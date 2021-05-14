@@ -2,12 +2,12 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app-java/app-java.iml" filepath="$PROJECT_DIR$/app-java/app-java.iml" />
-      <module fileurl="file://$PROJECT_DIR$/core/core.iml" filepath="$PROJECT_DIR$/core/core.iml" />
-      <module fileurl="file://$PROJECT_DIR$/countly-sdk-android.iml" filepath="$PROJECT_DIR$/countly-sdk-android.iml" />
-      <module fileurl="file://$PROJECT_DIR$/sdk/sdk.iml" filepath="$PROJECT_DIR$/sdk/sdk.iml" />
-      <module fileurl="file://$PROJECT_DIR$/sdk-java/sdk-java.iml" filepath="$PROJECT_DIR$/sdk-java/sdk-java.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/countly-sdk-java.iml" filepath="$PROJECT_DIR$/.idea/modules/countly-sdk-java.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/countly-sdk-java.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/countly-sdk-java.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app-java/countly-sdk-java.app-java.iml" filepath="$PROJECT_DIR$/.idea/modules/app-java/countly-sdk-java.app-java.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/core/countly-sdk-java.core.iml" filepath="$PROJECT_DIR$/.idea/modules/core/countly-sdk-java.core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/sdk/countly-sdk-java.sdk.iml" filepath="$PROJECT_DIR$/.idea/modules/sdk/countly-sdk-java.sdk.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/sdk-java/countly-sdk-java.sdk-java.iml" filepath="$PROJECT_DIR$/.idea/modules/sdk-java/countly-sdk-java.sdk-java.iml" />
     </modules>
   </component>
 </project>

@@ -8,8 +8,10 @@ import ly.count.sdk.java.Countly;
 public class Sample {
     public static void main(String[] args) throws Exception {
 
-        String COUNTLY_SERVER_URL = "XXX";
-        String COUNTLY_APP_KEY = "XXX";
+        //String COUNTLY_SERVER_URL = "XXX";
+        //String COUNTLY_APP_KEY = "XXX";
+        String COUNTLY_SERVER_URL = "https://master.count.ly";
+        String COUNTLY_APP_KEY = "5e20d03806255d314eb6679b26fda6e580b3d899";
 
         Config config = new Config(COUNTLY_SERVER_URL, COUNTLY_APP_KEY)
                 .setLoggingLevel(Config.LoggingLevel.DEBUG)
@@ -21,7 +23,8 @@ public class Sample {
 
         // Countly needs persistent storage for requests, configuration storage, user profiles and other temporary data,
         // therefore requires a separate data folder to run
-        File targetFolder = new File("/projects/countly-sdk-android/app-java/data");
+        //File targetFolder = new File("/projects/countly-sdk-android/app-java/data");
+        File targetFolder = new File("d:\\__COUNTLY\\java_test\\");
 
         // Main initialization call, SDK can be used after this one is done
         Countly.init(targetFolder, config);
@@ -47,8 +50,8 @@ public class Sample {
 
         // Simple app lifecycle simulation
         long ms = System.currentTimeMillis();
-        while (System.currentTimeMillis() - ms < 60000) {
-            if (Countly.getSession() != null && System.currentTimeMillis() - ms > 40000) {
+        while (System.currentTimeMillis() - ms < 6000) {
+            if (Countly.getSession() != null && System.currentTimeMillis() - ms > 4000) {
                 Countly.api().event("Recorded").record();
 
                 // You should end sessions this prior to exiting from your app to ensure correct session durations.
