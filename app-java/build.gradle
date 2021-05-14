@@ -5,10 +5,7 @@ plugins {
 
 repositories {
     mavenLocal()
-    jcenter()
-    maven {
-        url  "https://dl.bintray.com/countly/maven"
-    }
+    mavenCentral()
 }
 
 dependencies {

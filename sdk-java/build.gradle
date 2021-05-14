@@ -1,26 +1,20 @@
 apply plugin: 'java-library'
-//apply plugin: 'bintray-release'
 apply plugin: 'maven'
 
-repositories {
-    jcenter()
-    maven {
-        url  "https://dl.bintray.com/countly/maven"
-    }
-}
 
 buildscript {
     repositories {
-        jcenter()
+        mavenCentral()
+        mavenLocal()
     }
     dependencies {
-        //classpath 'com.novoda:bintray-release:0.9.1'
+        classpath 'com.vanniktech:gradle-maven-publish-plugin:0.14.2'
     }
 }
 
 dependencies {
-    //api project(':core')
-    api "ly.count.sdk:core:${CLY_VERSION}"
+    api project(':core')
+    //api "ly.count.sdk:core:${CLY_VERSION}"
 
     testCompile project(':core').sourceSets.test.output
     testImplementation 'junit:junit:4.12'
@@ -30,14 +24,4 @@ dependencies {
     testImplementation 'com.squareup.okhttp3:mockwebserver:3.7.0'
 }
 
-/*
-publish {
-    userOrg = 'countly'
-    groupId = 'ly.count.sdk'
-    artifactId = 'java'
-    publishVersion = CLY_VERSION
-    desc = 'Countly Java SDK'
-    website = 'https://github.com/Countly/countly-sdk-android'
-    autoPublish = false
-}
-*/
+apply plugin: "com.vanniktech.maven.publish"

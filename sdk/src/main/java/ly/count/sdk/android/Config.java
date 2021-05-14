@@ -147,7 +147,8 @@ public class Config extends ConfigCore {
     public Config(String serverURL, String serverAppKey) {
         super(serverURL, serverAppKey);
         setSdkName("java-native-android");
-        setSdkVersion(ly.count.sdk.android.sdk.BuildConfig.VERSION_NAME);
+
+        //setSdkVersion(ly.count.sdk.android.sdk.BuildConfig.VERSION_NAME);
     }
 
     /**

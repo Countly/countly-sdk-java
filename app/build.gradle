@@ -1,15 +1,7 @@
 apply plugin: 'com.android.application'
 
-//repositories {
-    //mavenLocal()
-    //jcenter()
-//}
-
 buildscript {
     repositories {
-        maven {
-            url  "http://dl.bintray.com/countly/maven"
-        }
 //        flatDir {
 //            dirs 'libs'
 //        }
