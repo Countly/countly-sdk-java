@@ -8,10 +8,8 @@ import ly.count.sdk.java.Countly;
 public class Sample {
     public static void main(String[] args) throws Exception {
 
-        //String COUNTLY_SERVER_URL = "XXX";
-        //String COUNTLY_APP_KEY = "XXX";
-        String COUNTLY_SERVER_URL = "https://master.count.ly";
-        String COUNTLY_APP_KEY = "5e20d03806255d314eb6679b26fda6e580b3d899";
+        String COUNTLY_SERVER_URL = "XXX";
+        String COUNTLY_APP_KEY = "XXX";
 
         Config config = new Config(COUNTLY_SERVER_URL, COUNTLY_APP_KEY)
                 .setLoggingLevel(Config.LoggingLevel.DEBUG)
