@@ -29,6 +29,7 @@ public abstract class SDKModules implements SDKInterface {
         registerDefaultModuleMapping(CoreFeature.Logs.getIndex(), Log.class);
         registerDefaultModuleMapping(CoreFeature.Views.getIndex(), ModuleViews.class);
         registerDefaultModuleMapping(CoreFeature.Sessions.getIndex(), ModuleSessions.class);
+        registerDefaultModuleMapping(CoreFeature.CrashReporting.getIndex(), ModuleCrash.class);
     }
 
     public interface Modulator {
