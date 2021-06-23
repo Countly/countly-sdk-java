@@ -3,13 +3,13 @@ package ly.count.sdk.java;
 import java.util.HashSet;
 import java.util.Set;
 
-import ly.count.sdk.CrashProcessor;
-import ly.count.sdk.internal.CoreFeature;
-import ly.count.sdk.internal.Log;
-import ly.count.sdk.internal.Module;
-import ly.count.sdk.internal.Utils;
+import ly.count.sdk.java.CrashProcessor;
+import ly.count.sdk.java.internal.CoreFeature;
+import ly.count.sdk.java.internal.Log;
+import ly.count.sdk.java.internal.Module;
+import ly.count.sdk.java.internal.Utils;
 
-public class Config extends ly.count.sdk.ConfigCore {
+public class Config extends ly.count.sdk.java.ConfigCore {
     /**
      * Strategy for device id generation
      */
@@ -359,8 +359,8 @@ public class Config extends ly.count.sdk.ConfigCore {
      * trying to ignore them when testMode is off</li>
      * <li>Put Firebase token under {@code test} devices if {@code Feature.Push} is enabled.</li>
      * </ul>
-     * Note: this method automatically sets {@link #loggingLevel} to {@link ly.count.sdk.ConfigCore.LoggingLevel#INFO} in
-     * case it was {@link ly.count.sdk.ConfigCore.LoggingLevel#OFF} (default).
+     * Note: this method automatically sets {@link #loggingLevel} to {@link ly.count.sdk.java.ConfigCore.LoggingLevel#INFO} in
+     * case it was {@link ly.count.sdk.java.ConfigCore.LoggingLevel#OFF} (default).
      *
      * @return {@code this} instance for method chaining
      */

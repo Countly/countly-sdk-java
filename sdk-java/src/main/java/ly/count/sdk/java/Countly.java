@@ -2,14 +2,14 @@ package ly.count.sdk.java;
 
 import java.io.File;
 
-import ly.count.sdk.Cly;
-import ly.count.sdk.Crash;
-import ly.count.sdk.CrashProcessor;
-import ly.count.sdk.Event;
-import ly.count.sdk.Session;
-import ly.count.sdk.Usage;
-import ly.count.sdk.User;
-import ly.count.sdk.UserEditor;
+import ly.count.sdk.java.Cly;
+import ly.count.sdk.java.Crash;
+import ly.count.sdk.java.CrashProcessor;
+import ly.count.sdk.java.Event;
+import ly.count.sdk.java.Session;
+import ly.count.sdk.java.Usage;
+import ly.count.sdk.java.User;
+import ly.count.sdk.java.UserEditor;
 import ly.count.sdk.java.internal.CtxImpl;
 import ly.count.sdk.java.internal.Device;
 import ly.count.sdk.java.internal.SDK;

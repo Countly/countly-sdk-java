@@ -13,10 +13,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import ly.count.sdk.internal.Log;
-import ly.count.sdk.internal.Storable;
-import ly.count.sdk.internal.Storage;
-import ly.count.sdk.internal.Utils;
+import ly.count.sdk.java.internal.Log;
+import ly.count.sdk.java.internal.Storable;
+import ly.count.sdk.java.internal.Storage;
+import ly.count.sdk.java.internal.Utils;
 
 abstract class SDKStorage extends SDKLifecycle {
     private static final Log.Module L = Log.module("SDK");
@@ -28,7 +28,7 @@ abstract class SDKStorage extends SDKLifecycle {
     }
 
     @Override
-    public void stop(ly.count.sdk.internal.CtxCore ctx, boolean clear) {
+    public void stop(ly.count.sdk.java.internal.CtxCore ctx, boolean clear) {
         super.stop(ctx, clear);
         Storage.await();
         if (clear) {
@@ -65,7 +65,7 @@ abstract class SDKStorage extends SDKLifecycle {
     }
 
     @Override
-    public int storablePurge(ly.count.sdk.internal.CtxCore context, String prefix) {
+    public int storablePurge(ly.count.sdk.java.internal.CtxCore context, String prefix) {
         prefix = getName(prefix) + FILE_NAME_SEPARATOR;
 
         L.i("Purging storage for prefix " + prefix);
@@ -85,7 +85,7 @@ abstract class SDKStorage extends SDKLifecycle {
     }
 
     @Override
-    public Boolean storableWrite(ly.count.sdk.internal.CtxCore context, String prefix, Long id, byte[] data) {
+    public Boolean storableWrite(ly.count.sdk.java.internal.CtxCore context, String prefix, Long id, byte[] data) {
         String filename = getName(prefix, id.toString());
 
         FileOutputStream stream = null;
@@ -121,27 +121,27 @@ abstract class SDKStorage extends SDKLifecycle {
     }
 
     @Override
-    public <T extends Storable> Boolean storableWrite(ly.count.sdk.internal.CtxCore context, T storable) {
+    public <T extends Storable> Boolean storableWrite(ly.count.sdk.java.internal.CtxCore context, T storable) {
         return storableWrite(context, storable.storagePrefix(), storable.storageId(), storable.store());
     }
 
-    private String createFileFullPath(ly.count.sdk.internal.CtxCore context, String filename){
+    private String createFileFullPath(ly.count.sdk.java.internal.CtxCore context, String filename){
         String directoryPath = ((File)context.getContext()).getAbsolutePath();
         return directoryPath + File.separator + filename;
     }
 
-    private FileInputStream openFileAsInputStream(ly.count.sdk.internal.CtxCore context, String filename) throws FileNotFoundException {
+    private FileInputStream openFileAsInputStream(ly.count.sdk.java.internal.CtxCore context, String filename) throws FileNotFoundException {
         File initialFile = new File(createFileFullPath(context, filename));
         return new FileInputStream(initialFile);
     }
 
-    private FileOutputStream openFileAsOutputStream(ly.count.sdk.internal.CtxCore context, String filename) throws FileNotFoundException {
+    private FileOutputStream openFileAsOutputStream(ly.count.sdk.java.internal.CtxCore context, String filename) throws FileNotFoundException {
         File initialFile = new File(createFileFullPath(context, filename));
         return new FileOutputStream(initialFile);
     }
 
     @Override
-    public byte[] storableReadBytes(ly.count.sdk.internal.CtxCore context, String filename) {
+    public byte[] storableReadBytes(ly.count.sdk.java.internal.CtxCore context, String filename) {
         ByteArrayOutputStream buffer = null;
         FileInputStream stream = null;
 
@@ -183,12 +183,12 @@ abstract class SDKStorage extends SDKLifecycle {
     }
 
     @Override
-    public byte[] storableReadBytes(ly.count.sdk.internal.CtxCore ctx, String prefix, Long id) {
+    public byte[] storableReadBytes(ly.count.sdk.java.internal.CtxCore ctx, String prefix, Long id) {
         return storableReadBytes(ctx, getName(prefix, id.toString()));
     }
 
     @Override
-    public <T extends Storable> Boolean storableRead(ly.count.sdk.internal.CtxCore context, T storable) {
+    public <T extends Storable> Boolean storableRead(ly.count.sdk.java.internal.CtxCore context, T storable) {
         byte[] data = storableReadBytes(context, getName(storable));
         if (data == null) {
             return null;
@@ -198,7 +198,7 @@ abstract class SDKStorage extends SDKLifecycle {
     }
 
     @Override
-    public <T extends Storable> Map.Entry<Long, byte[]> storableReadBytesOneOf(ly.count.sdk.internal.CtxCore context, T storable, boolean asc) {
+    public <T extends Storable> Map.Entry<Long, byte[]> storableReadBytesOneOf(ly.count.sdk.java.internal.CtxCore context, T storable, boolean asc) {
         List<Long> list = storableList(context, storable.storagePrefix(), asc ? 1 : -1);
         if (list.size() > 0) {
             return new AbstractMap.SimpleEntry<>(list.get(0), storableReadBytes(context, getName(storable.storagePrefix(), list.get(0).toString())));
@@ -206,18 +206,18 @@ abstract class SDKStorage extends SDKLifecycle {
         return null;
     }
 
-    private boolean deleteFile(ly.count.sdk.internal.CtxCore context, String filename){
+    private boolean deleteFile(ly.count.sdk.java.internal.CtxCore context, String filename){
         File file = new File(createFileFullPath(context, filename));
         return file.delete();
     }
 
     @Override
-    public <T extends Storable> Boolean storableRemove(ly.count.sdk.internal.CtxCore context, T storable) {
+    public <T extends Storable> Boolean storableRemove(ly.count.sdk.java.internal.CtxCore context, T storable) {
         return deleteFile(context, getName(storable.storagePrefix(), storable.storageId().toString()));
     }
 
     @Override
-    public <T extends Storable> Boolean storablePop(ly.count.sdk.internal.CtxCore ctx, T storable) {
+    public <T extends Storable> Boolean storablePop(ly.count.sdk.java.internal.CtxCore ctx, T storable) {
         Boolean read = storableRead(ctx, storable);
         if (read == null) {
             return null;
@@ -227,7 +227,7 @@ abstract class SDKStorage extends SDKLifecycle {
         return read;
     }
 
-    private String[] getFileList(ly.count.sdk.internal.CtxCore context){
+    private String[] getFileList(ly.count.sdk.java.internal.CtxCore context){
         File[] files = ((File)context.getContext()).listFiles();
         if (files == null) {
             return new String[0];
@@ -246,7 +246,7 @@ abstract class SDKStorage extends SDKLifecycle {
     }
 
     @Override
-    public List<Long> storableList(ly.count.sdk.internal.CtxCore context, String prefix, int slice) {
+    public List<Long> storableList(ly.count.sdk.java.internal.CtxCore context, String prefix, int slice) {
         if (Utils.isEmpty(prefix)) {
             Log.wtf("Cannot get list of ids without prefix");
         }

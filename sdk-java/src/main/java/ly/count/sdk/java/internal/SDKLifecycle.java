@@ -1,15 +1,15 @@
 package ly.count.sdk.java.internal;
 
-import ly.count.sdk.internal.Byteable;
-import ly.count.sdk.internal.CtxCore;
-import ly.count.sdk.internal.InternalConfig;
-import ly.count.sdk.internal.Log;
-import ly.count.sdk.internal.Module;
-import ly.count.sdk.internal.ModuleCrash;
-import ly.count.sdk.internal.ModuleRequests;
-import ly.count.sdk.internal.Request;
-import ly.count.sdk.internal.SDKCore;
-import ly.count.sdk.internal.Storage;
+import ly.count.sdk.java.internal.Byteable;
+import ly.count.sdk.java.internal.CtxCore;
+import ly.count.sdk.java.internal.InternalConfig;
+import ly.count.sdk.java.internal.Log;
+import ly.count.sdk.java.internal.Module;
+import ly.count.sdk.java.internal.ModuleCrash;
+import ly.count.sdk.java.internal.ModuleRequests;
+import ly.count.sdk.java.internal.Request;
+import ly.count.sdk.java.internal.SDKCore;
+import ly.count.sdk.java.internal.Storage;
 
 /**
  * Application lifecycle-related methods of {@link SDK}
@@ -28,7 +28,7 @@ public abstract class SDKLifecycle extends SDKCore {
     }
 
     @Override
-    public void stop(ly.count.sdk.internal.CtxCore ctx, boolean clear) {
+    public void stop(ly.count.sdk.java.internal.CtxCore ctx, boolean clear) {
         super.stop(ctx, clear);
         config = null;
     }
@@ -39,7 +39,7 @@ public abstract class SDKLifecycle extends SDKCore {
      * it's developer responsibility. In any case, for API 14+ Countly ignores dev calls.
      */
     @Override
-    protected void onContextAcquired(final ly.count.sdk.internal.CtxCore ctx) {
+    protected void onContextAcquired(final ly.count.sdk.java.internal.CtxCore ctx) {
         L.d("Application created");
 
         eachModule(new Modulator() {

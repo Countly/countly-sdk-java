@@ -7,8 +7,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import ly.count.sdk.internal.BaseTestsCore;
-import ly.count.sdk.internal.InternalConfig;
+import ly.count.sdk.java.internal.BaseTestsCore;
+import ly.count.sdk.java.internal.InternalConfig;
 
 @RunWith(JUnit4.class)
 public class ConfigTests extends BaseTestsCore {
