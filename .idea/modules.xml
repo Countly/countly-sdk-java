@@ -5,7 +5,6 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/countly-sdk-java.iml" filepath="$PROJECT_DIR$/.idea/modules/countly-sdk-java.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/countly-sdk-java.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/countly-sdk-java.app.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/app-java/countly-sdk-java.app-java.iml" filepath="$PROJECT_DIR$/.idea/modules/app-java/countly-sdk-java.app-java.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/core/countly-sdk-java.core.iml" filepath="$PROJECT_DIR$/.idea/modules/core/countly-sdk-java.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/sdk/countly-sdk-java.sdk.iml" filepath="$PROJECT_DIR$/.idea/modules/sdk/countly-sdk-java.sdk.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/sdk-java/countly-sdk-java.sdk-java.iml" filepath="$PROJECT_DIR$/.idea/modules/sdk-java/countly-sdk-java.sdk-java.iml" />
     </modules>
