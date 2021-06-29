@@ -2,8 +2,8 @@ package ly.count.sdk.java.internal;
 
 import java.io.File;
 
-import ly.count.sdk.internal.InternalConfig;
-import ly.count.sdk.internal.Log;
+import ly.count.sdk.java.internal.InternalConfig;
+import ly.count.sdk.java.internal.Log;
 
 /**
  * {@link Ctx} implementation

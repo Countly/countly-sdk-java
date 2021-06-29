@@ -1,8 +1,8 @@
 package ly.count.sdk.java.internal;
 
-import ly.count.sdk.Crash;
-import ly.count.sdk.internal.CrashImplCore;
-import ly.count.sdk.internal.Storable;
+import ly.count.sdk.java.Crash;
+import ly.count.sdk.java.internal.CrashImplCore;
+import ly.count.sdk.java.internal.Storable;
 
 public class CrashImpl extends CrashImplCore implements Crash, Storable {
 

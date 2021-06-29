@@ -5,7 +5,7 @@ apply plugin: 'maven'
 buildscript {
     repositories {
         mavenCentral()
-        mavenLocal()
+        //mavenLocal()
     }
     dependencies {
         classpath 'com.vanniktech:gradle-maven-publish-plugin:0.14.2'
@@ -13,10 +13,8 @@ buildscript {
 }
 
 dependencies {
-    api project(':core')
-    //api "ly.count.sdk:core:${CLY_VERSION}"
+    implementation 'org.json:json:20180813'
 
-    testCompile project(':core').sourceSets.test.output
     testImplementation 'junit:junit:4.12'
     testImplementation 'org.mockito:mockito-core:2.8.9'
     testImplementation "org.powermock:powermock-core:${POWERMOCK_VERSION}"
