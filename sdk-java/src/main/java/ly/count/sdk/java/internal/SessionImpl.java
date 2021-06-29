@@ -328,7 +328,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     public View view(String name, boolean start) {
         if (!SDKCore.enabled(CoreFeature.Views)) {
-            L.i("Skipping event - feature is not enabled");
+            L.i("Skipping view - feature is not enabled");
             return null;
         }
         if (currentView != null) {
