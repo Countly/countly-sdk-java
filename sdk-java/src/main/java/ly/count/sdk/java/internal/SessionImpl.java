@@ -95,6 +95,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     @Override
     public Session begin() {
+        L.d("begin");
         begin(null);
         return this;
     }
@@ -128,6 +129,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     @Override
     public Session update() {
+        L.d("update");
         update(null);
         return this;
     }
@@ -157,6 +159,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     @Override
     public void end() {
+        L.d("end");
         end(null, null, null);
     }
 
@@ -234,6 +237,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     @Override
     public boolean isActive() {
+        L.d("isActive");
         return began != null && ended == null;
     }
 

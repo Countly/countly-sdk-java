@@ -61,6 +61,8 @@ class EventImpl implements Event, JSONable {
         if (recorder != null && !invalid) {
             invalid = true;
             recorder.recordEvent(this);
+
+            L.d("record: " + this.toString());
         }
     }
 
@@ -72,6 +74,7 @@ class EventImpl implements Event, JSONable {
 
     @Override
     public Event addSegment(String key, String value) {
+        L.d("addSegment: key = " + key + " value = " + value);
         if (key == null || "".equals(key)) {
             invalid = true;
             L.wtf("Segmentation key " + key + " for event " + this.key + " is empty");
@@ -95,6 +98,8 @@ class EventImpl implements Event, JSONable {
 
     @Override
     public Event addSegments(String... segmentation) {
+        L.d("addSegment: segmentation = " + segmentation);
+
         if (segmentation == null || segmentation.length == 0) {
             invalid = true;
             L.wtf("Segmentation varargs array is empty");
@@ -115,6 +120,8 @@ class EventImpl implements Event, JSONable {
 
     @Override
     public Event setSegmentation(Map<String, String> segmentation) {
+        L.d("setSegmentation: segmentation = " + segmentation);
+
         if (segmentation == null) {
             invalid = true;
             L.wtf("Segmentation map is null");
@@ -131,6 +138,7 @@ class EventImpl implements Event, JSONable {
 
     @Override
     public Event setCount(int count) {
+        L.d("setCount: count = " + count);
         if (count <= 0) {
             invalid = true;
             L.wtf("Event " + key + " count cannot be 0 or less");
@@ -142,6 +150,7 @@ class EventImpl implements Event, JSONable {
 
     @Override
     public Event setSum(double sum) {
+        L.d("setSum: sum = " + sum);
         if (Double.isInfinite(sum) || Double.isNaN(sum)) {
             invalid = true;
             L.wtf("NaN infinite value cannot be event '" + key + "' sum");
@@ -153,6 +162,7 @@ class EventImpl implements Event, JSONable {
 
     @Override
     public Event setDuration(double duration) {
+        L.d("setDuration: duration = " + duration);
         if (Double.isInfinite(duration) || Double.isNaN(duration) || duration < 0) {
             invalid = true;
             L.wtf("NaN, infinite or negative value cannot be event '" + key + "' duration");

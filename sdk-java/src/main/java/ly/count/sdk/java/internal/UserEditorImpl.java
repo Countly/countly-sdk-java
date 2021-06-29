@@ -333,61 +333,75 @@ public class UserEditorImpl implements UserEditor {
 
     @Override
     public UserEditor setName(String value) {
+        L.d("setName: value = " + value);
+
         return set(NAME, value);
     }
 
     @Override
     public UserEditor setUsername(String value) {
+        L.d("setUsername: value = " + value);
         return set(USERNAME, value);
     }
 
     @Override
     public UserEditor setEmail(String value) {
+        L.d("setEmail: value = " + value);
         return set(EMAIL, value);
     }
 
     @Override
     public UserEditor setOrg(String value) {
+        L.d("setOrg: value = " + value);
         return set(ORG, value);
     }
 
     @Override
     public UserEditor setPhone(String value) {
+        L.d("setPhone: value = " + value);
         return set(PHONE, value);
     }
 
     @Override
     public UserEditor setPicture(byte[] picture) {
+        L.d("setPicture: picture = " + picture);
         return set(PICTURE, picture);
     }
 
     @Override
     public UserEditor setPicturePath(String picturePath) {
+        L.d("setPicturePath: picturePath = " + picturePath);
+
         return set(PICTURE_PATH, picturePath);
     }
 
     @Override
     public UserEditor setGender(Object gender) {
+        L.d("setGender: gender = " + gender);
         return set(GENDER, gender);
     }
 
     @Override
     public UserEditor setBirthyear(int birthyear) {
+        L.d("setBirthyear: birthyear = " + birthyear);
         return set(BIRTHYEAR, birthyear);
     }
 
     @Override
     public UserEditor setBirthyear(String birthyear) {
+        L.d("setBirthyear: birthyear = " + birthyear);
         return set(BIRTHYEAR, birthyear);
     }
 
     @Override
     public UserEditor setLocale(String locale) {
+        L.d("setLocale: locale = " + locale);
         return set(LOCALE, locale);
     }
 
     @Override
     public UserEditor setCountry(String country) {
+        L.d("setCountry: country = " + country);
         if (SDKCore.enabled(CoreFeature.Location)) {
             return set(COUNTRY, country);
         } else {
@@ -397,6 +411,7 @@ public class UserEditorImpl implements UserEditor {
 
     @Override
     public UserEditor setCity(String city) {
+        L.d("setCity: city = " + city);
         if (SDKCore.enabled(CoreFeature.Location)) {
             return set(CITY, city);
         } else {
@@ -406,6 +421,7 @@ public class UserEditorImpl implements UserEditor {
 
     @Override
     public UserEditor setLocation(String location) {
+        L.d("setLocation: location = " + location);
         if (location != null) {
             String[] comps = location.split(",");
             if (comps.length == 2) {
@@ -426,6 +442,7 @@ public class UserEditorImpl implements UserEditor {
 
     @Override
     public UserEditor setLocation(double latitude, double longitude) {
+        L.d("setLocation: latitude = " + latitude + " longitude" + longitude);
         if (SDKCore.enabled(CoreFeature.Location)) {
             return set(LOCATION, latitude + "," + longitude);
         } else {
@@ -435,31 +452,37 @@ public class UserEditorImpl implements UserEditor {
 
     @Override
     public UserEditor optOutFromLocationServices() {
+        L.d("optOutFromLocationServices");
         return set(COUNTRY, "").set(CITY, "").set(LOCATION, "");
     }
 
     @Override
     public UserEditor inc(String key, int by) {
+        L.d("inc: key " + key + " by " + by);
         return setCustomOp(Op.INC, key, by);
     }
 
     @Override
     public UserEditor mul(String key, double by) {
+        L.d("mul: key " + key + " by " + by);
         return setCustomOp(Op.MUL, key, by);
     }
 
     @Override
     public UserEditor min(String key, double value) {
+        L.d("min: key " + key + " value " + value);
         return setCustomOp(Op.MIN, key, value);
     }
 
     @Override
     public UserEditor max(String key, double value) {
+        L.d("max: key " + key + " value " + value);
         return setCustomOp(Op.MAX, key, value);
     }
 
     @Override
     public UserEditor setOnce(String key, Object value) {
+        L.d("setOnce: key " + key + " value " + value);
         if (value == null) {
             L.wtf("$setOnce operation operand cannot be null: key " + key);
             return this;
@@ -470,6 +493,7 @@ public class UserEditorImpl implements UserEditor {
 
     @Override
     public UserEditor pull(String key, Object value) {
+        L.d("pull: key " + key + " value " + value);
         if (value == null) {
             L.wtf("$pull operation operand cannot be null: key " + key);
             return this;
@@ -480,6 +504,7 @@ public class UserEditorImpl implements UserEditor {
 
     @Override
     public UserEditor push(String key, Object value) {
+        L.d("push: key " + key + " value " + value);
         if (value == null) {
             L.wtf("$push operation operand cannot be null: key " + key);
             return this;
@@ -490,6 +515,7 @@ public class UserEditorImpl implements UserEditor {
 
     @Override
     public UserEditor pushUnique(String key, Object value) {
+        L.d("pushUnique: key " + key + " value " + value);
         if (value == null) {
             L.wtf("pushUnique / $addToSet operation operand cannot be null: key " + key);
             return this;
@@ -500,6 +526,7 @@ public class UserEditorImpl implements UserEditor {
 
     @Override
     public UserEditor addToCohort(String key) {
+        L.d("addToCohort: key " + key);
         if (cohortsToRemove.contains(key)) {
             cohortsToRemove.remove(key);
         }
@@ -509,6 +536,7 @@ public class UserEditorImpl implements UserEditor {
 
     @Override
     public UserEditor removeFromCohort(String key) {
+        L.d("removeFromCohort: key " + key);
         if (cohortsToAdd.contains(key)) {
             cohortsToAdd.remove(key);
         }
@@ -518,6 +546,7 @@ public class UserEditorImpl implements UserEditor {
 
     @Override
     public User commit() {
+        L.d("commit");
         if (SDKCore.instance == null) {
             L.wtf("Countly is not initialized");
             return null;

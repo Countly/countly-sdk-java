@@ -8,6 +8,8 @@ import ly.count.sdk.java.View;
  */
 
 class ViewImpl implements View {
+    private static final Log.Module L = Log.module("ViewImpl");
+
     static final String EVENT = "[CLY]_view";
     static final String NAME = "name";
     static final String VISIT = "visit";
@@ -34,6 +36,7 @@ class ViewImpl implements View {
 
     @Override
     public void start(boolean firstView) {
+        L.d("start: firstView = " + firstView);
         if (started) {
             return;
         }
@@ -53,6 +56,8 @@ class ViewImpl implements View {
 
     @Override
     public void stop(boolean lastView) {
+        L.d("stop: lastView = " + lastView);
+
         if (ended) {
             return;
         }

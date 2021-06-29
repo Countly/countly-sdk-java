@@ -54,7 +54,7 @@ public class Countly extends CountlyLifecycle {
     /**
      * Returns active {@link Session} if any or creates new {@link Session} instance.
      *
-     * NOTE: {@link Session} instances can expire, for example when {@link ly.count.sdk.ConfigCore.DID} changes.
+     * NOTE: {@link Session} instances can expire, for example when {@link ly.count.sdk.java.ConfigCore.DID} changes.
      * {@link Session} also holds application context.
      * So either do not store {@link Session} instances in any static variables and use this method or {@link #getSession()} every time you need it,
      * or check {@link Session#isActive()} before using it.
@@ -71,7 +71,7 @@ public class Countly extends CountlyLifecycle {
     /**
      * Returns active {@link Session} if any or {@code null} otherwise.
      *
-     * NOTE: {@link Session} instances can expire, for example when {@link ly.count.sdk.ConfigCore.DID} changes.
+     * NOTE: {@link Session} instances can expire, for example when {@link ly.count.sdk.java.ConfigCore.DID} changes.
      * {@link Session} also holds application context.
      * So either do not store {@link Session} instances in any static variables and use this method or {@link #session()} every time you need it,
      * or check {@link Session#isActive()} before using it.
@@ -96,18 +96,21 @@ public class Countly extends CountlyLifecycle {
 
     @Override
     public Usage login(String id) {
+        L.d("login");
         sdk.login(ctx, id);
         return this;
     }
 
     @Override
     public Usage logout() {
+        L.d("logout");
         sdk.logout(ctx);
         return this;
     }
 
     @Override
     public Usage resetDeviceId(String id) {
+        L.d("resetDeviceId: id = " + id);
         sdk.resetDeviceId(ctx, id);
         return this;
     }
@@ -120,6 +123,8 @@ public class Countly extends CountlyLifecycle {
      * @param features features to turn on
      */
     public static void onConsent(Config.Feature... features) {
+        L.d("onConsent: features = " + features);
+
         if (!isInitialized()) {
             L.wtf("Countly SDK is not initialized yet.");
         } else {
@@ -139,6 +144,7 @@ public class Countly extends CountlyLifecycle {
      * @param features features to turn offf
      */
     public static void onConsentRemoval(Config.Feature... features) {
+        L.d("onConsentRemoval: features = " + features);
         if (!isInitialized()) {
             L.wtf("Countly SDK is not initialized yet.");
         } else {
