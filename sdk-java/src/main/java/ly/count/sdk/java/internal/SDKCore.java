@@ -245,8 +245,12 @@ public abstract class SDKCore extends SDKModules {
         ((ModuleDeviceIdCore)module(CoreFeature.DeviceId.getIndex())).logout(ctx);
     }
 
-    public void resetDeviceId(CtxCore ctx, String id) {
-        ((ModuleDeviceIdCore)module(CoreFeature.DeviceId.getIndex())).resetDeviceId(ctx, id);
+    public void changeDeviceIdWithoutMerge(CtxCore ctx, String id) {
+        ((ModuleDeviceIdCore)module(CoreFeature.DeviceId.getIndex())).changeDeviceId(ctx, id, false);
+    }
+
+    public void changeDeviceIdWithMerge(CtxCore ctx, String id) {
+        ((ModuleDeviceIdCore)module(CoreFeature.DeviceId.getIndex())).changeDeviceId(ctx, id, true);
     }
 
     public static boolean enabled(int feature) {

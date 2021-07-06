@@ -15,15 +15,14 @@ public class Sample {
     static void basicEvent() {
         Countly.api().event("Basic Event").record();
     }
-    static void eventWithSumAndCount()
-    {
+
+    static void eventWithSumAndCount() {
         Countly.api().event("Event With Sum And Count")
                 .setSum(23)
                 .setCount(2).record();
     }
 
-    static void eventWithSegmentation()
-    {
+    static void eventWithSegmentation() {
 
         Map<String, String> segment = new HashMap<String, String>() {{
             put("Time Spent", "60");
@@ -34,8 +33,7 @@ public class Sample {
                 .setSegmentation(segment).record();
     }
 
-    static void eventWithSumAndSegmentation()
-    {
+    static void eventWithSumAndSegmentation() {
         Map<String, String> segment = new HashMap<String, String>() {{
             put("Time Spent", "60");
             put("Retry Attempts", "60");
@@ -46,8 +44,7 @@ public class Sample {
                 .setSegmentation(segment).record();
     }
 
-    static void timedEventWithSumCountSegmentationAndDuration()
-    {
+    static void timedEventWithSumCountSegmentationAndDuration() {
         Map<String, String> segment = new HashMap<String, String>() {{
             put("Time Spent", "60");
             put("Retry Attempts", "60");
@@ -60,13 +57,11 @@ public class Sample {
                 .setDuration(5.3).record();
     }
 
-    static void setLocation()
-    {
+    static void setLocation() {
         Countly.api().addLocation(31.5204, 74.3587);
     }
 
-    static void setUserProfile()
-    {
+    static void setUserProfile() {
         Countly.api().user().edit()
                 .setName("Full name")
                 .setUsername("nickname")
@@ -76,8 +71,7 @@ public class Sample {
                 .commit();
     }
 
-    static void setCustomProfile()
-    {
+    static void setCustomProfile() {
         Countly.api().user().edit()
                 .set("mostFavoritePet", "dog")
                 .inc("phoneCalls", 1)
@@ -86,25 +80,23 @@ public class Sample {
                 .commit();
     }
 
-    static void recordStartView()
-    {
+    static void recordStartView() {
         Countly.api().view("Start view");
     }
 
-    static void recordAnotherView()
-    {
+    static void recordAnotherView() {
         Countly.api().view("Another view");
     }
 
-    static void recordCrash()
-    {
+    static void recordCrash() {
         try {
             int a = 10 / 0;
-        }catch (Exception e) {
+        } catch (Exception e) {
             Countly.api().addCrashReport(e.getCause(), false, "Divided by zero", null, "sample app");
         }
 
     }
+
     public static void main(String[] args) throws Exception {
 
         Scanner scanner = new Scanner(System.in);
@@ -116,15 +108,13 @@ public class Sample {
                 .setLoggingLevel(Config.LoggingLevel.DEBUG)
                 .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
                 .enableFeatures(Config.Feature.Events, Config.Feature.Sessions, Config.Feature.CrashReporting, Config.Feature.Views, Config.Feature.UserProfiles, Config.Feature.Location)
-                .setRequiresConsent(true)
-                .setAutoSessionsTracking(true)
+                .setRequiresConsent(false)
                 .setEventsBufferSize(2);
 
         // Countly needs persistent storage for requests, configuration storage, user profiles and other temporary data,
         // therefore requires a separate data folder to run
         //File targetFolder = new File("/projects/countly-sdk-android/app-java/data");
         File targetFolder = new File("d:\\__COUNTLY\\java_test\\");
-
 
         // Main initialization call, SDK can be used after this one is done
         Countly.init(targetFolder, config);

@@ -128,10 +128,23 @@ public interface Usage {
     Usage logout();
 
     /**
-     * Resetting id without merging profiles on server, just set device id to new one.
-     * Neither closes session, nor affects any other place in the SDK.
+     * @deprecated
+     * This method is no longer acceptable to change device id.
+     * <p> Use {@link #changeDeviceIdWithoutMerge(String)} or {@link #changeDeviceIdWithMerge(String)}
+     */
+    Usage resetDeviceId(String id);
+
+    /**
+     * Change device id with merging profiles on server, just set device id to new one.
      *
      * @param id new user / device id string, cannot be empty
      */
-    Usage resetDeviceId(String id);
+    Usage changeDeviceIdWithMerge(String id);
+
+    /**
+     * Change device id without merging profiles on server, just set device id to new one.
+     *
+     * @param id new user / device id string, cannot be empty
+     */
+    Usage changeDeviceIdWithoutMerge(String id);
 }

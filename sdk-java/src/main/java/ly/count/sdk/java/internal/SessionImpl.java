@@ -285,6 +285,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             if (pushOnChange) {
                 Storage.pushAsync(ctx, this);
             }
+
             ConfigCore config = SDKCore.instance.config();
             if (config != null && config.getEventsBufferSize() <= events.size()) {
                 update();
@@ -358,7 +359,22 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     @Override
     public Usage resetDeviceId(String id) {
-        SDKCore.instance.resetDeviceId(ctx, id);
+        L.d("resetDeviceId: id = " + id);
+        SDKCore.instance.changeDeviceIdWithoutMerge(ctx, id);
+        return this;
+    }
+
+    @Override
+    public Usage changeDeviceIdWithMerge(String id) {
+        L.d("changeDeviceIdWithoutMerge: id = " + id);
+        SDKCore.instance.changeDeviceIdWithMerge(ctx, id);
+        return this;
+    }
+
+    @Override
+    public Usage changeDeviceIdWithoutMerge(String id) {
+        L.d("changeDeviceIdWithoutMerge: id = " + id);
+        SDKCore.instance.changeDeviceIdWithoutMerge(ctx, id);
         return this;
     }
 

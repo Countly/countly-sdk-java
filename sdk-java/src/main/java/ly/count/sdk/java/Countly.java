@@ -2,14 +2,6 @@ package ly.count.sdk.java;
 
 import java.io.File;
 
-import ly.count.sdk.java.Cly;
-import ly.count.sdk.java.Crash;
-import ly.count.sdk.java.CrashProcessor;
-import ly.count.sdk.java.Event;
-import ly.count.sdk.java.Session;
-import ly.count.sdk.java.Usage;
-import ly.count.sdk.java.User;
-import ly.count.sdk.java.UserEditor;
 import ly.count.sdk.java.internal.CtxImpl;
 import ly.count.sdk.java.internal.Device;
 import ly.count.sdk.java.internal.SDK;
@@ -111,7 +103,21 @@ public class Countly extends CountlyLifecycle {
     @Override
     public Usage resetDeviceId(String id) {
         L.d("resetDeviceId: id = " + id);
-        sdk.resetDeviceId(ctx, id);
+        sdk.changeDeviceIdWithoutMerge(ctx, id);
+        return this;
+    }
+
+    @Override
+    public Usage changeDeviceIdWithMerge(String id) {
+        L.d("changeDeviceIdWithoutMerge: id = " + id);
+        sdk.changeDeviceIdWithMerge(ctx, id);
+        return this;
+    }
+
+    @Override
+    public Usage changeDeviceIdWithoutMerge(String id) {
+        L.d("changeDeviceIdWithoutMerge: id = " + id);
+        sdk.changeDeviceIdWithoutMerge(ctx, id);
         return this;
     }
 
