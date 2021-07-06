@@ -302,7 +302,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
      * @param ctx context to run in
      * @param id new user id
      */
-    public void resetDeviceId(CtxCore ctx, String id) {
+    public void changeDeviceId(CtxCore ctx, String id, boolean withMerge) {
         if (Utils.isEmpty(id)) {
             L.wtf("Empty id passed to resetId method");
         } else {
@@ -310,8 +310,13 @@ public class ModuleDeviceIdCore extends ModuleBase {
             ctx.getConfig().setDeviceId(new ConfigCore.DID(ConfigCore.DID.REALM_DID, ConfigCore.DID.STRATEGY_CUSTOM, id));
             Storage.push(ctx, ctx.getConfig());
 
-            SDKCore.instance.onDeviceId(ctx, null, old);
-            SDKCore.instance.onDeviceId(ctx, ctx.getConfig().getDeviceId(), null);
+            if(withMerge) {
+                SDKCore.instance.onDeviceId(ctx, ctx.getConfig().getDeviceId(), old);
+            }
+            else {
+                SDKCore.instance.onDeviceId(ctx, null, old);
+                SDKCore.instance.onDeviceId(ctx, ctx.getConfig().getDeviceId(), null);
+            }
         }
     }
 
