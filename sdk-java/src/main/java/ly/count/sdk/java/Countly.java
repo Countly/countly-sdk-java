@@ -70,11 +70,17 @@ public class Countly extends CountlyLifecycle {
      *
      * @return active {@link Session} instance if there is one, {@code null} otherwise
      */
+
+    /**
+     * @deprecated
+     * This method deprecated, please
+     * <p> use {@link #session()} instead.
+     */
     public static Session getSession(){
         if (!isInitialized()) {
             L.wtf("Countly SDK is not initialized yet.");
         }
-        return Cly.getSession();
+        return Cly.session(cly.ctx);
     }
 
     /**
@@ -98,6 +104,11 @@ public class Countly extends CountlyLifecycle {
         L.d("logout");
         sdk.logout(ctx);
         return this;
+    }
+
+    @Override
+    public String getDeviceId() {
+        return ctx.getConfig().getDeviceId().id;
     }
 
     @Override

@@ -128,6 +128,11 @@ public interface Usage {
     Usage logout();
 
     /**
+     * This method returns the Device ID that is currently used by the SDK.
+     */
+    String getDeviceId();
+
+    /**
      * @deprecated
      * This method is no longer acceptable to change device id.
      * <p> Use {@link #changeDeviceIdWithoutMerge(String)} or {@link #changeDeviceIdWithMerge(String)}
