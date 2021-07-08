@@ -358,6 +358,11 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     }
 
     @Override
+    public String getDeviceId() {
+        return ctx.getConfig().getDeviceId().id;
+    }
+
+    @Override
     public Usage resetDeviceId(String id) {
         L.d("resetDeviceId: id = " + id);
         SDKCore.instance.changeDeviceIdWithoutMerge(ctx, id);

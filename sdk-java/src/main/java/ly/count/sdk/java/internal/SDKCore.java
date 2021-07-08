@@ -190,21 +190,16 @@ public abstract class SDKCore extends SDKModules {
         if (config.isLimited()) {
             if (id != null && (!id.equals(old) || !id.equals(config.getDeviceId(id.realm)))) {
                 config.setDeviceId(id);
-                L.d("0");
             } else if (id == null && old != null) {
                 config.removeDeviceId(old);
-                L.d("1");
             }
         } else {
             if (id != null && (!id.equals(old) || !id.equals(config.getDeviceId(id.realm)))) {
                 config.setDeviceId(id);
                 Storage.push(ctx, instance.config);
-                L.d("2");
             } else if (id == null && old != null) {
-                L.d("3");
                 if (config.removeDeviceId(old)) {
                     Storage.push(ctx, config);
-                    L.d("4");
                 }
             }
         }
