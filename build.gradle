@@ -20,7 +20,7 @@ buildscript {
 }
 
 allprojects {
-    ext.CLY_VERSION = "19.09-sdk2-rc"
+    ext.CLY_VERSION = "20.11.0"
     ext.POWERMOCK_VERSION = "1.7.1"
 
     tasks.withType(Javadoc) {
