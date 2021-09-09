@@ -394,29 +394,11 @@ public class Transport implements X509TrustManager {
     RequestResult processResponse(int code, String response, Long requestId) {
         L.i("[processResponse] Code [" + code + "] response [" + response + "] for request[" + requestId + "]" );
 
-        if (code >= 200 && code < 300) {
-            if (response.contains("result")) {
-                // response looks like {"result": "Success"}
-                L.d("Success");
-                return RequestResult.OK;
-            } else {
-                // some unknown response, will resend this request
-                L.w("Unknown response: " + response);
-                return RequestResult.REMOVE;
-            }
-        } else if (code >= 300 && code < 400) {
-            // redirects
-            L.w("Server returned redirect");
-            return RequestResult.RETRY;
-        } else if (code == 400 || code == 404) {
-            L.e("Bad request: " + response);
-            return RequestResult.REMOVE;
-        } else if (code >= 500) {
-            // server is down, will retry later
-            L.w("Server is down");
-            return RequestResult.RETRY;
+        if (code >= 200 && code < 300 && response != null && response.contains("result")) {
+            L.d("Success");
+            return RequestResult.OK;
         } else {
-            L.w("Bad response code " + code);
+            L.w("Fail: code :" + code + ", result: " + response);
             return RequestResult.RETRY;
         }
     }
