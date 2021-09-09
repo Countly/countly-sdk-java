@@ -395,18 +395,14 @@ public class Transport implements X509TrustManager {
         L.i("[processResponse] Code [" + code + "] response [" + response + "] for request[" + requestId + "]" );
 
         if (code >= 200 && code < 300) {
-            if (Utils.isEmpty(response)) {
-                L.w("Success (null response)");
-                // Null response, but response code is ok. Optimistically assuming request was sent
-                return RequestResult.OK;
-            } else if (response.contains("Success")) {
+            if (response.contains("result")) {
                 // response looks like {"result": "Success"}
                 L.d("Success");
                 return RequestResult.OK;
             } else {
                 // some unknown response, will resend this request
                 L.w("Unknown response: " + response);
-                return RequestResult.RETRY;
+                return RequestResult.REMOVE;
             }
         } else if (code >= 300 && code < 400) {
             // redirects
@@ -415,7 +411,7 @@ public class Transport implements X509TrustManager {
         } else if (code == 400 || code == 404) {
             L.e("Bad request: " + response);
             return RequestResult.REMOVE;
-        } else if (code > 400) {
+        } else if (code > 500) {
             // server is down, will retry later
             L.w("Server is down");
             return RequestResult.RETRY;

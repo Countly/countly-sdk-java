@@ -197,7 +197,7 @@ public class ConfigCore {
     /**
      * Countly SDK version to be sent in HTTP requests
      */
-    protected String sdkVersion = "20.11.0";
+    protected String sdkVersion = "20.11.1";
 
     /**
      * Countly SDK name to be sent in HTTP requests

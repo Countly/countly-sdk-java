@@ -1,3 +1,6 @@
+20.11.1
+* Fixed a bug related to server response handling.
+
 20.11.0
 * Added a new method to retrieve the current device id.
 * Added new methods to change device ID with and without server merge.
