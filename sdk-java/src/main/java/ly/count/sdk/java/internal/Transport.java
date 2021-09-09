@@ -411,7 +411,7 @@ public class Transport implements X509TrustManager {
         } else if (code == 400 || code == 404) {
             L.e("Bad request: " + response);
             return RequestResult.REMOVE;
-        } else if (code > 500) {
+        } else if (code >= 500) {
             // server is down, will retry later
             L.w("Server is down");
             return RequestResult.RETRY;
