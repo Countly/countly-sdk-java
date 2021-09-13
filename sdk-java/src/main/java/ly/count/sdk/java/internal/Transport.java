@@ -38,6 +38,7 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 import ly.count.sdk.java.User;
+import org.json.JSONObject;
 
 /**
  * Class managing all networking operations.
@@ -394,33 +395,12 @@ public class Transport implements X509TrustManager {
     RequestResult processResponse(int code, String response, Long requestId) {
         L.i("[processResponse] Code [" + code + "] response [" + response + "] for request[" + requestId + "]" );
 
-        if (code >= 200 && code < 300) {
-            if (Utils.isEmpty(response)) {
-                L.w("Success (null response)");
-                // Null response, but response code is ok. Optimistically assuming request was sent
-                return RequestResult.OK;
-            } else if (response.contains("Success")) {
-                // response looks like {"result": "Success"}
-                L.d("Success");
-                return RequestResult.OK;
-            } else {
-                // some unknown response, will resend this request
-                L.w("Unknown response: " + response);
-                return RequestResult.RETRY;
-            }
-        } else if (code >= 300 && code < 400) {
-            // redirects
-            L.w("Server returned redirect");
-            return RequestResult.RETRY;
-        } else if (code == 400 || code == 404) {
-            L.e("Bad request: " + response);
-            return RequestResult.REMOVE;
-        } else if (code > 400) {
-            // server is down, will retry later
-            L.w("Server is down");
-            return RequestResult.RETRY;
+        JSONObject jsonObject = new JSONObject(response);
+        if (code >= 200 && code < 300 && jsonObject.has("result")) {
+            L.d("Success");
+            return RequestResult.OK;
         } else {
-            L.w("Bad response code " + code);
+            L.w("Fail: code :" + code + ", result: " + response);
             return RequestResult.RETRY;
         }
     }

@@ -92,7 +92,7 @@ public class Sample {
         try {
             int a = 10 / 0;
         } catch (Exception e) {
-            Countly.api().addCrashReport(e.getCause(), false, "Divided by zero", null, "sample app");
+            Countly.api().addCrashReport(e, false, "Divided by zero", null, "sample app");
         }
 
     }
@@ -109,6 +109,7 @@ public class Sample {
                 .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
                 .enableFeatures(Config.Feature.Events, Config.Feature.Sessions, Config.Feature.CrashReporting, Config.Feature.Views, Config.Feature.UserProfiles, Config.Feature.Location)
                 .setRequiresConsent(false)
+                .enableParameterTamperingProtection("test-salt-checksum1")
                 .setEventsBufferSize(2);
 
         // Countly needs persistent storage for requests, configuration storage, user profiles and other temporary data,
