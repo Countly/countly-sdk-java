@@ -244,4 +244,8 @@ public class CrashImplCore implements Crash, Storable {
     public String getJSON() {
         return data.toString();
     }
+
+    public boolean isJsonValid() {
+        return data.has("_error") && data.has("_app_version") && data.has("_os");
+    }
 }

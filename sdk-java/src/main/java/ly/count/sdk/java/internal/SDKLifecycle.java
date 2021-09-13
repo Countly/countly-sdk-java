@@ -10,6 +10,9 @@ import ly.count.sdk.java.internal.ModuleRequests;
 import ly.count.sdk.java.internal.Request;
 import ly.count.sdk.java.internal.SDKCore;
 import ly.count.sdk.java.internal.Storage;
+import org.json.JSONObject;
+
+import java.util.Map;
 
 /**
  * Application lifecycle-related methods of {@link SDK}
@@ -159,8 +162,16 @@ public abstract class SDKLifecycle extends SDKCore {
     private boolean processCrash(CtxCore ctx, Long id) {
         CrashImpl crash = new CrashImpl(id);
         crash = Storage.read(ctx, crash);
+
         if (crash == null) {
             L.e("Cannot read crash from storage, skipping");
+            return false;
+        }
+
+        CrashImplCore crashCore = (CrashImplCore) crash;
+
+        if(!crashCore.isJsonValid()) {
+            L.wtf("Missing crash's mandatory properties!");
             return false;
         }
 
