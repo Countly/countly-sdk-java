@@ -38,6 +38,7 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 import ly.count.sdk.java.User;
+import org.json.JSONObject;
 
 /**
  * Class managing all networking operations.
@@ -394,7 +395,8 @@ public class Transport implements X509TrustManager {
     RequestResult processResponse(int code, String response, Long requestId) {
         L.i("[processResponse] Code [" + code + "] response [" + response + "] for request[" + requestId + "]" );
 
-        if (code >= 200 && code < 300 && response != null && response.contains("result")) {
+        JSONObject jsonObject = new JSONObject(response);
+        if (code >= 200 && code < 300 && jsonObject.has("result")) {
             L.d("Success");
             return RequestResult.OK;
         } else {
