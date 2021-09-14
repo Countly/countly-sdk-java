@@ -90,11 +90,11 @@ public class ModuleCrash extends ModuleBase {
         crash.putMetricsCore(ctx, running);
 
         if (!crash.getData().has("_os")){
-            L.w("onCrash: OS name cannot be null or empty");
+            L.w("onCrash, While recording an exception 'OS name' was either null or empty");
         }
 
         if (!crash.getData().has("_app_version")){
-            L.w("onCrash: App version cannot be null or empty");
+            L.w("onCrash, While recording an exception 'App version' was either null or empty");
         }
 
         if (crashProcessor != null) {
