@@ -90,7 +90,8 @@ public class Request implements Storable {
 
     @Override
     public String toString() {
-        return "[" + id + "] " + params.toString();
+        String p = params == null ? "" :params.toString();
+        return "[" + id + "] " + p;
     }
 
     @Override
