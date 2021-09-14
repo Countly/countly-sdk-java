@@ -78,6 +78,10 @@ public class ModuleCrash extends ModuleBase {
     }
 
     public CrashImplCore onCrash(CtxCore ctx, Throwable t, boolean fatal, String name, Map<String, String> segments, String... logs) {
+        if (t == null) {
+            L.e("Throwable cannot be null");
+            return  null;
+        }
         return onCrash(ctx, new CrashImplCore().addThrowable(t).setFatal(fatal).setName(name).setSegments(segments).setLogs(logs));
     }
 

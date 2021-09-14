@@ -170,11 +170,6 @@ public abstract class SDKLifecycle extends SDKCore {
 
         CrashImplCore crashCore = (CrashImplCore) crash;
 
-        if(!crashCore.isJsonValid()) {
-            L.wtf("Missing crash's mandatory properties!");
-            return false;
-        }
-
         Request request = ModuleRequests.nonSessionRequest(ctx);
         ModuleCrash.putCrashIntoParams(crash, request.params);
         if (Storage.push(ctx, request)) {
