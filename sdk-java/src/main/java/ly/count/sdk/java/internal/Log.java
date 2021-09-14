@@ -8,43 +8,11 @@ import ly.count.sdk.java.ConfigCore;
  */
 
 public class Log extends ModuleBase {
-    public interface Logger {
-        void d(String message);
-        void d(String message, Throwable throwable);
-        void i(String message);
-        void i(String message, Throwable throwable);
-        void w(String message);
-        void w(String message, Throwable throwable);
-        void e(String message);
-        void e(String message, Throwable throwable);
-        void wtf(String message);
-        void wtf(String message, Throwable throwable);
-    }
-
-    public static class SystemLogger implements Logger {
-        private String tag;
-
-        public SystemLogger(String tag) {
-            this.tag = tag;
-        }
-
-        @Override public void d(String message) { System.out.println("[DEBUG]\t" + tag + "\t" + message); }
-        @Override public void d(String message, Throwable throwable) { System.out.println("[DEBUG]\t" + tag + "\t" + message + " / " + throwable); }
-        @Override public void i(String message) { System.out.println("[INFO]\t" + tag + "\t" + message); }
-        @Override public void i(String message, Throwable throwable) { System.out.println("[INFO]\t" + tag + "\t" + message + " / " + throwable); }
-        @Override public void w(String message) { System.out.println("[WARN]\t" + tag + "\t" + message); }
-        @Override public void w(String message, Throwable throwable) { System.out.println("[WARN]\t" + tag + "\t" + message + " / " + throwable); }
-        @Override public void e(String message) { System.out.println("[ERROR]\t" + tag + "\t" + message); }
-        @Override public void e(String message, Throwable throwable) { System.out.println("[ERROR]\t" + tag + "\t" + message + " / " + throwable); }
-        @Override public void wtf(String message) { System.out.println("[WTF]\t" + tag + "\t" + message); }
-        @Override public void wtf(String message, Throwable throwable) { System.out.println("[WTF]\t" + tag + "\t" + message + " / " + throwable); }
-    }
-
     private static Log instance;
-    private static Logger logger;
 
-    private ConfigCore.LoggingLevel level;
+    private String tag;
     private boolean testMode;
+    private ConfigCore.LoggingLevel level;
 
     public static final class Module {
         String name;
@@ -53,16 +21,16 @@ public class Log extends ModuleBase {
             this.name = name;
         }
 
-        public void d(String message) { Log.d("[" + name + "] " + message); }
-        public void d(String message, Throwable throwable) { Log.d("[" + name + "] " + message, throwable); }
-        public void i(String message) { Log.i("[" + name + "] " + message); }
-        public void i(String message, Throwable throwable) { Log.i("[" + name + "] " + message, throwable); }
-        public void w(String message) { Log.w("[" + name + "] " + message); }
-        public void w(String message, Throwable throwable) { Log.w("[" + name + "] " + message, throwable); }
-        public void e(String message) { Log.e("[" + name + "] " + message); }
-        public void e(String message, Throwable throwable) { Log.e("[" + name + "] " + message, throwable); }
-        public void wtf(String message) { Log.wtf("[" + name + "] " + message); }
-        public void wtf(String message, Throwable throwable) { Log.wtf("[" + name + "] " + message, throwable); }
+        public void d(String message) { if(instance != null) instance.d("[" + name + "] " + message); }
+        public void d(String message, Throwable throwable) { if(instance != null) instance.d("[" + name + "] " + message, throwable); }
+        public void i(String message) { if(instance != null) instance.i("[" + name + "] " + message); }
+        public void i(String message, Throwable throwable) { if(instance != null) instance.i("[" + name + "] " + message, throwable); }
+        public void w(String message) { if(instance != null) instance.w("[" + name + "] " + message); }
+        public void w(String message, Throwable throwable) { if(instance != null) instance.w("[" + name + "] " + message, throwable); }
+        public void e(String message) { if(instance != null) instance.e("[" + name + "] " + message); }
+        public void e(String message, Throwable throwable) { if(instance != null) instance.e("[" + name + "] " + message, throwable); }
+        public void wtf(String message) { if(instance != null) instance.wtf("[" + name + "] " + message); }
+        public void wtf(String message, Throwable throwable) { if(instance != null) instance.wtf("[" + name + "] " + message, throwable); }
     }
 
     @Override
@@ -70,18 +38,10 @@ public class Log extends ModuleBase {
         instance = this;
 
         // let it be specific int and not index for visibility
+        tag = config.getLoggingTag();
         level = config.getLoggingLevel();
-
         testMode = config.isTestModeEnabled();
 
-        try {
-            logger = config.getLoggerClass().getConstructor(new Class<?>[]{String.class}).newInstance(config.getLoggingTag());
-        } catch (Throwable t) {
-            if (testMode) { throw new IllegalStateException(t); }
-            else {
-                System.out.println("Couldn't instantiate logger" + t.getLocalizedMessage());
-            }
-        }
     }
 
     @Override
@@ -102,7 +62,7 @@ public class Log extends ModuleBase {
      *
      * @param string string to log
      */
-    public static void d(String string) {
+    public  void d(String string) {
         d(string, null);
     }
 
@@ -112,12 +72,12 @@ public class Log extends ModuleBase {
      * @param string string to log
      * @param t exception to log along with {@code string}
      */
-    public static void d(String string, Throwable t) {
-        if (instance != null && logger != null && instance.level != null && instance.level.prints(ConfigCore.LoggingLevel.DEBUG)) {
+    public void d(String string, Throwable t) {
+        if (level.prints(ConfigCore.LoggingLevel.DEBUG)) {
             if (t == null) {
-                logger.d(string);
+                System.out.println("[DEBUG]\t" + tag + "\t" + string);
             } else {
-                logger.d(string, t);
+                System.out.println("[DEBUG]\t" + tag + "\t" + string + " / " + t);
             }
         }
     }
@@ -127,7 +87,7 @@ public class Log extends ModuleBase {
      *
      * @param string string to log
      */
-    public static void i(String string) {
+    public void i(String string) {
         i(string, null);
     }
 
@@ -137,12 +97,12 @@ public class Log extends ModuleBase {
      * @param string string to log
      * @param t exception to log along with {@code string}
      */
-    public static void i(String string, Throwable t) {
-        if (instance != null && logger != null && instance.level != null && instance.level.prints(ConfigCore.LoggingLevel.INFO)) {
+    public void i(String string, Throwable t) {
+        if (level.prints(ConfigCore.LoggingLevel.INFO)) {
             if (t == null) {
-                logger.i(string);
+                System.out.println("[INFO]\t" + tag + "\t" + string);
             } else {
-                logger.i(string, t);
+                System.out.println("[INFO]\t" + tag + "\t" + string + " / " + t);
             }
         }
     }
@@ -152,7 +112,7 @@ public class Log extends ModuleBase {
      *
      * @param string string to log
      */
-    public static void w(String string) {
+    public void w(String string) {
         w(string, null);
     }
 
@@ -162,12 +122,12 @@ public class Log extends ModuleBase {
      * @param string string to log
      * @param t exception to log along with {@code string}
      */
-    public static void w(String string, Throwable t) {
-        if (instance != null && logger != null && instance.level != null && instance.level.prints(ConfigCore.LoggingLevel.WARN)) {
+    public void w(String string, Throwable t) {
+        if (level.prints(ConfigCore.LoggingLevel.WARN)) {
             if (t == null) {
-                logger.w(string);
+                System.out.println("[WARN]\t" + tag + "\t" + string);
             } else {
-                logger.w(string, t);
+                System.out.println("[WARN]\t" + tag + "\t" + string + " / " + t);
             }
         }
     }
@@ -177,7 +137,7 @@ public class Log extends ModuleBase {
      *
      * @param string string to log
      */
-    public static void e(String string) {
+    public void e(String string) {
         e(string, null);
     }
 
@@ -187,12 +147,12 @@ public class Log extends ModuleBase {
      * @param string string to log
      * @param t exception to log along with {@code string}
      */
-    public static void e(String string, Throwable t) {
-        if (instance != null && logger != null && instance.level != null && instance.level.prints(ConfigCore.LoggingLevel.ERROR)) {
+    public void e(String string, Throwable t) {
+        if (level.prints(ConfigCore.LoggingLevel.ERROR)) {
             if (t == null) {
-                logger.e(string);
+                System.out.println("[ERROR]\t" + tag + "\t" + string);
             } else {
-                logger.e(string, t);
+                System.out.println("[ERROR]\t" + tag + "\t" + string + " / " + t);
             }
         }
     }
@@ -204,7 +164,8 @@ public class Log extends ModuleBase {
      * @param string string to log
      * @throws IllegalStateException when {@link ConfigCore#testMode} is on
      */
-    public static void wtf(String string) {
+
+    public void wtf(String string) {
         wtf(string, null);
     }
 
@@ -215,20 +176,13 @@ public class Log extends ModuleBase {
      * @param string string to log
      * @param t exception to log along with {@code string}
      */
-    public static void wtf(String string, Throwable t) {
-        if (instance == null || instance.level == null || instance.level != ConfigCore.LoggingLevel.OFF) {
-            if (logger != null) {
-                if (t == null) {
-                    logger.wtf(string);
-                } else {
-                    logger.wtf(string, t);
-                }
+    public void wtf(String string, Throwable t) {
+        if (level != ConfigCore.LoggingLevel.OFF) {
+            if (t == null) {
+                System.out.println("[WTF]\t" + tag + "\t" + string);
             } else {
-                new SystemLogger("Countly").wtf(string, t);
+                System.out.println("[WTF]\t" + tag + "\t" + string + " / " + t);
             }
-        }
-        if (instance != null && instance.testMode) {
-            throw new IllegalStateException(string, t);
         }
     }
 }

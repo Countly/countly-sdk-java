@@ -101,21 +101,22 @@ public class Sample {
 
         Scanner scanner = new Scanner(System.in);
 
-        String COUNTLY_SERVER_URL = "https://try.count.ly/";
-        String COUNTLY_APP_KEY = "API_KEY";
+        String COUNTLY_SERVER_URL = "https://master.count.ly/";
+        String COUNTLY_APP_KEY = "8c1d653f8f474be24958b282d5e9b4c4209ee552";
 
         Config config = new Config(COUNTLY_SERVER_URL, COUNTLY_APP_KEY)
                 .setLoggingLevel(Config.LoggingLevel.DEBUG)
                 .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
                 .enableFeatures(Config.Feature.Events, Config.Feature.Sessions, Config.Feature.CrashReporting, Config.Feature.Views, Config.Feature.UserProfiles, Config.Feature.Location)
                 .setRequiresConsent(false)
-                .enableParameterTamperingProtection("test-salt-checksum1")
+                .enableParameterTamperingProtection("test-salt-checksum")
                 .setEventsBufferSize(2);
 
         // Countly needs persistent storage for requests, configuration storage, user profiles and other temporary data,
         // therefore requires a separate data folder to run
-        //File targetFolder = new File("/projects/countly-sdk-android/app-java/data");
-        File targetFolder = new File("d:\\__COUNTLY\\java_test\\");
+        //File targetFolder = new File("/home/zahi/countly-workspace/countly-sdk-java/data");
+
+        File targetFolder = new File("/home/zahi/countly-workspace/countly-sdk-java/data");
 
         // Main initialization call, SDK can be used after this one is done
         Countly.init(targetFolder, config);
@@ -192,6 +193,6 @@ public class Sample {
         // Gracefully stop SDK to stop all SDK threads and allow this app to exit
         // Just in case, usually you don't want to clear data to reuse device id for next app runs
         // and to send any requests which might not be sent
-        Countly.stop(true);
+        Countly.stop(false);
     }
 }

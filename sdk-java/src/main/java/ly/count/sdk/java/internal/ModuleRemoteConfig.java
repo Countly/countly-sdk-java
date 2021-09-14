@@ -188,7 +188,7 @@ public class ModuleRemoteConfig extends ModuleBase {
                     Object value = newValues.get(key);
                     values.put(key, value);
                 } catch (Exception e) {
-                    Log.wtf("Failed merging new remote config values", e);
+                    L.wtf("Failed merging new remote config values", e);
                 }
             }
         }

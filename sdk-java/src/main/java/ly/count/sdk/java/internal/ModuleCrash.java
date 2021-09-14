@@ -29,7 +29,7 @@ public class ModuleCrash extends ModuleBase {
                 Class cls = Class.forName(config.getCrashProcessorClass());
                 crashProcessor = (CrashProcessor) cls.getConstructors()[0].newInstance();
             } catch (Throwable t) {
-                Log.wtf("Cannot instantiate CrashProcessor", t);
+                L.wtf("Cannot instantiate CrashProcessor", t);
             }
         }
     }
@@ -95,7 +95,7 @@ public class ModuleCrash extends ModuleBase {
                 }
 
             } catch (Throwable t) {
-                Log.e("Error when calling CrashProcessor#process(Crash)", t);
+                L.e("Error when calling CrashProcessor#process(Crash)", t);
             }
         }
         if (!Storage.push(ctx, crash)) {

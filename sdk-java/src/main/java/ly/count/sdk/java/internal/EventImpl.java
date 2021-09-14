@@ -260,7 +260,7 @@ class EventImpl implements Event, JSONable {
             EventImpl event = new EventImpl(recorder == null ? new EventRecorder() {
                 @Override
                 public void recordEvent(Event event) {
-                    Log.wtf("Shouldn't record serialized events");
+                    L.wtf("Shouldn't record serialized events");
                 }
             } : recorder, json.getString(KEY_KEY));
 

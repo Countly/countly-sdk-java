@@ -21,7 +21,7 @@ import ly.count.sdk.java.internal.Utils;
  * Countly configuration object.
  */
 public class ConfigCore {
-
+    private static final Log.Module L = Log.module("ConfigCore");
     /**
      * Logging level for {@link Log} module
      */
@@ -92,20 +92,20 @@ public class ConfigCore {
                 stream.close();
                 return bytes.toByteArray();
             } catch (IOException e) {
-                Log.wtf("Cannot serialize config", e);
+                L.wtf("Cannot serialize config", e);
             } finally {
                 if (stream != null) {
                     try {
                         stream.close();
                     } catch (IOException e) {
-                        Log.wtf("Cannot happen", e);
+                        L.wtf("Cannot happen", e);
                     }
                 }
                 if (bytes != null) {
                     try {
                         bytes.close();
                     } catch (IOException e) {
-                        Log.wtf("Cannot happen", e);
+                        L.wtf("Cannot happen", e);
                     }
                 }
             }
@@ -127,20 +127,20 @@ public class ConfigCore {
 
                 return true;
             } catch (IOException | ClassNotFoundException e) {
-                Log.wtf("Cannot deserialize config", e);
+                L.wtf("Cannot deserialize config", e);
             } finally {
                 if (stream != null) {
                     try {
                         stream.close();
                     } catch (IOException e) {
-                        Log.wtf("Cannot happen", e);
+                        L.wtf("Cannot happen", e);
                     }
                 }
                 if (bytes != null) {
                     try {
                         bytes.close();
                     } catch (IOException e) {
-                        Log.wtf("Cannot happen", e);
+                        L.wtf("Cannot happen", e);
                     }
                 }
             }
@@ -477,7 +477,7 @@ public class ConfigCore {
      */
     public ConfigCore enableParameterTamperingProtection(String salt) {
         if (Utils.isEmpty(salt)) {
-            Log.wtf("Salt cannot be empty in enableParameterTamperingProtection");
+            L.wtf("Salt cannot be empty in enableParameterTamperingProtection");
         } else {
             this.salt = salt;
         }
@@ -492,7 +492,7 @@ public class ConfigCore {
      */
     public ConfigCore setLoggingTag(String loggingTag) {
         if (loggingTag == null || loggingTag.equals("")) {
-            Log.wtf("Logging tag cannot be empty");
+            L.wtf("Logging tag cannot be empty");
         } else {
             this.loggingTag = loggingTag;
         }
@@ -507,7 +507,7 @@ public class ConfigCore {
      */
     public ConfigCore setLoggingLevel(LoggingLevel loggingLevel) {
         if (loggingLevel == null) {
-            Log.wtf("Logging level cannot be null");
+            L.wtf("Logging level cannot be null");
         } else {
             this.loggingLevel = loggingLevel;
         }
@@ -554,7 +554,7 @@ public class ConfigCore {
      */
     public ConfigCore setSendUpdateEachSeconds(int sendUpdateEachSeconds) {
         if (sendUpdateEachSeconds < 0) {
-            Log.wtf("sendUpdateEachSeconds cannot be negative");
+            L.wtf("sendUpdateEachSeconds cannot be negative");
         } else {
             this.sendUpdateEachSeconds = sendUpdateEachSeconds;
         }
@@ -571,7 +571,7 @@ public class ConfigCore {
      */
     public ConfigCore setEventsBufferSize(int eventsBufferSize) {
         if (eventsBufferSize < 0) {
-            Log.wtf("eventsBufferSize cannot be negative");
+            L.wtf("eventsBufferSize cannot be negative");
         } else {
             this.eventsBufferSize = eventsBufferSize;
         }
@@ -600,7 +600,7 @@ public class ConfigCore {
      */
     public ConfigCore setSessionCooldownPeriod(int sessionCooldownPeriod) {
         if (sessionCooldownPeriod < 0) {
-            Log.wtf("sessionCooldownPeriod cannot be negative");
+            L.wtf("sessionCooldownPeriod cannot be negative");
         } else {
             this.sessionCooldownPeriod = sessionCooldownPeriod;
         }
@@ -615,7 +615,7 @@ public class ConfigCore {
      */
     public ConfigCore setSdkName(String sdkName) {
         if (Utils.isEmpty(sdkName)) {
-            Log.wtf("sdkName cannot be empty");
+            L.wtf("sdkName cannot be empty");
         } else {
             this.sdkName = sdkName;
         }
@@ -630,7 +630,7 @@ public class ConfigCore {
      */
     public ConfigCore setSdkVersion(String sdkVersion) {
         if (Utils.isEmpty(sdkVersion)) {
-            Log.wtf("sdkVersion cannot be empty");
+            L.wtf("sdkVersion cannot be empty");
         } else {
             this.sdkVersion = sdkVersion;
         }
@@ -645,7 +645,7 @@ public class ConfigCore {
      */
     public ConfigCore setApplicationName(String name) {
         if (Utils.isEmpty(name)) {
-            Log.wtf("name cannot be empty");
+            L.wtf("name cannot be empty");
         } else {
             this.applicationName = name;
         }
@@ -660,7 +660,7 @@ public class ConfigCore {
      */
     public ConfigCore setApplicationVersion(String version) {
         if (Utils.isEmpty(version)) {
-            Log.wtf("version cannot be empty");
+            L.wtf("version cannot be empty");
         } else {
             this.applicationVersion = version;
         }
@@ -675,7 +675,7 @@ public class ConfigCore {
      */
     public ConfigCore setNetworkConnectTimeout(int seconds) {
         if (seconds <= 0 || seconds > 300) {
-            Log.wtf("Connection timeout must be between 0 and 300");
+            L.wtf("Connection timeout must be between 0 and 300");
         } else {
             networkConnectionTimeout = seconds;
         }
@@ -690,7 +690,7 @@ public class ConfigCore {
      */
     public ConfigCore setNetworkReadTimeout(int seconds) {
         if (seconds <= 0 || seconds > 300) {
-            Log.wtf("Read timeout must be between 0 and 300");
+            L.wtf("Read timeout must be between 0 and 300");
         } else {
             networkReadTimeout = seconds;
         }
@@ -706,7 +706,7 @@ public class ConfigCore {
      */
     public ConfigCore setNetworkRequestCooldown(int milliseconds) {
         if (milliseconds < 0 || milliseconds > 30000) {
-            Log.wtf("Request cooldown must be between 0 and 30000");
+            L.wtf("Request cooldown must be between 0 and 30000");
         } else {
             networkRequestCooldown = milliseconds;
         }
@@ -722,7 +722,7 @@ public class ConfigCore {
      */
     public ConfigCore setNetworkImportantRequestCooldown(int milliseconds) {
         if (milliseconds < 0 || milliseconds > 30) {
-            Log.wtf("Important request cooldown must be between 0 and 30");
+            L.wtf("Important request cooldown must be between 0 and 30");
         } else {
             networkImportantRequestCooldown = milliseconds;
         }
@@ -750,7 +750,7 @@ public class ConfigCore {
      */
     public ConfigCore addPublicKeyPin(String pemEncodedPublicKey) {
         if (Utils.isEmpty(pemEncodedPublicKey)) {
-            Log.wtf("pemEncodedPublicKey cannot be empty");
+            L.wtf("pemEncodedPublicKey cannot be empty");
         } else {
             if (publicKeyPins == null) {
                 publicKeyPins = new HashSet<>();
@@ -782,7 +782,7 @@ public class ConfigCore {
      */
     public ConfigCore addCertificatePin(String pemEncodedCertificate) {
         if (Utils.isEmpty(pemEncodedCertificate)) {
-            Log.wtf("pemEncodedCertificate cannot be empty");
+            L.wtf("pemEncodedCertificate cannot be empty");
         } else {
             if (certificatePins == null) {
                 certificatePins = new HashSet<>();
@@ -808,7 +808,7 @@ public class ConfigCore {
      */
     public ConfigCore setCrashReportingANRCheckingPeriod(int periodInSeconds) {
         if (periodInSeconds < 0) {
-            Log.wtf("ANR timeout less than zero doesn't make sense");
+            L.wtf("ANR timeout less than zero doesn't make sense");
         } else {
             this.crashReportingANRCheckingPeriod = periodInSeconds;
         }
@@ -834,7 +834,7 @@ public class ConfigCore {
      */
     public ConfigCore setCrashProcessorClass(Class<? extends CrashProcessor> crashProcessorClass) {
         if (crashProcessorClass == null) {
-            Log.wtf("crashProcessorClass cannot be null");
+            L.wtf("crashProcessorClass cannot be null");
         } else {
             this.crashProcessorClass = crashProcessorClass.getName();
         }
@@ -850,7 +850,7 @@ public class ConfigCore {
      */
     protected ConfigCore overrideModule(Integer feature, Class<? extends Module> cls) {
         if (feature == null || cls == null) {
-            Log.wtf("Feature & class cannot be null");
+            L.wtf("Feature & class cannot be null");
         } else {
             if (moduleOverrides == null) {
                 moduleOverrides = new HashMap<>();

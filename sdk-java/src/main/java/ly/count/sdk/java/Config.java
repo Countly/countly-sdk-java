@@ -3,13 +3,14 @@ package ly.count.sdk.java;
 import java.util.HashSet;
 import java.util.Set;
 
-import ly.count.sdk.java.CrashProcessor;
 import ly.count.sdk.java.internal.CoreFeature;
 import ly.count.sdk.java.internal.Log;
 import ly.count.sdk.java.internal.Module;
 import ly.count.sdk.java.internal.Utils;
 
 public class Config extends ly.count.sdk.java.ConfigCore {
+
+    private static final Log.Module L = Log.module("Config");
     /**
      * Strategy for device id generation
      */
@@ -133,7 +134,7 @@ public class Config extends ly.count.sdk.java.ConfigCore {
      */
     public Config setDeviceIdStrategy(DeviceIdStrategy strategy, String customDeviceId) {
         if (strategy == null) {
-            Log.wtf("DeviceIdStrategy cannot be null");
+            L.wtf("DeviceIdStrategy cannot be null");
         } else {
             if (strategy == DeviceIdStrategy.CUSTOM_ID) {
                 return setCustomDeviceId(customDeviceId);
@@ -161,7 +162,7 @@ public class Config extends ly.count.sdk.java.ConfigCore {
      */
     public Config setCustomDeviceId(String customDeviceId) {
         if (Utils.isEmpty(customDeviceId)) {
-            Log.wtf("DeviceIdStrategy.CUSTOM_ID strategy cannot be used without device id specified");
+            L.wtf("DeviceIdStrategy.CUSTOM_ID strategy cannot be used without device id specified");
         } else {
             this.customDeviceId = customDeviceId;
             this.deviceIdStrategy = DeviceIdStrategy.CUSTOM_ID.index;
@@ -186,11 +187,11 @@ public class Config extends ly.count.sdk.java.ConfigCore {
      */
     public Config enableFeatures(Feature... features) {
         if (features == null) {
-            Log.wtf("Features array cannot be null");
+            L.wtf("Features array cannot be null");
         } else {
             for (Feature f : features) {
                 if (f == null) {
-                    Log.wtf("Feature cannot be null");
+                    L.wtf("Feature cannot be null");
                 } else {
                     this.features = this.features | f.getIndex();
                 }
@@ -207,11 +208,11 @@ public class Config extends ly.count.sdk.java.ConfigCore {
      */
     public Config disableFeatures(Feature... features) {
         if (features == null) {
-            Log.wtf("Features array cannot be null");
+            L.wtf("Features array cannot be null");
         } else {
             for (Feature f : features) {
                 if (f == null) {
-                    Log.wtf("Feature cannot be null");
+                    L.wtf("Feature cannot be null");
                 } else {
                     this.features = this.features & ~f.getIndex();
                 }
@@ -232,7 +233,7 @@ public class Config extends ly.count.sdk.java.ConfigCore {
         if (features != null && features.length > 0) {
             for (int i = 0; i < features.length; i++) {
                 if (features[i] == null) {
-                    Log.wtf(i + "-th feature is null in setFeatures");
+                    L.wtf(i + "-th feature is null in setFeatures");
                 } else {
                     this.features = this.features | features[i].index;
                 }
@@ -251,7 +252,7 @@ public class Config extends ly.count.sdk.java.ConfigCore {
      */
     public Config overrideModule(Feature feature, Class<? extends Module> cls) {
         if (feature == null || cls == null) {
-            Log.wtf("Feature & class cannot be null");
+            L.wtf("Feature & class cannot be null");
         } else {
             super.overrideModule(feature.index, cls);
         }
@@ -426,7 +427,7 @@ public class Config extends ly.count.sdk.java.ConfigCore {
      * @see #autoViewsTracking
      */
     public Config setCrashReportingANRCheckingPeriod(int periodInSeconds) {
-        Log.wtf("ANR tracking is not available for Java-native SDK");
+        L.wtf("ANR tracking is not available for Java-native SDK");
         super.setCrashReportingANRCheckingPeriod(0);
         return this;
     }
@@ -437,7 +438,7 @@ public class Config extends ly.count.sdk.java.ConfigCore {
      * @return {@code this} instance for method chaining
      */
     public Config disableANRCrashReporting() {
-        Log.wtf("ANR tracking is not available for Java-native SDK");
+        L.wtf("ANR tracking is not available for Java-native SDK");
         super.disableANRCrashReporting();
         return this;
     }
@@ -483,7 +484,7 @@ public class Config extends ly.count.sdk.java.ConfigCore {
      */
     public Config setAutoViewsTracking(boolean autoViewsTracking) {
         if (autoViewsTracking) {
-            Log.wtf("Auto views tracking is not available for Java-native SDK");
+            L.wtf("Auto views tracking is not available for Java-native SDK");
         }
         super.setAutoViewsTracking(false);
         return this;
@@ -494,7 +495,7 @@ public class Config extends ly.count.sdk.java.ConfigCore {
      */
     public Config setAutoSessionsTracking(boolean autoSessionsTracking) {
         if (autoSessionsTracking) {
-            Log.wtf("Auto sessions tracking is not available for Java-native SDK");
+            L.wtf("Auto sessions tracking is not available for Java-native SDK");
         }
         super.setAutoSessionsTracking(false);
         return this;
@@ -505,7 +506,7 @@ public class Config extends ly.count.sdk.java.ConfigCore {
      */
     public Config setSessionAutoCloseAfter(int sessionAutoCloseAfter) {
         if (sessionAutoCloseAfter != 0) {
-            Log.wtf("Auto sessions tracking is not available for Java-native SDK");
+            L.wtf("Auto sessions tracking is not available for Java-native SDK");
         }
         super.setSessionAutoCloseAfter(0);
         return this;

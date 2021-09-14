@@ -569,7 +569,7 @@ public class UserEditorImpl implements UserEditor {
                         try {
                             params.add(PICTURE_PATH, changes.getString(PICTURE_PATH));
                         } catch (JSONException e) {
-                            Log.w("Won't send picturePath", e);
+                            L.w("Won't send picturePath", e);
                         }
                     }
                     if (cohortsAdded.size() > 0) {
