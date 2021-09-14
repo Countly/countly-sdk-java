@@ -85,9 +85,15 @@ public class ModuleCrash extends ModuleBase {
         return onCrash(ctx, new CrashImplCore().addThrowable(t).setFatal(fatal).setName(name).setSegments(segments).setLogs(logs));
     }
 
-    public CrashImplCore onCrash(CtxCore ctx, CrashImplCore crash) {
+    private CrashImplCore onCrash(CtxCore ctx, CrashImplCore crash) {
         long running = started == 0 ? 0 : DeviceCore.dev.nsToMs(System.nanoTime() - started);
         crash.putMetricsCore(ctx, running);
+
+        if (!crash.validateMetrics()){
+            L.w("OS name or App version cannot be null or empty");
+        }
+
+
         if (crashProcessor != null) {
             try {
                 Crash result = crashProcessor.process(crash);
@@ -120,28 +126,6 @@ public class ModuleCrash extends ModuleBase {
 
     public enum CrashType {
         STACK_OVERFLOW, DIVISION_BY_ZERO, OOM, RUNTIME_EXCEPTION, NULLPOINTER_EXCEPTION, ANR
-    }
-
-    public static void crashTest(CrashType type) {
-        switch (type) {
-            case STACK_OVERFLOW:
-                stackOverflow();
-            case DIVISION_BY_ZERO:
-                int test = 10/0;
-            case OOM:
-                String s = "qwe";
-                while (true) { s = s + s; }
-            case RUNTIME_EXCEPTION:
-                throw new RuntimeException("This is a crash");
-            case NULLPOINTER_EXCEPTION:
-                String nullString = null;
-                nullString.charAt(1);
-            case ANR:
-                double n = Math.PI;
-                for (int i = 0; i <= 1000000; i++) {
-                    n = Math.pow(Math.sqrt(n), n);
-                }
-        }
     }
 
 }
