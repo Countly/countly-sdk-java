@@ -89,10 +89,13 @@ public class ModuleCrash extends ModuleBase {
         long running = started == 0 ? 0 : DeviceCore.dev.nsToMs(System.nanoTime() - started);
         crash.putMetricsCore(ctx, running);
 
-        if (!crash.validateMetrics()){
-            L.w("OS name or App version cannot be null or empty");
+        if (!crash.getData().has("_os")){
+            L.w("onCrash: OS name cannot be null or empty");
         }
 
+        if (!crash.getData().has("_app_version")){
+            L.w("onCrash: App version cannot be null or empty");
+        }
 
         if (crashProcessor != null) {
             try {

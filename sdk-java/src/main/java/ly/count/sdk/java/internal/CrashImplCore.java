@@ -242,10 +242,6 @@ public class CrashImplCore implements Crash, Storable {
         return data.toString();
     }
 
-    public boolean validateMetrics() {
-        return data.has("_os") && data.has("_app_version");
-    }
-
     public JSONObject getData() {
         return data;
     }
