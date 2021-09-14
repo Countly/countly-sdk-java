@@ -101,8 +101,8 @@ public class Sample {
 
         Scanner scanner = new Scanner(System.in);
 
-        String COUNTLY_SERVER_URL = "https://master.count.ly/";
-        String COUNTLY_APP_KEY = "8c1d653f8f474be24958b282d5e9b4c4209ee552";
+        String COUNTLY_SERVER_URL = "https://try.count.ly/";
+        String COUNTLY_APP_KEY = "API_KEY";
 
         Config config = new Config(COUNTLY_SERVER_URL, COUNTLY_APP_KEY)
                 .setLoggingLevel(Config.LoggingLevel.DEBUG)
@@ -115,7 +115,7 @@ public class Sample {
         // Countly needs persistent storage for requests, configuration storage, user profiles and other temporary data,
         // therefore requires a separate data folder to run
         //File targetFolder = new File("/projects/countly-sdk-android/app-java/data");
-        File targetFolder = new File("/home/zahi/countly-workspace/countly-sdk-java/data");
+        File targetFolder = new File("d:\\__COUNTLY\\java_test\\");
 
         // Main initialization call, SDK can be used after this one is done
         Countly.init(targetFolder, config);
