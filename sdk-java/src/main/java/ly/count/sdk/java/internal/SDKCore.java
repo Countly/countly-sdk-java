@@ -167,6 +167,7 @@ public abstract class SDKCore extends SDKModules {
 
     @Override
     public void onCrash(CtxCore ctx, Throwable t, boolean fatal, String name, Map<String, String> segments, String[] logs) {
+        L.i("onCrash: t: " + t.toString() + " fatal: " + fatal + " name: " + name + " segments: " + segments);
         ModuleCrash module = (ModuleCrash) module(CoreFeature.CrashReporting.getIndex());
         if (module != null) {
             module.onCrash(ctx, t, fatal, name, segments, logs);

@@ -78,4 +78,16 @@ class ViewImpl implements View {
 
         event.record();
     }
+
+    @Override
+    public String toString() {
+        return "ViewImpl{" +
+                "name='" + name + '\'' +
+                ", session=" + session +
+                ", start=" + start +
+                ", firstView=" + firstView +
+                ", started=" + started +
+                ", ended=" + ended +
+                '}';
+    }
 }

@@ -233,6 +233,11 @@ public class ModuleRemoteConfig extends ModuleBase {
 
             return false;
         }
+
+        @Override
+        public String toString() {
+            return values.toString();
+        }
     }
 
     public class RemoteConfig {
