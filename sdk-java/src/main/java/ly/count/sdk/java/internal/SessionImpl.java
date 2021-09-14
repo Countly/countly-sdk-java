@@ -272,6 +272,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     @Override
     public void recordEvent(Event event) {
+        L.d("recordEvent: " + event.toString());
         if (!SDKCore.enabled(CoreFeature.Events)) {
             L.i("Skipping event - feature is not enabled");
             return;
@@ -320,6 +321,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     @Override
     public Session addLocation(double latitude, double longitude) {
+        L.d("addLocation: latitude = " + latitude + " longitude = " + longitude);
         if (!SDKCore.enabled(CoreFeature.Location)) {
             L.i("Skipping event - feature is not enabled");
             return this;
@@ -328,6 +330,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     }
 
     public View view(String name, boolean start) {
+        L.d("view: name = " + name + " start = " + start);
         if (!SDKCore.enabled(CoreFeature.Views)) {
             L.i("Skipping view - feature is not enabled");
             return null;
@@ -553,6 +556,11 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public String toString() {
+        return params.toString();
     }
 
     @Override

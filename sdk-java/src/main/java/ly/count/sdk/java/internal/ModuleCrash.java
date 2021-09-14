@@ -29,7 +29,7 @@ public class ModuleCrash extends ModuleBase {
                 Class cls = Class.forName(config.getCrashProcessorClass());
                 crashProcessor = (CrashProcessor) cls.getConstructors()[0].newInstance();
             } catch (Throwable t) {
-                Log.wtf("Cannot instantiate CrashProcessor", t);
+                L.wtf("Cannot instantiate CrashProcessor", t);
             }
         }
     }
@@ -84,6 +84,9 @@ public class ModuleCrash extends ModuleBase {
     public CrashImplCore onCrash(CtxCore ctx, CrashImplCore crash) {
         long running = started == 0 ? 0 : DeviceCore.dev.nsToMs(System.nanoTime() - started);
         crash.putMetricsCore(ctx, running);
+
+        L.i("onCrash: " + crash.getJSON());
+
         if (crashProcessor != null) {
             try {
                 Crash result = crashProcessor.process(crash);
@@ -95,7 +98,7 @@ public class ModuleCrash extends ModuleBase {
                 }
 
             } catch (Throwable t) {
-                Log.e("Error when calling CrashProcessor#process(Crash)", t);
+                L.e("Error when calling CrashProcessor#process(Crash)", t);
             }
         }
         if (!Storage.push(ctx, crash)) {
@@ -110,34 +113,7 @@ public class ModuleCrash extends ModuleBase {
         params.add("crash", crash.getJSON());
     }
 
-    private static void stackOverflow() {
-        stackOverflow();
-    }
-
     public enum CrashType {
         STACK_OVERFLOW, DIVISION_BY_ZERO, OOM, RUNTIME_EXCEPTION, NULLPOINTER_EXCEPTION, ANR
     }
-
-    public static void crashTest(CrashType type) {
-        switch (type) {
-            case STACK_OVERFLOW:
-                stackOverflow();
-            case DIVISION_BY_ZERO:
-                int test = 10/0;
-            case OOM:
-                String s = "qwe";
-                while (true) { s = s + s; }
-            case RUNTIME_EXCEPTION:
-                throw new RuntimeException("This is a crash");
-            case NULLPOINTER_EXCEPTION:
-                String nullString = null;
-                nullString.charAt(1);
-            case ANR:
-                double n = Math.PI;
-                for (int i = 0; i <= 1000000; i++) {
-                    n = Math.pow(Math.sqrt(n), n);
-                }
-        }
-    }
-
 }

@@ -5,10 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import ly.count.sdk.java.User;
 import ly.count.sdk.java.UserEditor;
@@ -214,6 +211,29 @@ public class UserImpl extends User implements Storable {
         }
 
         return false;
+    }
+
+    @Override
+    public String toString() {
+        return "UserImpl{" +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                ", username='" + username + '\'' +
+                ", email='" + email + '\'' +
+                ", org='" + org + '\'' +
+                ", phone='" + phone + '\'' +
+                ", picturePath='" + picturePath + '\'' +
+                ", locale='" + locale + '\'' +
+                ", country='" + country + '\'' +
+                ", city='" + city + '\'' +
+                ", location='" + location + '\'' +
+                ", picture=" + Arrays.toString(picture) +
+                ", gender=" + gender +
+                ", birthyear=" + birthyear +
+                ", cohorts=" + cohorts +
+                ", custom=" + custom +
+                ", ctx=" + ctx +
+                '}';
     }
 
     @Override

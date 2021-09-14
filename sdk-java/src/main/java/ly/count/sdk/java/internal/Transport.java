@@ -330,7 +330,7 @@ public class Transport implements X509TrustManager {
                     if (sleeps) {
                         slept = slept % BACKOFF.length;
                         try {
-                            Log.d("Sleeping for " + BACKOFF[slept] + " seconds");
+                            L.d("Sleeping for " + BACKOFF[slept] + " seconds");
                             Thread.sleep(BACKOFF[slept] * 1000);
                         } catch (InterruptedException e) {
                             L.e("Interrupted while sleeping", e);
@@ -373,7 +373,7 @@ public class Transport implements X509TrustManager {
                             }
                         }
                     } catch (InterruptedException ie) {
-                        Log.w("Interrupted while waiting for did change request cooldown", ie);
+                        L.w("Interrupted while waiting for did change request cooldown", ie);
                     }
 
                     SDKCore.instance.onRequestCompleted(request, response, code, requestOwner);

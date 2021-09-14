@@ -23,11 +23,6 @@ public final class InternalConfig extends ConfigCore implements Storable {
     private static final Log.Module L = Log.module("InternalConfig");
 
     /**
-     * Logger class
-     */
-    private Class<? extends Log.Logger> loggerClass = Log.SystemLogger.class;
-
-    /**
      * Running in limited mode, started by itself rather than by developer
      */
     private boolean limited = false;
@@ -88,14 +83,6 @@ public final class InternalConfig extends ConfigCore implements Storable {
         }
     }
 
-    public Class<? extends Log.Logger> getLoggerClass() {
-        return loggerClass;
-    }
-
-    public InternalConfig setLoggerClass(Class<? extends Log.Logger> loggerClass) {
-        this.loggerClass = loggerClass;
-        return this;
-    }
 
     public InternalConfig setLimited(boolean limited) {
         this.limited = limited;
@@ -249,7 +236,7 @@ public final class InternalConfig extends ConfigCore implements Storable {
                     try {
                         moduleOverrides.put(f, (Class<? extends Module>) Class.forName(cls));
                     } catch (Throwable t) {
-                        Log.wtf("Cannot get class " + cls + " for feature override " + f);
+                        L.wtf("Cannot get class " + cls + " for feature override " + f);
                     }
                 }
             }

@@ -248,7 +248,7 @@ abstract class SDKStorage extends SDKLifecycle {
     @Override
     public List<Long> storableList(ly.count.sdk.java.internal.CtxCore context, String prefix, int slice) {
         if (Utils.isEmpty(prefix)) {
-            Log.wtf("Cannot get list of ids without prefix");
+            L.wtf("Cannot get list of ids without prefix");
         }
         prefix = prefix + FILE_NAME_SEPARATOR;
 
@@ -270,7 +270,7 @@ abstract class SDKStorage extends SDKLifecycle {
                         list.add(Long.parseLong(name));
                     }
                 } catch (NumberFormatException nfe) {
-                    Log.e("Wrong file name: " + file + " / " + prefix);
+                    L.e("Wrong file name: " + file + " / " + prefix);
                 }
                 if (list.size() >= max) {
                     break;

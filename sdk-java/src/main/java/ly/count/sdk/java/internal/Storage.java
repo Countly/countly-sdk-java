@@ -32,7 +32,7 @@ public class Storage {
      * @return true when storing succeeded, false otherwise
      */
     public static boolean push(CtxCore ctx, Storable storable) {
-        L.d("Pushing " + name(storable));
+        L.d("push: " + name(storable) + " " + storable.toString());
         try {
             return pushAsync(ctx, storable).get();
         } catch (InterruptedException | ExecutionException e) {
@@ -51,7 +51,7 @@ public class Storage {
      * @return Future<Boolean> object which resolves as true when storing succeeded, false otherwise
      */
     public static Future<Boolean> pushAsync(final CtxCore ctx, final Storable storable, Tasks.Callback<Boolean> callback) {
-        L.d("Pushing async " + name(storable));
+        L.d("pushAsync: " + name(storable) + " " + storable.toString());
         return tasks.run(new Tasks.Task<Boolean>(storable.storageId()) {
             @Override
             public Boolean call() throws Exception {
@@ -68,6 +68,7 @@ public class Storage {
      * @return Future<Boolean> object which resolves as true when storing succeeded, false otherwise
      */
     public static Future<Boolean> pushAsync(final CtxCore ctx, final Storable storable) {
+        L.d("pushAsync: " + name(storable) + " " + storable.toString());
         return pushAsync(ctx, storable, null);
     }
     /**
@@ -78,7 +79,7 @@ public class Storage {
      * @return true if removed, false otherwise
      */
     public static <T extends Storable> Boolean remove(final CtxCore ctx, T storable) {
-        L.d("removing " + name(storable));
+        L.d("remove: " + name(storable) + " " + storable.toString());
         try {
             return removeAsync(ctx, storable, null).get();
         } catch (InterruptedException | ExecutionException e) {
@@ -113,7 +114,7 @@ public class Storage {
      * @return storable object passed as param when restoring succeeded, null otherwise
      */
     public static <T extends Storable> T pop(CtxCore ctx, T storable) {
-        L.d("Popping " + name(storable));
+        L.d("pop: " + name(storable) + " " + storable.toString());
         try {
             return popAsync(ctx, storable).get();
         } catch (InterruptedException | ExecutionException e) {
@@ -191,7 +192,7 @@ public class Storage {
      * @return storable object passed as param when reading succeeded, null otherwise
      */
     public static <T extends Storable> T read(CtxCore ctx, T storable) {
-        L.d("read " + name(storable));
+        L.d("read: " + name(storable) + " " + storable.toString());
         try {
             return readAsync(ctx, storable).get();
         } catch (InterruptedException | ExecutionException e) {
@@ -249,7 +250,8 @@ public class Storage {
      * @return storable object passed as param when reading succeeded, null otherwise
      */
     public static <T extends Storable> T readOne(CtxCore ctx, T storable, boolean asc) {
-        L.d("readOne " + storable.storagePrefix());
+        L.d("readOne: " + name(storable) + " " + storable.toString());
+
         try {
             return readOneAsync(ctx, storable, asc).get();
         } catch (InterruptedException | ExecutionException e) {
@@ -309,7 +311,8 @@ public class Storage {
      * @return List<Long> object which resolves as list of storable ids, not null
      */
     public static List<Long> list(CtxCore ctx, String prefix, int slice) {
-        L.d("Listing " + prefix);
+        L.d("readOne: " + prefix);
+
         try {
             return listAsync(ctx, prefix, slice).get();
         } catch (InterruptedException | ExecutionException e) {
