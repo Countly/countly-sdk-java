@@ -245,4 +245,9 @@ public class CrashImplCore implements Crash, Storable {
     public JSONObject getData() {
         return data;
     }
+
+    @Override
+    public String toString() {
+        return data.toString();
+    }
 }

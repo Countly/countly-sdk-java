@@ -413,7 +413,7 @@ public class Utils {
             digest.update(bytes, 0, bytes.length);
             return hex(digest.digest());
         } catch (Throwable e) {
-            Log.e("Cannot calculate sha1", e);
+            L.e("Cannot calculate sha1", e);
             return null;
         }
     }

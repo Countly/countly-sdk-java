@@ -102,7 +102,7 @@ public abstract class SDKModules implements SDKInterface {
      */
     public void onConsent(CtxCore ctx, int consent) {
         if (!config().requiresConsent()) {
-            Log.wtf("onConsent() shouldn't be called when Config.requiresConsent() is false");
+            L.wtf("onConsent() shouldn't be called when Config.requiresConsent() is false");
             return;
         }
 
@@ -124,13 +124,13 @@ public abstract class SDKModules implements SDKInterface {
             if (SDKCore.enabled(feature) && existing == null) {
                 Class<? extends Module> cls = moduleMappings.get(feature);
                 if (cls == null) {
-                    Log.i("No module mapping for feature " + feature);
+                    L.i("No module mapping for feature " + feature);
                     continue;
                 }
 
                 Module module = instantiateModule(cls);
                 if (module == null) {
-                    Log.wtf("Cannot instantiate module " + feature);
+                    L.wtf("Cannot instantiate module " + feature);
                 } else {
                     module.init(ctx.getConfig());
                     module.onContextAcquired(ctx);
@@ -147,7 +147,7 @@ public abstract class SDKModules implements SDKInterface {
      */
     public void onConsentRemoval(CtxCore ctx, int noConsent) {
         if (!config().requiresConsent()) {
-            Log.wtf("onConsentRemoval() shouldn't be called when Config.requiresConsent() is false");
+            L.wtf("onConsentRemoval() shouldn't be called when Config.requiresConsent() is false");
             return;
         }
 

@@ -46,7 +46,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
         public String generate(CtxCore context, int realm) {
             String customId = context.getConfig().getCustomDeviceId();
             if(customId == null || customId.isEmpty()){
-                Log.wtf("Device ID should never be empty or null for CustomIDGenerator");
+                L.wtf("Device ID should never be empty or null for CustomIDGenerator");
             }
 
             return customId;
@@ -69,13 +69,13 @@ public class ModuleDeviceIdCore extends ModuleBase {
 
         DeviceIdGenerator generator = generators.get(config.getDeviceIdStrategy());
         if (generator == null) {
-            Log.wtf("Device id strategy [" + config.getDeviceIdStrategy() + "] is not supported by SDK.");
+            L.wtf("Device id strategy [" + config.getDeviceIdStrategy() + "] is not supported by SDK.");
         } else if (!generator.isAvailable()) {
             String str = "Device id strategy [" + config.getDeviceIdStrategy() + "] is not available. Make sure corresponding classes are in class path.";
             if (config.isDeviceIdFallbackAllowed()) {
-                Log.w(str);
+                L.w(str);
             } else {
-                Log.wtf(str);
+                L.wtf(str);
                 return;
             }
 
@@ -84,13 +84,13 @@ public class ModuleDeviceIdCore extends ModuleBase {
             while (--index > 0) {
                 generator = generators.get(index);
                 if (generator.isAvailable()) {
-                    Log.w("Will fall back to strategy [" + index + "]");
+                    L.w("Will fall back to strategy [" + index + "]");
                     found = true;
                 }
             }
             // UUID is always available though
             if (!found) {
-                Log.wtf("No fallback device id generation strategy available, SDK won't function properly");
+                L.wtf("No fallback device id generation strategy available, SDK won't function properly");
             }
         }
     }
@@ -362,11 +362,11 @@ public class ModuleDeviceIdCore extends ModuleBase {
             DeviceIdGenerator generator = generators.get(index);
             if (generator == null || !generator.isAvailable()) {
                 if (fallbackAllowed) {
-                    Log.w("Device id strategy [" + index + "] is not available. Falling back to next one.");
+                    L.w("Device id strategy [" + index + "] is not available. Falling back to next one.");
                     index--;
                     continue;
                 } else {
-                    Log.wtf("Device id strategy [" + index + "] is not available, while fallback is not allowed. SDK won't function properly.");
+                    L.wtf("Device id strategy [" + index + "] is not available, while fallback is not allowed. SDK won't function properly.");
                     return null;
                 }
             } else {
@@ -374,16 +374,16 @@ public class ModuleDeviceIdCore extends ModuleBase {
                 if (Utils.isNotEmpty(id)) {
                     return new ConfigCore.DID(holder.realm, index, id);
                 } else if (fallbackAllowed) {
-                    Log.w("Device id strategy [" + index + "] didn't return. Falling back to next one.");
+                    L.w("Device id strategy [" + index + "] didn't return. Falling back to next one.");
                     index--;
                     continue;
                 } else {
-                    Log.wtf("Device id strategy [" + index + "] didn't return, while fallback is not allowed. SDK won't function properly.");
+                    L.wtf("Device id strategy [" + index + "] didn't return, while fallback is not allowed. SDK won't function properly.");
                 }
             }
         }
 
-        Log.wtf("No device id strategies to fallback from [" + ctx.getConfig().getDeviceIdStrategy() + "] is available. SDK won't function properly.");
+        L.wtf("No device id strategies to fallback from [" + ctx.getConfig().getDeviceIdStrategy() + "] is available. SDK won't function properly.");
 
         return null;
     }

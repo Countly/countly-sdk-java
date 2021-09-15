@@ -326,13 +326,4 @@ public class DeviceCore {
         return total / BYTES_IN_MB;
     }
 
-    public boolean isDebuggerConnected() {
-        try {
-            return ManagementFactory.getRuntimeMXBean().getInputArguments().contains("-Xdebug") || ManagementFactory.getRuntimeMXBean().getInputArguments().contains("jdwp=");
-        } catch (Throwable e) {
-            Log.i("Cannot determine whether debugger is connected, skipping", e);
-            return false;
-        }
-    }
-
 }

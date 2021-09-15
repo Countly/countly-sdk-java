@@ -85,7 +85,7 @@ public class ModuleCrash extends ModuleBase {
         return onCrash(ctx, new CrashImplCore().addThrowable(t).setFatal(fatal).setName(name).setSegments(segments).setLogs(logs));
     }
 
-    private CrashImplCore onCrash(CtxCore ctx, CrashImplCore crash) {
+    public CrashImplCore onCrash(CtxCore ctx, CrashImplCore crash) {
         long running = started == 0 ? 0 : DeviceCore.dev.nsToMs(System.nanoTime() - started);
         crash.putMetricsCore(ctx, running);
 
@@ -96,6 +96,9 @@ public class ModuleCrash extends ModuleBase {
         if (!crash.getData().has("_app_version")){
             L.w("onCrash, While recording an exception 'App version' was either null or empty");
         }
+
+
+        L.i("onCrash: " + crash.getJSON());
 
         if (crashProcessor != null) {
             try {
@@ -108,7 +111,7 @@ public class ModuleCrash extends ModuleBase {
                 }
 
             } catch (Throwable t) {
-                Log.e("Error when calling CrashProcessor#process(Crash)", t);
+                L.e("Error when calling CrashProcessor#process(Crash)", t);
             }
         }
         if (!Storage.push(ctx, crash)) {
@@ -121,10 +124,6 @@ public class ModuleCrash extends ModuleBase {
 
     public static void putCrashIntoParams(CrashImplCore crash, Params params) {
         params.add("crash", crash.getJSON());
-    }
-
-    private static void stackOverflow() {
-        stackOverflow();
     }
 
     public enum CrashType {
