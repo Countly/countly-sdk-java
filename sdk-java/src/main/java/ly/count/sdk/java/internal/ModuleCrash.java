@@ -29,7 +29,7 @@ public class ModuleCrash extends ModuleBase {
                 Class cls = Class.forName(config.getCrashProcessorClass());
                 crashProcessor = (CrashProcessor) cls.getConstructors()[0].newInstance();
             } catch (Throwable t) {
-                Log.wtf("Cannot instantiate CrashProcessor", t);
+                L.wtf("Cannot instantiate CrashProcessor", t);
             }
         }
     }
