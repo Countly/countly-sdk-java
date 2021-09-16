@@ -168,8 +168,6 @@ public abstract class SDKLifecycle extends SDKCore {
             return false;
         }
 
-        CrashImplCore crashCore = (CrashImplCore) crash;
-
         Request request = ModuleRequests.nonSessionRequest(ctx);
         ModuleCrash.putCrashIntoParams(crash, request.params);
         if (Storage.push(ctx, request)) {
