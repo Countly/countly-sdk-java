@@ -23,7 +23,7 @@ public class DefaultNetworking implements Networking {
     @Override
     public boolean check(CtxCore ctx) {
         L.d("[check] state: shutdown [" + shutdown + "], tasks running [" + tasks.isRunning() + "], net running [" + tasks.isRunning() + "], device id [" + ctx.getConfig().getDeviceId() + "]");
-        if (!shutdown && !tasks.isRunning() && !tasks.isRunning() && ctx.getConfig().getDeviceId() != null) {
+        if (!shutdown && !tasks.isRunning() && ctx.getConfig().getDeviceId() != null) {
             tasks.run(submit(ctx));
         }
         return tasks.isRunning();
@@ -53,10 +53,10 @@ public class DefaultNetworking implements Networking {
                                 L.d("Request " + request.storageId() + " sent?: " + requestResult);
                                 if (requestResult == null || requestResult == Transport.RequestResult.REMOVE || requestResult == Transport.RequestResult.OK) {
                                     Storage.remove(ctx, request);
-                                }
-                                if (!shutdown) {
+
                                     check(ctx);
                                 }
+
                             }
                         });
                         return true;
