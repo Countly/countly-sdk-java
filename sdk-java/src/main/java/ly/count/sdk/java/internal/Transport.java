@@ -57,11 +57,7 @@ public class Transport implements X509TrustManager {
     private static final Log.Module L = Log.module("network");
     private static final String PARAMETER_TAMPERING_DIGEST = "SHA-256";
     private static final String CHECKSUM = "checksum256";
-    private static final int[] BACKOFF = new int[] { 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233 };
-
     private InternalConfig config;
-    private int slept;          // how many consecutive times networking slept
-    private boolean sleeps;     // whether exponential backoff sleeping is enabled
 
     private SSLContext sslContext;          // ssl context to use if pinning is enabled
     private List<byte[]> keyPins = null;    // list of parsed key pins
@@ -95,8 +91,7 @@ public class Transport implements X509TrustManager {
 
         L.i("Server: " + config.getServerURL());
         this.config = config;
-        this.slept = 0;
-        this.sleeps = true;
+
 
         try {
             setPins(config.getPublicKeyPins(), config.getCertificatePins());
@@ -139,7 +134,7 @@ public class Transport implements X509TrustManager {
      *
      * @param request request to send
      * @param user user to check for picture
-     * @return connection, not {@link HttpURLConnection#connected} yet
+     * @return connection, not {@link HttpURLConnection} yet
      * @throws IOException from {@link HttpURLConnection} in case of error
      */
     HttpURLConnection connection(final Request request, final User user) throws IOException {
@@ -322,28 +317,7 @@ public class Transport implements X509TrustManager {
             @Override
             public RequestResult call() {
                 RequestResult result = send();
-
-                if (result == RequestResult.OK || result == RequestResult.REMOVE) {
-                    slept = 0;
-                    return result;
-                } else if (result == RequestResult.RETRY) {
-                    if (sleeps) {
-                        slept = slept % BACKOFF.length;
-                        try {
-                            L.d("Sleeping for " + BACKOFF[slept] + " seconds");
-                            Thread.sleep(BACKOFF[slept] * 1000);
-                        } catch (InterruptedException e) {
-                            L.e("Interrupted while sleeping", e);
-                        }
-                        slept++;
-                        return call();
-                    } else {
-                        return result;
-                    }
-                } else {
-                    L.wtf("Bad RequestResult");
-                    return RequestResult.REMOVE;
-                }
+                return result;
             }
 
             public RequestResult send() {
