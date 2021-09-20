@@ -38,15 +38,12 @@ public class CrashImplCore implements Crash, Storable {
 
     @Override
     public CrashImplCore addThrowable(Throwable throwable) {
-        if (throwable == null) {
-            L.wtf("Throwable cannot be null");
-            return this;
-        } else {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            throwable.printStackTrace(pw);
-            return add("_error", sw.toString());
-        }
+        this.throwable = throwable;
+
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        this.throwable.printStackTrace(pw);
+        return add("_error", sw.toString());
     }
 
     @Override
@@ -243,6 +240,10 @@ public class CrashImplCore implements Crash, Storable {
 
     public String getJSON() {
         return data.toString();
+    }
+
+    public JSONObject getData() {
+        return data;
     }
 
     @Override

@@ -78,12 +78,25 @@ public class ModuleCrash extends ModuleBase {
     }
 
     public CrashImplCore onCrash(CtxCore ctx, Throwable t, boolean fatal, String name, Map<String, String> segments, String... logs) {
+        if (t == null) {
+            L.e("Throwable cannot be null");
+            return  null;
+        }
         return onCrash(ctx, new CrashImplCore().addThrowable(t).setFatal(fatal).setName(name).setSegments(segments).setLogs(logs));
     }
 
     public CrashImplCore onCrash(CtxCore ctx, CrashImplCore crash) {
         long running = started == 0 ? 0 : DeviceCore.dev.nsToMs(System.nanoTime() - started);
         crash.putMetricsCore(ctx, running);
+
+        if (!crash.getData().has("_os")){
+            L.w("onCrash, While recording an exception 'OS name' was either null or empty");
+        }
+
+        if (!crash.getData().has("_app_version")){
+            L.w("onCrash, While recording an exception 'App version' was either null or empty");
+        }
+
 
         L.i("onCrash: " + crash.getJSON());
 
@@ -116,4 +129,5 @@ public class ModuleCrash extends ModuleBase {
     public enum CrashType {
         STACK_OVERFLOW, DIVISION_BY_ZERO, OOM, RUNTIME_EXCEPTION, NULLPOINTER_EXCEPTION, ANR
     }
+
 }
