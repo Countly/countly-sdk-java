@@ -1,10 +1,10 @@
 package ly.count.sdk.java.internal;
 
-import ly.count.sdk.java.ConfigCore;
+import ly.count.sdk.java.Config;
 
 /**
  * Logging module. Exposes static functions for simplicity, thus can be used only from some point
- * in time when {@link ConfigCore} is created and {@link Module}s are up.
+ * in time when {@link Config} is created and {@link Module}s are up.
  */
 
 public class Log extends ModuleBase {
@@ -12,7 +12,7 @@ public class Log extends ModuleBase {
 
     private String tag;
     private boolean testMode;
-    private ConfigCore.LoggingLevel level;
+    private Config.LoggingLevel level;
 
     public static final class Module {
         String name;
@@ -58,7 +58,7 @@ public class Log extends ModuleBase {
     }
 
     /**
-     * {@link ConfigCore.LoggingLevel#DEBUG} level logging
+     * {@link Config.LoggingLevel#DEBUG} level logging
      *
      * @param string string to log
      */
@@ -67,13 +67,13 @@ public class Log extends ModuleBase {
     }
 
     /**
-     * {@link ConfigCore.LoggingLevel} level logging
+     * {@link Config.LoggingLevel} level logging
      *
      * @param string string to log
      * @param t exception to log along with {@code string}
      */
     public void d(String string, Throwable t) {
-        if (level.prints(ConfigCore.LoggingLevel.DEBUG)) {
+        if (level.prints(Config.LoggingLevel.DEBUG)) {
             if (t == null) {
                 System.out.println("[DEBUG]\t" + tag + "\t" + string);
             } else {
@@ -83,7 +83,7 @@ public class Log extends ModuleBase {
     }
 
     /**
-     * {@link ConfigCore.LoggingLevel#INFO} level logging
+     * {@link Config.LoggingLevel#INFO} level logging
      *
      * @param string string to log
      */
@@ -92,13 +92,13 @@ public class Log extends ModuleBase {
     }
 
     /**
-     * {@link ConfigCore.LoggingLevel#INFO} level logging
+     * {@link Config.LoggingLevel#INFO} level logging
      *
      * @param string string to log
      * @param t exception to log along with {@code string}
      */
     public void i(String string, Throwable t) {
-        if (level.prints(ConfigCore.LoggingLevel.INFO)) {
+        if (level.prints(Config.LoggingLevel.INFO)) {
             if (t == null) {
                 System.out.println("[INFO]\t" + tag + "\t" + string);
             } else {
@@ -108,7 +108,7 @@ public class Log extends ModuleBase {
     }
 
     /**
-     * {@link ConfigCore.LoggingLevel#WARN} level logging
+     * {@link Config.LoggingLevel#WARN} level logging
      *
      * @param string string to log
      */
@@ -117,13 +117,13 @@ public class Log extends ModuleBase {
     }
 
     /**
-     * {@link ConfigCore.LoggingLevel#WARN} level logging
+     * {@link Config.LoggingLevel#WARN} level logging
      *
      * @param string string to log
      * @param t exception to log along with {@code string}
      */
     public void w(String string, Throwable t) {
-        if (level.prints(ConfigCore.LoggingLevel.WARN)) {
+        if (level.prints(Config.LoggingLevel.WARN)) {
             if (t == null) {
                 System.out.println("[WARN]\t" + tag + "\t" + string);
             } else {
@@ -133,7 +133,7 @@ public class Log extends ModuleBase {
     }
 
     /**
-     * {@link ConfigCore.LoggingLevel#ERROR} level logging
+     * {@link Config.LoggingLevel#ERROR} level logging
      *
      * @param string string to log
      */
@@ -142,13 +142,13 @@ public class Log extends ModuleBase {
     }
 
     /**
-     * {@link ConfigCore.LoggingLevel#ERROR} level logging
+     * {@link Config.LoggingLevel#ERROR} level logging
      *
      * @param string string to log
      * @param t exception to log along with {@code string}
      */
     public void e(String string, Throwable t) {
-        if (level.prints(ConfigCore.LoggingLevel.ERROR)) {
+        if (level.prints(Config.LoggingLevel.ERROR)) {
             if (t == null) {
                 System.out.println("[ERROR]\t" + tag + "\t" + string);
             } else {
@@ -158,11 +158,11 @@ public class Log extends ModuleBase {
     }
 
     /**
-     * {@link ConfigCore.LoggingLevel#ERROR} (Android wtf) level logging which throws an
-     * exception when {@link ConfigCore#testMode} is enabled.
+     * {@link Config.LoggingLevel#ERROR} (Android wtf) level logging which throws an
+     * exception when {@link Config#testMode} is enabled.
      *
      * @param string string to log
-     * @throws IllegalStateException when {@link ConfigCore#testMode} is on
+     * @throws IllegalStateException when {@link Config#testMode} is on
      */
 
     public void wtf(String string) {
@@ -170,14 +170,14 @@ public class Log extends ModuleBase {
     }
 
     /**
-     * {@link ConfigCore.LoggingLevel#ERROR} (Android wtf) level logging which throws an
-     * exception when {@link ConfigCore#testMode} is enabled.
+     * {@link Config.LoggingLevel#ERROR} (Android wtf) level logging which throws an
+     * exception when {@link Config#testMode} is enabled.
      *
      * @param string string to log
      * @param t exception to log along with {@code string}
      */
     public void wtf(String string, Throwable t) {
-        if (level != ConfigCore.LoggingLevel.OFF) {
+        if (level != Config.LoggingLevel.OFF) {
             if (t == null) {
                 System.out.println("[WTF]\t" + tag + "\t" + string);
             } else {

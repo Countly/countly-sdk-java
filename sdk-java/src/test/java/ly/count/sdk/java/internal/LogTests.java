@@ -9,15 +9,13 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.powermock.reflect.Whitebox;
 
-import ly.count.sdk.java.ConfigCore;
-import ly.count.sdk.java.internal.InternalConfig;
-import ly.count.sdk.java.internal.Log;
+import ly.count.sdk.java.Config;
 
-import static ly.count.sdk.java.ConfigCore.LoggingLevel.DEBUG;
-import static ly.count.sdk.java.ConfigCore.LoggingLevel.ERROR;
-import static ly.count.sdk.java.ConfigCore.LoggingLevel.INFO;
-import static ly.count.sdk.java.ConfigCore.LoggingLevel.OFF;
-import static ly.count.sdk.java.ConfigCore.LoggingLevel.WARN;
+import static ly.count.sdk.java.Config.LoggingLevel.DEBUG;
+import static ly.count.sdk.java.Config.LoggingLevel.ERROR;
+import static ly.count.sdk.java.Config.LoggingLevel.INFO;
+import static ly.count.sdk.java.Config.LoggingLevel.OFF;
+import static ly.count.sdk.java.Config.LoggingLevel.WARN;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -33,7 +31,7 @@ public class LogTests {
     public void setupEveryTest() {
         String serverUrl = "http://www.serverurl.com";
         String serverAppKey = "1234";
-        config = new InternalConfig(new ConfigCore(serverUrl, serverAppKey));
+        config = new InternalConfig(new Config(serverUrl, serverAppKey));
     }
 
     @After

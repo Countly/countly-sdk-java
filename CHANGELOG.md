@@ -1,5 +1,6 @@
 20.11.1
 * Fixed a bug related to server response handling.
+* Fixed a potential issue with parameters tampering protection while adding checksum.
 
 20.11.0
 * Added a new method to retrieve the current device id.

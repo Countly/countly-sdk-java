@@ -8,15 +8,7 @@ import org.powermock.reflect.Whitebox;
 
 import java.util.List;
 
-import ly.count.sdk.java.ConfigCore;
-import ly.count.sdk.java.internal.CtxCore;
-import ly.count.sdk.java.internal.InternalConfig;
-import ly.count.sdk.java.internal.Log;
-import ly.count.sdk.java.internal.Module;
-import ly.count.sdk.java.internal.ModuleBase;
-import ly.count.sdk.java.internal.SDKCore;
-import ly.count.sdk.java.internal.SDKInterface;
-import ly.count.sdk.java.internal.Utils;
+import ly.count.sdk.java.Config;
 
 import static org.mockito.Mockito.mock;
 
@@ -63,15 +55,15 @@ public class BaseTestsCore {
         }
     }
 
-    public ConfigCore config() {
-        return new ConfigCore(SERVER, APP_KEY).enableTestMode().setLoggingLevel(ConfigCore.LoggingLevel.DEBUG);
+    public Config config() {
+        return new Config(SERVER, APP_KEY).enableTestMode().setLoggingLevel(Config.LoggingLevel.DEBUG);
     }
 
-    protected ConfigCore defaultConfig() throws Exception {
+    protected Config defaultConfig() throws Exception {
         return config();
     }
 
-    protected ConfigCore defaultConfigWithLogsForConfigTests() throws Exception {
+    protected Config defaultConfigWithLogsForConfigTests() throws Exception {
         InternalConfig config = new InternalConfig(defaultConfig());
         new Log().init(config);
         return config;
@@ -84,11 +76,11 @@ public class BaseTestsCore {
         Utils.reflectiveSetField(Utils.class, "utils", utils);
     }
 
-    protected void setUpApplication(ConfigCore config) throws Exception {
+    protected void setUpApplication(Config config) throws Exception {
         setUpSDK(config == null ? defaultConfig() : config, false);
     }
 
-    private void setUpSDK(ConfigCore config, boolean limited) throws Exception {
+    private void setUpSDK(Config config, boolean limited) throws Exception {
         new Log().init(this.config == null ? new InternalConfig(config == null ? defaultConfig() : config) : this.config);
         this.dummy = mock(ModuleBase.class);
         Utils.reflectiveSetField(SDKInterface.class, "testDummyModule", dummy);
