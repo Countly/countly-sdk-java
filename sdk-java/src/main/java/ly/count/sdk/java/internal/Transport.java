@@ -64,11 +64,6 @@ public class Transport implements X509TrustManager {
     private List<byte[]> certPins = null;   // list of parsed cert pins
     private X509TrustManager defaultTrustManager = null;    // default TrustManager to call along with Network one
 
-    public enum RequestResult {
-        OK,         // success
-        RETRY,      // retry MAX_RETRIES_BEFORE_SLEEP before switching to SLEEP
-        REMOVE      // bad request, remove
-    }
 
     public Transport() {
     }
@@ -312,15 +307,14 @@ public class Transport implements X509TrustManager {
         }
     }
 
-    public Tasks.Task<RequestResult> send(final Request request) {
-        return new Tasks.Task<RequestResult>(request.storageId()) {
+    public Tasks.Task<Boolean> send(final Request request) {
+        return new Tasks.Task<Boolean>(request.storageId()) {
             @Override
-            public RequestResult call() {
-                RequestResult result = send();
-                return result;
+            public Boolean call() {
+                return send();
             }
 
-            public RequestResult send() {
+            public Boolean send() {
                 L.i("[send] Sending request: " + request);
 
                 HttpURLConnection connection = null;
@@ -356,7 +350,7 @@ public class Transport implements X509TrustManager {
 
                 } catch (IOException e) {
                     L.w("Error while sending request " + request, e);
-                    return RequestResult.RETRY;
+                    return false;
                 } finally {
                     if (connection != null) {
                         connection.disconnect();
@@ -366,16 +360,16 @@ public class Transport implements X509TrustManager {
         };
     }
 
-    RequestResult processResponse(int code, String response, Long requestId) {
+    Boolean processResponse(int code, String response, Long requestId) {
         L.i("[processResponse] Code [" + code + "] response [" + response + "] for request[" + requestId + "]" );
 
         JSONObject jsonObject = new JSONObject(response);
         if (code >= 200 && code < 300 && jsonObject.has("result")) {
             L.d("Success");
-            return RequestResult.OK;
+            return true;
         } else {
             L.w("Fail: code :" + code + ", result: " + response);
-            return RequestResult.RETRY;
+            return false;
         }
     }
 

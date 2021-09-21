@@ -47,13 +47,12 @@ public class DefaultNetworking implements Networking {
                         Storage.remove(ctx, request);
                         return true;
                     } else {
-                        tasks.run(transport.send(request), new Tasks.Callback<Transport.RequestResult>() {
+                        tasks.run(transport.send(request), new Tasks.Callback<Boolean>() {
                             @Override
-                            public void call(Transport.RequestResult requestResult) throws Exception {
-                                L.d("Request " + request.storageId() + " sent?: " + requestResult);
-                                if (requestResult == null || requestResult == Transport.RequestResult.REMOVE || requestResult == Transport.RequestResult.OK) {
+                            public void call(Boolean result) throws Exception {
+                                L.d("Request " + request.storageId() + " sent?: " + result);
+                                if (result) {
                                     Storage.remove(ctx, request);
-
                                     check(ctx);
                                 }
 
