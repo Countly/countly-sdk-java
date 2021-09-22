@@ -44,7 +44,7 @@ public class LogTests {
         Log log = new Log();
         log.init(null);
     }
-
+/*
     @Test
     public void logInit_enableTestMode() {
         config.enableTestMode();
@@ -250,4 +250,6 @@ public class LogTests {
 
         Log.wtf(message, exception);
     }
+
+ */
 }

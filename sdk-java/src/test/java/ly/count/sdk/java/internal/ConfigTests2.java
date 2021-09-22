@@ -2,6 +2,7 @@ package ly.count.sdk.java.internal;
 
 import junit.framework.Assert;
 
+import ly.count.sdk.java.Config;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -46,14 +47,19 @@ public class ConfigTests2 extends BaseTestsCore {
         Assert.assertEquals("Countly", internalConfig.getLoggingTag());
     }
 
-    @Test (expected = IllegalStateException.class)
+    @Test
     public void setLoggingTag_null(){
+        Config.LoggingLevel level = internalConfig.getLoggingLevel();
         internalConfig.setLoggingTag(null);
+        Assert.assertEquals(level, internalConfig.getLoggingLevel());
     }
 
-    @Test (expected = IllegalStateException.class)
+    @Test
     public void setLoggingTag_empty(){
+        String tag = internalConfig.getLoggingTag();
         internalConfig.setLoggingTag("");
+        Assert.assertEquals(tag, internalConfig.getLoggingTag());
+
     }
 
     @Test
@@ -63,21 +69,25 @@ public class ConfigTests2 extends BaseTestsCore {
         Assert.assertEquals(tagName, internalConfig.getLoggingTag());
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void setLoggingLevel_null(){
-        internalConfig.setLoggingLevel(null);
-        Assert.assertNull(internalConfig.getLoggingLevel());
+        Config.LoggingLevel level = internalConfig.getLoggingLevel();
+        internalConfig.setLoggingTag(null);
+        Assert.assertEquals(level, internalConfig.getLoggingLevel());
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void sdkName_null(){
+        String prvName = internalConfig.getSdkName();
         internalConfig.setSdkName(null);
-        Assert.assertNull(internalConfig.getSdkName());
+        Assert.assertEquals(prvName, internalConfig.getSdkName());
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void sdkName_empty(){
+        String prvName = internalConfig.getSdkName();
         internalConfig.setSdkName("");
+        Assert.assertEquals(prvName, internalConfig.getSdkName());
     }
 
     @Test
@@ -91,14 +101,18 @@ public class ConfigTests2 extends BaseTestsCore {
         Assert.assertEquals(newSdkName, internalConfig.getSdkName());
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void sdkVersion_null(){
+        String prv = internalConfig.getSdkVersion();
         internalConfig.setSdkVersion(null);
+        Assert.assertEquals(prv, internalConfig.getSdkVersion());
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void sdkVersion_empty(){
+        String prv = internalConfig.getSdkVersion();
         internalConfig.setSdkVersion("");
+        Assert.assertEquals(prv, internalConfig.getSdkVersion());
     }
 
     @Test
@@ -162,7 +176,7 @@ public class ConfigTests2 extends BaseTestsCore {
 
     @Test
     public void sdkVersion_default(){
-        Assert.assertEquals("19.08", internalConfig.getSdkVersion());
+        Assert.assertEquals("20.11.1", internalConfig.getSdkVersion());
     }
 
 }

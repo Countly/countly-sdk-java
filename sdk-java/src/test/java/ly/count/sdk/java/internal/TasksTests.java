@@ -49,7 +49,6 @@ public class TasksTests extends BaseTestsCore {
         other.run(new Tasks.Task<Object>(0L) {
             @Override
             public Object call() throws Exception {
-                Log.d("...");
                 Thread.sleep(100);
                 return true;
             }
@@ -57,7 +56,6 @@ public class TasksTests extends BaseTestsCore {
         long now = System.nanoTime();
         other.shutdown();
         long timeToShutdown = DeviceCore.dev.nsToMs(System.nanoTime() - now);
-        Log.i("time to shutdown " + timeToShutdown);
         Assert.assertTrue(Whitebox.<ExecutorService>getInternalState(other, "executor").isShutdown());
         Assert.assertTrue(Whitebox.<ExecutorService>getInternalState(other, "executor").isTerminated());
         //Assert.assertTrue(timeToShutdown > 100);//todo, this line fails when trying to publish (AK, 12.12.18)
