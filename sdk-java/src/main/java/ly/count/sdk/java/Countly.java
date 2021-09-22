@@ -46,7 +46,7 @@ public class Countly extends CountlyLifecycle {
     /**
      * Returns active {@link Session} if any or creates new {@link Session} instance.
      *
-     * NOTE: {@link Session} instances can expire, for example when {@link ly.count.sdk.java.ConfigCore.DID} changes.
+     * NOTE: {@link Session} instances can expire, for example when {@link Config.DID} changes.
      * {@link Session} also holds application context.
      * So either do not store {@link Session} instances in any static variables and use this method or {@link #getSession()} every time you need it,
      * or check {@link Session#isActive()} before using it.
@@ -63,7 +63,7 @@ public class Countly extends CountlyLifecycle {
     /**
      * Returns active {@link Session} if any or {@code null} otherwise.
      *
-     * NOTE: {@link Session} instances can expire, for example when {@link ly.count.sdk.java.ConfigCore.DID} changes.
+     * NOTE: {@link Session} instances can expire, for example when {@link Config.DID} changes.
      * {@link Session} also holds application context.
      * So either do not store {@link Session} instances in any static variables and use this method or {@link #session()} every time you need it,
      * or check {@link Session#isActive()} before using it.

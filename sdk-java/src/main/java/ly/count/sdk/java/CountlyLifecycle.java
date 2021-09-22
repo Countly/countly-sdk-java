@@ -2,7 +2,6 @@ package ly.count.sdk.java;
 
 import java.io.File;
 
-import ly.count.sdk.java.Cly;
 import ly.count.sdk.java.internal.InternalConfig;
 import ly.count.sdk.java.internal.Log;
 import ly.count.sdk.java.internal.CtxImpl;

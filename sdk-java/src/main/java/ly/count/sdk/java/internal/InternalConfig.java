@@ -13,13 +13,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import ly.count.sdk.java.ConfigCore;
+import ly.count.sdk.java.Config;
 
 /**
  * Internal to Countly SDK configuration class. Can and should contain options hidden from outside.
- * Only members of {@link InternalConfig} can be changed, members of {@link ConfigCore} are non-modifiable.
+ * Only members of {@link InternalConfig} can be changed, members of {@link Config} are non-modifiable.
  */
-public final class InternalConfig extends ConfigCore implements Storable {
+public final class InternalConfig extends Config implements Storable {
     private static final Log.Module L = Log.module("InternalConfig");
 
     /**
@@ -50,12 +50,12 @@ public final class InternalConfig extends ConfigCore implements Storable {
         super("http://count.ly", "not a key");
     }
 
-    public InternalConfig(final ConfigCore config) throws IllegalArgumentException {
+    public InternalConfig(final Config config) throws IllegalArgumentException {
         super(config.getServerURL().toString(), config.getServerAppKey());
         setFrom(config);
     }
 
-    public void setFrom(ConfigCore config) {
+    public void setFrom(Config config) {
         List<Field> priva = Utils.reflectiveGetDeclaredFields(getClass(), false);
         List<Field> local = Utils.reflectiveGetDeclaredFields(getClass(), true);
         List<Field> remot = Utils.reflectiveGetDeclaredFields(config.getClass(), true);
@@ -308,7 +308,7 @@ public final class InternalConfig extends ConfigCore implements Storable {
         return this.dids.remove(did);
     }
 
-    public int getFeatures() { return features; }
+    public int getFeatures1() { return features; }
 
     public Set<Integer> getModuleOverrides() { return moduleOverrides == null ? new HashSet<Integer>() : moduleOverrides.keySet(); }
 

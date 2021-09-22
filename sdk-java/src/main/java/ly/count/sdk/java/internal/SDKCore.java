@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.Future;
 
-import ly.count.sdk.java.ConfigCore;
+import ly.count.sdk.java.Config;
 
 public abstract class SDKCore extends SDKModules {
     private static final Log.Module L = Log.module("SDKCore");
@@ -63,7 +63,7 @@ public abstract class SDKCore extends SDKModules {
         super.init(ctx);
 
         // ModuleSessions is always enabled, even without consent
-        int consents = ctx.getConfig().getFeatures() | CoreFeature.Sessions.getIndex();
+        int consents = ctx.getConfig().getFeatures1() | CoreFeature.Sessions.getIndex();
         // build modules
         buildModules(ctx, consents);
 
@@ -185,7 +185,7 @@ public abstract class SDKCore extends SDKModules {
     }
 
     @Override
-    public void onDeviceId(CtxCore ctx, ConfigCore.DID id, ConfigCore.DID old) {
+    public void onDeviceId(CtxCore ctx, Config.DID id, Config.DID old) {
         L.d((config.isLimited() ? "limited" : "non-limited") + " onDeviceId " + id + ", old " + old);
 
         if (config.isLimited()) {
@@ -222,14 +222,14 @@ public abstract class SDKCore extends SDKModules {
             }
         }
 
-        if (!config.isLimited() && id != null && id.realm == ConfigCore.DID.REALM_DID) {
+        if (!config.isLimited() && id != null && id.realm == Config.DID.REALM_DID) {
             user.id = id.id;
             L.d("5");
         }
     }
 
 
-    public Future<ConfigCore.DID> acquireId(final CtxCore ctx, final ConfigCore.DID holder, final boolean fallbackAllowed, final Tasks.Callback<ConfigCore.DID> callback) {
+    public Future<Config.DID> acquireId(final CtxCore ctx, final Config.DID holder, final boolean fallbackAllowed, final Tasks.Callback<Config.DID> callback) {
         return ((ModuleDeviceIdCore)module(CoreFeature.DeviceId.getIndex())).acquireId(ctx, holder, fallbackAllowed, callback);
     }
 
@@ -251,7 +251,7 @@ public abstract class SDKCore extends SDKModules {
 
     public static boolean enabled(int feature) {
         return (feature & instance.consents) == feature &&
-                (feature & instance.config().getFeatures()) == feature;
+                (feature & instance.config().getFeatures1()) == feature;
     }
 
     public static boolean enabled(CoreFeature feature) {

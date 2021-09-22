@@ -9,8 +9,7 @@ import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import ly.count.sdk.java.ConfigCore;
-import ly.count.sdk.java.internal.SessionImpl;
+import ly.count.sdk.java.Config;
 
 @RunWith(JUnit4.class)
 public class SessionImplTests extends BaseTestsCore {
@@ -24,7 +23,7 @@ public class SessionImplTests extends BaseTestsCore {
     }
 
     @Override
-    protected ConfigCore defaultConfig() throws Exception {
+    protected Config defaultConfig() throws Exception {
         return super.defaultConfig().disableTestMode();//
     }
 

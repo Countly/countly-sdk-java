@@ -4,7 +4,7 @@ import org.json.JSONObject;
 
 import java.util.Set;
 
-import ly.count.sdk.java.ConfigCore;
+import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Session;
 
 /**
@@ -19,7 +19,7 @@ public abstract class ModuleBase implements Module {
     }
 
     @Override
-    public void onDeviceId(CtxCore ctx, ConfigCore.DID deviceId, ConfigCore.DID oldDeviceId) {
+    public void onDeviceId(CtxCore ctx, Config.DID deviceId, Config.DID oldDeviceId) {
     }
 
     @Override

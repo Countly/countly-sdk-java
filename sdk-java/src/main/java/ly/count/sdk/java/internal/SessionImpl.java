@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import ly.count.sdk.java.ConfigCore;
+import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Event;
 import ly.count.sdk.java.Session;
 import ly.count.sdk.java.Usage;
@@ -206,7 +206,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         return ret;
     }
 
-    Boolean recover(ConfigCore config) {
+    Boolean recover(Config config) {
         if ((System.currentTimeMillis() - id) < DeviceCore.dev.secToMs(config.getSessionCooldownPeriod() * 2)) {
             return null;
         } else {
@@ -287,7 +287,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
                 Storage.pushAsync(ctx, this);
             }
 
-            ConfigCore config = SDKCore.instance.config();
+            Config config = SDKCore.instance.config();
             if (config != null && config.getEventsBufferSize() <= events.size()) {
                 update();
             }

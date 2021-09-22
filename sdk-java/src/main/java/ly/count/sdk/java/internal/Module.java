@@ -4,7 +4,7 @@ import org.json.JSONObject;
 
 import java.util.Set;
 
-import ly.count.sdk.java.ConfigCore;
+import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Session;
 
 /**
@@ -75,7 +75,7 @@ public interface Module {
      * @param deviceId deviceId valid from now on
      * @param oldDeviceId deviceId valid previously if any
      */
-    void onDeviceId(CtxCore ctx, ConfigCore.DID deviceId, ConfigCore.DID oldDeviceId);
+    void onDeviceId(CtxCore ctx, Config.DID deviceId, Config.DID oldDeviceId);
 
     /**
      * Activity is being created.

@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Future;
 
-import ly.count.sdk.java.ConfigCore;
+import ly.count.sdk.java.Config;
 
 /**
  * Main device id manipulation class.
@@ -55,8 +55,8 @@ public class ModuleDeviceIdCore extends ModuleBase {
 
     private static final Map<Integer, DeviceIdGenerator> generators = new HashMap<>();
     static {
-        registerGenerator(ConfigCore.DID.STRATEGY_UUID, new UUIDGenerator());
-        registerGenerator(ConfigCore.DID.STRATEGY_CUSTOM, new CustomIDGenerator());
+        registerGenerator(Config.DID.STRATEGY_UUID, new UUIDGenerator());
+        registerGenerator(Config.DID.STRATEGY_CUSTOM, new CustomIDGenerator());
     }
 
     public static void registerGenerator(int index, DeviceIdGenerator generator) {
@@ -110,15 +110,15 @@ public class ModuleDeviceIdCore extends ModuleBase {
 
             if (Utils.isNotEmpty(ctx.getConfig().getCustomDeviceId())) {
                 // developer specified id on SDK init
-                ConfigCore.DID did = new ConfigCore.DID(ConfigCore.DID.REALM_DID, ConfigCore.DID.STRATEGY_CUSTOM, ctx.getConfig().getCustomDeviceId());
+                Config.DID did = new Config.DID(Config.DID.REALM_DID, Config.DID.STRATEGY_CUSTOM, ctx.getConfig().getCustomDeviceId());
                 L.d("Got developer id [" + did + "]");
                 SDKCore.instance.onDeviceId(ctx, did, null);
             } else {
                 // regular flow - acquire id using specified strategy
-                ConfigCore.DID did = new ConfigCore.DID(ConfigCore.DID.REALM_DID, ctx.getConfig().getDeviceIdStrategy(), null);
-                acquireId(ctx, did, ctx.getConfig().isDeviceIdFallbackAllowed(), new Tasks.Callback<ConfigCore.DID>() {
+                Config.DID did = new Config.DID(Config.DID.REALM_DID, ctx.getConfig().getDeviceIdStrategy(), null);
+                acquireId(ctx, did, ctx.getConfig().isDeviceIdFallbackAllowed(), new Tasks.Callback<Config.DID>() {
                     @Override
-                    public void call(ConfigCore.DID id) throws Exception {
+                    public void call(Config.DID id) throws Exception {
                         if (id != null) {
                             L.d("Got device id: " + id);
                             SDKCore.instance.onDeviceId(ctx, id, null);
@@ -130,14 +130,14 @@ public class ModuleDeviceIdCore extends ModuleBase {
             }
         } else {
             // second or next app launch, notify id is available
-            ConfigCore.DID loadedDid = ctx.getConfig().getDeviceId();
+            Config.DID loadedDid = ctx.getConfig().getDeviceId();
             L.d("[onContextAcquired] Loading previously saved device id:[" + loadedDid.id + "] realm:[" + loadedDid.realm + "] strategy:[" + loadedDid.strategy + "]");
             SDKCore.instance.onDeviceId(ctx, loadedDid, loadedDid);
         }
     }
 
     @Override
-    public void onDeviceId(final CtxCore ctx, final ConfigCore.DID deviceId, final ConfigCore.DID oldDeviceId) {
+    public void onDeviceId(final CtxCore ctx, final Config.DID deviceId, final Config.DID oldDeviceId) {
         if (ctx.getConfig().isLimited()) {
             return;
         }
@@ -145,7 +145,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
 
         SessionImpl session = SDKCore.instance.getSession();
 
-        if (deviceId != null && oldDeviceId != null && deviceId.realm == ConfigCore.DID.REALM_DID && !deviceId.equals(oldDeviceId)) {
+        if (deviceId != null && oldDeviceId != null && deviceId.realm == Config.DID.REALM_DID && !deviceId.equals(oldDeviceId)) {
             // device id changed
             if (session != null && session.isActive()) {
                 // end previous session
@@ -167,7 +167,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
 
             sendDIDSignal(ctx, deviceId, oldDeviceId);
 
-        } else if (deviceId == null && oldDeviceId != null && oldDeviceId.realm == ConfigCore.DID.REALM_DID) {
+        } else if (deviceId == null && oldDeviceId != null && oldDeviceId.realm == Config.DID.REALM_DID) {
             // device id is unset
             if (session != null) {
                 L.d("Ending session because device id was unset from [" + oldDeviceId.id + "]");
@@ -176,7 +176,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
 
             sendDIDSignal(ctx, null, oldDeviceId);
 
-        } else if (deviceId != null && oldDeviceId == null && deviceId.realm == ConfigCore.DID.REALM_DID) {
+        } else if (deviceId != null && oldDeviceId == null && deviceId.realm == Config.DID.REALM_DID) {
             // device id just acquired
             if (this.tasks == null) {
                 this.tasks = new Tasks("deviceId");
@@ -237,10 +237,10 @@ public class ModuleDeviceIdCore extends ModuleBase {
      * Just a wrapper around {@link SDKInterface#onSignal(CtxCore, int, Byteable, Byteable)}} for {@link SDKCore.Signal#DID} case
      *
      * @param ctx Ctx to run in
-     * @param id new {@link ConfigCore.DID} if any
-     * @param old old {@link ConfigCore.DID} if any
+     * @param id new {@link Config.DID} if any
+     * @param old old {@link Config.DID} if any
      */
-    private void sendDIDSignal(CtxCore ctx, ConfigCore.DID id, ConfigCore.DID old) {
+    private void sendDIDSignal(CtxCore ctx, Config.DID id, Config.DID old) {
         L.d("Sending device id signal: [" + id + "], was [" + old + "]");
         SDKCore.instance.onSignal(ctx, SDKCore.Signal.DID.getIndex(), id, old);
     }
@@ -257,8 +257,8 @@ public class ModuleDeviceIdCore extends ModuleBase {
         if (Utils.isEmpty(id)) {
             L.wtf("Empty id passed to login method");
         } else {
-            final ConfigCore.DID old = ctx.getConfig().getDeviceId();
-            ctx.getConfig().setDeviceId(new ConfigCore.DID(ConfigCore.DID.REALM_DID, ConfigCore.DID.STRATEGY_CUSTOM, id));
+            final Config.DID old = ctx.getConfig().getDeviceId();
+            ctx.getConfig().setDeviceId(new Config.DID(Config.DID.REALM_DID, Config.DID.STRATEGY_CUSTOM, id));
             Storage.push(ctx, ctx.getConfig());
 
             // old session end & new session begin requests are supposed to happen here
@@ -274,15 +274,15 @@ public class ModuleDeviceIdCore extends ModuleBase {
      * @param ctx context to run in
      */
     public void logout(final CtxCore ctx) {
-        final ConfigCore.DID old = ctx.getConfig().getDeviceId();
+        final Config.DID old = ctx.getConfig().getDeviceId();
         ctx.getConfig().removeDeviceId(old);
         Storage.push(ctx, ctx.getConfig());
 
         SDKCore.instance.onDeviceId(ctx, null, old);
 
-        acquireId(ctx, new ConfigCore.DID(ConfigCore.DID.REALM_DID, ctx.getConfig().getDeviceIdStrategy(), null), ctx.getConfig().isDeviceIdFallbackAllowed(), new Tasks.Callback<ConfigCore.DID>() {
+        acquireId(ctx, new Config.DID(Config.DID.REALM_DID, ctx.getConfig().getDeviceIdStrategy(), null), ctx.getConfig().isDeviceIdFallbackAllowed(), new Tasks.Callback<Config.DID>() {
             @Override
-            public void call(ConfigCore.DID id) throws Exception {
+            public void call(Config.DID id) throws Exception {
                 if (id != null) {
                     L.d("Got device id: " + id);
                     SDKCore.instance.onDeviceId(ctx, id, null);
@@ -306,8 +306,8 @@ public class ModuleDeviceIdCore extends ModuleBase {
         if (Utils.isEmpty(id)) {
             L.wtf("Empty id passed to resetId method");
         } else {
-            final ConfigCore.DID old = ctx.getConfig().getDeviceId();
-            ctx.getConfig().setDeviceId(new ConfigCore.DID(ConfigCore.DID.REALM_DID, ConfigCore.DID.STRATEGY_CUSTOM, id));
+            final Config.DID old = ctx.getConfig().getDeviceId();
+            ctx.getConfig().setDeviceId(new Config.DID(Config.DID.REALM_DID, Config.DID.STRATEGY_CUSTOM, id));
             Storage.push(ctx, ctx.getConfig());
 
             if(withMerge) {
@@ -320,15 +320,15 @@ public class ModuleDeviceIdCore extends ModuleBase {
         }
     }
 
-    protected Future<ConfigCore.DID> acquireId(final CtxCore ctx, final ConfigCore.DID holder, final boolean fallbackAllowed, final Tasks.Callback<ConfigCore.DID> callback) {
+    protected Future<Config.DID> acquireId(final CtxCore ctx, final Config.DID holder, final boolean fallbackAllowed, final Tasks.Callback<Config.DID> callback) {
         L.d("d4");
         if (this.tasks == null) {
             this.tasks = new Tasks("deviceId");
         }
 
-        return this.tasks.run(new Tasks.Task<ConfigCore.DID>(Tasks.ID_STRICT) {
+        return this.tasks.run(new Tasks.Task<Config.DID>(Tasks.ID_STRICT) {
             @Override
-            public ConfigCore.DID call() throws Exception {
+            public Config.DID call() throws Exception {
                 return acquireIdSync(ctx, holder, fallbackAllowed);
             }
         }, callback);
@@ -341,9 +341,9 @@ public class ModuleDeviceIdCore extends ModuleBase {
      * @param ctx Ctx to run in
      * @param holder DID object which holds strategy and possibly other info for id generation
      * @param fallbackAllowed whether to automatically fallback to any available alternative or not
-     * @return {@link ConfigCore.DID} instance with an id
+     * @return {@link Config.DID} instance with an id
      */
-    protected ConfigCore.DID acquireIdSync(final CtxCore ctx, final ConfigCore.DID holder, final boolean fallbackAllowed) {
+    protected Config.DID acquireIdSync(final CtxCore ctx, final Config.DID holder, final boolean fallbackAllowed) {
         if (testSleep > 0) {
             try {
                 Thread.sleep(testSleep);
@@ -372,7 +372,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
             } else {
                 String id = generator.generate(ctx, holder.realm);
                 if (Utils.isNotEmpty(id)) {
-                    return new ConfigCore.DID(holder.realm, index, id);
+                    return new Config.DID(holder.realm, index, id);
                 } else if (fallbackAllowed) {
                     L.w("Device id strategy [" + index + "] didn't return. Falling back to next one.");
                     index--;
@@ -388,7 +388,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
         return null;
     }
 
-    protected void callOnDeviceId(CtxCore ctx, ConfigCore.DID id, ConfigCore.DID old) {
+    protected void callOnDeviceId(CtxCore ctx, Config.DID id, Config.DID old) {
         SDKCore.instance.onDeviceId(ctx, id, old);
     }
 

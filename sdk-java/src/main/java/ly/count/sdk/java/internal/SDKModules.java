@@ -4,7 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
-import ly.count.sdk.java.ConfigCore;
+import ly.count.sdk.java.Config;
 
 /**
  * {@link Module}-related methods of {@link SDKInterface}
@@ -112,12 +112,12 @@ public abstract class SDKModules implements SDKInterface {
                 session.end();
             }
 
-            consents = consents | (consent & ctx.getConfig().getFeatures());
+            consents = consents | (consent & ctx.getConfig().getFeatures1());
 
             module(ModuleSessions.class).session(ctx, null).begin();
         }
 
-        consents = consents | (consent & ctx.getConfig().getFeatures());
+        consents = consents | (consent & ctx.getConfig().getFeatures1());
 
         for (Integer feature : moduleMappings.keySet()) {
             Module existing = module(moduleMappings.get(feature));
@@ -213,7 +213,7 @@ public abstract class SDKModules implements SDKInterface {
             throw new IllegalStateException("Modules can only be built once");
         }
 
-        if (ctx.getConfig().getLoggingLevel() != ConfigCore.LoggingLevel.OFF) {
+        if (ctx.getConfig().getLoggingLevel() != Config.LoggingLevel.OFF) {
             modules.put(-10, instantiateModule(moduleMappings.get(CoreFeature.Logs.getIndex())));
         }
 
@@ -225,7 +225,7 @@ public abstract class SDKModules implements SDKInterface {
         if (ctx.getConfig().requiresConsent()) {
             consents = 0;
         } else {
-            consents = ctx.getConfig().getFeatures();
+            consents = ctx.getConfig().getFeatures1();
         }
 
         if (!ctx.getConfig().requiresConsent()) {
