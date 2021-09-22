@@ -9,3 +9,4 @@ sdkJava/build/
 core/build/
 sdk-java/build/
 *.attach_pid*
+sdk-java/
