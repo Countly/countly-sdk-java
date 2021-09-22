@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Scanner;
 
 import ly.count.sdk.java.Config;
-import ly.count.sdk.java.ConfigCore;
 import ly.count.sdk.java.Countly;
 
 public class Sample {
@@ -114,7 +113,7 @@ public class Sample {
 
         // Countly needs persistent storage for requests, configuration storage, user profiles and other temporary data,
         // therefore requires a separate data folder to run
-        //File targetFolder = new File("/home/zahi/countly-workspace/countly-sdk-java/data");
+        //File targetFolder = new File("/home/zahi/countly-workspace/data");
 
         File targetFolder = new File("d:\\__COUNTLY\\java_test\\");
 
