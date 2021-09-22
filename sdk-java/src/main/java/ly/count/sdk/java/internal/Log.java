@@ -73,7 +73,7 @@ public class Log extends ModuleBase {
      * @param t exception to log along with {@code string}
      */
     public void d(String string, Throwable t) {
-        if (level.prints(Config.LoggingLevel.DEBUG)) {
+        if (level != null && level.prints(Config.LoggingLevel.DEBUG)) {
             if (t == null) {
                 System.out.println("[DEBUG]\t" + tag + "\t" + string);
             } else {
@@ -123,7 +123,7 @@ public class Log extends ModuleBase {
      * @param t exception to log along with {@code string}
      */
     public void w(String string, Throwable t) {
-        if (level.prints(Config.LoggingLevel.WARN)) {
+        if (level != null && level.prints(Config.LoggingLevel.WARN)) {
             if (t == null) {
                 System.out.println("[WARN]\t" + tag + "\t" + string);
             } else {
@@ -148,7 +148,7 @@ public class Log extends ModuleBase {
      * @param t exception to log along with {@code string}
      */
     public void e(String string, Throwable t) {
-        if (level.prints(Config.LoggingLevel.ERROR)) {
+        if (level != null && level.prints(Config.LoggingLevel.ERROR)) {
             if (t == null) {
                 System.out.println("[ERROR]\t" + tag + "\t" + string);
             } else {
@@ -177,7 +177,7 @@ public class Log extends ModuleBase {
      * @param t exception to log along with {@code string}
      */
     public void wtf(String string, Throwable t) {
-        if (level != Config.LoggingLevel.OFF) {
+        if (level != null && level != Config.LoggingLevel.OFF) {
             if (t == null) {
                 System.out.println("[WTF]\t" + tag + "\t" + string);
             } else {
