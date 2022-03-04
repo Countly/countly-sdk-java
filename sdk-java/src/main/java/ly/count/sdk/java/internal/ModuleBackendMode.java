@@ -180,7 +180,7 @@ public class ModuleBackendMode extends ModuleBase {
             addTimeInfoIntoRequest(request, timestamp < 1 ? System.currentTimeMillis() : timestamp);
             requestQ.add(request);
 
-            processRequestQ();
+            addEventsToRequestQ();
         }
 
         public void sessionEnd(String deviceID, double duration, long timestamp) {
@@ -251,7 +251,7 @@ public class ModuleBackendMode extends ModuleBase {
             requestQ.add(request);
         }
 
-        public void recordUserProperties(String deviceID, Map<String, String> userProperties, long timestamp) {
+        public void recordUserProperties(String deviceID, Map<String, Object> userProperties, long timestamp) {
             if (SDKCore.instance == null) {
                 L.wtf("Countly is not initialized");
             }
@@ -261,8 +261,10 @@ public class ModuleBackendMode extends ModuleBase {
             }
 
             Request request = new Request();
+            JSONObject properties = new JSONObject(userProperties);
+
             request.params.add("device_id", deviceID);
-            request.params.add("user_details", userProperties);
+            request.params.add("user_details", properties);
 
             addTimeInfoIntoRequest(request, timestamp < 1 ? System.currentTimeMillis() : timestamp);
             requestQ.add(request);

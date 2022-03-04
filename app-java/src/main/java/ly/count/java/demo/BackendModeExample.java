@@ -23,7 +23,8 @@ public class BackendModeExample {
     }
 
     static void recordUserProperties() {
-        Map<String, String> userDetail = new HashMap<>();
+        // User detail
+        Map<String, Object> userDetail = new HashMap<>();
         userDetail.put("name", "Full Name");
         userDetail.put("username", "username1");
         userDetail.put("email", "user@gmail.com");
@@ -31,6 +32,20 @@ public class BackendModeExample {
         userDetail.put("phone", "000-111-000");
         userDetail.put("gender", "M");
         userDetail.put("byear", "1991");
+
+        // User custom detail
+        Map<String, Object> customDetail = new HashMap<>();
+        customDetail.put("hair", "black");
+        customDetail.put("height", 5.9);
+
+        // Operations: inc, mul
+        Map<String, Object> operations = new HashMap<>();
+        operations.put("$inc", 1);
+         //property 'weight', operation 'increment'
+        customDetail.put("weight", operations);
+
+        userDetail.put("custom", customDetail);
+
 
         Countly.backendMode().recordUserProperties("8c1d653f8f474be24958b282d5e9b4c4209ee552", userDetail, 0);
     }
