@@ -30,6 +30,7 @@ public abstract class SDKModules implements SDKInterface {
         registerDefaultModuleMapping(CoreFeature.Views.getIndex(), ModuleViews.class);
         registerDefaultModuleMapping(CoreFeature.Sessions.getIndex(), ModuleSessions.class);
         registerDefaultModuleMapping(CoreFeature.CrashReporting.getIndex(), ModuleCrash.class);
+        registerDefaultModuleMapping(CoreFeature.BackendMode.getIndex(), ModuleBackendMode.class);
     }
 
     public interface Modulator {
@@ -243,6 +244,7 @@ public abstract class SDKModules implements SDKInterface {
                 }
             }
         }
+        modules.put(CoreFeature.BackendMode.getIndex(), instantiateModule(moduleMappings.get(CoreFeature.BackendMode.getIndex())));
 
         // dummy module for tests if any
         if (testDummyModule != null) {

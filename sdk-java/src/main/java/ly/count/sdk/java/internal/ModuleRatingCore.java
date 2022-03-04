@@ -15,7 +15,6 @@ public class ModuleRatingCore extends ModuleBase {
     //in instances when the rating feature was not enabled
     //when a module is disabled, developer facing functions do nothing
     protected boolean disabledModule = false;
-
     public final static Long storableStorageId = 123L;
     public final static String storableStoragePrefix = "rating";
 

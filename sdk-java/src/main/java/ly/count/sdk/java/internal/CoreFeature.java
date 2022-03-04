@@ -17,6 +17,7 @@ public enum CoreFeature {
 
     PerformanceMonitoring(1 << 14);
     */
+    BackendMode(1 << 12),
     RemoteConfig(1 << 13),
     TestDummy(1 << 19),//used during testing
     DeviceId(1 << 20),

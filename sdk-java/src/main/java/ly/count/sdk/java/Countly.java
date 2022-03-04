@@ -60,6 +60,23 @@ public class Countly extends CountlyLifecycle {
         return Cly.session(cly.ctx);
     }
 
+    public static ModuleBackendMode.BackendMode backendMode(){
+        if (!isInitialized()) {
+            L.wtf("Countly SDK is not initialized yet.");
+            return null;
+        } else {
+            ModuleBackendMode mbm = cly.sdk.module(ModuleBackendMode.class);
+            if (mbm != null) {
+                return mbm.new BackendMode();
+            }
+            //if it is null, feature was not enabled, return mock
+            L.w("BackendMode was not enabled, returning dummy module");
+            ModuleBackendMode emptyMbm = new ModuleBackendMode();
+            emptyMbm.disableModule();
+            return emptyMbm.new BackendMode();
+        }
+    }
+
     /**
      * Returns active {@link Session} if any or {@code null} otherwise.
      *
