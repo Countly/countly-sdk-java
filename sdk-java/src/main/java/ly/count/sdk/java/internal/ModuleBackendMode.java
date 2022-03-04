@@ -29,7 +29,7 @@ public class ModuleBackendMode extends ModuleBase {
     public void init(InternalConfig config) {
         internalConfig = config;
         transport = new Transport();
-        transport.init(ctx.getConfig());
+        transport.init(internalConfig);
         tasks = new Tasks("request-queue");
         L.d("[ModuleBackendMode][init]");
     }
@@ -105,33 +105,44 @@ public class ModuleBackendMode extends ModuleBase {
     }
 
     public class BackendMode {
-
-        public BackendMode() {
-        }
-
-        public String test(String txt) {
-            L.d("[BackendMode][test]");
-            if (disabledModule) {
-                return null;
-            }
-            return "123" + txt;
-        }
-
         public void recordView(String deviceID, String key, Map<String, String> segmentation, long timestamp) {
+            if (SDKCore.instance == null) {
+                L.wtf("Countly is not initialized");
+            }
+
+            if (deviceID == null || deviceID.isEmpty()) {
+                L.wtf("DeviceID can not be null or empty.");
+            }
+
             recordEventInternal(deviceID, key, 1, -1, -1, segmentation, timestamp);
         }
 
         public void recordEvent(String deviceID, String key, int count, double sum, double dur, Map<String, String> segmentation, long timestamp) {
+            if (SDKCore.instance == null) {
+                L.wtf("Countly is not initialized");
+            }
+
+            if (deviceID == null || deviceID.isEmpty()) {
+                L.wtf("DeviceID can not be null or empty.");
+            }
+
             recordEventInternal(deviceID, key, count, sum, dur, segmentation, timestamp);
         }
 
         public void sessionBegin(String deviceID, long timestamp) {
+            if (SDKCore.instance == null) {
+                L.wtf("Countly is not initialized");
+            }
+
+            if (deviceID == null || deviceID.isEmpty()) {
+                L.wtf("DeviceID can not be null or empty.");
+            }
+
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(timestamp);
 
             final int hour = calendar.get(Calendar.HOUR_OF_DAY);
             final int dow = calendar.get(Calendar.DAY_OF_WEEK) - 1;
-
 
             Request request = new Request();
             request.params.add("device_id", deviceID);
@@ -149,40 +160,66 @@ public class ModuleBackendMode extends ModuleBase {
 //            metrics.put("_store", "Windows 10");
 //
 //            request.params.add("metrics", metrics);
-
             requestQ.add(request);
-
+            processRequestQ();
         }
 
         public void sessionUpdate(String deviceID, double duration, long timestamp) {
+            if (SDKCore.instance == null) {
+                L.wtf("Countly is not initialized");
+            }
+
+            if (deviceID == null || deviceID.isEmpty()) {
+                L.wtf("DeviceID can not be null or empty.");
+            }
+
             Request request = new Request();
             request.params.add("device_id", deviceID);
             request.params.add("session_duration", duration);
 
             addTimeInfoIntoRequest(request, timestamp < 1 ? System.currentTimeMillis() : timestamp);
-
             requestQ.add(request);
+
+            processRequestQ();
         }
 
-        public void sessionEnd(String deviceID, String duration, long timestamp) {
+        public void sessionEnd(String deviceID, double duration, long timestamp) {
+            if (SDKCore.instance == null) {
+                L.wtf("Countly is not initialized");
+            }
+
+            if (deviceID == null || deviceID.isEmpty()) {
+                L.wtf("DeviceID can not be null or empty.");
+            }
+
+            //Add events against device ID to request Q
+            JSONArray events = eventQueues.get(deviceID);
+            if (events != null && events.length() > 0) {
+                addEventsAgainstDeviceIdToRequestQ(deviceID, events);
+                eventQSize -= events.length();
+                eventQueues.remove(deviceID);
+            }
+
             Request request = new Request();
             request.params.add("device_id", deviceID);
             request.params.add("end_session", duration);
             request.params.add("session_duration", duration);
 
-            JSONArray events = eventQueues.get(deviceID);
-            if (events != null && events.length() > 0) {
-                request.params.add("events", events);
-                eventQueues.remove(deviceID);
-            }
-
             addTimeInfoIntoRequest(request, timestamp < 1 ? System.currentTimeMillis() : timestamp);
-
             requestQ.add(request);
 
+            processRequestQ();
         }
 
         public void recordException(String deviceID, Throwable stacktrace, Map<String, String> segmentation, long timestamp) {
+            if (SDKCore.instance == null) {
+                L.wtf("Countly is not initialized");
+            }
+
+            if (deviceID == null || deviceID.isEmpty()) {
+                L.wtf("DeviceID can not be null or empty.");
+            }
+
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             stacktrace.printStackTrace(pw);
@@ -191,6 +228,14 @@ public class ModuleBackendMode extends ModuleBase {
         }
 
         public void recordException(String deviceID, String exceptionMessage, String exceptionStacktrace, Map<String, String> segmentation, long timestamp) {
+            if (SDKCore.instance == null) {
+                L.wtf("Countly is not initialized");
+            }
+
+            if (deviceID == null || deviceID.isEmpty()) {
+                L.wtf("DeviceID can not be null or empty.");
+            }
+
             JSONObject crash = new JSONObject();
             crash.put("_error", exceptionStacktrace);
             crash.put("_custom", segmentation);
@@ -207,6 +252,14 @@ public class ModuleBackendMode extends ModuleBase {
         }
 
         public void recordUserProperties(String deviceID, Map<String, String> userProperties, long timestamp) {
+            if (SDKCore.instance == null) {
+                L.wtf("Countly is not initialized");
+            }
+
+            if (deviceID == null || deviceID.isEmpty()) {
+                L.wtf("DeviceID can not be null or empty.");
+            }
+
             Request request = new Request();
             request.params.add("device_id", deviceID);
             request.params.add("user_details", userProperties);
@@ -225,7 +278,7 @@ public class ModuleBackendMode extends ModuleBase {
             ++eventQSize;
 
             if (eventQSize >= internalConfig.getEventsBufferSize()) {
-                addEventsToRequestQueue();
+                addEventsToRequestQ();
             }
         }
 
@@ -256,20 +309,24 @@ public class ModuleBackendMode extends ModuleBase {
             return jsonObject;
         }
 
-        private void addEventsToRequestQueue() {
-            //TODO: Need to verify order of events.
+        private void addEventsToRequestQ() {
             for (Map.Entry<String, JSONArray> entry : eventQueues.entrySet()) {
-
-                Request request = new Request();
-                request.params.add("device_id", entry.getKey());
-                request.params.add("events", entry.getValue());
-                request.own(ModuleBackendMode.class);
-                requestQ.add(request);
+                addEventsAgainstDeviceIdToRequestQ(entry.getKey(), entry.getValue());
             }
-
+            eventQSize = 0;
             eventQueues.clear();
 
             processRequestQ();
+        }
+
+        private void addEventsAgainstDeviceIdToRequestQ(String deviceID, JSONArray events) {
+            //TODO: Need to verify order of events.
+            Request request = new Request();
+            request.params.add("device_id", deviceID);
+            request.params.add("events", events);
+            addTimeInfoIntoRequest(request, System.currentTimeMillis());
+            request.own(ModuleBackendMode.class);
+            requestQ.add(request);
         }
 
         private void addTimeInfoIntoRequest(Request request, long timestamp) {
