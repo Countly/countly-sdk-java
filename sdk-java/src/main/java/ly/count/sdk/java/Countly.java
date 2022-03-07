@@ -4,6 +4,7 @@ import java.io.File;
 
 import ly.count.sdk.java.internal.CtxImpl;
 import ly.count.sdk.java.internal.Device;
+import ly.count.sdk.java.internal.ModuleBackendMode;
 import ly.count.sdk.java.internal.SDK;
 
 /**
