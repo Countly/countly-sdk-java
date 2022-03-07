@@ -1,5 +1,6 @@
 package ly.count.sdk.java.internal;
 
+import ly.count.sdk.java.Countly;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -66,6 +67,10 @@ public class ModuleBackendMode extends ModuleBase {
     }
 
     private void processRequestQ() {
+        if (!Countly.isInitialized()) {
+            return;
+        }
+
         if (tasks.isRunning() || requestQ.size() == 0) {
             return;
         }
@@ -102,6 +107,22 @@ public class ModuleBackendMode extends ModuleBase {
                 }
             }
         };
+    }
+
+    public int getEventQSize() {
+        return eventQSize;
+    }
+
+    public void setEventQSize(int eventQSize) {
+        this.eventQSize = eventQSize;
+    }
+
+    public Queue<Request> getRequestQ() {
+        return requestQ;
+    }
+
+    public Map<String, JSONArray> getEventQueues() {
+        return eventQueues;
     }
 
     public class BackendMode {
