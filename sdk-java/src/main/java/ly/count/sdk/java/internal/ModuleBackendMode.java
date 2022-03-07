@@ -223,7 +223,7 @@ public class ModuleBackendMode extends ModuleBase {
 
             Request request = new Request();
             request.params.add("device_id", deviceID);
-            request.params.add("end_session", duration);
+            request.params.add("end_session", 1);
             request.params.add("session_duration", duration);
 
             addTimeInfoIntoRequest(request, timestamp < 1 ? System.currentTimeMillis() : timestamp);
@@ -317,7 +317,7 @@ public class ModuleBackendMode extends ModuleBase {
             if (sum > 0) {
                 jsonObject.put("sum", sum);
             }
-            if (sum >= 0) {
+            if (count > 0) {
                 jsonObject.put("count", count);
             }
             if (dur >= 0) {
