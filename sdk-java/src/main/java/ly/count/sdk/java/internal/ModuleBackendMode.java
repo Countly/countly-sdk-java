@@ -23,6 +23,7 @@ public class ModuleBackendMode extends ModuleBase {
     protected boolean disabledModule = false;
 
     private int eventQSize = 0;
+    protected boolean defferUpload = false;
     private final Queue<Request> requestQ = new LinkedList<>();
     private final Map<String, JSONArray> eventQueues = new HashMap<>();
 
@@ -158,7 +159,7 @@ public class ModuleBackendMode extends ModuleBase {
     }
 
     private void processRequestQ() {
-        if (!Countly.isInitialized()) {
+        if (defferUpload) {
             return;
         }
 
@@ -424,6 +425,10 @@ public class ModuleBackendMode extends ModuleBase {
 
             addTimeInfoIntoRequest(request, timestamp < 1 ? System.currentTimeMillis() : timestamp);
             requestQ.add(request);
+        }
+
+        public ModuleBase getModule() {
+            return ModuleBackendMode.this;
         }
     }
 }

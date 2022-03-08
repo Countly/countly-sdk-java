@@ -42,6 +42,10 @@ public abstract class CountlyLifecycle extends Cly {
                 stop(false);
             }
 
+            if(config.enableBackendMode) {
+                config.sdkName = "java-native-backend";
+            }
+
             SDK sdk = new SDK();
             sdk.init(new CtxImpl(sdk, new InternalConfig(config), directory));
 

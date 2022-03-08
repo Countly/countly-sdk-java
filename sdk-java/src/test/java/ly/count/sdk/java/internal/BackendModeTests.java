@@ -5,13 +5,12 @@ import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.Event;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.powermock.reflect.Whitebox;
 
+import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Calendar;
@@ -26,13 +25,38 @@ public class BackendModeTests {
     InternalConfig config;
     ModuleBackendMode moduleBackendMode;
 
-    @Before
-    public void setupEveryTest() throws Exception {
-        config = new InternalConfig(new Config("https://try.count.ly", "COUNTLY_APP_KEY"));
-        config.setEventsBufferSize(4)
+    @BeforeClass
+    public static void init() {
+        Config cc = new Config("https://try.count.ly", "COUNTLY_APP_KEY");
+        cc.setEventsBufferSize(4)
                 .enableBackendMode(true);
-        moduleBackendMode = new ModuleBackendMode();
-        moduleBackendMode.init(config);
+        File targetFolder = new File("C:\\Users\\zahid\\Documents\\Countly\\data");
+        Countly.init(targetFolder, cc);
+    }
+
+    @Before
+    public void start() {
+        moduleBackendMode = (ModuleBackendMode) Countly.backendMode().getModule();
+        moduleBackendMode.defferUpload = true;
+    }
+
+    @After
+    public void end() {
+        moduleBackendMode.setEventQSize(0);
+        moduleBackendMode.getRequestQ().clear();
+        moduleBackendMode.getEventQueues().clear();
+    }
+
+    @AfterClass
+    public static void stop() throws Exception {
+        Countly.stop(false);
+    }
+
+    @Test
+    public void backendModeConfigTest() {
+        ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
+        Assert.assertTrue(moduleBackendMode.internalConfig.isBackendModeEnable());
+        Assert.assertEquals("java-native-backend", moduleBackendMode.internalConfig.getSdkName());
     }
 
     @Test
