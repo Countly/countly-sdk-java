@@ -176,7 +176,7 @@ public class ConfigTests2 extends BaseTestsCore {
 
     @Test
     public void sdkVersion_default(){
-        Assert.assertEquals("20.11.1", internalConfig.getSdkVersion());
+        Assert.assertEquals("20.11.2", internalConfig.getSdkVersion());
     }
 
 }

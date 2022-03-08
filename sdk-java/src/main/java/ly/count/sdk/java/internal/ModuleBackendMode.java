@@ -7,6 +7,9 @@ import org.json.JSONObject;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class ModuleBackendMode extends ModuleBase {
 
@@ -25,6 +28,7 @@ public class ModuleBackendMode extends ModuleBase {
 
     private Tasks tasks;
     private Transport transport;
+    private ScheduledExecutorService executor = null;
 
     @Override
     public void init(InternalConfig config) {
@@ -33,12 +37,23 @@ public class ModuleBackendMode extends ModuleBase {
         transport.init(internalConfig);
         tasks = new Tasks("request-queue");
         L.d("[ModuleBackendMode][init]");
+
     }
 
     @Override
     public void onContextAcquired(CtxCore ctx) {
         this.ctx = ctx;
         L.d("[ModuleBackendMode][onContextAcquired]");
+
+        if (ctx.getConfig().isBackendModeEnable() && ctx.getConfig().getSendUpdateEachSeconds() > 0 && executor == null) {
+            executor = Executors.newScheduledThreadPool(1);
+            executor.scheduleWithFixedDelay(new Runnable() {
+                @Override
+                public void run() {
+                    addEventsToRequestQ();
+                }
+            }, ctx.getConfig().getSendUpdateEachSeconds(), ctx.getConfig().getSendUpdateEachSeconds(), TimeUnit.SECONDS);
+        }
     }
 
     @Override
@@ -60,10 +75,86 @@ public class ModuleBackendMode extends ModuleBase {
     public void stop(CtxCore ctx, boolean clear) {
         super.stop(ctx, clear);
         tasks.shutdown();
+        executor.shutdownNow();
     }
 
     public void disableModule() {
         disabledModule = true;
+    }
+
+
+    private void recordEventInternal(String deviceID, String key, int count, double sum, double dur, Map<String, String> segmentation, long timestamp) {
+        JSONObject jsonObject = buildEventJSONObject(key, count, sum, dur, segmentation, timestamp < 1 ? DeviceCore.dev.uniqueTimestamp() : timestamp);
+
+        if (!eventQueues.containsKey(deviceID)) {
+            eventQueues.put(deviceID, new JSONArray());
+        }
+        eventQueues.get(deviceID).put(jsonObject);
+        ++eventQSize;
+
+        if (eventQSize >= internalConfig.getEventsBufferSize()) {
+            addEventsToRequestQ();
+        }
+    }
+
+    private JSONObject buildEventJSONObject(String key, int count, double sum, double dur, Map<String, String> segmentation, long timestamp) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(timestamp);
+        final int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        final int dow = calendar.get(Calendar.DAY_OF_WEEK) - 1;
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("key", key);
+
+        if (sum > 0) {
+            jsonObject.put("sum", sum);
+        }
+        if (count > 0) {
+            jsonObject.put("count", count);
+        }
+        if (dur >= 0) {
+            jsonObject.put("dur", dur);
+        }
+
+        jsonObject.put("segmentation", segmentation);
+        jsonObject.put("dow", dow);
+        jsonObject.put("hour", hour);
+        jsonObject.put("timestamp", timestamp);
+
+        return jsonObject;
+    }
+
+    private void addTimeInfoIntoRequest(Request request, long timestamp) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(timestamp);
+
+        final int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        final int dow = calendar.get(Calendar.DAY_OF_WEEK) - 1;
+
+        request.params.add("dow", dow);
+        request.params.add("hour", hour);
+        request.params.add("timestamp", timestamp);
+        request.params.add("tz", DeviceCore.dev.getTimezoneOffset());
+    }
+
+    private void addEventsAgainstDeviceIdToRequestQ(String deviceID, JSONArray events) {
+        //TODO: Need to verify order of events.
+        Request request = new Request();
+        request.params.add("device_id", deviceID);
+        request.params.add("events", events);
+        addTimeInfoIntoRequest(request, System.currentTimeMillis());
+        request.own(ModuleBackendMode.class);
+        requestQ.add(request);
+    }
+
+    private void addEventsToRequestQ() {
+        for (Map.Entry<String, JSONArray> entry : eventQueues.entrySet()) {
+            addEventsAgainstDeviceIdToRequestQ(entry.getKey(), entry.getValue());
+        }
+        eventQSize = 0;
+        eventQueues.clear();
+
+        processRequestQ();
     }
 
     private void processRequestQ() {
@@ -127,36 +218,52 @@ public class ModuleBackendMode extends ModuleBase {
 
     public class BackendMode {
         public void recordView(String deviceID, String key, Map<String, String> segmentation, long timestamp) {
-            if (SDKCore.instance == null) {
-                L.wtf("Countly is not initialized");
+            if (!internalConfig.isBackendModeEnable()) {
+                L.wtf("[Countly][BackendMode][recordView] BackendMode is not enable.");
+                return;
             }
 
             if (deviceID == null || deviceID.isEmpty()) {
-                L.wtf("DeviceID can not be null or empty.");
+                L.wtf("[Countly][BackendMode][recordView] DeviceID can not be null or empty.");
+                return;
+            }
+
+            if (key == null || key.isEmpty()) {
+                L.wtf("[Countly][BackendMode][recordView] Key can not be null or empty.");
+                return;
             }
 
             recordEventInternal(deviceID, key, 1, -1, -1, segmentation, timestamp);
         }
 
         public void recordEvent(String deviceID, String key, int count, double sum, double dur, Map<String, String> segmentation, long timestamp) {
-            if (SDKCore.instance == null) {
-                L.wtf("Countly is not initialized");
+            if (!internalConfig.isBackendModeEnable()) {
+                L.wtf("[Countly][BackendMode][recordEvent] BackendMode is not enable.");
+                return;
             }
 
             if (deviceID == null || deviceID.isEmpty()) {
-                L.wtf("DeviceID can not be null or empty.");
+                L.wtf("[Countly][BackendMode][recordEvent] DeviceID can not be null or empty.");
+                return;
+            }
+
+            if (key == null || key.isEmpty()) {
+                L.wtf("[Countly][BackendMode][recordEvent] Event key can not be null or empty.");
+                return;
             }
 
             recordEventInternal(deviceID, key, count, sum, dur, segmentation, timestamp);
         }
 
         public void sessionBegin(String deviceID, long timestamp) {
-            if (SDKCore.instance == null) {
-                L.wtf("Countly is not initialized");
+            if (!internalConfig.isBackendModeEnable()) {
+                L.wtf("[Countly][BackendMode][recordEvent] BackendMode is not enable.");
+                return;
             }
 
             if (deviceID == null || deviceID.isEmpty()) {
-                L.wtf("DeviceID can not be null or empty.");
+                L.wtf("[Countly][BackendMode][sessionBegin] DeviceID can not be null or empty.");
+                return;
             }
 
             Calendar calendar = Calendar.getInstance();
@@ -186,12 +293,14 @@ public class ModuleBackendMode extends ModuleBase {
         }
 
         public void sessionUpdate(String deviceID, double duration, long timestamp) {
-            if (SDKCore.instance == null) {
-                L.wtf("Countly is not initialized");
+            if (!internalConfig.isBackendModeEnable()) {
+                L.wtf("[Countly][BackendMode][sessionUpdate] BackendMode is not enable.");
+                return;
             }
 
             if (deviceID == null || deviceID.isEmpty()) {
-                L.wtf("DeviceID can not be null or empty.");
+                L.wtf("[Countly][BackendMode][sessionUpdate] DeviceID can not be null or empty.");
+                return;
             }
 
             Request request = new Request();
@@ -205,12 +314,14 @@ public class ModuleBackendMode extends ModuleBase {
         }
 
         public void sessionEnd(String deviceID, double duration, long timestamp) {
-            if (SDKCore.instance == null) {
-                L.wtf("Countly is not initialized");
+            if (!internalConfig.isBackendModeEnable()) {
+                L.wtf("[Countly][BackendMode][sessionEnd] BackendMode is not enable.");
+                return;
             }
 
             if (deviceID == null || deviceID.isEmpty()) {
-                L.wtf("DeviceID can not be null or empty.");
+                L.wtf("[Countly][BackendMode][sessionEnd] DeviceID can not be null or empty.");
+                return;
             }
 
             //Add events against device ID to request Q
@@ -232,35 +343,53 @@ public class ModuleBackendMode extends ModuleBase {
             processRequestQ();
         }
 
-        public void recordException(String deviceID, Throwable stacktrace, Map<String, String> segmentation, long timestamp) {
-            if (SDKCore.instance == null) {
-                L.wtf("Countly is not initialized");
+        public void recordException(String deviceID, Throwable throwable, Map<String, String> segmentation, long timestamp) {
+            if (!internalConfig.isBackendModeEnable()) {
+                L.wtf("[Countly][BackendMode][recordException] BackendMode is not enable.");
+                return;
             }
 
             if (deviceID == null || deviceID.isEmpty()) {
-                L.wtf("DeviceID can not be null or empty.");
+                L.wtf("[Countly][BackendMode][recordException] DeviceID can not be null or empty.");
+                return;
+            }
+
+            if (throwable == null) {
+                L.wtf("[Countly][BackendMode][recordException] throwable can not be null.");
+                return;
             }
 
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
-            stacktrace.printStackTrace(pw);
+            throwable.printStackTrace(pw);
 
-            recordException(deviceID, stacktrace.getMessage(), sw.toString(), segmentation, timestamp);
+            recordException(deviceID, throwable.getMessage(), sw.toString(), segmentation, timestamp);
         }
 
-        public void recordException(String deviceID, String exceptionMessage, String exceptionStacktrace, Map<String, String> segmentation, long timestamp) {
-            if (SDKCore.instance == null) {
-                L.wtf("Countly is not initialized");
+        public void recordException(String deviceID, String message, String stacktrace, Map<String, String> segmentation, long timestamp) {
+            if (!internalConfig.isBackendModeEnable()) {
+                L.wtf("[Countly][BackendMode][recordException] BackendMode is not enable.");
+                return;
             }
 
             if (deviceID == null || deviceID.isEmpty()) {
-                L.wtf("DeviceID can not be null or empty.");
+                L.wtf("[Countly][BackendMode][recordException] DeviceID can not be null or empty.");
+                return;
+            }
+            if (message == null || message.isEmpty()) {
+                L.wtf("[Countly][BackendMode][recordException] message can not be null or empty.");
+                return;
+            }
+
+            if (stacktrace == null) {
+                L.wtf("[Countly][BackendMode][recordException] stacktrace can not be null.");
+                return;
             }
 
             JSONObject crash = new JSONObject();
-            crash.put("_error", exceptionStacktrace);
+            crash.put("_error", stacktrace);
             crash.put("_custom", segmentation);
-            crash.put("_name", exceptionMessage);
+            crash.put("_name", message);
             //crash.put("_nonfatal", true);
 
             Request request = new Request();
@@ -273,12 +402,18 @@ public class ModuleBackendMode extends ModuleBase {
         }
 
         public void recordUserProperties(String deviceID, Map<String, Object> userProperties, long timestamp) {
-            if (SDKCore.instance == null) {
-                L.wtf("Countly is not initialized");
+            if (!internalConfig.isBackendModeEnable()) {
+                L.wtf("[Countly][BackendMode][recordUserProperties] BackendMode is not enable.");
+                return;
             }
 
             if (deviceID == null || deviceID.isEmpty()) {
-                L.wtf("DeviceID can not be null or empty.");
+                L.wtf("[Countly][BackendMode][recordUserProperties] DeviceID can not be null or empty.");
+                return;
+            }
+            if (userProperties == null || userProperties.isEmpty()) {
+                L.wtf("[Countly][BackendMode][recordUserProperties] userProperties can not be null or empty.");
+                return;
             }
 
             Request request = new Request();
@@ -289,80 +424,6 @@ public class ModuleBackendMode extends ModuleBase {
 
             addTimeInfoIntoRequest(request, timestamp < 1 ? System.currentTimeMillis() : timestamp);
             requestQ.add(request);
-        }
-
-        private void recordEventInternal(String deviceID, String key, int count, double sum, double dur, Map<String, String> segmentation, long timestamp) {
-            JSONObject jsonObject = buildEventJSONObject(key, count, sum, dur, segmentation, timestamp < 1 ? DeviceCore.dev.uniqueTimestamp() : timestamp);
-
-            if (!eventQueues.containsKey(deviceID)) {
-                eventQueues.put(deviceID, new JSONArray());
-            }
-            eventQueues.get(deviceID).put(jsonObject);
-            ++eventQSize;
-
-            if (eventQSize >= internalConfig.getEventsBufferSize()) {
-                addEventsToRequestQ();
-            }
-        }
-
-        private JSONObject buildEventJSONObject(String key, int count, double sum, double dur, Map<String, String> segmentation, long timestamp) {
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTimeInMillis(timestamp);
-            final int hour = calendar.get(Calendar.HOUR_OF_DAY);
-            final int dow = calendar.get(Calendar.DAY_OF_WEEK) - 1;
-
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("key", key);
-
-            if (sum > 0) {
-                jsonObject.put("sum", sum);
-            }
-            if (count > 0) {
-                jsonObject.put("count", count);
-            }
-            if (dur >= 0) {
-                jsonObject.put("dur", dur);
-            }
-
-            jsonObject.put("segmentation", segmentation);
-            jsonObject.put("dow", dow);
-            jsonObject.put("hour", hour);
-            jsonObject.put("timestamp", timestamp);
-
-            return jsonObject;
-        }
-
-        private void addEventsToRequestQ() {
-            for (Map.Entry<String, JSONArray> entry : eventQueues.entrySet()) {
-                addEventsAgainstDeviceIdToRequestQ(entry.getKey(), entry.getValue());
-            }
-            eventQSize = 0;
-            eventQueues.clear();
-
-            processRequestQ();
-        }
-
-        private void addEventsAgainstDeviceIdToRequestQ(String deviceID, JSONArray events) {
-            //TODO: Need to verify order of events.
-            Request request = new Request();
-            request.params.add("device_id", deviceID);
-            request.params.add("events", events);
-            addTimeInfoIntoRequest(request, System.currentTimeMillis());
-            request.own(ModuleBackendMode.class);
-            requestQ.add(request);
-        }
-
-        private void addTimeInfoIntoRequest(Request request, long timestamp) {
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTimeInMillis(timestamp);
-
-            final int hour = calendar.get(Calendar.HOUR_OF_DAY);
-            final int dow = calendar.get(Calendar.DAY_OF_WEEK) - 1;
-
-            request.params.add("dow", dow);
-            request.params.add("hour", hour);
-            request.params.add("timestamp", timestamp);
-            request.params.add("tz", DeviceCore.dev.getTimezoneOffset());
         }
     }
 }

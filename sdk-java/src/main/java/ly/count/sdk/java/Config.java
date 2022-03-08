@@ -265,7 +265,7 @@ public class Config {
     /**
      * Countly SDK version to be sent in HTTP requests
      */
-    protected String sdkVersion = "20.11.1";
+    protected String sdkVersion = "20.11.2";
 
     /**
      * Countly SDK name to be sent in HTTP requests
@@ -281,6 +281,11 @@ public class Config {
      * Force usage of POST method for all requests
      */
     protected boolean usePOST = false;
+
+    /**
+     * This would be a special state where the majority of the SDK calls don't work anymore and only a few special calls work.
+     */
+    protected boolean enableBackendMode = false;
 
     /**
      * Salt string for parameter tampering protection
@@ -653,6 +658,17 @@ public class Config {
      */
     public Config setUsePOST(boolean usePOST) {
         this.usePOST = usePOST;
+        return this;
+    }
+
+    /**
+     * Enable SDK's backend mode.
+     *
+     * @param enableBackendMode whether the majority of the SDK calls don't work anymore and only a few special calls work.
+     * @return {@code this} instance for method chaining
+     */
+    public Config enableBackendMode(boolean enableBackendMode) {
+        this.enableBackendMode = enableBackendMode;
         return this;
     }
 
@@ -1202,6 +1218,13 @@ public class Config {
      */
     public boolean isUsePOST() {
         return usePOST;
+    }
+    /**
+     * Getter for {@link #enableBackendMode}
+     * @return {@link #enableBackendMode} value
+     */
+    public boolean isBackendModeEnable() {
+        return enableBackendMode;
     }
 
     /**
