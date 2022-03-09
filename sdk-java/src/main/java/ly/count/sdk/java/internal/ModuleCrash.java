@@ -78,6 +78,12 @@ public class ModuleCrash extends ModuleBase {
     }
 
     public CrashImplCore onCrash(CtxCore ctx, Throwable t, boolean fatal, String name, Map<String, String> segments, String... logs) {
+
+        if(ctx.getConfig().isBackendModeEnable()) {
+            L.w("Skipping crash - Backend mode is enabled!");
+            return null;
+        }
+
         if (t == null) {
             L.e("Throwable cannot be null");
             return  null;

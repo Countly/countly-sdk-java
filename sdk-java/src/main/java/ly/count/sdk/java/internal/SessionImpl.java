@@ -95,6 +95,11 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     @Override
     public Session begin() {
+        if(ctx.getConfig().isBackendModeEnable()) {
+            L.w("Skipping session begin - Backend mode is enabled!");
+            return this;
+        }
+
         L.d("begin");
         begin(null);
         return this;
@@ -129,6 +134,11 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     @Override
     public Session update() {
+        if(ctx.getConfig().isBackendModeEnable()) {
+            L.w("Skipping session update - Backend mode is enabled!");
+            return this;
+        }
+
         L.d("update");
         update(null);
         return this;
@@ -159,6 +169,11 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     @Override
     public void end() {
+        if(ctx.getConfig().isBackendModeEnable()) {
+            L.w("Skipping session end - Backend mode is enabled!");
+            return;
+        }
+
         L.d("end");
         end(null, null, null);
     }
@@ -311,6 +326,11 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     @Override
     public Session addCrashReport(Throwable t, boolean fatal, String name, Map<String, String> segments, String... logs) {
+        if(ctx.getConfig().isBackendModeEnable()) {
+            L.w("Skipping crash - Backend mode is enabled!");
+            return this;
+        }
+
         if (!SDKCore.enabled(CoreFeature.CrashReporting)) {
             L.i("Skipping event - feature is not enabled");
             return this;
@@ -321,6 +341,11 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     @Override
     public Session addLocation(double latitude, double longitude) {
+        if(ctx.getConfig().isBackendModeEnable()) {
+            L.w("Skipping location - Backend mode is enabled!");
+            return this;
+        }
+
         L.d("addLocation: latitude = " + latitude + " longitude = " + longitude);
         if (!SDKCore.enabled(CoreFeature.Location)) {
             L.i("Skipping event - feature is not enabled");
@@ -374,6 +399,11 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     @Override
     public Usage changeDeviceIdWithMerge(String id) {
+        if(ctx.getConfig().isBackendModeEnable()) {
+            L.w("Skipping change device id with merge - Backend mode is enabled!");
+            return this;
+        }
+
         L.d("changeDeviceIdWithoutMerge: id = " + id);
         SDKCore.instance.changeDeviceIdWithMerge(ctx, id);
         return this;
@@ -381,6 +411,11 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     @Override
     public Usage changeDeviceIdWithoutMerge(String id) {
+        if(ctx.getConfig().isBackendModeEnable()) {
+            L.w("Skipping change device id without merge - Backend mode is enabled!");
+            return this;
+        }
+
         L.d("changeDeviceIdWithoutMerge: id = " + id);
         SDKCore.instance.changeDeviceIdWithoutMerge(ctx, id);
         return this;
