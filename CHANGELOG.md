@@ -1,3 +1,8 @@
+20.11.2
+* Added backend mode feature.
+* Added a new configuration field to enable or disable SDK backend mode.
+* Added "enable backend mode" checks for all public SDK's features methods to stop their working.
+
 20.11.1
 * Fixed a bug related to server response handling.
 * Fixed a potential issue with parameters tampering protection while adding checksum.

@@ -9,6 +9,9 @@ import java.util.Map;
 import java.util.Scanner;
 
 public class BackendModeExample {
+    final static String COUNTLY_APP_KEY = "YOUR_APP_KEY";
+    final static String COUNTLY_SERVER_URL = "https://try.count.ly/";
+
     static void recordEvent() {
         Map<String, String> segment = new HashMap<String, String>() {{
             put("Time Spent", "60");
@@ -99,9 +102,6 @@ public class BackendModeExample {
     public static void main(String[] args) throws Exception {
 
         Scanner scanner = new Scanner(System.in);
-
-        String COUNTLY_SERVER_URL = "https://master.count.ly/";
-        String COUNTLY_APP_KEY = "8c1d653f8f474be24958b282d5e9b4c4209ee552";
 
         Config config = new Config(COUNTLY_SERVER_URL, COUNTLY_APP_KEY)
                 .setLoggingLevel(Config.LoggingLevel.DEBUG)
