@@ -29,7 +29,7 @@ public class BackendModeTests {
     public static void init() {
         Config cc = new Config("https://try.count.ly", "COUNTLY_APP_KEY");
         cc.setEventsBufferSize(4)
-                .enableBackendMode(true);
+                .enableBackendMode();
         File targetFolder = new File("C:\\Users\\zahid\\Documents\\Countly\\data");
         Countly.init(targetFolder, cc);
     }

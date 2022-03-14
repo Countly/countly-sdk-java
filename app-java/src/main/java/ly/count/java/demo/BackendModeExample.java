@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Scanner;
 
 public class BackendModeExample {
+    final static String DEVICE_ID = "device-id";
     final static String COUNTLY_APP_KEY = "YOUR_APP_KEY";
     final static String COUNTLY_SERVER_URL = "https://try.count.ly/";
 
@@ -18,7 +19,7 @@ public class BackendModeExample {
             put("Retry Attempts", "60");
         }};
 
-        Countly.backendMode().recordEvent("8c1d653f8f474be24958b282d5e9b4c4209ee552", "Event Key", 1, 0, 5, segment, 0);
+        Countly.backendMode().recordEvent(DEVICE_ID, "Event Key", 1, 0, 5, segment, 0);
     }
 
     static void setLocation() {
@@ -49,8 +50,7 @@ public class BackendModeExample {
 
         userDetail.put("custom", customDetail);
 
-
-        Countly.backendMode().recordUserProperties("8c1d653f8f474be24958b282d5e9b4c4209ee552", userDetail, 0);
+        Countly.backendMode().recordUserProperties(DEVICE_ID, userDetail, 0);
     }
 
     static void recordView() {
@@ -62,7 +62,7 @@ public class BackendModeExample {
             put("start", "1");
         }};
 
-        Countly.backendMode().recordView("8c1d653f8f474be24958b282d5e9b4c4209ee552", "[CLY]_view", segmentation, 0);
+        Countly.backendMode().recordView(DEVICE_ID, "[CLY]_view", segmentation, 1646640780130L);
     }
 
     static void recordCrash() {
@@ -72,7 +72,7 @@ public class BackendModeExample {
         try {
             int a = 10 / 0;
         } catch (Exception e) {
-            Countly.backendMode().recordException("8c1d653f8f474be24958b282d5e9b4c4209ee552", e, segmentation, 0);
+            Countly.backendMode().recordException(DEVICE_ID, e, segmentation, 0);
         }
     }
 
@@ -83,20 +83,20 @@ public class BackendModeExample {
         try {
             int a = 10 / 0;
         } catch (Exception e) {
-            Countly.backendMode().recordException("8c1d653f8f474be24958b282d5e9b4c4209ee552", "Divided By Zero", "stack traces", segmentation, 0);
+            Countly.backendMode().recordException(DEVICE_ID, "Divided By Zero", "stack traces", segmentation, 0);
         }
     }
 
     static void sessionBegin() {
-        Countly.backendMode().sessionBegin("8c1d653f8f474be24958b282d5e9b4c4209ee552", 0);
+        Countly.backendMode().sessionBegin(DEVICE_ID, 0);
     }
 
     static void sessionUpdate() {
-        Countly.backendMode().sessionUpdate("8c1d653f8f474be24958b282d5e9b4c4209ee552", 10, 0);
+        Countly.backendMode().sessionUpdate(DEVICE_ID, 10, 0);
     }
 
     static void sessionEnd() {
-        Countly.backendMode().sessionEnd("8c1d653f8f474be24958b282d5e9b4c4209ee552", 20, 0);
+        Countly.backendMode().sessionEnd(DEVICE_ID, 20, 0);
     }
 
     public static void main(String[] args) throws Exception {
@@ -105,6 +105,7 @@ public class BackendModeExample {
 
         Config config = new Config(COUNTLY_SERVER_URL, COUNTLY_APP_KEY)
                 .setLoggingLevel(Config.LoggingLevel.DEBUG)
+                .enableBackendMode()
                 .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
                 .setRequiresConsent(false)
                 .enableParameterTamperingProtection("test-salt-checksum")

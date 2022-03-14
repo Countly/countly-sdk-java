@@ -663,12 +663,10 @@ public class Config {
 
     /**
      * Enable SDK's backend mode.
-     *
-     * @param enableBackendMode whether the majority of the SDK calls don't work anymore and only a few special calls work.
      * @return {@code this} instance for method chaining
      */
-    public Config enableBackendMode(boolean enableBackendMode) {
-        this.enableBackendMode = enableBackendMode;
+    public Config enableBackendMode() {
+        this.enableBackendMode = true;
         return this;
     }
 
