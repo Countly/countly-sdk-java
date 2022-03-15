@@ -14,9 +14,9 @@ public class BackendModeExample {
     final static String COUNTLY_SERVER_URL = "https://try.count.ly/";
 
     static void recordEvent() {
-        Map<String, String> segment = new HashMap<String, String>() {{
-            put("Time Spent", "60");
-            put("Retry Attempts", "60");
+        Map<String, Object> segment = new HashMap<String, Object>() {{
+            put("Time Spent", 60);
+            put("Retry Attempts", 60);
         }};
 
         Countly.backendMode().recordEvent(DEVICE_ID, "Event Key", 1, 0, 5, segment, 0);
@@ -55,7 +55,7 @@ public class BackendModeExample {
 
     static void recordView() {
 
-        Map<String, String> segmentation = new HashMap<String, String>() {{
+        Map<String, Object> segmentation = new HashMap<String, Object>() {{
             put("name", "SampleView");
             put("visit", "1");
             put("segment", "Windows");
@@ -66,7 +66,7 @@ public class BackendModeExample {
     }
 
     static void recordCrash() {
-        Map<String, String> segmentation = new HashMap<String, String>() {{
+        Map<String, Object> segmentation = new HashMap<String, Object>() {{
             put("login page", "authenticate request");
         }};
         try {
@@ -77,7 +77,7 @@ public class BackendModeExample {
     }
 
     static void recordAnotherCrash() {
-        Map<String, String> segmentation = new HashMap<String, String>() {{
+        Map<String, Object> segmentation = new HashMap<String, Object>() {{
             put("login page", "authenticate request");
         }};
         try {

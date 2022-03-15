@@ -553,7 +553,7 @@ public class UserEditorImpl implements UserEditor {
         }
 
         if(SDKCore.instance.config.isBackendModeEnable()) {
-            L.w("Skipping user detail - Backend mode is enabled!");
+            L.w("Skipping user detail, backend mode is enabled!");
             return null;
         }
 

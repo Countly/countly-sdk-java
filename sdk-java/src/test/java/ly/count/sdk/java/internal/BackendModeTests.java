@@ -15,13 +15,11 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.mockito.Mockito.mock;
-
 @RunWith(JUnit4.class)
 public class BackendModeTests {
-    private CtxCore ctx;
     InternalConfig config;
     ModuleBackendMode moduleBackendMode;
+    private CtxCore ctx;
 
     @BeforeClass
     public static void init() {
@@ -30,6 +28,11 @@ public class BackendModeTests {
                 .enableBackendMode();
         File targetFolder = new File("C:\\Users\\zahid\\Documents\\Countly\\data");
         Countly.init(targetFolder, cc);
+    }
+
+    @AfterClass
+    public static void stop() throws Exception {
+        Countly.stop(false);
     }
 
     @Before
@@ -45,11 +48,6 @@ public class BackendModeTests {
         moduleBackendMode.eventQueues.clear();
     }
 
-    @AfterClass
-    public static void stop() throws Exception {
-        Countly.stop(false);
-    }
-
     @Test
     public void backendModeConfigTest() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
@@ -61,7 +59,7 @@ public class BackendModeTests {
     public void viewFieldsTest() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
-        Map<String, String> segmentation = new HashMap<String, String>() {{
+        Map<String, Object> segmentation = new HashMap<String, Object>() {{
             put("name", "SampleView");
             put("visit", "1");
             put("segment", "Windows");
@@ -76,12 +74,7 @@ public class BackendModeTests {
         Assert.assertEquals(1L, moduleBackendMode.eventQSize);
 
         JSONObject event = events.getJSONObject(0);
-        Assert.assertEquals("[CLY]_view", event.get("key"));
-
-        Assert.assertEquals(1, event.get("count"));
-        Assert.assertEquals(1, event.get("dow"));
-        Assert.assertEquals(13, event.get("hour"));
-        Assert.assertEquals(1646640780130L, event.get("timestamp"));
+        validateEventFields("[CLY]_view", 1, null, null, 1, 13, 1646640780130L, event);
 
         JSONObject segments = event.getJSONObject("segmentation");
         Assert.assertEquals("SampleView", segments.get("name"));
@@ -94,7 +87,7 @@ public class BackendModeTests {
     public void singleDeviceIdEventTest() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
-        Map<String, String> segmentation = new HashMap<>();
+        Map<String, Object> segmentation = new HashMap<>();
         segmentation.put("key1", "value1");
         segmentation.put("key2", "value2");
 
@@ -106,13 +99,7 @@ public class BackendModeTests {
         Assert.assertEquals(1, moduleBackendMode.eventQSize);
 
         JSONObject event = events.getJSONObject(0);
-        Assert.assertEquals("key-1", event.get("key"));
-        Assert.assertEquals(0.1, event.get("sum"));
-        Assert.assertEquals(1, event.get("count"));
-        Assert.assertEquals(10.0, event.get("dur"));
-        Assert.assertEquals(1, event.get("dow"));
-        Assert.assertEquals(13, event.get("hour"));
-        Assert.assertEquals(1646640780130L, event.get("timestamp"));
+        validateEventFields("key-1", 1, 0.1, 10.0, 1, 13, 1646640780130L, event);
 
         JSONObject segments = event.getJSONObject("segmentation");
         Assert.assertEquals("value1", segments.get("key1"));
@@ -123,11 +110,11 @@ public class BackendModeTests {
     public void multipleDeviceIdEventTest() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
-        Map<String, String> segmentation = new HashMap<>();
+        Map<String, Object> segmentation = new HashMap<>();
         segmentation.put("key1", "value1");
         segmentation.put("key2", "value2");
 
-        Map<String, String> segmentation1 = new HashMap<>();
+        Map<String, Object> segmentation1 = new HashMap<>();
         segmentation1.put("key3", "value3");
         segmentation1.put("key4", "value4");
 
@@ -145,13 +132,8 @@ public class BackendModeTests {
         Assert.assertEquals(2, events.length());
 
         JSONObject event = events.getJSONObject(0);
-        Assert.assertEquals("key-2", event.get("key"));
-        Assert.assertEquals(0.1, event.get("sum"));
-        Assert.assertEquals(1, event.get("count"));
-        Assert.assertEquals(10.0, event.get("dur"));
-        Assert.assertEquals(1, event.get("dow"));
-        Assert.assertEquals(13, event.get("hour"));
-        Assert.assertEquals(1646640780130L, event.get("timestamp"));
+        validateEventFields("key-2", 1, 0.1, 10.0, 1, 13, 1646640780130L, event);
+
 
         JSONObject segments = event.getJSONObject("segmentation");
         Assert.assertEquals("value1", segments.get("key1"));
@@ -163,12 +145,8 @@ public class BackendModeTests {
 
         event = events.getJSONObject(0);
         Assert.assertEquals("key-2", event.get("key"));
-        Assert.assertEquals(0.1, event.get("sum"));
-        Assert.assertEquals(1, event.get("count"));
-        Assert.assertEquals(10.0, event.get("dur"));
-        Assert.assertEquals(1, event.get("dow"));
-        Assert.assertEquals(13, event.get("hour"));
-        Assert.assertEquals(1646640780130L, event.get("timestamp"));
+        validateEventFields("key-2", 1, 0.1, 10.0, 1, 13, 1646640780130L, event);
+
 
         segments = event.getJSONObject("segmentation");
         Assert.assertEquals("value1", segments.get("key1"));
@@ -176,12 +154,8 @@ public class BackendModeTests {
 
         event = events.getJSONObject(1);
         Assert.assertEquals("key-3", event.get("key"));
-        Assert.assertEquals(0.2, event.get("sum"));
-        Assert.assertEquals(2, event.get("count"));
-        Assert.assertEquals(20.0, event.get("dur"));
-        Assert.assertEquals(1, event.get("dow"));
-        Assert.assertEquals(14, event.get("hour"));
-        Assert.assertEquals(1646644457826L, event.get("timestamp"));
+        validateEventFields("key-3", 2, 0.2, 20.0, 1, 14, 1646644457826L, event);
+
 
         segments = event.getJSONObject("segmentation");
         Assert.assertEquals("value3", segments.get("key3"));
@@ -192,11 +166,11 @@ public class BackendModeTests {
     public void eventThreshHoldTest() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
-        Map<String, String> segmentation = new HashMap<>();
+        Map<String, Object> segmentation = new HashMap<>();
         segmentation.put("key1", "value1");
         segmentation.put("key2", "value2");
 
-        Map<String, String> segmentation1 = new HashMap<>();
+        Map<String, Object> segmentation1 = new HashMap<>();
         segmentation1.put("key3", "value3");
         segmentation1.put("key4", "value4");
 
@@ -241,11 +215,11 @@ public class BackendModeTests {
     public void eventPackagingOnSessionUpdateTest() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
-        Map<String, String> segmentation = new HashMap<>();
+        Map<String, Object> segmentation = new HashMap<>();
         segmentation.put("key1", "value1");
         segmentation.put("key2", "value2");
 
-        Map<String, String> segmentation1 = new HashMap<>();
+        Map<String, Object> segmentation1 = new HashMap<>();
         segmentation1.put("key3", "value3");
         segmentation1.put("key4", "value4");
 
@@ -280,11 +254,11 @@ public class BackendModeTests {
     public void eventPackagingOnSessionEndTest() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
-        Map<String, String> segmentation = new HashMap<>();
+        Map<String, Object> segmentation = new HashMap<>();
         segmentation.put("key1", "value1");
         segmentation.put("key2", "value2");
 
-        Map<String, String> segmentation1 = new HashMap<>();
+        Map<String, Object> segmentation1 = new HashMap<>();
         segmentation1.put("key3", "value3");
         segmentation1.put("key4", "value4");
 
@@ -324,12 +298,7 @@ public class BackendModeTests {
         Request request = moduleBackendMode.requestQ.remove();
 
         Assert.assertEquals("1", request.params.get("begin_session"));
-        Assert.assertEquals("device-id-1", request.params.get("device_id"));
-
-        Assert.assertEquals("300", request.params.get("tz"));
-        Assert.assertEquals("1", request.params.get("dow"));
-        Assert.assertEquals("13", request.params.get("hour"));
-        Assert.assertEquals("1646640780130", request.params.get("timestamp"));
+        validateRequestTimeFields("device-id-1", 1646640780130L, request);
     }
 
     @Test
@@ -341,12 +310,7 @@ public class BackendModeTests {
         Request request = moduleBackendMode.requestQ.remove();
 
         Assert.assertEquals("10.5", request.params.get("session_duration"));
-        Assert.assertEquals("device-id-1", request.params.get("device_id"));
-
-        Assert.assertEquals("300", request.params.get("tz"));
-        Assert.assertEquals("1", request.params.get("dow"));
-        Assert.assertEquals("13", request.params.get("hour"));
-        Assert.assertEquals("1646640780130", request.params.get("timestamp"));
+        validateRequestTimeFields("device-id-1", 1646640780130L, request);
     }
 
     @Test
@@ -359,18 +323,13 @@ public class BackendModeTests {
 
         Assert.assertEquals("1", request.params.get("end_session"));
         Assert.assertEquals("10.5", request.params.get("session_duration"));
-        Assert.assertEquals("device-id-1", request.params.get("device_id"));
-
-        Assert.assertEquals("300", request.params.get("tz"));
-        Assert.assertEquals("1", request.params.get("dow"));
-        Assert.assertEquals("13", request.params.get("hour"));
-        Assert.assertEquals("1646640780130", request.params.get("timestamp"));
+        validateRequestTimeFields("device-id-1", 1646640780130L, request);
     }
 
     @Test
     public void crashTest() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
-        Map<String, String> segmentation = new HashMap<String, String>() {{
+        Map<String, Object> segmentation = new HashMap<String, Object>() {{
             put("key1", "value1");
         }};
         try {
@@ -391,12 +350,8 @@ public class BackendModeTests {
 
             Assert.assertEquals(e.getMessage(), crashJson.get("_name"));
             Assert.assertEquals(sw.toString(), crashJson.get("_error"));
+            validateRequestTimeFields("device-id-1", 1646640780130L, request);
 
-            Assert.assertEquals("1", request.params.get("dow"));
-            Assert.assertEquals("300", request.params.get("tz"));
-            Assert.assertEquals("13", request.params.get("hour"));
-            Assert.assertEquals("device-id-1", request.params.get("device_id"));
-            Assert.assertEquals("1646640780130", request.params.get("timestamp"));
 
             JSONObject segments = crashJson.getJSONObject("_custom");
             Assert.assertEquals("value1", segments.get("key1"));
@@ -407,22 +362,10 @@ public class BackendModeTests {
             crash = request.params.get("crash");
             crashJson = new JSONObject(crash);
 
-
             Assert.assertEquals("Divided By Zero", crashJson.get("_name"));
             Assert.assertEquals("stack traces", crashJson.get("_error"));
 
-            long timestamp = System.currentTimeMillis();
-
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTimeInMillis(timestamp);
-
-            final int hour = calendar.get(Calendar.HOUR_OF_DAY);
-            final int dow = calendar.get(Calendar.DAY_OF_WEEK) - 1;
-
-            Assert.assertEquals(dow + "", request.params.get("dow"));
-            Assert.assertEquals("300", request.params.get("tz"));
-            Assert.assertEquals(hour + "", request.params.get("hour"));
-            Assert.assertEquals("device-id-2", request.params.get("device_id"));
+            validateRequestTimeFields("device-id-2", System.currentTimeMillis(), request);
 
             segments = crashJson.getJSONObject("_custom");
             Assert.assertTrue(segments.isEmpty());
@@ -460,12 +403,7 @@ public class BackendModeTests {
 
         Assert.assertEquals(1, moduleBackendMode.requestQ.size());
         Request request = moduleBackendMode.requestQ.remove();
-
-        Assert.assertEquals("1", request.params.get("dow"));
-        Assert.assertEquals("300", request.params.get("tz"));
-        Assert.assertEquals("13", request.params.get("hour"));
-        Assert.assertEquals("device-id-1", request.params.get("device_id"));
-        Assert.assertEquals("1646640780130", request.params.get("timestamp"));
+        validateRequestTimeFields("device-id-1", 1646640780130L, request);
 
         String userDetails = request.params.get("user_details");
 
@@ -488,5 +426,30 @@ public class BackendModeTests {
 
         //Operations
         Assert.assertEquals(1, operationsJson.get("$inc"));
+    }
+
+    private void validateEventFields(String key, int count, Double sum, Double dur, int dow, int hour, long timestamp, JSONObject event) {
+        Assert.assertEquals(key, event.get("key"));
+        Assert.assertEquals(sum, event.opt("sum"));
+        Assert.assertEquals(count, event.get("count"));
+        Assert.assertEquals(dur, event.opt("dur"));
+
+        Assert.assertEquals(dow, event.get("dow"));
+        Assert.assertEquals(hour, event.get("hour"));
+        Assert.assertEquals(timestamp, event.get("timestamp"));
+    }
+
+    private void validateRequestTimeFields(String deviceID, long timestamp, Request request) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(timestamp);
+
+        final int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        final int dow = calendar.get(Calendar.DAY_OF_WEEK) - 1;
+
+        Assert.assertEquals(DeviceCore.dev.getTimezoneOffset() + "", request.params.get("tz"));
+        Assert.assertEquals(dow + "", request.params.get("dow"));
+        Assert.assertEquals(hour + "", request.params.get("hour"));
+        Assert.assertEquals(deviceID, request.params.get("device_id"));
+        Assert.assertEquals(timestamp + "", request.params.get("timestamp"));
     }
 }

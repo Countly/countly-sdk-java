@@ -96,7 +96,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     @Override
     public Session begin() {
         if(ctx.getConfig().isBackendModeEnable()) {
-            L.w("Skipping session begin - Backend mode is enabled!");
+            L.w("Skipping session begin, backend mode is enabled!");
             return this;
         }
 
@@ -135,7 +135,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     @Override
     public Session update() {
         if(ctx.getConfig().isBackendModeEnable()) {
-            L.w("Skipping session update - Backend mode is enabled!");
+            L.w("Skipping session update, backend mode is enabled!");
             return this;
         }
 
@@ -170,7 +170,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     @Override
     public void end() {
         if(ctx.getConfig().isBackendModeEnable()) {
-            L.w("Skipping session end - Backend mode is enabled!");
+            L.w("Skipping session end, backend mode is enabled!");
             return;
         }
 
@@ -327,7 +327,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     @Override
     public Session addCrashReport(Throwable t, boolean fatal, String name, Map<String, String> segments, String... logs) {
         if(ctx.getConfig().isBackendModeEnable()) {
-            L.w("Skipping crash - Backend mode is enabled!");
+            L.w("Skipping crash, backend mode is enabled!");
             return this;
         }
 
@@ -342,7 +342,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     @Override
     public Session addLocation(double latitude, double longitude) {
         if(ctx.getConfig().isBackendModeEnable()) {
-            L.w("Skipping location - Backend mode is enabled!");
+            L.w("Skipping location, backend mode is enabled!");
             return this;
         }
 
@@ -400,7 +400,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     @Override
     public Usage changeDeviceIdWithMerge(String id) {
         if(ctx.getConfig().isBackendModeEnable()) {
-            L.w("Skipping change device id with merge - Backend mode is enabled!");
+            L.w("Skipping change device id with merge, backend mode is enabled!");
             return this;
         }
 
@@ -412,7 +412,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     @Override
     public Usage changeDeviceIdWithoutMerge(String id) {
         if(ctx.getConfig().isBackendModeEnable()) {
-            L.w("Skipping change device id without merge - Backend mode is enabled!");
+            L.w("Skipping change device id without merge, backend mode is enabled!");
             return this;
         }
 
