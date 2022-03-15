@@ -1,6 +1,5 @@
 package ly.count.sdk.java.internal;
 
-import ly.count.sdk.java.Countly;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -22,10 +21,10 @@ public class ModuleBackendMode extends ModuleBase {
     //when a module is disabled, developer facing functions do nothing
     protected boolean disabledModule = false;
 
-    private int eventQSize = 0;
+    protected int eventQSize = 0;
     protected boolean defferUpload = false;
-    private final Queue<Request> requestQ = new LinkedList<>();
-    private final Map<String, JSONArray> eventQueues = new HashMap<>();
+    protected final Queue<Request> requestQ = new LinkedList<>();
+    protected final Map<String, JSONArray> eventQueues = new HashMap<>();
 
     private Tasks tasks;
     private Transport transport;
@@ -199,22 +198,6 @@ public class ModuleBackendMode extends ModuleBase {
                 }
             }
         };
-    }
-
-    public int getEventQSize() {
-        return eventQSize;
-    }
-
-    public void setEventQSize(int eventQSize) {
-        this.eventQSize = eventQSize;
-    }
-
-    public Queue<Request> getRequestQ() {
-        return requestQ;
-    }
-
-    public Map<String, JSONArray> getEventQueues() {
-        return eventQueues;
     }
 
     public class BackendMode {
@@ -431,7 +414,7 @@ public class ModuleBackendMode extends ModuleBase {
             requestQ.add(request);
         }
 
-        public ModuleBase getModule() {
+        protected ModuleBase getModule() {
             return ModuleBackendMode.this;
         }
     }
