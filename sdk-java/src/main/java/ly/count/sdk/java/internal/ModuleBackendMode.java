@@ -84,6 +84,8 @@ public class ModuleBackendMode extends ModuleBase {
 
 
     private void recordEventInternal(String deviceID, String key, int count, double sum, double dur, Map<String, String> segmentation, long timestamp) {
+        L.i(String.format("recordEventInternal: deviceID = %s, key = %s,, count = %d, sum = %f, dur = %f, segmentation = %s, timestamp = %d", deviceID, key, count, sum, dur, segmentation, timestamp));
+
         JSONObject jsonObject = buildEventJSONObject(key, count, sum, dur, segmentation, timestamp < 1 ? DeviceCore.dev.uniqueTimestamp() : timestamp);
 
         if (!eventQueues.containsKey(deviceID)) {
@@ -121,6 +123,8 @@ public class ModuleBackendMode extends ModuleBase {
         jsonObject.put("hour", hour);
         jsonObject.put("timestamp", timestamp);
 
+        L.i(String.format("buildEventJSONObject: jsonObject = %s", jsonObject));
+
         return jsonObject;
     }
 
@@ -138,7 +142,8 @@ public class ModuleBackendMode extends ModuleBase {
     }
 
     private void addEventsAgainstDeviceIdToRequestQ(String deviceID, JSONArray events) {
-        //TODO: Need to verify order of events.
+        L.i(String.format("addEventsAgainstDeviceIdToRequestQ: deviceID = %s, events = %s", deviceID, events));
+
         Request request = new Request();
         request.params.add("device_id", deviceID);
         request.params.add("events", events);
@@ -148,6 +153,8 @@ public class ModuleBackendMode extends ModuleBase {
     }
 
     private void addEventsToRequestQ() {
+        L.i(String.format("addEventsToRequestQ"));
+
         for (Map.Entry<String, JSONArray> entry : eventQueues.entrySet()) {
             addEventsAgainstDeviceIdToRequestQ(entry.getKey(), entry.getValue());
         }
@@ -158,6 +165,8 @@ public class ModuleBackendMode extends ModuleBase {
     }
 
     private void processRequestQ() {
+        L.i(String.format("processRequestQ: requestQ-size = %d", requestQ.size()));
+
         if (defferUpload) {
             return;
         }
@@ -171,25 +180,27 @@ public class ModuleBackendMode extends ModuleBase {
     }
 
     private Tasks.Task<Boolean> sendRequest(final Request request) {
+        L.i(String.format("sendRequest: request = %s", request));
+
         return new Tasks.Task<Boolean>(Tasks.ID_STRICT) {
             @Override
             public Boolean call() throws Exception {
                 if (request == null) {
                     return false;
                 } else {
-                    L.d("Preparing request: " + request);
+                    L.i("sendRequest: Preparing request: " + request);
                     final Boolean check = SDKCore.instance.isRequestReady(request);
                     if (check == null) {
-                        L.d("Request is not ready yet: " + request);
+                        L.i("sendRequest: Request is not ready yet: " + request);
                         return false;
                     } else if (check.equals(Boolean.FALSE)) {
-                        L.d("Request won't be ready, removing: " + request);
+                        L.d("sendRequest: Request won't be ready, removing: " + request);
                         return true;
                     } else {
                         tasks.run(transport.send(request), new Tasks.Callback<Boolean>() {
                             @Override
                             public void call(Boolean result) throws Exception {
-                                L.d("Request " + request.storageId() + " sent?: " + result);
+                                L.d("sendRequest: Request " + request.storageId() + " sent?: " + result);
                                 processRequestQ();
                             }
                         });
@@ -202,18 +213,19 @@ public class ModuleBackendMode extends ModuleBase {
 
     public class BackendMode {
         public void recordView(String deviceID, String key, Map<String, String> segmentation, long timestamp) {
+            L.d(String.format(":recordView: deviceID = %s, key = %s, segmentation = %s, timestamp = %d", deviceID, key, segmentation, timestamp));
             if (!internalConfig.isBackendModeEnable()) {
-                L.wtf("[Countly][BackendMode][recordView] BackendMode is not enable.");
+                L.e("recordView: BackendMode is not enable.");
                 return;
             }
 
             if (deviceID == null || deviceID.isEmpty()) {
-                L.wtf("[Countly][BackendMode][recordView] DeviceID can not be null or empty.");
+                L.e("recordView: DeviceID can not be null or empty.");
                 return;
             }
 
             if (key == null || key.isEmpty()) {
-                L.wtf("[Countly][BackendMode][recordView] Key can not be null or empty.");
+                L.e("recordView: Key can not be null or empty.");
                 return;
             }
 
@@ -221,18 +233,20 @@ public class ModuleBackendMode extends ModuleBase {
         }
 
         public void recordEvent(String deviceID, String key, int count, double sum, double dur, Map<String, String> segmentation, long timestamp) {
+            L.d(String.format("recordEvent: deviceID = %s, key = %s, count = %d, sum = %f, dur = %f, segmentation = %s, timestamp = %d", deviceID, key, count, sum, dur, segmentation, timestamp));
+
             if (!internalConfig.isBackendModeEnable()) {
-                L.wtf("[Countly][BackendMode][recordEvent] BackendMode is not enable.");
+                L.e("recordEvent: BackendMode is not enable.");
                 return;
             }
 
             if (deviceID == null || deviceID.isEmpty()) {
-                L.wtf("[Countly][BackendMode][recordEvent] DeviceID can not be null or empty.");
+                L.e("recordEvent: DeviceID can not be null or empty.");
                 return;
             }
 
             if (key == null || key.isEmpty()) {
-                L.wtf("[Countly][BackendMode][recordEvent] Event key can not be null or empty.");
+                L.e("recordEvent: Event key can not be null or empty.");
                 return;
             }
 
@@ -240,13 +254,15 @@ public class ModuleBackendMode extends ModuleBase {
         }
 
         public void sessionBegin(String deviceID, long timestamp) {
+            L.d(String.format("sessionBegin: deviceID = %s, timestamp = %d", deviceID, timestamp));
+
             if (!internalConfig.isBackendModeEnable()) {
-                L.wtf("[Countly][BackendMode][recordEvent] BackendMode is not enable.");
+                L.e("sessionBegin: BackendMode is not enable.");
                 return;
             }
 
             if (deviceID == null || deviceID.isEmpty()) {
-                L.wtf("[Countly][BackendMode][sessionBegin] DeviceID can not be null or empty.");
+                L.e("sessionBegin: DeviceID can not be null or empty.");
                 return;
             }
 
@@ -254,13 +270,15 @@ public class ModuleBackendMode extends ModuleBase {
         }
 
         public void sessionUpdate(String deviceID, double duration, long timestamp) {
+            L.d(String.format("sessionUpdate: deviceID = %s, duration = %f, timestamp = %d", deviceID, duration, timestamp));
+
             if (!internalConfig.isBackendModeEnable()) {
-                L.wtf("[Countly][BackendMode][sessionUpdate] BackendMode is not enable.");
+                L.e("sessionUpdate: BackendMode is not enable.");
                 return;
             }
 
             if (deviceID == null || deviceID.isEmpty()) {
-                L.wtf("[Countly][BackendMode][sessionUpdate] DeviceID can not be null or empty.");
+                L.e("sessionUpdate: DeviceID can not be null or empty.");
                 return;
             }
 
@@ -268,13 +286,15 @@ public class ModuleBackendMode extends ModuleBase {
         }
 
         public void sessionEnd(String deviceID, double duration, long timestamp) {
+            L.d(String.format("sessionEnd: deviceID = %s, duration = %f, timestamp = %d", deviceID, duration, timestamp));
+
             if (!internalConfig.isBackendModeEnable()) {
-                L.wtf("[Countly][BackendMode][sessionEnd] BackendMode is not enable.");
+                L.e("sessionEnd: BackendMode is not enable.");
                 return;
             }
 
             if (deviceID == null || deviceID.isEmpty()) {
-                L.wtf("[Countly][BackendMode][sessionEnd] DeviceID can not be null or empty.");
+                L.e("sessionEnd: DeviceID can not be null or empty.");
                 return;
             }
 
@@ -282,18 +302,20 @@ public class ModuleBackendMode extends ModuleBase {
         }
 
         public void recordException(String deviceID, Throwable throwable, Map<String, String> segmentation, long timestamp) {
+            L.d(String.format("recordException: deviceID = %s, throwable = %s, segmentation = %s, timestamp = %d", deviceID, throwable, segmentation, timestamp));
+
             if (!internalConfig.isBackendModeEnable()) {
-                L.wtf("[Countly][BackendMode][recordException] BackendMode is not enable.");
+                L.e("recordException BackendMode is not enable.");
                 return;
             }
 
             if (deviceID == null || deviceID.isEmpty()) {
-                L.wtf("[Countly][BackendMode][recordException] DeviceID can not be null or empty.");
+                L.e("recordException: DeviceID can not be null or empty.");
                 return;
             }
 
             if (throwable == null) {
-                L.wtf("[Countly][BackendMode][recordException] throwable can not be null.");
+                L.e("recordException: throwable can not be null.");
                 return;
             }
 
@@ -305,22 +327,25 @@ public class ModuleBackendMode extends ModuleBase {
         }
 
         public void recordException(String deviceID, String message, String stacktrace, Map<String, String> segmentation, long timestamp) {
+            L.d(String.format("recordException: deviceID = %s, message = %s, stacktrace = %s, segmentation = %s, timestamp = %d", deviceID, message, stacktrace, segmentation, timestamp));
+
             if (!internalConfig.isBackendModeEnable()) {
-                L.wtf("[Countly][BackendMode][recordException] BackendMode is not enable.");
+                L.e("[Countly][BackendMode][recordException] BackendMode is not enable.");
                 return;
             }
 
             if (deviceID == null || deviceID.isEmpty()) {
-                L.wtf("[Countly][BackendMode][recordException] DeviceID can not be null or empty.");
+                L.e("recordException: DeviceID can not be null or empty.");
                 return;
             }
+
             if (message == null || message.isEmpty()) {
-                L.wtf("[Countly][BackendMode][recordException] message can not be null or empty.");
+                L.e("recordException: message can not be null or empty.");
                 return;
             }
 
             if (stacktrace == null) {
-                L.wtf("[Countly][BackendMode][recordException] stacktrace can not be null.");
+                L.e("recordException: stacktrace can not be null.");
                 return;
             }
 
@@ -328,17 +353,19 @@ public class ModuleBackendMode extends ModuleBase {
         }
 
         public void recordUserProperties(String deviceID, Map<String, Object> userProperties, long timestamp) {
+            L.d(String.format("recordUserProperties: deviceID = %s, userProperties = %s, timestamp = %d", deviceID, userProperties, timestamp));
+
             if (!internalConfig.isBackendModeEnable()) {
-                L.wtf("[Countly][BackendMode][recordUserProperties] BackendMode is not enable.");
+                L.e("recordUserProperties: BackendMode is not enable.");
                 return;
             }
 
             if (deviceID == null || deviceID.isEmpty()) {
-                L.wtf("[Countly][BackendMode][recordUserProperties] DeviceID can not be null or empty.");
+                L.e("recordUserProperties: DeviceID can not be null or empty.");
                 return;
             }
             if (userProperties == null || userProperties.isEmpty()) {
-                L.wtf("[Countly][BackendMode][recordUserProperties] userProperties can not be null or empty.");
+                L.e("recordUserProperties: userProperties can not be null or empty.");
                 return;
             }
 
@@ -346,6 +373,8 @@ public class ModuleBackendMode extends ModuleBase {
         }
 
         private void sessionBeginInternal(String deviceID, long timestamp) {
+            L.i(String.format("sessionBeginInternal: deviceID = %s, timestamp = %d", deviceID, timestamp));
+
             Request request = new Request();
             request.params.add("device_id", deviceID);
             request.params.add("begin_session", 1);
@@ -357,6 +386,8 @@ public class ModuleBackendMode extends ModuleBase {
         }
 
         private void sessionUpdateInternal(String deviceID, double duration, long timestamp) {
+            L.i(String.format("sessionUpdateInternal: deviceID = %s, duration = %f, timestamp = %d", deviceID, duration, timestamp));
+
             Request request = new Request();
             request.params.add("device_id", deviceID);
             request.params.add("session_duration", duration);
@@ -368,6 +399,8 @@ public class ModuleBackendMode extends ModuleBase {
         }
 
         private void sessionEndInternal(String deviceID, double duration, long timestamp) {
+            L.i(String.format("sessionEndInternal: deviceID = %s, duration = %f, timestamp = %d", deviceID, duration, timestamp));
+
             //Add events against device ID to request Q
             JSONArray events = eventQueues.get(deviceID);
             if (events != null && events.length() > 0) {
@@ -388,6 +421,8 @@ public class ModuleBackendMode extends ModuleBase {
         }
 
         public void recordExceptionInternal(String deviceID, String message, String stacktrace, Map<String, String> segmentation, long timestamp) {
+            L.i(String.format("recordExceptionInternal: deviceID = %s, message = %s, stacktrace = %s, segmentation = %s, timestamp = %d", deviceID, message, stacktrace, segmentation, timestamp));
+
             JSONObject crash = new JSONObject();
             crash.put("_error", stacktrace);
             crash.put("_custom", segmentation);
@@ -404,6 +439,8 @@ public class ModuleBackendMode extends ModuleBase {
         }
 
         private void recordUserPropertiesInternal(String deviceID, Map<String, Object> userProperties, long timestamp) {
+            L.i(String.format("recordUserPropertiesInternal: deviceID = %s, userProperties = %s, timestamp = %d", deviceID, userProperties, timestamp));
+
             Request request = new Request();
             JSONObject properties = new JSONObject(userProperties);
 
