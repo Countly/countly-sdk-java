@@ -267,30 +267,7 @@ public class ModuleBackendMode extends ModuleBase {
                 return;
             }
 
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTimeInMillis(timestamp);
-
-            final int hour = calendar.get(Calendar.HOUR_OF_DAY);
-            final int dow = calendar.get(Calendar.DAY_OF_WEEK) - 1;
-
-            Request request = new Request();
-            request.params.add("device_id", deviceID);
-            request.params.add("begin_session", 1);
-
-            request.params.add("dow", dow);
-            request.params.add("hour", hour);
-            request.params.add("timestamp", timestamp);
-            request.params.add("tz", DeviceCore.dev.getTimezoneOffset());
-
-//            JSONObject metrics = new JSONObject();
-//            metrics.put("_os", "Windows 10");
-//            metrics.put("_os_version", "10.0");
-//            metrics.put("_locale", "en_GB");
-//            metrics.put("_store", "Windows 10");
-//
-//            request.params.add("metrics", metrics);
-            requestQ.add(request);
-            processRequestQ();
+            sessionBeginInternal(deviceID, timestamp < 1 ? System.currentTimeMillis() : timestamp);
         }
 
         public void sessionUpdate(String deviceID, double duration, long timestamp) {
@@ -304,14 +281,7 @@ public class ModuleBackendMode extends ModuleBase {
                 return;
             }
 
-            Request request = new Request();
-            request.params.add("device_id", deviceID);
-            request.params.add("session_duration", duration);
-
-            addTimeInfoIntoRequest(request, timestamp < 1 ? System.currentTimeMillis() : timestamp);
-            requestQ.add(request);
-
-            addEventsToRequestQ();
+            sessionUpdateInternal(deviceID, duration, timestamp < 1 ? System.currentTimeMillis() : timestamp);
         }
 
         public void sessionEnd(String deviceID, double duration, long timestamp) {
@@ -325,23 +295,7 @@ public class ModuleBackendMode extends ModuleBase {
                 return;
             }
 
-            //Add events against device ID to request Q
-            JSONArray events = eventQueues.get(deviceID);
-            if (events != null && events.length() > 0) {
-                addEventsAgainstDeviceIdToRequestQ(deviceID, events);
-                eventQSize -= events.length();
-                eventQueues.remove(deviceID);
-            }
-
-            Request request = new Request();
-            request.params.add("device_id", deviceID);
-            request.params.add("end_session", 1);
-            request.params.add("session_duration", duration);
-
-            addTimeInfoIntoRequest(request, timestamp < 1 ? System.currentTimeMillis() : timestamp);
-            requestQ.add(request);
-
-            processRequestQ();
+            sessionEndInternal(deviceID, duration, timestamp < 1 ? System.currentTimeMillis() : timestamp);
         }
 
         public void recordException(String deviceID, Throwable throwable, Map<String, String> segmentation, long timestamp) {
@@ -364,7 +318,7 @@ public class ModuleBackendMode extends ModuleBase {
             PrintWriter pw = new PrintWriter(sw);
             throwable.printStackTrace(pw);
 
-            recordException(deviceID, throwable.getMessage(), sw.toString(), segmentation, timestamp);
+            recordExceptionInternal(deviceID, throwable.getMessage(), sw.toString(), segmentation, timestamp < 1 ? System.currentTimeMillis() : timestamp);
         }
 
         public void recordException(String deviceID, String message, String stacktrace, Map<String, String> segmentation, long timestamp) {
@@ -387,19 +341,7 @@ public class ModuleBackendMode extends ModuleBase {
                 return;
             }
 
-            JSONObject crash = new JSONObject();
-            crash.put("_error", stacktrace);
-            crash.put("_custom", segmentation);
-            crash.put("_name", message);
-            //crash.put("_nonfatal", true);
-
-            Request request = new Request();
-            request.params.add("device_id", deviceID);
-            request.params.add("crash", crash);
-
-            addTimeInfoIntoRequest(request, timestamp < 1 ? System.currentTimeMillis() : timestamp);
-
-            requestQ.add(request);
+            recordExceptionInternal(deviceID, message, stacktrace, segmentation, timestamp < 1 ? System.currentTimeMillis() : timestamp);
         }
 
         public void recordUserProperties(String deviceID, Map<String, Object> userProperties, long timestamp) {
@@ -417,13 +359,75 @@ public class ModuleBackendMode extends ModuleBase {
                 return;
             }
 
+            recordUserPropertiesInternal(deviceID, userProperties, timestamp < 1 ? System.currentTimeMillis() : timestamp);
+        }
+
+        private void sessionBeginInternal(String deviceID, long timestamp) {
+            Request request = new Request();
+            request.params.add("device_id", deviceID);
+            request.params.add("begin_session", 1);
+
+            addTimeInfoIntoRequest(request, timestamp);
+
+            requestQ.add(request);
+            processRequestQ();
+        }
+
+        private void sessionUpdateInternal(String deviceID, double duration, long timestamp) {
+            Request request = new Request();
+            request.params.add("device_id", deviceID);
+            request.params.add("session_duration", duration);
+
+            addTimeInfoIntoRequest(request, timestamp);
+            requestQ.add(request);
+
+            addEventsToRequestQ();
+        }
+
+        private void sessionEndInternal(String deviceID, double duration, long timestamp) {
+            //Add events against device ID to request Q
+            JSONArray events = eventQueues.get(deviceID);
+            if (events != null && events.length() > 0) {
+                addEventsAgainstDeviceIdToRequestQ(deviceID, events);
+                eventQSize -= events.length();
+                eventQueues.remove(deviceID);
+            }
+
+            Request request = new Request();
+            request.params.add("device_id", deviceID);
+            request.params.add("end_session", 1);
+            request.params.add("session_duration", duration);
+
+            addTimeInfoIntoRequest(request, timestamp);
+            requestQ.add(request);
+
+            processRequestQ();
+        }
+
+        public void recordExceptionInternal(String deviceID, String message, String stacktrace, Map<String, String> segmentation, long timestamp) {
+            JSONObject crash = new JSONObject();
+            crash.put("_error", stacktrace);
+            crash.put("_custom", segmentation);
+            crash.put("_name", message);
+            //crash.put("_nonfatal", true);
+
+            Request request = new Request();
+            request.params.add("device_id", deviceID);
+            request.params.add("crash", crash);
+
+            addTimeInfoIntoRequest(request, timestamp);
+
+            requestQ.add(request);
+        }
+
+        private void recordUserPropertiesInternal(String deviceID, Map<String, Object> userProperties, long timestamp) {
             Request request = new Request();
             JSONObject properties = new JSONObject(userProperties);
 
             request.params.add("device_id", deviceID);
             request.params.add("user_details", properties);
 
-            addTimeInfoIntoRequest(request, timestamp < 1 ? System.currentTimeMillis() : timestamp);
+            addTimeInfoIntoRequest(request, timestamp);
             requestQ.add(request);
         }
 

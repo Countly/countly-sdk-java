@@ -1217,6 +1217,7 @@ public class Config {
     public boolean isUsePOST() {
         return usePOST;
     }
+
     /**
      * Getter for {@link #enableBackendMode}
      * @return {@link #enableBackendMode} value

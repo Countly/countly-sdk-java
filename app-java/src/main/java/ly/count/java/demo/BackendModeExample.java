@@ -45,7 +45,7 @@ public class BackendModeExample {
         // Operations: inc, mul
         Map<String, Object> operations = new HashMap<>();
         operations.put("$inc", 1);
-         //property 'weight', operation 'increment'
+        // property 'weight', operation 'increment'
         customDetail.put("weight", operations);
 
         userDetail.put("custom", customDetail);
@@ -85,18 +85,6 @@ public class BackendModeExample {
         } catch (Exception e) {
             Countly.backendMode().recordException(DEVICE_ID, "Divided By Zero", "stack traces", segmentation, 0);
         }
-    }
-
-    static void sessionBegin() {
-        Countly.backendMode().sessionBegin(DEVICE_ID, 0);
-    }
-
-    static void sessionUpdate() {
-        Countly.backendMode().sessionUpdate(DEVICE_ID, 10, 0);
-    }
-
-    static void sessionEnd() {
-        Countly.backendMode().sessionEnd(DEVICE_ID, 20, 0);
     }
 
     public static void main(String[] args) throws Exception {
@@ -155,13 +143,13 @@ public class BackendModeExample {
                     recordAnotherCrash();
                     break;
                 case 6:
-                    sessionBegin();
+                    Countly.backendMode().sessionBegin(DEVICE_ID, 0);
                     break;
                 case 7:
-                    sessionUpdate();
+                    Countly.backendMode().sessionUpdate(DEVICE_ID, 10, 0);
                     break;
                 case 8:
-                    sessionEnd();
+                    Countly.backendMode().sessionEnd(DEVICE_ID, 20, 0);
                     break;
                 default:
                     break;
