@@ -103,7 +103,7 @@ public class ModuleBackendMode extends ModuleBase {
         }
     }
 
-    private void sessionBeginInternal(String deviceID, long timestamp) {
+    private void sessionBeginInternal(String deviceID, Map<String, String> metrics, long timestamp) {
         L.d(String.format("sessionBeginInternal: deviceID = %s, timestamp = %d", deviceID, timestamp));
 
         if (timestamp < 1) {
@@ -113,6 +113,9 @@ public class ModuleBackendMode extends ModuleBase {
         Request request = new Request();
         request.params.add("device_id", deviceID);
         request.params.add("begin_session", 1);
+
+        JSONObject metricsJson = new JSONObject(metrics);
+        request.params.add("metrics", metricsJson);
 
         addTimeInfoIntoRequest(request, timestamp);
 
@@ -356,7 +359,7 @@ public class ModuleBackendMode extends ModuleBase {
             recordEventInternal(deviceID, key, count, sum, dur, segmentation, timestamp);
         }
 
-        public void sessionBegin(String deviceID, long timestamp) {
+        public void sessionBegin(String deviceID, Map<String, String> metrics, long timestamp) {
             L.i(String.format("sessionBegin: deviceID = %s, timestamp = %d", deviceID, timestamp));
 
             if (!internalConfig.isBackendModeEnable()) {
@@ -369,7 +372,7 @@ public class ModuleBackendMode extends ModuleBase {
                 return;
             }
 
-            sessionBeginInternal(deviceID, timestamp);
+            sessionBeginInternal(deviceID, metrics, timestamp);
         }
 
         public void sessionUpdate(String deviceID, double duration, long timestamp) {

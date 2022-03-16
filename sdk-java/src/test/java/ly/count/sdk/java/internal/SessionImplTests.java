@@ -37,6 +37,7 @@ public class SessionImplTests extends BaseTestsCore {
     @Test
     public void addParams() {
         SessionImpl session = new SessionImpl(ctx);
+        session.setPushOnChange(false);
         Assert.assertNotNull(session.params);
 
         StringBuilder sbParams = new StringBuilder();

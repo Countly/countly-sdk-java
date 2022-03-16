@@ -142,9 +142,13 @@ public class BackendModeExample {
                 case 5:
                     recordAnotherCrash();
                     break;
-                case 6:
-                    Countly.backendMode().sessionBegin(DEVICE_ID, 0);
+                case 6: {
+                    Map<String, String> metrics = new HashMap<>();
+                    metrics.put("os", "windows");
+
+                    Countly.backendMode().sessionBegin(DEVICE_ID, metrics, 0);
                     break;
+                }
                 case 7:
                     Countly.backendMode().sessionUpdate(DEVICE_ID, 10, 0);
                     break;

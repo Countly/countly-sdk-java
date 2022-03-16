@@ -48,15 +48,22 @@ public class BackendModeTests {
         moduleBackendMode.eventQueues.clear();
     }
 
+    /**
+     * It validates the SDK name and 'enableBackendMode' in configuration.
+     */
     @Test
-    public void backendModeConfigTest() {
+    public void testConfigurationValues() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
         Assert.assertTrue(moduleBackendMode.internalConfig.isBackendModeEnable());
+        Assert.assertEquals(4, moduleBackendMode.internalConfig.getEventsBufferSize());
         Assert.assertEquals("java-native-backend", moduleBackendMode.internalConfig.getSdkName());
     }
 
+    /**
+     * It validates the functionality of 'recordView' method.
+     */
     @Test
-    public void viewFieldsTest() {
+    public void testMethodRecordView() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
         Map<String, Object> segmentation = new HashMap<String, Object>() {{
@@ -83,8 +90,11 @@ public class BackendModeTests {
         Assert.assertEquals("1", segments.get("start"));
     }
 
+    /**
+     * It validates the functionality of 'recordEvent' method and event queue size by using single device ID.
+     */
     @Test
-    public void singleDeviceIdEventTest() {
+    public void testMethodRecordEventWithSingleDeviceID() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
         Map<String, Object> segmentation = new HashMap<>();
@@ -106,8 +116,11 @@ public class BackendModeTests {
         Assert.assertEquals("value2", segments.get("key2"));
     }
 
+    /**
+     * It validates the functionality of 'recordEvent' method and event queue size by using multiple device IDs.
+     */
     @Test
-    public void multipleDeviceIdEventTest() {
+    public void testMethodRecordEventWithMultipleDeviceID() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
         Map<String, Object> segmentation = new HashMap<>();
@@ -162,8 +175,11 @@ public class BackendModeTests {
         Assert.assertEquals("value4", segments.get("key4"));
     }
 
+    /**
+     * It validates the event thresh hold against single and multiple device IDs.
+     */
     @Test
-    public void eventThreshHoldTest() {
+    public void TestEventThreshHoldWithSingleAndMultiple() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
         Map<String, Object> segmentation = new HashMap<>();
@@ -211,8 +227,11 @@ public class BackendModeTests {
         Assert.assertEquals(null, moduleBackendMode.eventQueues.get("device-id-2"));
     }
 
+    /**
+     * It validates the functionality of adding events into request queue on session update.
+     */
     @Test
-    public void eventPackagingOnSessionUpdateTest() {
+    public void testFunctionalityAddEventsIntoRequestQueueOnSessionUpdate() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
         Map<String, Object> segmentation = new HashMap<>();
@@ -250,8 +269,11 @@ public class BackendModeTests {
         Assert.assertNull(moduleBackendMode.eventQueues.get("device-id-2"));
     }
 
+    /**
+     * It validates the functionality of adding events into request queue on session end.
+     */
     @Test
-    public void eventPackagingOnSessionEndTest() {
+    public void testFunctionalityAddEventsIntoRequestQueueOnSessionEnd() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
         Map<String, Object> segmentation = new HashMap<>();
@@ -289,20 +311,35 @@ public class BackendModeTests {
         Assert.assertEquals(1, moduleBackendMode.eventQueues.get("device-id-1").length());
     }
 
+    /**
+     * It validates the request and functionality of 'sessionBegin' method.
+     */
     @Test
-    public void sessionBeginTest() {
+    public void TestMethodSessionBegin() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
-        backendMode.sessionBegin("device-id-1", 1646640780130L);
+        Map<String, String> metrics = new HashMap<>();
+        metrics.put("os", "windows");
+        metrics.put("app-version", "0.1");
+
+        backendMode.sessionBegin("device-id-1", metrics, 1646640780130L);
 
         Assert.assertEquals(1, moduleBackendMode.requestQ.size());
         Request request = moduleBackendMode.requestQ.remove();
 
+        String session = request.params.get("metrics");
+        JSONObject sessionJson = new JSONObject(session);
+
+        Assert.assertEquals("windows", sessionJson.get("os"));
+        Assert.assertEquals("0.1", sessionJson.get("app-version"));
         Assert.assertEquals("1", request.params.get("begin_session"));
         validateRequestTimeFields("device-id-1", 1646640780130L, request);
     }
 
+    /**
+     * It validates the request and functionality of 'sessionUpdate' method.
+     */
     @Test
-    public void sessionUpdateTest() {
+    public void testMethodSessionUpdate() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
         backendMode.sessionUpdate("device-id-1", 10.5, 1646640780130L);
 
@@ -313,8 +350,11 @@ public class BackendModeTests {
         validateRequestTimeFields("device-id-1", 1646640780130L, request);
     }
 
+    /**
+     * It validates the request and functionality of 'sessionEnd' method.
+     */
     @Test
-    public void sessionEndTest() {
+    public void testSessionEnd() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
         backendMode.sessionEnd("device-id-1", 10.5, 1646640780130L);
 
@@ -326,8 +366,11 @@ public class BackendModeTests {
         validateRequestTimeFields("device-id-1", 1646640780130L, request);
     }
 
+    /**
+     * It validates the request and functionality of 'recordException' method.
+     */
     @Test
-    public void crashTest() {
+    public void testMethodRecordException() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
         Map<String, Object> segmentation = new HashMap<String, Object>() {{
             put("key1", "value1");
@@ -336,7 +379,7 @@ public class BackendModeTests {
             int a = 10 / 0;
         } catch (Exception e) {
             backendMode.recordException("device-id-1", e, segmentation, 1646640780130L);
-            backendMode.recordException("device-id-2", "Divided By Zero", "stack traces", null, 0);
+            backendMode.recordException("device-id-2", "Divided By Zero", "stack traces", null, 1646640780130L);
 
             Assert.assertEquals(2, moduleBackendMode.requestQ.size());
             Request request = moduleBackendMode.requestQ.remove();
@@ -365,15 +408,18 @@ public class BackendModeTests {
             Assert.assertEquals("Divided By Zero", crashJson.get("_name"));
             Assert.assertEquals("stack traces", crashJson.get("_error"));
 
-            validateRequestTimeFields("device-id-2", System.currentTimeMillis(), request);
+            validateRequestTimeFields("device-id-2", 1646640780130L, request);
 
             segments = crashJson.getJSONObject("_custom");
             Assert.assertTrue(segments.isEmpty());
         }
     }
 
+    /**
+     * It validates the user detail, user custom detail and operations on custom properties.
+     */
     @Test
-    public void userPropertiesTest() {
+    public void testUserDetailCustomDetailAndOperations() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
         // User detail
