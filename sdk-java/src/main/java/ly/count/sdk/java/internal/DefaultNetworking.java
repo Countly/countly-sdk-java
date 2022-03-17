@@ -6,13 +6,15 @@ public class DefaultNetworking implements Networking {
     private Transport transport;
     private Tasks tasks;
     private boolean shutdown;
+    IStorageForRequestQueue storageForRequestQueue;
 
     @Override
-    public void init(CtxCore ctx) {
+    public void init(CtxCore ctx, IStorageForRequestQueue storageForRequestQueue) {
         shutdown = false;
         transport = new Transport();
         transport.init(ctx.getConfig());
         tasks = new Tasks("network");
+        this.storageForRequestQueue = storageForRequestQueue;
     }
 
     @Override
@@ -33,7 +35,7 @@ public class DefaultNetworking implements Networking {
         return new Tasks.Task<Boolean>(Tasks.ID_STRICT) {
             @Override
             public Boolean call() throws Exception {
-                final Request request = Storage.readOne(ctx, new Request(0L), true);
+                final Request request = storageForRequestQueue.getNextRequest();
                 if (request == null) {
                     return false;
                 } else {
@@ -52,7 +54,7 @@ public class DefaultNetworking implements Networking {
                             public void call(Boolean result) throws Exception {
                                 L.d("Request " + request.storageId() + " sent?: " + result);
                                 if (result) {
-                                    Storage.remove(ctx, request);
+                                    storageForRequestQueue.removeRequest(request);
                                     check(ctx);
                                 }
 

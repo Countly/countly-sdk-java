@@ -53,12 +53,12 @@ public class ModuleSessions extends ModuleBase {
                 timedEvents = new TimedEvents();
             }
 
-            if (!ctx.getConfig().isBackendModeEnable() && ctx.getConfig().getSendUpdateEachSeconds() > 0 && executor == null) {
+            if (ctx.getConfig().getSendUpdateEachSeconds() > 0 && executor == null) {
                 executor = Executors.newScheduledThreadPool(1);
                 executor.scheduleWithFixedDelay(new Runnable() {
                     @Override
                     public void run() {
-                        if (isActive() && getSession() != null) {
+                        if (!ctx.getConfig().isBackendModeEnabled() && isActive() && getSession() != null) {
                             L.i("updating session");
                             getSession().update();
                         }

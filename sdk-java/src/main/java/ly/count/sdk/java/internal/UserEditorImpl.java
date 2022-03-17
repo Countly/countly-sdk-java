@@ -552,7 +552,7 @@ public class UserEditorImpl implements UserEditor {
             return null;
         }
 
-        if(SDKCore.instance != null && SDKCore.instance.config.isBackendModeEnable()) {
+        if(SDKCore.instance != null && SDKCore.instance.config.isBackendModeEnabled()) {
             L.w("Skipping user detail, backend mode is enabled!");
             return null;
         }

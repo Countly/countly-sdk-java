@@ -483,6 +483,11 @@ public class Config {
      */
     protected Long remoteConfigUpdateRequestTimeout = null;
 
+    /**
+     * Maximum in memory request queue size.
+     */
+    protected int requestQueueMaxSize = 1000;
+
     //endregion
 
 
@@ -668,6 +673,14 @@ public class Config {
     public Config enableBackendMode() {
         this.enableBackendMode = true;
         return this;
+    }
+
+    public int getRequestQueueMaxSize() {
+        return requestQueueMaxSize;
+    }
+
+    public void setRequestQueueMaxSize(int requestQueueMaxSize) {
+        this.requestQueueMaxSize = requestQueueMaxSize;
     }
 
     /**
@@ -1222,7 +1235,7 @@ public class Config {
      * Getter for {@link #enableBackendMode}
      * @return {@link #enableBackendMode} value
      */
-    public boolean isBackendModeEnable() {
+    public boolean isBackendModeEnabled() {
         return enableBackendMode;
     }
 
