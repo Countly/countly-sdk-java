@@ -529,6 +529,38 @@ public class BackendModeTests {
     }
 
     /**
+     * It validates functionality of 'recordException' method against invalid data.
+     */
+    @Test
+    public void testMethodRecordExceptionWithInvalidData() {
+        ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
+        Map<String, Object> segmentation = new HashMap<String, Object>() {{
+            put("key1", "value1");
+        }};
+
+        backendMode.recordException("", null, segmentation, 1646640780130L);
+        Assert.assertTrue(SDKCore.instance.requestQ.isEmpty());
+
+        backendMode.recordException(null, null, segmentation, 1646640780130L);
+        Assert.assertTrue(SDKCore.instance.requestQ.isEmpty());
+
+        backendMode.recordException("device-id-1", null, segmentation, 1646640780130L);
+        Assert.assertTrue(SDKCore.instance.requestQ.isEmpty());
+
+        backendMode.recordException("device-id-2", "", "stack traces", null, 1646640780130L);
+        Assert.assertTrue(SDKCore.instance.requestQ.isEmpty());
+
+        backendMode.recordException("device-id-2", "device-id", "", null, 1646640780130L);
+        Assert.assertTrue(SDKCore.instance.requestQ.isEmpty());
+
+        backendMode.recordException("device-id-2", null, "stack traces", null, 1646640780130L);
+        Assert.assertTrue(SDKCore.instance.requestQ.isEmpty());
+
+        backendMode.recordException("device-id-2", "device-id", null, null, 1646640780130L);
+        Assert.assertTrue(SDKCore.instance.requestQ.isEmpty());
+    }
+
+    /**
      * It validates the user detail, user custom detail and operations on custom properties.
      */
     @Test
@@ -585,6 +617,35 @@ public class BackendModeTests {
 
         //Operations
         Assert.assertEquals(1, operationsJson.get("$inc"));
+    }
+
+    /**
+     * It validates functionality of 'recordUserProperties' method against invalid data.
+     */
+    @Test
+    public void testMethodRecordUserPropertiesWithInvalidData() {
+        ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
+        Map<String, Object> userDetail = new HashMap<>();
+        userDetail.put("name", "Full Name");
+        userDetail.put("username", "username1");
+        userDetail.put("email", "user@gmail.com");
+        userDetail.put("organization", "Countly");
+        userDetail.put("phone", "000-111-000");
+        userDetail.put("gender", "M");
+        userDetail.put("byear", "1991");
+
+        backendMode.recordUserProperties("", userDetail, 1646640780130L);
+        Assert.assertTrue(SDKCore.instance.requestQ.isEmpty());
+
+        backendMode.recordUserProperties(null, userDetail, 1646640780130L);
+        Assert.assertTrue(SDKCore.instance.requestQ.isEmpty());
+
+        backendMode.recordUserProperties("device-id", null, 1646640780130L);
+        Assert.assertTrue(SDKCore.instance.requestQ.isEmpty());
+
+        userDetail.clear();
+        backendMode.recordUserProperties("device-id", userDetail, 1646640780130L);
+        Assert.assertTrue(SDKCore.instance.requestQ.isEmpty());
     }
 
     private void validateEventFields(String key, int count, Double sum, Double dur, int dow, int hour, long timestamp, JSONObject event) {

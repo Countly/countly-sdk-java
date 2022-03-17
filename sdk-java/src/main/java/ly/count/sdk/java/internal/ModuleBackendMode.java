@@ -81,6 +81,8 @@ public class ModuleBackendMode extends ModuleBase {
             timestamp = DeviceCore.dev.uniqueTimestamp();
         }
 
+        removeInvalidDataFromSegments(segmentation);
+
         JSONObject jsonObject = buildEventJSONObject(key, count, sum, dur, segmentation, timestamp);
 
         if (!eventQueues.containsKey(deviceID)) {
@@ -137,6 +139,7 @@ public class ModuleBackendMode extends ModuleBase {
             timestamp = DeviceCore.dev.uniqueTimestamp();
         }
 
+
         //Add events against device ID to request Q
         JSONArray events = eventQueues.get(deviceID);
         if (events != null && events.length() > 0) {
@@ -161,6 +164,8 @@ public class ModuleBackendMode extends ModuleBase {
             timestamp = DeviceCore.dev.uniqueTimestamp();
         }
 
+        removeInvalidDataFromSegments(segmentation);
+
         JSONObject crash = new JSONObject();
         crash.put("_error", stacktrace);
         crash.put("_custom", segmentation);
@@ -182,6 +187,8 @@ public class ModuleBackendMode extends ModuleBase {
         if (timestamp < 1) {
             timestamp = DeviceCore.dev.uniqueTimestamp();
         }
+
+        removeInvalidDataFromSegments(userProperties);
 
         Request request = new Request();
         JSONObject properties = new JSONObject(userProperties);
@@ -256,6 +263,37 @@ public class ModuleBackendMode extends ModuleBase {
         eventQueues.clear();
     }
 
+    protected Map<String, Object> removeInvalidDataFromSegments(Map<String, Object> segments) {
+
+        if (segments == null || segments.isEmpty()) {
+            return segments;
+        }
+
+        int i = 0;
+        List<String> toRemove = new ArrayList<>();
+        for (Map.Entry<String, Object> item : segments.entrySet()) {
+            Object type = item.getValue();
+
+            boolean isValidDataType = item.getValue() != null && (type instanceof Boolean
+                    || type instanceof Integer
+                    || type instanceof String
+                    || type instanceof Double
+                    || type instanceof Float
+            );
+
+            if (!isValidDataType) {
+                toRemove.add(item.getKey());
+                L.w("RemoveSegmentInvalidDataTypes: In segmentation Data type '" + type + "' of item '" + item.getValue() + "' isn't valid.");
+            }
+        }
+
+        for (String k : toRemove) {
+            segments.remove(k);
+        }
+
+        return segments;
+    }
+
     public class BackendMode {
         public void recordView(String deviceID, String name, Map<String, Object> segmentation, long timestamp) {
             L.i(String.format(":recordView: deviceID = %s, key = %s, segmentation = %s, timestamp = %d", deviceID, name, segmentation, timestamp));
@@ -274,7 +312,7 @@ public class ModuleBackendMode extends ModuleBase {
                 return;
             }
 
-            if(segmentation == null) {
+            if (segmentation == null) {
                 segmentation = new HashMap<>();
             }
 
@@ -395,7 +433,7 @@ public class ModuleBackendMode extends ModuleBase {
                 return;
             }
 
-            if (stacktrace == null) {
+            if (stacktrace == null || stacktrace.isEmpty()) {
                 L.e("recordException: stacktrace can not be null.");
                 return;
             }
