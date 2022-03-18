@@ -648,6 +648,116 @@ public class BackendModeTests {
         Assert.assertTrue(SDKCore.instance.requestQ.isEmpty());
     }
 
+    /*
+     * It validates the data type of Event's segment items.
+     */
+    @Test
+    public void testEventSegmentDataType() {
+        ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
+
+        Map<String, Object> segmentation = new HashMap<>();
+        segmentation.put("key1", null); //invalid
+        segmentation.put("key2", "value");
+        segmentation.put("key3", 1);
+        segmentation.put("key4", 20.5);
+        segmentation.put("key5", true);
+        segmentation.put("key6", backendMode); //invalid
+        segmentation.put("key7", 10L);
+
+        Assert.assertEquals(0, moduleBackendMode.eventQSize);
+        backendMode.recordEvent("device-id-1", "key-1", 1, 0.1, 10, segmentation, 1646640780130L);
+
+        JSONArray events = moduleBackendMode.eventQueues.get("device-id-1");
+        Assert.assertEquals(1, events.length());
+        Assert.assertEquals(1, moduleBackendMode.eventQSize);
+
+        JSONObject event = events.getJSONObject(0);
+        validateEventFields("key-1", 1, 0.1, 10.0, 1, 13, 1646640780130L, event);
+
+        JSONObject segments = event.getJSONObject("segmentation");
+        Assert.assertEquals(5, segments.length());
+        Assert.assertEquals("value", segments.get("key2"));
+        Assert.assertEquals(1, segments.get("key3"));
+        Assert.assertEquals(20.5, segments.get("key4"));
+        Assert.assertEquals(10L, segments.get("key7"));
+        Assert.assertEquals(true, segments.get("key5"));
+
+        Assert.assertFalse(segments.has("key1"));
+        Assert.assertFalse(segments.has("key6"));
+    }
+
+    /*
+     * It validates the data type of View's segment items.
+     */
+    @Test
+    public void testViewSegmentDataType() {
+        ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
+
+        Map<String, Object> segmentation = new HashMap<>();
+        segmentation.put("key1", null); //invalid
+        segmentation.put("key2", "value");
+        segmentation.put("key3", 1);
+        segmentation.put("key4", 20.5);
+        segmentation.put("key5", true);
+        segmentation.put("key6", backendMode); //invalid
+        segmentation.put("key7", 10L);
+
+        Assert.assertEquals(0, moduleBackendMode.eventQSize);
+        backendMode.recordView("device-id-1", "view-1", segmentation, 1646640780130L);
+
+        JSONArray events = moduleBackendMode.eventQueues.get("device-id-1");
+        Assert.assertEquals(1, events.length());
+        Assert.assertEquals(1, moduleBackendMode.eventQSize);
+
+        JSONObject event = events.getJSONObject(0);
+        JSONObject segments = event.getJSONObject("segmentation");
+        Assert.assertEquals(6, segments.length());
+        Assert.assertEquals("value", segments.get("key2"));
+        Assert.assertEquals(1, segments.get("key3"));
+        Assert.assertEquals(20.5, segments.get("key4"));
+        Assert.assertEquals(10L, segments.get("key7"));
+        Assert.assertEquals(true, segments.get("key5"));
+        Assert.assertEquals("view-1", segments.get("name"));
+
+        Assert.assertFalse(segments.has("key1"));
+        Assert.assertFalse(segments.has("key6"));
+    }
+
+    /*
+     * It validates the data type of Crash's segment items.
+     */
+    @Test
+    public void testCrashSegmentDataType() {
+        ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
+
+        Map<String, Object> segmentation = new HashMap<>();
+        segmentation.put("key1", null); //invalid
+        segmentation.put("key2", "value");
+        segmentation.put("key3", 1);
+        segmentation.put("key4", 20.5);
+        segmentation.put("key5", true);
+        segmentation.put("key6", backendMode); //invalid
+        segmentation.put("key7", 10L);
+
+        Assert.assertEquals(0, moduleBackendMode.eventQSize);
+        backendMode.recordException("device-id-1", "key-1", "stacktrace", segmentation, 1646640780130L);
+
+        Request request = SDKCore.instance.requestQ.remove();
+        String crash = request.params.get("crash");
+
+        JSONObject crashJson = new JSONObject(crash);
+        JSONObject segments = crashJson.getJSONObject("_custom");
+        Assert.assertEquals(5, segments.length());
+        Assert.assertEquals("value", segments.get("key2"));
+        Assert.assertEquals(1, segments.get("key3"));
+        Assert.assertEquals(20.5, segments.get("key4"));
+        Assert.assertEquals(true, segments.get("key5"));
+        Assert.assertEquals(10, segments.get("key7"));
+
+        Assert.assertFalse(segments.has("key1"));
+        Assert.assertFalse(segments.has("key6"));
+    }
+
     private void validateEventFields(String key, int count, Double sum, Double dur, int dow, int hour, long timestamp, JSONObject event) {
         Assert.assertEquals(key, event.get("key"));
         Assert.assertEquals(sum, event.opt("sum"));

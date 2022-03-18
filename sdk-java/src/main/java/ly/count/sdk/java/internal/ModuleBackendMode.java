@@ -276,6 +276,7 @@ public class ModuleBackendMode extends ModuleBase {
 
             boolean isValidDataType = item.getValue() != null && (type instanceof Boolean
                     || type instanceof Integer
+                    || type instanceof Long
                     || type instanceof String
                     || type instanceof Double
                     || type instanceof Float
