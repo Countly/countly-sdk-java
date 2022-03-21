@@ -620,6 +620,118 @@ public class BackendModeTests {
     }
 
     /**
+     * It validates the structure of user detail , custom user detail and operations.
+     * Case 1: When custom detail and are provided, along with user detail.
+     */
+    @Test
+    public void testUserDetailStructureAllDataAtSameLevel() {
+        ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
+
+        // User detail
+        Map<String, Object> userDetail = new HashMap<>();
+        userDetail.put("name", "Full Name");
+        userDetail.put("username", "username1");
+        userDetail.put("email", "user@gmail.com");
+        userDetail.put("organization", "Countly");
+        userDetail.put("phone", "000-111-000");
+        userDetail.put("gender", "M");
+        userDetail.put("byear", "1991");
+        //custom detail
+        userDetail.put("hair", "black");
+        userDetail.put("height", 5.9);
+
+
+        Map<String, Object> operations = new HashMap<>();
+        operations.put("$inc", 1);
+        userDetail.put("weight", operations);
+
+        backendMode.recordUserProperties("device-id-1", userDetail, 1646640780130L);
+
+        Assert.assertEquals(1, SDKCore.instance.requestQ.size());
+        Request request = SDKCore.instance.requestQ.remove();
+        validateRequestTimeFields("device-id-1", 1646640780130L, request);
+
+        String userDetails = request.params.get("user_details");
+
+        JSONObject userDetailsJson = new JSONObject(userDetails);
+        JSONObject customPropertiesJson = userDetailsJson.getJSONObject("custom");
+        JSONObject operationsJson = customPropertiesJson.getJSONObject("weight");
+
+        //User details
+        Assert.assertEquals("Full Name", userDetailsJson.get("name"));
+        Assert.assertEquals("username1", userDetailsJson.get("username"));
+        Assert.assertEquals("user@gmail.com", userDetailsJson.get("email"));
+        Assert.assertEquals("Countly", userDetailsJson.get("organization"));
+        Assert.assertEquals("000-111-000", userDetailsJson.get("phone"));
+        Assert.assertEquals("M", userDetailsJson.get("gender"));
+        Assert.assertEquals("1991", userDetailsJson.get("byear"));
+
+        //Custom properties
+        Assert.assertEquals("black", customPropertiesJson.get("hair"));
+        Assert.assertEquals(5.9, customPropertiesJson.get("height"));
+
+        //Operations
+        Assert.assertEquals(1, operationsJson.get("$inc"));
+    }
+
+    /**
+     * It validates the structure of user detail , custom user detail and operations.
+     * Case 2: When only user custom detail is provided.
+     */
+    @Test
+    public void testUserDetailStructureWithOnlyCustomDetail() {
+        ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
+
+        Map<String, Object> userDetail = new HashMap<>();
+        //custom detail
+        userDetail.put("hair", "black");
+        userDetail.put("height", 5.9);
+
+        backendMode.recordUserProperties("device-id-1", userDetail, 1646640780130L);
+
+        Assert.assertEquals(1, SDKCore.instance.requestQ.size());
+        Request request = SDKCore.instance.requestQ.remove();
+        validateRequestTimeFields("device-id-1", 1646640780130L, request);
+
+        String userDetails = request.params.get("user_details");
+
+        JSONObject userDetailsJson = new JSONObject(userDetails);
+        JSONObject customPropertiesJson = userDetailsJson.getJSONObject("custom");
+
+        //Custom properties
+        Assert.assertEquals("black", customPropertiesJson.get("hair"));
+        Assert.assertEquals(5.9, customPropertiesJson.get("height"));
+    }
+
+    /**
+     * It validates the structure of user detail , custom user detail and operations.
+     * Case 3: When only operation data is provided.
+     */
+    @Test
+    public void testUserDetailStructureWithOnlyOperationData() {
+        ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
+
+        Map<String, Object> userDetail = new HashMap<>();
+        Map<String, Object> operations = new HashMap<>();
+        operations.put("$inc", 1);
+        userDetail.put("weight", operations);
+
+        backendMode.recordUserProperties("device-id-1", userDetail, 1646640780130L);
+
+        Assert.assertEquals(1, SDKCore.instance.requestQ.size());
+        Request request = SDKCore.instance.requestQ.remove();
+        validateRequestTimeFields("device-id-1", 1646640780130L, request);
+
+        String userDetails = request.params.get("user_details");
+
+        JSONObject userDetailsJson = new JSONObject(userDetails);
+        JSONObject customPropertiesJson = userDetailsJson.getJSONObject("custom");
+        JSONObject operationsJson = customPropertiesJson.getJSONObject("weight");
+
+        Assert.assertEquals(1, operationsJson.get("$inc"));
+    }
+
+    /**
      * It validates functionality of 'recordUserProperties' method against invalid data.
      */
     @Test

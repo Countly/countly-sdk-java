@@ -188,10 +188,29 @@ public class ModuleBackendMode extends ModuleBase {
             timestamp = DeviceCore.dev.uniqueTimestamp();
         }
 
-        removeInvalidDataFromSegments(userProperties, true);
+        List<String> userPredefinedKeys = Arrays.asList("name", "username", "email", "organization", "phone", "gender", "byear");
+
+        Map<String, Object> userDetail = new HashMap<>();
+        Map<String, Object> customDetail = new HashMap<>();
+        for (Map.Entry<String, Object> item : userProperties.entrySet()) {
+            if (userPredefinedKeys.contains(item.getKey().toLowerCase())) {
+                userDetail.put(item.getKey(), item.getValue());
+            } else {
+                if (item.getValue() instanceof Map) {
+                    if ("custom".equals(item.getKey())) {
+                        customDetail.putAll((Map) item.getValue());
+                        continue;
+                    }
+                }
+                customDetail.put(item.getKey(), item.getValue());
+            }
+        }
+        
+        userDetail.put("custom", customDetail);
+        removeInvalidDataFromSegments(userDetail, true);
 
         Request request = new Request();
-        JSONObject properties = new JSONObject(userProperties);
+        JSONObject properties = new JSONObject(userDetail);
 
         request.params.add("device_id", deviceID);
         request.params.add("user_details", properties);
@@ -263,7 +282,7 @@ public class ModuleBackendMode extends ModuleBase {
         eventQueues.clear();
     }
 
-    protected Map<String, Object> removeInvalidDataFromSegments(Map<String, Object> segments,  boolean userProperties) {
+    protected Map<String, Object> removeInvalidDataFromSegments(Map<String, Object> segments, boolean userProperties) {
 
         if (segments == null || segments.isEmpty()) {
             return segments;
@@ -275,10 +294,10 @@ public class ModuleBackendMode extends ModuleBase {
             Object type = item.getValue();
 
             boolean isValidDataType;
-            if(userProperties && type instanceof Map) {
+            if (userProperties && type instanceof Map) {
                 isValidDataType = true;
                 removeInvalidDataFromSegments((Map<String, Object>) type, true);
-            }else {
+            } else {
                 isValidDataType = (type instanceof Boolean
                         || type instanceof Integer
                         || type instanceof Long
