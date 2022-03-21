@@ -62,7 +62,7 @@ public class BackendModeExample {
             put("start", "1");
         }};
 
-        Countly.backendMode().recordView(DEVICE_ID, "[CLY]_view", segmentation, 1646640780130L);
+        Countly.backendMode().recordView(DEVICE_ID, "SampleView", segmentation, 1646640780130L);
     }
 
     static void recordCrash() {

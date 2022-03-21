@@ -113,6 +113,7 @@ public class ModuleBackendMode extends ModuleBase {
         addTimeInfoIntoRequest(request, timestamp);
 
         SDKCore.instance.requestQ.add(request);
+        SDKCore.instance.networking.check(ctx);
     }
 
     private void sessionUpdateInternal(String deviceID, double duration, long timestamp) {
@@ -128,6 +129,7 @@ public class ModuleBackendMode extends ModuleBase {
 
         addTimeInfoIntoRequest(request, timestamp);
         SDKCore.instance.requestQ.add(request);
+        SDKCore.instance.networking.check(ctx);
 
         addEventsToRequestQ();
     }
@@ -155,6 +157,7 @@ public class ModuleBackendMode extends ModuleBase {
 
         addTimeInfoIntoRequest(request, timestamp);
         SDKCore.instance.requestQ.add(request);
+        SDKCore.instance.networking.check(ctx);
     }
 
     public void recordExceptionInternal(String deviceID, String message, String stacktrace, Map<String, Object> segmentation, long timestamp) {
@@ -179,6 +182,7 @@ public class ModuleBackendMode extends ModuleBase {
         addTimeInfoIntoRequest(request, timestamp);
 
         SDKCore.instance.requestQ.add(request);
+        SDKCore.instance.networking.check(ctx);
     }
 
     private void recordUserPropertiesInternal(String deviceID, Map<String, Object> userProperties, long timestamp) {
@@ -205,7 +209,7 @@ public class ModuleBackendMode extends ModuleBase {
                 customDetail.put(item.getKey(), item.getValue());
             }
         }
-        
+
         userDetail.put("custom", customDetail);
         removeInvalidDataFromSegments(userDetail, true);
 
@@ -217,6 +221,7 @@ public class ModuleBackendMode extends ModuleBase {
 
         addTimeInfoIntoRequest(request, timestamp);
         SDKCore.instance.requestQ.add(request);
+        SDKCore.instance.networking.check(ctx);
     }
 
     private JSONObject buildEventJSONObject(String key, int count, double sum, double dur, Map<String, Object> segmentation, long timestamp) {
@@ -275,11 +280,12 @@ public class ModuleBackendMode extends ModuleBase {
     private void addEventsToRequestQ() {
         L.d(String.format("addEventsToRequestQ"));
 
-        for (Map.Entry<String, JSONArray> entry : eventQueues.entrySet()) {
+        for (Map.Entry<String, JSONArray> entry : eventQueues.e6ntrySet()) {
             addEventsAgainstDeviceIdToRequestQ(entry.getKey(), entry.getValue());
         }
         eventQSize = 0;
         eventQueues.clear();
+        SDKCore.instance.networking.check(ctx);
     }
 
     protected Map<String, Object> removeInvalidDataFromSegments(Map<String, Object> segments, boolean userProperties) {

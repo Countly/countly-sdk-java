@@ -99,6 +99,10 @@ public abstract class SDKCore extends SDKModules {
                 networking.init(ctx, new IStorageForRequestQueue() {
                     @Override
                     public Request getNextRequest() {
+                        if(requestQ.isEmpty()) {
+                            return null;
+                        }
+
                         return requestQ.element();
                     }
 
