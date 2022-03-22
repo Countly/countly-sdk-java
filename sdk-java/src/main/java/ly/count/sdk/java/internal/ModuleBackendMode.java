@@ -224,6 +224,45 @@ public class ModuleBackendMode extends ModuleBase {
         SDKCore.instance.networking.check(ctx);
     }
 
+    void recordDirectRequestInternal(String deviceID, Map<String, String> requestData, long timestamp) {
+        L.d(String.format("recordDirectRequestInternal: deviceID = %s, requestJson = %s, timestamp = %d", deviceID, requestData, timestamp));
+
+        if (requestData.containsKey("device_id")) {
+            String _deviceID = requestData.remove("device_id");
+            if (_deviceID != null || !_deviceID.isEmpty()) {
+                deviceID = _deviceID;
+            }
+        }
+
+        if (requestData.containsKey("timestamp")) {
+            String _timestamp = requestData.remove("timestamp");
+            if (_timestamp != null && !_timestamp.isEmpty()) {
+                timestamp = Long.parseLong(_timestamp);
+            }
+        }
+        if (timestamp < 1) {
+            timestamp = DeviceCore.dev.uniqueTimestamp();
+        }
+        //remove checksum, will add before sending request to server
+        requestData.remove("checksum");
+
+        //remove tz, dow, and hour, will be calculate from 'timestamp' and add back to request
+        requestData.remove("tz");
+        requestData.remove("dow");
+        requestData.remove("hour");
+
+        //JSONObject requestJson = new JSONObject(requestData);
+        Request request = new Request();
+        for (Map.Entry<String, String> item : requestData.entrySet()) {
+            request.params.add(item.getKey(), item.getValue());
+        }
+
+        request.params.add("device_id", deviceID);
+        addTimeInfoIntoRequest(request, timestamp);
+        SDKCore.instance.requestQ.add(request);
+        SDKCore.instance.networking.check(ctx);
+    }
+
     private JSONObject buildEventJSONObject(String key, int count, double sum, double dur, Map<String, Object> segmentation, long timestamp) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(timestamp);
@@ -280,7 +319,7 @@ public class ModuleBackendMode extends ModuleBase {
     private void addEventsToRequestQ() {
         L.d(String.format("addEventsToRequestQ"));
 
-        for (Map.Entry<String, JSONArray> entry : eventQueues.e6ntrySet()) {
+        for (Map.Entry<String, JSONArray> entry : eventQueues.entrySet()) {
             addEventsAgainstDeviceIdToRequestQ(entry.getKey(), entry.getValue());
         }
         eventQSize = 0;
@@ -491,6 +530,23 @@ public class ModuleBackendMode extends ModuleBase {
             }
 
             recordUserPropertiesInternal(deviceID, userProperties, timestamp);
+        }
+
+        public void recordDirectRequest(String deviceID, Map<String, String> requestData, long timestamp) {
+            if (!internalConfig.isBackendModeEnabled()) {
+                L.e("recordDirectRequest: BackendMode is not enable.");
+                return;
+            }
+
+            if (deviceID == null || deviceID.isEmpty()) {
+                L.e("recordDirectRequest: DeviceID can not be null or empty.");
+                return;
+            }
+            if (requestData == null || requestData.isEmpty()) {
+                L.e("recordDirectRequest: requestData can not be null or empty.");
+                return;
+            }
+            recordDirectRequestInternal(deviceID, requestData, timestamp);
         }
 
         protected ModuleBase getModule() {

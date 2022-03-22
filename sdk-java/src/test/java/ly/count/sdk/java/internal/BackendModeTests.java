@@ -17,16 +17,16 @@ import java.util.Map;
 
 @RunWith(JUnit4.class)
 public class BackendModeTests {
-    InternalConfig config;
-    ModuleBackendMode moduleBackendMode;
-    private CtxCore ctx;
+    private ModuleBackendMode moduleBackendMode;
 
     @BeforeClass
     public static void init() {
         Config cc = new Config("https://try.count.ly", "COUNTLY_APP_KEY");
         cc.setEventsBufferSize(4)
                 .enableBackendMode();
-        File targetFolder = new File("C:\\Users\\zahid\\Documents\\Countly\\data");
+
+        // File targetFolder = new File("C:\\Users\\zahid\\Documents\\Countly\\data");
+        File targetFolder = new File("/Users/zahidzafar/Projects/countly/java-sdk-data");
         Countly.init(targetFolder, cc);
     }
 
@@ -868,6 +868,49 @@ public class BackendModeTests {
 
         Assert.assertFalse(segments.has("key1"));
         Assert.assertFalse(segments.has("key6"));
+    }
+
+    /**
+     * It validates the request and functionality of 'recordDirectRequest' method.
+     */
+    @Test
+    public void testRecordDirectRequest() {
+        ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
+
+        // Direct request with timestamp and device id
+        Map<String, String> requestData = new HashMap<>();
+        requestData.put("data1", "value1");
+        requestData.put("device_id", "device-id-1");
+        requestData.put("timestamp", "1647938191782");
+        requestData.put("tz", "100");
+        requestData.put("dow", "0");
+        requestData.put("hour", "9");
+        requestData.put("data3", "value3");
+
+        Assert.assertEquals(0, moduleBackendMode.eventQSize);
+        Assert.assertTrue(SDKCore.instance.requestQ.isEmpty());
+        backendMode.recordDirectRequest("device-id-2", requestData, 987654321L);
+        Assert.assertEquals(1, SDKCore.instance.requestQ.size());
+
+        Request request = SDKCore.instance.requestQ.remove();
+        Assert.assertEquals("value1", request.params.get("data1"));
+        Assert.assertEquals("value3", request.params.get("data3"));
+        validateRequestTimeFields("device-id-1", 1647938191782L, request);
+
+        // Direct request without timestamp and device id
+        requestData = new HashMap<>();
+        requestData.put("data2", "value2");
+        requestData.put("data4", "value4");
+
+        Assert.assertEquals(0, moduleBackendMode.eventQSize);
+        Assert.assertTrue(SDKCore.instance.requestQ.isEmpty());
+        backendMode.recordDirectRequest("device-id-2", requestData, 987654321L);
+        Assert.assertEquals(1, SDKCore.instance.requestQ.size());
+
+        request = SDKCore.instance.requestQ.remove();
+        Assert.assertEquals("value2", request.params.get("data2"));
+        Assert.assertEquals("value4", request.params.get("data4"));
+        validateRequestTimeFields("device-id-2", 987654321L, request);
     }
 
     private void validateEventFields(String key, int count, Double sum, Double dur, int dow, int hour, long timestamp, JSONObject event) {
