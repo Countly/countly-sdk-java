@@ -73,6 +73,15 @@ public class BackendModeExample {
         }
     }
 
+    static void recordDirectRequest() {
+        Map<String, String> requestData = new HashMap<>();
+        requestData.put("device_id", "id");
+        requestData.put("timestamp", "1646640780130");
+        requestData.put("end_session", "1");
+        requestData.put("session_duration", "20.5");
+        Countly.backendMode().recordDirectRequest(DEVICE_ID, requestData, 0);
+    }
+
     public static void main(String[] args) throws Exception {
 
         Scanner scanner = new Scanner(System.in);
@@ -106,7 +115,7 @@ public class BackendModeExample {
             System.out.println("6) Start session");
             System.out.println("7) Update session");
             System.out.println("8) End session");
-            System.out.println("9) record direct request");
+            System.out.println("9) Record direct request");
             System.out.println("0) Exit ");
 
             int input = scanner.nextInt();
@@ -142,16 +151,9 @@ public class BackendModeExample {
                 case 8:
                     Countly.backendMode().sessionEnd(DEVICE_ID, 20, 0);
                     break;
-                case 9:{
-                    Map<String, String> requestData = new HashMap<>();
-                    requestData.put("device_id", "id");
-                    requestData.put("timestamp", "1646640780130");
-                    requestData.put("end_session", "1");
-                    requestData.put("session_duration", "20.5");
-                    Countly.backendMode().recordDirectRequest(DEVICE_ID, requestData, 0);
+                case 9:
+                    recordDirectRequest();
                     break;
-                }
-
                 default:
                     break;
             }

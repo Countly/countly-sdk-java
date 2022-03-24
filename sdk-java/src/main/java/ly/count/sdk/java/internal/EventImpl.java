@@ -59,7 +59,7 @@ class EventImpl implements Event, JSONable {
     @Override
     public void record() {
         if(SDKCore.instance != null && SDKCore.instance.config.isBackendModeEnabled()) {
-            L.w("Skipping event, backend mode is enabled!");
+            L.w("record: Skipping event, backend mode is enabled!");
             return;
         }
 
@@ -74,7 +74,7 @@ class EventImpl implements Event, JSONable {
     @Override
     public void endAndRecord() {
         if(SDKCore.instance != null && SDKCore.instance.config.isBackendModeEnabled()) {
-            L.w("Skipping event, backend mode is enabled!");
+            L.w("endAndRecord: Skipping event, backend mode is enabled!");
             return;
         }
 
