@@ -22,10 +22,6 @@ public class BackendModeExample {
         Countly.backendMode().recordEvent(DEVICE_ID, "Event Key", 1, 0, 5, segment, 0);
     }
 
-    static void setLocation() {
-        Countly.api().addLocation(31.5204, 74.3587);
-    }
-
     static void recordUserProperties() {
         // User detail
         Map<String, Object> userDetail = new HashMap<>();
@@ -36,19 +32,10 @@ public class BackendModeExample {
         userDetail.put("phone", "000-111-000");
         userDetail.put("gender", "M");
         userDetail.put("byear", "1991");
-
-        // User custom detail
-        Map<String, Object> customDetail = new HashMap<>();
-        customDetail.put("hair", "black");
-        customDetail.put("height", 5.9);
-
-        // Operations: inc, mul
-        Map<String, Object> operations = new HashMap<>();
-        operations.put("$inc", 1);
-        // property 'weight', operation 'increment'
-        customDetail.put("weight", operations);
-
-        userDetail.put("custom", customDetail);
+        //custom detail
+        userDetail.put("hair", "black");
+        userDetail.put("height", 5.9);
+        userDetail.put("marks", "{\"$inc\": 1}");
 
         Countly.backendMode().recordUserProperties(DEVICE_ID, userDetail, 0);
     }
@@ -56,7 +43,6 @@ public class BackendModeExample {
     static void recordView() {
 
         Map<String, Object> segmentation = new HashMap<String, Object>() {{
-            put("name", "SampleView");
             put("visit", "1");
             put("segment", "Windows");
             put("start", "1");

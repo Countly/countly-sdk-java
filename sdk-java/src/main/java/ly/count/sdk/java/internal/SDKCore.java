@@ -14,7 +14,7 @@ public abstract class SDKCore extends SDKModules {
     private UserImpl user;
     public InternalConfig config;
     protected Networking networking;
-    protected Queue<Request> requestQ = null;
+    protected Queue<Request> requestQueueMemory = null;
 
     public enum Signal {
         DID(1),
@@ -63,7 +63,7 @@ public abstract class SDKCore extends SDKModules {
 
         super.init(ctx);
 
-        requestQ = new ArrayDeque<>(config.getRequestQueueMaxSize());
+        requestQueueMemory = new ArrayDeque<>(config.getRequestQueueMaxSize());
         // ModuleSessions is always enabled, even without consent
         int consents = ctx.getConfig().getFeatures1() | CoreFeature.Sessions.getIndex();
         // build modules
@@ -99,16 +99,16 @@ public abstract class SDKCore extends SDKModules {
                 networking.init(ctx, new IStorageForRequestQueue() {
                     @Override
                     public Request getNextRequest() {
-                        if(requestQ.isEmpty()) {
+                        if(requestQueueMemory.isEmpty()) {
                             return null;
                         }
 
-                        return requestQ.element();
+                        return requestQueueMemory.element();
                     }
 
                     @Override
                     public Boolean removeRequest(Request request) {
-                        return requestQ.remove(request);
+                        return requestQueueMemory.remove(request);
                     }
                 });
             } else {
