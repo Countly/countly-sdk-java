@@ -35,7 +35,7 @@ public class BackendModeExample {
         //custom detail
         userDetail.put("hair", "black");
         userDetail.put("height", 5.9);
-        userDetail.put("marks", "{\"$inc\": 1}");
+        userDetail.put("marks", "{$inc: 1}");
 
         Countly.backendMode().recordUserProperties(DEVICE_ID, userDetail, 0);
     }
