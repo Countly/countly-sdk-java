@@ -69,6 +69,13 @@ public class ModuleBackendMode extends ModuleBase {
         executor.shutdownNow();
     }
 
+    public int getQueueSize(){
+        int queueSize = 0;
+        int rSize = SDKCore.instance.requestQ.size();
+
+        return queueSize;
+    }
+
     public void disableModule() {
         disabledModule = true;
     }
@@ -112,8 +119,7 @@ public class ModuleBackendMode extends ModuleBase {
 
         addTimeInfoIntoRequest(request, timestamp);
 
-        SDKCore.instance.requestQ.add(request);
-        SDKCore.instance.networking.check(ctx);
+        addRequestToRequestQ(request);
     }
 
     private void sessionUpdateInternal(String deviceID, double duration, long timestamp) {
@@ -128,8 +134,7 @@ public class ModuleBackendMode extends ModuleBase {
         request.params.add("session_duration", duration);
 
         addTimeInfoIntoRequest(request, timestamp);
-        SDKCore.instance.requestQ.add(request);
-        SDKCore.instance.networking.check(ctx);
+        addRequestToRequestQ(request);
 
         addEventsToRequestQ();
     }
@@ -156,8 +161,7 @@ public class ModuleBackendMode extends ModuleBase {
         request.params.add("session_duration", duration);
 
         addTimeInfoIntoRequest(request, timestamp);
-        SDKCore.instance.requestQ.add(request);
-        SDKCore.instance.networking.check(ctx);
+        addRequestToRequestQ(request);
     }
 
     public void recordExceptionInternal(String deviceID, String message, String stacktrace, Map<String, Object> segmentation, long timestamp) {
@@ -181,8 +185,7 @@ public class ModuleBackendMode extends ModuleBase {
 
         addTimeInfoIntoRequest(request, timestamp);
 
-        SDKCore.instance.requestQ.add(request);
-        SDKCore.instance.networking.check(ctx);
+        addRequestToRequestQ(request);
     }
 
     private void recordUserPropertiesInternal(String deviceID, Map<String, Object> userProperties, long timestamp) {
@@ -220,8 +223,7 @@ public class ModuleBackendMode extends ModuleBase {
         request.params.add("user_details", properties);
 
         addTimeInfoIntoRequest(request, timestamp);
-        SDKCore.instance.requestQ.add(request);
-        SDKCore.instance.networking.check(ctx);
+        addRequestToRequestQ(request);
     }
 
     void recordDirectRequestInternal(String deviceID, Map<String, String> requestData, long timestamp) {
@@ -251,6 +253,10 @@ public class ModuleBackendMode extends ModuleBase {
         requestData.remove("dow");
         requestData.remove("hour");
 
+        requestData.remove("app_key");
+        requestData.remove("sdk_name");
+        requestData.remove("sdk_version");
+
         //JSONObject requestJson = new JSONObject(requestData);
         Request request = new Request();
         for (Map.Entry<String, String> item : requestData.entrySet()) {
@@ -259,8 +265,7 @@ public class ModuleBackendMode extends ModuleBase {
 
         request.params.add("device_id", deviceID);
         addTimeInfoIntoRequest(request, timestamp);
-        SDKCore.instance.requestQ.add(request);
-        SDKCore.instance.networking.check(ctx);
+        addRequestToRequestQ(request);
     }
 
     private JSONObject buildEventJSONObject(String key, int count, double sum, double dur, Map<String, Object> segmentation, long timestamp) {
@@ -313,7 +318,7 @@ public class ModuleBackendMode extends ModuleBase {
         request.params.add("events", events);
         addTimeInfoIntoRequest(request, System.currentTimeMillis());
         request.own(ModuleBackendMode.class);
-        SDKCore.instance.requestQ.add(request);
+        addRequestToRequestQ(request);
     }
 
     private void addEventsToRequestQ() {
@@ -324,6 +329,17 @@ public class ModuleBackendMode extends ModuleBase {
         }
         eventQSize = 0;
         eventQueues.clear();
+        
+    }
+
+    private void addRequestToRequestQ(Request request) {
+        L.d("addRequestToRequestQ");
+        if (internalConfig.getRequestQueueMaxSize() == SDKCore.instance.requestQ.size()) {
+            L.d("addRequestToRequestQ: In Memory request queue is full, dropping oldest request: " + request.params.toString());
+            SDKCore.instance.requestQ.remove();
+        }
+
+        SDKCore.instance.requestQ.add(request);
         SDKCore.instance.networking.check(ctx);
     }
 
