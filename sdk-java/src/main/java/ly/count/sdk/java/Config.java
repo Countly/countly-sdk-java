@@ -265,7 +265,7 @@ public class Config {
     /**
      * Countly SDK version to be sent in HTTP requests
      */
-    protected String sdkVersion = "20.11.2";
+    protected String sdkVersion = "20.11.2-RC1";
 
     /**
      * Countly SDK name to be sent in HTTP requests
