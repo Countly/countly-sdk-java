@@ -84,10 +84,10 @@ public class ModuleBackendMode extends ModuleBase {
     }
 
 
-    private void recordEventInternal(String deviceID, String key, int count, double sum, double dur, Map<String, Object> segmentation, long timestamp) {
+    private void recordEventInternal(String deviceID, String key, int count, double sum, double dur, Map<String, Object> segmentation, Long timestamp) {
         L.d(String.format("recordEventInternal: deviceID = %s, key = %s,, count = %d, sum = %f, dur = %f, segmentation = %s, timestamp = %d", deviceID, key, count, sum, dur, segmentation, timestamp));
 
-        if (timestamp < 1) {
+        if (timestamp == null || timestamp < 1) {
             timestamp = DeviceCore.dev.uniqueTimestamp();
         }
 
@@ -106,10 +106,10 @@ public class ModuleBackendMode extends ModuleBase {
         }
     }
 
-    private void sessionBeginInternal(String deviceID, Map<String, String> metrics, long timestamp) {
+    private void sessionBeginInternal(String deviceID, Map<String, String> metrics, Long timestamp) {
         L.d(String.format("sessionBeginInternal: deviceID = %s, timestamp = %d", deviceID, timestamp));
 
-        if (timestamp < 1) {
+        if (timestamp == null || timestamp < 1) {
             timestamp = DeviceCore.dev.uniqueTimestamp();
         }
 
@@ -125,10 +125,10 @@ public class ModuleBackendMode extends ModuleBase {
         addRequestToRequestQ(request);
     }
 
-    private void sessionUpdateInternal(String deviceID, double duration, long timestamp) {
+    private void sessionUpdateInternal(String deviceID, Double duration, Long timestamp) {
         L.d(String.format("sessionUpdateInternal: deviceID = %s, duration = %f, timestamp = %d", deviceID, duration, timestamp));
 
-        if (timestamp < 1) {
+        if (timestamp == null || timestamp < 1) {
             timestamp = DeviceCore.dev.uniqueTimestamp();
         }
 
@@ -140,10 +140,10 @@ public class ModuleBackendMode extends ModuleBase {
         addRequestToRequestQ(request);
     }
 
-    private void sessionEndInternal(String deviceID, double duration, long timestamp) {
+    private void sessionEndInternal(String deviceID, double duration, Long timestamp) {
         L.d(String.format("sessionEndInternal: deviceID = %s, duration = %f, timestamp = %d", deviceID, duration, timestamp));
 
-        if (timestamp < 1) {
+        if (timestamp == null || timestamp < 1) {
             timestamp = DeviceCore.dev.uniqueTimestamp();
         }
 
@@ -160,10 +160,10 @@ public class ModuleBackendMode extends ModuleBase {
         addRequestToRequestQ(request);
     }
 
-    public void recordExceptionInternal(String deviceID, String message, String stacktrace, Map<String, Object> segmentation, long timestamp) {
+    public void recordExceptionInternal(String deviceID, String message, String stacktrace, Map<String, Object> segmentation, Long timestamp) {
         L.d(String.format("recordExceptionInternal: deviceID = %s, message = %s, stacktrace = %s, segmentation = %s, timestamp = %d", deviceID, message, stacktrace, segmentation, timestamp));
 
-        if (timestamp < 1) {
+        if (timestamp == null || timestamp < 1) {
             timestamp = DeviceCore.dev.uniqueTimestamp();
         }
 
@@ -184,10 +184,10 @@ public class ModuleBackendMode extends ModuleBase {
         addRequestToRequestQ(request);
     }
 
-    private void recordUserPropertiesInternal(String deviceID, Map<String, Object> userProperties, long timestamp) {
+    private void recordUserPropertiesInternal(String deviceID, Map<String, Object> userProperties, Long timestamp) {
         L.d(String.format("recordUserPropertiesInternal: deviceID = %s, userProperties = %s, timestamp = %d", deviceID, userProperties, timestamp));
 
-        if (timestamp < 1) {
+        if (timestamp == null || timestamp < 1) {
             timestamp = DeviceCore.dev.uniqueTimestamp();
         }
 
@@ -225,10 +225,10 @@ public class ModuleBackendMode extends ModuleBase {
         addRequestToRequestQ(request);
     }
 
-    void recordDirectRequestInternal(String deviceID, Map<String, String> requestData, long timestamp) {
+    void recordDirectRequestInternal(String deviceID, Map<String, String> requestData, Long timestamp) {
         L.d(String.format("recordDirectRequestInternal: deviceID = %s, requestJson = %s, timestamp = %d", deviceID, requestData, timestamp));
 
-        if (timestamp < 1) {
+        if (timestamp == null || timestamp < 1) {
             timestamp = DeviceCore.dev.uniqueTimestamp();
         }
 
@@ -249,7 +249,7 @@ public class ModuleBackendMode extends ModuleBase {
         addRequestToRequestQ(request);
     }
 
-    private JSONObject buildEventJSONObject(String key, int count, double sum, double dur, Map<String, Object> segmentation, long timestamp) {
+    private JSONObject buildEventJSONObject(String key, int count, double sum, double dur, Map<String, Object> segmentation, Long timestamp) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(timestamp);
         final int hour = calendar.get(Calendar.HOUR_OF_DAY);
@@ -278,7 +278,7 @@ public class ModuleBackendMode extends ModuleBase {
         return jsonObject;
     }
 
-    private void addTimeInfoIntoRequest(Request request, long timestamp) {
+    private void addTimeInfoIntoRequest(Request request, Long timestamp) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(timestamp);
 
@@ -363,7 +363,7 @@ public class ModuleBackendMode extends ModuleBase {
     }
 
     public class BackendMode {
-        public void recordView(String deviceID, String name, Map<String, Object> segmentation, long timestamp) {
+        public void recordView(String deviceID, String name, Map<String, Object> segmentation, Long timestamp) {
             L.i(String.format(":recordView: deviceID = %s, key = %s, segmentation = %s, timestamp = %d", deviceID, name, segmentation, timestamp));
             if (!internalConfig.isBackendModeEnabled()) {
                 L.e("recordView: BackendMode is not enabled.");
@@ -389,7 +389,7 @@ public class ModuleBackendMode extends ModuleBase {
             recordEventInternal(deviceID, "[CLY]_view", 1, -1, -1, segmentation, timestamp);
         }
 
-        public void recordEvent(String deviceID, String key, int count, double sum, double dur, Map<String, Object> segmentation, long timestamp) {
+        public void recordEvent(String deviceID, String key, int count, double sum, double dur, Map<String, Object> segmentation, Long timestamp) {
             L.i(String.format("recordEvent: deviceID = %s, key = %s, count = %d, sum = %f, dur = %f, segmentation = %s, timestamp = %d", deviceID, key, count, sum, dur, segmentation, timestamp));
 
             if (!internalConfig.isBackendModeEnabled()) {
@@ -407,10 +407,18 @@ public class ModuleBackendMode extends ModuleBase {
                 return;
             }
 
+            if(count < 1) {
+                count = 1;
+            }
+
+            if(sum < 0) {
+                sum = 0.0;
+            }
+
             recordEventInternal(deviceID, key, count, sum, dur, segmentation, timestamp);
         }
 
-        public void sessionBegin(String deviceID, Map<String, String> metrics, long timestamp) {
+        public void sessionBegin(String deviceID, Map<String, String> metrics, Long timestamp) {
             L.i(String.format("sessionBegin: deviceID = %s, timestamp = %d", deviceID, timestamp));
 
             if (!internalConfig.isBackendModeEnabled()) {
@@ -426,7 +434,7 @@ public class ModuleBackendMode extends ModuleBase {
             sessionBeginInternal(deviceID, metrics, timestamp);
         }
 
-        public void sessionUpdate(String deviceID, double duration, long timestamp) {
+        public void sessionUpdate(String deviceID, double duration, Long timestamp) {
             L.i(String.format("sessionUpdate: deviceID = %s, duration = %f, timestamp = %d", deviceID, duration, timestamp));
 
             if (!internalConfig.isBackendModeEnabled()) {
@@ -439,10 +447,14 @@ public class ModuleBackendMode extends ModuleBase {
                 return;
             }
 
+            if(duration < 0) {
+                duration = 0;
+            }
+
             sessionUpdateInternal(deviceID, duration, timestamp);
         }
 
-        public void sessionEnd(String deviceID, double duration, long timestamp) {
+        public void sessionEnd(String deviceID, double duration, Long timestamp) {
             L.i(String.format("sessionEnd: deviceID = %s, duration = %f, timestamp = %d", deviceID, duration, timestamp));
 
             if (!internalConfig.isBackendModeEnabled()) {
@@ -455,10 +467,14 @@ public class ModuleBackendMode extends ModuleBase {
                 return;
             }
 
+            if(duration < 0) {
+                duration = 0;
+            }
+
             sessionEndInternal(deviceID, duration, timestamp);
         }
 
-        public void recordException(String deviceID, Throwable throwable, Map<String, Object> segmentation, long timestamp) {
+        public void recordException(String deviceID, Throwable throwable, Map<String, Object> segmentation, Long timestamp) {
             L.i(String.format("recordException: deviceID = %s, throwable = %s, segmentation = %s, timestamp = %d", deviceID, throwable, segmentation, timestamp));
 
             if (!internalConfig.isBackendModeEnabled()) {
@@ -483,7 +499,7 @@ public class ModuleBackendMode extends ModuleBase {
             recordExceptionInternal(deviceID, throwable.getMessage(), sw.toString(), segmentation, timestamp);
         }
 
-        public void recordException(String deviceID, String message, String stacktrace, Map<String, Object> segmentation, long timestamp) {
+        public void recordException(String deviceID, String message, String stacktrace, Map<String, Object> segmentation, Long timestamp) {
             L.i(String.format("recordException: deviceID = %s, message = %s, stacktrace = %s, segmentation = %s, timestamp = %d", deviceID, message, stacktrace, segmentation, timestamp));
 
             if (!internalConfig.isBackendModeEnabled()) {
@@ -509,7 +525,7 @@ public class ModuleBackendMode extends ModuleBase {
             recordExceptionInternal(deviceID, message, stacktrace, segmentation, timestamp);
         }
 
-        public void recordUserProperties(String deviceID, Map<String, Object> userProperties, long timestamp) {
+        public void recordUserProperties(String deviceID, Map<String, Object> userProperties, Long timestamp) {
             L.i(String.format("recordUserProperties: deviceID = %s, userProperties = %s, timestamp = %d", deviceID, userProperties, timestamp));
 
             if (!internalConfig.isBackendModeEnabled()) {
@@ -529,7 +545,7 @@ public class ModuleBackendMode extends ModuleBase {
             recordUserPropertiesInternal(deviceID, userProperties, timestamp);
         }
 
-        public void recordDirectRequest(String deviceID, Map<String, String> requestData, long timestamp) {
+        public void recordDirectRequest(String deviceID, Map<String, String> requestData, Long timestamp) {
             if (!internalConfig.isBackendModeEnabled()) {
                 L.e("recordDirectRequest: BackendMode is not enabled.");
                 return;

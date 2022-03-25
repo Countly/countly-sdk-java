@@ -19,7 +19,7 @@ public class BackendModeExample {
             put("Retry Attempts", 60);
         }};
 
-        Countly.backendMode().recordEvent(DEVICE_ID, "Event Key", 1, 0, 5, segment, 0);
+        Countly.backendMode().recordEvent(DEVICE_ID, "Event Key", 1, 0, 5, segment, null);
     }
 
     static void recordUserProperties() {
@@ -35,9 +35,10 @@ public class BackendModeExample {
         //custom detail
         userDetail.put("hair", "black");
         userDetail.put("height", 5.9);
+        userDetail.put("fav-colors", "{$push: black}");
         userDetail.put("marks", "{$inc: 1}");
 
-        Countly.backendMode().recordUserProperties(DEVICE_ID, userDetail, 0);
+        Countly.backendMode().recordUserProperties(DEVICE_ID, userDetail, null);
     }
 
     static void recordView() {
@@ -58,7 +59,7 @@ public class BackendModeExample {
         try {
             int a = 10 / 0;
         } catch (Exception e) {
-            Countly.backendMode().recordException(DEVICE_ID, e, segmentation, 0);
+            Countly.backendMode().recordException(DEVICE_ID, e, segmentation, null);
         }
     }
 
@@ -69,7 +70,7 @@ public class BackendModeExample {
         try {
             int a = 10 / 0;
         } catch (Exception e) {
-            Countly.backendMode().recordException(DEVICE_ID, "Divided By Zero", "stack traces", segmentation, 0);
+            Countly.backendMode().recordException(DEVICE_ID, "Divided By Zero", "stack traces", segmentation, null);
         }
     }
 
@@ -79,7 +80,7 @@ public class BackendModeExample {
         requestData.put("timestamp", "1646640780130");
         requestData.put("end_session", "1");
         requestData.put("session_duration", "20.5");
-        Countly.backendMode().recordDirectRequest(DEVICE_ID, requestData, 0);
+        Countly.backendMode().recordDirectRequest(DEVICE_ID, requestData, null);
     }
 
     public static void main(String[] args) throws Exception {
@@ -89,6 +90,7 @@ public class BackendModeExample {
         Config config = new Config(COUNTLY_SERVER_URL, COUNTLY_APP_KEY)
                 .setLoggingLevel(Config.LoggingLevel.DEBUG)
                 .enableBackendMode()
+                .setRequestQueueMaxSize(100)
                 .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
                 .setRequiresConsent(false)
                 .enableParameterTamperingProtection("test-salt-checksum")
@@ -139,17 +141,21 @@ public class BackendModeExample {
                     recordAnotherCrash();
                     break;
                 case 6: {
-                    Map<String, String> metrics = new HashMap<>();
-                    metrics.put("os", "windows");
+                    Map<String, String> metrics = new HashMap<String, String>() {{
+                        put("_os", "Android");
+                        put("_os_version", "10");
+                        put("_app_version", "1.2");
+                    }};
+                    Countly.backendMode().sessionBegin("device-id", metrics, null);
 
-                    Countly.backendMode().sessionBegin(DEVICE_ID, metrics, 0);
+                    Countly.backendMode().sessionBegin(DEVICE_ID, metrics, null);
                     break;
                 }
                 case 7:
-                    Countly.backendMode().sessionUpdate(DEVICE_ID, 10, 0);
+                    Countly.backendMode().sessionUpdate(DEVICE_ID, 10, null);
                     break;
                 case 8:
-                    Countly.backendMode().sessionEnd(DEVICE_ID, 20, 0);
+                    Countly.backendMode().sessionEnd(DEVICE_ID, 20, null);
                     break;
                 case 9:
                     recordDirectRequest();

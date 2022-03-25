@@ -679,14 +679,20 @@ public class Config {
         return requestQueueMaxSize;
     }
 
-    public void setRequestQueueMaxSize(int requestQueueMaxSize) {
+    /**
+     * In backend mode set the in memory request queue size.
+     * @param requestQueueMaxSize int to set request queue maximum size for backend mode
+     * @return {@code this} instance for method chaining
+     */
+    public Config setRequestQueueMaxSize(int requestQueueMaxSize) {
         this.requestQueueMaxSize = requestQueueMaxSize;
+        return this;
     }
 
     /**
      * Enable parameter tampering protection
      *
-     * @param salt String to add to each request bebfore calculating checksum
+     * @param salt String to add to each request before calculating checksum
      * @return {@code this} instance for method chaining
      */
     public Config enableParameterTamperingProtection(String salt) {
