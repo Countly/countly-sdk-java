@@ -71,14 +71,6 @@ public class ModuleBackendMode extends ModuleBase {
         executor.shutdownNow();
     }
 
-    public int getQueueSize() {
-        int queueSize = 0;
-        int eSize = eventQueues.size();
-        int rSize = SDKCore.instance.requestQueueMemory.size();
-
-        return rSize + eSize;
-    }
-
     public void disableModule() {
         disabledModule = true;
     }
@@ -407,11 +399,11 @@ public class ModuleBackendMode extends ModuleBase {
                 return;
             }
 
-            if(count < 1) {
+            if (count < 1) {
                 count = 1;
             }
 
-            if(sum < 0) {
+            if (sum < 0) {
                 sum = 0.0;
             }
 
@@ -447,7 +439,7 @@ public class ModuleBackendMode extends ModuleBase {
                 return;
             }
 
-            if(duration < 0) {
+            if (duration < 0) {
                 duration = 0;
             }
 
@@ -467,7 +459,7 @@ public class ModuleBackendMode extends ModuleBase {
                 return;
             }
 
-            if(duration < 0) {
+            if (duration < 0) {
                 duration = 0;
             }
 
@@ -560,6 +552,14 @@ public class ModuleBackendMode extends ModuleBase {
                 return;
             }
             recordDirectRequestInternal(deviceID, requestData, timestamp);
+        }
+
+        public int getQueueSize() {
+            int queueSize = 0;
+            int eSize = eventQueues.size();
+            int rSize = SDKCore.instance.requestQueueMemory.size();
+
+            return rSize + eSize;
         }
 
         protected ModuleBase getModule() {
