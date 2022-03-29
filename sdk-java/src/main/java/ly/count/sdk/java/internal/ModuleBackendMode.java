@@ -76,7 +76,7 @@ public class ModuleBackendMode extends ModuleBase {
     }
 
 
-    private void recordEventInternal(String deviceID, String key, int count, double sum, double dur, Map<String, Object> segmentation, Long timestamp) {
+    private void recordEventInternal(String deviceID, String key, int count, Double sum, double dur, Map<String, Object> segmentation, Long timestamp) {
         L.d(String.format("recordEventInternal: deviceID = %s, key = %s,, count = %d, sum = %f, dur = %f, segmentation = %s, timestamp = %d", deviceID, key, count, sum, dur, segmentation, timestamp));
 
         if (timestamp == null || timestamp < 1) {
@@ -241,7 +241,7 @@ public class ModuleBackendMode extends ModuleBase {
         addRequestToRequestQ(request);
     }
 
-    private JSONObject buildEventJSONObject(String key, int count, double sum, double dur, Map<String, Object> segmentation, Long timestamp) {
+    private JSONObject buildEventJSONObject(String key, int count, Double sum, double dur, Map<String, Object> segmentation, Long timestamp) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(timestamp);
         final int hour = calendar.get(Calendar.HOUR_OF_DAY);
@@ -250,9 +250,8 @@ public class ModuleBackendMode extends ModuleBase {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("key", key);
 
-        if (sum > 0) {
-            jsonObject.put("sum", sum);
-        }
+        jsonObject.put("sum", sum);
+
         if (count > 0) {
             jsonObject.put("count", count);
         }
@@ -300,7 +299,7 @@ public class ModuleBackendMode extends ModuleBase {
     }
 
     private void addEventsToRequestQ() {
-        L.d(String.format("addEventsToRequestQ"));
+        L.d("addEventsToRequestQ");
 
         for (String s : eventQueues.keySet()) {
             addEventsAgainstDeviceIdToRequestQ(s);
@@ -378,7 +377,7 @@ public class ModuleBackendMode extends ModuleBase {
 
             segmentation.put("name", name);
 
-            recordEventInternal(deviceID, "[CLY]_view", 1, -1, -1, segmentation, timestamp);
+            recordEventInternal(deviceID, "[CLY]_view", 1, null, -1, segmentation, timestamp);
         }
 
         public void recordEvent(String deviceID, String key, int count, double sum, double dur, Map<String, Object> segmentation, Long timestamp) {
@@ -401,10 +400,6 @@ public class ModuleBackendMode extends ModuleBase {
 
             if (count < 1) {
                 count = 1;
-            }
-
-            if (sum < 0) {
-                sum = 0.0;
             }
 
             recordEventInternal(deviceID, key, count, sum, dur, segmentation, timestamp);
