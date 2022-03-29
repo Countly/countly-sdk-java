@@ -19,7 +19,7 @@ public class BackendModeExample {
             put("Retry Attempts", 60);
         }};
 
-        Countly.backendMode().recordEvent(DEVICE_ID, "Event Key", 1, 0, 5, segment, null);
+        Countly.backendMode().recordEvent(DEVICE_ID, "Event Key", 1, 0.1, 5, segment, null);
     }
 
     static void recordUserProperties() {
@@ -146,7 +146,6 @@ public class BackendModeExample {
                         put("_os_version", "10");
                         put("_app_version", "1.2");
                     }};
-                    Countly.backendMode().sessionBegin("device-id", metrics, null);
 
                     Countly.backendMode().sessionBegin(DEVICE_ID, metrics, null);
                     break;

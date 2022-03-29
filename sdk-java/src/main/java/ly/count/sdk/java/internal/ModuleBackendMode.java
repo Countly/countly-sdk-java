@@ -380,7 +380,7 @@ public class ModuleBackendMode extends ModuleBase {
             recordEventInternal(deviceID, "[CLY]_view", 1, null, -1, segmentation, timestamp);
         }
 
-        public void recordEvent(String deviceID, String key, int count, double sum, double dur, Map<String, Object> segmentation, Long timestamp) {
+        public void recordEvent(String deviceID, String key, int count, Double sum, double dur, Map<String, Object> segmentation, Long timestamp) {
             L.i(String.format("recordEvent: deviceID = %s, key = %s, count = %d, sum = %f, dur = %f, segmentation = %s, timestamp = %d", deviceID, key, count, sum, dur, segmentation, timestamp));
 
             if (!internalConfig.isBackendModeEnabled()) {
