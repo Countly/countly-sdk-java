@@ -24,7 +24,7 @@ public class BackendModeTests {
         Config cc = new Config("https://try.count.ly", "COUNTLY_APP_KEY");
         cc.setEventsBufferSize(4)
                 .enableBackendMode()
-                .setRequestQueueMaxSize(100);
+                .setRequestQueueMaxSize(1000000);
 
         File targetFolder = new File("C:\\Users\\zahid\\Documents\\Countly\\data");
         //File targetFolder = new File("/Users/zahidzafar/Projects/countly/java-sdk-data");
@@ -918,7 +918,7 @@ public class BackendModeTests {
     @Test
     public void testRequestQueueSizeAndPerformance() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
-        for (int i = 1; i < 1000; ++i) {
+        for (int i = 1; i <= 1000000; ++i) {
             Map<String, Object> segmentation = new HashMap<>();
             segmentation.put("key", "value");
 
@@ -926,7 +926,7 @@ public class BackendModeTests {
             Assert.assertEquals(i, SDKCore.instance.requestQueueMemory.size());
         }
 
-        Assert.assertEquals(100, SDKCore.instance.requestQueueMemory.size());
+        Assert.assertEquals(1000000, SDKCore.instance.requestQueueMemory.size());
     }
 
     private void validateEventFields(String key, int count, Double sum, Double dur, int dow, int hour, long timestamp, JSONObject event) {
