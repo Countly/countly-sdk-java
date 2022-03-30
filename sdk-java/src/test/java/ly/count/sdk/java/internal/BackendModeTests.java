@@ -23,7 +23,8 @@ public class BackendModeTests {
     public static void init() {
         Config cc = new Config("https://try.count.ly", "COUNTLY_APP_KEY");
         cc.setEventsBufferSize(4)
-                .enableBackendMode();
+                .enableBackendMode()
+                .setRequestQueueMaxSize(100);
 
         File targetFolder = new File("C:\\Users\\zahid\\Documents\\Countly\\data");
         //File targetFolder = new File("/Users/zahidzafar/Projects/countly/java-sdk-data");
@@ -912,6 +913,20 @@ public class BackendModeTests {
         Assert.assertEquals("value2", request.params.get("data2"));
         Assert.assertEquals("value4", request.params.get("data4"));
         validateRequestTimeFields("device-id-2", 987654321L, request);
+    }
+
+    @Test
+    public void testRequestQueueSizeAndPerformance() {
+        ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
+        for (int i = 1; i < 1000; ++i) {
+            Map<String, Object> segmentation = new HashMap<>();
+            segmentation.put("key", "value");
+
+            backendMode.recordException("device-id-1", "Ex-" + 1, "stacktrace", segmentation, 1646640780130L);
+            Assert.assertEquals(i, SDKCore.instance.requestQueueMemory.size());
+        }
+
+        Assert.assertEquals(100, SDKCore.instance.requestQueueMemory.size());
     }
 
     private void validateEventFields(String key, int count, Double sum, Double dur, int dow, int hour, long timestamp, JSONObject event) {
