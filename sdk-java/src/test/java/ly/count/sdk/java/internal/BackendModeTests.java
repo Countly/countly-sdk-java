@@ -22,9 +22,7 @@ public class BackendModeTests {
     @BeforeClass
     public static void init() {
         Config cc = new Config("https://try.count.ly", "COUNTLY_APP_KEY");
-        cc.setEventsBufferSize(4)
-                .enableBackendMode()
-                .setRequestQueueMaxSize(1000000);
+        cc.setEventsBufferSize(4).enableBackendMode();
 
         File targetFolder = new File("C:\\Users\\zahid\\Documents\\Countly\\data");
         //File targetFolder = new File("/Users/zahidzafar/Projects/countly/java-sdk-data");
@@ -592,13 +590,6 @@ public class BackendModeTests {
         userDetail.put("hair", "black");
         userDetail.put("height", 5.9);
 
-//        // Operations: inc, mul
-//        Map<String, Object> operations = new HashMap<>();
-//        operations.put("$inc", 1);
-
-        //property 'weight', operation 'increment'
-       // customDetail.put("weight", operations);
-
         backendMode.recordUserProperties("device-id-1", userDetail, 1646640780130L);
 
         Assert.assertEquals(1, SDKCore.instance.requestQueueMemory.size());
@@ -609,7 +600,6 @@ public class BackendModeTests {
 
         JSONObject userDetailsJson = new JSONObject(userDetails);
         JSONObject customPropertiesJson = userDetailsJson.getJSONObject("custom");
-       // JSONObject operationsJson = customPropertiesJson.getJSONObject("weight");
 
         //User details
         Assert.assertEquals("Full Name", userDetailsJson.get("name"));
@@ -623,9 +613,6 @@ public class BackendModeTests {
         //Custom properties
         Assert.assertEquals("black", customPropertiesJson.get("hair"));
         Assert.assertEquals(5.9, customPropertiesJson.get("height"));
-
-        //Operations
-      //  Assert.assertEquals(1, operationsJson.get("$inc"));
     }
 
     /**
@@ -674,7 +661,7 @@ public class BackendModeTests {
         Assert.assertEquals("black", customPropertiesJson.get("hair"));
         Assert.assertEquals(5.9, customPropertiesJson.get("height"));
 
-        JSONObject operationsJson = customPropertiesJson.getJSONObject("weight");;
+        JSONObject operationsJson = customPropertiesJson.getJSONObject("weight");
         Assert.assertEquals(1, operationsJson.get("$inc"));
     }
 
@@ -729,7 +716,7 @@ public class BackendModeTests {
         JSONObject userDetailsJson = new JSONObject(userDetails);
         JSONObject customPropertiesJson = userDetailsJson.getJSONObject("custom");
 
-        JSONObject operationsJson = customPropertiesJson.getJSONObject("weight");;
+        JSONObject operationsJson = customPropertiesJson.getJSONObject("weight");
         Assert.assertEquals(1, operationsJson.get("$inc"));
     }
 
@@ -913,20 +900,6 @@ public class BackendModeTests {
         Assert.assertEquals("value2", request.params.get("data2"));
         Assert.assertEquals("value4", request.params.get("data4"));
         validateRequestTimeFields("device-id-2", 987654321L, request);
-    }
-
-    @Test
-    public void testRequestQueueSizeAndPerformance() {
-        ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
-        for (int i = 1; i <= 1000000; ++i) {
-            Map<String, Object> segmentation = new HashMap<>();
-            segmentation.put("key", "value");
-
-            backendMode.recordException("device-id-1", "Ex-" + 1, "stacktrace", segmentation, 1646640780130L);
-            Assert.assertEquals(i, SDKCore.instance.requestQueueMemory.size());
-        }
-
-        Assert.assertEquals(1000000, SDKCore.instance.requestQueueMemory.size());
     }
 
     private void validateEventFields(String key, int count, Double sum, Double dur, int dow, int hour, long timestamp, JSONObject event) {
