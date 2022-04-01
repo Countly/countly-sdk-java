@@ -173,7 +173,7 @@ public class BackendModePerformanceTests {
         do {
 
             if (Countly.backendMode().getQueueSize() >= config.getRequestQueueMaxSize()) {
-                Thread.sleep(secondsToSleep * 1000);
+               // Thread.sleep(secondsToSleep * 1000);
             } else {
                 if (remaining > 0) {
                     Map<String, Object> segment = new HashMap<String, Object>() {{
@@ -216,12 +216,15 @@ public class BackendModePerformanceTests {
                     break;
                 case 1:
                     performLargeRequestQueueSizeTest();
+                    running = false;
                     break;
                 case 2:
                     performLargeEventQueueTest();
+                    running = false;
                     break;
                 case 3:
                     recordBulkDataAndSendToServer();
+                    running = false;
                     break;
                 default:
                     break;
