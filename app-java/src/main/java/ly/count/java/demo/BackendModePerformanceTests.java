@@ -40,6 +40,7 @@ public class BackendModePerformanceTests {
         Countly.init(targetFolder, config);
         System.out.printf("After SDK Initialization: Total Memory = %d Mb, Available RAM= %d Mb %n", DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
 
+        long startTime = System.currentTimeMillis();
         int batchSize = requestQSize / 25;
 
         System.out.printf("Adding %d requests(events) into request Queue%n", batchSize);
@@ -94,6 +95,7 @@ public class BackendModePerformanceTests {
             Countly.backendMode().sessionBegin(DEVICE_ID, metrics, null);
         }
 
+        System.out.printf("Time spent: %dms%n", (System.currentTimeMillis() - startTime));
         System.out.printf("After adding %d request: Total Memory = %d Mb, Available RAM= %d Mb %n", requestQSize, DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
 
         Countly.stop(false);
@@ -123,6 +125,7 @@ public class BackendModePerformanceTests {
         Countly.init(targetFolder, config);
         System.out.printf("After SDK Initialization: Total Memory = %d Mb, Available RAM= %d Mb %n", DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
 
+        long startTime = System.currentTimeMillis();
 
         int noOfDevices = 10;
         for (int d = 0; d <= noOfDevices; ++d) {
@@ -137,6 +140,8 @@ public class BackendModePerformanceTests {
                 Countly.backendMode().recordEvent("device-id-" + d, "Event Key " + i, 1, 0.1, 5, segment, null);
             }
         }
+
+        System.out.printf("Time spent: %dms%n", (System.currentTimeMillis() - startTime));
 
 
         System.out.printf("After adding %d events into event queue: Total Memory = %d Mb, Available RAM= %d Mb %n", noOfEvents * noOfDevices, DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
@@ -167,9 +172,9 @@ public class BackendModePerformanceTests {
         Countly.init(targetFolder, config);
         System.out.printf("After SDK Initialization: Total Memory = %d Mb, Available RAM= %d Mb %n", DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
 
-        int countOfRequest = 100000;
+        int countOfRequest = 10000;
         int remaining = countOfRequest;
-        int secondsToSleep = 10;
+        int secondsToSleep = 5;
         do {
 
             if (Countly.backendMode().getQueueSize() >= config.getRequestQueueMaxSize()) {
@@ -207,8 +212,6 @@ public class BackendModePerformanceTests {
             System.out.println("2) Perform Large Event queues test");
             System.out.println("3) Record bulk data to server");
 
-            System.out.println("0) Exit ");
-
             int input = scanner.nextInt();
             switch (input) {
                 case 0:
@@ -230,7 +233,7 @@ public class BackendModePerformanceTests {
                     break;
             }
         }
+
+        System.out.println("Exit");
     }
-
-
 }
