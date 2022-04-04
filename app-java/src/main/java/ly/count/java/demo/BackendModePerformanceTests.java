@@ -156,7 +156,7 @@ public class BackendModePerformanceTests {
         System.out.printf("Before SDK Initialization: Total Memory = %dMb, Available RAM = %dMb %n", DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
 
         Config config = new Config("https://master.count.ly/", "8c1d653f8f474be24958b282d5e9b4c4209ee552")
-                .setLoggingLevel(Config.LoggingLevel.DEBUG)
+                .setLoggingLevel(Config.LoggingLevel.OFF)
                 .enableBackendMode()
                 .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
                 .setRequiresConsent(false)
@@ -172,13 +172,14 @@ public class BackendModePerformanceTests {
         Countly.init(targetFolder, config);
         System.out.printf("After SDK Initialization: Total Memory = %d Mb, Available RAM= %d Mb %n", DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
 
-        int countOfRequest = 10000;
+        long startTime = System.currentTimeMillis();
+        int countOfRequest = 10;
         int remaining = countOfRequest;
         int secondsToSleep = 5;
         do {
 
             if (Countly.backendMode().getQueueSize() >= config.getRequestQueueMaxSize()) {
-               // Thread.sleep(secondsToSleep * 1000);
+               Thread.sleep(secondsToSleep * 1000);
             } else {
                 if (remaining > 0) {
                     Map<String, Object> segment = new HashMap<String, Object>() {{
@@ -195,7 +196,8 @@ public class BackendModePerformanceTests {
         } while (remaining != 0 || Countly.backendMode().getQueueSize() != 0);
 
 
-        System.out.printf("After successfully sending data: Total Memory = %d Mb, Available RAM= %d Mb %n", DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
+        System.out.printf("After successfully sending %d requests to server: Total Memory = %d Mb, Available RAM= %d Mb %n", countOfRequest, DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
+        System.out.printf("Time spent: %dms%n", (System.currentTimeMillis() - startTime));
 
         Countly.stop(false);
         System.out.println("=====SDK Stop=====");
