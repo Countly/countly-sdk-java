@@ -18,7 +18,6 @@ public class BackendModePerformanceTests {
     static void performLargeRequestQueueSizeTest() {
         System.out.println("===== Test Started: 'Large request queue size' =====");
         int requestQSize = 1000000;
-        System.out.println("===== Test Start =====");
         System.out.printf("Before SDK Initialization: Total Memory = %dMb, Available RAM = %dMb %n", DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
 
         Config config = new Config(COUNTLY_SERVER_URL, COUNTLY_APP_KEY)
