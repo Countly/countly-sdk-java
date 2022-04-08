@@ -578,17 +578,7 @@ public class BackendModeTests {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
         // User detail
-        Map<String, Object> userDetail = new HashMap<>();
-        userDetail.put("name", "Full Name");
-        userDetail.put("username", "username1");
-        userDetail.put("email", "user@gmail.com");
-        userDetail.put("organization", "Countly");
-        userDetail.put("phone", "000-111-000");
-        userDetail.put("gender", "M");
-        userDetail.put("byear", "1991");
-
-        userDetail.put("hair", "black");
-        userDetail.put("height", 5.9);
+        Map<String, Object> userDetail = populateUserProperties(true, true, false);
 
         backendMode.recordUserProperties("device-id-1", userDetail, 1646640780130L);
 
@@ -597,22 +587,7 @@ public class BackendModeTests {
         validateRequestTimeFields("device-id-1", 1646640780130L, request);
 
         String userDetails = request.params.get("user_details");
-
-        JSONObject userDetailsJson = new JSONObject(userDetails);
-        JSONObject customPropertiesJson = userDetailsJson.getJSONObject("custom");
-
-        //User details
-        Assert.assertEquals("Full Name", userDetailsJson.get("name"));
-        Assert.assertEquals("username1", userDetailsJson.get("username"));
-        Assert.assertEquals("user@gmail.com", userDetailsJson.get("email"));
-        Assert.assertEquals("Countly", userDetailsJson.get("organization"));
-        Assert.assertEquals("000-111-000", userDetailsJson.get("phone"));
-        Assert.assertEquals("M", userDetailsJson.get("gender"));
-        Assert.assertEquals("1991", userDetailsJson.get("byear"));
-
-        //Custom properties
-        Assert.assertEquals("black", customPropertiesJson.get("hair"));
-        Assert.assertEquals(5.9, customPropertiesJson.get("height"));
+        validateUserProperties(userDetails, true, true, false);
     }
 
     /**
@@ -624,19 +599,7 @@ public class BackendModeTests {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
         // User detail
-        Map<String, Object> userDetail = new HashMap<>();
-        userDetail.put("name", "Full Name");
-        userDetail.put("username", "username1");
-        userDetail.put("email", "user@gmail.com");
-        userDetail.put("organization", "Countly");
-        userDetail.put("phone", "000-111-000");
-        userDetail.put("gender", "M");
-        userDetail.put("byear", "1991");
-        //custom detail
-        userDetail.put("hair", "black");
-        userDetail.put("height", 5.9);
-        userDetail.put("weight", "{\"$inc\": 1}");
-
+        Map<String, Object> userDetail = populateUserProperties(true, true, true);
         backendMode.recordUserProperties("device-id-1", userDetail, 1646640780130L);
 
         Assert.assertEquals(1, SDKCore.instance.requestQueueMemory.size());
@@ -644,25 +607,8 @@ public class BackendModeTests {
         validateRequestTimeFields("device-id-1", 1646640780130L, request);
 
         String userDetails = request.params.get("user_details");
+        validateUserProperties(userDetails, true, true, true);
 
-        JSONObject userDetailsJson = new JSONObject(userDetails);
-        JSONObject customPropertiesJson = userDetailsJson.getJSONObject("custom");
-
-        //User details
-        Assert.assertEquals("Full Name", userDetailsJson.get("name"));
-        Assert.assertEquals("username1", userDetailsJson.get("username"));
-        Assert.assertEquals("user@gmail.com", userDetailsJson.get("email"));
-        Assert.assertEquals("Countly", userDetailsJson.get("organization"));
-        Assert.assertEquals("000-111-000", userDetailsJson.get("phone"));
-        Assert.assertEquals("M", userDetailsJson.get("gender"));
-        Assert.assertEquals("1991", userDetailsJson.get("byear"));
-
-        //Custom properties
-        Assert.assertEquals("black", customPropertiesJson.get("hair"));
-        Assert.assertEquals(5.9, customPropertiesJson.get("height"));
-
-        JSONObject operationsJson = customPropertiesJson.getJSONObject("weight");
-        Assert.assertEquals(1, operationsJson.get("$inc"));
     }
 
     /**
@@ -673,10 +619,7 @@ public class BackendModeTests {
     public void testUserDetailStructureWithOnlyCustomDetail() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
-        Map<String, Object> userDetail = new HashMap<>();
-        //custom detail
-        userDetail.put("hair", "black");
-        userDetail.put("height", 5.9);
+        Map<String, Object> userDetail = populateUserProperties(false, true, false);
 
         backendMode.recordUserProperties("device-id-1", userDetail, 1646640780130L);
 
@@ -685,13 +628,7 @@ public class BackendModeTests {
         validateRequestTimeFields("device-id-1", 1646640780130L, request);
 
         String userDetails = request.params.get("user_details");
-
-        JSONObject userDetailsJson = new JSONObject(userDetails);
-        JSONObject customPropertiesJson = userDetailsJson.getJSONObject("custom");
-
-        //Custom properties
-        Assert.assertEquals("black", customPropertiesJson.get("hair"));
-        Assert.assertEquals(5.9, customPropertiesJson.get("height"));
+        validateUserProperties(userDetails, false, true, false);
     }
 
     /**
@@ -702,8 +639,7 @@ public class BackendModeTests {
     public void testUserDetailStructureWithOnlyOperationData() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
-        Map<String, Object> userDetail = new HashMap<>();
-        userDetail.put("weight", "{\"$inc\": 1}");
+        Map<String, Object> userDetail = populateUserProperties(false, false, true);
 
         backendMode.recordUserProperties("device-id-1", userDetail, 1646640780130L);
 
@@ -712,12 +648,7 @@ public class BackendModeTests {
         validateRequestTimeFields("device-id-1", 1646640780130L, request);
 
         String userDetails = request.params.get("user_details");
-
-        JSONObject userDetailsJson = new JSONObject(userDetails);
-        JSONObject customPropertiesJson = userDetailsJson.getJSONObject("custom");
-
-        JSONObject operationsJson = customPropertiesJson.getJSONObject("weight");
-        Assert.assertEquals(1, operationsJson.get("$inc"));
+        validateUserProperties(userDetails, false, false, true);
     }
 
     /**
@@ -726,14 +657,7 @@ public class BackendModeTests {
     @Test
     public void testMethodRecordUserPropertiesWithInvalidData() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
-        Map<String, Object> userDetail = new HashMap<>();
-        userDetail.put("name", "Full Name");
-        userDetail.put("username", "username1");
-        userDetail.put("email", "user@gmail.com");
-        userDetail.put("organization", "Countly");
-        userDetail.put("phone", "000-111-000");
-        userDetail.put("gender", "M");
-        userDetail.put("byear", "1991");
+        Map<String, Object> userDetail = populateUserProperties(true, false, false);
 
         backendMode.recordUserProperties("", userDetail, 1646640780130L);
         Assert.assertTrue(SDKCore.instance.requestQueueMemory.isEmpty());
@@ -902,6 +826,30 @@ public class BackendModeTests {
         validateRequestTimeFields("device-id-2", 987654321L, request);
     }
 
+    private Map<String, Object> populateUserProperties(boolean addUserDetail, boolean addCustomDetail, boolean addOperation) {
+        Map<String, Object> userDetail = new HashMap<>();
+        if (addUserDetail) {
+            userDetail.put("name", "Full Name");
+            userDetail.put("username", "username1");
+            userDetail.put("email", "user@gmail.com");
+            userDetail.put("organization", "Countly");
+            userDetail.put("phone", "000-111-000");
+            userDetail.put("gender", "M");
+            userDetail.put("byear", "1991");
+        }
+
+        if (addCustomDetail) {
+            userDetail.put("hair", "black");
+            userDetail.put("height", 5.9);
+        }
+
+        if (addOperation) {
+            userDetail.put("weight", "{\"$inc\": 1}");
+        }
+
+        return userDetail;
+    }
+
     private void validateEventFields(String key, int count, Double sum, Double dur, int dow, int hour, long timestamp, JSONObject event) {
         Assert.assertEquals(key, event.get("key"));
         Assert.assertEquals(sum, event.opt("sum"));
@@ -925,5 +873,32 @@ public class BackendModeTests {
         Assert.assertEquals(hour + "", request.params.get("hour"));
         Assert.assertEquals(deviceID, request.params.get("device_id"));
         Assert.assertEquals(timestamp + "", request.params.get("timestamp"));
+    }
+
+    private void validateUserProperties(String userDetails, boolean validateUserDetail, boolean validateCustomDetail, boolean validateOperation) {
+        JSONObject userDetailsJson = new JSONObject(userDetails);
+
+        if (validateUserDetail) {
+            Assert.assertEquals("Full Name", userDetailsJson.get("name"));
+            Assert.assertEquals("username1", userDetailsJson.get("username"));
+            Assert.assertEquals("user@gmail.com", userDetailsJson.get("email"));
+            Assert.assertEquals("Countly", userDetailsJson.get("organization"));
+            Assert.assertEquals("000-111-000", userDetailsJson.get("phone"));
+            Assert.assertEquals("M", userDetailsJson.get("gender"));
+            Assert.assertEquals("1991", userDetailsJson.get("byear"));
+        }
+
+        if (validateCustomDetail) {
+            //Custom properties
+            JSONObject customPropertiesJson = userDetailsJson.getJSONObject("custom");
+            Assert.assertEquals("black", customPropertiesJson.get("hair"));
+            Assert.assertEquals(5.9, customPropertiesJson.get("height"));
+        }
+
+        if (validateOperation) {
+            JSONObject customPropertiesJson = userDetailsJson.getJSONObject("custom");
+            JSONObject operationsJson = customPropertiesJson.getJSONObject("weight");
+            Assert.assertEquals(1, operationsJson.get("$inc"));
+        }
     }
 }
