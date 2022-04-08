@@ -47,6 +47,7 @@ public abstract class CountlyLifecycle extends Cly {
             }
 
             if(config.requestQueueMaxSize < 1) {
+                L.e("init: Request queue max size can not be less than 1.");
                 config.requestQueueMaxSize = 1;
             }
 

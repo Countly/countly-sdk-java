@@ -15,31 +15,28 @@ public class BackendModePerformanceTests {
     final static String COUNTLY_SERVER_URL = "https://try.count.ly/";
 
 
-    static void performLargeRequestQueueSizeTest() {
-        System.out.println("===== Test Started: 'Large request queue size' =====");
-        int requestQSize = 1000000;
-        System.out.printf("Before SDK Initialization: Total Memory = %dMb, Available RAM = %dMb %n", DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
-
+    private static void initSDK(int eventQueueSize, int requestQueueSize) {
         Config config = new Config(COUNTLY_SERVER_URL, COUNTLY_APP_KEY)
                 .setLoggingLevel(Config.LoggingLevel.OFF)
                 .enableBackendMode()
-                .setRequestQueueMaxSize(requestQSize)
+                .setRequestQueueMaxSize(requestQueueSize)
                 .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
                 .setRequiresConsent(false)
-                .enableParameterTamperingProtection("test-salt-checksum")
                 .setEventsBufferSize(1);
-
-        // Countly needs persistent storage for requests, configuration storage, user profiles and other temporary data,
-        // therefore requires a separate data folder to run
-        //File targetFolder = new File("/home/zahi/countly-workspace/data");
 
         File targetFolder = new File("C:\\Users\\zahid\\Documents\\Countly\\data");
 
         // Main initialization call, SDK can be used after this one is done
         Countly.init(targetFolder, config);
+    }
+
+    static void performLargeRequestQueueSizeTest() {
+        System.out.println("===== Test Started: 'Large request queue size' =====");
+        int requestQSize = 1000000;
+        System.out.printf("Before SDK Initialization: Total Memory = %dMb, Available RAM = %dMb %n", DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
+        initSDK(1, requestQSize);
         System.out.printf("After SDK Initialization: Total Memory = %d Mb, Available RAM= %d Mb %n", DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
 
-        long startTime = System.currentTimeMillis();
         int batchSize = requestQSize / 25;
 
         System.out.printf("Adding %d requests(events) into request Queue%n", batchSize);
@@ -94,7 +91,6 @@ public class BackendModePerformanceTests {
             Countly.backendMode().sessionBegin(DEVICE_ID, metrics, null);
         }
 
-        System.out.printf("Time spent: %dms%n", (System.currentTimeMillis() - startTime));
         System.out.printf("After adding %d request: Total Memory = %d Mb, Available RAM= %d Mb %n", requestQSize, DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
 
         Countly.stop(false);
@@ -105,26 +101,8 @@ public class BackendModePerformanceTests {
         int noOfEvents = 100000;
         System.out.println("===== Test Start: 'Large Event queues against multiple devices ids' =====");
         System.out.printf("Before SDK Initialization: Total Memory = %dMb, Available RAM = %dMb %n", DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
-
-        Config config = new Config(COUNTLY_SERVER_URL, COUNTLY_APP_KEY)
-                .setLoggingLevel(Config.LoggingLevel.OFF)
-                .enableBackendMode()
-                .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
-                .setRequiresConsent(false)
-                .enableParameterTamperingProtection("test-salt-checksum")
-                .setEventsBufferSize(noOfEvents);
-
-        // Countly needs persistent storage for requests, configuration storage, user profiles and other temporary data,
-        // therefore requires a separate data folder to run
-        //File targetFolder = new File("/home/zahi/countly-workspace/data");
-
-        File targetFolder = new File("C:\\Users\\zahid\\Documents\\Countly\\data");
-
-        // Main initialization call, SDK can be used after this one is done
-        Countly.init(targetFolder, config);
+        initSDK(noOfEvents, 1000);
         System.out.printf("After SDK Initialization: Total Memory = %d Mb, Available RAM= %d Mb %n", DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
-
-        long startTime = System.currentTimeMillis();
 
         int noOfDevices = 10;
         for (int d = 0; d <= noOfDevices; ++d) {
@@ -139,10 +117,6 @@ public class BackendModePerformanceTests {
                 Countly.backendMode().recordEvent("device-id-" + d, "Event Key " + i, 1, 0.1, 5, segment, null);
             }
         }
-
-        System.out.printf("Time spent: %dms%n", (System.currentTimeMillis() - startTime));
-
-
         System.out.printf("After adding %d events into event queue: Total Memory = %d Mb, Available RAM= %d Mb %n", noOfEvents * noOfDevices, DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
 
         Countly.stop(false);
@@ -153,32 +127,14 @@ public class BackendModePerformanceTests {
 
         System.out.println("===== Test Start: 'Record bulk data to server' =====");
         System.out.printf("Before SDK Initialization: Total Memory = %dMb, Available RAM = %dMb %n", DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
-
-        Config config = new Config("https://master.count.ly/", "8c1d653f8f474be24958b282d5e9b4c4209ee552")
-                .setLoggingLevel(Config.LoggingLevel.OFF)
-                .enableBackendMode()
-                .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
-                .setRequiresConsent(false)
-                .enableParameterTamperingProtection("test-salt-checksum");
-
-        // Countly needs persistent storage for requests, configuration storage, user profiles and other temporary data,
-        // therefore requires a separate data folder to run
-        //File targetFolder = new File("/home/zahi/countly-workspace/data");
-
-        File targetFolder = new File("C:\\Users\\zahid\\Documents\\Countly\\data");
-
-        // Main initialization call, SDK can be used after this one is done
-        Countly.init(targetFolder, config);
+        initSDK(100, 1000);
         System.out.printf("After SDK Initialization: Total Memory = %d Mb, Available RAM= %d Mb %n", DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
-
-        long startTime = System.currentTimeMillis();
         int countOfRequest = 10;
         int remaining = countOfRequest;
         int secondsToSleep = 5;
         do {
-
-            if (Countly.backendMode().getQueueSize() >= config.getRequestQueueMaxSize()) {
-               Thread.sleep(secondsToSleep * 1000);
+            if (Countly.backendMode().getQueueSize() >= 100) {
+                Thread.sleep(secondsToSleep * 1000);
             } else {
                 if (remaining > 0) {
                     Map<String, Object> segment = new HashMap<String, Object>() {{
@@ -196,7 +152,6 @@ public class BackendModePerformanceTests {
 
 
         System.out.printf("After successfully sending %d requests to server: Total Memory = %d Mb, Available RAM= %d Mb %n", countOfRequest, DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
-        System.out.printf("Time spent: %dms%n", (System.currentTimeMillis() - startTime));
 
         Countly.stop(false);
         System.out.println("=====SDK Stop=====");
@@ -204,6 +159,7 @@ public class BackendModePerformanceTests {
 
     public static void main(String[] args) throws Exception {
         boolean running = true;
+        long startTime = 0;
         Scanner scanner = new Scanner(System.in);
         while (running) {
 
@@ -216,19 +172,27 @@ public class BackendModePerformanceTests {
             int input = scanner.nextInt();
             switch (input) {
                 case 0:
+                    startTime = System.currentTimeMillis();
                     running = false;
+                    System.out.printf("Time spent: %dms%n", (System.currentTimeMillis() - startTime));
                     break;
                 case 1:
+                    startTime = System.currentTimeMillis();
                     performLargeRequestQueueSizeTest();
                     running = false;
+                    System.out.printf("Time spent: %dms%n", (System.currentTimeMillis() - startTime));
                     break;
                 case 2:
+                    startTime = System.currentTimeMillis();
                     performLargeEventQueueTest();
                     running = false;
+                    System.out.printf("Time spent: %dms%n", (System.currentTimeMillis() - startTime));
                     break;
                 case 3:
+                    startTime = System.currentTimeMillis();
                     recordBulkDataAndSendToServer();
                     running = false;
+                    System.out.printf("Time spent: %dms%n", (System.currentTimeMillis() - startTime));
                     break;
                 default:
                     break;
