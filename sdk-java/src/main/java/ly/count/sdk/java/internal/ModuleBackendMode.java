@@ -360,12 +360,16 @@ public class ModuleBackendMode extends ModuleBase {
     }
 
     public class BackendMode {
+        /**
+         * Record a view.
+         *
+         * @param deviceID     device id, cannot be null or empty
+         * @param name         String representing name of this View, cannot be null or empty
+         * @param segmentation additional view segmentation you want to set, leave null if you don't want to add anything
+         * @param timestamp    record time in milliseconds, leave null if you don't have it
+         */
         public void recordView(String deviceID, String name, Map<String, Object> segmentation, Long timestamp) {
             L.i(String.format(":recordView: deviceID = %s, key = %s, segmentation = %s, timestamp = %d", deviceID, name, segmentation, timestamp));
-            if (!internalConfig.isBackendModeEnabled()) {
-                L.e("recordView: BackendMode is not enabled.");
-                return;
-            }
 
             if (deviceID == null || deviceID.isEmpty()) {
                 L.e("recordView: DeviceID can not be null or empty.");
@@ -386,13 +390,19 @@ public class ModuleBackendMode extends ModuleBase {
             recordEventInternal(deviceID, "[CLY]_view", 1, null, -1, segmentation, timestamp);
         }
 
+        /**
+         * Record an event.
+         *
+         * @param deviceID     device id, cannot be null or empty
+         * @param key          key for this event, cannot be null or empty
+         * @param count        how many of these events have occurred, default value is "1"
+         * @param sum          set sum if needed, leave null if you don't have it.
+         * @param dur          set duration if needed, default value is "0"
+         * @param segmentation additional view segmentation you want to set, leave null if you don't want to add anything
+         * @param timestamp    record time in milliseconds, leave null if you don't have it
+         */
         public void recordEvent(String deviceID, String key, int count, Double sum, double dur, Map<String, Object> segmentation, Long timestamp) {
             L.i(String.format("recordEvent: deviceID = %s, key = %s, count = %d, sum = %f, dur = %f, segmentation = %s, timestamp = %d", deviceID, key, count, sum, dur, segmentation, timestamp));
-
-            if (!internalConfig.isBackendModeEnabled()) {
-                L.e("recordEvent: BackendMode is not enabled.");
-                return;
-            }
 
             if (deviceID == null || deviceID.isEmpty()) {
                 L.e("recordEvent: DeviceID can not be null or empty.");
@@ -411,13 +421,15 @@ public class ModuleBackendMode extends ModuleBase {
             recordEventInternal(deviceID, key, count, sum, dur, segmentation, timestamp);
         }
 
+        /**
+         * Start the session.
+         *
+         * @param deviceID  device id, cannot be null or empty
+         * @param metrics   additional information you want to set, leave null if you don't want to add anything
+         * @param timestamp record time in milliseconds, leave null if you don't have it
+         */
         public void sessionBegin(String deviceID, Map<String, String> metrics, Long timestamp) {
             L.i(String.format("sessionBegin: deviceID = %s, timestamp = %d", deviceID, timestamp));
-
-            if (!internalConfig.isBackendModeEnabled()) {
-                L.e("sessionBegin: BackendMode is not enabled.");
-                return;
-            }
 
             if (deviceID == null || deviceID.isEmpty()) {
                 L.e("sessionBegin: DeviceID can not be null or empty.");
@@ -427,13 +439,15 @@ public class ModuleBackendMode extends ModuleBase {
             sessionBeginInternal(deviceID, metrics, timestamp);
         }
 
+        /**
+         * Send update request to the server saying that user is still using the app.
+         *
+         * @param deviceID  device id, cannot be null or empty
+         * @param duration  app usage duration
+         * @param timestamp record time in milliseconds, leave null if you don't have it
+         */
         public void sessionUpdate(String deviceID, double duration, Long timestamp) {
             L.i(String.format("sessionUpdate: deviceID = %s, duration = %f, timestamp = %d", deviceID, duration, timestamp));
-
-            if (!internalConfig.isBackendModeEnabled()) {
-                L.e("sessionUpdate: BackendMode is not enabled.");
-                return;
-            }
 
             if (deviceID == null || deviceID.isEmpty()) {
                 L.e("sessionUpdate: DeviceID can not be null or empty.");
@@ -447,13 +461,15 @@ public class ModuleBackendMode extends ModuleBase {
             sessionUpdateInternal(deviceID, duration, timestamp);
         }
 
+        /**
+         * End this session, add corresponding request to queue
+         *
+         * @param deviceID  device id, cannot be null or empty
+         * @param duration  app usage duration
+         * @param timestamp record time in milliseconds, leave null if you don't have it
+         */
         public void sessionEnd(String deviceID, double duration, Long timestamp) {
             L.i(String.format("sessionEnd: deviceID = %s, duration = %f, timestamp = %d", deviceID, duration, timestamp));
-
-            if (!internalConfig.isBackendModeEnabled()) {
-                L.e("sessionEnd: BackendMode is not enabled.");
-                return;
-            }
 
             if (deviceID == null || deviceID.isEmpty()) {
                 L.e("sessionEnd: DeviceID can not be null or empty.");
@@ -467,13 +483,17 @@ public class ModuleBackendMode extends ModuleBase {
             sessionEndInternal(deviceID, duration, timestamp);
         }
 
+        /**
+         * Record a crash.
+         *
+         * @param deviceID     device id, cannot be null or empty
+         * @param throwable    {@link Throwable} to log
+         * @param segmentation (optional, can be {@code null}) additional crash segments map
+         * @param crashDetails (optional, can be {@code null}) additional log lines (separated by \n) or comment about this crash report
+         * @param timestamp    record time in milliseconds, leave null if you don't have it
+         */
         public void recordException(String deviceID, Throwable throwable, Map<String, Object> segmentation, Map<String, String> crashDetails, Long timestamp) {
             L.i(String.format("recordException: deviceID = %s, throwable = %s, segmentation = %s, timestamp = %d", deviceID, throwable, segmentation, timestamp));
-
-            if (!internalConfig.isBackendModeEnabled()) {
-                L.e("recordException BackendMode is not enabled.");
-                return;
-            }
 
             if (deviceID == null || deviceID.isEmpty()) {
                 L.e("recordException: DeviceID can not be null or empty.");
@@ -492,13 +512,18 @@ public class ModuleBackendMode extends ModuleBase {
             recordExceptionInternal(deviceID, throwable.getMessage(), sw.toString(), segmentation, crashDetails, timestamp);
         }
 
+        /**
+         * Record a crash.
+         *
+         * @param deviceID     device id, cannot be null or empty
+         * @param message      a string that contain detailed description of the exception
+         * @param stacktrace   a string that describes the contents of the callstack.
+         * @param segmentation (optional, can be {@code null}) additional crash information
+         * @param crashDetails (optional, can be {@code null}) a map contains crash detail
+         * @param timestamp    record time in milliseconds, leave null if you don't have it
+         */
         public void recordException(String deviceID, String message, String stacktrace, Map<String, Object> segmentation, Map<String, String> crashDetails, Long timestamp) {
             L.i(String.format("recordException: deviceID = %s, message = %s, stacktrace = %s, segmentation = %s, timestamp = %d", deviceID, message, stacktrace, segmentation, timestamp));
-
-            if (!internalConfig.isBackendModeEnabled()) {
-                L.e("recordException: BackendMode is not enabled.");
-                return;
-            }
 
             if (deviceID == null || deviceID.isEmpty()) {
                 L.e("recordException: DeviceID can not be null or empty.");
@@ -518,13 +543,15 @@ public class ModuleBackendMode extends ModuleBase {
             recordExceptionInternal(deviceID, message, stacktrace, segmentation, crashDetails, timestamp);
         }
 
+        /**
+         * Record user detail and user custom detail.
+         *
+         * @param deviceID       device id, cannot be null or empty
+         * @param userProperties a map contains user detail, it can not be null or empty
+         * @param timestamp      record time in milliseconds, leave null if you don't have it
+         */
         public void recordUserProperties(String deviceID, Map<String, Object> userProperties, Long timestamp) {
             L.i(String.format("recordUserProperties: deviceID = %s, userProperties = %s, timestamp = %d", deviceID, userProperties, timestamp));
-
-            if (!internalConfig.isBackendModeEnabled()) {
-                L.e("recordUserProperties: BackendMode is not enabled.");
-                return;
-            }
 
             if (deviceID == null || deviceID.isEmpty()) {
                 L.e("recordUserProperties: DeviceID can not be null or empty.");
@@ -538,11 +565,14 @@ public class ModuleBackendMode extends ModuleBase {
             recordUserPropertiesInternal(deviceID, userProperties, timestamp);
         }
 
+        /**
+         * Record a direct request.
+         *
+         * @param deviceID    device id, cannot be null or empty
+         * @param requestData a map contains request data, it can not be null or empty
+         * @param timestamp   record time in milliseconds, leave null if you don't have it
+         */
         public void recordDirectRequest(String deviceID, Map<String, String> requestData, Long timestamp) {
-            if (!internalConfig.isBackendModeEnabled()) {
-                L.e("recordDirectRequest: BackendMode is not enabled.");
-                return;
-            }
 
             if (deviceID == null || deviceID.isEmpty()) {
                 L.e("recordDirectRequest: DeviceID can not be null or empty.");
@@ -555,6 +585,11 @@ public class ModuleBackendMode extends ModuleBase {
             recordDirectRequestInternal(deviceID, requestData, timestamp);
         }
 
+        /**
+         * Return queue size
+         *
+         * @return sum of request queue size and event queue size
+         */
         public int getQueueSize() {
             int queueSize = 0;
             int eSize = eventQueues.size();
