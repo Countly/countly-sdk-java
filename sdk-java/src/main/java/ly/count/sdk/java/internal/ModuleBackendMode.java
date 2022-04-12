@@ -152,7 +152,7 @@ public class ModuleBackendMode extends ModuleBase {
         addRequestToRequestQ(request);
     }
 
-    public void recordExceptionInternal(String deviceID, String message, String stacktrace, Map<String, Object> segmentation, Long timestamp) {
+    public void recordExceptionInternal(String deviceID, String message, String stacktrace, Map<String, Object> segmentation, Map<String, String> crashDetails, Long timestamp) {
         L.d(String.format("recordExceptionInternal: deviceID = %s, message = %s, stacktrace = %s, segmentation = %s, timestamp = %d", deviceID, message, stacktrace, segmentation, timestamp));
 
         if (timestamp == null || timestamp < 1) {
@@ -165,7 +165,13 @@ public class ModuleBackendMode extends ModuleBase {
         crash.put("_error", stacktrace);
         crash.put("_custom", segmentation);
         crash.put("_name", message);
-        //crash.put("_nonfatal", true);
+
+        if (crashDetails != null && !crashDetails.isEmpty()) {
+            removeInvalidDataFromSegments(segmentation);
+            for (Map.Entry<String, String> entry : crashDetails.entrySet()) {
+                crash.put(entry.getKey(), entry.getValue());
+            }
+        }
 
         Request request = new Request();
         request.params.add("device_id", deviceID);
@@ -461,7 +467,7 @@ public class ModuleBackendMode extends ModuleBase {
             sessionEndInternal(deviceID, duration, timestamp);
         }
 
-        public void recordException(String deviceID, Throwable throwable, Map<String, Object> segmentation, Long timestamp) {
+        public void recordException(String deviceID, Throwable throwable, Map<String, Object> segmentation, Map<String, String> crashDetails, Long timestamp) {
             L.i(String.format("recordException: deviceID = %s, throwable = %s, segmentation = %s, timestamp = %d", deviceID, throwable, segmentation, timestamp));
 
             if (!internalConfig.isBackendModeEnabled()) {
@@ -483,10 +489,10 @@ public class ModuleBackendMode extends ModuleBase {
             PrintWriter pw = new PrintWriter(sw);
             throwable.printStackTrace(pw);
 
-            recordExceptionInternal(deviceID, throwable.getMessage(), sw.toString(), segmentation, timestamp);
+            recordExceptionInternal(deviceID, throwable.getMessage(), sw.toString(), segmentation, crashDetails, timestamp);
         }
 
-        public void recordException(String deviceID, String message, String stacktrace, Map<String, Object> segmentation, Long timestamp) {
+        public void recordException(String deviceID, String message, String stacktrace, Map<String, Object> segmentation, Map<String, String> crashDetails, Long timestamp) {
             L.i(String.format("recordException: deviceID = %s, message = %s, stacktrace = %s, segmentation = %s, timestamp = %d", deviceID, message, stacktrace, segmentation, timestamp));
 
             if (!internalConfig.isBackendModeEnabled()) {
@@ -509,7 +515,7 @@ public class ModuleBackendMode extends ModuleBase {
                 return;
             }
 
-            recordExceptionInternal(deviceID, message, stacktrace, segmentation, timestamp);
+            recordExceptionInternal(deviceID, message, stacktrace, segmentation, crashDetails, timestamp);
         }
 
         public void recordUserProperties(String deviceID, Map<String, Object> userProperties, Long timestamp) {

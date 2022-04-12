@@ -24,7 +24,7 @@ public class BackendModePerformanceTests {
                 .setRequiresConsent(false)
                 .setEventsBufferSize(1);
 
-        File targetFolder = new File("C:\\Users\\zahid\\Documents\\Countly\\data");
+        File targetFolder = new File("d:\\__COUNTLY\\java_test\\");
 
         // Main initialization call, SDK can be used after this one is done
         Countly.init(targetFolder, config);
@@ -56,7 +56,15 @@ public class BackendModePerformanceTests {
             Map<String, Object> segmentation = new HashMap<String, Object>() {{
                 put("login page", "authenticate request");
             }};
-            Countly.backendMode().recordException(DEVICE_ID, "Message: " + i, "stack traces " + 1, segmentation, null);
+
+            Map<String, String> crashDetails = new HashMap<String, String>() {{
+                put("_os", "Windows 11");
+                put("_os_version", "11.202");
+                put("_logs", "main page");
+            }};
+
+            Countly.backendMode().recordException(DEVICE_ID, "Message: " + i, "stack traces " + 1, segmentation, crashDetails,
+                    null);
         }
 
         System.out.printf("Adding %d requests(user properties) into request Queue%n", batchSize);

@@ -10,8 +10,38 @@ import java.util.Scanner;
 
 public class BackendModeExample {
     final static String DEVICE_ID = "device-id";
-    final static String COUNTLY_APP_KEY = "8c1d653f8f474be24958b282d5e9b4c4209ee552";
-    final static String COUNTLY_SERVER_URL = "https://master.count.ly/";
+    final static String COUNTLY_APP_KEY = "YOUR_APP_KEY";
+    final static String COUNTLY_SERVER_URL = "https://try.count.ly/";
+
+    static void recordDataWithLegacyCalls() {
+        // Record Event
+        Countly.api().event("Event With Sum And Count")
+                .setSum(23)
+                .setCount(2).record();
+
+        // Record view
+        Countly.api().view("Start view");
+
+        // Record Location
+        Countly.api().addLocation(31.5204, 74.3587);
+
+        // Record user properties
+        Countly.api().user().edit()
+                .setName("Full name")
+                .setUsername("nickname")
+                .setEmail("test@test.com")
+                .setOrg("Tester")
+                .setPhone("+123456789")
+                .commit();
+
+        // Record crash
+        try {
+            int a = 10 / 0;
+        } catch (Exception e) {
+            Countly.api().addCrashReport(e, false, "Divided by zero", null, "sample app");
+        }
+
+    }
 
     public static void main(String[] args) throws Exception {
 
@@ -47,6 +77,7 @@ public class BackendModeExample {
             System.out.println("7) Update session");
             System.out.println("8) End session");
             System.out.println("9) Record a direct request");
+            System.out.println("99) Record data with legacy calls");
             System.out.println("0) Exit ");
 
             int input = scanner.nextInt();
@@ -95,10 +126,15 @@ public class BackendModeExample {
                     Map<String, Object> segmentation = new HashMap<String, Object>() {{
                         put("login page", "authenticate request");
                     }};
+                    Map<String, String> crashDetails = new HashMap<String, String>() {{
+                        put("_os", "Windows 11");
+                        put("_os_version", "11.202");
+                        put("_logs", "main page");
+                    }};
                     try {
                         int a = 10 / 0;
                     } catch (Exception e) {
-                        Countly.backendMode().recordException(DEVICE_ID, e, segmentation, null);
+                        Countly.backendMode().recordException(DEVICE_ID, e, segmentation, crashDetails, null);
                     }
                 }
                 break;
@@ -106,10 +142,16 @@ public class BackendModeExample {
                     Map<String, Object> segmentation = new HashMap<String, Object>() {{
                         put("login page", "authenticate request");
                     }};
+
+                    Map<String, String> crashDetails = new HashMap<String, String>() {{
+                        put("_os", "Windows 11");
+                        put("_os_version", "11.202");
+                        put("_logs", "main page");
+                    }};
                     try {
                         int a = 10 / 0;
                     } catch (Exception e) {
-                        Countly.backendMode().recordException(DEVICE_ID, "Divided By Zero", "stack traces", segmentation, null);
+                        Countly.backendMode().recordException(DEVICE_ID, "Divided By Zero", "stack traces", segmentation, crashDetails, null);
                     }
                 }
                 break;
@@ -136,8 +178,11 @@ public class BackendModeExample {
                     requestData.put("end_session", "1");
                     requestData.put("session_duration", "20.5");
                     Countly.backendMode().recordDirectRequest(DEVICE_ID, requestData, null);
+                    break;
                 }
-                break;
+                case 99: // record data with legacy call
+                    recordDataWithLegacyCalls();
+                    break;
                 default:
                     break;
             }

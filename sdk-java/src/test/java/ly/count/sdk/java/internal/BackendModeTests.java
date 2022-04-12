@@ -24,8 +24,7 @@ public class BackendModeTests {
         Config cc = new Config("https://try.count.ly", "COUNTLY_APP_KEY");
         cc.setEventsBufferSize(4).enableBackendMode();
 
-        File targetFolder = new File("C:\\Users\\zahid\\Documents\\Countly\\data");
-        //File targetFolder = new File("/Users/zahidzafar/Projects/countly/java-sdk-data");
+        File targetFolder = new File("d:\\__COUNTLY\\java_test\\");
         Countly.init(targetFolder, cc);
     }
 
@@ -498,11 +497,18 @@ public class BackendModeTests {
         Map<String, Object> segmentation = new HashMap<String, Object>() {{
             put("key1", "value1");
         }};
+
+        Map<String, String> crashDetails = new HashMap<String, String>() {{
+            put("_error", "Custom Error");
+            put("_logs", "Logs");
+            put("_os", "Operating System");
+        }};
+
         try {
             int a = 10 / 0;
         } catch (Exception e) {
-            backendMode.recordException("device-id-1", e, segmentation, 1646640780130L);
-            backendMode.recordException("device-id-2", "Divided By Zero", "stack traces", null, 1646640780130L);
+            backendMode.recordException("device-id-1", e, segmentation, crashDetails, 1646640780130L);
+            backendMode.recordException("device-id-2", "Divided By Zero", "stack traces", null, null, 1646640780130L);
 
             Assert.assertEquals(2, SDKCore.instance.requestQueueMemory.size());
             Request request = SDKCore.instance.requestQueueMemory.remove();
@@ -515,7 +521,9 @@ public class BackendModeTests {
             e.printStackTrace(pw);
 
             Assert.assertEquals(e.getMessage(), crashJson.get("_name"));
-            Assert.assertEquals(sw.toString(), crashJson.get("_error"));
+            Assert.assertEquals("Custom Error", crashJson.get("_error"));
+            Assert.assertEquals("Logs", crashJson.get("_logs"));
+            Assert.assertEquals("Operating System", crashJson.get("_os"));
             validateRequestTimeFields("device-id-1", 1646640780130L, request);
 
 
@@ -548,25 +556,25 @@ public class BackendModeTests {
             put("key1", "value1");
         }};
 
-        backendMode.recordException("", null, segmentation, 1646640780130L);
+        backendMode.recordException("", null, segmentation, null, 1646640780130L);
         Assert.assertTrue(SDKCore.instance.requestQueueMemory.isEmpty());
 
-        backendMode.recordException(null, null, segmentation, 1646640780130L);
+        backendMode.recordException(null, null, segmentation, null, 1646640780130L);
         Assert.assertTrue(SDKCore.instance.requestQueueMemory.isEmpty());
 
-        backendMode.recordException("device-id-1", null, segmentation, 1646640780130L);
+        backendMode.recordException("device-id-1", null, segmentation, null, 1646640780130L);
         Assert.assertTrue(SDKCore.instance.requestQueueMemory.isEmpty());
 
-        backendMode.recordException("device-id-2", "", "stack traces", null, 1646640780130L);
+        backendMode.recordException("device-id-2", "", "stack traces", null, null, 1646640780130L);
         Assert.assertTrue(SDKCore.instance.requestQueueMemory.isEmpty());
 
-        backendMode.recordException("device-id-2", "device-id", "", null, 1646640780130L);
+        backendMode.recordException("device-id-2", "device-id", "", null, null, 1646640780130L);
         Assert.assertTrue(SDKCore.instance.requestQueueMemory.isEmpty());
 
-        backendMode.recordException("device-id-2", null, "stack traces", null, 1646640780130L);
+        backendMode.recordException("device-id-2", null, "stack traces", null, null, 1646640780130L);
         Assert.assertTrue(SDKCore.instance.requestQueueMemory.isEmpty());
 
-        backendMode.recordException("device-id-2", "device-id", null, null, 1646640780130L);
+        backendMode.recordException("device-id-2", "device-id", null, null, null, 1646640780130L);
         Assert.assertTrue(SDKCore.instance.requestQueueMemory.isEmpty());
     }
 
@@ -764,8 +772,12 @@ public class BackendModeTests {
         segmentation.put("key6", backendMode); //invalid
         segmentation.put("key7", 10L);
 
+        Map<String, String> crashDetails = new HashMap<>();
+        crashDetails.put("K1", null); //invalid
+        crashDetails.put("K2", "V2");
+
         Assert.assertEquals(0, moduleBackendMode.eventQSize);
-        backendMode.recordException("device-id-1", "key-1", "stacktrace", segmentation, 1646640780130L);
+        backendMode.recordException("device-id-1", "key-1", "stacktrace", segmentation, crashDetails, 1646640780130L);
 
         Request request = SDKCore.instance.requestQueueMemory.remove();
         String crash = request.params.get("crash");
@@ -778,6 +790,10 @@ public class BackendModeTests {
         Assert.assertEquals(20.5, segments.get("key4"));
         Assert.assertEquals(true, segments.get("key5"));
         Assert.assertEquals(10, segments.get("key7"));
+        Assert.assertEquals(10, segments.get("key7"));
+
+        Assert.assertFalse(crashJson.has("K1"));
+        Assert.assertEquals("V2", crashJson.get("K2"));
 
         Assert.assertFalse(segments.has("key1"));
         Assert.assertFalse(segments.has("key6"));
