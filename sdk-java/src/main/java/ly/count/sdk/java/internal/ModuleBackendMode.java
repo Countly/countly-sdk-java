@@ -76,7 +76,7 @@ public class ModuleBackendMode extends ModuleBase {
     }
 
 
-    private void recordEventInternal(String deviceID, String key, int count, Double sum, double dur, Map<String, Object> segmentation, Long timestamp) {
+    private void recordEventInternal(String deviceID, String key, int count, Double sum, Double dur, Map<String, Object> segmentation, Long timestamp) {
         L.d(String.format("recordEventInternal: deviceID = %s, key = %s,, count = %d, sum = %f, dur = %f, segmentation = %s, timestamp = %d", deviceID, key, count, sum, dur, segmentation, timestamp));
 
         if (timestamp == null || timestamp < 1) {
@@ -247,7 +247,7 @@ public class ModuleBackendMode extends ModuleBase {
         addRequestToRequestQ(request);
     }
 
-    private JSONObject buildEventJSONObject(String key, int count, Double sum, double dur, Map<String, Object> segmentation, Long timestamp) {
+    private JSONObject buildEventJSONObject(String key, int count, Double sum, Double dur, Map<String, Object> segmentation, Long timestamp) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(timestamp);
         final int hour = calendar.get(Calendar.HOUR_OF_DAY);
@@ -261,7 +261,7 @@ public class ModuleBackendMode extends ModuleBase {
         if (count > 0) {
             jsonObject.put("count", count);
         }
-        if (dur >= 0) {
+        if (dur != null) {
             jsonObject.put("dur", dur);
         }
 
@@ -387,7 +387,7 @@ public class ModuleBackendMode extends ModuleBase {
 
             segmentation.put("name", name);
 
-            recordEventInternal(deviceID, "[CLY]_view", 1, null, -1, segmentation, timestamp);
+            recordEventInternal(deviceID, "[CLY]_view", 1, null, null, segmentation, timestamp);
         }
 
         /**
@@ -401,7 +401,7 @@ public class ModuleBackendMode extends ModuleBase {
          * @param segmentation additional view segmentation you want to set, leave null if you don't want to add anything
          * @param timestamp    record time in milliseconds, leave null if you don't have it
          */
-        public void recordEvent(String deviceID, String key, int count, Double sum, double dur, Map<String, Object> segmentation, Long timestamp) {
+        public void recordEvent(String deviceID, String key, int count, Double sum, Double dur, Map<String, Object> segmentation, Long timestamp) {
             L.i(String.format("recordEvent: deviceID = %s, key = %s, count = %d, sum = %f, dur = %f, segmentation = %s, timestamp = %d", deviceID, key, count, sum, dur, segmentation, timestamp));
 
             if (deviceID == null || deviceID.isEmpty()) {
@@ -489,7 +489,7 @@ public class ModuleBackendMode extends ModuleBase {
          * @param deviceID     device id, cannot be null or empty
          * @param throwable    {@link Throwable} to log
          * @param segmentation (optional, can be {@code null}) additional crash segments map
-         * @param crashDetails (optional, can be {@code null}) additional log lines (separated by \n) or comment about this crash report
+         * @param crashDetails (optional, can be {@code null}) a map contains crash detail
          * @param timestamp    record time in milliseconds, leave null if you don't have it
          */
         public void recordException(String deviceID, Throwable throwable, Map<String, Object> segmentation, Map<String, String> crashDetails, Long timestamp) {

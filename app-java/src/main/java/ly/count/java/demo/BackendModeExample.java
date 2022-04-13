@@ -90,7 +90,7 @@ public class BackendModeExample {
                         put("Retry Attempts", 60);
                     }};
 
-                    Countly.backendMode().recordEvent(DEVICE_ID, "Event Key", 1, 0.1, 5, segment, null);
+                    Countly.backendMode().recordEvent(DEVICE_ID, "Event Key", 1, 0.1, 5.0, segment, null);
                 }
                 break;
                 case 2: { // Record a view
