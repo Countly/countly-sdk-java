@@ -178,20 +178,14 @@ public class BackendModePerformanceTests {
             System.out.println("3) Record bulk data to server");
 
             int input = scanner.nextInt();
+            startTime = System.currentTimeMillis();
             switch (input) {
-                case 0:
-                    startTime = System.currentTimeMillis();
-                    running = false;
-                    System.out.printf("Time spent: %dms%n", (System.currentTimeMillis() - startTime));
-                    break;
                 case 1:
-                    startTime = System.currentTimeMillis();
                     performLargeRequestQueueSizeTest();
                     running = false;
                     System.out.printf("Time spent: %dms%n", (System.currentTimeMillis() - startTime));
                     break;
                 case 2:
-                    startTime = System.currentTimeMillis();
                     performLargeEventQueueTest();
                     running = false;
                     System.out.printf("Time spent: %dms%n", (System.currentTimeMillis() - startTime));
