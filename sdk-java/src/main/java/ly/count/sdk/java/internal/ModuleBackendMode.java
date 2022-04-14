@@ -98,7 +98,7 @@ public class ModuleBackendMode extends ModuleBase {
         }
     }
 
-    private void sessionBeginInternal(String deviceID, Map<String, String> metrics, Long timestamp) {
+    private void sessionBeginInternal(String deviceID, Map<String, String> metrics, Map<String, String> location, Long timestamp) {
         L.d(String.format("sessionBeginInternal: deviceID = %s, timestamp = %d", deviceID, timestamp));
 
         if (timestamp == null || timestamp < 1) {
@@ -111,6 +111,12 @@ public class ModuleBackendMode extends ModuleBase {
 
         JSONObject metricsJson = new JSONObject(metrics);
         request.params.add("metrics", metricsJson);
+
+        if (location != null) {
+            for (Map.Entry<String, String> entry : location.entrySet()) {
+                request.params.add(entry.getKey(), entry.getValue());
+            }
+        }
 
         addTimeInfoIntoRequest(request, timestamp);
 
@@ -428,7 +434,7 @@ public class ModuleBackendMode extends ModuleBase {
          * @param metrics   additional information you want to set, leave null if you don't want to add anything
          * @param timestamp record time in milliseconds, leave null if you don't have it
          */
-        public void sessionBegin(String deviceID, Map<String, String> metrics, Long timestamp) {
+        public void sessionBegin(String deviceID, Map<String, String> metrics, Map<String, String> location, Long timestamp) {
             L.i(String.format("sessionBegin: deviceID = %s, timestamp = %d", deviceID, timestamp));
 
             if (deviceID == null || deviceID.isEmpty()) {
@@ -436,7 +442,7 @@ public class ModuleBackendMode extends ModuleBase {
                 return;
             }
 
-            sessionBeginInternal(deviceID, metrics, timestamp);
+            sessionBeginInternal(deviceID, metrics, location, timestamp);
         }
 
         /**
