@@ -1,15 +1,12 @@
 package ly.count.sdk.java.internal;
 
-import junit.framework.Assert;
 
 import ly.count.sdk.java.Config;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import ly.count.sdk.java.internal.BaseTestsCore;
-import ly.count.sdk.java.internal.InternalConfig;
 
 import java.net.URL;
 
@@ -26,163 +23,94 @@ public class ConfigTests extends BaseTestsCore {
 
 
     @Test
-    public void setup_urlAndKey() throws Exception{
+    public void testServerUrlAndAppKey() throws Exception{
         URL url = new URL(serverUrl);
         Assert.assertEquals(serverAppKey, internalConfig.getServerAppKey());
         Assert.assertEquals(url, internalConfig.getServerURL());
     }
 
     @Test
-    public void setUsePost_setAndDeset(){
+    public void testRequestMethod(){
         Assert.assertFalse(internalConfig.isUsePOST());
+
         internalConfig.enableUsePOST();
         Assert.assertTrue(internalConfig.isUsePOST());
+
         internalConfig.setUsePOST(false);
         Assert.assertFalse(internalConfig.isUsePOST());
+
         internalConfig.setUsePOST(true);
         Assert.assertTrue(internalConfig.isUsePOST());
     }
 
     @Test
-    public void setLoggingTag_default(){
+    public void testLoggingTagAndLevel(){
         Assert.assertEquals("Countly", internalConfig.getLoggingTag());
-    }
 
-    @Test
-    public void setLoggingTag_null(){
-        Config.LoggingLevel level = internalConfig.getLoggingLevel();
-        internalConfig.setLoggingTag(null);
-        Assert.assertEquals(level, internalConfig.getLoggingLevel());
-    }
-
-    @Test
-    public void setLoggingTag_empty(){
-        String tag = internalConfig.getLoggingTag();
         internalConfig.setLoggingTag("");
-        Assert.assertEquals(tag, internalConfig.getLoggingTag());
+        Assert.assertEquals("Countly", internalConfig.getLoggingTag());
 
-    }
-
-    @Test
-    public void setLoggingTag_simple(){
-        String tagName = "simpleName";
-        internalConfig.setLoggingTag(tagName);
-        Assert.assertEquals(tagName, internalConfig.getLoggingTag());
-    }
-
-    @Test
-    public void setLoggingLevel_null(){
-        Config.LoggingLevel level = internalConfig.getLoggingLevel();
         internalConfig.setLoggingTag(null);
-        Assert.assertEquals(level, internalConfig.getLoggingLevel());
+        Assert.assertEquals("Countly", internalConfig.getLoggingTag());
+
+        internalConfig.setLoggingTag("New Tag");
+        Assert.assertEquals("New Tag", internalConfig.getLoggingTag());
     }
 
     @Test
-    public void sdkName_null(){
-        String prvName = internalConfig.getSdkName();
-        internalConfig.setSdkName(null);
-        Assert.assertEquals(prvName, internalConfig.getSdkName());
+    public void testLoggingLevel(){
+        Assert.assertEquals(Config.LoggingLevel.DEBUG, internalConfig.getLoggingLevel());
+
+        internalConfig.setLoggingLevel(Config.LoggingLevel.INFO);
+        Assert.assertEquals(Config.LoggingLevel.INFO, internalConfig.getLoggingLevel());
     }
 
     @Test
-    public void sdkName_empty(){
-        String prvName = internalConfig.getSdkName();
-        internalConfig.setSdkName("");
-        Assert.assertEquals(prvName, internalConfig.getSdkName());
-    }
-
-    @Test
-    public void sdkName_setting(){
-        String newSdkName = "new-some-name";
-        internalConfig.setSdkName(newSdkName);
-        Assert.assertEquals(newSdkName, internalConfig.getSdkName());
-
-        newSdkName = "another-name";
-        internalConfig.setSdkName(newSdkName);
-        Assert.assertEquals(newSdkName, internalConfig.getSdkName());
-    }
-
-    @Test
-    public void sdkVersion_null(){
-        String prv = internalConfig.getSdkVersion();
-        internalConfig.setSdkVersion(null);
-        Assert.assertEquals(prv, internalConfig.getSdkVersion());
-    }
-
-    @Test
-    public void sdkVersion_empty(){
-        String prv = internalConfig.getSdkVersion();
-        internalConfig.setSdkVersion("");
-        Assert.assertEquals(prv, internalConfig.getSdkVersion());
-    }
-
-    @Test
-    public void sdkVersion_setting(){
-        String versionName = "123";
-        internalConfig.setSdkVersion(versionName);
-        Assert.assertEquals(versionName, internalConfig.getSdkVersion());
-
-        versionName = "asd";
-        internalConfig.setSdkVersion(versionName);
-        Assert.assertEquals(versionName, internalConfig.getSdkVersion());
-    }
-
-    @Test
-    public void programmaticSessionsControl_default(){
-        Assert.assertTrue(internalConfig.isAutoSessionsTrackingEnabled());
-    }
-
-    @Test
-    public void programmaticSessionsControl_enableAndDisable(){
-        Assert.assertTrue(internalConfig.isAutoSessionsTrackingEnabled());
-        internalConfig.setAutoSessionsTracking(false);
-        Assert.assertFalse(internalConfig.isAutoSessionsTrackingEnabled());
-    }
-
-    @Test
-    public void sendUpdateEachSeconds_default(){
-        Assert.assertEquals(30, internalConfig.getSendUpdateEachSeconds());
-    }
-
-    @Test
-    public void sendUpdateEachSeconds_disable(){
-        internalConfig.disableUpdateRequests();
-        Assert.assertEquals(0, internalConfig.getSendUpdateEachSeconds());
-    }
-
-    @Test
-    public void sendUpdateEachSeconds_set(){
-        int secondsAmount = 123;
-        internalConfig.setSendUpdateEachSeconds(secondsAmount);
-        Assert.assertEquals(secondsAmount, internalConfig.getSendUpdateEachSeconds());
-    }
-
-    @Test
-    public void sendUpdateEachEvents_default(){
-        Assert.assertEquals(10, internalConfig.getEventsBufferSize());
-    }
-
-    @Test
-    public void sendUpdateEachEvents_disable(){
-        internalConfig.disableUpdateRequests();
-        Assert.assertEquals(0, internalConfig.getSendUpdateEachSeconds());
-    }
-
-    @Test
-    public void sendUpdateEachEvents_set(){
-        int eventsAmount = 123;
-        internalConfig.setEventsBufferSize(eventsAmount);
-        Assert.assertEquals(eventsAmount, internalConfig.getEventsBufferSize());
-    }
-
-    @Test
-    public void sdkVersion_default(){
-        Assert.assertEquals("20.11.2-RC1", internalConfig.getSdkVersion());
-    }
-
-
-    @Test
-    public void sdkName_default(){
+    public void testSDKName(){
         Assert.assertEquals("java-native", internalConfig.getSdkName());
+
+        internalConfig.setSdkName(null);
+        Assert.assertEquals("java-native", internalConfig.getSdkName());
+
+        internalConfig.setSdkName("");
+        Assert.assertEquals("java-native", internalConfig.getSdkName());
+
+        internalConfig.setSdkName("new-name");
+        Assert.assertEquals("new-name", internalConfig.getSdkName());
+    }
+
+    @Test
+    public void testSDKVersion(){
+        String versionName = "20.11.2-RC1";
+        Assert.assertEquals(versionName, internalConfig.getSdkVersion());
+
+        internalConfig.setSdkVersion(null);
+        Assert.assertEquals(versionName, internalConfig.getSdkVersion());
+
+        internalConfig.setSdkVersion("");
+        Assert.assertEquals(versionName, internalConfig.getSdkVersion());
+
+        internalConfig.setSdkVersion("new-version");
+        Assert.assertEquals("new-version", internalConfig.getSdkVersion());
+    }
+
+
+    @Test
+    public void testSendUpdateEachSeconds(){
+        Assert.assertEquals(30, internalConfig.getSendUpdateEachSeconds());
+
+        internalConfig.disableUpdateRequests();
+        Assert.assertEquals(0, internalConfig.getSendUpdateEachSeconds());
+
+        internalConfig.setSendUpdateEachSeconds(123);
+        Assert.assertEquals(123, internalConfig.getSendUpdateEachSeconds());
+    }
+
+    @Test
+    public void testEventBufferSize(){
+        Assert.assertEquals(10, internalConfig.getEventsBufferSize());
+
+        internalConfig.setEventsBufferSize(60);
+        Assert.assertEquals(60, internalConfig.getEventsBufferSize());
     }
 }
