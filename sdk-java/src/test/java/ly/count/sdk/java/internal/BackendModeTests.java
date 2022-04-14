@@ -403,13 +403,25 @@ public class BackendModeTests {
         metrics.put("os", "windows");
         metrics.put("app-version", "0.1");
 
-        backendMode.sessionBegin("device-id-1", metrics, 1646640780130L);
+        Map<String, String> location = new HashMap<String, String>() {{
+            put("ip_address", "192.168.1.1");
+            put("city", "Lahore");
+            put("country_code", "PK");
+            put("location", "31.5204,74.3587");
+        }};
+
+        backendMode.sessionBegin("device-id-1", metrics, location, 1646640780130L);
 
         Assert.assertEquals(1, SDKCore.instance.requestQueueMemory.size());
         Request request = SDKCore.instance.requestQueueMemory.remove();
 
         String session = request.params.get("metrics");
         JSONObject sessionJson = new JSONObject(session);
+
+        Assert.assertEquals("Lahore", request.params.get("city"));
+        Assert.assertEquals("PK", request.params.get("country_code"));
+        Assert.assertEquals("192.168.1.1", request.params.get("ip_address"));
+        Assert.assertEquals("31.5204,74.3587", request.params.get("location"));
 
         Assert.assertEquals("windows", sessionJson.get("os"));
         Assert.assertEquals("0.1", sessionJson.get("app-version"));
@@ -427,8 +439,8 @@ public class BackendModeTests {
         metrics.put("os", "windows");
         metrics.put("app-version", "0.1");
 
-        backendMode.sessionBegin("", metrics, 1646640780130L);
-        backendMode.sessionBegin(null, metrics, 1646640780130L);
+        backendMode.sessionBegin("", metrics, null, 1646640780130L);
+        backendMode.sessionBegin(null, metrics, null, 1646640780130L);
 
         Assert.assertTrue(SDKCore.instance.requestQueueMemory.isEmpty());
     }

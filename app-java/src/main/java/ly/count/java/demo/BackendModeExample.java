@@ -161,7 +161,14 @@ public class BackendModeExample {
                         put("_app_version", "1.2");
                     }};
 
-                    Countly.backendMode().sessionBegin(DEVICE_ID, metrics, null);
+                    Map<String, String> location = new HashMap<String, String>() {{
+                        put("ip_address", "192.168.1.1");
+                        put("city", "Lahore");
+                        put("country_code", "PK");
+                        put("location", "31.5204,74.3587");
+                    }};
+
+                    Countly.backendMode().sessionBegin(DEVICE_ID, metrics, location, null);
                     break;
                 }
                 case 7: // update session
