@@ -147,7 +147,7 @@ public class BackendModeTests {
         segmentation.put("key2", "value2");
 
         Assert.assertEquals(0, moduleBackendMode.eventQSize);
-        backendMode.recordEvent("device-id-1", "key-1", 1, 0.1, 10, segmentation, 1646640780130L);
+        backendMode.recordEvent("device-id-1", "key-1", 1, 0.1, 10.0, segmentation, 1646640780130L);
 
         JSONArray events = moduleBackendMode.eventQueues.get("device-id-1");
         Assert.assertEquals(1, events.length());
@@ -176,15 +176,15 @@ public class BackendModeTests {
         Assert.assertEquals(0, moduleBackendMode.eventQSize);
 
         /* Invalid Device ID */
-        backendMode.recordEvent("", "key-1", 1, 0.1, 10, segmentation, 1646640780130L);
-        backendMode.recordEvent(null, "key-2", 1, 0.1, 10, segmentation, 1646640780130L);
+        backendMode.recordEvent("", "key-1", 1, 0.1, 10.0, segmentation, 1646640780130L);
+        backendMode.recordEvent(null, "key-2", 1, 0.1, 10.0, segmentation, 1646640780130L);
 
         Assert.assertTrue(moduleBackendMode.eventQueues.isEmpty());
         Assert.assertEquals(0L, moduleBackendMode.eventQSize);
 
         /* Invalid view name */
-        backendMode.recordEvent("device-id-1", "", 1, 0.1, 10, segmentation, 1646640780130L);
-        backendMode.recordEvent("device-id-1", null, 1, 0.1, 10, segmentation, 1646640780130L);
+        backendMode.recordEvent("device-id-1", "", 1, 0.1, 10.0, segmentation, 1646640780130L);
+        backendMode.recordEvent("device-id-1", null, 1, 0.1, 10.0, segmentation, 1646640780130L);
 
         Assert.assertTrue(moduleBackendMode.eventQueues.isEmpty());
         Assert.assertEquals(0L, moduleBackendMode.eventQSize);
@@ -209,12 +209,12 @@ public class BackendModeTests {
         segmentation1.put("key4", "value4");
 
         Assert.assertEquals(0, moduleBackendMode.eventQSize);
-        backendMode.recordEvent("device-id-1", "key-1", 1, 0.1, 10, segmentation, 1646640780130L);
+        backendMode.recordEvent("device-id-1", "key-1", 1, 0.1, 10.0, segmentation, 1646640780130L);
 
         Assert.assertEquals(1, moduleBackendMode.eventQSize);
         Assert.assertEquals(1, backendMode.getQueueSize());
-        backendMode.recordEvent("device-id-2", "key-2", 1, 0.1, 10, segmentation, 1646640780130L);
-        backendMode.recordEvent("device-id-2", "key-3", 2, 0.2, 20, segmentation1, 1646644457826L);
+        backendMode.recordEvent("device-id-2", "key-2", 1, 0.1, 10.0, segmentation, 1646640780130L);
+        backendMode.recordEvent("device-id-2", "key-3", 2, 0.2, 20.0, segmentation1, 1646644457826L);
 
         Assert.assertEquals(3, moduleBackendMode.eventQSize);
         Assert.assertEquals(2, backendMode.getQueueSize());
@@ -271,43 +271,43 @@ public class BackendModeTests {
 
         Assert.assertEquals(0, moduleBackendMode.eventQSize);
 
-        backendMode.recordEvent("device-id-1", "key-1", 1, 0.1, 10, segmentation, 1646640780130L);
+        backendMode.recordEvent("device-id-1", "key-1", 1, 0.1, 10.0, segmentation, 1646640780130L);
         Assert.assertEquals(1, moduleBackendMode.eventQSize);
         Assert.assertEquals(1, moduleBackendMode.eventQueues.get("device-id-1").length());
         Assert.assertEquals(1, backendMode.getQueueSize());
 
-        backendMode.recordEvent("device-id-1", "key-2", 1, 0.1, 10, segmentation, 1646640780130L);
+        backendMode.recordEvent("device-id-1", "key-2", 1, 0.1, 10.0, segmentation, 1646640780130L);
         Assert.assertEquals(2, moduleBackendMode.eventQSize);
         Assert.assertEquals(2, moduleBackendMode.eventQueues.get("device-id-1").length());
         Assert.assertEquals(1, backendMode.getQueueSize());
 
-        backendMode.recordEvent("device-id-1", "key-3", 1, 0.1, 10, segmentation, 1646640780130L);
+        backendMode.recordEvent("device-id-1", "key-3", 1, 0.1, 10.0, segmentation, 1646640780130L);
         Assert.assertEquals(3, moduleBackendMode.eventQSize);
         Assert.assertEquals(1, backendMode.getQueueSize());
 
-        backendMode.recordEvent("device-id-1", "key-3", 1, 0.1, 10, segmentation, 1646640780130L);
+        backendMode.recordEvent("device-id-1", "key-3", 1, 0.1, 10.0, segmentation, 1646640780130L);
         Assert.assertEquals(0, moduleBackendMode.eventQSize);
         Assert.assertNull(moduleBackendMode.eventQueues.get("device-id-1"));
         Assert.assertEquals(1, backendMode.getQueueSize());
 
-        backendMode.recordEvent("device-id-1", "key-1", 1, 0.1, 10, segmentation, 1646640780130L);
+        backendMode.recordEvent("device-id-1", "key-1", 1, 0.1, 10.0, segmentation, 1646640780130L);
         Assert.assertEquals(1, moduleBackendMode.eventQSize);
         Assert.assertEquals(1, moduleBackendMode.eventQueues.get("device-id-1").length());
         Assert.assertEquals(2, backendMode.getQueueSize());
 
-        backendMode.recordEvent("device-id-2", "key-2", 1, 0.1, 10, segmentation, 1646640780130L);
+        backendMode.recordEvent("device-id-2", "key-2", 1, 0.1, 10.0, segmentation, 1646640780130L);
         Assert.assertEquals(2, moduleBackendMode.eventQSize);
         Assert.assertEquals(1, moduleBackendMode.eventQueues.get("device-id-1").length());
         Assert.assertEquals(1, moduleBackendMode.eventQueues.get("device-id-2").length());
         Assert.assertEquals(3, backendMode.getQueueSize());
 
-        backendMode.recordEvent("device-id-2", "key-3", 1, 0.1, 10, segmentation, 1646640780130L);
+        backendMode.recordEvent("device-id-2", "key-3", 1, 0.1, 10.0, segmentation, 1646640780130L);
         Assert.assertEquals(3, moduleBackendMode.eventQSize);
         Assert.assertEquals(1, moduleBackendMode.eventQueues.get("device-id-1").length());
         Assert.assertEquals(2, moduleBackendMode.eventQueues.get("device-id-2").length());
         Assert.assertEquals(3, backendMode.getQueueSize());
 
-        backendMode.recordEvent("device-id-2", "key-4", 2, 0.2, 20, segmentation1, 1646644457826L);
+        backendMode.recordEvent("device-id-2", "key-4", 2, 0.2, 20.0, segmentation1, 1646644457826L);
         Assert.assertEquals(0, moduleBackendMode.eventQSize);
         Assert.assertEquals(3, backendMode.getQueueSize());
         Assert.assertNull(moduleBackendMode.eventQueues.get("device-id-1"));
@@ -332,18 +332,18 @@ public class BackendModeTests {
         Assert.assertEquals(0, moduleBackendMode.eventQSize);
         Assert.assertEquals(0, SDKCore.instance.requestQueueMemory.size());
 
-        backendMode.recordEvent("device-id-1", "key-1", 1, 0.1, 10, segmentation, 1646640780130L);
+        backendMode.recordEvent("device-id-1", "key-1", 1, 0.1, 10.0, segmentation, 1646640780130L);
         Assert.assertEquals(1, moduleBackendMode.eventQSize);
         Assert.assertEquals(0, SDKCore.instance.requestQueueMemory.size());
         Assert.assertEquals(1, moduleBackendMode.eventQueues.get("device-id-1").length());
 
-        backendMode.recordEvent("device-id-2", "key-3", 1, 0.1, 10, segmentation, 1646640780130L);
+        backendMode.recordEvent("device-id-2", "key-3", 1, 0.1, 10.0, segmentation, 1646640780130L);
         Assert.assertEquals(2, moduleBackendMode.eventQSize);
         Assert.assertEquals(0, SDKCore.instance.requestQueueMemory.size());
         Assert.assertEquals(1, moduleBackendMode.eventQueues.get("device-id-1").length());
         Assert.assertEquals(1, moduleBackendMode.eventQueues.get("device-id-2").length());
 
-        backendMode.recordEvent("device-id-2", "key-4", 2, 0.2, 20, segmentation1, 1646644457826L);
+        backendMode.recordEvent("device-id-2", "key-4", 2, 0.2, 20.0, segmentation1, 1646644457826L);
         Assert.assertEquals(3, moduleBackendMode.eventQSize);
         Assert.assertEquals(0, SDKCore.instance.requestQueueMemory.size());
         Assert.assertEquals(1, moduleBackendMode.eventQueues.get("device-id-1").length());
@@ -369,18 +369,18 @@ public class BackendModeTests {
         Assert.assertEquals(0, moduleBackendMode.eventQSize);
         Assert.assertEquals(0, SDKCore.instance.requestQueueMemory.size());
 
-        backendMode.recordEvent("device-id-1", "key-1", 1, 0.1, 10, segmentation, 1646640780130L);
+        backendMode.recordEvent("device-id-1", "key-1", 1, 0.1, 10.0, segmentation, 1646640780130L);
         Assert.assertEquals(1, moduleBackendMode.eventQSize);
         Assert.assertEquals(0, SDKCore.instance.requestQueueMemory.size());
         Assert.assertEquals(1, moduleBackendMode.eventQueues.get("device-id-1").length());
 
-        backendMode.recordEvent("device-id-2", "key-3", 1, 0.1, 10, segmentation, 1646640780130L);
+        backendMode.recordEvent("device-id-2", "key-3", 1, 0.1, 10.0, segmentation, 1646640780130L);
         Assert.assertEquals(2, moduleBackendMode.eventQSize);
         Assert.assertEquals(0, SDKCore.instance.requestQueueMemory.size());
         Assert.assertEquals(1, moduleBackendMode.eventQueues.get("device-id-1").length());
         Assert.assertEquals(1, moduleBackendMode.eventQueues.get("device-id-2").length());
 
-        backendMode.recordEvent("device-id-2", "key-4", 2, 0.2, 20, segmentation1, 1646644457826L);
+        backendMode.recordEvent("device-id-2", "key-4", 2, 0.2, 20.0, segmentation1, 1646644457826L);
         Assert.assertEquals(3, moduleBackendMode.eventQSize);
         Assert.assertEquals(0, SDKCore.instance.requestQueueMemory.size());
         Assert.assertEquals(1, moduleBackendMode.eventQueues.get("device-id-1").length());
@@ -698,7 +698,7 @@ public class BackendModeTests {
         segmentation.put("key7", 10L);
 
         Assert.assertEquals(0, moduleBackendMode.eventQSize);
-        backendMode.recordEvent("device-id-1", "key-1", 1, 0.1, 10, segmentation, 1646640780130L);
+        backendMode.recordEvent("device-id-1", "key-1", 1, 0.1, 10.0, segmentation, 1646640780130L);
 
         JSONArray events = moduleBackendMode.eventQueues.get("device-id-1");
         Assert.assertEquals(1, events.length());

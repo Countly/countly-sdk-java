@@ -67,7 +67,7 @@ public class Countly extends CountlyLifecycle {
             return null;
         } else {
             ModuleBackendMode mbm = cly.sdk.module(ModuleBackendMode.class);
-            if (mbm != null) {
+            if (cly.ctx.getConfig().enableBackendMode && mbm != null) {
                 return mbm.new BackendMode();
             }
             //if it is null, feature was not enabled, return mock

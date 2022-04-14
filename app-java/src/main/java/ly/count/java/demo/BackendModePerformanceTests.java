@@ -47,7 +47,7 @@ public class BackendModePerformanceTests {
                 put("Retry Attempts", 60);
             }};
 
-            Countly.backendMode().recordEvent(DEVICE_ID, "Event Key " + i, 1, 0.1, 5, segment, null);
+            Countly.backendMode().recordEvent(DEVICE_ID, "Event Key " + i, 1, 0.1, 5.0, segment, null);
         }
 
         System.out.printf("Adding %d requests(crash) into request Queue%n", batchSize);
@@ -122,7 +122,7 @@ public class BackendModePerformanceTests {
                     put("Retry Attempts", 60);
                 }};
 
-                Countly.backendMode().recordEvent("device-id-" + d, "Event Key " + i, 1, 0.1, 5, segment, null);
+                Countly.backendMode().recordEvent("device-id-" + d, "Event Key " + i, 1, 0.1, 5.0, segment, null);
             }
         }
         System.out.printf("After adding %d events into event queue: Total Memory = %d Mb, Available RAM= %d Mb %n", noOfEvents * noOfDevices, DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
@@ -150,7 +150,7 @@ public class BackendModePerformanceTests {
                         put("Retry Attempts", 60);
                     }};
 
-                    Countly.backendMode().recordEvent("device-id", "Event Key " + remaining, 1, 0.1, 5, segment, null);
+                    Countly.backendMode().recordEvent("device-id", "Event Key " + remaining, 1, 0.1, 5.0, segment, null);
                     --remaining;
                 }
 
@@ -178,20 +178,14 @@ public class BackendModePerformanceTests {
             System.out.println("3) Record bulk data to server");
 
             int input = scanner.nextInt();
+            startTime = System.currentTimeMillis();
             switch (input) {
-                case 0:
-                    startTime = System.currentTimeMillis();
-                    running = false;
-                    System.out.printf("Time spent: %dms%n", (System.currentTimeMillis() - startTime));
-                    break;
                 case 1:
-                    startTime = System.currentTimeMillis();
                     performLargeRequestQueueSizeTest();
                     running = false;
                     System.out.printf("Time spent: %dms%n", (System.currentTimeMillis() - startTime));
                     break;
                 case 2:
-                    startTime = System.currentTimeMillis();
                     performLargeEventQueueTest();
                     running = false;
                     System.out.printf("Time spent: %dms%n", (System.currentTimeMillis() - startTime));
