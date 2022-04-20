@@ -18,19 +18,19 @@ public class ConfigTests extends BaseTestsCore {
 
     @Before
     public void setUp() throws Exception {
-        internalConfig = (InternalConfig)defaultConfigWithLogsForConfigTests();
+        internalConfig = (InternalConfig) defaultConfigWithLogsForConfigTests();
     }
 
 
     @Test
-    public void testServerUrlAndAppKey() throws Exception{
+    public void testServerUrlAndAppKey() throws Exception {
         URL url = new URL(serverUrl);
         Assert.assertEquals(serverAppKey, internalConfig.getServerAppKey());
         Assert.assertEquals(url, internalConfig.getServerURL());
     }
 
     @Test
-    public void testRequestMethod(){
+    public void testRequestMethod() {
         Assert.assertFalse(internalConfig.isUsePOST());
 
         internalConfig.enableUsePOST();
@@ -44,7 +44,7 @@ public class ConfigTests extends BaseTestsCore {
     }
 
     @Test
-    public void testLoggingTagAndLevel(){
+    public void testLoggingTag() {
         Assert.assertEquals("Countly", internalConfig.getLoggingTag());
 
         internalConfig.setLoggingTag("");
@@ -58,7 +58,7 @@ public class ConfigTests extends BaseTestsCore {
     }
 
     @Test
-    public void testLoggingLevel(){
+    public void testLoggingLevel() {
         Assert.assertEquals(Config.LoggingLevel.DEBUG, internalConfig.getLoggingLevel());
 
         internalConfig.setLoggingLevel(Config.LoggingLevel.INFO);
@@ -66,7 +66,7 @@ public class ConfigTests extends BaseTestsCore {
     }
 
     @Test
-    public void testSDKName(){
+    public void testSDKName() {
         Assert.assertEquals("java-native", internalConfig.getSdkName());
 
         internalConfig.setSdkName(null);
@@ -80,8 +80,8 @@ public class ConfigTests extends BaseTestsCore {
     }
 
     @Test
-    public void testSDKVersion(){
-        String versionName = "20.11.2-RC1";
+    public void testSDKVersion() {
+        String versionName = "20.11.2";
         Assert.assertEquals(versionName, internalConfig.getSdkVersion());
 
         internalConfig.setSdkVersion(null);
@@ -96,7 +96,7 @@ public class ConfigTests extends BaseTestsCore {
 
 
     @Test
-    public void testSendUpdateEachSeconds(){
+    public void testSendUpdateEachSeconds() {
         Assert.assertEquals(30, internalConfig.getSendUpdateEachSeconds());
 
         internalConfig.disableUpdateRequests();
@@ -107,7 +107,7 @@ public class ConfigTests extends BaseTestsCore {
     }
 
     @Test
-    public void testEventBufferSize(){
+    public void testEventBufferSize() {
         Assert.assertEquals(10, internalConfig.getEventsBufferSize());
 
         internalConfig.setEventsBufferSize(60);
