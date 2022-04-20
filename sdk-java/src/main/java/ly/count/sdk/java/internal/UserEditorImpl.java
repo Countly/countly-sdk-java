@@ -552,6 +552,11 @@ public class UserEditorImpl implements UserEditor {
             return null;
         }
 
+        if(SDKCore.instance != null && SDKCore.instance.config.isBackendModeEnabled()) {
+            L.w("commit: Skipping user detail, backend mode is enabled!");
+            return null;
+        }
+
         try {
             final JSONObject changes = new JSONObject();
             final Set<String> cohortsAdded = new HashSet<>();

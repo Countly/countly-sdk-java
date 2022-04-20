@@ -1,15 +1,10 @@
 package ly.count.sdk.java.internal;
 
+import ly.count.sdk.java.Config;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.Future;
-
-import ly.count.sdk.java.Config;
 
 public abstract class SDKCore extends SDKModules {
     private static final Log.Module L = Log.module("SDKCore");
@@ -19,6 +14,7 @@ public abstract class SDKCore extends SDKModules {
     private UserImpl user;
     public InternalConfig config;
     protected Networking networking;
+    protected Queue<Request> requestQueueMemory = null;
 
     public enum Signal {
         DID(1),
@@ -28,14 +24,19 @@ public abstract class SDKCore extends SDKModules {
 
         private final int index;
 
-        Signal(int index){ this.index = index; }
+        Signal(int index) {
+            this.index = index;
+        }
 
-        public int getIndex(){ return index; }
+        public int getIndex() {
+            return index;
+        }
     }
 
     protected SDKCore() {
         this.modules = new TreeMap<>();
         instance = this;
+
     }
 
     protected InternalConfig prepareConfig(CtxCore ctx) {
@@ -62,6 +63,7 @@ public abstract class SDKCore extends SDKModules {
 
         super.init(ctx);
 
+        requestQueueMemory = new ArrayDeque<>(config.getRequestQueueMaxSize());
         // ModuleSessions is always enabled, even without consent
         int consents = ctx.getConfig().getFeatures1() | CoreFeature.Sessions.getIndex();
         // build modules
@@ -91,7 +93,40 @@ public abstract class SDKCore extends SDKModules {
 
         if (config.isDefaultNetworking()) {
             networking = new DefaultNetworking();
-            networking.init(ctx);
+
+            if (config.isBackendModeEnabled()) {
+                //Backend mode is enabled, we will use memory only request queue.
+                networking.init(ctx, new IStorageForRequestQueue() {
+                    @Override
+                    public Request getNextRequest() {
+                        if(requestQueueMemory.isEmpty()) {
+                            return null;
+                        }
+
+                        return requestQueueMemory.element();
+                    }
+
+                    @Override
+                    public Boolean removeRequest(Request request) {
+                        return requestQueueMemory.remove(request);
+                    }
+                });
+            } else {
+                // Backend mode isn't enabled, we use persistent file storage.
+                networking.init(ctx, new IStorageForRequestQueue() {
+                    @Override
+                    public Request getNextRequest() {
+                        return Storage.readOne(ctx, new Request(0L), true);
+                    }
+
+                    @Override
+                    public Boolean removeRequest(Request request) {
+                        return Storage.remove(ctx, request);
+                    }
+                });
+            }
+
+
             networking.check(ctx);
         }
 
@@ -157,7 +192,7 @@ public abstract class SDKCore extends SDKModules {
     }
 
     TimedEvents timedEvents() {
-        return ((ModuleSessions)module(CoreFeature.Sessions.getIndex())).timedEvents();
+        return ((ModuleSessions) module(CoreFeature.Sessions.getIndex())).timedEvents();
     }
 
     @Override
@@ -230,23 +265,23 @@ public abstract class SDKCore extends SDKModules {
 
 
     public Future<Config.DID> acquireId(final CtxCore ctx, final Config.DID holder, final boolean fallbackAllowed, final Tasks.Callback<Config.DID> callback) {
-        return ((ModuleDeviceIdCore)module(CoreFeature.DeviceId.getIndex())).acquireId(ctx, holder, fallbackAllowed, callback);
+        return ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).acquireId(ctx, holder, fallbackAllowed, callback);
     }
 
     public void login(CtxCore ctx, String id) {
-        ((ModuleDeviceIdCore)module(CoreFeature.DeviceId.getIndex())).login(ctx, id);
+        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).login(ctx, id);
     }
 
     public void logout(CtxCore ctx) {
-        ((ModuleDeviceIdCore)module(CoreFeature.DeviceId.getIndex())).logout(ctx);
+        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).logout(ctx);
     }
 
     public void changeDeviceIdWithoutMerge(CtxCore ctx, String id) {
-        ((ModuleDeviceIdCore)module(CoreFeature.DeviceId.getIndex())).changeDeviceId(ctx, id, false);
+        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).changeDeviceId(ctx, id, false);
     }
 
     public void changeDeviceIdWithMerge(CtxCore ctx, String id) {
-        ((ModuleDeviceIdCore)module(CoreFeature.DeviceId.getIndex())).changeDeviceId(ctx, id, true);
+        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).changeDeviceId(ctx, id, true);
     }
 
     public static boolean enabled(int feature) {
@@ -258,8 +293,8 @@ public abstract class SDKCore extends SDKModules {
         return enabled(feature.getIndex());
     }
 
-    public boolean hasConsentForFeature(CoreFeature feature){
-        if(!instance.config.requiresConsent()){
+    public boolean hasConsentForFeature(CoreFeature feature) {
+        if (!instance.config.requiresConsent()) {
             //if no consent required, return true
             return true;
         }
@@ -272,7 +307,7 @@ public abstract class SDKCore extends SDKModules {
         if (cls == null) {
             return true;
         } else {
-            ModuleBase module = (ModuleBase)module(cls);
+            ModuleBase module = (ModuleBase) module(cls);
             request.params.remove(Request.MODULE);
             if (module == null) {
                 return true;
@@ -286,9 +321,10 @@ public abstract class SDKCore extends SDKModules {
      * After a network request has been finished
      * propagate that response to the module
      * that owns the request
+     *
      * @param request the request that was sent, used to identify the request
      */
-    public void onRequestCompleted(Request request, String response, int responseCode, Class<? extends Module> requestOwner){
+    public void onRequestCompleted(Request request, String response, int responseCode, Class<? extends Module> requestOwner) {
         if (requestOwner != null) {
             Module module = module(requestOwner);
 
@@ -298,7 +334,7 @@ public abstract class SDKCore extends SDKModules {
         }
     }
 
-    protected void recover (CtxCore ctx) {
+    protected void recover(CtxCore ctx) {
         List<Long> crashes = Storage.list(ctx, CrashImplCore.getStoragePrefix());
 
         for (Long id : crashes) {

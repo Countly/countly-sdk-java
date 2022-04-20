@@ -265,7 +265,7 @@ public class Config {
     /**
      * Countly SDK version to be sent in HTTP requests
      */
-    protected String sdkVersion = "20.11.1";
+    protected String sdkVersion = "20.11.2";
 
     /**
      * Countly SDK name to be sent in HTTP requests
@@ -281,6 +281,11 @@ public class Config {
      * Force usage of POST method for all requests
      */
     protected boolean usePOST = false;
+
+    /**
+     * This would be a special state where the majority of the SDK calls don't work anymore and only a few special calls work.
+     */
+    protected boolean enableBackendMode = false;
 
     /**
      * Salt string for parameter tampering protection
@@ -478,6 +483,11 @@ public class Config {
      */
     protected Long remoteConfigUpdateRequestTimeout = null;
 
+    /**
+     * Maximum in memory request queue size.
+     */
+    protected int requestQueueMaxSize = 1000;
+
     //endregion
 
 
@@ -657,9 +667,32 @@ public class Config {
     }
 
     /**
+     * Enable SDK's backend mode.
+     * @return {@code this} instance for method chaining
+     */
+    public Config enableBackendMode() {
+        this.enableBackendMode = true;
+        return this;
+    }
+
+    public int getRequestQueueMaxSize() {
+        return requestQueueMaxSize;
+    }
+
+    /**
+     * In backend mode set the in memory request queue size.
+     * @param requestQueueMaxSize int to set request queue maximum size for backend mode
+     * @return {@code this} instance for method chaining
+     */
+    public Config setRequestQueueMaxSize(int requestQueueMaxSize) {
+        this.requestQueueMaxSize = requestQueueMaxSize;
+        return this;
+    }
+
+    /**
      * Enable parameter tampering protection
      *
-     * @param salt String to add to each request bebfore calculating checksum
+     * @param salt String to add to each request before calculating checksum
      * @return {@code this} instance for method chaining
      */
     public Config enableParameterTamperingProtection(String salt) {
@@ -1202,6 +1235,14 @@ public class Config {
      */
     public boolean isUsePOST() {
         return usePOST;
+    }
+
+    /**
+     * Getter for {@link #enableBackendMode}
+     * @return {@link #enableBackendMode} value
+     */
+    public boolean isBackendModeEnabled() {
+        return enableBackendMode;
     }
 
     /**

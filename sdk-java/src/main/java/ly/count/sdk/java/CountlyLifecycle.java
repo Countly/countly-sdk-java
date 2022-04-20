@@ -42,6 +42,15 @@ public abstract class CountlyLifecycle extends Cly {
                 stop(false);
             }
 
+            if(config.enableBackendMode) {
+                config.sdkName = "java-native-backend";
+            }
+
+            if(config.requestQueueMaxSize < 1) {
+                L.e("init: Request queue max size can not be less than 1.");
+                config.requestQueueMaxSize = 1;
+            }
+
             SDK sdk = new SDK();
             sdk.init(new CtxImpl(sdk, new InternalConfig(config), directory));
 

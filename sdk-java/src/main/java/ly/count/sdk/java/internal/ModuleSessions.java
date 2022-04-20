@@ -58,7 +58,7 @@ public class ModuleSessions extends ModuleBase {
                 executor.scheduleWithFixedDelay(new Runnable() {
                     @Override
                     public void run() {
-                        if (isActive() && getSession() != null) {
+                        if (!ctx.getConfig().isBackendModeEnabled() && isActive() && getSession() != null) {
                             L.i("updating session");
                             getSession().update();
                         }

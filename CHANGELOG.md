@@ -1,3 +1,6 @@
+20.11.2
+* Added backend mode feature and a new configuration field to enable it.
+
 20.11.1
 * Fixed a bug related to server response handling.
 * Fixed a potential issue with parameters tampering protection while adding checksum.

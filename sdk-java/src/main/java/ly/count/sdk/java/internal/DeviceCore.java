@@ -212,6 +212,10 @@ public class DeviceCore {
         return Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
     }
 
+    public int getHourFromCalendar(Calendar calendar) {
+        return calendar.get(Calendar.HOUR_OF_DAY);
+    }
+
     /**
      * Convert time in nanoseconds to milliseconds
      *

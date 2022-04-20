@@ -36,6 +36,11 @@ class ViewImpl implements View {
 
     @Override
     public void start(boolean firstView) {
+        if(SDKCore.instance != null && SDKCore.instance.config.isBackendModeEnabled()) {
+            L.w("start: Skipping view, backend mode is enabled!");
+            return;
+        }
+
         L.d("start: firstView = " + firstView);
         if (started) {
             return;
@@ -56,6 +61,11 @@ class ViewImpl implements View {
 
     @Override
     public void stop(boolean lastView) {
+        if(SDKCore.instance != null && SDKCore.instance.config.isBackendModeEnabled()) {
+            L.w("stop: Skipping view, backend mode is enabled!");
+            return;
+        }
+
         L.d("stop: lastView = " + lastView);
 
         if (ended) {
