@@ -16,7 +16,7 @@ public abstract class SDKCore extends SDKModules {
     protected Networking networking;
     protected Queue<Request> requestQueueMemory = null;
 
-    protected final Object lock = new Object();
+    protected final Object lockBRQStorage = new Object();
 
     public enum Signal {
         DID(1),
@@ -101,7 +101,7 @@ public abstract class SDKCore extends SDKModules {
                 networking.init(ctx, new IStorageForRequestQueue() {
                     @Override
                     public Request getNextRequest() {
-                        synchronized(SDKCore.instance.lock) {
+                        synchronized(SDKCore.instance.lockBRQStorage) {
                             if (requestQueueMemory.isEmpty()) {
                                 return null;
                             }
@@ -112,7 +112,7 @@ public abstract class SDKCore extends SDKModules {
 
                     @Override
                     public Boolean removeRequest(Request request) {
-                        synchronized(SDKCore.instance.lock) {
+                        synchronized(SDKCore.instance.lockBRQStorage) {
                             return requestQueueMemory.remove(request);
                         }
                     }

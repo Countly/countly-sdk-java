@@ -323,7 +323,7 @@ public class ModuleBackendMode extends ModuleBase {
     }
 
     private void addRequestToRequestQ(Request request) {
-        synchronized(SDKCore.instance.lock) {
+        synchronized(SDKCore.instance.lockBRQStorage) {
             L.d("addRequestToRequestQ");
             if (internalConfig.getRequestQueueMaxSize() == SDKCore.instance.requestQueueMemory.size()) {
                 L.d("addRequestToRequestQ: In Memory request queue is full, dropping oldest request: " + request.params.toString());
