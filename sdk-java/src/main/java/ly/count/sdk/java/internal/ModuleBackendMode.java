@@ -294,7 +294,7 @@ public class ModuleBackendMode extends ModuleBase {
         request.params.add("tz", DeviceCore.dev.getTimezoneOffset());
     }
 
-    private void addEventsAgainstDeviceIdToRequestQ(String deviceID) {
+    private synchronized void addEventsAgainstDeviceIdToRequestQ(String deviceID) {
         JSONArray events = eventQueues.get(deviceID);
         if (events == null || events.isEmpty()) {
             return;
@@ -310,7 +310,7 @@ public class ModuleBackendMode extends ModuleBase {
         addRequestToRequestQ(request);
     }
 
-    private void addEventsToRequestQ() {
+    private synchronized void addEventsToRequestQ() {
         L.d("addEventsToRequestQ");
 
         for (String s : eventQueues.keySet()) {
@@ -323,14 +323,16 @@ public class ModuleBackendMode extends ModuleBase {
     }
 
     private void addRequestToRequestQ(Request request) {
-        L.d("addRequestToRequestQ");
-        if (internalConfig.getRequestQueueMaxSize() == SDKCore.instance.requestQueueMemory.size()) {
-            L.d("addRequestToRequestQ: In Memory request queue is full, dropping oldest request: " + request.params.toString());
-            SDKCore.instance.requestQueueMemory.remove();
-        }
+        synchronized(SDKCore.instance.lockBRQStorage) {
+            L.d("addRequestToRequestQ");
+            if (internalConfig.getRequestQueueMaxSize() == SDKCore.instance.requestQueueMemory.size()) {
+                L.d("addRequestToRequestQ: In Memory request queue is full, dropping oldest request: " + request.params.toString());
+                SDKCore.instance.requestQueueMemory.remove();
+            }
 
-        SDKCore.instance.requestQueueMemory.add(request);
-        SDKCore.instance.networking.check(ctx);
+            SDKCore.instance.requestQueueMemory.add(request);
+            SDKCore.instance.networking.check(ctx);
+        }
     }
 
     protected Map<String, Object> removeInvalidDataFromSegments(Map<String, Object> segments) {
