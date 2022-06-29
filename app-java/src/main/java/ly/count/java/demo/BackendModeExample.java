@@ -316,8 +316,7 @@ public class BackendModeExample {
 
         // Countly needs persistent storage for requests, configuration storage, user profiles and other temporary data,
         // therefore requires a separate data folder to run
-
-        File targetFolder = new File("C:\\Users\\zahid\\OneDrive\\Documents\\Countly\\Data");
+        File targetFolder = new File("d:\\__COUNTLY\\java_test\\");
 
         // Main initialization call, SDK can be used after this one is done
         Countly.init(targetFolder, config);

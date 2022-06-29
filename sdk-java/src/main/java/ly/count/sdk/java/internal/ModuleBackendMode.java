@@ -322,15 +322,17 @@ public class ModuleBackendMode extends ModuleBase {
 
     }
 
-    private synchronized void addRequestToRequestQ(Request request) {
-        L.d("addRequestToRequestQ");
-        if (internalConfig.getRequestQueueMaxSize() == SDKCore.instance.requestQueueMemory.size()) {
-            L.d("addRequestToRequestQ: In Memory request queue is full, dropping oldest request: " + request.params.toString());
-            SDKCore.instance.requestQueueMemory.remove();
-        }
+    private void addRequestToRequestQ(Request request) {
+        synchronized(SDKCore.instance.lock) {
+            L.d("addRequestToRequestQ");
+            if (internalConfig.getRequestQueueMaxSize() == SDKCore.instance.requestQueueMemory.size()) {
+                L.d("addRequestToRequestQ: In Memory request queue is full, dropping oldest request: " + request.params.toString());
+                SDKCore.instance.requestQueueMemory.remove();
+            }
 
-        SDKCore.instance.requestQueueMemory.add(request);
-        SDKCore.instance.networking.check(ctx);
+            SDKCore.instance.requestQueueMemory.add(request);
+            SDKCore.instance.networking.check(ctx);
+        }
     }
 
     protected Map<String, Object> removeInvalidDataFromSegments(Map<String, Object> segments) {

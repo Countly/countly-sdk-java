@@ -1,3 +1,6 @@
+20.11.3
+* Fixed a threading issue in the backend mode feature.
+
 20.11.2
 * Added backend mode feature and a new configuration field to enable it.
 
