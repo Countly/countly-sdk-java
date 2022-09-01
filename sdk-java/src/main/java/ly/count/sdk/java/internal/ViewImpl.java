@@ -66,6 +66,11 @@ class ViewImpl implements View {
             return;
         }
 
+        if (start == null) {
+            L.e("stop: We are trying to end a view that has not been started.");
+            return;
+        }
+
         L.d("stop: lastView = " + lastView);
 
         if (ended) {
