@@ -1,5 +1,5 @@
 20.11.4
-* Fixed a potential issue while stopping a view that was not started.
+* Adding mitigations to an issue that would surface when stopping a view that was not started.
 
 20.11.3
 * Fixed a threading issue in the backend mode feature.
