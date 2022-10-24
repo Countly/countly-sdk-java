@@ -1,44 +1,41 @@
-# Countly Android SDK [![Build Status](https://api.travis-ci.org/Countly/countly-sdk-android.png)](https://travis-ci.org/Countly/countly-sdk-android) [![API](https://img.shields.io/badge/API-9%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=9)
+# Countly Java SDK
 
-**We're hiring:** Countly is looking for Android SDK developers, full stack devs, devops and growth hackers (remote work). [Click this link for job description](https://angel.co/countly/jobs/)
+This repository contains the Countly Java SDK, which can be integrated into Java applications. The Countly Java SDK is intended to be used with [Countly Community Edition](https://github.com/Countly/countly-server) or [Countly Enterprise Edition](https://count.ly/product).
 
-* **Slack user?** [Join our Slack community](http://slack.count.ly:3000/)
-* **Questions?** [Ask in our Community forum](http://community.count.ly)
+## What is Countly?
 
-## What's Countly?
-[Countly](http://count.ly) is an innovative, real-time, open source mobile analytics application. 
-It collects data from mobile devices, and visualizes this information to analyze mobile application 
-usage and end-user behavior. There are two parts of Countly: the server that collects and analyzes data, 
-and mobile SDK that sends this data. Both parts are open source with different licensing terms.
+[Countly](https://count.ly) is a product analytics solution and innovation enabler that helps teams track product performance and customer journey and behavior across [mobile](https://count.ly/mobile-analytics), [web](http://count.ly/web-analytics),
+and [desktop](https://count.ly/desktop-analytics) applications. [Ensuring privacy by design](https://count.ly/privacy-by-design), Countly allows you to innovate and enhance your products to provide personalized and customized customer experiences, and meet key business and revenue goals.
 
-## About
+Track, measure, and take action - all without leaving Countly.
 
-This repository includes the Countly Android SDK.
+* **Slack user?** [Join our Slack Community](https://slack.count.ly)
+* **Questions or feature requests?** [Post in our Community Forum](https://support.count.ly/hc/en-us/community/topics)
+* **Looking for the Countly Server?** [Countly Community Edition repository](https://github.com/Countly/countly-server)
+* **Looking for other Countly SDKs?** [An overview of all Countly SDKs for mobile, web and desktop](https://support.count.ly/hc/en-us/articles/360037236571-Downloading-and-Installing-SDKs#officially-supported-sdks)
 
-Need help? See [Countly SDK for Android](http://resources.count.ly/v1.0/docs/countly-sdk-for-android) documentation at [Countly Resources](http://resources.count.ly), or ask us on our [Countly Analytics Community Slack channel](http://slack.count.ly:3000/).
+## Integrating Countly SDK in your projects
 
-## Sample Android application
+Link to the script and call helper methods based on what you want to track: sessions, views, clicks, custom events, user data, etc. and for much more [check out our documentation](https://support.count.ly/hc/en-us/articles/360037813891-Java).
 
-We have a beautiful Android application ([push notification sample app](https://github.com/Countly/countly-sdk-android/tree/master/app-messaging) and [analytics sample app](https://github.com/Countly/countly-sdk-android/tree/master/app)) which includes this SDK. 
-Feel free to use this for testing purposes as you develop your application.
+For information about how to add the SDK to your project, please check [this section of the documentation](https://support.count.ly/hc/en-us/articles/360037813891-Java#adding-sdk-to-the-project).
 
-![Android-sample-app](http://count.ly/wp-content/uploads/2017/01/android-sample-app.png)
+You can find minimal SDK integration information for your project in [this section of the documentation](https://support.count.ly/hc/en-us/articles/360037813891-Java#minimal-setup).
 
-### Other Github resources
+For an example integration of this SDK, you can have a look [here](https://github.com/Countly/countly-sdk-java/tree/master/app-java/src/main/java/ly/count/java/demo).
 
-This SDK needs one of the following Countly Editions to work: 
+This SDK supports the following features:
+* [Analytics](https://support.count.ly/hc/en-us/articles/4431589003545-Analytics)
+* [User Profiles](https://support.count.ly/hc/en-us/articles/4403281285913-User-Profiles)
+* [Crash Reports](https://support.count.ly/hc/en-us/articles/4404213566105-Crashes-Errors)
 
-* Countly Community Edition, [downloadable from Github](https://github.com/Countly/countly-server)
-* [Countly Enterprise Edition](http://count.ly/product)
+## Security
 
-For more information about Countly Enterprise Edition, see [comparison of different Countly editions](https://count.ly/compare/)
+Security is very important to us. If you discover any issue regarding security, please disclose the information responsibly by sending an email to security@count.ly and **not by creating a GitHub issue**.
 
-There are also other Countly SDK repositories (both official and community supported) on [Countly resources](http://resources.count.ly/v1.0/docs/downloading-sdks).
+## Badges
 
-## How can I help you with your efforts?
-Glad you asked. We need ideas, feedbacks and constructive comments. All your suggestions will be taken care with upmost importance. We are on [Twitter](http://twitter.com/gocountly) and [Facebook](http://www.facebook.com/Countly) if you would like to keep up with our fast progress!
-
-And, if you liked Countly, [why not use one of our badges](https://count.ly/brand-assets/) and give a link back to us, so others know about this wonderful platform? 
+If you like Countly, [why not use one of our badges](https://count.ly/brand-assets) and give a link back to us so others know about this wonderful platform?
 
 <a href="https://count.ly/f/badge" rel="nofollow"><img style="width:145px;height:60px" src="https://count.ly/badges/dark.svg?v2" alt="Countly - Product Analytics" /></a>
 
@@ -52,6 +49,8 @@ And, if you liked Countly, [why not use one of our badges](https://count.ly/bran
 <a href="https://count.ly/f/badge" rel="nofollow"><img style="width:145px;height:60px" src="https://count.ly/badges/light.svg" alt="Countly - Product Analytics" /></a>
 ```
 
-### Support
+## How can I help you with your efforts?
 
-For Community support, visit [http://community.count.ly](http://community.count.ly "Countly Community Forum").
+Glad you asked! We need ideas, feedback and constructive comments. All your suggestions will be taken care of with utmost importance. For feature requests and engaging with the community, join [our Slack Community](https://slack.count.ly) or [Community Forum](https://support.count.ly/hc/en-us/community/topics).
+
+We are on [Twitter](http://twitter.com/gocountly), [Facebook](https://www.facebook.com/Countly) and [LinkedIn](https://www.linkedin.com/company/countly) if you would like to keep up with Countly related updates. 
