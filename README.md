@@ -1,3 +1,5 @@
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/3655dbdf8cc34b98a00e9b7ff77f1811)](https://www.codacy.com/gh/Countly/countly-sdk-java/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Countly/countly-sdk-java&amp;utm_campaign=Badge_Grade)
+
 # Countly Java SDK
 
 This repository contains the Countly Java SDK, which can be integrated into Java applications. The Countly Java SDK is intended to be used with [Countly Community Edition](https://github.com/Countly/countly-server) or [Countly Enterprise Edition](https://count.ly/product).
