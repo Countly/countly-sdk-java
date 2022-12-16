@@ -1,3 +1,6 @@
+20.11.5
+* Fixed a bug in backend mode while removing consent.
+
 20.11.4
 * Adding mitigations to an issue that would surface when stopping a view that was not started.
 
