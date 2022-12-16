@@ -68,7 +68,9 @@ public class ModuleBackendMode extends ModuleBase {
     @Override
     public void stop(CtxCore ctx, boolean clear) {
         super.stop(ctx, clear);
-        executor.shutdownNow();
+        if(executor != null) {
+            executor.shutdownNow();
+        }
     }
 
     public void disableModule() {
