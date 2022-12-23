@@ -1,5 +1,6 @@
 package ly.count.sdk.java.internal;
 
+import ly.count.sdk.java.Config;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -17,7 +18,7 @@ class EventImpl implements Event, JSONable {
     private static final Log.Module L = Log.module("EventImpl");
 
     private final EventRecorder recorder;
-    private final String key;
+    private String key;
 
     private Map<String, String> segmentation;
 
@@ -56,15 +57,64 @@ class EventImpl implements Event, JSONable {
         this.dow = DeviceCore.dev.currentDayOfWeek();
     }
 
+    private void trimEvent() {
+        key = trimKey(key);
+        segmentation = FixSegmentKeysAndValues(segmentation);
+    }
+
+    private String trimKey(String k) {
+        Config config = SDKCore.instance.config();
+
+        if (k.length() > config.getMaxKeyLength()) {
+            L.w("[EventImpl] RecordEventInternal : Max allowed key length is " + config.getMaxKeyLength());
+            k = k.substring(0, config.getMaxKeyLength());
+        }
+
+        return k;
+    }
+
+    private String trimValue(String fieldName, String v) {
+        Config config = SDKCore.instance.config();
+        if (v != null && v.length() > config.getMaxValueSize()) {
+            L.w("[EventImpl] TrimValue : Max allowed '" + fieldName + "' length is " + config.getMaxValueSize() + ". " + v + " will be truncated.");
+            v = v.substring(0, config.getMaxValueSize());
+        }
+
+        return v;
+    }
+
+    private Map<String, String> FixSegmentKeysAndValues(Map<String, String> segments) {
+        if (segments == null || segments.size() == 0) {
+            return segments;
+        }
+
+        Map<String, String> segmentation = new HashMap<>();
+
+        for (Map.Entry<String, String> entry : segments.entrySet()) {
+            String k = entry.getKey();
+            String v = entry.getValue();
+            if (k == null || k.length() == 0 || v == null) {
+                continue;
+            }
+
+            k = trimKey(k);
+            v = trimValue(k, v);
+
+            segmentation.put(k, v);
+        }
+        return segmentation;
+    }
+
     @Override
     public void record() {
-        if(SDKCore.instance != null && SDKCore.instance.config.isBackendModeEnabled()) {
+        if (SDKCore.instance != null && SDKCore.instance.config.isBackendModeEnabled()) {
             L.w("record: Skipping event, backend mode is enabled!");
             return;
         }
 
         if (recorder != null && !invalid) {
             invalid = true;
+            trimEvent();
             recorder.recordEvent(this);
 
             L.d("record: " + this.toString());
@@ -73,7 +123,7 @@ class EventImpl implements Event, JSONable {
 
     @Override
     public void endAndRecord() {
-        if(SDKCore.instance != null && SDKCore.instance.config.isBackendModeEnabled()) {
+        if (SDKCore.instance != null && SDKCore.instance.config.isBackendModeEnabled()) {
             L.w("endAndRecord: Skipping event, backend mode is enabled!");
             return;
         }
@@ -192,7 +242,7 @@ class EventImpl implements Event, JSONable {
         if (obj == null || !(obj instanceof EventImpl)) {
             return false;
         }
-        EventImpl event = (EventImpl)obj;
+        EventImpl event = (EventImpl) obj;
         if (timestamp != event.timestamp) {
             return false;
         }
@@ -225,6 +275,7 @@ class EventImpl implements Event, JSONable {
 
     /**
      * Serialize to JSON format according to Countly server requirements
+     *
      * @return JSON string
      */
     public String toJSON() {
@@ -257,6 +308,7 @@ class EventImpl implements Event, JSONable {
 
     /**
      * Deserialize from JSON format according to Countly server requirements
+     *
      * @return JSON string
      */
     static EventImpl fromJSON(String jsonString, EventRecorder recorder) {
