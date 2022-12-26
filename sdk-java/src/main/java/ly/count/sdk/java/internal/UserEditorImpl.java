@@ -308,9 +308,16 @@ public class UserEditorImpl implements UserEditor {
         cohortsRemoved.addAll(cohortsToRemove);
     }
 
+    Object trimValue(String key, Object value){
+        Object v = value;
+        if(value instanceof String) {
+            v = Utils.trimValue(key, (String) value);
+        }
+        return v;
+    }
     @Override
     public UserEditor set(String key, Object value) {
-        sets.put(key, value);
+        sets.put(key, trimValue(key, value));
         return this;
     }
 
@@ -487,7 +494,7 @@ public class UserEditorImpl implements UserEditor {
             L.wtf("$setOnce operation operand cannot be null: key " + key);
             return this;
         } else {
-            return setCustomOp(Op.SET_ONCE, key, value);
+            return setCustomOp(Op.SET_ONCE, key, trimValue(key, value));
         }
     }
 

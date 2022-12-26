@@ -57,53 +57,6 @@ class EventImpl implements Event, JSONable {
         this.dow = DeviceCore.dev.currentDayOfWeek();
     }
 
-    private void trimEvent() {
-        key = trimKey(key);
-        segmentation = FixSegmentKeysAndValues(segmentation);
-    }
-
-    private String trimKey(String k) {
-        Config config = SDKCore.instance.config();
-
-        if (k.length() > config.getMaxKeyLength()) {
-            L.w("[EventImpl] RecordEventInternal : Max allowed key length is " + config.getMaxKeyLength());
-            k = k.substring(0, config.getMaxKeyLength());
-        }
-
-        return k;
-    }
-
-    private String trimValue(String fieldName, String v) {
-        Config config = SDKCore.instance.config();
-        if (v != null && v.length() > config.getMaxValueSize()) {
-            L.w("[EventImpl] TrimValue : Max allowed '" + fieldName + "' length is " + config.getMaxValueSize() + ". " + v + " will be truncated.");
-            v = v.substring(0, config.getMaxValueSize());
-        }
-
-        return v;
-    }
-
-    private Map<String, String> FixSegmentKeysAndValues(Map<String, String> segments) {
-        if (segments == null || segments.size() == 0) {
-            return segments;
-        }
-
-        Map<String, String> segmentation = new HashMap<>();
-
-        for (Map.Entry<String, String> entry : segments.entrySet()) {
-            String k = entry.getKey();
-            String v = entry.getValue();
-            if (k == null || k.length() == 0 || v == null) {
-                continue;
-            }
-
-            k = trimKey(k);
-            v = trimValue(k, v);
-
-            segmentation.put(k, v);
-        }
-        return segmentation;
-    }
 
     @Override
     public void record() {
@@ -114,7 +67,6 @@ class EventImpl implements Event, JSONable {
 
         if (recorder != null && !invalid) {
             invalid = true;
-            trimEvent();
             recorder.recordEvent(this);
 
             L.d("record: " + this.toString());
@@ -151,6 +103,8 @@ class EventImpl implements Event, JSONable {
             segmentation = new HashMap<>();
         }
 
+        key = Utils.trimKey(key);
+        value = Utils.trimValue(key, value);
         segmentation.put(key, value);
 
         return this;

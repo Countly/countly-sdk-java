@@ -1,5 +1,7 @@
 package ly.count.sdk.java.internal;
 
+import ly.count.sdk.java.Config;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,11 +12,7 @@ import java.lang.reflect.Method;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Utility class
@@ -31,7 +29,8 @@ public class Utils {
 
     /**
      * Joins objects with a separator
-     * @param objects objects to join
+     *
+     * @param objects   objects to join
      * @param separator separator to use
      * @return resulting string
      */
@@ -49,6 +48,7 @@ public class Utils {
 
     /**
      * URLDecoder wrapper to remove try-catch
+     *
      * @param str string to decode
      * @return url-decoded {@code str}
      */
@@ -64,7 +64,7 @@ public class Utils {
      * Get fields declared by class and its superclasses filtering test-related which
      * contain $ in their name
      *
-     * @param cls class to check
+     * @param cls  class to check
      * @param goUp whether to return parent class fields as well
      * @return list of declared fields
      */
@@ -142,6 +142,7 @@ public class Utils {
 
     /**
      * URLEncoder wrapper to remove try-catch
+     *
      * @param str string to encode
      * @return url-encoded {@code str}
      */
@@ -178,17 +179,17 @@ public class Utils {
     /**
      * Reflective method call encapsulation.
      *
-     * @param className class to call method in
-     * @param instance instance to call on, null for static methods
+     * @param className  class to call method in
+     * @param instance   instance to call on, null for static methods
      * @param methodName method name
-     * @param args optional arguments to pass to that method
+     * @param args       optional arguments to pass to that method
      * @return false in case of failure, method result otherwise
      */
-    public static Object reflectiveCall(String className, Object instance, String methodName, Object ...args) {
+    public static Object reflectiveCall(String className, Object instance, String methodName, Object... args) {
         return utils._reflectiveCall(className, instance, methodName, args);
     }
 
-    public Object _reflectiveCall(String className, Object instance, String methodName, Object ...args) {
+    public Object _reflectiveCall(String className, Object instance, String methodName, Object... args) {
         try {
             L.d("cls " + className + ", inst " + instance);
             className = className == null && instance != null ? instance.getClass().getName() : className;
@@ -222,17 +223,17 @@ public class Utils {
     /**
      * Reflective method call encapsulation with argument types specified explicitly before each parameter.
      *
-     * @param className class to call method in
-     * @param instance instance to call on, null for static methods
+     * @param className  class to call method in
+     * @param instance   instance to call on, null for static methods
      * @param methodName method name
-     * @param args optional arguments to pass to that method in format [arg1 class, arg1 value, arg2 class, arg2 value]
+     * @param args       optional arguments to pass to that method in format [arg1 class, arg1 value, arg2 class, arg2 value]
      * @return false in case of failure, method result otherwise
      */
-    public static Object reflectiveCallStrict(String className, Object instance, String methodName, Object ...args) {
+    public static Object reflectiveCallStrict(String className, Object instance, String methodName, Object... args) {
         return utils._reflectiveCallStrict(className, instance, methodName, args);
     }
 
-    public Object _reflectiveCallStrict(String className, Object instance, String methodName, Object ...args) {
+    public Object _reflectiveCallStrict(String className, Object instance, String methodName, Object... args) {
         try {
             Class<?> cls = instance == null ? Class.forName(className) : instance.getClass();
             Class<?> types[] = args == null || args.length == 0 ? null : new Class[args.length / 2];
@@ -403,7 +404,7 @@ public class Utils {
      * Calculate digest (SHA-1, SHA-256, etc.) hash of the string provided
      *
      * @param digestName digest name like {@code "SHA-256"}, must be supported by Java, see {@link MessageDigest}
-     * @param string string to hash
+     * @param string     string to hash
      * @return hash of the string or null in case of error
      */
     public static String digestHex(String digestName, String string) {
@@ -425,11 +426,11 @@ public class Utils {
      * @return hex string of the byte array in lower case
      */
     public static String hex(byte[] bytes) {
-        char[] hexChars = new char[ bytes.length * 2 ];
-        for( int j = 0; j < bytes.length; j++ ) {
-            int v = bytes[ j ] & 0xFF;
-            hexChars[ j * 2 ] = BASE_16[ v >>> 4 ];
-            hexChars[ j * 2 + 1 ] = BASE_16[ v & 0x0F ];
+        char[] hexChars = new char[bytes.length * 2];
+        for (int j = 0; j < bytes.length; j++) {
+            int v = bytes[j] & 0xFF;
+            hexChars[j * 2] = BASE_16[v >>> 4];
+            hexChars[j * 2 + 1] = BASE_16[v & 0x0F];
         }
         return new String(hexChars).toLowerCase();
     }
@@ -460,8 +461,65 @@ public class Utils {
             try {
                 bytes.close();
                 stream.close();
-            } catch (Throwable ignored){}
+            } catch (Throwable ignored) {
+            }
         }
+    }
+
+    public static String trimKey(final String key) {
+        String k = key;
+        Config config = SDKCore.instance.config();
+        if (key.length() > config.getMaxKeyLength()) {
+            L.w("[EventImpl] RecordEventInternal : Max allowed key length is " + config.getMaxKeyLength());
+            k = key.substring(0, config.getMaxKeyLength());
+        }
+
+        return k;
+    }
+
+    public static String trimValue(final String fieldName, final String value) {
+        Config config = SDKCore.instance.config();
+        String v = value;
+        if (value != null && value.length() > config.getMaxValueSize()) {
+            L.w("[EventImpl] TrimValue : Max allowed '" + fieldName + "' length is " + config.getMaxValueSize() + ". " + value + " will be truncated.");
+            v = value.substring(0, config.getMaxValueSize());
+        }
+
+        return v;
+    }
+
+    public static String[] trimValues(final String[] values) {
+        Config config = SDKCore.instance.config();
+        for (int i = 0; i < values.length; ++i) {
+            if (values[i].length() > config.getMaxValueSize()) {
+                L.w("[SessionImpl] TrimKey : Max allowed value length is " + config.getMaxValueSize() + ". " + values[i] + " will be truncated.");
+                values[i] = values[i].substring(0, config.getMaxValueSize());
+            }
+        }
+
+        return values;
+    }
+
+    public static Map<String, String> fixSegmentKeysAndValues(final Map<String, String> segments) {
+        if (segments == null || segments.size() == 0) {
+            return segments;
+        }
+
+        Map<String, String> segmentation = new HashMap<>();
+
+        for (Map.Entry<String, String> entry : segments.entrySet()) {
+            String k = entry.getKey();
+            String v = entry.getValue();
+            if (k == null || k.length() == 0 || v == null) {
+                continue;
+            }
+
+            k = trimKey(k);
+            v = trimValue(k, v);
+
+            segmentation.put(k, v);
+        }
+        return segmentation;
     }
 
     public static class Base64 {
