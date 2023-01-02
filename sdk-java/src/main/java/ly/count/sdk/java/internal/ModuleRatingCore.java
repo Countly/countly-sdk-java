@@ -9,8 +9,6 @@ public class ModuleRatingCore extends ModuleBase {
 
     protected static final String STAR_RATING_EVENT_KEY = "[CLY]_star_rating";
 
-    protected static final Log.Module L = Log.module("Rating");
-
     //disabled is set when a empty module is created
     //in instances when the rating feature was not enabled
     //when a module is disabled, developer facing functions do nothing
@@ -22,7 +20,8 @@ public class ModuleRatingCore extends ModuleBase {
     protected CtxCore ctx = null;
 
     @Override
-    public void init(InternalConfig config) {
+    public void init(InternalConfig config, Log logger) {
+        super.init(config, logger);
         internalConfig = config;
     }
 
@@ -211,7 +210,7 @@ public class ModuleRatingCore extends ModuleBase {
 
             }
             catch (JSONException e) {
-                L.w("Got exception converting an StarRatingPreferences to JSON", e);
+                L.w("[ModuleRatingCore] [Rating] Got exception converting an StarRatingPreferences to JSON", e);
             }
 
             return json;
@@ -247,7 +246,7 @@ public class ModuleRatingCore extends ModuleBase {
                     }
 
                 } catch (JSONException e) {
-                    L.w("Got exception converting JSON to a StarRatingPreferences", e);
+                    L.w("[ModuleRatingCore] [Rating] Got exception converting JSON to a StarRatingPreferences", e);
                 }
             }
         }
@@ -267,7 +266,7 @@ public class ModuleRatingCore extends ModuleBase {
             try {
                 return toJSON().toString().getBytes(Utils.UTF8);
             } catch (UnsupportedEncodingException e) {
-                L.wtf("UTF is not supported for Rating", e);
+                L.e("[ModuleRatingCore] [Rating] UTF is not supported for Rating", e);
                 return null;
             }
         }
@@ -280,11 +279,11 @@ public class ModuleRatingCore extends ModuleBase {
                     JSONObject obj = new JSONObject(json);
                     fromJSON(obj);
                 } catch (JSONException e) {
-                    L.e("Couldn't decode Rating data successfully", e);
+                    L.e("[ModuleRatingCore] [Rating] Couldn't decode Rating data successfully", e);
                 }
                 return true;
             } catch (UnsupportedEncodingException e) {
-                L.wtf("Cannot deserialize Rating", e);
+                L.e("[ModuleRatingCore] [Rating] Cannot deserialize Rating", e);
             }
 
             return false;
@@ -300,7 +299,7 @@ public class ModuleRatingCore extends ModuleBase {
          */
         public synchronized void setStarRatingDialogTexts(String starRatingTextTitle, String starRatingTextMessage, String starRatingTextDismiss) {
             if(disabledModule) { return; }
-            L.d("Setting star rating texts");
+            L.d("[ModuleRatingCore] Setting star rating texts");
 
             ModuleRatingCore.this.setStarRatingInitConfig(-1, starRatingTextTitle, starRatingTextMessage, starRatingTextDismiss);
         }
@@ -311,7 +310,7 @@ public class ModuleRatingCore extends ModuleBase {
         public int getAutomaticStarRatingSessionLimit(){
             if(disabledModule) { return -1; }
             int sessionLimit = ModuleRatingCore.this.getAutomaticStarRatingSessionLimit();
-            L.d("Getting automatic star rating session limit: [" + sessionLimit + "]");
+            L.d("[ModuleRatingCore] Getting automatic star rating session limit: [" + sessionLimit + "]");
 
             return sessionLimit;
         }
@@ -322,7 +321,7 @@ public class ModuleRatingCore extends ModuleBase {
         public int getStarRatingsCurrentVersionsSessionCount(){
             if(disabledModule) { return -1; }
             int sessionCount = ModuleRatingCore.this.getCurrentVersionsSessionCount();
-            L.d("Getting star rating current version session count: [" + sessionCount + "]");
+            L.d("[ModuleRatingCore] Getting star rating current version session count: [" + sessionCount + "]");
 
             return sessionCount;
         }
@@ -332,7 +331,7 @@ public class ModuleRatingCore extends ModuleBase {
          */
         public void clearAutomaticStarRatingSessionCount(){
             if(disabledModule) { return; }
-            L.d("Clearing star rating session count");
+            L.d("[ModuleRatingCore] Clearing star rating session count");
 
             ModuleRatingCore.this.clearAutomaticStarRatingSessionCount();
         }

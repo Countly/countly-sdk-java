@@ -2,10 +2,7 @@ package ly.count.sdk.java;
 
 import java.io.File;
 
-import ly.count.sdk.java.internal.CtxImpl;
-import ly.count.sdk.java.internal.Device;
-import ly.count.sdk.java.internal.ModuleBackendMode;
-import ly.count.sdk.java.internal.SDK;
+import ly.count.sdk.java.internal.*;
 
 /**
  * Main Countly SDK API class.
@@ -29,20 +26,20 @@ public class Countly extends CountlyLifecycle {
     protected static Countly cly;
     protected SDK sdk;
 
-    protected Countly(SDK sdk, CtxImpl ctx) {
-        super();
+    protected Countly(SDK sdk, CtxImpl ctx, Log logger) {
+        super(logger);
         cly = this;
         super.sdkInterface = this.sdk = sdk;
         this.ctx = ctx;
     }
 
-    private static CtxImpl ctx(File directory) {
-        return new CtxImpl(cly.sdk, cly.sdk.config(), directory);
-    }
-
-    private static CtxImpl ctx(File directory, String view) {
-        return new CtxImpl(cly.sdk, cly.sdk.config(), directory, view);
-    }
+//    private static CtxImpl ctx(File directory) {
+//        return new CtxImpl(cly.sdk, cly.sdk.config(), directory);
+//    }
+//
+//    private static CtxImpl ctx(File directory, String view) {
+//        return new CtxImpl(cly.sdk, cly.sdk.config(), directory, view);
+//    }
 
     /**
      * Returns active {@link Session} if any or creates new {@link Session} instance.
@@ -56,14 +53,14 @@ public class Countly extends CountlyLifecycle {
      */
     public static Session session(){
         if (!isInitialized()) {
-            L.wtf("Countly SDK is not initialized yet.");
+            L.e("Countly SDK is not initialized yet.");
         }
         return Cly.session(cly.ctx);
     }
 
     public static ModuleBackendMode.BackendMode backendMode(){
         if (!isInitialized()) {
-            L.wtf("Countly SDK is not initialized yet.");
+            L.e("Countly SDK is not initialized yet.");
             return null;
         } else {
             ModuleBackendMode mbm = cly.sdk.module(ModuleBackendMode.class);
@@ -96,7 +93,7 @@ public class Countly extends CountlyLifecycle {
      */
     public static Session getSession(){
         if (!isInitialized()) {
-            L.wtf("Countly SDK is not initialized yet.");
+            L.e("Countly SDK is not initialized yet.");
         }
         return Cly.session(cly.ctx);
     }
@@ -158,11 +155,11 @@ public class Countly extends CountlyLifecycle {
      * @param features features to turn on
      */
     public static void onConsent(Config.Feature... features) {
-        L.d("onConsent: features = " + features);
-
         if (!isInitialized()) {
-            L.wtf("Countly SDK is not initialized yet.");
+            L.e("Countly SDK is not initialized yet.");
         } else {
+            L.d("onConsent: features = " + features);
+
             int ftrs = 0;
             for (Config.Feature f : features) {
                 ftrs = ftrs | f.getIndex();
@@ -181,7 +178,7 @@ public class Countly extends CountlyLifecycle {
     public static void onConsentRemoval(Config.Feature... features) {
         L.d("onConsentRemoval: features = " + features);
         if (!isInitialized()) {
-            L.wtf("Countly SDK is not initialized yet.");
+            L.e("Countly SDK is not initialized yet.");
         } else {
             int ftrs = 0;
             for (Config.Feature f : features) {

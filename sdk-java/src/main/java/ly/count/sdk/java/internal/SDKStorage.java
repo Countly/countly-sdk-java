@@ -19,7 +19,6 @@ import ly.count.sdk.java.internal.Storage;
 import ly.count.sdk.java.internal.Utils;
 
 abstract class SDKStorage extends SDKLifecycle {
-    private static final Log.Module L = Log.module("SDK");
     private static final String FILE_NAME_PREFIX = "[CLY]";
     private static final String FILE_NAME_SEPARATOR = "_";
 
@@ -100,20 +99,20 @@ abstract class SDKStorage extends SDKLifecycle {
             stream.close();
             return true;
         } catch (IOException e) {
-            L.wtf("Cannot write data to " + filename, e);
+            L.w("Cannot write data to " + filename, e);
         } finally {
             if (stream != null) {
                 try {
                     stream.close();
                 } catch (IOException e) {
-                    L.wtf("Couldn't close output stream for " + filename, e);
+                    L.w("Couldn't close output stream for " + filename, e);
                 }
             }
             if (lock != null && lock.isValid()) {
                 try {
                     lock.release();
                 } catch (IOException e) {
-                    L.wtf("Couldn't release lock for " + filename, e);
+                    L.w("Couldn't release lock for " + filename, e);
                 }
             }
         }

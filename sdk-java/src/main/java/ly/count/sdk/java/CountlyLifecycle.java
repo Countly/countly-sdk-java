@@ -12,10 +12,10 @@ import ly.count.sdk.java.internal.SDK;
  */
 
 public abstract class CountlyLifecycle extends Cly {
-    protected static final Log.Module L = Log.module("Countly");
+    //protected static final Log.Module L = Log.module("Countly");
 
-    protected CountlyLifecycle() {
-        super();
+    protected CountlyLifecycle(Log logger) {
+        super(logger);
     }
 
     //protected CtxImpl ctx;
@@ -29,16 +29,17 @@ public abstract class CountlyLifecycle extends Cly {
      */
     public static void init (final File directory, final Config config) {
         if (config == null) {
-            L.wtf("Config cannot be null");
-        } else if (directory == null) {
-            L.wtf("File cannot be null");
+            Log.print("[ERROR] Config cannot be null");
+        }
+        else if (directory == null) {
+            L.e("File cannot be null");
         } else if (!directory.isDirectory()) {
-            L.wtf("File must be a directory");
+            L.e("File must be a directory");
         } else if (!directory.exists()) {
-            L.wtf("File must exist");
+            L.e("File must exist");
         } else {
             if (cly != null) {
-                L.wtf("Countly shouldn't be initialized twice. Please either use Countly.isInitialized() to check status or call Countly.stop() before second Countly.init().");
+                L.e("Countly shouldn't be initialized twice. Please either use Countly.isInitialized() to check status or call Countly.stop() before second Countly.init().");
                 stop(false);
             }
 
@@ -51,11 +52,13 @@ public abstract class CountlyLifecycle extends Cly {
                 config.requestQueueMaxSize = 1;
             }
 
+            InternalConfig internalConfig = new InternalConfig(config);
+            L = new Log(internalConfig);
             SDK sdk = new SDK();
-            sdk.init(new CtxImpl(sdk, new InternalConfig(config), directory));
+            sdk.init(new CtxImpl(sdk, internalConfig, L, directory));
 
             // config has been changed, thus recreating ctx
-            cly = new Countly(sdk, new CtxImpl(sdk, sdk.config(), directory));
+            cly = new Countly(sdk, new CtxImpl(sdk, sdk.config(), L, directory), L);
         }
     }
 
@@ -72,7 +75,7 @@ public abstract class CountlyLifecycle extends Cly {
             ((Countly)cly).sdk.stop(((Countly) cly).ctx, clearData);
             cly = null;
         } else {
-            L.wtf("Countly isn't initialized to stop it");
+            L.e("Countly isn't initialized to stop it");
         }
     }
 

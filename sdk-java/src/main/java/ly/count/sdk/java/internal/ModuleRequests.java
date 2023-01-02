@@ -9,7 +9,6 @@ import ly.count.sdk.java.User;
  */
 
 public class ModuleRequests extends ModuleBase {
-    private static final Log.Module L = Log.module("ModuleRequests");
 
     private static Params metrics;
 
@@ -18,8 +17,8 @@ public class ModuleRequests extends ModuleBase {
     }
 
     @Override
-    public void init(InternalConfig config) {
-        super.init(config);
+    public void init(InternalConfig config, Log logger) {
+        super.init(config, logger);
     }
 
     @Override
@@ -112,7 +111,7 @@ public class ModuleRequests extends ModuleBase {
                 try {
                     callback.call(false);
                 } catch (Throwable t) {
-                    L.e("Shouldn't happen", t);
+                    L.e("[ModuleRequests] Shouldn't happen", t);
                 }
             }
             return null;
@@ -125,6 +124,8 @@ public class ModuleRequests extends ModuleBase {
         if (!SDKCore.enabled(CoreFeature.Location)) {
             return null;
         }
+
+
 
         Request request = sessionRequest(ctx, null, null, null);
         request.params.add("location", latitude + "," + longitude);
@@ -246,7 +247,7 @@ public class ModuleRequests extends ModuleBase {
                 try {
                     callback.call(null);
                 } catch (Exception e) {
-                    L.wtf("Exception in a callback", e);
+                    L.e("[ModuleRequests] Exception in a callback", e);
                 }
             }
             return null;

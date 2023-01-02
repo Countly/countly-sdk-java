@@ -7,7 +7,7 @@ import java.util.*;
 import java.util.concurrent.Future;
 
 public abstract class SDKCore extends SDKModules {
-    private static final Log.Module L = Log.module("SDKCore");
+   // private static final Log.Module L = Log.module("SDKCore");
 
     protected static SDKCore instance;
 
@@ -46,7 +46,7 @@ public abstract class SDKCore extends SDKModules {
         try {
             loaded = Storage.read(ctx, new InternalConfig());
         } catch (IllegalArgumentException e) {
-            L.wtf("Cannot happen", e);
+            L.e("Cannot happen", e);
         }
 
         if (loaded == null) {
@@ -57,7 +57,8 @@ public abstract class SDKCore extends SDKModules {
         }
     }
 
-    public void init(final CtxCore ctx) {
+    public void init(final CtxCore ctx, Log logger) {
+        L = logger;
         L.i("Initializing Countly in " + (ctx.getConfig().isLimited() ? "limited" : "full") + " mode");
 
         config = prepareConfig(ctx);
@@ -76,7 +77,7 @@ public abstract class SDKCore extends SDKModules {
             @Override
             public void run(int feature, Module module) {
                 try {
-                    module.init(config);
+                    module.init(config, logger);
                     Utils.reflectiveSetField(module, "active", true);
                 } catch (IllegalArgumentException | IllegalStateException e) {
                     L.e("Error during module initialization", e);
@@ -147,7 +148,7 @@ public abstract class SDKCore extends SDKModules {
                     user = new UserImpl(ctx);
                 }
             } catch (Throwable e) {
-                L.wtf("Cannot happen", e);
+                L.e("Cannot happen", e);
                 user = new UserImpl(ctx);
             }
 
@@ -253,7 +254,7 @@ public abstract class SDKCore extends SDKModules {
         if (config.isLimited()) {
             config = Storage.read(ctx, new InternalConfig());
             if (config == null) {
-                L.wtf("ConfigCore reload gave null instance");
+                L.e("ConfigCore reload gave null instance");
             } else {
                 config.setLimited(true);
             }
@@ -353,7 +354,7 @@ public abstract class SDKCore extends SDKModules {
             L.d("recovering session " + id);
             SessionImpl session = Storage.read(ctx, new SessionImpl(ctx, id));
             if (session == null) {
-                L.wtf("no session with id " + id + " found while recovering");
+                L.e("no session with id " + id + " found while recovering");
             } else {
                 Boolean success = session.recover(config);
                 L.d("session " + id + " recovery " + (success == null ? "won't recover" : success ? "success" : "failure"));

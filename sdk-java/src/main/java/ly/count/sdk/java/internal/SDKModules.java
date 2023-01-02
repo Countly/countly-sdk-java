@@ -11,7 +11,9 @@ import ly.count.sdk.java.Config;
  */
 
 public abstract class SDKModules implements SDKInterface {
-    private static final Log.Module L = Log.module("SDKModules");
+//    private static final Log.Module L = Log.module("SDKModules");
+
+    protected static Log L = null;
     private static Module testDummyModule = null;//set during testing when trying to check the SDK's lifecycle
 
     /**
@@ -26,7 +28,7 @@ public abstract class SDKModules implements SDKInterface {
     static {
         registerDefaultModuleMapping(CoreFeature.DeviceId.getIndex(), ModuleDeviceIdCore.class);
         registerDefaultModuleMapping(CoreFeature.Requests.getIndex(), ModuleRequests.class);
-        registerDefaultModuleMapping(CoreFeature.Logs.getIndex(), Log.class);
+        //registerDefaultModuleMapping(CoreFeature.Logs.getIndex(), Log.class);
         registerDefaultModuleMapping(CoreFeature.Views.getIndex(), ModuleViews.class);
         registerDefaultModuleMapping(CoreFeature.Sessions.getIndex(), ModuleSessions.class);
         registerDefaultModuleMapping(CoreFeature.CrashReporting.getIndex(), ModuleCrash.class);
@@ -80,7 +82,7 @@ public abstract class SDKModules implements SDKInterface {
                     module.stop(ctx, clear);
                     Utils.reflectiveSetField(module, "active", false);
                 } catch (Throwable e) {
-                    L.wtf("Exception while stopping " + module.getClass(), e);
+                    L.e("Exception while stopping " + module.getClass(), e);
                 }
             }
         });
@@ -103,7 +105,7 @@ public abstract class SDKModules implements SDKInterface {
      */
     public void onConsent(CtxCore ctx, int consent) {
         if (!config().requiresConsent()) {
-            L.wtf("onConsent() shouldn't be called when Config.requiresConsent() is false");
+            L.e("onConsent() shouldn't be called when Config.requiresConsent() is false");
             return;
         }
 
@@ -131,9 +133,9 @@ public abstract class SDKModules implements SDKInterface {
 
                 Module module = instantiateModule(cls);
                 if (module == null) {
-                    L.wtf("Cannot instantiate module " + feature);
+                    L.e("Cannot instantiate module " + feature);
                 } else {
-                    module.init(ctx.getConfig());
+                    module.init(ctx.getConfig(), L);
                     module.onContextAcquired(ctx);
                     modules.put(feature, module);
                 }
@@ -148,7 +150,7 @@ public abstract class SDKModules implements SDKInterface {
      */
     public void onConsentRemoval(CtxCore ctx, int noConsent) {
         if (!config().requiresConsent()) {
-            L.wtf("onConsentRemoval() shouldn't be called when Config.requiresConsent() is false");
+            L.e("onConsentRemoval() shouldn't be called when Config.requiresConsent() is false");
             return;
         }
 
@@ -262,20 +264,20 @@ public abstract class SDKModules implements SDKInterface {
         try {
             return (Module)cls.getConstructors()[0].newInstance();
         } catch (InstantiationException e) {
-            L.wtf("Module cannot be instantiated", e);
+            L.e("Module cannot be instantiated", e);
         } catch (IllegalAccessException e) {
-            L.wtf("Module constructor cannot be accessed", e);
+            L.e("Module constructor cannot be accessed", e);
         } catch (InvocationTargetException e) {
-            L.wtf("Module constructor cannot be invoked", e);
+            L.e("Module constructor cannot be invoked", e);
         } catch (IllegalArgumentException e) {
             try {
                 return (Module)cls.getConstructors()[0].newInstance((Object)null);
             } catch (InstantiationException e1) {
-                L.wtf("Module cannot be instantiated", e);
+                L.e("Module cannot be instantiated", e);
             } catch (IllegalAccessException e1) {
-                L.wtf("Module constructor cannot be accessed", e);
+                L.e("Module constructor cannot be accessed", e);
             } catch (InvocationTargetException e1) {
-                L.wtf("Module constructor cannot be invoked", e);
+                L.e("Module constructor cannot be invoked", e);
             }
         }
         return null;

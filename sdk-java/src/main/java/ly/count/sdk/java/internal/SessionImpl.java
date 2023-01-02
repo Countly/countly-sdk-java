@@ -170,7 +170,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     @Override
     public void end() {
         if(ctx.getConfig().isBackendModeEnabled()) {
-            L.w("end: Skipping session end, backend mode is enabled!");
+            logger.w("end: Skipping session end, backend mode is enabled!");
             return;
         }
 

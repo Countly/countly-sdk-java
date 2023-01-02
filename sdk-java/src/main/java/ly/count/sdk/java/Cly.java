@@ -11,10 +11,12 @@ public abstract class Cly implements Usage {
     protected CtxCore ctx;
     protected SDKInterface sdkInterface;
 
-    private static final Log.Module L = Log.module("Cly");
+    //private static final Log.Module L = Log.module("Cly");
+    protected static Log L = null;
 
-    protected Cly() {
+    protected Cly(Log logger) {
         cly = this;
+        L = logger;
     }
 
     protected static Session session(CtxCore ctx) {

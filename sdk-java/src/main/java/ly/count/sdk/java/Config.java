@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 
 import ly.count.sdk.java.internal.*;
+import ly.count.sdk.java.internal.Module;
 
 /**
  * Countly configuration object.
@@ -376,15 +377,6 @@ public class Config {
      */
     protected int sessionAutoCloseAfter = "Android".equals(System.getProperty("os.name")) ? 10 : 0;
 
-    /**
-     * Enable test mode:
-     * <ul>
-     *     <li>Raise exceptions when SDK is in inconsistent state as opposed to silently
-     *     trying to ignore it when testMode is off</li>
-     *     <li>Put Firebase token under {@code test} devices if {@code Feature.Push} is enabled.</li>
-     * </ul>
-     */
-    protected boolean testMode = false;
 
     /**
      * When not {@code null}, more than {@code 0} and {@code Feature.CrashReporting} is enabled,
