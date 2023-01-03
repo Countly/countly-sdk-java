@@ -12,8 +12,6 @@ import ly.count.sdk.java.internal.SDK;
  */
 
 public abstract class CountlyLifecycle extends Cly {
-    //protected static final Log.Module L = Log.module("Countly");
-
     protected CountlyLifecycle(Log logger) {
         super(logger);
     }
@@ -32,14 +30,14 @@ public abstract class CountlyLifecycle extends Cly {
             Log.print("[ERROR] Config cannot be null");
         }
         else if (directory == null) {
-            L.e("File cannot be null");
+            L.e("[Countly] File cannot be null");
         } else if (!directory.isDirectory()) {
-            L.e("File must be a directory");
+            L.e("[Countly] File must be a directory");
         } else if (!directory.exists()) {
-            L.e("File must exist");
+            L.e("[Countly] File must exist");
         } else {
             if (cly != null) {
-                L.e("Countly shouldn't be initialized twice. Please either use Countly.isInitialized() to check status or call Countly.stop() before second Countly.init().");
+                L.e("[Countly] Countly shouldn't be initialized twice. Please either use Countly.isInitialized() to check status or call Countly.stop() before second Countly.init().");
                 stop(false);
             }
 
@@ -48,7 +46,7 @@ public abstract class CountlyLifecycle extends Cly {
             }
 
             if(config.requestQueueMaxSize < 1) {
-                L.e("init: Request queue max size can not be less than 1.");
+                L.e("[Countly] init: Request queue max size can not be less than 1.");
                 config.requestQueueMaxSize = 1;
             }
 
@@ -71,11 +69,11 @@ public abstract class CountlyLifecycle extends Cly {
      */
     public static void stop (boolean clearData) {
         if (cly != null) {
-            L.i("Stopping SDK");
+            L.i("[Countly] Stopping SDK");
             ((Countly)cly).sdk.stop(((Countly) cly).ctx, clearData);
             cly = null;
         } else {
-            L.e("Countly isn't initialized to stop it");
+            L.e("[Countly] Countly isn't initialized to stop it");
         }
     }
 

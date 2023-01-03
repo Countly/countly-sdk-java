@@ -8,7 +8,6 @@ import ly.count.sdk.java.Config;
  */
 
 public class Log {
-    private static Log instance;
 
     private String tag;
     private Config.LoggingLevel level;

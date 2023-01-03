@@ -7,7 +7,6 @@ import java.util.concurrent.TimeUnit;
 import ly.count.sdk.java.Config;
 
 public class ModuleSessions extends ModuleBase {
-    private static final Log.Module L = Log.module("ModuleSessions");
 
     private int activityCount = 0;
     private ScheduledExecutorService executor = null;
@@ -24,6 +23,7 @@ public class ModuleSessions extends ModuleBase {
 
     public synchronized SessionImpl session(CtxCore ctx, Long id) {
         if (session == null) {
+            SessionImpl.L = L;
             session = new SessionImpl(ctx, id);
         }
         return session;
@@ -39,8 +39,8 @@ public class ModuleSessions extends ModuleBase {
     }
 
     @Override
-    public void init(InternalConfig config) throws IllegalStateException {
-        super.init(config);
+    public void init(InternalConfig config, Log logger) throws IllegalStateException {
+        super.init(config, logger);
     }
 
     @Override
@@ -48,9 +48,9 @@ public class ModuleSessions extends ModuleBase {
         super.onContextAcquired(ctx);
 
         try {
-            timedEvents = Storage.read(ctx, new TimedEvents());
+            timedEvents = Storage.read(ctx, new TimedEvents(L));
             if (timedEvents == null) {
-                timedEvents = new TimedEvents();
+                timedEvents = new TimedEvents(L);
             }
 
             if (ctx.getConfig().getSendUpdateEachSeconds() > 0 && executor == null) {
@@ -59,15 +59,15 @@ public class ModuleSessions extends ModuleBase {
                     @Override
                     public void run() {
                         if (!ctx.getConfig().isBackendModeEnabled() && isActive() && getSession() != null) {
-                            L.i("updating session");
+                            L.i("[ModuleSessions] updating session");
                             getSession().update();
                         }
                     }
                 }, ctx.getConfig().getSendUpdateEachSeconds(), ctx.getConfig().getSendUpdateEachSeconds(), TimeUnit.SECONDS);
             }
         } catch (Throwable e) {
-            L.wtf("Cannot happen", e);
-            timedEvents = new TimedEvents();
+            L.e("[ModuleSessions] Cannot happen", e);
+            timedEvents = new TimedEvents(L);
         }
     }
 
@@ -89,11 +89,11 @@ public class ModuleSessions extends ModuleBase {
                 if (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
                     executor.shutdownNow();
                     if (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
-                        L.e("Sessions update thread must be locked");
+                        L.e("[ModuleSessions] Sessions update thread must be locked");
                     }
                 }
             } catch (Throwable t) {
-                L.e("Error while stopping session update thread", t);
+                L.e("[ModuleSessions] Error while stopping session update thread", t);
             }
             executor = null;
         }
@@ -108,7 +108,7 @@ public class ModuleSessions extends ModuleBase {
      * @see ModuleDeviceIdCore#onDeviceId(CtxCore, Config.DID, Config.DID)
      */
     public void onDeviceId(final CtxCore ctx, final Config.DID deviceId, final Config.DID oldDeviceId) {
-        L.d("onDeviceId " + deviceId + ", old " + oldDeviceId);
+        L.d("[ModuleSessions] onDeviceId " + deviceId + ", old " + oldDeviceId);
         if (deviceId != null && oldDeviceId != null && deviceId.realm == Config.DID.REALM_DID && !deviceId.equals(oldDeviceId) && getSession() == null) {
             session(ctx, null).begin();
         }
@@ -118,7 +118,7 @@ public class ModuleSessions extends ModuleBase {
     public synchronized void onActivityStarted(CtxCore ctx) {
         if (ctx.getConfig().isAutoSessionsTrackingEnabled() && activityCount == 0) {
             if (getSession() == null) {
-                L.i("starting new session");
+                L.i("[ModuleSessions] starting new session");
                 session(ctx, null).begin();
             }
         }
@@ -133,12 +133,12 @@ public class ModuleSessions extends ModuleBase {
                 executor = Executors.newScheduledThreadPool(1);
             }
             if (executor != null) {
-                L.i("stopping session");
+                L.i("[ModuleSessions] stopping session");
                 try {
                     executor.schedule(new Runnable() {
                         @Override
                         public void run() {
-                            L.i("ending session? activities " + activityCount + " session null? " + (getSession() == null) + " active? " + (getSession() != null && getSession().isActive()));
+                            L.i("[ModuleSessions] ending session? activities " + activityCount + " session null? " + (getSession() == null) + " active? " + (getSession() != null && getSession().isActive()));
                             if (activityCount == 0 && getSession() != null && getSession().isActive()) {
                                 getSession().end();
                             }
@@ -151,7 +151,7 @@ public class ModuleSessions extends ModuleBase {
                         executor.shutdownNow();
                     }
                 } catch (InterruptedException e) {
-                    L.w("Interrupted while waiting for session update executor to stop", e);
+                    L.w("[ModuleSessions] Interrupted while waiting for session update executor to stop", e);
                     executor.shutdownNow();
                 }
                 executor = null;

@@ -13,11 +13,13 @@ import ly.count.sdk.java.Event;
 import ly.count.sdk.java.Session;
 
 class TimedEvents implements Storable, EventImpl.EventRecorder {
-    private static final Log.Module L = Log.module("TimedEvents");
+
+    private Log L = null;
 
     private Map<String, EventImpl> events;
 
-    protected TimedEvents() {
+    protected TimedEvents(Log logger) {
+        L = logger;
         events = new HashMap<>();
     }
 
@@ -64,20 +66,20 @@ class TimedEvents implements Storable, EventImpl.EventRecorder {
             stream.close();
             return bytes.toByteArray();
         } catch (IOException e) {
-            L.wtf("Cannot serialize timed events", e);
+            L.e("[TimedEvents] Cannot serialize timed events", e);
         } finally {
             if (stream != null) {
                 try {
                     stream.close();
                 } catch (IOException e) {
-                    L.wtf("Cannot happen", e);
+                    L.e("[TimedEvents] Cannot happen", e);
                 }
             }
             if (bytes != null) {
                 try {
                     bytes.close();
                 } catch (IOException e) {
-                    L.wtf("Cannot happen", e);
+                    L.e("[TimedEvents] Cannot happen", e);
                 }
             }
         }
@@ -102,20 +104,20 @@ class TimedEvents implements Storable, EventImpl.EventRecorder {
 
             return true;
         } catch (IOException e) {
-            L.wtf("Cannot deserialize config", e);
+            L.e("[TimedEvents] Cannot deserialize config", e);
         } finally {
             if (stream != null) {
                 try {
                     stream.close();
                 } catch (IOException e) {
-                    L.wtf("Cannot happen", e);
+                    L.e("[TimedEvents] Cannot happen", e);
                 }
             }
             if (bytes != null) {
                 try {
                     bytes.close();
                 } catch (IOException e) {
-                    L.wtf("Cannot happen", e);
+                    L.e("[TimedEvents] Cannot happen", e);
                 }
             }
         }

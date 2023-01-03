@@ -36,6 +36,7 @@ public abstract class SDKCore extends SDKModules {
     }
 
     protected SDKCore() {
+        super();
         this.modules = new TreeMap<>();
         instance = this;
 
@@ -46,7 +47,7 @@ public abstract class SDKCore extends SDKModules {
         try {
             loaded = Storage.read(ctx, new InternalConfig());
         } catch (IllegalArgumentException e) {
-            L.e("Cannot happen", e);
+            L.e("[SDKCore] Cannot happen", e);
         }
 
         if (loaded == null) {
@@ -59,7 +60,7 @@ public abstract class SDKCore extends SDKModules {
 
     public void init(final CtxCore ctx, Log logger) {
         L = logger;
-        L.i("Initializing Countly in " + (ctx.getConfig().isLimited() ? "limited" : "full") + " mode");
+        L.i("[SDKCore] [SDKCore] Initializing Countly in " + (ctx.getConfig().isLimited() ? "limited" : "full") + " mode");
 
         config = prepareConfig(ctx);
         Utils.reflectiveSetField(ctx, "config", config);
@@ -80,7 +81,7 @@ public abstract class SDKCore extends SDKModules {
                     module.init(config, logger);
                     Utils.reflectiveSetField(module, "active", true);
                 } catch (IllegalArgumentException | IllegalStateException e) {
-                    L.e("Error during module initialization", e);
+                    L.e("[SDKCore] Error during module initialization", e);
                     if (config.isTestModeEnabled()) {
                         throw e;
                     } else {
@@ -148,7 +149,7 @@ public abstract class SDKCore extends SDKModules {
                     user = new UserImpl(ctx);
                 }
             } catch (Throwable e) {
-                L.e("Cannot happen", e);
+                L.e("[SDKCore] Cannot happen", e);
                 user = new UserImpl(ctx);
             }
 
@@ -184,7 +185,7 @@ public abstract class SDKCore extends SDKModules {
             networking.stop(ctx);
         }
 
-        L.i("Stopping Countly SDK" + (clear ? " and clearing all data" : ""));
+        L.i("[SDKCore] [SDKCore] Stopping Countly SDK" + (clear ? " and clearing all data" : ""));
         super.stop(ctx, clear);
 
         user = null;
@@ -209,7 +210,7 @@ public abstract class SDKCore extends SDKModules {
 
     @Override
     public void onCrash(CtxCore ctx, Throwable t, boolean fatal, String name, Map<String, String> segments, String[] logs) {
-        L.i("onCrash: t: " + t.toString() + " fatal: " + fatal + " name: " + name + " segments: " + segments);
+        L.i("[SDKCore] [SDKCore] onCrash: t: " + t.toString() + " fatal: " + fatal + " name: " + name + " segments: " + segments);
         ModuleCrash module = (ModuleCrash) module(CoreFeature.CrashReporting.getIndex());
         if (module != null) {
             module.onCrash(ctx, t, fatal, name, segments, logs);
@@ -254,7 +255,7 @@ public abstract class SDKCore extends SDKModules {
         if (config.isLimited()) {
             config = Storage.read(ctx, new InternalConfig());
             if (config == null) {
-                L.e("ConfigCore reload gave null instance");
+                L.e("[SDKCore] ConfigCore reload gave null instance");
             } else {
                 config.setLimited(true);
             }
@@ -266,7 +267,7 @@ public abstract class SDKCore extends SDKModules {
 
         if (!config.isLimited() && id != null && id.realm == Config.DID.REALM_DID) {
             user.id = id.id;
-            L.d("5");
+            L.d("[SDKCore] 5");
         }
     }
 
@@ -345,19 +346,19 @@ public abstract class SDKCore extends SDKModules {
         List<Long> crashes = Storage.list(ctx, CrashImplCore.getStoragePrefix());
 
         for (Long id : crashes) {
-            L.i("Found unprocessed crash " + id);
+            L.i("[SDKCore] [SDKCore] Found unprocessed crash " + id);
             onSignal(ctx, Signal.Crash.getIndex(), id.toString());
         }
 
         List<Long> sessions = Storage.list(ctx, SessionImpl.getStoragePrefix());
         for (Long id : sessions) {
-            L.d("recovering session " + id);
+            L.d("[SDKCore] recovering session " + id);
             SessionImpl session = Storage.read(ctx, new SessionImpl(ctx, id));
             if (session == null) {
-                L.e("no session with id " + id + " found while recovering");
+                L.e("[SDKCore] no session with id " + id + " found while recovering");
             } else {
                 Boolean success = session.recover(config);
-                L.d("session " + id + " recovery " + (success == null ? "won't recover" : success ? "success" : "failure"));
+                L.d("[SDKCore] session " + id + " recovery " + (success == null ? "won't recover" : success ? "success" : "failure"));
             }
         }
     }
