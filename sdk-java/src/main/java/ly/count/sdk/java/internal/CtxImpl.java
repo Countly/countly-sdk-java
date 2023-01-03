@@ -56,6 +56,11 @@ public class CtxImpl implements Ctx {
         return expired;
     }
 
+    @Override
+    public Log getLogger() {
+        return L;
+    }
+
     public String getView() {
         return view;
     }

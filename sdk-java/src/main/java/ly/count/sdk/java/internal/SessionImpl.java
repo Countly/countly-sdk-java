@@ -29,8 +29,8 @@ import ly.count.sdk.java.View;
  */
 
 public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
-    private static final Log.Module L = Log.module("SessionImpl");
 
+    protected static Log L = null;
     /**
      * {@link System#nanoTime()} of time when {@link Session} object is created.
      */
@@ -96,24 +96,24 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     @Override
     public Session begin() {
         if(ctx.getConfig().isBackendModeEnabled()) {
-            L.w("begin: Skipping session begin, backend mode is enabled!");
+            L.w("[SessionImpl] begin: Skipping session begin, backend mode is enabled!");
             return this;
         }
 
-        L.d("begin");
+        L.d("[SessionImpl] begin");
         begin(null);
         return this;
     }
 
     Future<Boolean> begin(Long now) {
         if (SDKCore.instance == null) {
-            L.wtf("Countly is not initialized");
+            L.e("[SessionImpl] Countly is not initialized");
             return null;
         } else if (began != null) {
-            L.wtf("Session already began");
+            L.e("[SessionImpl] Session already began");
             return null;
         } else if (ended != null) {
-            L.wtf("Session already ended");
+            L.e("[SessionImpl] Session already ended");
             return null;
         } else {
             began = now == null ? System.nanoTime() : now;
@@ -135,24 +135,24 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     @Override
     public Session update() {
         if(ctx.getConfig().isBackendModeEnabled()) {
-            L.w("update: Skipping session update, backend mode is enabled!");
+            L.w("[SessionImpl] update: Skipping session update, backend mode is enabled!");
             return this;
         }
 
-        L.d("update");
+        L.d("[SessionImpl] update");
         update(null);
         return this;
     }
 
     Future<Boolean> update(Long now) {
         if (SDKCore.instance == null) {
-            L.wtf("Countly is not initialized");
+            L.e("[SessionImpl] Countly is not initialized");
             return null;
         } else if (began == null) {
-            L.wtf("Session is not began to update it");
+            L.e("[SessionImpl] Session is not began to update it");
             return null;
         } else if (ended != null) {
-            L.wtf("Session is already ended to update it");
+            L.e("[SessionImpl] Session is already ended to update it");
             return null;
         }
 
@@ -170,23 +170,23 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     @Override
     public void end() {
         if(ctx.getConfig().isBackendModeEnabled()) {
-            logger.w("end: Skipping session end, backend mode is enabled!");
+            L.w("end: Skipping session end, backend mode is enabled!");
             return;
         }
 
-        L.d("end");
+        L.d("[SessionImpl] end");
         end(null, null, null);
     }
 
     Future<Boolean> end(Long now, final Tasks.Callback<Boolean> callback, String did) {
         if (SDKCore.instance == null) {
-            L.wtf("Countly is not initialized");
+            L.e("[SessionImpl] Countly is not initialized");
             return null;
         } else if (began == null) {
-            L.wtf("Session is not began to end it");
+            L.e("[SessionImpl] Session is not began to end it");
             return null;
         } else if (ended != null) {
-            L.wtf("Session already ended");
+            L.e("[SessionImpl] Session already ended");
             return null;
         }
         ended = now == null ? System.nanoTime() : now;
@@ -210,7 +210,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             @Override
             public void call(Boolean removed) throws Exception {
                 if (!removed) {
-                    L.i("No data in session end request");
+                    L.i("[SessionImpl] No data in session end request");
                 }
                 Storage.removeAsync(ctx, SessionImpl.this, callback);
             }
@@ -244,7 +244,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             try {
                 return future.get();
             } catch (InterruptedException | ExecutionException e) {
-                L.wtf("Interrupted while resolving session recovery future", e);
+                L.e("[SessionImpl] Interrupted while resolving session recovery future", e);
                 return false;
             }
         }
@@ -252,7 +252,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     @Override
     public boolean isActive() {
-        L.d("isActive");
+        L.d("[SessionImpl] isActive");
         return began != null && ended == null;
     }
 
@@ -287,9 +287,9 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     @Override
     public void recordEvent(Event event) {
-        L.d("recordEvent: " + event.toString());
+        L.d("[SessionImpl] recordEvent: " + event.toString());
         if (!SDKCore.enabled(CoreFeature.Events)) {
-            L.i("recordEvent: Skipping event - feature is not enabled");
+            L.i("[SessionImpl] recordEvent: Skipping event - feature is not enabled");
             return;
         }
         if (began == null) {
@@ -312,7 +312,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     @Override
     public User user() {
         if (SDKCore.instance == null) {
-            L.wtf("Countly is not initialized");
+            L.e("[SessionImpl] Countly is not initialized");
             return null;
         } else {
             return SDKCore.instance.user();
@@ -327,12 +327,12 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     @Override
     public Session addCrashReport(Throwable t, boolean fatal, String name, Map<String, String> segments, String... logs) {
         if(ctx.getConfig().isBackendModeEnabled()) {
-            L.w("addCrashReport: Skipping crash, backend mode is enabled!");
+            L.w("[SessionImpl] addCrashReport: Skipping crash, backend mode is enabled!");
             return this;
         }
 
         if (!SDKCore.enabled(CoreFeature.CrashReporting)) {
-            L.i("addCrashReport: Skipping event - feature is not enabled");
+            L.i("[SessionImpl] addCrashReport: Skipping event - feature is not enabled");
             return this;
         }
         SDKCore.instance.onCrash(ctx, t, fatal, name, segments, logs);
@@ -342,22 +342,22 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     @Override
     public Session addLocation(double latitude, double longitude) {
         if(ctx.getConfig().isBackendModeEnabled()) {
-            L.w("addLocation: Skipping location, backend mode is enabled!");
+            L.w("[SessionImpl] addLocation: Skipping location, backend mode is enabled!");
             return this;
         }
 
-        L.d("addLocation: latitude = " + latitude + " longitude = " + longitude);
+        L.d("[SessionImpl] addLocation: latitude = " + latitude + " longitude = " + longitude);
         if (!SDKCore.enabled(CoreFeature.Location)) {
-            L.i("addLocation: Skipping event - feature is not enabled");
+            L.i("[SessionImpl] addLocation: Skipping event - feature is not enabled");
             return this;
         }
         return addParam("location", latitude + "," + longitude);
     }
 
     public View view(String name, boolean start) {
-        L.d("view: name = " + name + " start = " + start);
+        L.d("[SessionImpl] view: name = " + name + " start = " + start);
         if (!SDKCore.enabled(CoreFeature.Views)) {
-            L.i("view: Skipping view - feature is not enabled");
+            L.i("[SessionImpl] view: Skipping view - feature is not enabled");
             return null;
         }
         if (currentView != null) {
@@ -392,7 +392,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     @Override
     public Usage resetDeviceId(String id) {
-        L.d("resetDeviceId: id = " + id);
+        L.d("[SessionImpl] resetDeviceId: id = " + id);
         SDKCore.instance.changeDeviceIdWithoutMerge(ctx, id);
         return this;
     }
@@ -400,11 +400,11 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     @Override
     public Usage changeDeviceIdWithMerge(String id) {
         if(ctx.getConfig().isBackendModeEnabled()) {
-            L.w("changeDeviceIdWithMerge: Skipping change device id with merge, backend mode is enabled!");
+            L.w("[SessionImpl] changeDeviceIdWithMerge: Skipping change device id with merge, backend mode is enabled!");
             return this;
         }
 
-        L.d("changeDeviceIdWithoutMerge: id = " + id);
+        L.d("[SessionImpl] changeDeviceIdWithoutMerge: id = " + id);
         SDKCore.instance.changeDeviceIdWithMerge(ctx, id);
         return this;
     }
@@ -412,11 +412,11 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     @Override
     public Usage changeDeviceIdWithoutMerge(String id) {
         if(ctx.getConfig().isBackendModeEnabled()) {
-            L.w("changeDeviceIdWithoutMerge: Skipping change device id without merge, backend mode is enabled!");
+            L.w("[SessionImpl] changeDeviceIdWithoutMerge: Skipping change device id without merge, backend mode is enabled!");
             return this;
         }
 
-        L.d("changeDeviceIdWithoutMerge: id = " + id);
+        L.d("[SessionImpl] changeDeviceIdWithoutMerge: id = " + id);
         SDKCore.instance.changeDeviceIdWithoutMerge(ctx, id);
         return this;
     }
@@ -475,20 +475,20 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             stream.close();
             return bytes.toByteArray();
         } catch (IOException e) {
-            L.wtf("Cannot serialize session", e);
+            L.e("[SessionImpl] Cannot serialize session", e);
         } finally {
             if (stream != null) {
                 try {
                     stream.close();
                 } catch (IOException e) {
-                    L.wtf("Cannot happen", e);
+                    L.e("[SessionImpl] Cannot happen", e);
                 }
             }
             if (bytes != null) {
                 try {
                     bytes.close();
                 } catch (IOException e) {
-                    L.wtf("Cannot happen", e);
+                    L.e("[SessionImpl] Cannot happen", e);
                 }
             }
         }
@@ -503,7 +503,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             bytes = new ByteArrayInputStream(data);
             stream = new ObjectInputStream(bytes);
             if (id != stream.readLong()) {
-                L.wtf("Wrong file for session deserialization");
+                L.e("[SessionImpl] Wrong file for session deserialization");
             }
 
             began = stream.readLong();
@@ -526,20 +526,20 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
             return true;
         } catch (IOException e) {
-            L.wtf("Cannot deserialize session", e);
+            L.e("[SessionImpl] Cannot deserialize session", e);
         } finally {
             if (stream != null) {
                 try {
                     stream.close();
                 } catch (IOException e) {
-                    L.wtf("Cannot happen", e);
+                    L.e("[SessionImpl] Cannot happen", e);
                 }
             }
             if (bytes != null) {
                 try {
                     bytes.close();
                 } catch (IOException e) {
-                    L.wtf("Cannot happen", e);
+                    L.e("[SessionImpl] Cannot happen", e);
                 }
             }
         }

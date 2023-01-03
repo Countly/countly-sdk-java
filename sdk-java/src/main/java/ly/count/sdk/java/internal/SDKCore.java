@@ -82,11 +82,7 @@ public abstract class SDKCore extends SDKModules {
                     Utils.reflectiveSetField(module, "active", true);
                 } catch (IllegalArgumentException | IllegalStateException e) {
                     L.e("[SDKCore] Error during module initialization", e);
-                    if (config.isTestModeEnabled()) {
-                        throw e;
-                    } else {
-                        failed.add(feature);
-                    }
+                    failed.add(feature);
                 }
             }
         });

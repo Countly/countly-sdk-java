@@ -15,7 +15,9 @@ import ly.count.sdk.java.UserEditor;
  */
 
 public class UserImpl extends User implements Storable {
-    private static final Log.Module L = Log.module("UserImpl");
+   // private static final Log.Module L = Log.module("UserImpl");
+    
+    private Log L = null;
 
     String id, name, username, email, org, phone, picturePath, locale, country, city, location;
     byte[] picture;
@@ -26,6 +28,7 @@ public class UserImpl extends User implements Storable {
     CtxCore ctx;
 
     public UserImpl(CtxCore ctx) {
+        this.L = ctx.getLogger();
         this.ctx = ctx;
         this.custom = new HashMap<>();
         this.cohorts = new HashSet<>();
@@ -96,7 +99,7 @@ public class UserImpl extends User implements Storable {
     }
 
     public UserEditor edit() {
-        return new UserEditorImpl(this);
+        return new UserEditorImpl(this, L);
     }
 
     @Override
@@ -127,20 +130,20 @@ public class UserImpl extends User implements Storable {
             stream.close();
             return bytes.toByteArray();
         } catch (IOException e) {
-            L.wtf("Cannot serialize session", e);
+          L.e("[UserImpl Cannot serialize session", e);
         } finally {
             if (stream != null) {
                 try {
                     stream.close();
                 } catch (IOException e) {
-                    L.wtf("Cannot happen", e);
+                  L.e("[UserImpl Cannot happen", e);
                 }
             }
             if (bytes != null) {
                 try {
                     bytes.close();
                 } catch (IOException e) {
-                    L.wtf("Cannot happen", e);
+                  L.e("[UserImpl Cannot happen", e);
                 }
             }
         }
@@ -192,20 +195,20 @@ public class UserImpl extends User implements Storable {
 
             return true;
         } catch (IOException | ClassNotFoundException e) {
-            L.wtf("Cannot deserialize session", e);
+          L.e("[UserImpl Cannot deserialize session", e);
         } finally {
             if (stream != null) {
                 try {
                     stream.close();
                 } catch (IOException e) {
-                    L.wtf("Cannot happen", e);
+                  L.e("[UserImpl Cannot happen", e);
                 }
             }
             if (bytes != null) {
                 try {
                     bytes.close();
                 } catch (IOException e) {
-                    L.wtf("Cannot happen", e);
+                  L.e("[UserImpl Cannot happen", e);
                 }
             }
         }

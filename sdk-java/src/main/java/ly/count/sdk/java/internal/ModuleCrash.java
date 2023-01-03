@@ -89,7 +89,7 @@ public class ModuleCrash extends ModuleBase {
             L.e("[ModuleCrash] Throwable cannot be null");
             return  null;
         }
-        return onCrash(ctx, new CrashImplCore().addThrowable(t).setFatal(fatal).setName(name).setSegments(segments).setLogs(logs));
+        return onCrash(ctx, new CrashImplCore(L).addThrowable(t).setFatal(fatal).setName(name).setSegments(segments).setLogs(logs));
     }
 
     public CrashImplCore onCrash(CtxCore ctx, CrashImplCore crash) {

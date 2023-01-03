@@ -21,8 +21,6 @@ import java.util.List;
  */
 
 public class Utils {
-    protected static final Log.Module L = Log.module("Utils");
-
     protected static final Utils utils = new Utils();
 
     public static final String UTF8 = "UTF-8";
@@ -31,7 +29,8 @@ public class Utils {
 
     /**
      * Joins objects with a separator
-     * @param objects objects to join
+     *
+     * @param objects   objects to join
      * @param separator separator to use
      * @return resulting string
      */
@@ -49,6 +48,7 @@ public class Utils {
 
     /**
      * URLDecoder wrapper to remove try-catch
+     *
      * @param str string to decode
      * @return url-decoded {@code str}
      */
@@ -64,7 +64,7 @@ public class Utils {
      * Get fields declared by class and its superclasses filtering test-related which
      * contain $ in their name
      *
-     * @param cls class to check
+     * @param cls  class to check
      * @param goUp whether to return parent class fields as well
      * @return list of declared fields
      */
@@ -142,6 +142,7 @@ public class Utils {
 
     /**
      * URLEncoder wrapper to remove try-catch
+     *
      * @param str string to encode
      * @return url-encoded {@code str}
      */
@@ -149,7 +150,7 @@ public class Utils {
         try {
             return URLEncoder.encode(str, UTF8);
         } catch (UnsupportedEncodingException e) {
-            L.wtf("No UTF-8 encoding?", e);
+            Log.print("Utils No UTF-8 encoding?" + e.toString());
             return "";
         }
     }
@@ -170,7 +171,7 @@ public class Utils {
             Class.forName(cls);
             return true;
         } catch (ClassNotFoundException e) {
-            L.d("Class " + cls + " not found");
+            Log.print("Utils Class " + cls + " not found");
             return false;
         }
     }
@@ -178,19 +179,19 @@ public class Utils {
     /**
      * Reflective method call encapsulation.
      *
-     * @param className class to call method in
-     * @param instance instance to call on, null for static methods
+     * @param className  class to call method in
+     * @param instance   instance to call on, null for static methods
      * @param methodName method name
-     * @param args optional arguments to pass to that method
+     * @param args       optional arguments to pass to that method
      * @return false in case of failure, method result otherwise
      */
-    public static Object reflectiveCall(String className, Object instance, String methodName, Object ...args) {
+    public static Object reflectiveCall(String className, Object instance, String methodName, Object... args) {
         return utils._reflectiveCall(className, instance, methodName, args);
     }
 
-    public Object _reflectiveCall(String className, Object instance, String methodName, Object ...args) {
+    public Object _reflectiveCall(String className, Object instance, String methodName, Object... args) {
         try {
-            L.d("cls " + className + ", inst " + instance);
+            Log.print("Utils cls " + className + ", inst " + instance);
             className = className == null && instance != null ? instance.getClass().getName() : className;
             Class<?> cls = instance == null ? Class.forName(className) : instance.getClass();
             Class<?> types[] = null;
@@ -205,16 +206,16 @@ public class Utils {
             Method method = cls.getDeclaredMethod(methodName, types);
             return method.invoke(instance, args);
         } catch (ClassNotFoundException t) {
-            L.w("Cannot call " + methodName + " of " + className, t);
+            Log.print("Utils Cannot call " + methodName + " of " + className + t.toString());
             return false;
         } catch (NoSuchMethodException t) {
-            L.w("Cannot call " + methodName + " of " + className, t);
+            Log.print("Utils Cannot call " + methodName + " of " + className + t.toString());
             return false;
         } catch (IllegalAccessException t) {
-            L.w("Cannot call " + methodName + " of " + className, t);
+            Log.print("Utils Cannot call " + methodName + " of " + className + t.toString());
             return false;
         } catch (InvocationTargetException t) {
-            L.w("Cannot call " + methodName + " of " + className, t);
+            Log.print("Utils Cannot call " + methodName + " of " + className + t.toString());
             return false;
         }
     }
@@ -222,17 +223,17 @@ public class Utils {
     /**
      * Reflective method call encapsulation with argument types specified explicitly before each parameter.
      *
-     * @param className class to call method in
-     * @param instance instance to call on, null for static methods
+     * @param className  class to call method in
+     * @param instance   instance to call on, null for static methods
      * @param methodName method name
-     * @param args optional arguments to pass to that method in format [arg1 class, arg1 value, arg2 class, arg2 value]
+     * @param args       optional arguments to pass to that method in format [arg1 class, arg1 value, arg2 class, arg2 value]
      * @return false in case of failure, method result otherwise
      */
-    public static Object reflectiveCallStrict(String className, Object instance, String methodName, Object ...args) {
+    public static Object reflectiveCallStrict(String className, Object instance, String methodName, Object... args) {
         return utils._reflectiveCallStrict(className, instance, methodName, args);
     }
 
-    public Object _reflectiveCallStrict(String className, Object instance, String methodName, Object ...args) {
+    public Object _reflectiveCallStrict(String className, Object instance, String methodName, Object... args) {
         try {
             Class<?> cls = instance == null ? Class.forName(className) : instance.getClass();
             Class<?> types[] = args == null || args.length == 0 ? null : new Class[args.length / 2];
@@ -247,16 +248,16 @@ public class Utils {
             Method method = cls.getDeclaredMethod(methodName, types);
             return method.invoke(instance, arguments);
         } catch (ClassNotFoundException t) {
-            L.w("Cannot call " + methodName + " of " + className, t);
+            Log.print("Utils Cannot call " + methodName + " of " + className + t.toString());
             return false;
         } catch (NoSuchMethodException t) {
-            L.w("Cannot call " + methodName + " of " + className, t);
+            Log.print("Utils Cannot call " + methodName + " of " + className + t.toString());
             return false;
         } catch (IllegalAccessException t) {
-            L.w("Cannot call " + methodName + " of " + className, t);
+            Log.print("Utils Cannot call " + methodName + " of " + className + t.toString());
             return false;
         } catch (InvocationTargetException t) {
-            L.w("Cannot call " + methodName + " of " + className, t);
+            Log.print("Utils Cannot call " + methodName + " of " + className + t.toString());
             return false;
         }
     }
@@ -282,9 +283,9 @@ public class Utils {
             }
             return true;
         } catch (IllegalAccessException e) {
-            L.w("Cannot access field " + name + " of " + cls, e);
+            Log.print("Utils Cannot access field " + name + " of " + cls + e.toString());
         } catch (NoSuchFieldException e) {
-            L.w("No field " + name + " in " + cls, e);
+            Log.print("Utils No field " + name + " in " + cls + e.toString());
         }
         return false;
     }
@@ -312,9 +313,9 @@ public class Utils {
             }
             return value;
         } catch (IllegalAccessException e) {
-            L.w("Cannot access field " + name + " of " + object.getClass(), e);
+            Log.print("Utils Cannot access field " + name + " of " + object.getClass() + e.toString());
         } catch (NoSuchFieldException e) {
-            L.w("No field " + name + " in " + object.getClass(), e);
+            Log.print("Utils No field " + name + " in " + object.getClass() + e.toString());
         }
         return null;
     }
@@ -346,13 +347,13 @@ public class Utils {
 //                Method method = cls.getDeclaredMethod(methodName, types);
 //                return method.invoke(instance, args);
 //            } catch (NoSuchMethodException t) {
-//                L.w("Cannot call " + methodName + " of " + cls.getName(), t);
+//                Log.print("Utils Cannot call " + methodName + " of " + cls.getName() + t.toString());
 //                return false;
 //            } catch (IllegalAccessException t) {
-//                L.w("Cannot call " + methodName + " of " + cls.getName(), t);
+//                Log.print("Utils Cannot call " + methodName + " of " + cls.getName() + t.toString());
 //                return false;
 //            } catch (InvocationTargetException t) {
-//                L.w("Cannot call " + methodName + " of " + cls.getName(), t);
+//                Log.print("Utils Cannot call " + methodName + " of " + cls.getName() + t.toString());
 //                return false;
 //            }
 //        }
@@ -370,9 +371,9 @@ public class Utils {
 //                }
 //                return value;
 //            } catch (IllegalAccessException e) {
-//                L.w("Cannot access field " + fieldName + " of " + cls.getName(), e);
+//                Log.print("Utils Cannot access field " + fieldName + " of " + cls.getName() + e.toString());
 //            } catch (NoSuchFieldException e) {
-//                L.w("No field " + fieldName + " in " + cls.getName(), e);
+//                Log.print("Utils No field " + fieldName + " in " + cls.getName() + e.toString());
 //            }
 //            return null;
 //        }
@@ -390,9 +391,9 @@ public class Utils {
 //                }
 //                return true;
 //            } catch (IllegalAccessException e) {
-//                L.w("Cannot access field " + fieldName + " of " + cls.getName(), e);
+//                Log.print("Utils Cannot access field " + fieldName + " of " + cls.getName() + e.toString());
 //            } catch (NoSuchFieldException e) {
-//                L.w("No field " + fieldName + " in " + cls.getName(), e);
+//                Log.print("Utils No field " + fieldName + " in " + cls.getName() + e.toString());
 //            }
 //            return false;
 //        }
@@ -403,7 +404,7 @@ public class Utils {
      * Calculate digest (SHA-1, SHA-256, etc.) hash of the string provided
      *
      * @param digestName digest name like {@code "SHA-256"}, must be supported by Java, see {@link MessageDigest}
-     * @param string string to hash
+     * @param string     string to hash
      * @return hash of the string or null in case of error
      */
     public static String digestHex(String digestName, String string) {
@@ -413,7 +414,7 @@ public class Utils {
             digest.update(bytes, 0, bytes.length);
             return hex(digest.digest());
         } catch (Throwable e) {
-            L.e("Cannot calculate sha1", e);
+            Log.print("Utils Cannot calculate sha1" + " / " + e);
             return null;
         }
     }
@@ -425,11 +426,11 @@ public class Utils {
      * @return hex string of the byte array in lower case
      */
     public static String hex(byte[] bytes) {
-        char[] hexChars = new char[ bytes.length * 2 ];
-        for( int j = 0; j < bytes.length; j++ ) {
-            int v = bytes[ j ] & 0xFF;
-            hexChars[ j * 2 ] = BASE_16[ v >>> 4 ];
-            hexChars[ j * 2 + 1 ] = BASE_16[ v & 0x0F ];
+        char[] hexChars = new char[bytes.length * 2];
+        for (int j = 0; j < bytes.length; j++) {
+            int v = bytes[j] & 0xFF;
+            hexChars[j * 2] = BASE_16[v >>> 4];
+            hexChars[j * 2 + 1] = BASE_16[v & 0x0F];
         }
         return new String(hexChars).toLowerCase();
     }
@@ -454,13 +455,14 @@ public class Utils {
             }
             return bytes.toByteArray();
         } catch (IOException e) {
-            L.e("Couldn't read stream", e);
+            Log.print("Utils Couldn't read stream" + e.toString());
             return null;
         } finally {
             try {
                 bytes.close();
                 stream.close();
-            } catch (Throwable ignored){}
+            } catch (Throwable ignored) {
+            }
         }
     }
 
@@ -484,7 +486,7 @@ public class Utils {
                 res = ly.count.sdk.java.internal.Base64.decode(string);
             } catch (IOException e) {
                 //should not get here
-                L.wtf("Error while decoding base64 string, " + e.toString());
+                Log.print("Utils Error while decoding base64 string, " + e.toString());
             }
             return res;
         }

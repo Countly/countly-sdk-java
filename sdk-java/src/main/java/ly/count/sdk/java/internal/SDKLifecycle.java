@@ -54,7 +54,7 @@ public abstract class SDKLifecycle extends SDKCore {
     }
 
     private boolean processCrash(CtxCore ctx, Long id) {
-        CrashImpl crash = new CrashImpl(id);
+        CrashImpl crash = new CrashImpl(id, L);
         crash = Storage.read(ctx, crash);
 
         if (crash == null) {
