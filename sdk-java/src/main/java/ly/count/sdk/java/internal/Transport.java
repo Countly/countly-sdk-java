@@ -54,7 +54,7 @@ import org.json.JSONObject;
 //class Network extends ModuleBase { - may be
 
 public class Transport implements X509TrustManager {
-    private static Log L = null;
+    private Log L = null;
     private static final String PARAMETER_TAMPERING_DIGEST = "SHA-256";
     private static final String CHECKSUM = "checksum256";
     private InternalConfig config;

@@ -1,7 +1,7 @@
 package ly.count.sdk.java.internal;
 
 public class DefaultNetworking implements Networking {
-    private static Log L = null;
+    private Log L = null;
 
     private Transport transport;
     private Tasks tasks;

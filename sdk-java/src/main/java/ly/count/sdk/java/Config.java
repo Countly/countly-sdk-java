@@ -376,6 +376,15 @@ public class Config {
      */
     protected int sessionAutoCloseAfter = "Android".equals(System.getProperty("os.name")) ? 10 : 0;
 
+    /**
+     * Enable test mode:
+     * <ul>
+     *     <li>Raise exceptions when SDK is in inconsistent state as opposed to silently
+     *     trying to ignore it when testMode is off</li>
+     *     <li>Put Firebase token under {@code test} devices if {@code Feature.Push} is enabled.</li>
+     * </ul>
+     */
+    protected boolean testMode = false;
 
     /**
      * When not {@code null}, more than {@code 0} and {@code Feature.CrashReporting} is enabled,
@@ -725,34 +734,34 @@ public class Config {
         return this;
     }
 
-//    /**
-//     * Enable test mode:
-//     * <ul>
-//     *     <li>Raise exceptions when SDK is in inconsistent state as opposed to silently
-//     *     trying to ignore them when testMode is off</li>
-//     *     <li>Put Firebase token under {@code test} devices if {@code Feature.Push} is enabled.</li>
-//     * </ul>
-//     * Note: this method automatically sets {@link #loggingLevel} to {@link LoggingLevel#INFO} in
-//     * case it was {@link LoggingLevel#OFF} (default).
-//     *
-//     * @return {@code this} instance for method chaining
-//     */
-//    public Config enableTestMode() {
-//        this.testMode = true;
-//        this.loggingLevel = this.loggingLevel == LoggingLevel.OFF ? LoggingLevel.INFO : this.loggingLevel;
-//        return this;
-//    }
+    /**
+     * Enable test mode:
+     * <ul>
+     *     <li>Raise exceptions when SDK is in inconsistent state as opposed to silently
+     *     trying to ignore them when testMode is off</li>
+     *     <li>Put Firebase token under {@code test} devices if {@code Feature.Push} is enabled.</li>
+     * </ul>
+     * Note: this method automatically sets {@link #loggingLevel} to {@link LoggingLevel#INFO} in
+     * case it was {@link LoggingLevel#OFF} (default).
+     *
+     * @return {@code this} instance for method chaining
+     */
+    public Config enableTestMode() {
+        this.testMode = true;
+        this.loggingLevel = this.loggingLevel == LoggingLevel.OFF ? LoggingLevel.INFO : this.loggingLevel;
+        return this;
+    }
 
-//    /**
-//     * Disable test mode, so SDK will silently avoid raising exceptions whenever possible.
-//     * Test mode is disabled by default.
-//     *
-//     * @return {@code this} instance for method chaining
-//     */
-//    public Config disableTestMode() {
-//        this.testMode = false;
-//        return this;
-//    }
+    /**
+     * Disable test mode, so SDK will silently avoid raising exceptions whenever possible.
+     * Test mode is disabled by default.
+     *
+     * @return {@code this} instance for method chaining
+     */
+    public Config disableTestMode() {
+        this.testMode = false;
+        return this;
+    }
 
     /**
      * Set maximum amount of time in seconds between two update requests to the server
@@ -1301,13 +1310,13 @@ public class Config {
         return loggingLevel;
     }
 
-//    /**
-//     * Getter for {@link #testMode}
-//     * @return {@link #testMode} value
-//     */
-//    public boolean isTestModeEnabled() {
-//        return testMode;
-//    }
+    /**
+     * Getter for {@link #testMode}
+     * @return {@link #testMode} value
+     */
+    public boolean isTestModeEnabled() {
+        return testMode;
+    }
 
     /**
      * Getter for {@link #sendUpdateEachSeconds}

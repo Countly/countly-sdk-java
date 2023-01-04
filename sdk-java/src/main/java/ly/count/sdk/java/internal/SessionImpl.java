@@ -30,7 +30,7 @@ import ly.count.sdk.java.View;
 
 public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
-    protected static Log L = null;
+    protected Log L = null;
     /**
      * {@link System#nanoTime()} of time when {@link Session} object is created.
      */

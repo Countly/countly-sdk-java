@@ -27,17 +27,17 @@ public abstract class CountlyLifecycle extends Cly {
      */
     public static void init (final File directory, final Config config) {
         if (config == null) {
-            Log.print("[ERROR] Config cannot be null");
+            System.out.println("[ERROR][Countly] Config cannot be null");
         }
         else if (directory == null) {
-            L.e("[Countly] File cannot be null");
+            System.out.println("[ERROR][Countly] File cannot be null");
         } else if (!directory.isDirectory()) {
-            L.e("[Countly] File must be a directory");
+            System.out.println("[ERROR][Countly] File must be a directory");
         } else if (!directory.exists()) {
-            L.e("[Countly] File must exist");
+            System.out.println("[ERROR][Countly] File must exist");
         } else {
             if (cly != null) {
-                L.e("[Countly] Countly shouldn't be initialized twice. Please either use Countly.isInitialized() to check status or call Countly.stop() before second Countly.init().");
+                System.out.println("[ERROR][Countly] Countly shouldn't be initialized twice. Please either use Countly.isInitialized() to check status or call Countly.stop() before second Countly.init().");
                 stop(false);
             }
 
@@ -46,12 +46,12 @@ public abstract class CountlyLifecycle extends Cly {
             }
 
             if(config.requestQueueMaxSize < 1) {
-                L.e("[Countly] init: Request queue max size can not be less than 1.");
+                System.out.println("[ERROR][Countly] init: Request queue max size can not be less than 1.");
                 config.requestQueueMaxSize = 1;
             }
 
             InternalConfig internalConfig = new InternalConfig(config);
-            L = new Log(internalConfig);
+            Log L = new Log(internalConfig);
             SDK sdk = new SDK();
             sdk.init(new CtxImpl(sdk, internalConfig, L, directory));
 
@@ -69,11 +69,11 @@ public abstract class CountlyLifecycle extends Cly {
      */
     public static void stop (boolean clearData) {
         if (cly != null) {
-            L.i("[Countly] Stopping SDK");
+            System.out.println("[ERROR][Countly] Stopping SDK");
             ((Countly)cly).sdk.stop(((Countly) cly).ctx, clearData);
             cly = null;
         } else {
-            L.e("[Countly] Countly isn't initialized to stop it");
+            System.out.println("[ERROR][Countly] Countly isn't initialized to stop it");
         }
     }
 

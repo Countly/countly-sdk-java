@@ -20,7 +20,7 @@ import ly.count.sdk.java.Config;
  * Only members of {@link InternalConfig} can be changed, members of {@link Config} are non-modifiable.
  */
 public final class InternalConfig extends Config implements Storable {
-    private static final Log.Module L = Log.module("InternalConfig");
+   // private static final Log.Module L = Log.module("InternalConfig");
 
     /**
      * Running in limited mode, started by itself rather than by developer
@@ -76,7 +76,7 @@ public final class InternalConfig extends Config implements Storable {
                             l.setAccessible(false);
                         }
                     } catch (IllegalAccessException | IllegalArgumentException iae) {
-                        L.w("Cannot access field " + r.getName(), iae);
+                        System.out.println("Cannot access field " + r.getName() + " " + iae);
                     }
                 }
             }
@@ -155,20 +155,20 @@ public final class InternalConfig extends Config implements Storable {
             stream.close();
             return bytes.toByteArray();
         } catch (IOException e) {
-            L.wtf("Cannot serialize config", e);
+            System.out.println("Cannot serialize config " + e);
         } finally {
             if (stream != null) {
                 try {
                     stream.close();
                 } catch (IOException e) {
-                    L.wtf("Cannot happen", e);
+                    System.out.println("Cannot happen " + e);
                 }
             }
             if (bytes != null) {
                 try {
                     bytes.close();
                 } catch (IOException e) {
-                    L.wtf("Cannot happen", e);
+                    System.out.println("Cannot happen " + e);
                 }
             }
         }
@@ -189,7 +189,7 @@ public final class InternalConfig extends Config implements Storable {
                 Utils.reflectiveSetField(this, "serverURL", new URL(stream.readUTF()));
                 Utils.reflectiveSetField(this, "serverAppKey", stream.readUTF());
             } catch (Exception e) {
-                L.wtf("Cannot happen", e);
+                System.out.println("Cannot happen " + e);
             }
 
             features = stream.readInt();
@@ -236,7 +236,7 @@ public final class InternalConfig extends Config implements Storable {
                     try {
                         moduleOverrides.put(f, (Class<? extends Module>) Class.forName(cls));
                     } catch (Throwable t) {
-                        L.wtf("Cannot get class " + cls + " for feature override " + f);
+                        System.out.println("Cannot get class " + cls + " for feature override " + f);
                     }
                 }
             }
@@ -253,20 +253,20 @@ public final class InternalConfig extends Config implements Storable {
 
             return true;
         } catch (IOException | ClassNotFoundException e) {
-            L.wtf("Cannot deserialize config", e);
+            System.out.println("Cannot deserialize config " + e);
         } finally {
             if (stream != null) {
                 try {
                     stream.close();
                 } catch (IOException e) {
-                    L.wtf("Cannot happen", e);
+                    System.out.println("Cannot happen " + e);
                 }
             }
             if (bytes != null) {
                 try {
                     bytes.close();
                 } catch (IOException e) {
-                    L.wtf("Cannot happen", e);
+                    System.out.println("Cannot happen " + e);
                 }
             }
         }
@@ -289,7 +289,7 @@ public final class InternalConfig extends Config implements Storable {
 
     public DID setDeviceId(DID id) {
         if (id == null) {
-            L.wtf("DID cannot be null");
+            System.out.println("DID cannot be null");
         }
         DID old = null;
         for (DID did : dids) {

@@ -11,7 +11,7 @@ import ly.count.sdk.java.Config;
  */
 
 public abstract class SDKModules implements SDKInterface {
-    protected static Log L = null;
+    protected Log L = null;
     private static Module testDummyModule = null;//set during testing when trying to check the SDK's lifecycle
 
     /**
@@ -129,7 +129,7 @@ public abstract class SDKModules implements SDKInterface {
                     continue;
                 }
 
-                Module module = instantiateModule(cls);
+                Module module = instantiateModule(cls, L);
                 if (module == null) {
                     L.e("[SDKModules] Cannot instantiate module " + feature);
                 } else {
@@ -215,13 +215,13 @@ public abstract class SDKModules implements SDKInterface {
         }
 
         if (ctx.getConfig().getLoggingLevel() != Config.LoggingLevel.OFF) {
-            modules.put(-10, instantiateModule(moduleMappings.get(CoreFeature.Logs.getIndex())));
+            modules.put(-10, instantiateModule(moduleMappings.get(CoreFeature.Logs.getIndex()), L));
         }
 
         // standard required internal features
-        modules.put(-3, instantiateModule(moduleMappings.get(CoreFeature.DeviceId.getIndex())));
-        modules.put(-2, instantiateModule(moduleMappings.get(CoreFeature.Requests.getIndex())));
-        modules.put(CoreFeature.Sessions.getIndex(), instantiateModule(moduleMappings.get(CoreFeature.Sessions.getIndex())));
+        modules.put(-3, instantiateModule(moduleMappings.get(CoreFeature.DeviceId.getIndex()), L));
+        modules.put(-2, instantiateModule(moduleMappings.get(CoreFeature.Requests.getIndex()), L));
+        modules.put(CoreFeature.Sessions.getIndex(), instantiateModule(moduleMappings.get(CoreFeature.Sessions.getIndex()), L));
 
         if (ctx.getConfig().requiresConsent()) {
             consents = 0;
@@ -237,14 +237,14 @@ public abstract class SDKModules implements SDKInterface {
                 }
                 Module existing = module(cls);
                 if ((features & feature) > 0 && existing == null) {
-                    Module m = instantiateModule(cls);
+                    Module m = instantiateModule(cls, L);
                     if (m != null) {
                         modules.put(feature, m);
                     }
                 }
             }
         }
-        modules.put(CoreFeature.BackendMode.getIndex(), instantiateModule(moduleMappings.get(CoreFeature.BackendMode.getIndex())));
+        modules.put(CoreFeature.BackendMode.getIndex(), instantiateModule(moduleMappings.get(CoreFeature.BackendMode.getIndex()), L));
 
         // dummy module for tests if any
         if (testDummyModule != null) {
@@ -258,7 +258,7 @@ public abstract class SDKModules implements SDKInterface {
      * @param cls class of {@link Module}
      * @return {@link Module} instance or null in case of error
      */
-    private static Module instantiateModule(Class<? extends Module> cls) {
+    private static Module instantiateModule(Class<? extends Module> cls, Log L) {
         try {
             return (Module)cls.getConstructors()[0].newInstance();
         } catch (InstantiationException e) {

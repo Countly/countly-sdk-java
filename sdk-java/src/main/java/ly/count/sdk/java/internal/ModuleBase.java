@@ -14,7 +14,7 @@ import ly.count.sdk.java.Session;
 public abstract class ModuleBase implements Module {
     private boolean active = false;
 
-    protected static Log L = null;
+    protected Log L = null;
     InternalConfig internalConfig = null;
 
     @Override

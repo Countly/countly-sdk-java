@@ -11,7 +11,7 @@ public abstract class Cly implements Usage {
     protected CtxCore ctx;
     protected SDKInterface sdkInterface;
     
-    protected static Log L = null;
+    protected Log L = null;
 
     protected Cly(Log logger) {
         cly = this;

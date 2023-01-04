@@ -53,14 +53,14 @@ public class Countly extends CountlyLifecycle {
      */
     public static Session session(){
         if (!isInitialized()) {
-            L.e("Countly SDK is not initialized yet.");
+            System.out.println("[ERROR][Countly] SDK is not initialized yet.");
         }
         return Cly.session(cly.ctx);
     }
 
     public static ModuleBackendMode.BackendMode backendMode(){
         if (!isInitialized()) {
-            L.e("Countly SDK is not initialized yet.");
+            System.out.println("[ERROR][Countly] SDK is not initialized yet.");
             return null;
         } else {
             ModuleBackendMode mbm = cly.sdk.module(ModuleBackendMode.class);
@@ -68,7 +68,7 @@ public class Countly extends CountlyLifecycle {
                 return mbm.new BackendMode();
             }
             //if it is null, feature was not enabled, return mock
-            L.w("BackendMode was not enabled, returning dummy module");
+            System.out.println("[WARNING][Countly] BackendMode was not enabled, returning dummy module");
             ModuleBackendMode emptyMbm = new ModuleBackendMode();
             emptyMbm.disableModule();
             return emptyMbm.new BackendMode();
@@ -93,7 +93,7 @@ public class Countly extends CountlyLifecycle {
      */
     public static Session getSession(){
         if (!isInitialized()) {
-            L.e("Countly SDK is not initialized yet.");
+            System.out.println("[ERROR][Countly] SDK is not initialized yet.");
         }
         return Cly.session(cly.ctx);
     }
@@ -156,9 +156,9 @@ public class Countly extends CountlyLifecycle {
      */
     public static void onConsent(Config.Feature... features) {
         if (!isInitialized()) {
-            L.e("Countly SDK is not initialized yet.");
+            System.out.println("[ERROR][Countly] SDK is not initialized yet.");
         } else {
-            L.d("onConsent: features = " + features);
+            System.out.println("[DEBUG][Countly] onConsent: features = " + features);
 
             int ftrs = 0;
             for (Config.Feature f : features) {
@@ -176,9 +176,9 @@ public class Countly extends CountlyLifecycle {
      * @param features features to turn offf
      */
     public static void onConsentRemoval(Config.Feature... features) {
-        L.d("onConsentRemoval: features = " + features);
+        System.out.println("[DEBUG][Countly] onConsentRemoval: features = " + features);
         if (!isInitialized()) {
-            L.e("Countly SDK is not initialized yet.");
+            System.out.println("[ERROR][Countly]Countly SDK is not initialized yet.");
         } else {
             int ftrs = 0;
             for (Config.Feature f : features) {
