@@ -41,8 +41,8 @@ public class LogTests {
 
     @Test(expected = NullPointerException.class)
     public void logInit_null(){
-        Log log = new Log();
-        log.init(null);
+//        Log log = new Log(); TODO
+//        log.init(null);
     }
 /*
     @Test

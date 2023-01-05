@@ -14,9 +14,6 @@ import ly.count.sdk.java.Event;
  */
 
 class EventImpl implements Event, JSONable {
-
-    private static final Log L = null;
-
     private final EventRecorder recorder;
     private final String key;
 
@@ -43,11 +40,11 @@ class EventImpl implements Event, JSONable {
     EventImpl(EventRecorder recorder, String key) {
         if (recorder == null) {
             invalid = true;
-            L.e("[EventImpl] recorder cannot be null for an event");
+            System.out.println("[EventImpl] recorder cannot be null for an event");
         }
         if (key == null || "".equals(key)) {
             invalid = true;
-            L.e("[EventImpl] Event key cannot be null or empty");
+            System.out.println("[EventImpl] Event key cannot be null or empty");
         }
         this.recorder = recorder;
         this.key = key;
@@ -60,7 +57,7 @@ class EventImpl implements Event, JSONable {
     @Override
     public void record() {
         if(SDKCore.instance != null && SDKCore.instance.config.isBackendModeEnabled()) {
-            L.w("[EventImpl] record: Skipping event, backend mode is enabled!");
+            System.out.println("[EventImpl] record: Skipping event, backend mode is enabled!");
             return;
         }
 
@@ -68,14 +65,14 @@ class EventImpl implements Event, JSONable {
             invalid = true;
             recorder.recordEvent(this);
 
-            L.d("[EventImpl] record: " + this.toString());
+            System.out.println("[EventImpl] record: " + this.toString());
         }
     }
 
     @Override
     public void endAndRecord() {
         if(SDKCore.instance != null && SDKCore.instance.config.isBackendModeEnabled()) {
-            L.w("[EventImpl] endAndRecord: Skipping event, backend mode is enabled!");
+            System.out.println("[EventImpl] endAndRecord: Skipping event, backend mode is enabled!");
             return;
         }
 
@@ -85,16 +82,16 @@ class EventImpl implements Event, JSONable {
 
     @Override
     public Event addSegment(String key, String value) {
-        L.d("[EventImpl] addSegment: key = " + key + " value = " + value);
+        System.out.println("[EventImpl] addSegment: key = " + key + " value = " + value);
         if (key == null || "".equals(key)) {
             invalid = true;
-            L.e("[EventImpl] Segmentation key " + key + " for event " + this.key + " is empty");
+            System.out.println("[EventImpl] Segmentation key " + key + " for event " + this.key + " is empty");
             return this;
         }
 
         if (value == null || "".equals(value)) {
             invalid = true;
-            L.e("[EventImpl] Segmentation value " + value + " (" + key + ") for event " + this.key + " is empty");
+            System.out.println("[EventImpl] Segmentation value " + value + " (" + key + ") for event " + this.key + " is empty");
             return this;
         }
 
@@ -109,17 +106,17 @@ class EventImpl implements Event, JSONable {
 
     @Override
     public Event addSegments(String... segmentation) {
-        L.d("[EventImpl] addSegment: segmentation = " + segmentation);
+        System.out.println("[EventImpl] addSegment: segmentation = " + segmentation);
 
         if (segmentation == null || segmentation.length == 0) {
             invalid = true;
-            L.e("[EventImpl] Segmentation varargs array is empty");
+            System.out.println("[EventImpl] Segmentation varargs array is empty");
             return this;
         }
 
         if (segmentation.length % 2 != 0) {
             invalid = true;
-            L.e("[EventImpl] Segmentation varargs array length is not even");
+            System.out.println("[EventImpl] Segmentation varargs array length is not even");
             return this;
         }
 
@@ -131,11 +128,11 @@ class EventImpl implements Event, JSONable {
 
     @Override
     public Event setSegmentation(Map<String, String> segmentation) {
-        L.d("[EventImpl] setSegmentation: segmentation = " + segmentation);
+        System.out.println("[EventImpl] setSegmentation: segmentation = " + segmentation);
 
         if (segmentation == null) {
             invalid = true;
-            L.e("[EventImpl] Segmentation map is null");
+            System.out.println("[EventImpl] Segmentation map is null");
             return this;
         }
 
@@ -149,10 +146,10 @@ class EventImpl implements Event, JSONable {
 
     @Override
     public Event setCount(int count) {
-        L.d("[EventImpl] setCount: count = " + count);
+        System.out.println("[EventImpl] setCount: count = " + count);
         if (count <= 0) {
             invalid = true;
-            L.e("[EventImpl] Event " + key + " count cannot be 0 or less");
+            System.out.println("[EventImpl] Event " + key + " count cannot be 0 or less");
             return this;
         }
         this.count = count;
@@ -161,10 +158,10 @@ class EventImpl implements Event, JSONable {
 
     @Override
     public Event setSum(double sum) {
-        L.d("[EventImpl] setSum: sum = " + sum);
+        System.out.println("[EventImpl] setSum: sum = " + sum);
         if (Double.isInfinite(sum) || Double.isNaN(sum)) {
             invalid = true;
-            L.e("[EventImpl] NaN infinite value cannot be event '" + key + "' sum");
+            System.out.println("[EventImpl] NaN infinite value cannot be event '" + key + "' sum");
         } else {
             this.sum = sum;
         }
@@ -173,10 +170,10 @@ class EventImpl implements Event, JSONable {
 
     @Override
     public Event setDuration(double duration) {
-        L.d("[EventImpl] setDuration: duration = " + duration);
+        System.out.println("[EventImpl] setDuration: duration = " + duration);
         if (Double.isInfinite(duration) || Double.isNaN(duration) || duration < 0) {
             invalid = true;
-            L.e("[EventImpl] NaN, infinite or negative value cannot be event '" + key + "' duration");
+            System.out.println("[EventImpl] NaN, infinite or negative value cannot be event '" + key + "' duration");
         } else {
             this.duration = duration;
         }
@@ -250,7 +247,7 @@ class EventImpl implements Event, JSONable {
                 json.put(DUR_KEY, duration);
             }
         } catch (JSONException e) {
-            L.e("[EventImpl] Cannot serialize event to JSON", e);
+            System.out.println("[EventImpl] Cannot serialize event to JSON " + e);
         }
 
         return json.toString();
@@ -265,13 +262,13 @@ class EventImpl implements Event, JSONable {
             JSONObject json = new JSONObject(jsonString);
 
             if (!json.has(KEY_KEY) || json.isNull(KEY_KEY)) {
-                L.e("[EventImpl] Bad JSON for deserialization of event: " + jsonString);
+                System.out.println("[ERROR][EventImpl][fromJSON] Bad JSON for deserialization of event: " + jsonString);
                 return null;
             }
             EventImpl event = new EventImpl(recorder == null ? new EventRecorder() {
                 @Override
                 public void recordEvent(Event event) {
-                    L.e("[EventImpl] Shouldn't record serialized events");
+                    System.out.println("[ERROR][EventImpl] Shouldn't record serialized events");
                 }
             } : recorder, json.getString(KEY_KEY));
 
@@ -301,7 +298,7 @@ class EventImpl implements Event, JSONable {
 
             return event;
         } catch (JSONException e) {
-            L.e("[EventImpl] Cannot deserialize event from JSON", e);
+            System.out.println("[EventImpl] Cannot deserialize event from JSON " + e);
         }
 
         return null;

@@ -23,7 +23,6 @@ public class ModuleSessions extends ModuleBase {
 
     public synchronized SessionImpl session(CtxCore ctx, Long id) {
         if (session == null) {
-            SessionImpl.L = L;
             session = new SessionImpl(ctx, id);
         }
         return session;

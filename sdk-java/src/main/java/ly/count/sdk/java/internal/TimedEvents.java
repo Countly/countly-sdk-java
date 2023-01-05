@@ -14,7 +14,7 @@ import ly.count.sdk.java.Session;
 
 class TimedEvents implements Storable, EventImpl.EventRecorder {
 
-    private Log L = null;
+    private final Log L;
 
     private Map<String, EventImpl> events;
 

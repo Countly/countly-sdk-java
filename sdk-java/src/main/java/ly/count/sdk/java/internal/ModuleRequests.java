@@ -111,7 +111,7 @@ public class ModuleRequests extends ModuleBase {
                 try {
                     callback.call(false);
                 } catch (Throwable t) {
-                    L.e("[ModuleRequests] Shouldn't happen", t);
+                    System.out.println("[ModuleRequests] Shouldn't happen " + t);
                 }
             }
             return null;
@@ -240,14 +240,14 @@ public class ModuleRequests extends ModuleBase {
      * @return {@link Future} which resolves to {@code} true if stored successfully, false otherwise
      */
     public static Future<Boolean> pushAsync(final CtxCore ctx, final Request request, final Tasks.Callback<Boolean> callback) {
-        L.d("New request " + request.storageId() + ": " + request);
+        System.out.println("New request " + request.storageId() + ": " + request);
 
         if (request.isEmpty()) {
             if (callback != null) {
                 try {
                     callback.call(null);
                 } catch (Exception e) {
-                    L.e("[ModuleRequests] Exception in a callback", e);
+                    System.out.println("[ModuleRequests] Exception in a callback " + e);
                 }
             }
             return null;

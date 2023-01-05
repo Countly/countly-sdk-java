@@ -210,7 +210,7 @@ public class ModuleRatingCore extends ModuleBase {
 
             }
             catch (JSONException e) {
-                L.w("[ModuleRatingCore] [Rating] Got exception converting an StarRatingPreferences to JSON", e);
+                System.out.println("[ModuleRatingCore] [Rating] Got exception converting an StarRatingPreferences to JSON " + e);
             }
 
             return json;
@@ -246,7 +246,7 @@ public class ModuleRatingCore extends ModuleBase {
                     }
 
                 } catch (JSONException e) {
-                    L.w("[ModuleRatingCore] [Rating] Got exception converting JSON to a StarRatingPreferences", e);
+                    System.out.println("[ModuleRatingCore] [Rating] Got exception converting JSON to a StarRatingPreferences " + e);
                 }
             }
         }
@@ -266,7 +266,7 @@ public class ModuleRatingCore extends ModuleBase {
             try {
                 return toJSON().toString().getBytes(Utils.UTF8);
             } catch (UnsupportedEncodingException e) {
-                L.e("[ModuleRatingCore] [Rating] UTF is not supported for Rating", e);
+                System.out.println("[ModuleRatingCore] [Rating] UTF is not supported for Rating " + e);
                 return null;
             }
         }
@@ -279,11 +279,11 @@ public class ModuleRatingCore extends ModuleBase {
                     JSONObject obj = new JSONObject(json);
                     fromJSON(obj);
                 } catch (JSONException e) {
-                    L.e("[ModuleRatingCore] [Rating] Couldn't decode Rating data successfully", e);
+                    System.out.println("[ModuleRatingCore] [Rating] Couldn't decode Rating data successfully " + e);
                 }
                 return true;
             } catch (UnsupportedEncodingException e) {
-                L.e("[ModuleRatingCore] [Rating] Cannot deserialize Rating", e);
+                System.out.println("[ModuleRatingCore] [Rating] Cannot deserialize Rating " + e);
             }
 
             return false;

@@ -27,7 +27,7 @@ public class EventImplTests extends BaseTestsCore {
     public void setupEveryTest() throws Exception {
         config = new InternalConfig(new Config("http://www.serverurl.com", "1234"));
         L = new Log(config);
-        ctx = new CtxImpl(sdk, config, new Object(), log);
+        ctx = new CtxImpl(sdk, config, new Object(), L);
     }
 
     @Test
@@ -82,7 +82,7 @@ public class EventImplTests extends BaseTestsCore {
     public void segmentation_throwsIllegalStateExceptionWhenNull() {
         SessionImpl session = new SessionImpl(ctx);
 
-        EventImpl event = new EventImpl(session, "key", L);
+        EventImpl event = new EventImpl(session, "key");
         Assert.assertNull(Whitebox.getInternalState(event, "segmentation"));
         event.addSegment("k", null);
         Assert.assertTrue((boolean)Whitebox.getInternalState(event, "invalid"));
