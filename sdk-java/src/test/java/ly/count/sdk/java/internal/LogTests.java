@@ -1,8 +1,7 @@
 package ly.count.sdk.java.internal;
 
-import junit.framework.Assert;
-
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -41,8 +40,7 @@ public class LogTests {
 
     @Test(expected = NullPointerException.class)
     public void logInit_null(){
-//        Log log = new Log(); TODO
-//        log.init(null);
+        Log log = new Log(null);
     }
 /*
     @Test
