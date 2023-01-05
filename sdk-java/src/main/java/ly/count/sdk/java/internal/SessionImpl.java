@@ -78,6 +78,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
      * Create session with current time as id.
      */
     protected SessionImpl(CtxCore ctx) {
+        L = ctx.getLogger();
         this.id = DeviceCore.dev.uniformTimestamp();
         this.ctx = ctx;
     }
@@ -86,6 +87,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
      * Deserialization constructor (use existing id).
      */
     public SessionImpl(CtxCore ctx, Long id) {
+        L = ctx.getLogger();
         this.ctx = ctx;
         this.id = id == null ? DeviceCore.dev.uniformTimestamp() : id;
         if (SDKCore.instance != null) {

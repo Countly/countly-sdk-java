@@ -214,9 +214,9 @@ public abstract class SDKModules implements SDKInterface {
             throw new IllegalStateException("Modules can only be built once");
         }
 
-        if (ctx.getConfig().getLoggingLevel() != Config.LoggingLevel.OFF) {
-            modules.put(-10, instantiateModule(moduleMappings.get(CoreFeature.Logs.getIndex()), L));
-        }
+//        if (ctx.getConfig().getLoggingLevel() != Config.LoggingLevel.OFF) {
+//            modules.put(-10, instantiateModule(moduleMappings.get(CoreFeature.Logs.getIndex()), L));
+//        }
 
         // standard required internal features
         modules.put(-3, instantiateModule(moduleMappings.get(CoreFeature.DeviceId.getIndex()), L));

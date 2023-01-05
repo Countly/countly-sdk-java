@@ -53,7 +53,7 @@ public abstract class CountlyLifecycle extends Cly {
             InternalConfig internalConfig = new InternalConfig(config);
             Log L = new Log(internalConfig);
             SDK sdk = new SDK();
-            sdk.init(new CtxImpl(sdk, internalConfig, L, directory));
+            sdk.init(new CtxImpl(sdk, internalConfig, L, directory), L);
 
             // config has been changed, thus recreating ctx
             cly = new Countly(sdk, new CtxImpl(sdk, sdk.config(), L, directory), L);
