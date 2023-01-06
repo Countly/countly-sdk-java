@@ -150,7 +150,7 @@ public class Utils {
         try {
             return URLEncoder.encode(str, UTF8);
         } catch (UnsupportedEncodingException e) {
-            Log.print("Utils No UTF-8 encoding?" + e.toString());
+            System.out.print("Utils No UTF-8 encoding?" + e);
             return "";
         }
     }
@@ -171,7 +171,7 @@ public class Utils {
             Class.forName(cls);
             return true;
         } catch (ClassNotFoundException e) {
-            Log.print("Utils Class " + cls + " not found");
+            System.out.print("Utils Class " + cls + " not found");
             return false;
         }
     }
@@ -191,7 +191,7 @@ public class Utils {
 
     public Object _reflectiveCall(String className, Object instance, String methodName, Object... args) {
         try {
-            Log.print("Utils cls " + className + ", inst " + instance);
+            System.out.print("Utils cls " + className + ", inst " + instance);
             className = className == null && instance != null ? instance.getClass().getName() : className;
             Class<?> cls = instance == null ? Class.forName(className) : instance.getClass();
             Class<?> types[] = null;
@@ -206,16 +206,16 @@ public class Utils {
             Method method = cls.getDeclaredMethod(methodName, types);
             return method.invoke(instance, args);
         } catch (ClassNotFoundException t) {
-            Log.print("Utils Cannot call " + methodName + " of " + className + t.toString());
+            System.out.print("Utils Cannot call " + methodName + " of " + className + t.toString());
             return false;
         } catch (NoSuchMethodException t) {
-            Log.print("Utils Cannot call " + methodName + " of " + className + t.toString());
+            System.out.print("Utils Cannot call " + methodName + " of " + className + t.toString());
             return false;
         } catch (IllegalAccessException t) {
-            Log.print("Utils Cannot call " + methodName + " of " + className + t.toString());
+            System.out.print("Utils Cannot call " + methodName + " of " + className + t.toString());
             return false;
         } catch (InvocationTargetException t) {
-            Log.print("Utils Cannot call " + methodName + " of " + className + t.toString());
+            System.out.print("Utils Cannot call " + methodName + " of " + className + t.toString());
             return false;
         }
     }
@@ -248,16 +248,16 @@ public class Utils {
             Method method = cls.getDeclaredMethod(methodName, types);
             return method.invoke(instance, arguments);
         } catch (ClassNotFoundException t) {
-            Log.print("Utils Cannot call " + methodName + " of " + className + t.toString());
+            System.out.print("Utils Cannot call " + methodName + " of " + className + t.toString());
             return false;
         } catch (NoSuchMethodException t) {
-            Log.print("Utils Cannot call " + methodName + " of " + className + t.toString());
+            System.out.print("Utils Cannot call " + methodName + " of " + className + t.toString());
             return false;
         } catch (IllegalAccessException t) {
-            Log.print("Utils Cannot call " + methodName + " of " + className + t.toString());
+            System.out.print("Utils Cannot call " + methodName + " of " + className + t.toString());
             return false;
         } catch (InvocationTargetException t) {
-            Log.print("Utils Cannot call " + methodName + " of " + className + t.toString());
+            System.out.print("Utils Cannot call " + methodName + " of " + className + t.toString());
             return false;
         }
     }
@@ -283,9 +283,9 @@ public class Utils {
             }
             return true;
         } catch (IllegalAccessException e) {
-            Log.print("Utils Cannot access field " + name + " of " + cls + e.toString());
+            System.out.print("Utils Cannot access field " + name + " of " + cls + e.toString());
         } catch (NoSuchFieldException e) {
-            Log.print("Utils No field " + name + " in " + cls + e.toString());
+            System.out.print("Utils No field " + name + " in " + cls + e.toString());
         }
         return false;
     }
@@ -313,9 +313,9 @@ public class Utils {
             }
             return value;
         } catch (IllegalAccessException e) {
-            Log.print("Utils Cannot access field " + name + " of " + object.getClass() + e.toString());
+            System.out.print("Utils Cannot access field " + name + " of " + object.getClass() + e.toString());
         } catch (NoSuchFieldException e) {
-            Log.print("Utils No field " + name + " in " + object.getClass() + e.toString());
+            System.out.print("Utils No field " + name + " in " + object.getClass() + e.toString());
         }
         return null;
     }
@@ -347,13 +347,13 @@ public class Utils {
 //                Method method = cls.getDeclaredMethod(methodName, types);
 //                return method.invoke(instance, args);
 //            } catch (NoSuchMethodException t) {
-//                Log.print("Utils Cannot call " + methodName + " of " + cls.getName() + t.toString());
+//                System.out.print("Utils Cannot call " + methodName + " of " + cls.getName() + t.toString());
 //                return false;
 //            } catch (IllegalAccessException t) {
-//                Log.print("Utils Cannot call " + methodName + " of " + cls.getName() + t.toString());
+//                System.out.print("Utils Cannot call " + methodName + " of " + cls.getName() + t.toString());
 //                return false;
 //            } catch (InvocationTargetException t) {
-//                Log.print("Utils Cannot call " + methodName + " of " + cls.getName() + t.toString());
+//                System.out.print("Utils Cannot call " + methodName + " of " + cls.getName() + t.toString());
 //                return false;
 //            }
 //        }
@@ -371,9 +371,9 @@ public class Utils {
 //                }
 //                return value;
 //            } catch (IllegalAccessException e) {
-//                Log.print("Utils Cannot access field " + fieldName + " of " + cls.getName() + e.toString());
+//                System.out.print("Utils Cannot access field " + fieldName + " of " + cls.getName() + e.toString());
 //            } catch (NoSuchFieldException e) {
-//                Log.print("Utils No field " + fieldName + " in " + cls.getName() + e.toString());
+//                System.out.print("Utils No field " + fieldName + " in " + cls.getName() + e.toString());
 //            }
 //            return null;
 //        }
@@ -391,9 +391,9 @@ public class Utils {
 //                }
 //                return true;
 //            } catch (IllegalAccessException e) {
-//                Log.print("Utils Cannot access field " + fieldName + " of " + cls.getName() + e.toString());
+//                System.out.print("Utils Cannot access field " + fieldName + " of " + cls.getName() + e.toString());
 //            } catch (NoSuchFieldException e) {
-//                Log.print("Utils No field " + fieldName + " in " + cls.getName() + e.toString());
+//                System.out.print("Utils No field " + fieldName + " in " + cls.getName() + e.toString());
 //            }
 //            return false;
 //        }
@@ -414,7 +414,7 @@ public class Utils {
             digest.update(bytes, 0, bytes.length);
             return hex(digest.digest());
         } catch (Throwable e) {
-            Log.print("Utils Cannot calculate sha1" + " / " + e);
+            System.out.print("Utils Cannot calculate sha1" + " / " + e);
             return null;
         }
     }
@@ -455,7 +455,7 @@ public class Utils {
             }
             return bytes.toByteArray();
         } catch (IOException e) {
-            Log.print("Utils Couldn't read stream" + e.toString());
+            System.out.print("Utils Couldn't read stream" + e.toString());
             return null;
         } finally {
             try {
@@ -486,7 +486,7 @@ public class Utils {
                 res = ly.count.sdk.java.internal.Base64.decode(string);
             } catch (IOException e) {
                 //should not get here
-                Log.print("Utils Error while decoding base64 string, " + e.toString());
+                System.out.print("Utils Error while decoding base64 string, " + e);
             }
             return res;
         }

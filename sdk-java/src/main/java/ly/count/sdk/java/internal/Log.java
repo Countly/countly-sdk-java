@@ -26,7 +26,7 @@ public class Log {
      *
      * @param string string to log
      */
-    public  void d(String string) {
+    public void d(String string) {
         d(string, null);
     }
 
@@ -34,7 +34,7 @@ public class Log {
      * {@link Config.LoggingLevel} level logging
      *
      * @param string string to log
-     * @param t exception to log along with {@code string}
+     * @param t      exception to log along with {@code string}
      */
     public void d(String string, Throwable t) {
         if (level != null && level.prints(Config.LoggingLevel.DEBUG)) {
@@ -59,7 +59,7 @@ public class Log {
      * {@link Config.LoggingLevel#INFO} level logging
      *
      * @param string string to log
-     * @param t exception to log along with {@code string}
+     * @param t      exception to log along with {@code string}
      */
     public void i(String string, Throwable t) {
         if (level.prints(Config.LoggingLevel.INFO)) {
@@ -84,7 +84,7 @@ public class Log {
      * {@link Config.LoggingLevel#WARN} level logging
      *
      * @param string string to log
-     * @param t exception to log along with {@code string}
+     * @param t      exception to log along with {@code string}
      */
     public void w(String string, Throwable t) {
         if (level != null && level.prints(Config.LoggingLevel.WARN)) {
@@ -109,7 +109,7 @@ public class Log {
      * {@link Config.LoggingLevel#ERROR} level logging
      *
      * @param string string to log
-     * @param t exception to log along with {@code string}
+     * @param t      exception to log along with {@code string}
      */
     public void e(String string, Throwable t) {
         if (level != null && level.prints(Config.LoggingLevel.ERROR)) {
@@ -120,8 +120,20 @@ public class Log {
             }
         }
     }
-    
-    public static void print(String msg) {
+
+    /**
+     * {@link Config.LoggingLevel#VERBOSE} level logging
+     *
+     * @param string string to log
+     */
+    public void v(String string) {
+        if (level != null && level.prints(Config.LoggingLevel.VERBOSE)) {
+            print("[VERBOSE]\t" + tag + "\t" + string);
+
+        }
+    }
+
+    private static void print(String msg) {
         System.out.println(msg);
     }
 }

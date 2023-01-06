@@ -274,10 +274,10 @@ public class DeviceCore {
             }
             return Long.parseLong(value) / 1024;
         } catch (NumberFormatException e){
-            Log.print("[ERROR][DeviceCore] Cannot parse meminfo " + e.toString());
+            System.out.print("[ERROR][DeviceCore] Cannot parse meminfo " + e.toString());
             return null;
         } catch (IOException e) {
-            Log.print("[ERROR] [DeviceCore] Cannot read meminfo " + e.toString());
+            System.out.print("[ERROR] [DeviceCore] Cannot read meminfo " + e.toString());
             return null;
         }
         finally {
