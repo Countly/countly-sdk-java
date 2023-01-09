@@ -1,5 +1,5 @@
 22.06.0
-* "resetDeviceId", "login", and "logout" have been deprecated and these methods are going to be removed in the future.
+* The "resetDeviceId", "login", and "logout" have been deprecated.
 
 20.11.5
 * Fixed a bug where the backend mode module produces "null pointer exceptions" in case not initialized.
