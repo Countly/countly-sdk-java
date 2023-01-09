@@ -64,7 +64,7 @@ public class BaseTestsCore {
     }
 
     public Config config() {
-        return new Config(SERVER, APP_KEY).enableTestMode().setLoggingLevel(Config.LoggingLevel.DEBUG);
+        return new Config(SERVER, APP_KEY).setLoggingLevel(Config.LoggingLevel.DEBUG);
     }
 
     protected Config defaultConfig() throws Exception {

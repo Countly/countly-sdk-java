@@ -19,15 +19,16 @@ import ly.count.sdk.java.internal.Module;
  * Countly configuration object.
  */
 public class Config {
+
     /**
      * Logging level for {@link Log} module
      */
     public enum LoggingLevel {
+        VERBOSE(-1),
         DEBUG(0),
         INFO(1),
         WARN(2),
         ERROR(3),
-        VERBOSE(4),
         OFF(5);
 
         private final int level;
@@ -257,6 +258,12 @@ public class Config {
      * Logging level
      */
     protected LoggingLevel loggingLevel = LoggingLevel.OFF;
+
+    /**
+     * Log listener
+     */
+    protected Log.LogCallback loglistener = null;
+
 
     /**
      * Countly SDK name to be sent in HTTP requests
@@ -570,6 +577,18 @@ public class Config {
     }
 
     /**
+     * Add a log callback that will duplicate all logs done by the SDK.
+     * For each message you will receive the message string and it's targeted log level.
+     *
+     * @param logCallback
+     * @return Returns the same config object for convenient linking
+     */
+    public Config setLogListener(Log.LogCallback logCallback) {
+        this.loglistener = logCallback;
+        return this;
+    }
+
+    /**
      * Set enabled features all at once instead of {@link #setFeatures(Config.Feature...)}.
      *
      * @param features variable args of features to enable
@@ -747,7 +766,7 @@ public class Config {
      *
      * @return {@code this} instance for method chaining
      */
-    public Config enableTestMode() {
+    protected Config enableTestMode() {
         this.testMode = true;
         this.loggingLevel = this.loggingLevel == LoggingLevel.OFF ? LoggingLevel.INFO : this.loggingLevel;
         return this;
@@ -759,7 +778,7 @@ public class Config {
      *
      * @return {@code this} instance for method chaining
      */
-    public Config disableTestMode() {
+    protected Config disableTestMode() {
         this.testMode = false;
         return this;
     }
@@ -1312,10 +1331,18 @@ public class Config {
     }
 
     /**
+     * Getter for {@link #loglistener}
+     * @return {@link #loglistener} value
+     */
+    public Log.LogCallback getLogListener() {
+        return loglistener;
+    }
+
+    /**
      * Getter for {@link #testMode}
      * @return {@link #testMode} value
      */
-    public boolean isTestModeEnabled() {
+    protected boolean isTestModeEnabled() {
         return testMode;
     }
 

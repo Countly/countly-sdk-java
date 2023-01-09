@@ -9,66 +9,42 @@ import ly.count.sdk.java.Config;
 
 public class Log {
 
+    public interface LogCallback {
+        void LogHappened(String logMessage, Config.LoggingLevel logLevel);
+    }
+
     private String tag;
+    LogCallback logListener = null;
     private Config.LoggingLevel level;
 
 
     public Log(InternalConfig config) {
-
         // let it be specific int and not index for visibility
         tag = config.getLoggingTag();
         level = config.getLoggingLevel();
-    }
-
-
-    /**
-     * {@link Config.LoggingLevel#DEBUG} level logging
-     *
-     * @param string string to log
-     */
-    public void d(String string) {
-        d(string, null);
+        logListener = config.getLogListener();
     }
 
     /**
      * {@link Config.LoggingLevel} level logging
      *
      * @param string string to log
-     * @param t      exception to log along with {@code string}
      */
     public void d(String string, Throwable t) {
-        if (level != null && level.prints(Config.LoggingLevel.DEBUG)) {
-            if (t == null) {
-                print("[DEBUG]\t" + tag + "\t" + string);
-            } else {
-                print("[DEBUG]\t" + tag + "\t" + string + " / " + t);
-            }
-        }
+        String msg = "[DEBUG]\t" + tag + "\t" + string;
+        print(msg, Config.LoggingLevel.DEBUG);
+        informListener(msg, Config.LoggingLevel.DEBUG);
     }
 
     /**
      * {@link Config.LoggingLevel#INFO} level logging
      *
      * @param string string to log
-     */
-    public void i(String string) {
-        i(string, null);
-    }
-
-    /**
-     * {@link Config.LoggingLevel#INFO} level logging
-     *
-     * @param string string to log
-     * @param t      exception to log along with {@code string}
      */
     public void i(String string, Throwable t) {
-        if (level.prints(Config.LoggingLevel.INFO)) {
-            if (t == null) {
-                print("[INFO]\t" + tag + "\t" + string);
-            } else {
-                print("[INFO]\t" + tag + "\t" + string + " / " + t);
-            }
-        }
+        String msg = "[INFO]\t" + tag + "\t" + string;
+        print(msg, Config.LoggingLevel.INFO);
+        informListener(msg, Config.LoggingLevel.INFO);
     }
 
     /**
@@ -77,23 +53,9 @@ public class Log {
      * @param string string to log
      */
     public void w(String string) {
-        w(string, null);
-    }
-
-    /**
-     * {@link Config.LoggingLevel#WARN} level logging
-     *
-     * @param string string to log
-     * @param t      exception to log along with {@code string}
-     */
-    public void w(String string, Throwable t) {
-        if (level != null && level.prints(Config.LoggingLevel.WARN)) {
-            if (t == null) {
-                print("[WARN]\t" + tag + "\t" + string);
-            } else {
-                print("[WARN]\t" + tag + "\t" + string + " / " + t);
-            }
-        }
+        String msg = "[WARN]\t" + tag + "\t" + string;
+        print(msg, Config.LoggingLevel.WARN);
+        informListener(msg, Config.LoggingLevel.WARN);
     }
 
     /**
@@ -102,23 +64,9 @@ public class Log {
      * @param string string to log
      */
     public void e(String string) {
-        e(string, null);
-    }
-
-    /**
-     * {@link Config.LoggingLevel#ERROR} level logging
-     *
-     * @param string string to log
-     * @param t      exception to log along with {@code string}
-     */
-    public void e(String string, Throwable t) {
-        if (level != null && level.prints(Config.LoggingLevel.ERROR)) {
-            if (t == null) {
-                print("[ERROR]\t" + tag + "\t" + string);
-            } else {
-                print("[ERROR]\t" + tag + "\t" + string + " / " + t);
-            }
-        }
+        String msg = "[ERROR]\t" + tag + "\t" + string;
+        print(msg, Config.LoggingLevel.ERROR);
+        informListener(msg, Config.LoggingLevel.ERROR);
     }
 
     /**
@@ -127,13 +75,20 @@ public class Log {
      * @param string string to log
      */
     public void v(String string) {
-        if (level != null && level.prints(Config.LoggingLevel.VERBOSE)) {
-            print("[VERBOSE]\t" + tag + "\t" + string);
+        String msg = "[VERBOSE]\t" + tag + "\t" + string;
+        print(msg, Config.LoggingLevel.VERBOSE);
+        informListener(msg, Config.LoggingLevel.VERBOSE);
+    }
 
+    private void print(String msg, Config.LoggingLevel level) {
+        if (level != null && level.prints(level)) {
+            System.out.println(msg);
         }
     }
 
-    private static void print(String msg) {
-        System.out.println(msg);
+    private void informListener(String msg, Config.LoggingLevel level) {
+        if (logListener != null) {
+            logListener.LogHappened(msg, level);
+        }
     }
 }
