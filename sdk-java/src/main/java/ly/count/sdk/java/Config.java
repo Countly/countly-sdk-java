@@ -24,11 +24,11 @@ public class Config {
      * Logging level for {@link Log} module
      */
     public enum LoggingLevel {
-        VERBOSE(-1),
-        DEBUG(0),
-        INFO(1),
-        WARN(2),
-        ERROR(3),
+        VERBOSE(0),
+        DEBUG(1),
+        INFO(2),
+        WARN(3),
+        ERROR(4),
         OFF(5);
 
         private final int level;
@@ -262,7 +262,7 @@ public class Config {
     /**
      * Log listener
      */
-    protected Log.LogCallback logListener = null;
+    protected LogCallback logListener = null;
 
 
     /**
@@ -583,7 +583,7 @@ public class Config {
      * @param logCallback
      * @return Returns the same config object for convenient linking
      */
-    public Config setLogListener(Log.LogCallback logCallback) {
+    public Config setLogListener(LogCallback logCallback) {
         this.logListener = logCallback;
         return this;
     }
@@ -1334,7 +1334,7 @@ public class Config {
      * Getter for {@link #logListener}
      * @return {@link #logListener} value
      */
-    public Log.LogCallback getLogListener() {
+    public LogCallback getLogListener() {
         return logListener;
     }
 

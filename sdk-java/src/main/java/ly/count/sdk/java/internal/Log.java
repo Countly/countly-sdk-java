@@ -9,10 +9,6 @@ import ly.count.sdk.java.Config;
 
 public class Log {
 
-    public interface LogCallback {
-        void LogHappened(String logMessage, Config.LoggingLevel logLevel);
-    }
-
     private String tag;
     LogCallback logListener = null;
     private Config.LoggingLevel level;
