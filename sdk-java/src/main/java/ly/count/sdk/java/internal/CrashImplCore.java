@@ -19,18 +19,19 @@ import ly.count.sdk.java.Crash;
  */
 
 public class CrashImplCore implements Crash, Storable {
-    private static final Log.Module L = Log.module("CrashImpl");
+    private Log L = null;
 
     private final Long id;
     private final JSONObject data;
     private Throwable throwable;
     private Map<Thread, StackTraceElement[]> traces;
 
-    protected CrashImplCore() {
-        this(DeviceCore.dev.uniformTimestamp());
+    protected CrashImplCore(Log logger) {
+        this(DeviceCore.dev.uniformTimestamp(), logger);
     }
 
-    protected CrashImplCore(Long id) {
+    protected CrashImplCore(Long id, Log logger) {
+        this.L = logger;
         this.id = id;
         this.data = new JSONObject();
         this.add("_nonfatal", true);
@@ -54,7 +55,7 @@ public class CrashImplCore implements Crash, Storable {
     @Override
     public CrashImplCore addTraces(Thread main, Map<Thread, StackTraceElement[]> traces) {
         if (traces == null) {
-            L.wtf("traces cannot be null");
+          L.e("[CrashImpl traces cannot be null");
             return this;
         } else {
             this.traces = traces;
@@ -175,7 +176,7 @@ public class CrashImplCore implements Crash, Storable {
             try {
                 this.data.put(key, value);
             } catch (JSONException e) {
-                L.wtf("Couldn't add " + key + " to a crash", e);
+              L.e("[CrashImpl Couldn't add " + key + " to a crash" + e);
             }
         }
         return this;
@@ -186,7 +187,7 @@ public class CrashImplCore implements Crash, Storable {
         try {
             return data.toString().getBytes(Utils.UTF8);
         } catch (UnsupportedEncodingException e) {
-            L.wtf("UTF is not supported", e);
+          L.e("[CrashImpl UTF is not supported" + e);
             return null;
         }
     }
@@ -202,11 +203,11 @@ public class CrashImplCore implements Crash, Storable {
                     this.data.put(k, obj.get(k));
                 }
             } catch (JSONException e) {
-                L.e("Couldn't decode crash data successfully", e);
+               L.e("[CrashImpl Couldn't decode crash data successfully" + e);
             }
             return true;
         } catch (UnsupportedEncodingException e) {
-            L.wtf("Cannot deserialize crash", e);
+          L.e("[CrashImpl Cannot deserialize crash" + e);
         }
 
         return false;

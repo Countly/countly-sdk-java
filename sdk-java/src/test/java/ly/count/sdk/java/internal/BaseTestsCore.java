@@ -28,10 +28,13 @@ public class BaseTestsCore {
         private Object ctx;
         private InternalConfig config;
 
-        public CtxImpl(SDKInterface sdk, InternalConfig config, Object ctx) {
+        private Log L = null;
+
+        public CtxImpl(SDKInterface sdk, InternalConfig config, Object ctx, Log logger) {
             this.sdk = sdk;
             this.config = config;
             this.ctx = ctx;
+            this.L = logger;
         }
 
         @Override
@@ -53,10 +56,15 @@ public class BaseTestsCore {
         public boolean isExpired() {
             return false;
         }
+
+        @Override
+        public Log getLogger() {
+            return null;
+        }
     }
 
     public Config config() {
-        return new Config(SERVER, APP_KEY).enableTestMode().setLoggingLevel(Config.LoggingLevel.DEBUG);
+        return new Config(SERVER, APP_KEY).setLoggingLevel(Config.LoggingLevel.DEBUG);
     }
 
     protected Config defaultConfig() throws Exception {
@@ -65,13 +73,14 @@ public class BaseTestsCore {
 
     protected Config defaultConfigWithLogsForConfigTests() throws Exception {
         InternalConfig config = new InternalConfig(defaultConfig());
-        new Log().init(config);
+        new Log(config);
         return config;
     }
 
     @Before
     public void setUp() throws Exception {
-        ctx = new CtxImpl(this.sdk, this.config == null ? new InternalConfig(defaultConfig()) : this.config, getContext());
+        Log L = new Log(this.config == null ? new InternalConfig(config == null ? defaultConfig() : config) : this.config);
+        ctx = new CtxImpl(this.sdk, this.config == null ? new InternalConfig(defaultConfig()) : this.config, getContext(), L);
         utils = Mockito.spy(new Utils());
         Utils.reflectiveSetField(Utils.class, "utils", utils);
     }
@@ -81,13 +90,13 @@ public class BaseTestsCore {
     }
 
     private void setUpSDK(Config config, boolean limited) throws Exception {
-        new Log().init(this.config == null ? new InternalConfig(config == null ? defaultConfig() : config) : this.config);
+        Log L = new Log(this.config == null ? new InternalConfig(config == null ? defaultConfig() : config) : this.config);
         this.dummy = mock(ModuleBase.class);
         Utils.reflectiveSetField(SDKInterface.class, "testDummyModule", dummy);
         this.sdk = mock(SDKCore.class);
-        this.sdk.init(new CtxImpl(this.sdk, new InternalConfig(defaultConfig()), getContext()));
+        this.sdk.init(new CtxImpl(this.sdk, new InternalConfig(defaultConfig()), getContext(), L));
         this.config = this.sdk.config();
-        this.ctx = new CtxImpl(this.sdk, this.config, getContext());
+        this.ctx = new CtxImpl(this.sdk, this.config, getContext(), L);
     }
 
     @SuppressWarnings("unchecked")

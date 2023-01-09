@@ -13,4 +13,6 @@ public interface CtxCore {
     InternalConfig getConfig();
     SDKInterface getSDK();
     boolean isExpired();
+
+    Log getLogger();
 }

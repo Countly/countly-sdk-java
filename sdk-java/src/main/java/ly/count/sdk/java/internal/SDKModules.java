@@ -11,7 +11,7 @@ import ly.count.sdk.java.Config;
  */
 
 public abstract class SDKModules implements SDKInterface {
-    private static final Log.Module L = Log.module("SDKModules");
+    protected Log L = null;
     private static Module testDummyModule = null;//set during testing when trying to check the SDK's lifecycle
 
     /**
@@ -26,7 +26,7 @@ public abstract class SDKModules implements SDKInterface {
     static {
         registerDefaultModuleMapping(CoreFeature.DeviceId.getIndex(), ModuleDeviceIdCore.class);
         registerDefaultModuleMapping(CoreFeature.Requests.getIndex(), ModuleRequests.class);
-        registerDefaultModuleMapping(CoreFeature.Logs.getIndex(), Log.class);
+        //registerDefaultModuleMapping(CoreFeature.Logs.getIndex(), Log.class);
         registerDefaultModuleMapping(CoreFeature.Views.getIndex(), ModuleViews.class);
         registerDefaultModuleMapping(CoreFeature.Sessions.getIndex(), ModuleSessions.class);
         registerDefaultModuleMapping(CoreFeature.CrashReporting.getIndex(), ModuleCrash.class);
@@ -80,7 +80,7 @@ public abstract class SDKModules implements SDKInterface {
                     module.stop(ctx, clear);
                     Utils.reflectiveSetField(module, "active", false);
                 } catch (Throwable e) {
-                    L.wtf("Exception while stopping " + module.getClass(), e);
+                    L.e("[SDKModules] Exception while stopping " + module.getClass() + " " + e);
                 }
             }
         });
@@ -103,7 +103,7 @@ public abstract class SDKModules implements SDKInterface {
      */
     public void onConsent(CtxCore ctx, int consent) {
         if (!config().requiresConsent()) {
-            L.wtf("onConsent() shouldn't be called when Config.requiresConsent() is false");
+            L.e("[SDKModules] onConsent() shouldn't be called when Config.requiresConsent() is false");
             return;
         }
 
@@ -125,15 +125,15 @@ public abstract class SDKModules implements SDKInterface {
             if (SDKCore.enabled(feature) && existing == null) {
                 Class<? extends Module> cls = moduleMappings.get(feature);
                 if (cls == null) {
-                    L.i("No module mapping for feature " + feature);
+                    L.i("[SDKModules] No module mapping for feature " + feature);
                     continue;
                 }
 
-                Module module = instantiateModule(cls);
+                Module module = instantiateModule(cls, L);
                 if (module == null) {
-                    L.wtf("Cannot instantiate module " + feature);
+                    L.e("[SDKModules] Cannot instantiate module " + feature);
                 } else {
-                    module.init(ctx.getConfig());
+                    module.init(ctx.getConfig(), L);
                     module.onContextAcquired(ctx);
                     modules.put(feature, module);
                 }
@@ -148,7 +148,7 @@ public abstract class SDKModules implements SDKInterface {
      */
     public void onConsentRemoval(CtxCore ctx, int noConsent) {
         if (!config().requiresConsent()) {
-            L.wtf("onConsentRemoval() shouldn't be called when Config.requiresConsent() is false");
+            L.e("[SDKModules] onConsentRemoval() shouldn't be called when Config.requiresConsent() is false");
             return;
         }
 
@@ -214,14 +214,14 @@ public abstract class SDKModules implements SDKInterface {
             throw new IllegalStateException("Modules can only be built once");
         }
 
-        if (ctx.getConfig().getLoggingLevel() != Config.LoggingLevel.OFF) {
-            modules.put(-10, instantiateModule(moduleMappings.get(CoreFeature.Logs.getIndex())));
-        }
+//        if (ctx.getConfig().getLoggingLevel() != Config.LoggingLevel.OFF) {
+//            modules.put(-10, instantiateModule(moduleMappings.get(CoreFeature.Logs.getIndex()), L));
+//        }
 
         // standard required internal features
-        modules.put(-3, instantiateModule(moduleMappings.get(CoreFeature.DeviceId.getIndex())));
-        modules.put(-2, instantiateModule(moduleMappings.get(CoreFeature.Requests.getIndex())));
-        modules.put(CoreFeature.Sessions.getIndex(), instantiateModule(moduleMappings.get(CoreFeature.Sessions.getIndex())));
+        modules.put(-3, instantiateModule(moduleMappings.get(CoreFeature.DeviceId.getIndex()), L));
+        modules.put(-2, instantiateModule(moduleMappings.get(CoreFeature.Requests.getIndex()), L));
+        modules.put(CoreFeature.Sessions.getIndex(), instantiateModule(moduleMappings.get(CoreFeature.Sessions.getIndex()), L));
 
         if (ctx.getConfig().requiresConsent()) {
             consents = 0;
@@ -237,14 +237,14 @@ public abstract class SDKModules implements SDKInterface {
                 }
                 Module existing = module(cls);
                 if ((features & feature) > 0 && existing == null) {
-                    Module m = instantiateModule(cls);
+                    Module m = instantiateModule(cls, L);
                     if (m != null) {
                         modules.put(feature, m);
                     }
                 }
             }
         }
-        modules.put(CoreFeature.BackendMode.getIndex(), instantiateModule(moduleMappings.get(CoreFeature.BackendMode.getIndex())));
+        modules.put(CoreFeature.BackendMode.getIndex(), instantiateModule(moduleMappings.get(CoreFeature.BackendMode.getIndex()), L));
 
         // dummy module for tests if any
         if (testDummyModule != null) {
@@ -258,24 +258,24 @@ public abstract class SDKModules implements SDKInterface {
      * @param cls class of {@link Module}
      * @return {@link Module} instance or null in case of error
      */
-    private static Module instantiateModule(Class<? extends Module> cls) {
+    private static Module instantiateModule(Class<? extends Module> cls, Log L) {
         try {
             return (Module)cls.getConstructors()[0].newInstance();
         } catch (InstantiationException e) {
-            L.wtf("Module cannot be instantiated", e);
+            L.e("[SDKModules] Module cannot be instantiated" + e);
         } catch (IllegalAccessException e) {
-            L.wtf("Module constructor cannot be accessed", e);
+            L.e("[SDKModules] Module constructor cannot be accessed" + e);
         } catch (InvocationTargetException e) {
-            L.wtf("Module constructor cannot be invoked", e);
+            L.e("[SDKModules] Module constructor cannot be invoked" + e);
         } catch (IllegalArgumentException e) {
             try {
                 return (Module)cls.getConstructors()[0].newInstance((Object)null);
             } catch (InstantiationException e1) {
-                L.wtf("Module cannot be instantiated", e);
+                L.e("[SDKModules] Module cannot be instantiated" + e);
             } catch (IllegalAccessException e1) {
-                L.wtf("Module constructor cannot be accessed", e);
+                L.e("[SDKModules] Module constructor cannot be accessed" + e);
             } catch (InvocationTargetException e1) {
-                L.wtf("Module constructor cannot be invoked", e);
+                L.e("[SDKModules] Module constructor cannot be invoked" + e);
             }
         }
         return null;

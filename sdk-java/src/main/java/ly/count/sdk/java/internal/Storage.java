@@ -14,7 +14,6 @@ import java.util.concurrent.Future;
  */
 
 public class Storage {
-    private static final Log.Module L = Log.module("Storage");
 
     private static final Tasks tasks = new Tasks("storage");
 
@@ -32,11 +31,11 @@ public class Storage {
      * @return true when storing succeeded, false otherwise
      */
     public static boolean push(CtxCore ctx, Storable storable) {
-        L.d("push: " + name(storable) + " " + storable.toString());
+        System.out.println("[DEBUG][Storage] push: " + name(storable) + " " + storable);
         try {
             return pushAsync(ctx, storable).get();
         } catch (InterruptedException | ExecutionException e) {
-            L.wtf("Interrupted while pushing " + name(storable), e);
+            System.out.println("[ERROR][Storage] Interrupted while pushing " + name(storable) + " " + e);
         }
         return false;
     }
@@ -51,7 +50,7 @@ public class Storage {
      * @return Future<Boolean> object which resolves as true when storing succeeded, false otherwise
      */
     public static Future<Boolean> pushAsync(final CtxCore ctx, final Storable storable, Tasks.Callback<Boolean> callback) {
-        L.d("pushAsync: " + name(storable) + " " + storable.toString());
+        System.out.println("[DEBUG][Storage] pushAsync: " + name(storable) + " " + storable.toString());
         return tasks.run(new Tasks.Task<Boolean>(storable.storageId()) {
             @Override
             public Boolean call() throws Exception {
@@ -68,7 +67,7 @@ public class Storage {
      * @return Future<Boolean> object which resolves as true when storing succeeded, false otherwise
      */
     public static Future<Boolean> pushAsync(final CtxCore ctx, final Storable storable) {
-        L.d("pushAsync: " + name(storable) + " " + storable.toString());
+        System.out.println("[DEBUG][Storage] pushAsync: " + name(storable) + " " + storable.toString());
         return pushAsync(ctx, storable, null);
     }
     /**
@@ -79,11 +78,11 @@ public class Storage {
      * @return true if removed, false otherwise
      */
     public static <T extends Storable> Boolean remove(final CtxCore ctx, T storable) {
-        L.d("remove: " + name(storable) + " " + storable.toString());
+        System.out.println("[DEBUG][Storage] remove: " + name(storable) + " " + storable.toString());
         try {
             return removeAsync(ctx, storable, null).get();
         } catch (InterruptedException | ExecutionException e) {
-            L.wtf("Interrupted while removing " + name(storable), e);
+            System.out.println("[ERROR][Storage] Interrupted while removing " + name(storable) + " " + e);
         }
         return null;
     }
@@ -114,11 +113,11 @@ public class Storage {
      * @return storable object passed as param when restoring succeeded, null otherwise
      */
     public static <T extends Storable> T pop(CtxCore ctx, T storable) {
-        L.d("pop: " + name(storable) + " " + storable.toString());
+        System.out.println("[DEBUG][Storage] pop: " + name(storable) + " " + storable.toString());
         try {
             return popAsync(ctx, storable).get();
         } catch (InterruptedException | ExecutionException e) {
-            L.wtf("Interrupted while popping " + name(storable), e);
+            System.out.println("[ERROR][Storage] Interrupted while popping " + name(storable) + " " + e);
         }
         return null;
     }
@@ -153,7 +152,7 @@ public class Storage {
      * @return storable object passed as param when reading succeeded, null otherwise
      */
     static <T extends Storable> boolean transform(final CtxCore ctx, final String prefix, final Transformer transformer) {
-        L.d("readAll " + prefix);
+        System.out.println("[DEBUG][Storage] readAll " + prefix);
         try {
             return tasks.run(new Tasks.Task<Boolean>(Tasks.ID_STRICT) {
                 @Override
@@ -167,19 +166,19 @@ public class Storage {
                             if (transformed != null) {
                                 if (!ctx.getSDK().storableWrite(ctx, prefix, id, transformed)) {
                                     success = false;
-                                    L.e("Couldn't write transformed data for " + id);
+                                    System.out.println("[ERROR][Storage] Couldn't write transformed data for " + id);
                                 }
                             }
                         } else {
                             success = false;
-                            L.e("Couldn't read data to transform from " + id);
+                            System.out.println("[ERROR][Storage] Couldn't read data to transform from " + id);
                         }
                     }
                     return success;
                 }
             }).get();
         } catch (InterruptedException | ExecutionException e) {
-            L.wtf("Interrupted while reading all " + prefix, e);
+            System.out.println("[ERROR][Storage] Interrupted while reading all " + prefix + " " + e);
         }
         return false;
     }
@@ -192,11 +191,11 @@ public class Storage {
      * @return storable object passed as param when reading succeeded, null otherwise
      */
     public static <T extends Storable> T read(CtxCore ctx, T storable) {
-        L.d("read: " + name(storable) + " " + storable.toString());
+        System.out.println("[DEBUG][Storage] read: " + name(storable) + " " + storable.toString());
         try {
             return readAsync(ctx, storable).get();
         } catch (InterruptedException | ExecutionException e) {
-            L.wtf("Interrupted while popping " + name(storable), e);
+            System.out.println("[ERROR][Storage] Interrupted while popping " + name(storable) + " " + e);
         }
         return null;
     }
@@ -229,7 +228,7 @@ public class Storage {
                 Boolean done = ctx.getSDK().storableRead(ctx, storable);
                 T ret = null;
                 if (done == null || !done) {
-                    L.d("No data for file " + name(storable));
+                    System.out.println("[DEBUG][Storage] No data for file " + name(storable));
                 } else {
                     ret = storable;
                 }
@@ -250,12 +249,12 @@ public class Storage {
      * @return storable object passed as param when reading succeeded, null otherwise
      */
     public static <T extends Storable> T readOne(CtxCore ctx, T storable, boolean asc) {
-        L.d("readOne: " + name(storable) + " " + storable.toString());
+        System.out.println("[DEBUG][Storage] readOne: " + name(storable) + " " + storable.toString());
 
         try {
             return readOneAsync(ctx, storable, asc).get();
         } catch (InterruptedException | ExecutionException e) {
-            L.wtf("Interrupted while popping " + name(storable), e);
+            System.out.println("[ERROR][Storage] Interrupted while popping " + name(storable) + " " + e);
         }
         return null;
     }
@@ -311,12 +310,12 @@ public class Storage {
      * @return List<Long> object which resolves as list of storable ids, not null
      */
     public static List<Long> list(CtxCore ctx, String prefix, int slice) {
-        L.d("readOne: " + prefix);
+        System.out.println("[DEBUG][Storage] readOne: " + prefix);
 
         try {
             return listAsync(ctx, prefix, slice).get();
         } catch (InterruptedException | ExecutionException e) {
-            L.wtf("Interrupted while listing " + prefix, e);
+            System.out.println("[ERROR][Storage] Interrupted while listing " + prefix + " " + e);
         }
         return null;
     }
@@ -349,17 +348,17 @@ public class Storage {
     }
 
     public static void await() {
-        L.d("Waiting for storage tasks to complete");
+        System.out.println("[DEBUG][Storage] Waiting for storage tasks to complete");
         try {
             tasks.run(new Tasks.Task<Boolean>(Tasks.ID_STRICT) {
                 @Override
                 public Boolean call() throws Exception {
-                    L.d("Waiting for storage tasks to complete DONE");
+                    System.out.println("[DEBUG][Storage] Waiting for storage tasks to complete DONE");
                     return null;
                 }
             }).get();
         } catch (InterruptedException | ExecutionException e) {
-            L.wtf("Interrupted while waiting", e);
+            System.out.println("[ERROR][Storage] Interrupted while waiting " + e);
         }
     }
 

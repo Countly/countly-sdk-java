@@ -16,7 +16,6 @@ import java.util.concurrent.TimeUnit;
  */
 
 public class Tasks {
-    public final Log.Module L;
     public static final Long ID_STRICT = 0L;
     public static final Long ID_LIST = -1L;
 
@@ -52,7 +51,6 @@ public class Tasks {
             }
         });
         pending = new HashMap<>();
-        L = Log.module(name + " tasks");
     }
 
     /**
@@ -135,11 +133,11 @@ public class Tasks {
                     executor.shutdownNow(); // Cancel currently executing tasks
                     // Wait a while for tasks to respond to being cancelled
                     if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
-                        L.e("didn't shutdown gracefully");
+                        System.out.println("[Task] didn't shutdown gracefully");
                     }
                 }
             } catch (Throwable t) {
-                L.e("Error while shutting down tasks", t);
+                System.out.println("[Task] Error while shutting down tasks " + t);
             }
         }
     }
@@ -152,7 +150,7 @@ public class Tasks {
                 }
             }).get();
         } catch (InterruptedException | ExecutionException e) {
-            L.w("Interrupted while waiting for Tasks to finish running tasks", e);
+            System.out.println("[Task] Interrupted while waiting for Tasks to finish running tasks " + e);
         }
     }
 }

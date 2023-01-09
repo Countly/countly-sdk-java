@@ -18,7 +18,6 @@ public class Params {
     static final String PARAM_DEVICE_ID = "device_id";
     static final String PARAM_OLD_DEVICE_ID = "old_device_id";
 
-    private static final Log.Module L = Log.module("Params");
 
     private StringBuilder params;
 
@@ -37,7 +36,7 @@ public class Params {
             try {
                 json.put(key, value);
             } catch (JSONException e) {
-                L.wtf("Cannot put property into Params.Obj", e);
+                System.out.println("Cannot put property into Params.Obj " + e.toString());
             }
             return this;
         }
@@ -188,7 +187,7 @@ public class Params {
 
     private Params addObjects(Object[] objects) {
         if (objects.length % 2 != 0) {
-            L.wtf("Bad number of parameters");
+            System.out.println("Bad number of parameters");
         } else {
             for (int i = 0; i < objects.length; i += 2) {
                 add(objects[i] == null ? ("unknown" + i) : objects[i].toString(), objects.length > i + 1 ? objects[i + 1] : null);
