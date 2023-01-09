@@ -121,6 +121,9 @@ public class ModuleDeviceIdCore extends ModuleBase {
                     public void call(Config.DID id) throws Exception {
                         if (id != null) {
                             L.d("Got device id: " + id);
+                            if(id.strategy == Config.DID.STRATEGY_UUID) {
+                                L.w("During init, custom device id was not provided. SDK has generated a random device id.");
+                            }
                             SDKCore.instance.onDeviceId(ctx, id, null);
                         } else {
                             L.i("No device id of strategy [" + ctx.getConfig().getDeviceIdStrategy() + "] is available yet");
