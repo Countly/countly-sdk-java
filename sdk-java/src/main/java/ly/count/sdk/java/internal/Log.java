@@ -30,7 +30,7 @@ public class Log {
      *
      * @param string string to log
      */
-    public void d(String string, Throwable t) {
+    public void d(String string) {
         String msg = "[DEBUG]\t" + tag + "\t" + string;
         print(msg, Config.LoggingLevel.DEBUG);
         informListener(msg, Config.LoggingLevel.DEBUG);
@@ -41,7 +41,7 @@ public class Log {
      *
      * @param string string to log
      */
-    public void i(String string, Throwable t) {
+    public void i(String string) {
         String msg = "[INFO]\t" + tag + "\t" + string;
         print(msg, Config.LoggingLevel.INFO);
         informListener(msg, Config.LoggingLevel.INFO);

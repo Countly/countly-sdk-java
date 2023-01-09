@@ -112,7 +112,7 @@ public class ModuleRemoteConfig extends ModuleBase {
                 saveStoredValues(stored);
 
             } catch (Exception e) {
-                L.e("Failed merging new values into old ones", e);
+                L.e("Failed merging new values into old ones" + e);
                 error = "Error merging results";
             }
         } else {

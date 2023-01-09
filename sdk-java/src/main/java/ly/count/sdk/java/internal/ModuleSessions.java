@@ -65,7 +65,7 @@ public class ModuleSessions extends ModuleBase {
                 }, ctx.getConfig().getSendUpdateEachSeconds(), ctx.getConfig().getSendUpdateEachSeconds(), TimeUnit.SECONDS);
             }
         } catch (Throwable e) {
-            L.e("[ModuleSessions] Cannot happen", e);
+            L.e("[ModuleSessions] Cannot happen" + e);
             timedEvents = new TimedEvents(L);
         }
     }
@@ -92,7 +92,7 @@ public class ModuleSessions extends ModuleBase {
                     }
                 }
             } catch (Throwable t) {
-                L.e("[ModuleSessions] Error while stopping session update thread", t);
+                L.e("[ModuleSessions] Error while stopping session update thread " + t);
             }
             executor = null;
         }
@@ -150,7 +150,7 @@ public class ModuleSessions extends ModuleBase {
                         executor.shutdownNow();
                     }
                 } catch (InterruptedException e) {
-                    L.w("[ModuleSessions] Interrupted while waiting for session update executor to stop", e);
+                    L.w("[ModuleSessions] Interrupted while waiting for session update executor to stop" + e);
                     executor.shutdownNow();
                 }
                 executor = null;

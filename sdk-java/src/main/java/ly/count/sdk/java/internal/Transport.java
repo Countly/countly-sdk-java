@@ -69,7 +69,7 @@ public class Transport implements X509TrustManager {
     }
 
     /**
-     * @see Module#init(InternalConfig)
+     * @see Module#init(InternalConfig, Log)
      *
      * @param config
      * @throws IllegalArgumentException
@@ -247,7 +247,7 @@ public class Transport implements X509TrustManager {
                     File f = new File(picture);
                     protocol = f.toURI().toURL().getProtocol();
                 } catch (Throwable tt) {
-                    L.w("[network] Couldn't determine picturePath protocol", tt);
+                    L.w("[network] Couldn't determine picturePath protocol " +  tt);
                 }
             }
             if (protocol != null && protocol.equals("file")) {
@@ -297,7 +297,7 @@ public class Transport implements X509TrustManager {
             }
             return total.toString();
         } catch (IOException e) {
-            L.w("[network] Error while reading server response", e);
+            L.w("[network] Error while reading server response " + e);
             return null;
         } finally {
             if (reader != null) {
@@ -342,7 +342,7 @@ public class Transport implements X509TrustManager {
                             }
                         }
                     } catch (InterruptedException ie) {
-                        L.w("[network] Interrupted while waiting for did change request cooldown", ie);
+                        L.w("[network] Interrupted while waiting for did change request cooldown " + ie);
                     }
 
                     SDKCore.instance.onRequestCompleted(request, response, code, requestOwner);
@@ -350,7 +350,7 @@ public class Transport implements X509TrustManager {
                     return processResponse(code, response, request.storageId());
 
                 } catch (IOException e) {
-                    L.w("[network] Error while sending request " + request, e);
+                    L.w("[network] Error while sending request " + request + " " + e);
                     return false;
                 } finally {
                     if (connection != null) {
@@ -416,7 +416,7 @@ public class Transport implements X509TrustManager {
                     PublicKey k = kf.generatePublic(spec);
                     keyPins.add(k.getEncoded());
                 } catch (InvalidKeySpecException e) {
-                    L.d("[network] Certificate in instead of public key it seems", e);
+                    L.d("[network] Certificate in instead of public key it seems " + e);
                     CertificateFactory cf = CertificateFactory.getInstance("X.509");
                     Certificate cert = cf.generateCertificate(new ByteArrayInputStream(data));
                     keyPins.add(cert.getPublicKey().getEncoded());

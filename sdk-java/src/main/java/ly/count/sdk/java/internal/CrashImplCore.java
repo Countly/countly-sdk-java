@@ -176,7 +176,7 @@ public class CrashImplCore implements Crash, Storable {
             try {
                 this.data.put(key, value);
             } catch (JSONException e) {
-              L.e("[CrashImpl Couldn't add " + key + " to a crash", e);
+              L.e("[CrashImpl Couldn't add " + key + " to a crash" + e);
             }
         }
         return this;
@@ -187,7 +187,7 @@ public class CrashImplCore implements Crash, Storable {
         try {
             return data.toString().getBytes(Utils.UTF8);
         } catch (UnsupportedEncodingException e) {
-          L.e("[CrashImpl UTF is not supported", e);
+          L.e("[CrashImpl UTF is not supported" + e);
             return null;
         }
     }
@@ -203,11 +203,11 @@ public class CrashImplCore implements Crash, Storable {
                     this.data.put(k, obj.get(k));
                 }
             } catch (JSONException e) {
-               L.e("[CrashImpl Couldn't decode crash data successfully", e);
+               L.e("[CrashImpl Couldn't decode crash data successfully" + e);
             }
             return true;
         } catch (UnsupportedEncodingException e) {
-          L.e("[CrashImpl Cannot deserialize crash", e);
+          L.e("[CrashImpl Cannot deserialize crash" + e);
         }
 
         return false;

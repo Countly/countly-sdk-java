@@ -66,20 +66,20 @@ class TimedEvents implements Storable, EventImpl.EventRecorder {
             stream.close();
             return bytes.toByteArray();
         } catch (IOException e) {
-            L.e("[TimedEvents] Cannot serialize timed events", e);
+            L.e("[TimedEvents] Cannot serialize timed events" + e);
         } finally {
             if (stream != null) {
                 try {
                     stream.close();
                 } catch (IOException e) {
-                    L.e("[TimedEvents] Cannot happen", e);
+                    L.e("[TimedEvents] Cannot happen" + e);
                 }
             }
             if (bytes != null) {
                 try {
                     bytes.close();
                 } catch (IOException e) {
-                    L.e("[TimedEvents] Cannot happen", e);
+                    L.e("[TimedEvents] Cannot happen" + e);
                 }
             }
         }
@@ -104,20 +104,20 @@ class TimedEvents implements Storable, EventImpl.EventRecorder {
 
             return true;
         } catch (IOException e) {
-            L.e("[TimedEvents] Cannot deserialize config", e);
+            L.e("[TimedEvents] Cannot deserialize config" + e);
         } finally {
             if (stream != null) {
                 try {
                     stream.close();
                 } catch (IOException e) {
-                    L.e("[TimedEvents] Cannot happen", e);
+                    L.e("[TimedEvents] Cannot happen" + e);
                 }
             }
             if (bytes != null) {
                 try {
                     bytes.close();
                 } catch (IOException e) {
-                    L.e("[TimedEvents] Cannot happen", e);
+                    L.e("[TimedEvents] Cannot happen" + e);
                 }
             }
         }

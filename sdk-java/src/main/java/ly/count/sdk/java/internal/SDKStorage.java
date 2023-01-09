@@ -99,20 +99,20 @@ abstract class SDKStorage extends SDKLifecycle {
             stream.close();
             return true;
         } catch (IOException e) {
-            L.w("[SDKStorage] Cannot write data to " + filename, e);
+            L.w("[SDKStorage] Cannot write data to " + filename + " " + e);
         } finally {
             if (stream != null) {
                 try {
                     stream.close();
                 } catch (IOException e) {
-                    L.w("[SDKStorage] Couldn't close output stream for " + filename, e);
+                    L.w("[SDKStorage] Couldn't close output stream for " + filename + " " + e);
                 }
             }
             if (lock != null && lock.isValid()) {
                 try {
                     lock.release();
                 } catch (IOException e) {
-                    L.w("[SDKStorage] Couldn't release lock for " + filename, e);
+                    L.w("[SDKStorage] Couldn't release lock for " + filename + " " + e);
                 }
             }
         }
@@ -161,20 +161,20 @@ abstract class SDKStorage extends SDKLifecycle {
         } catch (FileNotFoundException e) {
             return null;
         } catch (IOException e) {
-            L.e("[SDKStorage] Error while reading file " + filename, e);
+            L.e("[SDKStorage] Error while reading file " + filename + " " + e);
         } finally {
             if (stream != null) {
                 try {
                     stream.close();
                 } catch (IOException e) {
-                    L.e("[SDKStorage] Couldn't close input stream for " + filename, e);
+                    L.e("[SDKStorage] Couldn't close input stream for " + filename + " " + e);
                 }
             }
             if (buffer != null) {
                 try {
                     buffer.close();
                 } catch (IOException e) {
-                    L.e("[SDKStorage] Cannot happen", e);
+                    L.e("[SDKStorage] Cannot happen" + e);
                 }
             }
         }

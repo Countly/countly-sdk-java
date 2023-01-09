@@ -246,7 +246,7 @@ public class UserEditorImpl implements UserEditor {
                             user.birthyear = Integer.parseInt((String) value);
                             changes.put(BIRTHYEAR, user.birthyear);
                         } catch (NumberFormatException e) {
-                           L.e("[UserEditorImpl user.birthyear must be either Integer or String which can be parsed to Integer", e);
+                           L.e("[UserEditorImpl user.birthyear must be either Integer or String which can be parsed to Integer" + e);
                         }
                     } else {
                        L.e("[UserEditorImpl Won't set user birthyear (must be of type Integer or String which can be parsed to Integer)");
@@ -428,7 +428,7 @@ public class UserEditorImpl implements UserEditor {
                 try {
                     return set(LOCATION, Double.valueOf(comps[0]) + "," + Double.valueOf(comps[1]));
                 } catch (Throwable t){
-                   L.e("[UserEditorImpl Invalid location format: " + location, t);
+                   L.e("[UserEditorImpl Invalid location format: " + location + " " + t);
                     return this;
                 }
             } else {
@@ -574,7 +574,7 @@ public class UserEditorImpl implements UserEditor {
                         try {
                             params.add(PICTURE_PATH, changes.getString(PICTURE_PATH));
                         } catch (JSONException e) {
-                            L.w("Won't send picturePath", e);
+                            L.w("Won't send picturePath" + e);
                         }
                     }
                     if (cohortsAdded.size() > 0) {
@@ -601,7 +601,7 @@ public class UserEditorImpl implements UserEditor {
             SDKCore.instance.onUserChanged(user.ctx, changes, cohortsAdded, cohortsRemoved);
 
         } catch (JSONException e) {
-           L.e("[UserEditorImpl Exception while committing changes to User profile", e);
+           L.e("[UserEditorImpl Exception while committing changes to User profile" + e);
         }
 
         sets.clear();

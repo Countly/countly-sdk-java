@@ -47,7 +47,7 @@ public abstract class SDKCore extends SDKModules {
         try {
             loaded = Storage.read(ctx, new InternalConfig());
         } catch (IllegalArgumentException e) {
-            L.e("[SDKCore] Cannot happen", e);
+            L.e("[SDKCore] Cannot happen" + e);
         }
 
         if (loaded == null) {
@@ -81,7 +81,7 @@ public abstract class SDKCore extends SDKModules {
                     module.init(config, logger);
                     Utils.reflectiveSetField(module, "active", true);
                 } catch (IllegalArgumentException | IllegalStateException e) {
-                    L.e("[SDKCore] Error during module initialization", e);
+                    L.e("[SDKCore] Error during module initialization" + e);
                     failed.add(feature);
                 }
             }
@@ -145,7 +145,7 @@ public abstract class SDKCore extends SDKModules {
                     user = new UserImpl(ctx);
                 }
             } catch (Throwable e) {
-                L.e("[SDKCore] Cannot happen", e);
+                L.e("[SDKCore] Cannot happen" + e);
                 user = new UserImpl(ctx);
             }
 

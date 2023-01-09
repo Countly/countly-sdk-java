@@ -348,7 +348,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
             try {
                 Thread.sleep(testSleep);
             } catch (InterruptedException ie) {
-                L.e("[ModuleDeviceIdCore] Exception during tests", ie);
+                L.e("[ModuleDeviceIdCore] Exception during tests " + ie);
             }
         }
 

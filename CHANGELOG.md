@@ -1,3 +1,6 @@
+22.06.0
+* "enableTestMode", "disableTestMode" and "isTestModeEnabled" methods in SDK configuration have been removed, and their functionalities have been terminated.
+
 20.11.5
 * Fixed a bug where the backend mode module produces "null pointer exceptions" in case not initialized.
 

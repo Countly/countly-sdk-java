@@ -80,7 +80,7 @@ public abstract class SDKModules implements SDKInterface {
                     module.stop(ctx, clear);
                     Utils.reflectiveSetField(module, "active", false);
                 } catch (Throwable e) {
-                    L.e("[SDKModules] Exception while stopping " + module.getClass(), e);
+                    L.e("[SDKModules] Exception while stopping " + module.getClass() + " " + e);
                 }
             }
         });
@@ -262,20 +262,20 @@ public abstract class SDKModules implements SDKInterface {
         try {
             return (Module)cls.getConstructors()[0].newInstance();
         } catch (InstantiationException e) {
-            L.e("[SDKModules] Module cannot be instantiated", e);
+            L.e("[SDKModules] Module cannot be instantiated" + e);
         } catch (IllegalAccessException e) {
-            L.e("[SDKModules] Module constructor cannot be accessed", e);
+            L.e("[SDKModules] Module constructor cannot be accessed" + e);
         } catch (InvocationTargetException e) {
-            L.e("[SDKModules] Module constructor cannot be invoked", e);
+            L.e("[SDKModules] Module constructor cannot be invoked" + e);
         } catch (IllegalArgumentException e) {
             try {
                 return (Module)cls.getConstructors()[0].newInstance((Object)null);
             } catch (InstantiationException e1) {
-                L.e("[SDKModules] Module cannot be instantiated", e);
+                L.e("[SDKModules] Module cannot be instantiated" + e);
             } catch (IllegalAccessException e1) {
-                L.e("[SDKModules] Module constructor cannot be accessed", e);
+                L.e("[SDKModules] Module constructor cannot be accessed" + e);
             } catch (InvocationTargetException e1) {
-                L.e("[SDKModules] Module constructor cannot be invoked", e);
+                L.e("[SDKModules] Module constructor cannot be invoked" + e);
             }
         }
         return null;

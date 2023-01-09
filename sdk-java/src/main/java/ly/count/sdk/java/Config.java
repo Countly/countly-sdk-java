@@ -262,7 +262,7 @@ public class Config {
     /**
      * Log listener
      */
-    protected Log.LogCallback loglistener = null;
+    protected Log.LogCallback logListener = null;
 
 
     /**
@@ -584,7 +584,7 @@ public class Config {
      * @return Returns the same config object for convenient linking
      */
     public Config setLogListener(Log.LogCallback logCallback) {
-        this.loglistener = logCallback;
+        this.logListener = logCallback;
         return this;
     }
 
@@ -1331,11 +1331,11 @@ public class Config {
     }
 
     /**
-     * Getter for {@link #loglistener}
-     * @return {@link #loglistener} value
+     * Getter for {@link #logListener}
+     * @return {@link #logListener} value
      */
     public Log.LogCallback getLogListener() {
-        return loglistener;
+        return logListener;
     }
 
     /**

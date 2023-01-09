@@ -130,20 +130,20 @@ public class UserImpl extends User implements Storable {
             stream.close();
             return bytes.toByteArray();
         } catch (IOException e) {
-          L.e("[UserImpl Cannot serialize session", e);
+          L.e("[UserImpl Cannot serialize session" + e);
         } finally {
             if (stream != null) {
                 try {
                     stream.close();
                 } catch (IOException e) {
-                  L.e("[UserImpl Cannot happen", e);
+                  L.e("[UserImpl Cannot happen" + e);
                 }
             }
             if (bytes != null) {
                 try {
                     bytes.close();
                 } catch (IOException e) {
-                  L.e("[UserImpl Cannot happen", e);
+                  L.e("[UserImpl Cannot happen" + e);
                 }
             }
         }
@@ -195,20 +195,20 @@ public class UserImpl extends User implements Storable {
 
             return true;
         } catch (IOException | ClassNotFoundException e) {
-          L.e("[UserImpl Cannot deserialize session", e);
+          L.e("[UserImpl Cannot deserialize session" + e);
         } finally {
             if (stream != null) {
                 try {
                     stream.close();
                 } catch (IOException e) {
-                  L.e("[UserImpl Cannot happen", e);
+                  L.e("[UserImpl Cannot happen" + e);
                 }
             }
             if (bytes != null) {
                 try {
                     bytes.close();
                 } catch (IOException e) {
-                  L.e("[UserImpl Cannot happen", e);
+                  L.e("[UserImpl Cannot happen" + e);
                 }
             }
         }
@@ -222,7 +222,7 @@ public class UserImpl extends User implements Storable {
                 "id='" + id + '\'' +
                 ", name='" + name + '\'' +
                 ", username='" + username + '\'' +
-                ", email='" + email + '\'' +
+                " + email='" + email + '\'' +
                 ", org='" + org + '\'' +
                 ", phone='" + phone + '\'' +
                 ", picturePath='" + picturePath + '\'' +

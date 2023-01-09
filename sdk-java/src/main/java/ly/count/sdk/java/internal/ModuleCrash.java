@@ -30,7 +30,7 @@ public class ModuleCrash extends ModuleBase {
                 Class cls = Class.forName(config.getCrashProcessorClass());
                 crashProcessor = (CrashProcessor) cls.getConstructors()[0].newInstance();
             } catch (Throwable t) {
-                L.e("[ModuleCrash] Cannot instantiate CrashProcessor", t);
+                L.e("[ModuleCrash] Cannot instantiate CrashProcessor" + t);
             }
         }
     }
@@ -45,7 +45,7 @@ public class ModuleCrash extends ModuleBase {
                 ctx.getSDK().storablePurge(ctx, CrashImplCore.getStoragePrefix());
             }
         } catch (Throwable t) {
-            L.e("[ModuleCrash] Exception while stopping crash reporting", t);
+            L.e("[ModuleCrash] Exception while stopping crash reporting" + t);
         }
     }
 
@@ -118,7 +118,7 @@ public class ModuleCrash extends ModuleBase {
                 }
 
             } catch (Throwable t) {
-                L.e("[ModuleCrash] Error when calling CrashProcessor#process(Crash)", t);
+                L.e("[ModuleCrash] Error when calling CrashProcessor#process(Crash)" + t);
             }
         }
         if (!Storage.push(ctx, crash)) {
