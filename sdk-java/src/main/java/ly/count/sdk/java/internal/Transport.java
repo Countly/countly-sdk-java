@@ -140,7 +140,7 @@ public class Transport implements X509TrustManager {
 
         String path = config.getServerURL().toString() + endpoint;
         String picture = request.params.remove(UserEditorImpl.PICTURE_PATH);
-        boolean usingGET = !config.isUsePOST() && request.isGettable(config.getServerURL()) && Utils.isEmpty(picture);
+        boolean usingGET = !config.isUsePOST() && request.isGettable(config.getServerURL()) && Utils.isEmptyOrNull(picture);
 
         if (usingGET && config.getParameterTamperingProtectionSalt() != null) {
             request.params.add(CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, request.params.toString() + config.getParameterTamperingProtectionSalt()));

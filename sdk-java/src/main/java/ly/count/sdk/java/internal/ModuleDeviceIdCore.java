@@ -254,7 +254,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
      * @param id device id to change to
      */
     public void login(CtxCore ctx, String id) {
-        if (Utils.isEmpty(id)) {
+        if (Utils.isEmptyOrNull(id)) {
             L.wtf("Empty id passed to login method");
         } else {
             final Config.DID old = ctx.getConfig().getDeviceId();
@@ -303,7 +303,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
      * @param id new user id
      */
     public void changeDeviceId(CtxCore ctx, String id, boolean withMerge) {
-        if (Utils.isEmpty(id)) {
+        if (Utils.isEmptyOrNull(id)) {
             L.wtf("Empty id passed to resetId method");
         } else {
             final Config.DID old = ctx.getConfig().getDeviceId();
