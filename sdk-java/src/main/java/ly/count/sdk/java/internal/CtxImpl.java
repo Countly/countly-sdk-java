@@ -6,9 +6,9 @@ import ly.count.sdk.java.internal.InternalConfig;
 import ly.count.sdk.java.internal.Log;
 
 /**
- * {@link Ctx} implementation
+ * {@link CtxCore} implementation
  */
-public class CtxImpl implements Ctx {
+public class CtxImpl implements CtxCore {
    // private static final Log.Module L = Log.module("[CtxImpl]");
 
     Log L = null;
