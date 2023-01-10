@@ -19,7 +19,7 @@ public class CrashImpl extends CrashImplCore implements Crash, Storable {
         return (CrashImpl) super.add(key, value);
     }
 
-    public CrashImpl putMetrics(Ctx ctx, Long runningTime) {
+    public CrashImpl putMetrics(CtxCore ctx, Long runningTime) {
         super.putMetricsCore(ctx, runningTime);
         return add("_device", Device.dev.getDevice())
                 .add("_os", Device.dev.getOS())
