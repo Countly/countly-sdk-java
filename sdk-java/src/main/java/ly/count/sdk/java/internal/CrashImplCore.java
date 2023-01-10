@@ -165,7 +165,7 @@ public class CrashImplCore implements Crash, Storable {
     public List<String> getLogs() {
         try {
             String logs = this.data.getString("_logs");
-            return Utils.isEmpty(logs) ? null : Arrays.asList(logs.split("\n"));
+            return Utils.isEmptyOrNull(logs) ? null : Arrays.asList(logs.split("\n"));
         } catch (JSONException e) {
             return null;
         }
@@ -230,7 +230,7 @@ public class CrashImplCore implements Crash, Storable {
     public CrashImplCore putMetricsCore(CtxCore ctx, Long runningTime) {
         String version = ctx.getConfig().getApplicationVersion();
         return add("_os", DeviceCore.dev.getOS())
-                .add("_app_version", Utils.isEmpty(version) ? "0.0" : version)
+                .add("_app_version", Utils.isEmptyOrNull(version) ? "0.0" : version)
                 .add("_os_version", DeviceCore.dev.getOSVersion())
                 .add("_ram_current", DeviceCore.dev.getRAMAvailable())
                 .add("_ram_total", DeviceCore.dev.getRAMTotal())

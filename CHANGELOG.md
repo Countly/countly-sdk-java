@@ -1,4 +1,5 @@
 22.06.0
+* The "resetDeviceId", "login", and "logout" have been deprecated.
 * ! Minor breaking change ! The following methods and their functionality is removed from the "Config" class: "enableTestMode", "disableTestMode" and "isTestModeEnabled". The "TestMode" functionality is being removed from the SDK.
 
 20.11.5
