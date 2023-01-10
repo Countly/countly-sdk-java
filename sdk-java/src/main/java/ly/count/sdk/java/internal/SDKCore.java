@@ -37,7 +37,6 @@ public abstract class SDKCore implements SDKInterface {
     }
 
     protected SDKCore() {
-        super();
         this.modules = new TreeMap<>();
         instance = this;
 
@@ -698,6 +697,49 @@ public abstract class SDKCore implements SDKInterface {
                 Boolean success = session.recover(config);
                 L.d("[SDKCore] session " + id + " recovery " + (success == null ? "won't recover" : success ? "success" : "failure"));
             }
+        }
+    }
+
+    /**
+     * Core instance config
+     */
+
+
+    @Override
+    public void onSignal(CtxCore ctx, int id, Byteable param1, Byteable param2) {
+        if (id == Signal.DID.getIndex()) {
+            networking.check(ctx);
+        }
+    }
+
+    @Override
+    public void onSignal(CtxCore ctx, int id, String param) {
+        if (id == Signal.Ping.getIndex()){
+            networking.check(ctx);
+        } else if (id == Signal.Crash.getIndex()) {
+            processCrash(ctx, Long.parseLong(param));
+        }
+    }
+
+    private boolean processCrash(CtxCore ctx, Long id) {
+        CrashImpl crash = new CrashImpl(id, L);
+        crash = Storage.read(ctx, crash);
+
+        if (crash == null) {
+            L.e("Cannot read crash from storage, skipping");
+            return false;
+        }
+
+        Request request = ModuleRequests.nonSessionRequest(ctx);
+        ModuleCrash.putCrashIntoParams(crash, request.params);
+        if (Storage.push(ctx, request)) {
+            L.i("[SDKLifecycle] Added request " + request.storageId() + " instead of crash " + crash.storageId());
+            networking.check(ctx);
+            Boolean success = Storage.remove(ctx, crash);
+            return success == null ? false : success;
+        } else {
+            L.e("[SDKLifecycle] Couldn't write request " + request.storageId() + " instead of crash " + crash.storageId());
+            return false;
         }
     }
 }
