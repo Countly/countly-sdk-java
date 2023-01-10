@@ -120,6 +120,9 @@ public class ModuleDeviceIdCore extends ModuleBase {
                     @Override
                     public void call(Config.DID id) throws Exception {
                         if (id != null) {
+                            if(id.strategy == Config.DID.STRATEGY_UUID) {
+                                L.i("During init, custom device id was not provided. SDK has generated a random device id.");
+                            }
                             L.d("[ModuleDeviceIdCore] Got device id: " + id);
                             SDKCore.instance.onDeviceId(ctx, id, null);
                         } else {
@@ -254,7 +257,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
      * @param id device id to change to
      */
     public void login(CtxCore ctx, String id) {
-        if (Utils.isEmpty(id)) {
+        if (Utils.isEmptyOrNull(id)) {
             L.e("[ModuleDeviceIdCore] Empty id passed to login method");
         } else {
             final Config.DID old = ctx.getConfig().getDeviceId();
@@ -303,7 +306,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
      * @param id new user id
      */
     public void changeDeviceId(CtxCore ctx, String id, boolean withMerge) {
-        if (Utils.isEmpty(id)) {
+        if (Utils.isEmptyOrNull(id)) {
             L.e("[ModuleDeviceIdCore] Empty id passed to resetId method");
         } else {
             final Config.DID old = ctx.getConfig().getDeviceId();

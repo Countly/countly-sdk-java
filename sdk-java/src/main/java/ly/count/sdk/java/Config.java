@@ -647,7 +647,7 @@ public class Config {
      * @return {@code this} instance for method chaining
      */
     public Config setCustomDeviceId(String customDeviceId) {
-        if (Utils.isEmpty(customDeviceId)) {
+        if (Utils.isEmptyOrNull(customDeviceId)) {
             System.out.print("[ConfigCore] DeviceIdStrategy.CUSTOM_ID strategy cannot be used without device id specified");
         } else {
             this.customDeviceId = customDeviceId;
@@ -716,7 +716,7 @@ public class Config {
      * @return {@code this} instance for method chaining
      */
     public Config enableParameterTamperingProtection(String salt) {
-        if (Utils.isEmpty(salt)) {
+        if (Utils.isEmptyOrNull(salt)) {
             System.out.print("[ConfigCore] Salt cannot be empty in enableParameterTamperingProtection");
         } else {
             this.salt = salt;
@@ -854,7 +854,7 @@ public class Config {
      * @return {@code this} instance for method chaining
      */
     public Config setSdkName(String sdkName) {
-        if (Utils.isEmpty(sdkName)) {
+        if (Utils.isEmptyOrNull(sdkName)) {
             System.out.print("[ConfigCore] sdkName cannot be empty");
         } else {
             this.sdkName = sdkName;
@@ -869,7 +869,7 @@ public class Config {
      * @return {@code this} instance for method chaining
      */
     public Config setSdkVersion(String sdkVersion) {
-        if (Utils.isEmpty(sdkVersion)) {
+        if (Utils.isEmptyOrNull(sdkVersion)) {
             System.out.print("[ConfigCore] sdkVersion cannot be empty");
         } else {
             this.sdkVersion = sdkVersion;
@@ -884,7 +884,7 @@ public class Config {
      * @return {@code this} instance for method chaining
      */
     public Config setApplicationName(String name) {
-        if (Utils.isEmpty(name)) {
+        if (Utils.isEmptyOrNull(name)) {
             System.out.print("[ConfigCore] name cannot be empty");
         } else {
             this.applicationName = name;
@@ -899,7 +899,7 @@ public class Config {
      * @return {@code this} instance for method chaining
      */
     public Config setApplicationVersion(String version) {
-        if (Utils.isEmpty(version)) {
+        if (Utils.isEmptyOrNull(version)) {
             System.out.print("[ConfigCore] version cannot be empty");
         } else {
             this.applicationVersion = version;
@@ -989,7 +989,7 @@ public class Config {
      * @return {@code this} instance for method chaining
      */
     public Config addPublicKeyPin(String pemEncodedPublicKey) {
-        if (Utils.isEmpty(pemEncodedPublicKey)) {
+        if (Utils.isEmptyOrNull(pemEncodedPublicKey)) {
             System.out.print("[ConfigCore] pemEncodedPublicKey cannot be empty");
         } else {
             if (publicKeyPins == null) {
@@ -1021,7 +1021,7 @@ public class Config {
      * @return {@code this} instance for method chaining
      */
     public Config addCertificatePin(String pemEncodedCertificate) {
-        if (Utils.isEmpty(pemEncodedCertificate)) {
+        if (Utils.isEmptyOrNull(pemEncodedCertificate)) {
             System.out.print("[ConfigCore] pemEncodedCertificate cannot be empty");
         } else {
             if (certificatePins == null) {

@@ -105,7 +105,7 @@ public class Utils {
      * @param str string to check
      * @return true if null or empty string, false otherwise
      */
-    public static boolean isEmpty(String str) {
+    public static boolean isEmptyOrNull(String str) {
         return str == null || "".equals(str);
     }
 
@@ -116,7 +116,7 @@ public class Utils {
      * @return false if null or empty string, true otherwise
      */
     public static boolean isNotEmpty(String str) {
-        return !isEmpty(str);
+        return !isEmptyOrNull(str);
     }
 
     public static boolean isNotEqual(Object a, Object b) {

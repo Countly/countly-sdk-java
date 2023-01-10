@@ -13,11 +13,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import ly.count.sdk.java.internal.Log;
-import ly.count.sdk.java.internal.Storable;
-import ly.count.sdk.java.internal.Storage;
-import ly.count.sdk.java.internal.Utils;
-
 abstract class SDKStorage extends SDKLifecycle {
     private static final String FILE_NAME_PREFIX = "[CLY]";
     private static final String FILE_NAME_SEPARATOR = "_";
@@ -41,7 +36,7 @@ abstract class SDKStorage extends SDKLifecycle {
     }
 
     private static String getName(String ...names) {
-        if (names == null || names.length == 0 || Utils.isEmpty(names[0])) {
+        if (names == null || names.length == 0 || Utils.isEmptyOrNull(names[0])) {
             return FILE_NAME_PREFIX;
         } else {
             StringBuilder prefix = new StringBuilder(FILE_NAME_PREFIX);
@@ -246,7 +241,7 @@ abstract class SDKStorage extends SDKLifecycle {
 
     @Override
     public List<Long> storableList(ly.count.sdk.java.internal.CtxCore context, String prefix, int slice) {
-        if (Utils.isEmpty(prefix)) {
+        if (Utils.isEmptyOrNull(prefix)) {
             L.e("[SDKStorage] Cannot get list of ids without prefix");
         }
         prefix = prefix + FILE_NAME_SEPARATOR;
