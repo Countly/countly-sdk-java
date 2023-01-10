@@ -8,7 +8,6 @@ import java.util.*;
 import java.util.concurrent.Future;
 
 public abstract class SDKCore implements SDKInterface {
-   // private static final Log.Module L = Log.module("SDKCore");
 
     protected static SDKCore instance;
 
@@ -703,7 +702,6 @@ public abstract class SDKCore implements SDKInterface {
     /**
      * Core instance config
      */
-
 
     @Override
     public void onSignal(CtxCore ctx, int id, Byteable param1, Byteable param2) {
