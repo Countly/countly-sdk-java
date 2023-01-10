@@ -13,11 +13,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import ly.count.sdk.java.internal.Log;
-import ly.count.sdk.java.internal.Storable;
-import ly.count.sdk.java.internal.Storage;
-import ly.count.sdk.java.internal.Utils;
-
 abstract class SDKStorage extends SDKLifecycle {
     private static final String FILE_NAME_PREFIX = "[CLY]";
     private static final String FILE_NAME_SEPARATOR = "_";
