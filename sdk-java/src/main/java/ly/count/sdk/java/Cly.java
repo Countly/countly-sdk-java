@@ -10,11 +10,12 @@ public abstract class Cly implements Usage {
     protected static Cly cly;
     protected CtxCore ctx;
     protected SDKInterface sdkInterface;
+    
+    protected Log L = null;
 
-    private static final Log.Module L = Log.module("Cly");
-
-    protected Cly() {
+    protected Cly(Log logger) {
         cly = this;
+        L = logger;
     }
 
     protected static Session session(CtxCore ctx) {
@@ -27,13 +28,13 @@ public abstract class Cly implements Usage {
 
     @Override
     public Event event(String key) {
-        L.d("event: key = " + key);
+        L.d("[Cly] event: key = " + key);
         return ((Session) sdkInterface.session(ctx, null)).event(key);
     }
 
     @Override
     public Event timedEvent(String key) {
-        L.d("timedEvent: key = " + key);
+        L.d("[Cly] timedEvent: key = " + key);
         return ((Session) sdkInterface.session(ctx, null)).timedEvent(key);
     }
 
@@ -46,43 +47,43 @@ public abstract class Cly implements Usage {
      */
     @Override
     public User user() {
-        L.d("user");
+        L.d("[Cly] user");
         return ((Session) sdkInterface.session(ctx, null)).user();
     }
 
     @Override
     public Usage addParam(String key, Object value) {
-        L.d("addParam: key = " + key + " value = " + value);
+        L.d("[Cly] addParam: key = " + key + " value = " + value);
         return ((Session) sdkInterface.session(ctx, null)).addParam(key, value);
     }
 
     @Override
     public Usage addCrashReport(Throwable t, boolean fatal) {
-        L.d("addCrashReport: t = " + t + " fatal = " + fatal);
+        L.d("[Cly] addCrashReport: t = " + t + " fatal = " + fatal);
         return ((Session) sdkInterface.session(ctx, null)).addCrashReport(t, fatal);
     }
 
     @Override
     public Usage addCrashReport(Throwable t, boolean fatal, String name, Map<String, String> segments, String... logs) {
-        L.d("addCrashReport: t = " + t + " fatal = " + fatal + " name = " + name + " segments = " + segments + " logs = " + logs);
+        L.d("[Cly] addCrashReport: t = " + t + " fatal = " + fatal + " name = " + name + " segments = " + segments + " logs = " + logs);
         return ((Session) sdkInterface.session(ctx, null)).addCrashReport(t, fatal, name, segments, logs);
     }
 
     @Override
     public Usage addLocation(double latitude, double longitude) {
-        L.d("addLocation: latitude = " + latitude + " longitude = " + longitude);
+        L.d("[Cly] addLocation: latitude = " + latitude + " longitude = " + longitude);
         return ((Session) sdkInterface.session(ctx, null)).addLocation(latitude, longitude);
     }
 
     @Override
     public View view(String name, boolean start) {
-        L.d("view: name = " + name + " start = " + start);
+        L.d("[Cly] view: name = " + name + " start = " + start);
         return ((Session) sdkInterface.session(ctx, null)).view(name, start);
     }
 
     @Override
     public View view(String name) {
-        L.d("view: name = " + name);
+        L.d("[Cly] view: name = " + name);
         return ((Session) sdkInterface.session(ctx, null)).view(name);
     }
 }

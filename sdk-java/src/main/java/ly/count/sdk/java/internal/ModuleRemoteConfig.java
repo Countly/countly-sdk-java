@@ -10,7 +10,6 @@ import java.util.Iterator;
 import java.util.Map;
 
 public class ModuleRemoteConfig extends ModuleBase {
-    protected static final Log.Module L = Log.module("RemoteConfig");
 
     //after how much time the timeout error is returned
     Long rcRequestTimeout = 5000L;
@@ -45,8 +44,8 @@ public class ModuleRemoteConfig extends ModuleBase {
     }
 
     @Override
-    public void init(InternalConfig config) {
-        super.init(config);
+    public void init(InternalConfig config, Log logger) {
+        super.init(config, logger);
         requestCallbacks = new HashMap<Long, RemoteConfigCallback>();
     }
 
@@ -113,7 +112,7 @@ public class ModuleRemoteConfig extends ModuleBase {
                 saveStoredValues(stored);
 
             } catch (Exception e) {
-                L.e("Failed merging new values into old ones", e);
+                L.e("Failed merging new values into old ones" + e);
                 error = "Error merging results";
             }
         } else {
@@ -188,7 +187,7 @@ public class ModuleRemoteConfig extends ModuleBase {
                     Object value = newValues.get(key);
                     values.put(key, value);
                 } catch (Exception e) {
-                    L.wtf("Failed merging new remote config values", e);
+                    System.out.println("[ERROR][ModuleRemoteConfig]  Failed merging new remote config values " + e);
                 }
             }
         }
@@ -212,7 +211,7 @@ public class ModuleRemoteConfig extends ModuleBase {
             try {
                 return values.toString().getBytes(Utils.UTF8);
             } catch (UnsupportedEncodingException e) {
-                L.wtf("UTF is not supported for RemoteConfigValueStore", e);
+                System.out.println("[ERROR][ModuleRemoteConfig]  UTF is not supported for RemoteConfigValueStore " + e);
                 return null;
             }
         }
@@ -224,11 +223,11 @@ public class ModuleRemoteConfig extends ModuleBase {
                 try {
                     values = new JSONObject(json);
                 } catch (JSONException e) {
-                    L.e("Couldn't decode RemoteConfigValueStore successfully", e);
+                    System.out.println("[ERROR][ModuleRemoteConfig]  Couldn't decode RemoteConfigValueStore successfully " + e);
                 }
                 return true;
             } catch (UnsupportedEncodingException e) {
-                L.wtf("Cannot deserialize RemoteConfigValueStore", e);
+                System.out.println("[ERROR][ModuleRemoteConfig]  Cannot deserialize RemoteConfigValueStore " + e);
             }
 
             return false;

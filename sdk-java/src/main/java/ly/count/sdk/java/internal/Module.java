@@ -26,7 +26,7 @@ public interface Module {
      * @throws IllegalArgumentException in case supplied {@link InternalConfig} is not consistent.
      * @throws IllegalStateException if some required for this module platform feature is not available on this platform.
      */
-    void init (InternalConfig config) throws IllegalArgumentException, IllegalStateException;
+    void init (InternalConfig config, Log logger) throws IllegalArgumentException, IllegalStateException;
 
     /**
      * App user decided to opt out from analytics or developer changed important preferences.

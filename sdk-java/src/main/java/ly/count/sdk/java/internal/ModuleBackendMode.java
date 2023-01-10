@@ -12,7 +12,6 @@ import java.util.concurrent.TimeUnit;
 
 public class ModuleBackendMode extends ModuleBase {
 
-    protected static final Log.Module L = Log.module("BackendMode");
     protected InternalConfig internalConfig = null;
     protected CtxCore ctx = null;
 
@@ -29,15 +28,16 @@ public class ModuleBackendMode extends ModuleBase {
     String[] userPredefinedKeys = {"name", "username", "email", "organization", "phone", "gender", "byear"};
 
     @Override
-    public void init(InternalConfig config) {
+    public void init(InternalConfig config, Log logger) {
+        super.init(config, logger);
         internalConfig = config;
-        L.d("init: config = " + config);
+        L.d("[BackendMode] init: config = " + config);
     }
 
     @Override
     public void onContextAcquired(CtxCore ctx) {
         this.ctx = ctx;
-        L.d("onContextAcquired: " + ctx.toString());
+        L.d("[BackendMode] onContextAcquired: " + ctx.toString());
 
         if (ctx.getConfig().isBackendModeEnabled() && ctx.getConfig().getSendUpdateEachSeconds() > 0 && executor == null) {
             executor = Executors.newScheduledThreadPool(1);
@@ -313,7 +313,7 @@ public class ModuleBackendMode extends ModuleBase {
     }
 
     private synchronized void addEventsToRequestQ() {
-        L.d("addEventsToRequestQ");
+        L.d("[BackendMode] addEventsToRequestQ");
 
         for (String s : eventQueues.keySet()) {
             addEventsAgainstDeviceIdToRequestQ(s);
@@ -326,9 +326,9 @@ public class ModuleBackendMode extends ModuleBase {
 
     private void addRequestToRequestQ(Request request) {
         synchronized(SDKCore.instance.lockBRQStorage) {
-            L.d("addRequestToRequestQ");
+            L.d("[BackendMode] addRequestToRequestQ");
             if (internalConfig.getRequestQueueMaxSize() == SDKCore.instance.requestQueueMemory.size()) {
-                L.d("addRequestToRequestQ: In Memory request queue is full, dropping oldest request: " + request.params.toString());
+                L.d("[BackendMode] addRequestToRequestQ: In Memory request queue is full, dropping oldest request: " + request.params.toString());
                 SDKCore.instance.requestQueueMemory.remove();
             }
 
@@ -358,7 +358,7 @@ public class ModuleBackendMode extends ModuleBase {
 
             if (!isValidDataType) {
                 toRemove.add(item.getKey());
-                L.w("RemoveSegmentInvalidDataTypes: In segmentation Data type '" + type + "' of item '" + item.getValue() + "' isn't valid.");
+                L.w("[BackendMode] RemoveSegmentInvalidDataTypes: In segmentation Data type '" + type + "' of item '" + item.getValue() + "' isn't valid.");
             }
         }
 
@@ -386,12 +386,12 @@ public class ModuleBackendMode extends ModuleBase {
             }
 
             if (deviceID == null || deviceID.isEmpty()) {
-                L.e("recordView: DeviceID can not be null or empty.");
+                L.e("[BackendMode] recordView: DeviceID can not be null or empty.");
                 return;
             }
 
             if (name == null || name.isEmpty()) {
-                L.e("recordView: Name can not be null or empty.");
+                L.e("[BackendMode] recordView: Name can not be null or empty.");
                 return;
             }
 
@@ -423,12 +423,12 @@ public class ModuleBackendMode extends ModuleBase {
             }
 
             if (deviceID == null || deviceID.isEmpty()) {
-                L.e("recordEvent: DeviceID can not be null or empty.");
+                L.e("[BackendMode] recordEvent: DeviceID can not be null or empty.");
                 return;
             }
 
             if (key == null || key.isEmpty()) {
-                L.e("recordEvent: Event key can not be null or empty.");
+                L.e("[BackendMode] recordEvent: Event key can not be null or empty.");
                 return;
             }
 
@@ -454,7 +454,7 @@ public class ModuleBackendMode extends ModuleBase {
             }
 
             if (deviceID == null || deviceID.isEmpty()) {
-                L.e("sessionBegin: DeviceID can not be null or empty.");
+                L.e("[BackendMode] sessionBegin: DeviceID can not be null or empty.");
                 return;
             }
 
@@ -476,7 +476,7 @@ public class ModuleBackendMode extends ModuleBase {
             }
 
             if (deviceID == null || deviceID.isEmpty()) {
-                L.e("sessionUpdate: DeviceID can not be null or empty.");
+                L.e("[BackendMode] sessionUpdate: DeviceID can not be null or empty.");
                 return;
             }
 
@@ -502,7 +502,7 @@ public class ModuleBackendMode extends ModuleBase {
             }
 
             if (deviceID == null || deviceID.isEmpty()) {
-                L.e("sessionEnd: DeviceID can not be null or empty.");
+                L.e("[BackendMode] sessionEnd: DeviceID can not be null or empty.");
                 return;
             }
 
@@ -530,12 +530,12 @@ public class ModuleBackendMode extends ModuleBase {
             }
 
             if (deviceID == null || deviceID.isEmpty()) {
-                L.e("recordException: DeviceID can not be null or empty.");
+                L.e("[BackendMode] recordException: DeviceID can not be null or empty.");
                 return;
             }
 
             if (throwable == null) {
-                L.e("recordException: throwable can not be null.");
+                L.e("[BackendMode] recordException: throwable can not be null.");
                 return;
             }
 
@@ -564,17 +564,17 @@ public class ModuleBackendMode extends ModuleBase {
             }
 
             if (deviceID == null || deviceID.isEmpty()) {
-                L.e("recordException: DeviceID can not be null or empty.");
+                L.e("[BackendMode] recordException: DeviceID can not be null or empty.");
                 return;
             }
 
             if (message == null || message.isEmpty()) {
-                L.e("recordException: message can not be null or empty.");
+                L.e("[BackendMode] recordException: message can not be null or empty.");
                 return;
             }
 
             if (stacktrace == null || stacktrace.isEmpty()) {
-                L.e("recordException: stacktrace can not be null.");
+                L.e("[BackendMode] recordException: stacktrace can not be null.");
                 return;
             }
 
@@ -596,11 +596,11 @@ public class ModuleBackendMode extends ModuleBase {
             }
 
             if (deviceID == null || deviceID.isEmpty()) {
-                L.e("recordUserProperties: DeviceID can not be null or empty.");
+                L.e("[BackendMode] recordUserProperties: DeviceID can not be null or empty.");
                 return;
             }
             if (userProperties == null || userProperties.isEmpty()) {
-                L.e("recordUserProperties: userProperties can not be null or empty.");
+                L.e("[BackendMode] recordUserProperties: userProperties can not be null or empty.");
                 return;
             }
 
@@ -622,11 +622,11 @@ public class ModuleBackendMode extends ModuleBase {
             }
 
             if (deviceID == null || deviceID.isEmpty()) {
-                L.e("recordDirectRequest: DeviceID can not be null or empty.");
+                L.e("[BackendMode] recordDirectRequest: DeviceID can not be null or empty.");
                 return;
             }
             if (requestData == null || requestData.isEmpty()) {
-                L.e("recordDirectRequest: requestData can not be null or empty.");
+                L.e("[BackendMode] recordDirectRequest: requestData can not be null or empty.");
                 return;
             }
             recordDirectRequestInternal(deviceID, requestData, timestamp);

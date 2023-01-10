@@ -21,12 +21,13 @@ public class EventImplTests extends BaseTestsCore {
     SDKInterface sdk = mock(SDKInterface.class);
     InternalConfig config;
 
+    Log L = null;
+
     @Before
     public void setupEveryTest() throws Exception {
         config = new InternalConfig(new Config("http://www.serverurl.com", "1234"));
-        Log log = new Log();
-        log.init(config);
-        ctx = new CtxImpl(sdk, config, new Object());
+        L = new Log(config);
+        ctx = new CtxImpl(sdk, config, new Object(), L);
     }
 
     @Test

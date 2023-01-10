@@ -6,12 +6,12 @@ import ly.count.sdk.java.internal.Storable;
 
 public class CrashImpl extends CrashImplCore implements Crash, Storable {
 
-    protected CrashImpl() {
-        super();
-    }
+//    protected CrashImpl() {
+//        super();
+//    }
 
-    public CrashImpl(Long id) {
-        super(id);
+    public CrashImpl(Long id, Log logger) {
+        super(id, logger);
     }
 
     @Override

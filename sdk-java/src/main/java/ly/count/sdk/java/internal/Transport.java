@@ -54,7 +54,7 @@ import org.json.JSONObject;
 //class Network extends ModuleBase { - may be
 
 public class Transport implements X509TrustManager {
-    private static final Log.Module L = Log.module("network");
+    private Log L = null;
     private static final String PARAMETER_TAMPERING_DIGEST = "SHA-256";
     private static final String CHECKSUM = "checksum256";
     private InternalConfig config;
@@ -69,12 +69,12 @@ public class Transport implements X509TrustManager {
     }
 
     /**
-     * @see Module#init(InternalConfig)
+     * @see Module#init(InternalConfig, Log)
      *
      * @param config
      * @throws IllegalArgumentException
      */
-    public void init (InternalConfig config) throws IllegalArgumentException {
+    public void init (InternalConfig config, Log logger) throws IllegalArgumentException {
         // ssl config (cert & public key pinning)
         // sha1 signing
         // 301/302 handling, probably configurable (like allowFollowingRedirects) and with response
@@ -84,7 +84,8 @@ public class Transport implements X509TrustManager {
         // network status callbacks - may be
         // APM stuff - later
 
-        L.i("Server: " + config.getServerURL());
+        L = logger;
+        L.i("[network] Server: " + config.getServerURL());
         this.config = config;
 
 
@@ -159,7 +160,7 @@ public class Transport implements X509TrustManager {
             OutputStream output = null;
             PrintWriter writer = null;
             try {
-                L.d("Picture " + picture);
+                L.d("[network] Picture " + picture);
                 byte[] data = picture == null ? null : pictureData(user, picture);
 
                 if (data != null) {
@@ -246,7 +247,7 @@ public class Transport implements X509TrustManager {
                     File f = new File(picture);
                     protocol = f.toURI().toURL().getProtocol();
                 } catch (Throwable tt) {
-                    L.w("Couldn't determine picturePath protocol", tt);
+                    L.w("[network] Couldn't determine picturePath protocol " +  tt);
                 }
             }
             if (protocol != null && protocol.equals("file")) {
@@ -296,7 +297,7 @@ public class Transport implements X509TrustManager {
             }
             return total.toString();
         } catch (IOException e) {
-            L.w("Error while reading server response", e);
+            L.w("[network] Error while reading server response " + e);
             return null;
         } finally {
             if (reader != null) {
@@ -315,7 +316,7 @@ public class Transport implements X509TrustManager {
             }
 
             public Boolean send() {
-                L.i("[send] Sending request: " + request);
+                L.i("[network] [send] Sending request: " + request);
 
                 HttpURLConnection connection = null;
                 try {
@@ -341,7 +342,7 @@ public class Transport implements X509TrustManager {
                             }
                         }
                     } catch (InterruptedException ie) {
-                        L.w("Interrupted while waiting for did change request cooldown", ie);
+                        L.w("[network] Interrupted while waiting for did change request cooldown " + ie);
                     }
 
                     SDKCore.instance.onRequestCompleted(request, response, code, requestOwner);
@@ -349,7 +350,7 @@ public class Transport implements X509TrustManager {
                     return processResponse(code, response, request.storageId());
 
                 } catch (IOException e) {
-                    L.w("Error while sending request " + request, e);
+                    L.w("[network] Error while sending request " + request + " " + e);
                     return false;
                 } finally {
                     if (connection != null) {
@@ -361,14 +362,14 @@ public class Transport implements X509TrustManager {
     }
 
     Boolean processResponse(int code, String response, Long requestId) {
-        L.i("[processResponse] Code [" + code + "] response [" + response + "] for request[" + requestId + "]" );
+        L.i("[network] [processResponse] Code [" + code + "] response [" + response + "] for request[" + requestId + "]" );
 
         JSONObject jsonObject = new JSONObject(response);
         if (code >= 200 && code < 300 && jsonObject.has("result")) {
-            L.d("Success");
+            L.d("[network] Success");
             return true;
         } else {
-            L.w("Fail: code :" + code + ", result: " + response);
+            L.w("[network] Fail: code :" + code + ", result: " + response);
             return false;
         }
     }
@@ -415,13 +416,13 @@ public class Transport implements X509TrustManager {
                     PublicKey k = kf.generatePublic(spec);
                     keyPins.add(k.getEncoded());
                 } catch (InvalidKeySpecException e) {
-                    L.d("Certificate in instead of public key it seems", e);
+                    L.d("[network] Certificate in instead of public key it seems " + e);
                     CertificateFactory cf = CertificateFactory.getInstance("X.509");
                     Certificate cert = cf.generateCertificate(new ByteArrayInputStream(data));
                     keyPins.add(cert.getPublicKey().getEncoded());
                 }
             } catch (NoSuchAlgorithmException e) {
-                L.d("Shouldn't happen " + key);
+                L.d("[network] Shouldn't happen " + key);
             }
         }
 

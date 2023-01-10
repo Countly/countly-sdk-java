@@ -9,7 +9,6 @@ import ly.count.sdk.java.User;
  */
 
 public class ModuleRequests extends ModuleBase {
-    private static final Log.Module L = Log.module("ModuleRequests");
 
     private static Params metrics;
 
@@ -18,8 +17,8 @@ public class ModuleRequests extends ModuleBase {
     }
 
     @Override
-    public void init(InternalConfig config) {
-        super.init(config);
+    public void init(InternalConfig config, Log logger) {
+        super.init(config, logger);
     }
 
     @Override
@@ -112,7 +111,7 @@ public class ModuleRequests extends ModuleBase {
                 try {
                     callback.call(false);
                 } catch (Throwable t) {
-                    L.e("Shouldn't happen", t);
+                    System.out.println("[ModuleRequests] Shouldn't happen " + t);
                 }
             }
             return null;
@@ -125,6 +124,8 @@ public class ModuleRequests extends ModuleBase {
         if (!SDKCore.enabled(CoreFeature.Location)) {
             return null;
         }
+
+
 
         Request request = sessionRequest(ctx, null, null, null);
         request.params.add("location", latitude + "," + longitude);
@@ -239,14 +240,14 @@ public class ModuleRequests extends ModuleBase {
      * @return {@link Future} which resolves to {@code} true if stored successfully, false otherwise
      */
     public static Future<Boolean> pushAsync(final CtxCore ctx, final Request request, final Tasks.Callback<Boolean> callback) {
-        L.d("New request " + request.storageId() + ": " + request);
+        System.out.println("New request " + request.storageId() + ": " + request);
 
         if (request.isEmpty()) {
             if (callback != null) {
                 try {
                     callback.call(null);
                 } catch (Exception e) {
-                    L.wtf("Exception in a callback", e);
+                    System.out.println("[ModuleRequests] Exception in a callback " + e);
                 }
             }
             return null;

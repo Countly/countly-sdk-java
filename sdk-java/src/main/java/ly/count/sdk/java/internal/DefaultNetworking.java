@@ -1,7 +1,7 @@
 package ly.count.sdk.java.internal;
 
 public class DefaultNetworking implements Networking {
-    private static final Log.Module L = Log.module("Networking");
+    private Log L = null;
 
     private Transport transport;
     private Tasks tasks;
@@ -10,9 +10,10 @@ public class DefaultNetworking implements Networking {
 
     @Override
     public void init(CtxCore ctx, IStorageForRequestQueue storageForRequestQueue) {
+        L = ctx.getLogger();
         shutdown = false;
         transport = new Transport();
-        transport.init(ctx.getConfig());
+        transport.init(ctx.getConfig(), ctx.getLogger());
         tasks = new Tasks("network");
         this.storageForRequestQueue = storageForRequestQueue;
     }
@@ -24,7 +25,7 @@ public class DefaultNetworking implements Networking {
 
     @Override
     public boolean check(CtxCore ctx) {
-        L.d("[check] state: shutdown [" + shutdown + "], tasks running [" + tasks.isRunning() + "], net running [" + tasks.isRunning() + "], device id [" + ctx.getConfig().getDeviceId() + "]");
+        L.d("[Networking] [check] state: shutdown [" + shutdown + "], tasks running [" + tasks.isRunning() + "], net running [" + tasks.isRunning() + "], device id [" + ctx.getConfig().getDeviceId() + "]");
         if (!shutdown && !tasks.isRunning() && ctx.getConfig().getDeviceId() != null) {
             tasks.run(submit(ctx));
         }
@@ -39,20 +40,20 @@ public class DefaultNetworking implements Networking {
                 if (request == null) {
                     return false;
                 } else {
-                    L.d("Preparing request: " + request);
+                    L.d("[Networking] Preparing request: " + request);
                     final Boolean check = SDKCore.instance.isRequestReady(request);
                     if (check == null) {
-                        L.d("Request is not ready yet: " + request);
+                        L.d("[Networking] Request is not ready yet: " + request);
                         return false;
                     } else if (check.equals(Boolean.FALSE)){
-                        L.d("Request won't be ready, removing: " + request);
+                        L.d("[Networking] Request won't be ready, removing: " + request);
                         Storage.remove(ctx, request);
                         return true;
                     } else {
                         tasks.run(transport.send(request), new Tasks.Callback<Boolean>() {
                             @Override
                             public void call(Boolean result) throws Exception {
-                                L.d("Request " + request.storageId() + " sent?: " + result);
+                                L.d("[Networking] Request " + request.storageId() + " sent?: " + result);
                                 if (result) {
                                     storageForRequestQueue.removeRequest(request);
                                     check(ctx);
