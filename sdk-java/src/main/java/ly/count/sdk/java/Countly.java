@@ -1,6 +1,7 @@
 package ly.count.sdk.java;
 
 import java.io.File;
+import java.util.Map;
 
 import ly.count.sdk.java.internal.*;
 
@@ -14,7 +15,7 @@ import ly.count.sdk.java.internal.*;
  * </ul>
  */
 
-public class Countly extends CountlyLifecycle {
+public class Countly implements Usage {
 
     /**
      * A class responsible for storage of device information sent to Countly server.
@@ -25,11 +26,13 @@ public class Countly extends CountlyLifecycle {
 
     protected static Countly cly;
     protected SDK sdk;
+    protected CtxCore ctx;
+    protected Log L;
 
     protected Countly(SDK sdk, CtxImpl ctx, Log logger) {
-        super(logger);
         cly = this;
-        super.sdkInterface = this.sdk = sdk;
+        L = logger;
+        this.sdk = sdk;
         this.ctx = ctx;
     }
 
@@ -40,6 +43,82 @@ public class Countly extends CountlyLifecycle {
 //    private static CtxImpl ctx(File directory, String view) {
 //        return new CtxImpl(cly.sdk, cly.sdk.config(), directory, view);
 //    }
+
+    //protected CtxImpl ctx;
+
+    /**
+     * Initialize Countly.
+     * To be called only once on application start.
+     *
+     * @param directory storage location for Countly
+     * @param config configuration object
+     */
+    public static void init (final File directory, final Config config) {
+        if (config == null) {
+            System.out.println("[ERROR][Countly] Config cannot be null");
+        }
+        else if (directory == null) {
+            System.out.println("[ERROR][Countly] File cannot be null");
+        } else if (!directory.isDirectory()) {
+            System.out.println("[ERROR][Countly] File must be a directory");
+        } else if (!directory.exists()) {
+            System.out.println("[ERROR][Countly] File must exist");
+        } else {
+            if (cly != null) {
+                System.out.println("[ERROR][Countly] Countly shouldn't be initialized twice. Please either use Countly.isInitialized() to check status or call Countly.stop() before second Countly.init().");
+                stop(false);
+            }
+
+            if(config.enableBackendMode) {
+                config.sdkName = "java-native-backend";
+            }
+
+            if(config.requestQueueMaxSize < 1) {
+                System.out.println("[ERROR][Countly] init: Request queue max size can not be less than 1.");
+                config.requestQueueMaxSize = 1;
+            }
+
+            InternalConfig internalConfig = new InternalConfig(config);
+            Log L = new Log(internalConfig);
+            SDK sdk = new SDK();
+            sdk.init(new CtxImpl(sdk, internalConfig, L, directory), L);
+
+            // config has been changed, thus recreating ctx
+            cly = new Countly(sdk, new CtxImpl(sdk, sdk.config(), L, directory), L);
+        }
+    }
+
+    /**
+     * Stop Countly SDK. Stops all tasks and releases resources.
+     * Waits for some tasks to complete, might block for some time.
+     * Also clears all the data if called with {@code clearData = true}.
+     *
+     * @param clearData whether to clear all Countly data or not
+     */
+    public static void stop (boolean clearData) {
+        if (cly != null) {
+            System.out.println("[ERROR][Countly] Stopping SDK");
+            cly.sdk.stop(cly.ctx, clearData);
+            cly = null;
+        } else {
+            System.out.println("[ERROR][Countly] Countly isn't initialized to stop it");
+        }
+    }
+
+    /**
+     * Returns whether Countly SDK has been already initialized or not.
+     *
+     * @return true if already initialized
+     */
+    public static boolean isInitialized() { return cly != null; }
+
+    /**
+     * Returns whether Countly SDK has been given consent to record data for a particular {@link Config.Feature} or not.
+     *
+     * @return true if consent has been given
+     */
+    public static boolean isTracking(Config.Feature feature) { return isInitialized() && ((Countly)cly).sdk.isTracking(feature.getIndex()); }
+
 
     /**
      * Returns active {@link Session} if any or creates new {@link Session} instance.
@@ -55,7 +134,7 @@ public class Countly extends CountlyLifecycle {
         if (!isInitialized()) {
             System.out.println("[ERROR][Countly] SDK is not initialized yet.");
         }
-        return Cly.session(cly.ctx);
+        return session(cly.ctx);
     }
 
     public static ModuleBackendMode.BackendMode backendMode(){
@@ -95,7 +174,7 @@ public class Countly extends CountlyLifecycle {
         if (!isInitialized()) {
             System.out.println("[ERROR][Countly] SDK is not initialized yet.");
         }
-        return Cly.session(cly.ctx);
+        return session(cly.ctx);
     }
 
     /**
@@ -178,7 +257,7 @@ public class Countly extends CountlyLifecycle {
     public static void onConsentRemoval(Config.Feature... features) {
         System.out.println("[DEBUG][Countly] onConsentRemoval: features = " + features);
         if (!isInitialized()) {
-            System.out.println("[ERROR][Countly]Countly SDK is not initialized yet.");
+            System.out.println("[ERROR][Countly] onConsentRemoval: SDK is not initialized yet.");
         } else {
             int ftrs = 0;
             for (Config.Feature f : features) {
@@ -188,5 +267,68 @@ public class Countly extends CountlyLifecycle {
         }
     }
 
+    protected static Session session(CtxCore ctx) {
+        return cly.sdk.session(ctx, null);
+    }
 
+    @Override
+    public Event event(String key) {
+        L.d("[Cly] event: key = " + key);
+        return ((Session) sdk.session(ctx, null)).event(key);
+    }
+
+    @Override
+    public Event timedEvent(String key) {
+        L.d("[Cly] timedEvent: key = " + key);
+        return ((Session) sdk.session(ctx, null)).timedEvent(key);
+    }
+
+    /**
+     * Get current User Profile object.
+     *
+     * @see User#edit() to get {@link UserEditor} object
+     * @see UserEditor#commit() to submit changes to the server
+     * @return current User Profile instance
+     */
+    @Override
+    public User user() {
+        L.d("[Cly] user");
+        return ((Session) sdk.session(ctx, null)).user();
+    }
+
+    @Override
+    public Usage addParam(String key, Object value) {
+        L.d("[Cly] addParam: key = " + key + " value = " + value);
+        return ((Session) sdk.session(ctx, null)).addParam(key, value);
+    }
+
+    @Override
+    public Usage addCrashReport(Throwable t, boolean fatal) {
+        L.d("[Cly] addCrashReport: t = " + t + " fatal = " + fatal);
+        return ((Session) sdk.session(ctx, null)).addCrashReport(t, fatal);
+    }
+
+    @Override
+    public Usage addCrashReport(Throwable t, boolean fatal, String name, Map<String, String> segments, String... logs) {
+        L.d("[Cly] addCrashReport: t = " + t + " fatal = " + fatal + " name = " + name + " segments = " + segments + " logs = " + logs);
+        return ((Session) sdk.session(ctx, null)).addCrashReport(t, fatal, name, segments, logs);
+    }
+
+    @Override
+    public Usage addLocation(double latitude, double longitude) {
+        L.d("[Cly] addLocation: latitude = " + latitude + " longitude = " + longitude);
+        return ((Session) sdk.session(ctx, null)).addLocation(latitude, longitude);
+    }
+
+    @Override
+    public View view(String name, boolean start) {
+        L.d("[Cly] view: name = " + name + " start = " + start);
+        return ((Session) sdk.session(ctx, null)).view(name, start);
+    }
+
+    @Override
+    public View view(String name) {
+        L.d("[Cly] view: name = " + name);
+        return ((Session) sdk.session(ctx, null)).view(name);
+    }
 }

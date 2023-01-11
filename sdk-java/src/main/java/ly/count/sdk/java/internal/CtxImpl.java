@@ -6,27 +6,27 @@ import ly.count.sdk.java.internal.InternalConfig;
 import ly.count.sdk.java.internal.Log;
 
 /**
- * {@link Ctx} implementation
+ * {@link CtxCore} implementation
  */
-public class CtxImpl implements Ctx {
+public class CtxImpl implements CtxCore {
    // private static final Log.Module L = Log.module("[CtxImpl]");
 
     Log L = null;
-    private SDKLifecycle sdk;
+    private SDKCore sdk;
     private InternalConfig config;
     private File directory;
     private String view;//todo not sure about the usefulness of this
 
     private boolean expired = false;
 
-    public CtxImpl(SDKLifecycle sdk, InternalConfig config, Log logger, File directory) {
+    public CtxImpl(SDKCore sdk, InternalConfig config, Log logger, File directory) {
         this.sdk = sdk;
         this.config = config;
         this.L = logger;
         this.directory = directory;
     }
 
-    public CtxImpl(SDKLifecycle sdk, InternalConfig config, File directory, String view) {
+    public CtxImpl(SDKCore sdk, InternalConfig config, File directory, String view) {
         this.sdk = sdk;
         this.config = config;
         this.directory = directory;
@@ -47,7 +47,7 @@ public class CtxImpl implements Ctx {
     }
 
     @Override
-    public SDKLifecycle getSDK() {
+    public SDKCore getSDK() {
         return sdk;
     }
 

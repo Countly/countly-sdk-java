@@ -365,7 +365,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         if (currentView != null) {
             currentView.stop(false);
         }
-        currentView = new ViewImpl(this, name);
+        currentView = new ViewImpl(this, name, L);
         currentView.start(start);
         startView = false;
         return currentView;
