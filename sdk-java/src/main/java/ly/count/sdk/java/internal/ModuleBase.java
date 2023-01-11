@@ -14,8 +14,13 @@ import ly.count.sdk.java.Session;
 public abstract class ModuleBase implements Module {
     private boolean active = false;
 
+    protected Log L = null;
+    InternalConfig internalConfig = null;
+
     @Override
-    public void init(InternalConfig config) {
+    public void init(InternalConfig config, Log logger) {
+        L = logger;
+        internalConfig = config;
     }
 
     @Override

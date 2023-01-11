@@ -13,13 +13,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import ly.count.sdk.java.internal.Log;
-import ly.count.sdk.java.internal.Storable;
-import ly.count.sdk.java.internal.Storage;
-import ly.count.sdk.java.internal.Utils;
-
 abstract class SDKStorage extends SDKLifecycle {
-    private static final Log.Module L = Log.module("SDK");
     private static final String FILE_NAME_PREFIX = "[CLY]";
     private static final String FILE_NAME_SEPARATOR = "_";
 
@@ -42,7 +36,7 @@ abstract class SDKStorage extends SDKLifecycle {
     }
 
     private static String getName(String ...names) {
-        if (names == null || names.length == 0 || Utils.isEmpty(names[0])) {
+        if (names == null || names.length == 0 || Utils.isEmptyOrNull(names[0])) {
             return FILE_NAME_PREFIX;
         } else {
             StringBuilder prefix = new StringBuilder(FILE_NAME_PREFIX);
@@ -68,7 +62,7 @@ abstract class SDKStorage extends SDKLifecycle {
     public int storablePurge(ly.count.sdk.java.internal.CtxCore context, String prefix) {
         prefix = getName(prefix) + FILE_NAME_SEPARATOR;
 
-        L.i("Purging storage for prefix " + prefix);
+        L.i("[SDKStorage] Purging storage for prefix " + prefix);
 
         int deleted = 0;
 
@@ -100,20 +94,20 @@ abstract class SDKStorage extends SDKLifecycle {
             stream.close();
             return true;
         } catch (IOException e) {
-            L.wtf("Cannot write data to " + filename, e);
+            L.w("[SDKStorage] Cannot write data to " + filename + " " + e);
         } finally {
             if (stream != null) {
                 try {
                     stream.close();
                 } catch (IOException e) {
-                    L.wtf("Couldn't close output stream for " + filename, e);
+                    L.w("[SDKStorage] Couldn't close output stream for " + filename + " " + e);
                 }
             }
             if (lock != null && lock.isValid()) {
                 try {
                     lock.release();
                 } catch (IOException e) {
-                    L.wtf("Couldn't release lock for " + filename, e);
+                    L.w("[SDKStorage] Couldn't release lock for " + filename + " " + e);
                 }
             }
         }
@@ -162,20 +156,20 @@ abstract class SDKStorage extends SDKLifecycle {
         } catch (FileNotFoundException e) {
             return null;
         } catch (IOException e) {
-            L.wtf("Error while reading file " + filename, e);
+            L.e("[SDKStorage] Error while reading file " + filename + " " + e);
         } finally {
             if (stream != null) {
                 try {
                     stream.close();
                 } catch (IOException e) {
-                    L.wtf("Couldn't close input stream for " + filename, e);
+                    L.e("[SDKStorage] Couldn't close input stream for " + filename + " " + e);
                 }
             }
             if (buffer != null) {
                 try {
                     buffer.close();
                 } catch (IOException e) {
-                    L.wtf("Cannot happen", e);
+                    L.e("[SDKStorage] Cannot happen" + e);
                 }
             }
         }
@@ -247,8 +241,8 @@ abstract class SDKStorage extends SDKLifecycle {
 
     @Override
     public List<Long> storableList(ly.count.sdk.java.internal.CtxCore context, String prefix, int slice) {
-        if (Utils.isEmpty(prefix)) {
-            L.wtf("Cannot get list of ids without prefix");
+        if (Utils.isEmptyOrNull(prefix)) {
+            L.e("[SDKStorage] Cannot get list of ids without prefix");
         }
         prefix = prefix + FILE_NAME_SEPARATOR;
 
@@ -270,7 +264,7 @@ abstract class SDKStorage extends SDKLifecycle {
                         list.add(Long.parseLong(name));
                     }
                 } catch (NumberFormatException nfe) {
-                    L.e("Wrong file name: " + file + " / " + prefix);
+                    L.e("[SDKStorage] Wrong file name: " + file + " / " + prefix);
                 }
                 if (list.size() >= max) {
                     break;

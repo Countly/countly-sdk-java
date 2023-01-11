@@ -25,8 +25,6 @@ public class DeviceCore {
         dev = this;
     }
 
-    protected static final Log.Module L = Log.module("Device");
-
     /**
      * One second in nanoseconds
      */
@@ -276,10 +274,10 @@ public class DeviceCore {
             }
             return Long.parseLong(value) / 1024;
         } catch (NumberFormatException e){
-            L.e("Cannot parse meminfo", e);
+            System.out.print("[ERROR][DeviceCore] Cannot parse meminfo " + e.toString());
             return null;
         } catch (IOException e) {
-            L.e("Cannot read meminfo", e);
+            System.out.print("[ERROR] [DeviceCore] Cannot read meminfo " + e.toString());
             return null;
         }
         finally {

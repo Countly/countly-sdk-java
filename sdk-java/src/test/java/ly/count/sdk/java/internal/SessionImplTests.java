@@ -24,7 +24,7 @@ public class SessionImplTests extends BaseTestsCore {
 
     @Override
     protected Config defaultConfig() throws Exception {
-        return super.defaultConfig().disableTestMode();//
+        return super.defaultConfig();//
     }
 
     @Test

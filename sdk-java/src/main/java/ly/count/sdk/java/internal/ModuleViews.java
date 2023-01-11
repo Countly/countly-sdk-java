@@ -14,8 +14,8 @@ public class ModuleViews extends ModuleBase {
     private Map<Integer, View> views = null;
 
     @Override
-    public void init(InternalConfig config) {
-        super.init(config);
+    public void init(InternalConfig config, Log logger) {
+        super.init(config, logger);
         views = new HashMap<>();
     }
 

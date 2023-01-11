@@ -9,7 +9,9 @@ import ly.count.sdk.java.internal.Log;
  * {@link Ctx} implementation
  */
 public class CtxImpl implements Ctx {
-    private static final Log.Module L = Log.module("CtxImpl");
+   // private static final Log.Module L = Log.module("[CtxImpl]");
+
+    Log L = null;
     private SDKLifecycle sdk;
     private InternalConfig config;
     private File directory;
@@ -17,9 +19,10 @@ public class CtxImpl implements Ctx {
 
     private boolean expired = false;
 
-    public CtxImpl(SDKLifecycle sdk, InternalConfig config, File directory) {
+    public CtxImpl(SDKLifecycle sdk, InternalConfig config, Log logger, File directory) {
         this.sdk = sdk;
         this.config = config;
+        this.L = logger;
         this.directory = directory;
     }
 
@@ -33,7 +36,7 @@ public class CtxImpl implements Ctx {
     @Override
     public File getContext() {
         if (expired) {
-            L.wtf("Ctx is expired");
+            L.w("[CtxImpl] Ctx is expired");
         }
         return directory;
     }
@@ -51,6 +54,11 @@ public class CtxImpl implements Ctx {
     @Override
     public boolean isExpired() {
         return expired;
+    }
+
+    @Override
+    public Log getLogger() {
+        return L;
     }
 
     public String getView() {

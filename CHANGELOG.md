@@ -1,5 +1,9 @@
+22.06.0
+* The "resetDeviceId", "login", and "logout" have been deprecated.
+* ! Minor breaking change ! The following methods and their functionality is removed from the "Config" class: "enableTestMode", "disableTestMode" and "isTestModeEnabled". The "TestMode" functionality is being removed from the SDK.
+
 20.11.5
-* Fixed a bug in backend mode while removing consent.
+* Fixed a bug where the backend mode module produces "null pointer exceptions" in case not initialized.
 
 20.11.4
 * Adding mitigations to an issue that would surface when stopping a view that was not started.

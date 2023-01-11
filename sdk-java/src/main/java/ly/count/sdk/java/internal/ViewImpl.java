@@ -8,7 +8,7 @@ import ly.count.sdk.java.View;
  */
 
 class ViewImpl implements View {
-    private static final Log.Module L = Log.module("ViewImpl");
+    private static final Log L = null;
 
     static final String EVENT = "[CLY]_view";
     static final String NAME = "name";
@@ -37,11 +37,11 @@ class ViewImpl implements View {
     @Override
     public void start(boolean firstView) {
         if(SDKCore.instance != null && SDKCore.instance.config.isBackendModeEnabled()) {
-            L.w("start: Skipping view, backend mode is enabled!");
+            L.w("[ViewImpl] start: Skipping view, backend mode is enabled!");
             return;
         }
 
-        L.d("start: firstView = " + firstView);
+        L.d("[ViewImpl] start: firstView = " + firstView);
         if (started) {
             return;
         }
@@ -62,16 +62,16 @@ class ViewImpl implements View {
     @Override
     public void stop(boolean lastView) {
         if(SDKCore.instance != null && SDKCore.instance.config.isBackendModeEnabled()) {
-            L.w("stop: Skipping view, backend mode is enabled!");
+            L.w("[ViewImpl] stop: Skipping view, backend mode is enabled!");
             return;
         }
 
         if (start == null) {
-            L.e("stop: We are trying to end a view that has not been started.");
+            L.e("[ViewImpl] stop: We are trying to end a view that has not been started.");
             return;
         }
 
-        L.d("stop: lastView = " + lastView);
+        L.d("[ViewImpl] stop: lastView = " + lastView);
 
         if (ended) {
             return;

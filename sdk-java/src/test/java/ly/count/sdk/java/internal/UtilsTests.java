@@ -10,8 +10,6 @@ import org.junit.runners.JUnit4;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import ly.count.sdk.java.internal.Utils;
-
 @RunWith(JUnit4.class)
 public class UtilsTests {
     @Before
@@ -192,9 +190,9 @@ public class UtilsTests {
 
     @Test
     public void isEmpty() {
-        junit.framework.Assert.assertFalse(Utils.isEmpty("notthatempty"));
-        junit.framework.Assert.assertTrue(Utils.isEmpty(""));
-        junit.framework.Assert.assertTrue(Utils.isEmpty(null));
+        junit.framework.Assert.assertFalse(Utils.isEmptyOrNull("notthatempty"));
+        junit.framework.Assert.assertTrue(Utils.isEmptyOrNull(""));
+        junit.framework.Assert.assertTrue(Utils.isEmptyOrNull(null));
     }
 
     @Test
