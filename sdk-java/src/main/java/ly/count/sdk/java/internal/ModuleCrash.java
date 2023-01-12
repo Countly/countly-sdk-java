@@ -73,10 +73,6 @@ public class ModuleCrash extends ModuleBase {
         }
     }
 
-    @Override
-    public Integer getFeature() {
-        return CoreFeature.CrashReporting.getIndex();
-    }
 
     public CrashImplCore onCrash(CtxCore ctx, Throwable t, boolean fatal, String name, Map<String, String> segments, String... logs) {
 

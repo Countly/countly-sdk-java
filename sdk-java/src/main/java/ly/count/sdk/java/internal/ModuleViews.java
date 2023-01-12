@@ -3,6 +3,7 @@ package ly.count.sdk.java.internal;
 import java.util.HashMap;
 import java.util.Map;
 
+import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Session;
 import ly.count.sdk.java.View;
 
@@ -26,7 +27,7 @@ public class ModuleViews extends ModuleBase {
     @Override
     public void onActivityStarted(CtxCore ctx) {
         Session session = SDKCore.instance.getSession();
-        if (session != null && SDKCore.enabled(CoreFeature.Views) && ctx.getConfig().isAutoViewsTrackingEnabled()) {
+        if (session != null && SDKCore.enabled(Config.Feature.Views) && ctx.getConfig().isAutoViewsTrackingEnabled()) {
             Class cls = ctx.getContext().getClass();
             views.put(ctx.getContext().hashCode(), session.view(cls.getSimpleName()));
         }
@@ -38,17 +39,11 @@ public class ModuleViews extends ModuleBase {
     @Override
     public void onActivityStopped(CtxCore ctx) {
         Session session = SDKCore.instance.getSession();
-        if (session != null && SDKCore.enabled(CoreFeature.Views) && ctx.getConfig().isAutoViewsTrackingEnabled()) {
+        if (session != null && SDKCore.enabled(Config.Feature.Views) && ctx.getConfig().isAutoViewsTrackingEnabled()) {
             int cls = ctx.getContext().hashCode();
             if (views.containsKey(cls)) {
                 views.remove(cls).stop(false);
             }
         }
-    }
-
-    // TODO: questionable
-    @Override
-    public Integer getFeature() {
-        return CoreFeature.Views.getIndex();
     }
 }

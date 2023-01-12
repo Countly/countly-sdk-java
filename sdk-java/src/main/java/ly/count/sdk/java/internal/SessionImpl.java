@@ -8,6 +8,7 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -279,7 +280,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     @Override
     public void recordEvent(Event event) {
         L.d("[SessionImpl] recordEvent: " + event.toString());
-        if (!SDKCore.enabled(CoreFeature.Events)) {
+        if (!SDKCore.enabled(Config.Feature.Events)) {
             L.i("[SessionImpl] recordEvent: Skipping event - feature is not enabled");
             return;
         }
@@ -322,7 +323,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             return this;
         }
 
-        if (!SDKCore.enabled(CoreFeature.CrashReporting)) {
+        if (!SDKCore.enabled(Config.Feature.CrashReporting)) {
             L.i("[SessionImpl] addCrashReport: Skipping event - feature is not enabled");
             return this;
         }
@@ -338,7 +339,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         }
 
         L.d("[SessionImpl] addLocation: latitude = " + latitude + " longitude = " + longitude);
-        if (!SDKCore.enabled(CoreFeature.Location)) {
+        if (!SDKCore.enabled(Config.Feature.Location)) {
             L.i("[SessionImpl] addLocation: Skipping event - feature is not enabled");
             return this;
         }
@@ -347,7 +348,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     public View view(String name, boolean start) {
         L.d("[SessionImpl] view: name = " + name + " start = " + start);
-        if (!SDKCore.enabled(CoreFeature.Views)) {
+        if (!SDKCore.enabled(Config.Feature.Views)) {
             L.i("[SessionImpl] view: Skipping view - feature is not enabled");
             return null;
         }
@@ -543,7 +544,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         return this;
     }
 
-    boolean hasConsent(CoreFeature feature) {
+    boolean hasConsent(Config.Feature feature) {
         return ctx.getConfig().getFeatures().contains(feature);
     }
 

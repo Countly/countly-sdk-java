@@ -99,24 +99,6 @@ public class BaseTestsCore {
         this.ctx = new CtxImpl(this.sdk, this.config, getContext(), L);
     }
 
-    @SuppressWarnings("unchecked")
-    protected <T extends Module> T module(Class<T> cls, boolean mock) {
-        T module = sdk.module(cls);
-
-        if (module == null) {
-            return null;
-        }
-
-        if (mock) {
-            List<Module> list = Whitebox.getInternalState(sdk, "modules");
-            list.remove(module);
-            module = Mockito.spy(module);
-            list.add(1, module);
-        }
-
-        return module;
-    }
-
     private Object getContext() {
         return new Object();
     }

@@ -31,11 +31,6 @@ public class ModuleRatingCore extends ModuleBase {
     }
 
     @Override
-    public Integer getFeature() {
-        return CoreFeature.StarRating.getIndex();
-    }
-
-    @Override
     public Boolean onRequest(Request request){
         return true;
     }

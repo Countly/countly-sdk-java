@@ -117,7 +117,7 @@ public class Countly implements Usage {
      *
      * @return true if consent has been given
      */
-    public static boolean isTracking(Config.Feature feature) { return isInitialized() && ((Countly)cly).sdk.isTracking(feature.getIndex()); }
+    public static boolean isTracking(Config.Feature feature) { return isInitialized();}
 
 
     /**

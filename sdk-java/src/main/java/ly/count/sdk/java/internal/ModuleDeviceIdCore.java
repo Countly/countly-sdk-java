@@ -210,11 +210,6 @@ public class ModuleDeviceIdCore extends ModuleBase {
         }
     }
 
-    @Override
-    public Integer getFeature() {
-        return CoreFeature.DeviceId.getIndex();
-    }
-
     /**
      * Puts {@code "device_id"} parameter into all requests which don't have it yet
      *

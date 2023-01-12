@@ -1,5 +1,6 @@
 package ly.count.sdk.java.internal;
 
+import ly.count.sdk.java.Config;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -403,7 +404,7 @@ public class UserEditorImpl implements UserEditor {
     @Override
     public UserEditor setCountry(String country) {
         L.d("setCountry: country = " + country);
-        if (SDKCore.enabled(CoreFeature.Location)) {
+        if (SDKCore.enabled(Config.Feature.Location)) {
             return set(COUNTRY, country);
         } else {
             return this;
@@ -413,7 +414,7 @@ public class UserEditorImpl implements UserEditor {
     @Override
     public UserEditor setCity(String city) {
         L.d("setCity: city = " + city);
-        if (SDKCore.enabled(CoreFeature.Location)) {
+        if (SDKCore.enabled(Config.Feature.Location)) {
             return set(CITY, city);
         } else {
             return this;
@@ -444,7 +445,7 @@ public class UserEditorImpl implements UserEditor {
     @Override
     public UserEditor setLocation(double latitude, double longitude) {
         L.d("setLocation: latitude = " + latitude + " longitude" + longitude);
-        if (SDKCore.enabled(CoreFeature.Location)) {
+        if (SDKCore.enabled(Config.Feature.Location)) {
             return set(LOCATION, latitude + "," + longitude);
         } else {
             return this;

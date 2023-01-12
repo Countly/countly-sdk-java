@@ -45,8 +45,7 @@ public abstract class SDKCore implements SDKInterface {
         return backendModeModule;
     }
 
-    protected SDKCore() {
-        this.modules = new TreeMap<>();
+    public SDKCore() {
         instance = this;
 
     }
@@ -56,30 +55,6 @@ public abstract class SDKCore implements SDKInterface {
 
     public interface Modulator {
         void run(int feature, Module module);
-    }
-
-    /**
-     * Selected by config map of module mappings
-     */
-    private static final Map<Integer, Class<? extends Module>> moduleMappings = new HashMap<>();
-
-    protected static void registerModuleMapping(int feature, Class<? extends Module> cls) {
-        if (cls != null) {
-            moduleMappings.put(feature, cls);
-        }
-    }
-
-    // TreeMap to keep modules sorted by their feature indexes
-    protected Map<Integer, Module> modules;
-
-    /**
-     * Check if consent has been given for a feature
-     *
-     * @param feat feature to test against, pass null to test if any consent given
-     * @return {@code true} if consent has been given
-     */
-    public boolean isTracking(Integer feat) {
-        return modules != null && modules.containsKey(feat);
     }
 
     @Override
@@ -106,8 +81,6 @@ public abstract class SDKCore implements SDKInterface {
         crashModule.stop(ctx, clear);
         backendModeModule.stop(ctx, clear);
 
-        modules.clear();
-        moduleMappings.clear();
         user = null;
         config = null;
         instance = null;
@@ -137,19 +110,25 @@ public abstract class SDKCore implements SDKInterface {
 
 
     @Override
-    public SessionImpl onSessionBegan(CtxCore ctx, SessionImpl session){
-        for (Module m : modules.values()) {
-            m.onSessionBegan(session, ctx);
-        }
+    public SessionImpl onSessionBegan(CtxCore ctx, SessionImpl session) {
+        deviceModule.onSessionBegan(session, ctx);
+        requestModule.onSessionBegan(session, ctx);
+        viewsModule.onSessionBegan(session, ctx);
+        sessionsModule.onSessionBegan(session, ctx);
+        crashModule.onSessionBegan(session, ctx);
+        backendModeModule.onSessionBegan(session, ctx);
+
         return session;
     }
 
     @Override
-    public SessionImpl onSessionEnded(CtxCore ctx, SessionImpl session){
-        //TODO
-        for (Module m : modules.values()) {
-            m.onSessionEnded(session, ctx);
-        }
+    public SessionImpl onSessionEnded(CtxCore ctx, SessionImpl session) {
+        deviceModule.onSessionEnded(session, ctx);
+        requestModule.onSessionEnded(session, ctx);
+        viewsModule.onSessionEnded(session, ctx);
+        sessionsModule.onSessionEnded(session, ctx);
+        crashModule.onSessionEnded(session, ctx);
+        backendModeModule.onSessionEnded(session, ctx);
 
         if (sessionsModule != null) {
             sessionsModule.forgetSession();
@@ -209,10 +188,6 @@ public abstract class SDKCore implements SDKInterface {
         crashModule.init(config, logger);
         backendModeModule.init(config, logger);
 
-        for (Integer feature : failed) {
-            modules.remove(feature);
-        }
-
         if (config.isDefaultNetworking()) {
             networking = new DefaultNetworking();
 
@@ -242,7 +217,8 @@ public abstract class SDKCore implements SDKInterface {
                 networking.init(ctx, new IStorageForRequestQueue() {
                     @Override
                     public Request getNextRequest() {
-                        return Storage.readOne(ctx, new Request(0L), true);
+                        Request request = Storage.readOne(ctx, new Request(0L), true);
+                        return request;
                     }
 
                     @Override
@@ -348,9 +324,12 @@ public abstract class SDKCore implements SDKInterface {
             }
         }
 
-        for (Module module : modules.values()) {
-            module.onDeviceId(ctx, id, old);
-        }
+        deviceModule.onDeviceId(ctx, id, old);
+        requestModule.onDeviceId(ctx, id, old);
+        viewsModule.onDeviceId(ctx, id, old);
+        sessionsModule.onDeviceId(ctx, id, old);
+        crashModule.onDeviceId(ctx, id, old);
+        backendModeModule.onDeviceId(ctx, id, old);
 
         if (config.isLimited()) {
             config = Storage.read(ctx, new InternalConfig());
@@ -392,11 +371,11 @@ public abstract class SDKCore implements SDKInterface {
         deviceModule.changeDeviceId(ctx, id, true);
     }
 
-    public static boolean enabled(CoreFeature feature) {
+    public static boolean enabled(Config.Feature feature) {
         return instance.config().getFeatures().contains(feature);
     }
 
-    public boolean hasConsentForFeature(CoreFeature feature) {
+    public boolean hasConsentForFeature(Config.Feature feature) {
         if (!instance.config.requiresConsent()) {
             //if no consent required, return true
             return true;

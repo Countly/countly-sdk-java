@@ -166,8 +166,4 @@ public interface Module {
      */
     void onConfigurationChanged(CtxCore ctx);
 
-    /**
-     * @return Module feature index if any
-     */
-    Integer getFeature();
 }

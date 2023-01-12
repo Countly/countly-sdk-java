@@ -2,6 +2,7 @@ package ly.count.sdk.java.internal;
 
 import java.util.concurrent.Future;
 
+import ly.count.sdk.java.Config;
 import ly.count.sdk.java.User;
 
 /**
@@ -27,15 +28,10 @@ public class ModuleRequests extends ModuleBase {
         ModuleRequests.metrics = DeviceCore.dev.buildMetrics(ctx);
     }
 
-    @Override
-    public Integer getFeature() {
-        return CoreFeature.Requests.getIndex();
-    }
-
     private static Request sessionRequest(CtxCore ctx, SessionImpl session, String type, Long value) {
         Request request = Request.build();
 
-        if (session != null && session.hasConsent(CoreFeature.Sessions)) {
+        if (session != null && session.hasConsent(Config.Feature.Sessions)) {
             if (value != null && value > 0) {
                 request.params.add(type, value);
             }
@@ -49,7 +45,7 @@ public class ModuleRequests extends ModuleBase {
 
         if (session != null) {
             synchronized (session.storageId()) {
-                if (session.events.size() > 0 && session.hasConsent(CoreFeature.Events)) {
+                if (session.events.size() > 0 && session.hasConsent(Config.Feature.Events)) {
                     request.params.arr("events").put(session.events).add();
                     session.events.clear();
                 } else {
@@ -67,7 +63,7 @@ public class ModuleRequests extends ModuleBase {
             request.params.add(Params.PARAM_DEVICE_ID, ctx.getConfig().getDeviceId().id);
         }
 
-        if (((session != null && session.hasConsent(CoreFeature.Location)) || (session == null && SDKCore.enabled(CoreFeature.Location)))
+        if (((session != null && session.hasConsent(Config.Feature.Location)) || (session == null && SDKCore.enabled(Config.Feature.Location)))
                 && request.params.has("begin_session")) {
             User user = SDKCore.instance.user();
             if (user.country() != null) {
@@ -102,7 +98,7 @@ public class ModuleRequests extends ModuleBase {
             request.params.add(Params.PARAM_DEVICE_ID, did);
         }
 
-        if (seconds != null && seconds > 0 && SDKCore.enabled(CoreFeature.Sessions)) {
+        if (seconds != null && seconds > 0 && SDKCore.enabled(Config.Feature.Sessions)) {
             request.params.add("session_duration", seconds);
         }
 
@@ -121,7 +117,7 @@ public class ModuleRequests extends ModuleBase {
     }
 
     public static Future<Boolean> location(CtxCore ctx, double latitude, double longitude) {
-        if (!SDKCore.enabled(CoreFeature.Location)) {
+        if (!SDKCore.enabled(Config.Feature.Location)) {
             return null;
         }
 
