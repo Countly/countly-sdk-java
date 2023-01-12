@@ -142,7 +142,7 @@ public class Countly implements Usage {
             System.out.println("[ERROR][Countly] SDK is not initialized yet.");
             return null;
         } else {
-            ModuleBackendMode mbm = cly.sdk.module(ModuleBackendMode.class);
+            ModuleBackendMode mbm = cly.sdk.backendMode();
             if (cly.ctx.getConfig().enableBackendMode && mbm != null) {
                 return mbm.new BackendMode();
             }

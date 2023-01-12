@@ -15,7 +15,7 @@ public abstract class SDKCore implements SDKInterface {
     ModuleViews viewsModule = new ModuleViews();
     ModuleSessions sessionsModule = new ModuleSessions();
     ModuleCrash crashModule = new ModuleCrash();
-    ModuleViews backendModeModule = new ModuleViews();
+    ModuleBackendMode backendModeModule = new ModuleBackendMode();
 
     private UserImpl user;
     public InternalConfig config;
@@ -39,6 +39,10 @@ public abstract class SDKCore implements SDKInterface {
         public int getIndex() {
             return index;
         }
+    }
+
+    public ModuleBackendMode backendMode () {
+        return backendModeModule;
     }
 
     protected SDKCore() {
