@@ -24,7 +24,7 @@ public class BackendModeTests {
         Config cc = new Config("https://try.count.ly", "COUNTLY_APP_KEY");
         cc.setEventsBufferSize(4).enableBackendMode();
 
-        File targetFolder = new File("d:\\__COUNTLY\\java_test\\");
+        File targetFolder = new File("/Users/zahidzafar/Projects/countly/countly-sdk-java/data");
         Countly.init(targetFolder, cc);
     }
 

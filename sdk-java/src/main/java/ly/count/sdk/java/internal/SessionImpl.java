@@ -63,11 +63,6 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
      */
     protected boolean startView = true;
 
-    /**
-     * Latest known consents for this {@link Session} instance.
-     * Affects how it's handled during recovery.
-     */
-    private int consents;
 
     /**
      * Whether to push changes to storage on every change automatically (false only for testing)
@@ -90,9 +85,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         L = ctx.getLogger();
         this.ctx = ctx;
         this.id = id == null ? DeviceCore.dev.uniformTimestamp() : id;
-        if (SDKCore.instance != null) {
-            this.consents = SDKCore.instance.consents;
-        }
+
     }
 
     @Override
@@ -121,7 +114,6 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             began = now == null ? System.nanoTime() : now;
         }
 
-        this.consents = SDKCore.instance.consents;
 
         if (pushOnChange) {
             Storage.pushAsync(ctx, this);
@@ -158,7 +150,6 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             return null;
         }
 
-        this.consents = SDKCore.instance.consents;
 
         Long duration = updateDuration(now);
 
@@ -192,8 +183,6 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             return null;
         }
         ended = now == null ? System.nanoTime() : now;
-
-        this.consents = SDKCore.instance.consents;
 
 //        // TODO: check if needed
 //        for (Event event: timedEvents.values()) {
@@ -473,7 +462,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
                 stream.writeUTF(event.toString());
             }
             stream.writeUTF(params.toString());
-            stream.writeInt(consents);
+            stream.writeInt(1);//todo
             stream.close();
             return bytes.toByteArray();
         } catch (IOException e) {
@@ -524,7 +513,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             }
 
             params.add(stream.readUTF());
-            consents = stream.readInt();
+            int consents = stream.readInt();//todo
 
             return true;
         } catch (IOException e) {
@@ -555,16 +544,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     }
 
     boolean hasConsent(CoreFeature feature) {
-        return hasConsent(feature.getIndex());
-    }
-
-    boolean hasConsent(int feature) {
-        return (consents & feature) > 0;
-    }
-
-    void setConsents(CtxCore ctx, int features) {
-        consents = features;
-        Storage.pushAsync(ctx, this);
+        return ctx.getConfig().getFeatures().contains(feature);
     }
 
     @Override

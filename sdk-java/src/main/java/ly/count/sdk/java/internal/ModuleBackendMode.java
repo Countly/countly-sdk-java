@@ -61,11 +61,6 @@ public class ModuleBackendMode extends ModuleBase {
     }
 
     @Override
-    public void onRequestCompleted(Request request, String response, int responseCode) {
-
-    }
-
-    @Override
     public void stop(CtxCore ctx, boolean clear) {
         super.stop(ctx, clear);
         if(executor != null) {
@@ -308,7 +303,7 @@ public class ModuleBackendMode extends ModuleBase {
         request.params.add("device_id", deviceID);
         request.params.add("events", events);
         addTimeInfoIntoRequest(request, System.currentTimeMillis());
-        request.own(ModuleBackendMode.class);
+        //request.own(ModuleBackendMode.class);
         addRequestToRequestQ(request);
     }
 

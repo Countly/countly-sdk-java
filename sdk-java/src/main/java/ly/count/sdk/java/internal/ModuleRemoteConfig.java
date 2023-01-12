@@ -75,7 +75,7 @@ public class ModuleRemoteConfig extends ModuleBase {
         //check if it's a old request or from this session
         if(requestCallbacks.containsKey(request.storageId())) {
             //indicate that this module is the owner
-            request.own(ModuleRemoteConfig.class);
+           // request.own(ModuleRemoteConfig.class);
             //returned to indicate that the request is ready
             return true;
 
@@ -91,7 +91,7 @@ public class ModuleRemoteConfig extends ModuleBase {
         disabledModule = true;
     }
 
-    @Override
+    //@Override
     public void onRequestCompleted(Request request, String response, int responseCode) {
         //check if we have a callback
         long receivedRequestId = request.storageId();

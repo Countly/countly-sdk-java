@@ -321,7 +321,6 @@ public class Transport implements X509TrustManager {
                 HttpURLConnection connection = null;
                 try {
                     ModuleRequests.addRequired(config, request);
-                    Class requestOwner = request.owner();
                     request.params.remove(Request.MODULE);
 
                     connection = connection(request, SDKCore.instance.user());
@@ -345,7 +344,8 @@ public class Transport implements X509TrustManager {
                         L.w("[network] Interrupted while waiting for did change request cooldown " + ie);
                     }
 
-                    SDKCore.instance.onRequestCompleted(request, response, code, requestOwner);
+                    //TODO
+                    SDKCore.instance.onRequestCompleted(request, response, code);
 
                     return processResponse(code, response, request.storageId());
 

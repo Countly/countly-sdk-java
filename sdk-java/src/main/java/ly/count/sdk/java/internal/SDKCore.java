@@ -10,6 +10,12 @@ import java.util.concurrent.Future;
 public abstract class SDKCore implements SDKInterface {
 
     protected static SDKCore instance;
+    ModuleDeviceIdCore deviceModule = new ModuleDeviceIdCore();
+    ModuleRequests requestModule = new ModuleRequests();
+    ModuleViews viewsModule = new ModuleViews();
+    ModuleSessions sessionsModule = new ModuleSessions();
+    ModuleCrash crashModule = new ModuleCrash();
+    ModuleViews backendModeModule = new ModuleViews();
 
     private UserImpl user;
     public InternalConfig config;
@@ -44,33 +50,9 @@ public abstract class SDKCore implements SDKInterface {
     protected Log L = null;
     private static Module testDummyModule = null;//set during testing when trying to check the SDK's lifecycle
 
-    /**
-     * All known mappings of {@code ConfigCore.Feature} to {@link Module} class.
-     */
-    private static final Map<Integer, Class<? extends Module>> DEFAULT_MAPPINGS = new HashMap<>();
-
-    protected static void registerDefaultModuleMapping(int feature, Class<? extends Module> cls) {
-        DEFAULT_MAPPINGS.put(feature, cls);
-    }
-
-    static {
-        registerDefaultModuleMapping(CoreFeature.DeviceId.getIndex(), ModuleDeviceIdCore.class);
-        registerDefaultModuleMapping(CoreFeature.Requests.getIndex(), ModuleRequests.class);
-        //registerDefaultModuleMapping(CoreFeature.Logs.getIndex(), Log.class);
-        registerDefaultModuleMapping(CoreFeature.Views.getIndex(), ModuleViews.class);
-        registerDefaultModuleMapping(CoreFeature.Sessions.getIndex(), ModuleSessions.class);
-        registerDefaultModuleMapping(CoreFeature.CrashReporting.getIndex(), ModuleCrash.class);
-        registerDefaultModuleMapping(CoreFeature.BackendMode.getIndex(), ModuleBackendMode.class);
-    }
-
     public interface Modulator {
         void run(int feature, Module module);
     }
-
-    /**
-     * Currently enabled features with consents
-     */
-    protected int consents = 0;
 
     /**
      * Selected by config map of module mappings
@@ -98,7 +80,6 @@ public abstract class SDKCore implements SDKInterface {
 
     @Override
     public void init(CtxCore ctx) {
-        prepareMappings(ctx);
     }
 
     @Override
@@ -114,30 +95,18 @@ public abstract class SDKCore implements SDKInterface {
         L.i("[SDKCore] [SDKCore] Stopping Countly SDK" + (clear ? " and clearing all data" : ""));
 
 
-        eachModule(new Modulator() {
-            @Override
-            public void run(int feature, Module module) {
-                try {
-                    module.stop(ctx, clear);
-                    Utils.reflectiveSetField(module, "active", false);
-                } catch (Throwable e) {
-                    L.e("[SDKModules] Exception while stopping " + module.getClass() + " " + e);
-                }
-            }
-        });
+        deviceModule.stop(ctx, clear);
+        requestModule.stop(ctx, clear);
+        viewsModule.stop(ctx, clear);
+        sessionsModule.stop(ctx, clear);
+        crashModule.stop(ctx, clear);
+        backendModeModule.stop(ctx, clear);
+
         modules.clear();
         moduleMappings.clear();
         user = null;
         config = null;
         instance = null;
-    }
-
-    private boolean addingConsent(int adding, CoreFeature feature) {
-        return (consents & feature.getIndex()) == 0 && (adding & feature.getIndex()) > 0;
-    }
-
-    private boolean removingConsent(int removing, CoreFeature feature) {
-        return (consents & feature.getIndex()) == feature.getIndex() && (removing & feature.getIndex()) == feature.getIndex();
     }
 
     /**
@@ -148,40 +117,6 @@ public abstract class SDKCore implements SDKInterface {
     public void onConsent(CtxCore ctx, int consent) {
         if (!config().requiresConsent()) {
             L.e("[SDKModules] onConsent() shouldn't be called when Config.requiresConsent() is false");
-            return;
-        }
-
-        if (addingConsent(consent, CoreFeature.Sessions)) {
-            SessionImpl session = module(ModuleSessions.class).getSession();
-            if (session != null) {
-                session.end();
-            }
-
-            consents = consents | (consent & ctx.getConfig().getFeatures1());
-
-            module(ModuleSessions.class).session(ctx, null).begin();
-        }
-
-        consents = consents | (consent & ctx.getConfig().getFeatures1());
-
-        for (Integer feature : moduleMappings.keySet()) {
-            Module existing = module(moduleMappings.get(feature));
-            if (SDKCore.enabled(feature) && existing == null) {
-                Class<? extends Module> cls = moduleMappings.get(feature);
-                if (cls == null) {
-                    L.i("[SDKModules] No module mapping for feature " + feature);
-                    continue;
-                }
-
-                Module module = instantiateModule(cls, L);
-                if (module == null) {
-                    L.e("[SDKModules] Cannot instantiate module " + feature);
-                } else {
-                    module.init(ctx.getConfig(), L);
-                    module.onContextAcquired(ctx);
-                    modules.put(feature, module);
-                }
-            }
         }
     }
 
@@ -193,169 +128,9 @@ public abstract class SDKCore implements SDKInterface {
     public void onConsentRemoval(CtxCore ctx, int noConsent) {
         if (!config().requiresConsent()) {
             L.e("[SDKModules] onConsentRemoval() shouldn't be called when Config.requiresConsent() is false");
-            return;
-        }
-
-        if (removingConsent(noConsent, CoreFeature.Sessions)) {
-            SessionImpl session = module(ModuleSessions.class).getSession();
-            if (session != null) {
-                session.end();
-            }
-        }
-
-        if (removingConsent(noConsent, CoreFeature.Location)) {
-            user().edit().optOutFromLocationServices();
-        }
-
-        consents = consents & ~noConsent;
-
-        for (Integer feature : moduleMappings.keySet()) {
-            Module existing = module(moduleMappings.get(feature));
-            if (feature != CoreFeature.Sessions.getIndex() && existing != null) {
-                existing.stop(ctx, true);
-                modules.remove(feature);
-            }
         }
     }
 
-    /**
-     * Create instances of {@link Module}s required by {@link #config}.
-     * Uses {@link #moduleMappings} for {@code ConfigCore.Feature} / {@link CoreFeature}
-     * - Class&lt;Module&gt; mapping to enable overriding by app developer.
-     *
-     * @param ctx {@link CtxCore} object containing config with mapping overrides
-     * @throws IllegalArgumentException in case some {@link Module} finds {@link #config} inconsistent.
-     * @throws IllegalStateException when this module is run second time on the same {@code Core} instance.
-     */
-    protected void prepareMappings(CtxCore ctx) throws IllegalStateException {
-        if (modules.size() > 0) {
-            throw new IllegalStateException("Modules can only be built once");
-        }
-
-        moduleMappings.clear();
-        moduleMappings.putAll(DEFAULT_MAPPINGS);
-
-        for (int feature : ctx.getConfig().getModuleOverrides()) {
-            registerModuleMapping(feature, ctx.getConfig().getModuleOverride(feature));
-        }
-    }
-
-
-    /**
-     * Create instances of {@link Module}s required by {@link #config}.
-     * Uses {@link #moduleMappings} for {@code ConfigCore.Feature} / {@link CoreFeature}
-     * - Class&lt;Module&gt; mapping to enable overriding by app developer.
-     *
-     * @param ctx {@link CtxCore} object
-     * @param features consents bitmask to check against
-     * @throws IllegalArgumentException in case some {@link Module} finds {@link #config} inconsistent.
-     * @throws IllegalStateException when this module is run second time on the same {@code Core} instance.
-     */
-    protected void buildModules(CtxCore ctx, int features) throws IllegalArgumentException, IllegalStateException {
-        // override module mappings in native/Android parts, overriding by ConfigCore ones if necessary
-
-        if (modules.size() > 0) {
-            throw new IllegalStateException("Modules can only be built once");
-        }
-
-//        if (ctx.getConfig().getLoggingLevel() != Config.LoggingLevel.OFF) {
-//            modules.put(-10, instantiateModule(moduleMappings.get(CoreFeature.Logs.getIndex()), L));
-//        }
-
-        // standard required internal features
-        modules.put(-3, instantiateModule(moduleMappings.get(CoreFeature.DeviceId.getIndex()), L));
-        modules.put(-2, instantiateModule(moduleMappings.get(CoreFeature.Requests.getIndex()), L));
-        modules.put(CoreFeature.Sessions.getIndex(), instantiateModule(moduleMappings.get(CoreFeature.Sessions.getIndex()), L));
-
-        if (ctx.getConfig().requiresConsent()) {
-            consents = 0;
-        } else {
-            consents = ctx.getConfig().getFeatures1();
-        }
-
-        if (!ctx.getConfig().requiresConsent()) {
-            for (int feature : moduleMappings.keySet()) {
-                Class<? extends Module> cls = moduleMappings.get(feature);
-                if (cls == null) {
-                    continue;
-                }
-                Module existing = module(cls);
-                if ((features & feature) > 0 && existing == null) {
-                    Module m = instantiateModule(cls, L);
-                    if (m != null) {
-                        modules.put(feature, m);
-                    }
-                }
-            }
-        }
-        modules.put(CoreFeature.BackendMode.getIndex(), instantiateModule(moduleMappings.get(CoreFeature.BackendMode.getIndex()), L));
-
-        // dummy module for tests if any
-        if (testDummyModule != null) {
-            modules.put(CoreFeature.TestDummy.getIndex(), testDummyModule);
-        }
-    }
-
-    /**
-     * Create {@link Module} by executing its default constructor.
-     *
-     * @param cls class of {@link Module}
-     * @return {@link Module} instance or null in case of error
-     */
-    private static Module instantiateModule(Class<? extends Module> cls, Log L) {
-        try {
-            return (Module)cls.getConstructors()[0].newInstance();
-        } catch (InstantiationException e) {
-            L.e("[SDKModules] Module cannot be instantiated" + e);
-        } catch (IllegalAccessException e) {
-            L.e("[SDKModules] Module constructor cannot be accessed" + e);
-        } catch (InvocationTargetException e) {
-            L.e("[SDKModules] Module constructor cannot be invoked" + e);
-        } catch (IllegalArgumentException e) {
-            try {
-                return (Module)cls.getConstructors()[0].newInstance((Object)null);
-            } catch (InstantiationException e1) {
-                L.e("[SDKModules] Module cannot be instantiated" + e);
-            } catch (IllegalAccessException e1) {
-                L.e("[SDKModules] Module constructor cannot be accessed" + e);
-            } catch (InvocationTargetException e1) {
-                L.e("[SDKModules] Module constructor cannot be invoked" + e);
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Return module instance by {@code ConfigCore.Feature}
-     *
-     * @param feature to get a {@link Module} instance for
-     * @return {@link Module} instance or null if no such module is instantiated
-     */
-    protected Module module(int feature) {
-        return module(moduleMappings.get(feature));
-    }
-
-    /**
-     * Return module instance by {@link Module} class
-     *
-     * @param cls class to get a {@link Module} instance for
-     * @return {@link Module} instance or null if no such module is instantiated
-     */
-    @SuppressWarnings("unchecked")
-    public  <T extends Module> T module(Class<T> cls) {
-        for (Module module: modules.values()) {
-            if (module.getClass().isAssignableFrom(cls)) {
-                return (T) module;
-            }
-        }
-        return null;
-    }
-
-    protected void eachModule(Modulator modulator) {
-        for (Integer feature: modules.keySet()) {
-            modulator.run(feature, modules.get(feature));
-        }
-    }
 
     @Override
     public SessionImpl onSessionBegan(CtxCore ctx, SessionImpl session){
@@ -367,36 +142,31 @@ public abstract class SDKCore implements SDKInterface {
 
     @Override
     public SessionImpl onSessionEnded(CtxCore ctx, SessionImpl session){
+        //TODO
         for (Module m : modules.values()) {
             m.onSessionEnded(session, ctx);
         }
-        ModuleSessions sessions = (ModuleSessions) module(CoreFeature.Sessions.getIndex());
-        if (sessions != null) {
-            sessions.forgetSession();
+
+        if (sessionsModule != null) {
+            sessionsModule.forgetSession();
         }
         return session;
     }
 
     @Override
     public SessionImpl getSession() {
-        ModuleSessions sessions = (ModuleSessions) module(CoreFeature.Sessions.getIndex());
-        if (sessions != null) {
-            return sessions.getSession();
+        if (sessionsModule != null) {
+            return sessionsModule.getSession();
         }
         return null;
     }
 
     @Override
     public SessionImpl session(CtxCore ctx, Long id) {
-        ModuleSessions sessions = (ModuleSessions) module(CoreFeature.Sessions.getIndex());
-        if (sessions != null) {
-            return sessions.session(ctx, id);
+        if (sessionsModule != null) {
+            return sessionsModule.session(ctx, id);
         }
         return null;
-    }
-
-    interface ModuleCallback {
-        void call(Module module);
     }
 
     protected InternalConfig prepareConfig(CtxCore ctx) {
@@ -425,24 +195,15 @@ public abstract class SDKCore implements SDKInterface {
         this.init(ctx);
 
         requestQueueMemory = new ArrayDeque<>(config.getRequestQueueMaxSize());
-        // ModuleSessions is always enabled, even without consent
-        int consents = ctx.getConfig().getFeatures1() | CoreFeature.Sessions.getIndex();
-        // build modules
-        buildModules(ctx, consents);
 
         final List<Integer> failed = new ArrayList<>();
-        eachModule(new Modulator() {
-            @Override
-            public void run(int feature, Module module) {
-                try {
-                    module.init(config, logger);
-                    Utils.reflectiveSetField(module, "active", true);
-                } catch (IllegalArgumentException | IllegalStateException e) {
-                    L.e("[SDKCore] Error during module initialization" + e);
-                    failed.add(feature);
-                }
-            }
-        });
+
+        deviceModule.init(config, logger);
+        requestModule.init(config, logger);
+        viewsModule.init(config, logger);
+        sessionsModule.init(config, logger);
+        crashModule.init(config, logger);
+        backendModeModule.init(config, logger);
 
         for (Integer feature : failed) {
             modules.remove(feature);
@@ -512,21 +273,21 @@ public abstract class SDKCore implements SDKInterface {
     }
 
     protected void onLimitedContextAcquired(final CtxCore ctx) {
-        eachModule(new Modulator() {
-            @Override
-            public void run(int feature, Module module) {
-                module.onLimitedContextAcquired(ctx);
-            }
-        });
+        deviceModule.onLimitedContextAcquired(ctx);
+        requestModule.onLimitedContextAcquired(ctx);
+        viewsModule.onLimitedContextAcquired(ctx);
+        sessionsModule.onLimitedContextAcquired(ctx);
+        crashModule.onLimitedContextAcquired(ctx);
+        backendModeModule.onLimitedContextAcquired(ctx);
     }
 
     protected void onContextAcquired(final CtxCore ctx) {
-        eachModule(new Modulator() {
-            @Override
-            public void run(int feature, Module module) {
-                module.onContextAcquired(ctx);
-            }
-        });
+        deviceModule.onContextAcquired(ctx);
+        requestModule.onContextAcquired(ctx);
+        viewsModule.onContextAcquired(ctx);
+        sessionsModule.onContextAcquired(ctx);
+        crashModule.onContextAcquired(ctx);
+        backendModeModule.onContextAcquired(ctx);
     }
 
 
@@ -536,7 +297,7 @@ public abstract class SDKCore implements SDKInterface {
     }
 
     TimedEvents timedEvents() {
-        return ((ModuleSessions) module(CoreFeature.Sessions.getIndex())).timedEvents();
+        return sessionsModule.timedEvents();
     }
 
     @Override
@@ -547,20 +308,19 @@ public abstract class SDKCore implements SDKInterface {
     @Override
     public void onCrash(CtxCore ctx, Throwable t, boolean fatal, String name, Map<String, String> segments, String[] logs) {
         L.i("[SDKCore] [SDKCore] onCrash: t: " + t.toString() + " fatal: " + fatal + " name: " + name + " segments: " + segments);
-        ModuleCrash module = (ModuleCrash) module(CoreFeature.CrashReporting.getIndex());
-        if (module != null) {
-            module.onCrash(ctx, t, fatal, name, segments, logs);
+        if (crashModule != null) {
+            crashModule.onCrash(ctx, t, fatal, name, segments, logs);
         }
     }
 
     @Override
     public void onUserChanged(final CtxCore ctx, final JSONObject changes, final Set<String> cohortsAdded, final Set<String> cohortsRemoved) {
-        eachModule(new Modulator() {
-            @Override
-            public void run(int feature, Module module) {
-                module.onUserChanged(ctx, changes, cohortsAdded, cohortsRemoved);
-            }
-        });
+        deviceModule.onUserChanged(ctx, changes, cohortsAdded, cohortsRemoved);
+        requestModule.onUserChanged(ctx, changes, cohortsAdded, cohortsRemoved);
+        viewsModule.onUserChanged(ctx, changes, cohortsAdded, cohortsRemoved);
+        sessionsModule.onUserChanged(ctx, changes, cohortsAdded, cohortsRemoved);
+        crashModule.onUserChanged(ctx, changes, cohortsAdded, cohortsRemoved);
+        backendModeModule.onUserChanged(ctx, changes, cohortsAdded, cohortsRemoved);
     }
 
     @Override
@@ -609,32 +369,27 @@ public abstract class SDKCore implements SDKInterface {
 
 
     public Future<Config.DID> acquireId(final CtxCore ctx, final Config.DID holder, final boolean fallbackAllowed, final Tasks.Callback<Config.DID> callback) {
-        return ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).acquireId(ctx, holder, fallbackAllowed, callback);
+        return deviceModule.acquireId(ctx, holder, fallbackAllowed, callback);
     }
 
     public void login(CtxCore ctx, String id) {
-        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).login(ctx, id);
+        deviceModule.login(ctx, id);
     }
 
     public void logout(CtxCore ctx) {
-        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).logout(ctx);
+        deviceModule.logout(ctx);
     }
 
     public void changeDeviceIdWithoutMerge(CtxCore ctx, String id) {
-        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).changeDeviceId(ctx, id, false);
+        deviceModule.changeDeviceId(ctx, id, false);
     }
 
     public void changeDeviceIdWithMerge(CtxCore ctx, String id) {
-        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).changeDeviceId(ctx, id, true);
-    }
-
-    public static boolean enabled(int feature) {
-        return (feature & instance.consents) == feature &&
-                (feature & instance.config().getFeatures1()) == feature;
+        deviceModule.changeDeviceId(ctx, id, true);
     }
 
     public static boolean enabled(CoreFeature feature) {
-        return enabled(feature.getIndex());
+        return instance.config().getFeatures().contains(feature);
     }
 
     public boolean hasConsentForFeature(CoreFeature feature) {
@@ -647,18 +402,7 @@ public abstract class SDKCore implements SDKInterface {
     }
 
     public Boolean isRequestReady(Request request) {
-        Class cls = request.owner();
-        if (cls == null) {
-            return true;
-        } else {
-            ModuleBase module = (ModuleBase) module(cls);
-            request.params.remove(Request.MODULE);
-            if (module == null) {
-                return true;
-            } else {
-                return module.onRequest(request);
-            }
-        }
+        return true;
     }
 
     /**
@@ -668,14 +412,8 @@ public abstract class SDKCore implements SDKInterface {
      *
      * @param request the request that was sent, used to identify the request
      */
-    public void onRequestCompleted(Request request, String response, int responseCode, Class<? extends Module> requestOwner) {
-        if (requestOwner != null) {
-            Module module = module(requestOwner);
-
-            if (module != null) {
-                module.onRequestCompleted(request, response, responseCode);
-            }
-        }
+    public void onRequestCompleted(Request request, String response, int responseCode) {
+        // request call back
     }
 
     protected void recover(CtxCore ctx) {

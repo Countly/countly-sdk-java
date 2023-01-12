@@ -145,38 +145,6 @@ public class ModuleRequests extends ModuleBase {
         return new Request(timestamp);
     }
 
-    /**
-     * Request to see if rating widget is available
-     * Expected format
-     * https://the.server.com/o/feedback/widget?app_key=d899c0f6adb2e9&widget_id=5c48ehdgee96c
-     *
-     * @param ctx {@link CtxCore} instannce
-     * @param widgetId widget id
-     * @return request instance
-     */
-    public static Request ratingWidgetAvailabilityCheck(CtxCore ctx, String widgetId, Class<? extends Module> module){
-        Request req = Request.build("widget_id", widgetId, "app_key", ctx.getConfig().getServerAppKey());
-        req.own(module);
-        req.endpoint("/o/feedback/widget?");
-
-        return req;
-    }
-
-    public static Request remoteConfigUpdate(CtxCore ctx, String keysInclude, String keysExclude, Class<? extends Module> module){
-        Request req = Request.build("method", "fetch_remote_config", "app_key", ctx.getConfig().getServerAppKey());
-
-        if(keysInclude != null){
-            req.params.add("keys", keysInclude);
-        } else if(keysExclude != null) {
-            req.params.add("omit_keys", keysExclude);
-        }
-
-        req.own(module);
-        req.endpoint("/o/sdk?");
-
-        return req;
-    }
-
     public static void injectParams(CtxCore ctx, ParamsInjector injector) {
         SessionImpl session = SDKCore.instance.getSession();
         if (session == null) {

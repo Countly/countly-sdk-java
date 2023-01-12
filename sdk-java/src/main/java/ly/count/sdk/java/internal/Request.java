@@ -32,25 +32,11 @@ public class Request implements Storable {
         this.params = new Params(params);
     }
 
-    public Request own(Class<? extends Module> module) {
-        this.params.add(MODULE, module.getName());
-        return this;
-    }
-
     public Request endpoint(String value){
         this.params.add(ENDPOINT, value);
         return this;
     }
 
-    @SuppressWarnings("unchecked")
-    public Class<? extends Module> owner() {
-        String name = this.params.get(MODULE);
-        try {
-            return name == null ? null : (Class<? extends Module>) Class.forName(name);
-        } catch (ClassNotFoundException e) {
-            return null;
-        }
-    }
 
     /**
      * Deserialization constructor (use existing id).
