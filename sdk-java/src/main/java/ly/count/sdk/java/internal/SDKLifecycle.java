@@ -1,19 +1,5 @@
 package ly.count.sdk.java.internal;
 
-import ly.count.sdk.java.internal.Byteable;
-import ly.count.sdk.java.internal.CtxCore;
-import ly.count.sdk.java.internal.InternalConfig;
-import ly.count.sdk.java.internal.Log;
-import ly.count.sdk.java.internal.Module;
-import ly.count.sdk.java.internal.ModuleCrash;
-import ly.count.sdk.java.internal.ModuleRequests;
-import ly.count.sdk.java.internal.Request;
-import ly.count.sdk.java.internal.SDKCore;
-import ly.count.sdk.java.internal.Storage;
-import org.json.JSONObject;
-
-import java.util.Map;
-
 /**
  * Application lifecycle-related methods of {@link SDK}
  */

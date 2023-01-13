@@ -1,6 +1,7 @@
 package ly.count.sdk.java.internal;
 
 
+import ly.count.sdk.java.Countly;
 import org.junit.After;
 import org.junit.Before;
 import org.mockito.Mockito;
@@ -23,45 +24,6 @@ public class BaseTestsCore {
 
     protected SDKCore sdk = null;
 
-    public class CtxImpl implements CtxCore {
-        private SDKCore sdk;
-        private Object ctx;
-        private InternalConfig config;
-
-        private Log L = null;
-
-        public CtxImpl(SDKCore sdk, InternalConfig config, Object ctx, Log logger) {
-            this.sdk = sdk;
-            this.config = config;
-            this.ctx = ctx;
-            this.L = logger;
-        }
-
-        @Override
-        public Object getContext() {
-            return ctx;
-        }
-
-        @Override
-        public InternalConfig getConfig() {
-            return config;
-        }
-
-        @Override
-        public SDKCore getSDK() {
-            return sdk;
-        }
-
-        @Override
-        public boolean isExpired() {
-            return false;
-        }
-
-        @Override
-        public Log getLogger() {
-            return null;
-        }
-    }
 
     public Config config() {
         return new Config(SERVER, APP_KEY).setLoggingLevel(Config.LoggingLevel.DEBUG);
@@ -80,7 +42,7 @@ public class BaseTestsCore {
     @Before
     public void setUp() throws Exception {
         Log L = new Log(this.config == null ? new InternalConfig(config == null ? defaultConfig() : config) : this.config);
-        ctx = new CtxImpl(this.sdk, this.config == null ? new InternalConfig(defaultConfig()) : this.config, getContext(), L);
+        ctx = new CtxCore(this.sdk, this.config == null ? new InternalConfig(defaultConfig()) : this.config, L, null);
         utils = new Utils();
         Utils.reflectiveSetField(Utils.class, "utils", utils);
     }
@@ -92,10 +54,10 @@ public class BaseTestsCore {
     private void setUpSDK(Config config, boolean limited) throws Exception {
         Log L = new Log(this.config == null ? new InternalConfig(config == null ? defaultConfig() : config) : this.config);
         this.sdk = new SDK();
+        this.ctx = new CtxCore(this.sdk, this.config, L, null);
         this.sdk.init(ctx, L);
-        this.sdk.init(new CtxImpl(this.sdk, new InternalConfig(defaultConfig()), getContext(), L));
         this.config = this.sdk.config();
-        this.ctx = new CtxImpl(this.sdk, this.config, getContext(), L);
+
     }
 
     private Object getContext() {

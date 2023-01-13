@@ -1,9 +1,5 @@
 package ly.count.sdk.java.internal;
 
-import ly.count.sdk.java.internal.CtxCore;
-import ly.count.sdk.java.internal.DeviceCore;
-import ly.count.sdk.java.internal.Params;
-
 /**
  * Class encapsulating most of device-specific logic: metrics, info, etc.
  * In Java we don't have access to the metrics, so the SDK leaves this up to developer to set these if needed.

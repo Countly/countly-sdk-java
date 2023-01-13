@@ -7,6 +7,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.powermock.reflect.Whitebox;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,7 +28,9 @@ public class EventImplTests extends BaseTestsCore {
     public void setupEveryTest() throws Exception {
         config = new InternalConfig(new Config("http://www.serverurl.com", "1234"));
         L = new Log(config);
-        ctx = new CtxImpl(sdk, config, new Object(), L);
+        ctx = new CtxCore(sdk, sdk.config(), L, null);
+       // sdk.init(ctx, L);
+
     }
 
     @Test
