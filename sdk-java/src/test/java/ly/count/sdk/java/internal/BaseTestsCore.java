@@ -81,7 +81,7 @@ public class BaseTestsCore {
     public void setUp() throws Exception {
         Log L = new Log(this.config == null ? new InternalConfig(config == null ? defaultConfig() : config) : this.config);
         ctx = new CtxImpl(this.sdk, this.config == null ? new InternalConfig(defaultConfig()) : this.config, getContext(), L);
-        utils = Mockito.spy(new Utils());
+        utils = new Utils();
         Utils.reflectiveSetField(Utils.class, "utils", utils);
     }
 
@@ -91,9 +91,8 @@ public class BaseTestsCore {
 
     private void setUpSDK(Config config, boolean limited) throws Exception {
         Log L = new Log(this.config == null ? new InternalConfig(config == null ? defaultConfig() : config) : this.config);
-        this.dummy = mock(ModuleBase.class);
-        Utils.reflectiveSetField(SDKInterface.class, "testDummyModule", dummy);
-        this.sdk = mock(SDKCore.class);
+        this.sdk = new SDK();
+        this.sdk.init(ctx, L);
         this.sdk.init(new CtxImpl(this.sdk, new InternalConfig(defaultConfig()), getContext(), L));
         this.config = this.sdk.config();
         this.ctx = new CtxImpl(this.sdk, this.config, getContext(), L);
