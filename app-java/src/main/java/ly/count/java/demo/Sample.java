@@ -101,15 +101,20 @@ public class Sample {
         Scanner scanner = new Scanner(System.in);
 
         String COUNTLY_SERVER_URL = "https://try.count.ly/";
-        String COUNTLY_APP_KEY = "API_KEY";
+        String COUNTLY_APP_KEY = "YOUR_APP_KEY";
 
         Config config = new Config(COUNTLY_SERVER_URL, COUNTLY_APP_KEY)
                 .setLoggingLevel(Config.LoggingLevel.DEBUG)
                 .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
                 .enableFeatures(Config.Feature.Events, Config.Feature.Sessions, Config.Feature.CrashReporting, Config.Feature.Views, Config.Feature.UserProfiles, Config.Feature.Location)
-                .setRequiresConsent(false)
+                .setRequiresConsent(true)
                 .enableParameterTamperingProtection("test-salt-checksum")
-                .setEventsBufferSize(2);
+                .setLogListener(new LogCallback() {
+                    @Override
+                    public void LogHappened(String logMessage, Config.LoggingLevel logLevel) {
+                        System.out.println("[" + logLevel + "] " + logMessage);
+                    }
+                });
 
         // Countly needs persistent storage for requests, configuration storage, user profiles and other temporary data,
         // therefore requires a separate data folder to run
