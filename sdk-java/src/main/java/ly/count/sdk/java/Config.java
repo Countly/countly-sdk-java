@@ -532,48 +532,56 @@ public class Config {
         return maxKeyLength;
     }
 
-    public void setMaxKeyLength(int maxKeyLength) {
+    public Config setMaxKeyLength(int maxKeyLength) {
         this.maxKeyLength = maxKeyLength;
+        return this;
     }
 
     public int getMaxValueSize() {
         return maxValueSize;
     }
 
-    public void setMaxValueSize(int maxValueSize) {
+    public Config setMaxValueSize(int maxValueSize) {
         this.maxValueSize = maxValueSize;
+        return this;
     }
 
     public int getMaxSegmentationValues() {
         return maxSegmentationValues;
     }
 
-    public void setMaxSegmentationValues(int maxSegmentationValues) {
+    public Config setMaxSegmentationValues(int maxSegmentationValues) {
         this.maxSegmentationValues = maxSegmentationValues;
+        return this;
     }
 
     public int getMaxStackTraceLinesPerThread() {
         return maxStackTraceLinesPerThread;
     }
 
-    public void setMaxStackTraceLinesPerThread(int maxStackTraceLinesPerThread) {
+    public Config setMaxStackTraceLinesPerThread(int maxStackTraceLinesPerThread) {
         this.maxStackTraceLinesPerThread = maxStackTraceLinesPerThread;
+        return this;
+
     }
 
     public int getMaxStackTraceLineLength() {
         return maxStackTraceLineLength;
     }
 
-    public void setMaxStackTraceLineLength(int maxStackTraceLineLength) {
+    public Config setMaxStackTraceLineLength(int maxStackTraceLineLength) {
         this.maxStackTraceLineLength = maxStackTraceLineLength;
+        return this;
     }
 
     public int getTotalBreadcrumbsAllowed() {
         return totalBreadcrumbsAllowed;
     }
 
-    public void setTotalBreadcrumbsAllowed(int totalBreadcrumbsAllowed) {
+    public Config setTotalBreadcrumbsAllowed(int totalBreadcrumbsAllowed) {
         this.totalBreadcrumbsAllowed = totalBreadcrumbsAllowed;
+        return this;
+
     }
 
 
