@@ -27,10 +27,10 @@ public class Log {
      * @param string string to log
      */
     public void d(String string) {
-        String logLeveTag = "[DEBUG]\t";
+        String logLevelTag = "[DEBUG]\t";
         String msg = tag + "\t" + string;
 
-        print(logLeveTag + msg, Config.LoggingLevel.DEBUG);
+        print(logLevelTag + msg, Config.LoggingLevel.DEBUG);
         informListener(msg, Config.LoggingLevel.DEBUG);
     }
 
@@ -40,10 +40,10 @@ public class Log {
      * @param string string to log
      */
     public void i(String string) {
-        String logLeveTag = "[INFO]\t";
+        String logLevelTag = "[INFO]\t";
         String msg = tag + "\t" + string;
 
-        print(logLeveTag + msg, Config.LoggingLevel.INFO);
+        print(logLevelTag + msg, Config.LoggingLevel.INFO);
         informListener(msg, Config.LoggingLevel.INFO);
     }
 
@@ -53,10 +53,10 @@ public class Log {
      * @param string string to log
      */
     public void w(String string) {
-        String logLeveTag = "[WARN]\t";
+        String logLevelTag = "[WARN]\t";
         String msg = tag + "\t" + string;
 
-        print(logLeveTag + msg, Config.LoggingLevel.WARN);
+        print(logLevelTag + msg, Config.LoggingLevel.WARN);
         informListener(msg, Config.LoggingLevel.WARN);
     }
 
@@ -66,10 +66,10 @@ public class Log {
      * @param string string to log
      */
     public void e(String string) {
-        String logLeveTag = "[ERROR]\t";
+        String logLevelTag = "[ERROR]\t";
         String msg = tag + "\t" + string;
 
-        print(logLeveTag + msg, Config.LoggingLevel.ERROR);
+        print(logLevelTag + msg, Config.LoggingLevel.ERROR);
         informListener(msg, Config.LoggingLevel.ERROR);
     }
 
@@ -79,10 +79,10 @@ public class Log {
      * @param string string to log
      */
     public void v(String string) {
-        String logLeveTag = "[VERBOSE]\t";
+        String logLevelTag = "[VERBOSE]\t";
         String msg =  tag + "\t" + string;
 
-        print(logLeveTag + msg, Config.LoggingLevel.VERBOSE);
+        print(logLevelTag + msg, Config.LoggingLevel.VERBOSE);
         informListener(msg, Config.LoggingLevel.VERBOSE);
     }
 
