@@ -49,6 +49,17 @@
     </option>
   </component>
   <component name="PDMPlugin">
+    <option name="customRuleSets">
+      <list>
+        <option value="D:\programming\Countly\countly-sdk-java\ruleset.xml" />
+      </list>
+    </option>
+    <option name="options">
+      <map>
+        <entry key="Statistics URL" value="" />
+        <entry key="Target JDK" value="11" />
+      </map>
+    </option>
     <option name="skipTestSources" value="false" />
   </component>
   <component name="ProjectInspectionProfilesVisibleTreeState">
