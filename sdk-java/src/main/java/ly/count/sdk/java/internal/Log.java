@@ -27,10 +27,9 @@ public class Log {
      * @param string string to log
      */
     public void d(String string) {
-        String logLevelTag = "[DEBUG]\t";
         String msg = tag + "\t" + string;
 
-        print(logLevelTag + msg, Config.LoggingLevel.DEBUG);
+        print("[DEBUG]\t" + msg, Config.LoggingLevel.DEBUG);
         informListener(msg, Config.LoggingLevel.DEBUG);
     }
 
@@ -40,10 +39,9 @@ public class Log {
      * @param string string to log
      */
     public void i(String string) {
-        String logLevelTag = "[INFO]\t";
         String msg = tag + "\t" + string;
 
-        print(logLevelTag + msg, Config.LoggingLevel.INFO);
+        print("[INFO]\t" + msg, Config.LoggingLevel.INFO);
         informListener(msg, Config.LoggingLevel.INFO);
     }
 
@@ -53,10 +51,9 @@ public class Log {
      * @param string string to log
      */
     public void w(String string) {
-        String logLevelTag = "[WARN]\t";
         String msg = tag + "\t" + string;
 
-        print(logLevelTag + msg, Config.LoggingLevel.WARN);
+        print("[WARN]\t" + msg, Config.LoggingLevel.WARN);
         informListener(msg, Config.LoggingLevel.WARN);
     }
 
@@ -66,10 +63,9 @@ public class Log {
      * @param string string to log
      */
     public void e(String string) {
-        String logLevelTag = "[ERROR]\t";
         String msg = tag + "\t" + string;
 
-        print(logLevelTag + msg, Config.LoggingLevel.ERROR);
+        print("[ERROR]\t" + msg, Config.LoggingLevel.ERROR);
         informListener(msg, Config.LoggingLevel.ERROR);
     }
 
@@ -79,10 +75,9 @@ public class Log {
      * @param string string to log
      */
     public void v(String string) {
-        String logLevelTag = "[VERBOSE]\t";
         String msg =  tag + "\t" + string;
 
-        print(logLevelTag + msg, Config.LoggingLevel.VERBOSE);
+        print("[VERBOSE]\t" + msg, Config.LoggingLevel.VERBOSE);
         informListener(msg, Config.LoggingLevel.VERBOSE);
     }
 
