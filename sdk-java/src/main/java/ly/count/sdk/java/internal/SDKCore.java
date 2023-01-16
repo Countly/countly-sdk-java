@@ -11,6 +11,7 @@ public abstract class SDKCore implements SDKInterface {
 
     protected static SDKCore instance;
 
+    protected CLYStorage clyStorage;
     private UserImpl user;
     public InternalConfig config;
     protected Networking networking;
@@ -38,7 +39,12 @@ public abstract class SDKCore implements SDKInterface {
     protected SDKCore() {
         this.modules = new TreeMap<>();
         instance = this;
+        clyStorage = new CLYStorage();
 
+    }
+
+    public CLYStorage getClyStorage() {
+        return clyStorage;
     }
 
     protected Log L = null;
@@ -225,7 +231,7 @@ public abstract class SDKCore implements SDKInterface {
      *
      * @param ctx {@link CtxCore} object containing config with mapping overrides
      * @throws IllegalArgumentException in case some {@link Module} finds {@link #config} inconsistent.
-     * @throws IllegalStateException when this module is run second time on the same {@code Core} instance.
+     * @throws IllegalStateException    when this module is run second time on the same {@code Core} instance.
      */
     protected void prepareMappings(CtxCore ctx) throws IllegalStateException {
         if (modules.size() > 0) {
@@ -246,10 +252,10 @@ public abstract class SDKCore implements SDKInterface {
      * Uses {@link #moduleMappings} for {@code ConfigCore.Feature} / {@link CoreFeature}
      * - Class&lt;Module&gt; mapping to enable overriding by app developer.
      *
-     * @param ctx {@link CtxCore} object
+     * @param ctx      {@link CtxCore} object
      * @param features consents bitmask to check against
      * @throws IllegalArgumentException in case some {@link Module} finds {@link #config} inconsistent.
-     * @throws IllegalStateException when this module is run second time on the same {@code Core} instance.
+     * @throws IllegalStateException    when this module is run second time on the same {@code Core} instance.
      */
     protected void buildModules(CtxCore ctx, int features) throws IllegalArgumentException, IllegalStateException {
         // override module mappings in native/Android parts, overriding by ConfigCore ones if necessary
@@ -304,7 +310,7 @@ public abstract class SDKCore implements SDKInterface {
      */
     private static Module instantiateModule(Class<? extends Module> cls, Log L) {
         try {
-            return (Module)cls.getConstructors()[0].newInstance();
+            return (Module) cls.getConstructors()[0].newInstance();
         } catch (InstantiationException e) {
             L.e("[SDKModules] Module cannot be instantiated" + e);
         } catch (IllegalAccessException e) {
@@ -313,7 +319,7 @@ public abstract class SDKCore implements SDKInterface {
             L.e("[SDKModules] Module constructor cannot be invoked" + e);
         } catch (IllegalArgumentException e) {
             try {
-                return (Module)cls.getConstructors()[0].newInstance((Object)null);
+                return (Module) cls.getConstructors()[0].newInstance((Object) null);
             } catch (InstantiationException e1) {
                 L.e("[SDKModules] Module cannot be instantiated" + e);
             } catch (IllegalAccessException e1) {
@@ -342,8 +348,8 @@ public abstract class SDKCore implements SDKInterface {
      * @return {@link Module} instance or null if no such module is instantiated
      */
     @SuppressWarnings("unchecked")
-    public  <T extends Module> T module(Class<T> cls) {
-        for (Module module: modules.values()) {
+    public <T extends Module> T module(Class<T> cls) {
+        for (Module module : modules.values()) {
             if (module.getClass().isAssignableFrom(cls)) {
                 return (T) module;
             }
@@ -352,13 +358,13 @@ public abstract class SDKCore implements SDKInterface {
     }
 
     protected void eachModule(Modulator modulator) {
-        for (Integer feature: modules.keySet()) {
+        for (Integer feature : modules.keySet()) {
             modulator.run(feature, modules.get(feature));
         }
     }
 
     @Override
-    public SessionImpl onSessionBegan(CtxCore ctx, SessionImpl session){
+    public SessionImpl onSessionBegan(CtxCore ctx, SessionImpl session) {
         for (Module m : modules.values()) {
             m.onSessionBegan(session, ctx);
         }
@@ -366,7 +372,7 @@ public abstract class SDKCore implements SDKInterface {
     }
 
     @Override
-    public SessionImpl onSessionEnded(CtxCore ctx, SessionImpl session){
+    public SessionImpl onSessionEnded(CtxCore ctx, SessionImpl session) {
         for (Module m : modules.values()) {
             m.onSessionEnded(session, ctx);
         }
@@ -419,6 +425,7 @@ public abstract class SDKCore implements SDKInterface {
         L = logger;
         L.i("[SDKCore] [SDKCore] Initializing Countly in " + (ctx.getConfig().isLimited() ? "limited" : "full") + " mode");
 
+        clyStorage.init(ctx, logger);
         config = prepareConfig(ctx);
         Utils.reflectiveSetField(ctx, "config", config);
 
@@ -456,7 +463,7 @@ public abstract class SDKCore implements SDKInterface {
                 networking.init(ctx, new IStorageForRequestQueue() {
                     @Override
                     public Request getNextRequest() {
-                        synchronized(SDKCore.instance.lockBRQStorage) {
+                        synchronized (SDKCore.instance.lockBRQStorage) {
                             if (requestQueueMemory.isEmpty()) {
                                 return null;
                             }
@@ -467,7 +474,7 @@ public abstract class SDKCore implements SDKInterface {
 
                     @Override
                     public Boolean removeRequest(Request request) {
-                        synchronized(SDKCore.instance.lockBRQStorage) {
+                        synchronized (SDKCore.instance.lockBRQStorage) {
                             return requestQueueMemory.remove(request);
                         }
                     }
@@ -712,7 +719,7 @@ public abstract class SDKCore implements SDKInterface {
 
     @Override
     public void onSignal(CtxCore ctx, int id, String param) {
-        if (id == Signal.Ping.getIndex()){
+        if (id == Signal.Ping.getIndex()) {
             networking.check(ctx);
         } else if (id == Signal.Crash.getIndex()) {
             processCrash(ctx, Long.parseLong(param));

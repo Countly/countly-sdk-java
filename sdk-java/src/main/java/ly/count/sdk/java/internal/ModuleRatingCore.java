@@ -53,7 +53,7 @@ public class ModuleRatingCore extends ModuleBase {
     }
 
     public void PurgeRatingInfo(){
-        ctx.getSDK().storablePurge(ctx, storableStoragePrefix);
+        ctx.getSDK().clyStorage.storablePurge(ctx, storableStoragePrefix);
     }
 
     /**
