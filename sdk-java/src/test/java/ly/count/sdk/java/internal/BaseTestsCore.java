@@ -6,6 +6,7 @@ import org.junit.Before;
 import org.mockito.Mockito;
 import org.powermock.reflect.Whitebox;
 
+import java.io.File;
 import java.util.List;
 
 import ly.count.sdk.java.Config;
@@ -23,7 +24,7 @@ public class BaseTestsCore {
 
     protected SDKCore sdk = null;
 
-    public class CtxImpl implements CtxCore {
+    public class CtxImpl extends CtxCore {
         private SDKCore sdk;
         private Object ctx;
         private InternalConfig config;
@@ -31,6 +32,7 @@ public class BaseTestsCore {
         private Log L = null;
 
         public CtxImpl(SDKCore sdk, InternalConfig config, Object ctx, Log logger) {
+            super(sdk, config, logger, null);
             this.sdk = sdk;
             this.config = config;
             this.ctx = ctx;
@@ -38,8 +40,8 @@ public class BaseTestsCore {
         }
 
         @Override
-        public Object getContext() {
-            return ctx;
+        public File getContext() {
+            return null;
         }
 
         @Override

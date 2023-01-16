@@ -22,9 +22,11 @@ public class BackendModeTests {
     @BeforeClass
     public static void init() {
         Config cc = new Config("https://try.count.ly", "COUNTLY_APP_KEY");
+        File targetFolder = new File("/Users/zahidzafar/Projects/countly/countly-sdk-java");
+
         cc.setEventsBufferSize(4).enableBackendMode();
 
-        File targetFolder = new File("d:\\__COUNTLY\\java_test\\");
+       // File targetFolder = new File("d:\\__COUNTLY\\java_test\\");
         Countly.init(targetFolder, cc);
     }
 
