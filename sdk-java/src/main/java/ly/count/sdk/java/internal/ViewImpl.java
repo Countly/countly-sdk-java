@@ -8,7 +8,7 @@ import ly.count.sdk.java.View;
  */
 
 class ViewImpl implements View {
-    private static final Log L = null;
+    private Log L = null;
 
     static final String EVENT = "[CLY]_view";
     static final String NAME = "name";
@@ -29,7 +29,8 @@ class ViewImpl implements View {
     private boolean firstView;
     private boolean started, ended;
 
-    ViewImpl(Session session, String name) {
+    ViewImpl(Session session, String name, Log logger) {
+        this.L = logger;
         this.name = name;
         this.session = session;
     }

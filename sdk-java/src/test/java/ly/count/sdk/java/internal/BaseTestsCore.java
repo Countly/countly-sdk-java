@@ -24,13 +24,13 @@ public class BaseTestsCore {
     protected SDKCore sdk = null;
 
     public class CtxImpl implements CtxCore {
-        private SDKInterface sdk;
+        private SDKCore sdk;
         private Object ctx;
         private InternalConfig config;
 
         private Log L = null;
 
-        public CtxImpl(SDKInterface sdk, InternalConfig config, Object ctx, Log logger) {
+        public CtxImpl(SDKCore sdk, InternalConfig config, Object ctx, Log logger) {
             this.sdk = sdk;
             this.config = config;
             this.ctx = ctx;
@@ -48,7 +48,7 @@ public class BaseTestsCore {
         }
 
         @Override
-        public SDKInterface getSDK() {
+        public SDKCore getSDK() {
             return sdk;
         }
 

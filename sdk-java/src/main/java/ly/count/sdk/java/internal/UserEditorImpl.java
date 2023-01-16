@@ -137,6 +137,7 @@ public class UserEditorImpl implements UserEditor {
     private final List<String> cohortsToAdd, cohortsToRemove;
 
     UserEditorImpl(UserImpl user, Log logger) {
+        this.L = logger;
         this.user = user;
         this.sets = new HashMap<>();
         this.ops = new ArrayList<>();
