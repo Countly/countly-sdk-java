@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module external.linked.project.id=":app-java:test" external.linked.project.path="$MODULE_DIR$/../../../app-java" external.root.project.path="$MODULE_DIR$/../../.." external.system.id="GRADLE" external.system.module.group="countly-sdk-java" external.system.module.type="sourceSet" external.system.module.version="unspecified" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <output-test url="file://$MODULE_DIR$/../../../app-java/build/classes/java/test" />
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../../../app-java/src/test" />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="countly-sdk-java.app-java.main" />
+    <orderEntry type="module" module-name="countly-sdk-java.sdk-java.main" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.json:json:20180813" level="project" />
+  </component>
+  <component name="TestModuleProperties" production-module="countly-sdk-java.app-java.main" />
+</module>

@@ -11,3 +11,4 @@ sdk-java/build/
 *.attach_pid*
 app-java/out/
 data
+sdk-java/out/
