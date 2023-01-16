@@ -29,7 +29,7 @@ public class Countly implements Usage {
     protected CtxCore ctx;
     protected Log L;
 
-    protected Countly(SDK sdk, CtxImpl ctx, Log logger) {
+    protected Countly(SDK sdk, CtxCore ctx, Log logger) {
         cly = this;
         L = logger;
         this.sdk = sdk;
@@ -81,10 +81,10 @@ public class Countly implements Usage {
             InternalConfig internalConfig = new InternalConfig(config);
             Log L = new Log(internalConfig);
             SDK sdk = new SDK();
-            sdk.init(new CtxImpl(sdk, internalConfig, L, directory), L);
+            sdk.init(new CtxCore(sdk, internalConfig, L, directory), L);
 
             // config has been changed, thus recreating ctx
-            cly = new Countly(sdk, new CtxImpl(sdk, sdk.config(), L, directory), L);
+            cly = new Countly(sdk, new CtxCore(sdk, sdk.config(), L, directory), L);
         }
     }
 

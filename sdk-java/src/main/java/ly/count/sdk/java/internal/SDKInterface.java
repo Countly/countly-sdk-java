@@ -51,18 +51,6 @@ public interface SDKInterface {
     void onCrash(CtxCore ctx, Throwable t, boolean fatal, String name, Map<String, String> segments, String[] logs);
     void onUserChanged(CtxCore ctx, JSONObject changes, Set<String> cohortsAdded, Set<String> cohortsRemoved);
 
-    // -------------------- Storage -----------------------
-    int storablePurge(CtxCore ctx, String prefix);
-    Boolean storableWrite(CtxCore ctx, String prefix, Long id, byte[] data);
-    <T extends Storable> Boolean storableWrite(CtxCore ctx, T storable);
-    <T extends Storable> Boolean storableRead(CtxCore ctx, T storable);
-    byte[] storableReadBytes(CtxCore ctx, String name);
-    byte[] storableReadBytes(CtxCore ctx, String prefix, Long id);
-    <T extends Storable> Map.Entry<Long, byte[]> storableReadBytesOneOf(CtxCore ctx, T storable, boolean asc);
-    <T extends Storable> Boolean storableRemove(CtxCore ctx, T storable);
-    <T extends Storable> Boolean storablePop(CtxCore ctx, T storable);
-    List<Long> storableList(CtxCore ctx, String prefix, int slice);
-
     // -------------------- Service ------------------------
     void onSignal(CtxCore ctx, int id, Byteable param1, Byteable param2);
     void onSignal(CtxCore ctx, int id, String param);
