@@ -117,7 +117,7 @@ public final class InternalConfig extends Config implements Storable {
             stream.writeUTF(serverURL.toString());
             stream.writeUTF(serverAppKey);
             stream.writeInt(features);
-            stream.writeUTF(loggingTag);
+            stream.writeUTF("Countly");//for keeping backwards compatibility, remove in the future
             stream.writeInt(loggingLevel.getLevel());
             stream.writeUTF(sdkName);
             stream.writeUTF(sdkVersion);
@@ -134,7 +134,7 @@ public final class InternalConfig extends Config implements Storable {
             stream.writeInt(sendUpdateEachSeconds);
             stream.writeInt(eventsBufferSize);
             stream.writeInt(sessionCooldownPeriod);
-            stream.writeBoolean(testMode);
+            stream.writeBoolean(false);//for keeping backwards compatibility, remove in the future
             stream.writeInt(crashReportingANRCheckingPeriod);
             stream.writeObject(crashProcessorClass);
             stream.writeInt(moduleOverrides == null ? 0 : moduleOverrides.size());
@@ -193,7 +193,7 @@ public final class InternalConfig extends Config implements Storable {
             }
 
             features = stream.readInt();
-            loggingTag = stream.readUTF();
+            String throwawayCountlyLoggingTag = stream.readUTF();//we are only reading this for backwards compatibility. Throw away in the future
             int l = stream.readInt();
             for (LoggingLevel level : LoggingLevel.values()) {
                 if (level.getLevel() == l) {
@@ -223,7 +223,7 @@ public final class InternalConfig extends Config implements Storable {
             sendUpdateEachSeconds = stream.readInt();
             eventsBufferSize = stream.readInt();
             sessionCooldownPeriod = stream.readInt();
-            testMode = stream.readBoolean();
+            boolean throwawayCountlyTestMode = stream.readBoolean();//we are only reading this for backwards compatibility. Throw away in the future
             crashReportingANRCheckingPeriod = stream.readInt();
             crashProcessorClass = (String) stream.readObject();
 

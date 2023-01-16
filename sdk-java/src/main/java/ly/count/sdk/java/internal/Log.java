@@ -8,81 +8,68 @@ import ly.count.sdk.java.Config;
  */
 
 public class Log {
-
-    private String tag;
     LogCallback logListener = null;
-    private Config.LoggingLevel level;
+    private Config.LoggingLevel configLevel;
 
 
     public Log(InternalConfig config) {
         // let it be specific int and not index for visibility
-        tag = config.getLoggingTag();
-        level = config.getLoggingLevel();
+        configLevel = config.getLoggingLevel();
         logListener = config.getLogListener();
     }
 
     /**
      * {@link Config.LoggingLevel} level logging
      *
-     * @param string string to log
+     * @param logMessage string to log
      */
-    public void d(String string) {
-        String msg = tag + "\t" + string;
-
-        print("[DEBUG]\t" + msg, Config.LoggingLevel.DEBUG);
-        informListener(msg, Config.LoggingLevel.DEBUG);
+    public void d(String logMessage) {
+        print("[DEBUG] [Countly]\t" + logMessage, Config.LoggingLevel.DEBUG);
+        informListener(logMessage, Config.LoggingLevel.DEBUG);
     }
 
     /**
      * {@link Config.LoggingLevel#INFO} level logging
      *
-     * @param string string to log
+     * @param logMessage string to log
      */
-    public void i(String string) {
-        String msg = tag + "\t" + string;
-
-        print("[INFO]\t" + msg, Config.LoggingLevel.INFO);
-        informListener(msg, Config.LoggingLevel.INFO);
+    public void i(String logMessage) {
+        print("[INFO] [Countly]\t" + logMessage, Config.LoggingLevel.INFO);
+        informListener(logMessage, Config.LoggingLevel.INFO);
     }
 
     /**
      * {@link Config.LoggingLevel#WARN} level logging
      *
-     * @param string string to log
+     * @param logMessage string to log
      */
-    public void w(String string) {
-        String msg = tag + "\t" + string;
-
-        print("[WARN]\t" + msg, Config.LoggingLevel.WARN);
-        informListener(msg, Config.LoggingLevel.WARN);
+    public void w(String logMessage) {
+        print("[WARN] [Countly]\t" + logMessage, Config.LoggingLevel.WARN);
+        informListener(logMessage, Config.LoggingLevel.WARN);
     }
 
     /**
      * {@link Config.LoggingLevel#ERROR} level logging
      *
-     * @param string string to log
+     * @param logMessage string to log
      */
-    public void e(String string) {
-        String msg = tag + "\t" + string;
-
-        print("[ERROR]\t" + msg, Config.LoggingLevel.ERROR);
-        informListener(msg, Config.LoggingLevel.ERROR);
+    public void e(String logMessage) {
+        print("[ERROR] [Countly]\t" + logMessage, Config.LoggingLevel.ERROR);
+        informListener(logMessage, Config.LoggingLevel.ERROR);
     }
 
     /**
      * {@link Config.LoggingLevel#VERBOSE} level logging
      *
-     * @param string string to log
+     * @param logMessage string to log
      */
-    public void v(String string) {
-        String msg =  tag + "\t" + string;
-
-        print("[VERBOSE]\t" + msg, Config.LoggingLevel.VERBOSE);
-        informListener(msg, Config.LoggingLevel.VERBOSE);
+    public void v(String logMessage) {
+        print("[VERBOSE] [Countly]\t" + logMessage, Config.LoggingLevel.VERBOSE);
+        informListener(logMessage, Config.LoggingLevel.VERBOSE);
     }
 
     private void print(String msg, Config.LoggingLevel level) {
-        if (level != null && level.prints(level)) {
+        if (level != null && configLevel.prints(level)) {
             System.out.println(msg);
         }
     }
