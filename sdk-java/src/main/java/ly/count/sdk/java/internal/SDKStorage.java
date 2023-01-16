@@ -29,7 +29,6 @@ public class SDKStorage {
         Storage.stop();
     }
 
-
     private static String getName(Storable storable) {
         return getName(storable.storagePrefix(), storable.storageId().toString());
     }
