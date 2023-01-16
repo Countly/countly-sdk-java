@@ -1,9 +1,5 @@
 package ly.count.sdk.java.internal;
 
-import java.io.*;
-import java.nio.channels.FileLock;
-import java.util.*;
-
 public class SDK extends SDKCore {
 
     private static final String FILE_NAME_PREFIX = "[CLY]";

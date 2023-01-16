@@ -43,10 +43,6 @@ public abstract class SDKCore implements SDKInterface {
 
     }
 
-    public CLYStorage getClyStorage() {
-        return clyStorage;
-    }
-
     protected Log L = null;
     private static Module testDummyModule = null;//set during testing when trying to check the SDK's lifecycle
 
