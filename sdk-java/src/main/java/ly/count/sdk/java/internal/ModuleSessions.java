@@ -98,7 +98,7 @@ public class ModuleSessions extends ModuleBase {
         }
 
         if (clear) {
-            ctx.getSDK().clyStorage.storablePurge(ctx, SessionImpl.getStoragePrefix());
+            ctx.getSDK().sdkStorage.storablePurge(ctx, SessionImpl.getStoragePrefix());
         }
     }
 

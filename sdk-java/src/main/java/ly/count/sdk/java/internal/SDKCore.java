@@ -11,7 +11,7 @@ public abstract class SDKCore implements SDKInterface {
 
     protected static SDKCore instance;
 
-    protected CLYStorage clyStorage;
+    protected SDKStorage sdkStorage;
     private UserImpl user;
     public InternalConfig config;
     protected Networking networking;
@@ -39,7 +39,7 @@ public abstract class SDKCore implements SDKInterface {
     protected SDKCore() {
         this.modules = new TreeMap<>();
         instance = this;
-        clyStorage = new CLYStorage();
+        sdkStorage = new SDKStorage();
 
     }
 
@@ -421,7 +421,7 @@ public abstract class SDKCore implements SDKInterface {
         L = logger;
         L.i("[SDKCore] [SDKCore] Initializing Countly in " + (ctx.getConfig().isLimited() ? "limited" : "full") + " mode");
 
-        clyStorage.init(ctx, logger);
+        sdkStorage.init(ctx, logger);
         config = prepareConfig(ctx);
         Utils.reflectiveSetField(ctx, "config", config);
 

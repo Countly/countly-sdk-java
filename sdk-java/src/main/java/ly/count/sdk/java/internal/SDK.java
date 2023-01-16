@@ -8,7 +8,7 @@ public class SDK extends SDKCore {
     @Override
     public void stop(ly.count.sdk.java.internal.CtxCore ctx, boolean clear) {
         super.stop(ctx, clear);
-        clyStorage.stop(ctx, clear);
+        sdkStorage.stop(ctx, clear);
     }
 
     @Override

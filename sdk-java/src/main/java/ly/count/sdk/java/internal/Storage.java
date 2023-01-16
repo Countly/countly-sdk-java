@@ -54,7 +54,7 @@ public class Storage {
         return tasks.run(new Tasks.Task<Boolean>(storable.storageId()) {
             @Override
             public Boolean call() throws Exception {
-                return ctx.getSDK().clyStorage.storableWrite(ctx, storable);
+                return ctx.getSDK().sdkStorage.storableWrite(ctx, storable);
             }
         }, callback);
     }
@@ -99,7 +99,7 @@ public class Storage {
         return tasks.run(new Tasks.Task<Boolean>(Tasks.ID_STRICT) {
             @Override
             public Boolean call() throws Exception {
-                return ctx.getSDK().clyStorage.storableRemove(ctx, storable);
+                return ctx.getSDK().sdkStorage.storableRemove(ctx, storable);
             }
         }, callback);
     }
@@ -134,7 +134,7 @@ public class Storage {
         return tasks.run(new Tasks.Task<T>(-storable.storageId()) {
             @Override
             public T call() throws Exception {
-                Boolean result = ctx.getSDK().clyStorage.storablePop(ctx, storable);
+                Boolean result = ctx.getSDK().sdkStorage.storablePop(ctx, storable);
                 if (result == null || !result) {
                     return null;
                 } else {
@@ -158,13 +158,13 @@ public class Storage {
                 @Override
                 public Boolean call() throws Exception {
                     boolean success = true;
-                    List<Long> ids = ctx.getSDK().clyStorage.storableList(ctx, prefix, 0);
+                    List<Long> ids = ctx.getSDK().sdkStorage.storableList(ctx, prefix, 0);
                     for (Long id : ids) {
-                        byte data[] = ctx.getSDK().clyStorage.storableReadBytes(ctx, prefix, id);
+                        byte data[] = ctx.getSDK().sdkStorage.storableReadBytes(ctx, prefix, id);
                         if (data != null) {
                             byte transformed[] = transformer.doTheJob(id, data);
                             if (transformed != null) {
-                                if (!ctx.getSDK().clyStorage.storableWrite(ctx, prefix, id, transformed)) {
+                                if (!ctx.getSDK().sdkStorage.storableWrite(ctx, prefix, id, transformed)) {
                                     success = false;
                                     System.out.println("[ERROR][Storage] Couldn't write transformed data for " + id);
                                 }
@@ -225,7 +225,7 @@ public class Storage {
         return tasks.run(new Tasks.Task<T>(-storable.storageId()) {
             @Override
             public T call() throws Exception {
-                Boolean done = ctx.getSDK().clyStorage.storableRead(ctx, storable);
+                Boolean done = ctx.getSDK().sdkStorage.storableRead(ctx, storable);
                 T ret = null;
                 if (done == null || !done) {
                     System.out.println("[DEBUG][Storage] No data for file " + name(storable));
@@ -272,7 +272,7 @@ public class Storage {
         return tasks.run(new Tasks.Task<T>(-storable.storageId()) {
             @Override
             public T call() throws Exception {
-                Map.Entry<Long, byte[]> data = ctx.getSDK().clyStorage.storableReadBytesOneOf(ctx, storable, asc);
+                Map.Entry<Long, byte[]> data = ctx.getSDK().sdkStorage.storableReadBytesOneOf(ctx, storable, asc);
                 if (data == null) {
                     return null;
                 }
@@ -335,7 +335,7 @@ public class Storage {
         return tasks.run(new Tasks.Task<List<Long>>(Tasks.ID_STRICT) {
             @Override
             public List<Long> call() throws Exception {
-                List<Long> list = ctx.getSDK().clyStorage.storableList(ctx, prefix, slice);
+                List<Long> list = ctx.getSDK().sdkStorage.storableList(ctx, prefix, slice);
                 Collections.sort(list, new Comparator<Long>() {
                     @Override
                     public int compare(Long o1, Long o2) {

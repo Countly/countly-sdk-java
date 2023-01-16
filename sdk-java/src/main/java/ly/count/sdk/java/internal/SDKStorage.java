@@ -4,7 +4,7 @@ import java.io.*;
 import java.nio.channels.FileLock;
 import java.util.*;
 
-public class CLYStorage {
+public class SDKStorage {
 
     private Log L;
     private CtxCore ctx;
@@ -12,7 +12,7 @@ public class CLYStorage {
     private static final String FILE_NAME_PREFIX = "[CLY]";
     private static final String FILE_NAME_SEPARATOR = "_";
 
-    protected CLYStorage() {
+    protected SDKStorage() {
 
     }
 
