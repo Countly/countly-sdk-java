@@ -1,6 +1,12 @@
 22.06.0
 * The "resetDeviceId", "login", and "logout" have been deprecated.
-* ! Minor breaking change ! The following methods and their functionality is removed from the "Config" class: "enableTestMode", "disableTestMode" and "isTestModeEnabled". The "TestMode" functionality is being removed from the SDK.
+* ! Minor breaking change ! The following methods and their functionality are deprecated from the "Config" class and will not function anymore: 
+	- "enableTestMode"
+	- "disableTestMode"
+	- "isTestModeEnabled".
+	- "setLoggingTag"
+* ! Minor breaking change ! The "TestMode" functionality is being removed from the SDK.
+* ! Minor breaking change ! It is not possible to set the logging tag anymore
 
 20.11.5
 * Fixed a bug where the backend mode module produces "null pointer exceptions" in case not initialized.

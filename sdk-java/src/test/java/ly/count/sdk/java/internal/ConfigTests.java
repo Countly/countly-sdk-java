@@ -54,7 +54,7 @@ public class ConfigTests extends BaseTestsCore {
         Assert.assertEquals("Countly", internalConfig.getLoggingTag());
 
         internalConfig.setLoggingTag("New Tag");
-        Assert.assertEquals("New Tag", internalConfig.getLoggingTag());
+        Assert.assertEquals("Countly", internalConfig.getLoggingTag());//this should return "Countly" because the call should not be working anymore
     }
 
     @Test

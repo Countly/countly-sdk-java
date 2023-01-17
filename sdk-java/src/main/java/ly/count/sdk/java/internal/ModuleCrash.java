@@ -42,7 +42,7 @@ public class ModuleCrash extends ModuleBase {
                 Thread.setDefaultUncaughtExceptionHandler(previousHandler);
             }
             if (clear) {
-                ctx.getSDK().storablePurge(ctx, CrashImplCore.getStoragePrefix());
+                ctx.getSDK().sdkStorage.storablePurge(ctx, CrashImplCore.getStoragePrefix());
             }
         } catch (Throwable t) {
             L.e("[ModuleCrash] Exception while stopping crash reporting" + t);
