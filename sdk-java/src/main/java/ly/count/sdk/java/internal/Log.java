@@ -13,7 +13,9 @@ public class Log {
 
 
     public Log(Config.LoggingLevel loggingLevel, LogCallback logListener) {
-        // let it be specific int and not index for visibility
+        if(loggingLevel == null) {
+            throw new NullPointerException("Logging level can't null.");
+        }
         this.loggingLevel = loggingLevel;
         this.logListener = logListener;
     }

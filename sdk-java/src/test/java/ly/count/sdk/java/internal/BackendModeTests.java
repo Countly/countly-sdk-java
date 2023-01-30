@@ -26,7 +26,7 @@ public class BackendModeTests {
 
         cc.setEventsBufferSize(4).enableBackendMode();
 
-        File targetFolder = new File("d:\\__COUNTLY\\java_test\\");
+        File targetFolder = new File("/Users/zahidzafar/Projects/countly/countly-sdk-java");
         Countly.init(targetFolder, cc);
     }
 
