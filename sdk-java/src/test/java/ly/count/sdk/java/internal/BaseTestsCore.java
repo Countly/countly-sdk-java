@@ -75,13 +75,20 @@ public class BaseTestsCore {
 
     protected Config defaultConfigWithLogsForConfigTests() throws Exception {
         InternalConfig config = new InternalConfig(defaultConfig());
-        new Log(config);
+        new Log(config.getLoggingLevel(), config.getLogListener());
         return config;
     }
 
     @Before
     public void setUp() throws Exception {
-        Log L = new Log(this.config == null ? new InternalConfig(config == null ? defaultConfig() : config) : this.config);
+        Log L;
+        if(this.config == null) {
+            Config c = defaultConfig();
+            L = new Log(c.getLoggingLevel(), c.getLogListener());
+        }
+        else {
+            L = new Log(this.config.getLoggingLevel(), this.config.getLogListener());
+        }
         ctx = new CtxImpl(this.sdk, this.config == null ? new InternalConfig(defaultConfig()) : this.config, getContext(), L);
         utils = Mockito.spy(new Utils());
         Utils.reflectiveSetField(Utils.class, "utils", utils);
@@ -92,7 +99,15 @@ public class BaseTestsCore {
     }
 
     private void setUpSDK(Config config, boolean limited) throws Exception {
-        Log L = new Log(this.config == null ? new InternalConfig(config == null ? defaultConfig() : config) : this.config);
+        Log L;
+        if(this.config == null) {
+            Config c = defaultConfig();
+            L = new Log(c.getLoggingLevel(), c.getLogListener());
+        }
+        else {
+            L = new Log(this.config.getLoggingLevel(), this.config.getLogListener());
+        }
+
         this.dummy = mock(ModuleBase.class);
         Utils.reflectiveSetField(SDKInterface.class, "testDummyModule", dummy);
         this.sdk = mock(SDKCore.class);
