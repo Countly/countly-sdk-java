@@ -466,7 +466,6 @@ public class Utils {
 
     public static String trimKey(final int limit, final String key, Log logger) {
         String k = key;
-        Config config = SDKCore.instance.config();
         if (key.length() > limit) {
             logger.d("[Utils] RecordEventInternal : Max allowed key length is " + limit);
             k = key.substring(0, limit);

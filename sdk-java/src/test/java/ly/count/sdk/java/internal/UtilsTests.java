@@ -1,5 +1,6 @@
 package ly.count.sdk.java.internal;
 
+import ly.count.sdk.java.Config;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -8,20 +9,46 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 
 @RunWith(JUnit4.class)
 public class UtilsTests {
+
+    Log logger;
+
     @Before
-    public void setupEveryTest(){
+    public void setupEveryTest() {
+        logger = new Log(Config.LoggingLevel.DEBUG, null);
     }
 
     @After
-    public void cleanupEveryTests(){
+    public void cleanupEveryTests() {
     }
 
     @Test
-    public void base_64_decodeToString(){
+    public void trimKey() {
+        String result = Utils.trimKey(3, "Key_01", logger);
+        Assert.assertEquals("Key", result);
+    }
+
+    @Test
+    public void trimValue() {
+        String result = Utils.trimValue(5, "Key", "Value1", logger);
+        Assert.assertEquals("Value", result);
+    }
+
+    @Test
+    public void trimValues() {
+        String[] result = Utils.trimValues(3, new String[]{"zelda", "link", "ganon"}, logger);
+        Assert.assertEquals(3, result.length);
+        Assert.assertEquals("zel", result[0]);
+        Assert.assertEquals("lin", result[1]);
+        Assert.assertEquals("gan", result[2]);
+    }
+
+    @Test
+    public void base_64_decodeToString() {
         String decodeSource = "MTIzNDU=";
         String decodeTarget = "12345";
 
@@ -29,7 +56,7 @@ public class UtilsTests {
     }
 
     @Test
-    public void base_64_decodeToByte(){
+    public void base_64_decodeToByte() {
         String decodeSource = "MTIzNDU=";
         String decodeTarget = "12345";
         byte[] decodeTargetBytes = decodeTarget.getBytes();
@@ -48,42 +75,42 @@ public class UtilsTests {
     }
 
     @Test
-    public void base_64_encodeString(){
+    public void base_64_encodeString() {
         String source = "12345";
         String resTarget = "MTIzNDU=";
 
         Assert.assertEquals(resTarget, Utils.Base64.encode(source));
     }
 
-    @Test (expected = NullPointerException.class)
-    public void urlencode_null(){
+    @Test(expected = NullPointerException.class)
+    public void urlencode_null() {
         final String givenString = null;
         final String res = Utils.urlencode(givenString);
     }
 
     @Test
-    public void urlencode_empty(){
+    public void urlencode_empty() {
         final String givenString = "";
         final String res = Utils.urlencode(givenString);
         junit.framework.Assert.assertEquals(givenString, res);
     }
 
     @Test
-    public void urlencode_symbols(){
+    public void urlencode_symbols() {
         final String givenString = "~!@ #$%^&()_+{ }:\"|[]\\|,./<>?";
         final String res = Utils.urlencode(givenString);
         junit.framework.Assert.assertEquals("%7E%21%40+%23%24%25%5E%26%28%29_%2B%7B+%7D%3A%22%7C%5B%5D%5C%7C%2C.%2F%3C%3E%3F", res);
     }
 
     @Test
-    public void urlencode_basicAlphanumericals(){
+    public void urlencode_basicAlphanumericals() {
         final String givenString = "TheQuickBrownFoxJumpsOverTheLazyDog1234567890.-*_";
         final String res = Utils.urlencode(givenString);
         junit.framework.Assert.assertEquals(givenString, res);
     }
 
-    @Test (expected = NullPointerException.class)
-    public void joinCollection_nullCollection(){
+    @Test(expected = NullPointerException.class)
+    public void joinCollection_nullCollection() {
         String separator = "g";
         Collection<Object> objects = null;
 
@@ -91,18 +118,20 @@ public class UtilsTests {
     }
 
     @Test
-    public void joinCollection_emptyCollection(){
+    public void joinCollection_emptyCollection() {
         String separator = "g";
-        Collection<Object> objects = new ArrayList<Object>() {};
+        Collection<Object> objects = new ArrayList<Object>() {
+        };
 
         String res = Utils.join(objects, separator);
         junit.framework.Assert.assertEquals("", res);
     }
 
     @Test
-    public void joinCollection_nullseparator(){
+    public void joinCollection_nullseparator() {
         String separator = null;
-        Collection<Object> objects = new ArrayList<Object>() {};
+        Collection<Object> objects = new ArrayList<Object>() {
+        };
         objects.add("1");
         objects.add("2");
         objects.add("3");
@@ -112,9 +141,10 @@ public class UtilsTests {
     }
 
     @Test
-    public void joinCollection_emptyseparator(){
+    public void joinCollection_emptyseparator() {
         String separator = "";
-        Collection<Object> objects = new ArrayList<Object>() {};
+        Collection<Object> objects = new ArrayList<Object>() {
+        };
         objects.add("1");
         objects.add("2");
         objects.add("3");
@@ -124,9 +154,10 @@ public class UtilsTests {
     }
 
     @Test
-    public void joinCollection_simpleStrings(){
+    public void joinCollection_simpleStrings() {
         String separator = "f";
-        Collection<Object> objects = new ArrayList<Object>() {};
+        Collection<Object> objects = new ArrayList<Object>() {
+        };
         objects.add("11");
         objects.add("22");
         objects.add("33");
@@ -136,9 +167,10 @@ public class UtilsTests {
     }
 
     @Test
-    public void joinCollection_stringsWithNumbers(){
+    public void joinCollection_stringsWithNumbers() {
         String separator = "&";
-        Collection<Object> objects = new ArrayList<Object>() {};
+        Collection<Object> objects = new ArrayList<Object>() {
+        };
         objects.add("str");
         objects.add("string");
         objects.add("int");
@@ -176,10 +208,14 @@ public class UtilsTests {
     public void reflectiveSetField() {
         final class Testy {
             private int x = 10;
-            Testy(int n) { x = n; }
+
+            Testy(int n) {
+                x = n;
+            }
+
             @Override
             public boolean equals(Object obj) {
-                return obj instanceof Testy && ((Testy)obj).x == x;
+                return obj instanceof Testy && ((Testy) obj).x == x;
             }
         }
         Testy i = new Testy(5), j = new Testy(6);
