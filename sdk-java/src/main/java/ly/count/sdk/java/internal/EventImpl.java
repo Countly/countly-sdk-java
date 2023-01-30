@@ -16,7 +16,7 @@ import ly.count.sdk.java.Event;
 
 class EventImpl implements Event, JSONable {
     private final EventRecorder recorder;
-    private String key;
+    private final String key;
 
     private Map<String, String> segmentation;
 
@@ -55,10 +55,9 @@ class EventImpl implements Event, JSONable {
         this.dow = DeviceCore.dev.currentDayOfWeek();
     }
 
-
     @Override
     public void record() {
-        if(SDKCore.instance != null && SDKCore.instance.config.isBackendModeEnabled()) {
+        if (SDKCore.instance != null && SDKCore.instance.config.isBackendModeEnabled()) {
             System.out.println("[EventImpl] record: Skipping event, backend mode is enabled!");
             return;
         }
@@ -73,7 +72,7 @@ class EventImpl implements Event, JSONable {
 
     @Override
     public void endAndRecord() {
-        if(SDKCore.instance != null && SDKCore.instance.config.isBackendModeEnabled()) {
+        if (SDKCore.instance != null && SDKCore.instance.config.isBackendModeEnabled()) {
             System.out.println("[EventImpl] endAndRecord: Skipping event, backend mode is enabled!");
             return;
         }
