@@ -309,13 +309,13 @@ public class UserEditorImpl implements UserEditor {
         cohortsRemoved.addAll(cohortsToRemove);
     }
 
-    Object trimValue(String key, Object value, Log logger){
-        Object v = value;
-        if(value instanceof String) {
-            v = Utils.trimValue(key, (String) value, logger);
-        }
-        return v;
-    }
+//    Object trimValue(String key, Object value, Log logger){
+//        Object v = value;
+//        if(value instanceof String) {
+//            v = Utils.trimValue(key, (String) value, logger);
+//        }
+//        return v;
+//    }
     @Override
     public UserEditor set(String key, Object value) {
         //sets.put(key, trimValue(key, value));

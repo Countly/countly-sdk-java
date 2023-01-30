@@ -464,41 +464,39 @@ public class Utils {
         }
     }
 
-    public static String trimKey(final String key, Log logger) {
+    public static String trimKey(final int limit, final String key, Log logger) {
         String k = key;
         Config config = SDKCore.instance.config();
-        if (key.length() > config.getMaxKeyLength()) {
-            logger.d("[Utils] RecordEventInternal : Max a`llowed key length is " + config.getMaxKeyLength());
-            k = key.substring(0, config.getMaxKeyLength());
+        if (key.length() > limit) {
+            logger.d("[Utils] RecordEventInternal : Max allowed key length is " + limit);
+            k = key.substring(0, limit);
         }
 
         return k;
     }
 
-    public static String trimValue(final String fieldName, final String value, Log logger) {
-        Config config = SDKCore.instance.config();
+    public static String trimValue(final int limit, final String fieldName, final String value, Log logger) {
         String v = value;
-        if (value != null && value.length() > config.getMaxValueSize()) {
-            logger.d("[Utils] TrimValue : Max allowed '" + fieldName + "' length is " + config.getMaxValueSize() + ". " + value + " will be truncated.");
-            v = value.substring(0, config.getMaxValueSize());
+        if (value != null && value.length() > limit) {
+            logger.d("[Utils] TrimValue : Max allowed '" + fieldName + "' length is " + limit + ". " + value + " will be truncated.");
+            v = value.substring(0, limit);
         }
 
         return v;
     }
 
-    public static String[] trimValues(final String[] values, Log logger) {
-        Config config = SDKCore.instance.config();
+    public static String[] trimValues(final int limit, final String[] values, Log logger) {
         for (int i = 0; i < values.length; ++i) {
-            if (values[i].length() > config.getMaxValueSize()) {
-                logger.d("[Utils] TrimKey : Max allowed value length is " + config.getMaxValueSize() + ". " + values[i] + " will be truncated.");
-                values[i] = values[i].substring(0, config.getMaxValueSize());
+            if (values[i].length() > limit) {
+                logger.d("[Utils] TrimKey : Max allowed value length is " + limit + ". " + values[i] + " will be truncated.");
+                values[i] = values[i].substring(0, limit);
             }
         }
 
         return values;
     }
 
-    public static Map<String, String> fixSegmentKeysAndValues(final Map<String, String> segments, Log logger) {
+    public static Map<String, String> fixSegmentKeysAndValues(final int keyLength, final int valueLength,final Map<String, String> segments, Log logger) {
         if (segments == null || segments.size() == 0) {
             return segments;
         }
@@ -512,8 +510,8 @@ public class Utils {
                 continue;
             }
 
-            k = trimKey(k, logger);
-            v = trimValue(k, v, logger);
+            k = trimKey(keyLength, k, logger);
+            v = trimValue(valueLength, k, v, logger);
 
             segmentation.put(k, v);
         }
