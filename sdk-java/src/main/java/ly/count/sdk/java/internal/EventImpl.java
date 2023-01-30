@@ -101,8 +101,6 @@ class EventImpl implements Event, JSONable {
             segmentation = new HashMap<>();
         }
 
-//        key = Utils.trimKey(key);
-//        value = Utils.trimValue(key, value);
         segmentation.put(key, value);
 
         return this;

@@ -481,92 +481,93 @@ public class Config {
      */
     protected int requestQueueMaxSize = 1000;
 
-//    /**
-//    * Maximum size of all string keys
-//    */
-//    protected int maxKeyLength = 128;
-//
-//    /**
-//    * Maximum size of all values in our key-value pairs
-//    */
-//    protected int maxValueSize = 256;
-//
-//    /**
-//    * Max amount of custom (dev provided) segmentation in one event
-//    */
-//    protected int maxSegmentationValues = 30;
-//
-//    /**
-//    * Limits how many stack trace lines would be recorded per thread
-//    */
-//    protected int maxStackTraceLinesPerThread = 30;
-//
-//    /**
-//    * Limits how many characters are allowed per stack trace line
-//    */
-//    protected int maxStackTraceLineLength = 200;
-//
-//    /**
-//    * Set the maximum amount of breadcrumbs.
-//    */
-//    protected int totalBreadcrumbsAllowed = 100;
-//
-//    //endregion
-//
-//    public int getMaxKeyLength() {
-//        return maxKeyLength;
-//    }
-//
-//    public Config setMaxKeyLength(int maxKeyLength) {
-//        this.maxKeyLength = maxKeyLength;
-//        return this;
-//    }
-//
-//    public int getMaxValueSize() {
-//        return maxValueSize;
-//    }
-//
-//    public Config setMaxValueSize(int maxValueSize) {
-//        this.maxValueSize = maxValueSize;
-//        return this;
-//    }
-//
-//    public int getMaxSegmentationValues() {
-//        return maxSegmentationValues;
-//    }
-//
-//    public Config setMaxSegmentationValues(int maxSegmentationValues) {
-//        this.maxSegmentationValues = maxSegmentationValues;
-//        return this;
-//    }
-//
-//    public int getMaxStackTraceLinesPerThread() {
-//        return maxStackTraceLinesPerThread;
-//    }
-//
-//    public Config setMaxStackTraceLinesPerThread(int maxStackTraceLinesPerThread) {
-//        this.maxStackTraceLinesPerThread = maxStackTraceLinesPerThread;
-//        return this;
-//
-//    }
-//
-//    public int getMaxStackTraceLineLength() {
-//        return maxStackTraceLineLength;
-//    }
-//
-//    public Config setMaxStackTraceLineLength(int maxStackTraceLineLength) {
-//        this.maxStackTraceLineLength = maxStackTraceLineLength;
-//        return this;
-//    }
-//
-//    public int getTotalBreadcrumbsAllowed() {
-//        return totalBreadcrumbsAllowed;
-//    }
-//
-//    public Config setTotalBreadcrumbsAllowed(int totalBreadcrumbsAllowed) {
-//        this.totalBreadcrumbsAllowed = totalBreadcrumbsAllowed;
-//        return this;
-//    }
+    /**
+    * Maximum size of all string keys
+    */
+    protected int maxKeyLength = 128;
+
+    /**
+    * Maximum size of all values in our key-value pairs
+    */
+    protected int maxValueSize = 256;
+
+    /**
+    * Max amount of custom (dev provided) segmentation in one event
+    */
+    protected int maxSegmentationValues = 30;
+
+    /**
+    * Limits how many stack trace lines would be recorded per thread
+    */
+    protected int maxStackTraceLinesPerThread = 30;
+
+    /**
+    * Limits how many characters are allowed per stack trace line
+    */
+    protected int maxStackTraceLineLength = 200;
+
+    /**
+    * Set the maximum amount of breadcrumbs.
+    */
+    protected int totalBreadcrumbsAllowed = 100;
+
+    //endregion
+
+    public int getMaxKeyLength() {
+        return maxKeyLength;
+    }
+
+    public Config setMaxKeyLength(int maxKeyLength) {
+        this.maxKeyLength = maxKeyLength;
+        return this;
+    }
+
+    public int getMaxValueSize() {
+        return maxValueSize;
+    }
+
+    public Config setMaxValueSize(int maxValueSize) {
+        this.maxValueSize = maxValueSize;
+        return this;
+    }
+
+    public int getMaxSegmentationValues() {
+        return maxSegmentationValues;
+    }
+
+    public Config setMaxSegmentationValues(int maxSegmentationValues) {
+        this.maxSegmentationValues = maxSegmentationValues;
+        return this;
+    }
+
+    public int getMaxStackTraceLinesPerThread() {
+        return maxStackTraceLinesPerThread;
+    }
+
+    public Config setMaxStackTraceLinesPerThread(int maxStackTraceLinesPerThread) {
+        this.maxStackTraceLinesPerThread = maxStackTraceLinesPerThread;
+        return this;
+
+    }
+
+    public int getMaxStackTraceLineLength() {
+        return maxStackTraceLineLength;
+    }
+
+    public Config setMaxStackTraceLineLength(int maxStackTraceLineLength) {
+        this.maxStackTraceLineLength = maxStackTraceLineLength;
+        return this;
+    }
+
+    public int getTotalBreadcrumbsAllowed() {
+        return totalBreadcrumbsAllowed;
+    }
+
+    public Config setTotalBreadcrumbsAllowed(int totalBreadcrumbsAllowed) {
+        this.totalBreadcrumbsAllowed = totalBreadcrumbsAllowed;
+        return this;
+
+    }
 
 
     // TODO: storage limits & configuration
@@ -1403,6 +1404,8 @@ public class Config {
     }
 
     /**
+     * Getter for {@link #testMode}
+     * @return {@link #testMode} value
      * @deprecated Calling this function will always return 'false'
      */
     public boolean isTestModeEnabled() {

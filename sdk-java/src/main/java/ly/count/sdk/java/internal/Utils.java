@@ -471,7 +471,6 @@ public class Utils {
             logger.d("[Utils] RecordEventInternal : Max allowed key length is " + limit);
             k = key.substring(0, limit);
         }
-
         return k;
     }
 

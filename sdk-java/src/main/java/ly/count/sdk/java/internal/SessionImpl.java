@@ -277,12 +277,10 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     }
 
     public Event event(String key) {
-        //key = Utils.trimKey(key);
         return new EventImpl(this, key);
     }
 
     public Event timedEvent(String key) {
-        //key = Utils.trimKey(key);
         return timedEvents().event(ctx, key);
     }
 
@@ -341,7 +339,6 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             return this;
         }
 
-        //Map<String, String> segmentation = Utils.fixSegmentKeysAndValues(segments);
         SDKCore.instance.onCrash(ctx, t, fatal, name, segments, logs);
         return this;
     }
@@ -372,7 +369,6 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             currentView.stop(false);
         }
         
-        //name = Utils.trimKey(name);
         currentView = new ViewImpl(this, name, L);
 
         currentView.start(start);
