@@ -8,9 +8,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.*;
 
 @RunWith(JUnit4.class)
 public class UtilsTests {
@@ -45,6 +43,19 @@ public class UtilsTests {
         Assert.assertEquals("zel", result[0]);
         Assert.assertEquals("lin", result[1]);
         Assert.assertEquals("gan", result[2]);
+    }
+
+    @Test
+    public void trimSegmentation() {
+        Map<String, String> segmentation  = new HashMap<String, String>() {{
+            put("key_10", "value1_");
+            put("key_20", "value2_");
+        }};
+
+        Map<String, String> result = Utils.fixSegmentKeysAndValues(5, 6, segmentation, logger);
+        Assert.assertEquals(2, result.size());
+        Assert.assertEquals("value1", result.get("key_1"));
+        Assert.assertEquals("value2", result.get("key_2"));
     }
 
     @Test
