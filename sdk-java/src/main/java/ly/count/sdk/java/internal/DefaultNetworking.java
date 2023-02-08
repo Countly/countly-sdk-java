@@ -45,7 +45,7 @@ public class DefaultNetworking implements Networking {
                     if (check == null) {
                         L.d("[Networking] Request is not ready yet: " + request);
                         return false;
-                    } else if (check.equals(Boolean.FALSE)){
+                    } else if (check.equals(Boolean.FALSE)) {
                         L.d("[Networking] Request won't be ready, removing: " + request);
                         Storage.remove(ctx, request);
                         return true;
@@ -58,7 +58,6 @@ public class DefaultNetworking implements Networking {
                                     storageForRequestQueue.removeRequest(request);
                                     check(ctx);
                                 }
-
                             }
                         });
                         return true;

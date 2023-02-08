@@ -36,11 +36,11 @@ public class ModuleRatingCore extends ModuleBase {
     }
 
     @Override
-    public Boolean onRequest(Request request){
+    public Boolean onRequest(Request request) {
         return true;
     }
 
-    public void disableModule(){
+    public void disableModule() {
         disabledModule = true;
     }
 
@@ -49,15 +49,17 @@ public class ModuleRatingCore extends ModuleBase {
      */
     public interface RatingCallback {
         void onRate(int rating);
+
         void onDismiss();
     }
 
-    public void PurgeRatingInfo(){
+    public void PurgeRatingInfo() {
         ctx.getSDK().sdkStorage.storablePurge(ctx, storableStoragePrefix);
     }
 
     /**
      * Returns a object with the loaded preferences
+     *
      * @return StarRatingPreferences instance
      */
     protected StarRatingPreferences loadStarRatingPreferences() {
@@ -68,6 +70,7 @@ public class ModuleRatingCore extends ModuleBase {
 
     /**
      * Save the star rating preferences object
+     *
      * @param srp
      */
     protected void saveStarRatingPreferences(StarRatingPreferences srp) {
@@ -76,6 +79,7 @@ public class ModuleRatingCore extends ModuleBase {
 
     /**
      * Setting things that would be provided during initial config
+     *
      * @param limit limit for automatic rating
      * @param starRatingTextTitle provided title
      * @param starRatingTextMessage provided message
@@ -84,19 +88,19 @@ public class ModuleRatingCore extends ModuleBase {
     public void setStarRatingInitConfig(int limit, String starRatingTextTitle, String starRatingTextMessage, String starRatingTextDismiss) {
         StarRatingPreferences srp = loadStarRatingPreferences();
 
-        if(limit >= 0) {
+        if (limit >= 0) {
             srp.sessionLimit = limit;
         }
 
-        if(starRatingTextTitle != null) {
+        if (starRatingTextTitle != null) {
             srp.dialogTextTitle = starRatingTextTitle;
         }
 
-        if(starRatingTextMessage != null) {
+        if (starRatingTextMessage != null) {
             srp.dialogTextMessage = starRatingTextMessage;
         }
 
-        if(starRatingTextDismiss != null) {
+        if (starRatingTextDismiss != null) {
             srp.dialogTextDismiss = starRatingTextDismiss;
         }
 
@@ -105,6 +109,7 @@ public class ModuleRatingCore extends ModuleBase {
 
     /**
      * Set if the star rating dialog should be shown automatically
+     *
      * @param shouldShow
      */
     public void setShowDialogAutomatically(boolean shouldShow) {
@@ -117,6 +122,7 @@ public class ModuleRatingCore extends ModuleBase {
      * Set if automatic star rating should be disabled for each new version.
      * By default automatic star rating will be shown for every new app version.
      * If this is set to true, star rating will be shown only once over apps lifetime
+     *
      * @param disableAsking if set true, will not show star rating for every new app version
      */
     public void setStarRatingDisableAskingForEachAppVersion(boolean disableAsking) {
@@ -128,16 +134,17 @@ public class ModuleRatingCore extends ModuleBase {
     /**
      * Returns the session limit set for automatic star rating
      */
-    public int getAutomaticStarRatingSessionLimit(){
+    public int getAutomaticStarRatingSessionLimit() {
         StarRatingPreferences srp = loadStarRatingPreferences();
         return srp.sessionLimit;
     }
 
     /**
      * Returns how many sessions has star rating counted internally
+     *
      * @return current session count
      */
-    public int getCurrentVersionsSessionCount(){
+    public int getCurrentVersionsSessionCount() {
         StarRatingPreferences srp = loadStarRatingPreferences();
         return srp.sessionAmount;
     }
@@ -145,7 +152,7 @@ public class ModuleRatingCore extends ModuleBase {
     /**
      * Set the automatic star rating session count back to 0
      */
-    public void clearAutomaticStarRatingSessionCount(){
+    public void clearAutomaticStarRatingSessionCount() {
         StarRatingPreferences srp = loadStarRatingPreferences();
         srp.sessionAmount = 0;
         saveStarRatingPreferences(srp);
@@ -153,9 +160,10 @@ public class ModuleRatingCore extends ModuleBase {
 
     /**
      * Set if the star rating dialog is cancellable
+     *
      * @param isCancellable
      */
-    public void setIfRatingDialogIsCancellable(boolean isCancellable){
+    public void setIfRatingDialogIsCancellable(boolean isCancellable) {
         StarRatingPreferences srp = loadStarRatingPreferences();
         srp.isDialogCancellable = isCancellable;
         saveStarRatingPreferences(srp);
@@ -207,9 +215,7 @@ public class ModuleRatingCore extends ModuleBase {
                 json.put(KEY_DIALOG_TEXT_TITLE, dialogTextTitle);
                 json.put(KEY_DIALOG_TEXT_MESSAGE, dialogTextMessage);
                 json.put(KEY_DIALOG_TEXT_DISMISS, dialogTextDismiss);
-
-            }
-            catch (JSONException e) {
+            } catch (JSONException e) {
                 System.out.println("[ModuleRatingCore] [Rating] Got exception converting an StarRatingPreferences to JSON " + e);
             }
 
@@ -218,11 +224,12 @@ public class ModuleRatingCore extends ModuleBase {
 
         /**
          * Load the preference state from a JSONObject
+         *
          * @param json object to parse
          */
         public void fromJSON(final JSONObject json) {
 
-            if(json != null) {
+            if (json != null) {
                 try {
                     appVersion = json.getString(KEY_APP_VERSION);
                     sessionLimit = json.optInt(KEY_SESSION_LIMIT, 5);
@@ -233,18 +240,17 @@ public class ModuleRatingCore extends ModuleBase {
                     automaticHasBeenShown = json.optBoolean(KEY_AUTOMATIC_HAS_BEEN_SHOWN, false);
                     isDialogCancellable = json.optBoolean(KEY_DIALOG_IS_CANCELLABLE, true);
 
-                    if(!json.isNull(KEY_DIALOG_TEXT_TITLE)) {
+                    if (!json.isNull(KEY_DIALOG_TEXT_TITLE)) {
                         dialogTextTitle = json.getString(KEY_DIALOG_TEXT_TITLE);
                     }
 
-                    if(!json.isNull(KEY_DIALOG_TEXT_MESSAGE)) {
+                    if (!json.isNull(KEY_DIALOG_TEXT_MESSAGE)) {
                         dialogTextMessage = json.getString(KEY_DIALOG_TEXT_MESSAGE);
                     }
 
-                    if(!json.isNull(KEY_DIALOG_TEXT_DISMISS)) {
+                    if (!json.isNull(KEY_DIALOG_TEXT_DISMISS)) {
                         dialogTextDismiss = json.getString(KEY_DIALOG_TEXT_DISMISS);
                     }
-
                 } catch (JSONException e) {
                     System.out.println("[ModuleRatingCore] [Rating] Got exception converting JSON to a StarRatingPreferences " + e);
                 }
@@ -274,7 +280,7 @@ public class ModuleRatingCore extends ModuleBase {
         @Override
         public boolean restore(byte[] data) {
             try {
-                String json = new String (data, Utils.UTF8);
+                String json = new String(data, Utils.UTF8);
                 try {
                     JSONObject obj = new JSONObject(json);
                     fromJSON(obj);
@@ -293,12 +299,15 @@ public class ModuleRatingCore extends ModuleBase {
     protected class RatingsCore {
         /**
          * Set's the text's for the different fields in the star rating dialog. Set value null if for some field you want to keep the old value
+         *
          * @param starRatingTextTitle dialog's title text
          * @param starRatingTextMessage dialog's message text
          * @param starRatingTextDismiss dialog's dismiss buttons text
          */
         public synchronized void setStarRatingDialogTexts(String starRatingTextTitle, String starRatingTextMessage, String starRatingTextDismiss) {
-            if(disabledModule) { return; }
+            if (disabledModule) {
+                return;
+            }
             L.d("[ModuleRatingCore] Setting star rating texts");
 
             ModuleRatingCore.this.setStarRatingInitConfig(-1, starRatingTextTitle, starRatingTextMessage, starRatingTextDismiss);
@@ -307,8 +316,10 @@ public class ModuleRatingCore extends ModuleBase {
         /**
          * Returns the session limit set for automatic star rating
          */
-        public int getAutomaticStarRatingSessionLimit(){
-            if(disabledModule) { return -1; }
+        public int getAutomaticStarRatingSessionLimit() {
+            if (disabledModule) {
+                return -1;
+            }
             int sessionLimit = ModuleRatingCore.this.getAutomaticStarRatingSessionLimit();
             L.d("[ModuleRatingCore] Getting automatic star rating session limit: [" + sessionLimit + "]");
 
@@ -318,8 +329,10 @@ public class ModuleRatingCore extends ModuleBase {
         /**
          * Returns how many sessions has star rating counted internally for the current apps version
          */
-        public int getStarRatingsCurrentVersionsSessionCount(){
-            if(disabledModule) { return -1; }
+        public int getStarRatingsCurrentVersionsSessionCount() {
+            if (disabledModule) {
+                return -1;
+            }
             int sessionCount = ModuleRatingCore.this.getCurrentVersionsSessionCount();
             L.d("[ModuleRatingCore] Getting star rating current version session count: [" + sessionCount + "]");
 
@@ -329,8 +342,10 @@ public class ModuleRatingCore extends ModuleBase {
         /**
          * Set the automatic star rating session count back to 0
          */
-        public void clearAutomaticStarRatingSessionCount(){
-            if(disabledModule) { return; }
+        public void clearAutomaticStarRatingSessionCount() {
+            if (disabledModule) {
+                return;
+            }
             L.d("[ModuleRatingCore] Clearing star rating session count");
 
             ModuleRatingCore.this.clearAutomaticStarRatingSessionCount();

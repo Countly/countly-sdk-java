@@ -3,7 +3,6 @@ package ly.count.sdk.java.internal;
 import org.junit.Assert;
 import org.junit.Test;
 
-
 public class DeviceCoreTests {
 
     @Test

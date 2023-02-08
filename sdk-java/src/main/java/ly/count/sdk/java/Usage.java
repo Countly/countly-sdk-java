@@ -9,7 +9,6 @@ import java.util.Map;
  * Only one session can send requests at a time, so even if you create 2 parallel sessions,
  * they will be made consequent automatically at the time of Countly SDK choice with no
  * correctness guarantees, so please avoid having parallel sessions.
- *
  */
 
 public interface Usage {
@@ -20,7 +19,6 @@ public interface Usage {
      *
      * @param key key for this event, cannot be null or empty
      * @return Event instance.
-     *
      * @see Event#record()
      */
     Event event(String key);
@@ -31,7 +29,6 @@ public interface Usage {
      *
      * @param key key for this event, cannot be null or empty
      * @return timed Event instance.
-     *
      * @see Event#endAndRecord() to end timed event
      */
     Event timedEvent(String key);
@@ -45,6 +42,7 @@ public interface Usage {
      * or sent to the server/
      *
      * //@ee Feature is not available in Countly Community Edition
+     *
      * @return current {@link User} instance
      */
     User user();
@@ -111,17 +109,14 @@ public interface Usage {
     View view(String name);
 
     /**
-     * @deprecated
-     * Login function to set device (user) id on Countly server to the string specified here.
-     * Closes current session, then starts new one automatically if {@link Config#autoSessionsTracking} is on, acquires device id.
-     *
      * @param id new user / device id string, cannot be empty
+     * @deprecated Login function to set device (user) id on Countly server to the string specified here.
+     * Closes current session, then starts new one automatically if {@link Config#autoSessionsTracking} is on, acquires device id.
      */
     Usage login(String id);
 
     /**
-     * @deprecated
-     * Logout function to make current user anonymous (that is with random id according to
+     * @deprecated Logout function to make current user anonymous (that is with random id according to
      * {@link Config#deviceIdStrategy} and such). Obviously makes sense only after a call to {@link #login(String)},
      * so it throws error or does nothing (depending on {@link Config#testMode}) if current id wasn't set using {@link #login(String)}.
      *
@@ -135,8 +130,7 @@ public interface Usage {
     String getDeviceId();
 
     /**
-     * @deprecated
-     * This method is no longer acceptable to change device id.
+     * @deprecated This method is no longer acceptable to change device id.
      * <p> Use {@link #changeDeviceIdWithoutMerge(String)} or {@link #changeDeviceIdWithMerge(String)}
      */
     Usage resetDeviceId(String id);

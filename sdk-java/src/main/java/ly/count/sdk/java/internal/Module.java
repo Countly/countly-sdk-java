@@ -26,7 +26,7 @@ public interface Module {
      * @throws IllegalArgumentException in case supplied {@link InternalConfig} is not consistent.
      * @throws IllegalStateException if some required for this module platform feature is not available on this platform.
      */
-    void init (InternalConfig config, Log logger) throws IllegalArgumentException, IllegalStateException;
+    void init(InternalConfig config, Log logger) throws IllegalArgumentException, IllegalStateException;
 
     /**
      * App user decided to opt out from analytics or developer changed important preferences.
@@ -82,34 +82,35 @@ public interface Module {
      *
      * @param ctx {@link CtxCore} with activity set
      */
-    void onActivityCreated (CtxCore ctx);
+    void onActivityCreated(CtxCore ctx);
 
     /**
      * Activity is being launched.
+     *
      * @param ctx {@link CtxCore} with activity set
      */
-    void onActivityStarted (CtxCore ctx);
+    void onActivityStarted(CtxCore ctx);
 
     /**
      * Activity is being resumed.
      *
      * @param ctx {@link CtxCore} with activity set
      */
-    void onActivityResumed (CtxCore ctx);
+    void onActivityResumed(CtxCore ctx);
 
     /**
      * Activity is being paused.
      *
      * @param ctx {@link CtxCore} with activity set
      */
-    void onActivityPaused (CtxCore ctx);
+    void onActivityPaused(CtxCore ctx);
 
     /**
      * Activity is being stopped.
      *
      * @param ctx {@link CtxCore} with activity set
      */
-    void onActivityStopped (CtxCore ctx);
+    void onActivityStopped(CtxCore ctx);
 
     /**
      * Activity is saving state.
@@ -123,7 +124,7 @@ public interface Module {
      *
      * @param ctx {@link CtxCore} with activity set
      */
-    void onActivityDestroyed (CtxCore ctx);
+    void onActivityDestroyed(CtxCore ctx);
 
     /**
      * Session is started.
@@ -137,7 +138,7 @@ public interface Module {
      *
      * @param session session which ended
      */
-    void onSessionEnded (Session session, CtxCore ctx);
+    void onSessionEnded(Session session, CtxCore ctx);
 
     /**
      * User object has been changed.

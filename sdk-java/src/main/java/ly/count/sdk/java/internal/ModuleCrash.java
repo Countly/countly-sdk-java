@@ -10,7 +10,6 @@ import ly.count.sdk.java.CrashProcessor;
  */
 
 public class ModuleCrash extends ModuleBase {
-    
 
     protected long started = 0;
     private boolean limited = false;
@@ -80,14 +79,14 @@ public class ModuleCrash extends ModuleBase {
 
     public CrashImplCore onCrash(CtxCore ctx, Throwable t, boolean fatal, String name, Map<String, String> segments, String... logs) {
 
-        if(ctx.getConfig().isBackendModeEnabled()) {
+        if (ctx.getConfig().isBackendModeEnabled()) {
             L.w("[ModuleCrash] onCrash: Skipping crash, backend mode is enabled!");
             return null;
         }
 
         if (t == null) {
             L.e("[ModuleCrash] Throwable cannot be null");
-            return  null;
+            return null;
         }
         return onCrash(ctx, new CrashImplCore(L).addThrowable(t).setFatal(fatal).setName(name).setSegments(segments).setLogs(logs));
     }
@@ -96,14 +95,13 @@ public class ModuleCrash extends ModuleBase {
         long running = started == 0 ? 0 : DeviceCore.dev.nsToMs(System.nanoTime() - started);
         crash.putMetricsCore(ctx, running);
 
-        if (!crash.getData().has("_os")){
+        if (!crash.getData().has("_os")) {
             L.w("[ModuleCrash] onCrash, While recording an exception 'OS name' was either null or empty");
         }
 
-        if (!crash.getData().has("_app_version")){
+        if (!crash.getData().has("_app_version")) {
             L.w("[ModuleCrash] onCrash, While recording an exception 'App version' was either null or empty");
         }
-
 
         L.i("[ModuleCrash] onCrash: " + crash.getJSON());
 
@@ -116,7 +114,6 @@ public class ModuleCrash extends ModuleBase {
                     Storage.remove(ctx, crash);
                     return null;
                 }
-
             } catch (Throwable t) {
                 L.e("[ModuleCrash] Error when calling CrashProcessor#process(Crash)" + t);
             }
@@ -136,5 +133,4 @@ public class ModuleCrash extends ModuleBase {
     public enum CrashType {
         STACK_OVERFLOW, DIVISION_BY_ZERO, OOM, RUNTIME_EXCEPTION, NULLPOINTER_EXCEPTION, ANR
     }
-
 }

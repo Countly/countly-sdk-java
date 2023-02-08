@@ -40,7 +40,6 @@ public class CtxCore {
         return directory;
     }
 
-
     public InternalConfig getConfig() {
         return config;
     }

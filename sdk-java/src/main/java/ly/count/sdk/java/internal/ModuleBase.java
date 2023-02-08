@@ -81,18 +81,20 @@ public abstract class ModuleBase implements Module {
     }
 
     @Override
-    public void onUserChanged(CtxCore ctx, JSONObject changes, Set<String> cohortsAdded, Set<String> cohortsRemoved){
+    public void onUserChanged(CtxCore ctx, JSONObject changes, Set<String> cohortsAdded, Set<String> cohortsRemoved) {
     }
 
     @Override
-    public Boolean onRequest (Request request) { return false; }
+    public Boolean onRequest(Request request) {
+        return false;
+    }
 
     @Override
-    public void onRequestCompleted(Request request, String response, int responseCode){
+    public void onRequestCompleted(Request request, String response, int responseCode) {
 
     }
 
     @Override
-    public void onConfigurationChanged(CtxCore ctx) {}
-
+    public void onConfigurationChanged(CtxCore ctx) {
+    }
 }

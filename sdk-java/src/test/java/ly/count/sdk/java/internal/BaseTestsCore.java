@@ -1,6 +1,5 @@
 package ly.count.sdk.java.internal;
 
-
 import org.junit.After;
 import org.junit.Before;
 import org.mockito.Mockito;
@@ -125,12 +124,11 @@ public class BaseTestsCore {
     }
 
     @After
-    public void tearDown() throws Exception  {
+    public void tearDown() throws Exception {
         if (this.sdk != null && ctx != null) {
             this.sdk.stop(ctx, true);
             this.sdk = null;
         }
         Utils.reflectiveSetField(SDKInterface.class, "testDummyModule", null);
     }
-
 }

@@ -20,7 +20,7 @@ import ly.count.sdk.java.Config;
  * Only members of {@link InternalConfig} can be changed, members of {@link Config} are non-modifiable.
  */
 public final class InternalConfig extends Config implements Storable {
-   // private static final Log.Module L = Log.module("InternalConfig");
+    // private static final Log.Module L = Log.module("InternalConfig");
 
     /**
      * Running in limited mode, started by itself rather than by developer
@@ -83,7 +83,6 @@ public final class InternalConfig extends Config implements Storable {
         }
     }
 
-
     public InternalConfig setLimited(boolean limited) {
         this.limited = limited;
         return this;
@@ -128,9 +127,17 @@ public final class InternalConfig extends Config implements Storable {
             stream.writeInt(networkConnectionTimeout);
             stream.writeInt(networkReadTimeout);
             stream.writeInt(publicKeyPins == null ? 0 : publicKeyPins.size());
-            if (publicKeyPins != null) for (String key: publicKeyPins) { stream.writeUTF(key); }
+            if (publicKeyPins != null) {
+                for (String key : publicKeyPins) {
+                    stream.writeUTF(key);
+                }
+            }
             stream.writeInt(certificatePins == null ? 0 : certificatePins.size());
-            if (certificatePins != null) for (String key: certificatePins) { stream.writeUTF(key); }
+            if (certificatePins != null) {
+                for (String key : certificatePins) {
+                    stream.writeUTF(key);
+                }
+            }
             stream.writeInt(sendUpdateEachSeconds);
             stream.writeInt(eventsBufferSize);
             stream.writeInt(sessionCooldownPeriod);
@@ -147,7 +154,7 @@ public final class InternalConfig extends Config implements Storable {
             stream.writeInt(dids.size());
             for (DID did : dids) {
                 byte[] b = did.store();
-                if (b != null){
+                if (b != null) {
                     stream.writeInt(b.length);
                     stream.write(b);
                 }
@@ -308,9 +315,13 @@ public final class InternalConfig extends Config implements Storable {
         return this.dids.remove(did);
     }
 
-    public int getFeatures1() { return features; }
+    public int getFeatures1() {
+        return features;
+    }
 
-    public Set<Integer> getModuleOverrides() { return moduleOverrides == null ? new HashSet<Integer>() : moduleOverrides.keySet(); }
+    public Set<Integer> getModuleOverrides() {
+        return moduleOverrides == null ? new HashSet<Integer>() : moduleOverrides.keySet();
+    }
 
     public boolean isDefaultNetworking() {
         return defaultNetworking;
@@ -321,46 +332,46 @@ public final class InternalConfig extends Config implements Storable {
     }
 
     //region rating module
-    public long getRatingWidgetTimeout(){
+    public long getRatingWidgetTimeout() {
         return ratingWidgetTimeout;
     }
 
-    public Integer getStarRatingSessionLimit(){
+    public Integer getStarRatingSessionLimit() {
         return starRatingSessionLimit;
     }
 
-    public String getStarRatingTextTitle(){
+    public String getStarRatingTextTitle() {
         return starRatingTextTitle;
     }
 
-    public String getStarRatingTextMessage(){
+    public String getStarRatingTextMessage() {
         return starRatingTextMessage;
     }
 
-    public String getStarRatingTextDismiss(){
+    public String getStarRatingTextDismiss() {
         return starRatingTextDismiss;
     }
 
-    public Boolean getAutomaticStarRatingShouldBeShown(){
+    public Boolean getAutomaticStarRatingShouldBeShown() {
         return automaticStarRatingShouldBeShown;
     }
 
-    public Boolean getStarRatingDialogIsCancelable(){
+    public Boolean getStarRatingDialogIsCancelable() {
         return starRatingIsDialogCancelable;
     }
 
-    public Boolean getStarRatingDisabledForNewVersion(){
+    public Boolean getStarRatingDisabledForNewVersion() {
         return starRatingDisabledAutomaticForNewVersions;
     }
 
     //endregion
 
     //region remote config
-    public Boolean getRemoteConfigAutomaticUpdateEnabled(){
+    public Boolean getRemoteConfigAutomaticUpdateEnabled() {
         return enableAutomaticRemoteConfig;
     }
 
-    public Long getRemoteConfigUpdateTimeoutLength(){
+    public Long getRemoteConfigUpdateTimeoutLength() {
         return remoteConfigUpdateRequestTimeout;
     }
     //endregion

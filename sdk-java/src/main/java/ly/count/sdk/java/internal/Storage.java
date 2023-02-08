@@ -25,7 +25,6 @@ public class Storage {
      * Stores data in device internal memory. When a storable with the same id already exists,
      * replaces it with new data.
      *
-     *
      * @param ctx context to run in
      * @param storable Object to store
      * @return true when storing succeeded, false otherwise
@@ -70,6 +69,7 @@ public class Storage {
         System.out.println("[DEBUG][Storage] pushAsync: " + name(storable) + " " + storable.toString());
         return pushAsync(ctx, storable, null);
     }
+
     /**
      * Removes storable from storage.
      *
@@ -103,7 +103,6 @@ public class Storage {
             }
         }, callback);
     }
-
 
     /**
      * Reinitializes storable with data stored previously in device internal memory and deletes corresponding file.
@@ -304,9 +303,9 @@ public class Storage {
      *
      * @param prefix String representing type of storable to list (prefix of file names)
      * @param slice integer controlling number and slice direction of results returned:
-     *              0 to return all records
-     *              1..N to return first N records ordered from first to last
-     *              -1..-N to return last N records ordered from last to first
+     * 0 to return all records
+     * 1..N to return first N records ordered from first to last
+     * -1..-N to return last N records ordered from last to first
      * @return List<Long> object which resolves as list of storable ids, not null
      */
     public static List<Long> list(CtxCore ctx, String prefix, int slice) {
@@ -326,10 +325,10 @@ public class Storage {
      *
      * @param prefix String representing type of storable to list (prefix of file names)
      * @param slice integer controlling number and slice direction of results returned:
-     *              0 to return all records
-     *              1..N to return first N records ordered from first to last
-     *              -1..-N to return last N records ordered from last to first
-     * @return Future<List<Long>> object which resolves as list of storable ids, not null
+     * 0 to return all records
+     * 1..N to return first N records ordered from first to last
+     * -1..-N to return last N records ordered from last to first
+     * @return Future<List < Long>> object which resolves as list of storable ids, not null
      */
     public static Future<List<Long>> listAsync(final CtxCore ctx, final String prefix, final int slice) {
         return tasks.run(new Tasks.Task<List<Long>>(Tasks.ID_STRICT) {

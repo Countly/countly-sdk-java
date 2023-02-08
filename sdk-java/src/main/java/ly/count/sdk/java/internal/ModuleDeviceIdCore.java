@@ -44,7 +44,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
         @Override
         public String generate(CtxCore context, int realm) {
             String customId = context.getConfig().getCustomDeviceId();
-            if(customId == null || customId.isEmpty()){
+            if (customId == null || customId.isEmpty()) {
                 context.getLogger().e("[ModuleDeviceIdCore] Device ID should never be empty or null for CustomIDGenerator");
             }
 
@@ -53,6 +53,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
     }
 
     private static final Map<Integer, DeviceIdGenerator> generators = new HashMap<>();
+
     static {
 
         registerGenerator(Config.DID.STRATEGY_UUID, new UUIDGenerator());
@@ -120,7 +121,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
                     @Override
                     public void call(Config.DID id) throws Exception {
                         if (id != null) {
-                            if(id.strategy == Config.DID.STRATEGY_UUID) {
+                            if (id.strategy == Config.DID.STRATEGY_UUID) {
                                 L.i("During init, custom device id was not provided. SDK has generated a random device id.");
                             }
                             L.d("[ModuleDeviceIdCore] Got device id: " + id);
@@ -158,9 +159,9 @@ public class ModuleDeviceIdCore extends ModuleBase {
 
             // add device id change request
             Request request = ModuleRequests.nonSessionRequest(ctx);
-            
+
             //if we are missing the device ID, add it
-            if(!request.params.has(Params.PARAM_DEVICE_ID)){
+            if (!request.params.has(Params.PARAM_DEVICE_ID)) {
                 request.params.add(Params.PARAM_DEVICE_ID, deviceId.id);
             }
             //add the old device ID every time
@@ -169,7 +170,6 @@ public class ModuleDeviceIdCore extends ModuleBase {
             ModuleRequests.pushAsync(ctx, request);
 
             sendDIDSignal(ctx, deviceId, oldDeviceId);
-
         } else if (deviceId == null && oldDeviceId != null && oldDeviceId.realm == Config.DID.REALM_DID) {
             // device id is unset
             if (session != null) {
@@ -178,7 +178,6 @@ public class ModuleDeviceIdCore extends ModuleBase {
             }
 
             sendDIDSignal(ctx, null, oldDeviceId);
-
         } else if (deviceId != null && oldDeviceId == null && deviceId.realm == Config.DID.REALM_DID) {
             // device id just acquired
             if (this.tasks == null) {
@@ -302,6 +301,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
      *     <li>End current session if any</li>
      *     <li>Begin new session with new id if previously ended a session</li>
      * </ul>
+     *
      * @param ctx context to run in
      * @param id new user id
      */
@@ -313,10 +313,9 @@ public class ModuleDeviceIdCore extends ModuleBase {
             ctx.getConfig().setDeviceId(new Config.DID(Config.DID.REALM_DID, Config.DID.STRATEGY_CUSTOM, id));
             Storage.push(ctx, ctx.getConfig());
 
-            if(withMerge) {
+            if (withMerge) {
                 SDKCore.instance.onDeviceId(ctx, ctx.getConfig().getDeviceId(), old);
-            }
-            else {
+            } else {
                 SDKCore.instance.onDeviceId(ctx, null, old);
                 SDKCore.instance.onDeviceId(ctx, ctx.getConfig().getDeviceId(), null);
             }
@@ -355,7 +354,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
             }
         }
 
-        L.d((ctx.getConfig().isLimited() ? "limited " : "")  + "acquireIdSync " + holder + " / " + fallbackAllowed);
+        L.d((ctx.getConfig().isLimited() ? "limited " : "") + "acquireIdSync " + holder + " / " + fallbackAllowed);
 
         L.i("[ModuleDeviceIdCore] Generating " + holder.strategy + " / " + holder.realm);
 
@@ -404,5 +403,4 @@ public class ModuleDeviceIdCore extends ModuleBase {
     }
 
     private static long testSleep = 0L;
-
 }

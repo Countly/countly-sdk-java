@@ -1,6 +1,5 @@
 package ly.count.sdk.java.internal;
 
-
 import ly.count.sdk.java.Config;
 import org.junit.Assert;
 import org.junit.Before;
@@ -20,7 +19,6 @@ public class ConfigTests extends BaseTestsCore {
     public void setUp() throws Exception {
         internalConfig = (InternalConfig) defaultConfigWithLogsForConfigTests();
     }
-
 
     @Test
     public void testServerUrlAndAppKey() throws Exception {
@@ -93,7 +91,6 @@ public class ConfigTests extends BaseTestsCore {
         internalConfig.setSdkVersion("new-version");
         Assert.assertEquals("new-version", internalConfig.getSdkVersion());
     }
-
 
     @Test
     public void testSendUpdateEachSeconds() {

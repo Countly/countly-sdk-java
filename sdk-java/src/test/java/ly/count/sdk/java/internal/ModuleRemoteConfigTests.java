@@ -15,11 +15,11 @@ import ly.count.sdk.java.internal.ModuleRemoteConfig;
 
 @RunWith(JUnit4.class)
 public class ModuleRemoteConfigTests extends BaseTestsCore {
-    String [] keys = new String[]{"qwe", "123", "asd", "zxc", "wer", "sdf", "xcv"};
+    String[] keys = new String[] { "qwe", "123", "asd", "zxc", "wer", "sdf", "xcv" };
     JSONArray jsonArray = new JSONArray();
 
     @Before
-    public void setupEveryTest(){
+    public void setupEveryTest() {
         jsonArray.put(12);
         jsonArray.put(23.4);
         jsonArray.put("asd");
@@ -27,11 +27,11 @@ public class ModuleRemoteConfigTests extends BaseTestsCore {
     }
 
     @After
-    public void cleanupEveryTests(){
+    public void cleanupEveryTests() {
     }
 
     @Test
-    public void remoteConfigValueStoreAddRemoveValues(){
+    public void remoteConfigValueStoreAddRemoveValues() {
         ModuleRemoteConfig.RemoteConfigValueStore rcvs = createValueStore();
 
         Assert.assertEquals(123345567789645L, rcvs.getValue(keys[0]));
@@ -43,7 +43,7 @@ public class ModuleRemoteConfigTests extends BaseTestsCore {
     }
 
     @Test
-    public void remoteConfigValueStoreStoreRestore(){
+    public void remoteConfigValueStoreStoreRestore() {
         ModuleRemoteConfig.RemoteConfigValueStore rcvs = createValueStore();
         ModuleRemoteConfig.RemoteConfigValueStore rcvs2 = new ModuleRemoteConfig.RemoteConfigValueStore();
 
@@ -54,9 +54,9 @@ public class ModuleRemoteConfigTests extends BaseTestsCore {
     }
 
     @Test
-    public void remoteConfigValueStoreMergeValues(){
-        String[] keys = new String[]{"dsd", "123", "xcv", "ty", "aa", "nn", "zx", "io"};
-        int[] valsI = new int[]{2,3,56,8,7,345,76,98};
+    public void remoteConfigValueStoreMergeValues() {
+        String[] keys = new String[] { "dsd", "123", "xcv", "ty", "aa", "nn", "zx", "io" };
+        int[] valsI = new int[] { 2, 3, 56, 8, 7, 345, 76, 98 };
         ModuleRemoteConfig.RemoteConfigValueStore rcvs = new ModuleRemoteConfig.RemoteConfigValueStore();
 
         //add values #1
@@ -89,13 +89,12 @@ public class ModuleRemoteConfigTests extends BaseTestsCore {
         Assert.assertEquals(rcvs.getValue(keys[0]), valsI[0]);
         Assert.assertEquals(rcvs.getValue(keys[1]), valsI[3]);
         Assert.assertEquals(rcvs.getValue(keys[2]), keys[5]);
-        JSONArray jarr2 = (JSONArray)rcvs.getValue(keys[3]);
+        JSONArray jarr2 = (JSONArray) rcvs.getValue(keys[3]);
 
-        for(int a = 0 ; a < jarr.length();a++){
+        for (int a = 0; a < jarr.length(); a++) {
             Assert.assertEquals(jarr.get(a), jarr2.get(a));
         }
     }
-
 
     boolean compareValueStores(ModuleRemoteConfig.RemoteConfigValueStore v1, ModuleRemoteConfig.RemoteConfigValueStore v2) {
         Map<String, Object> map1 = v1.values.toMap();
@@ -105,15 +104,15 @@ public class ModuleRemoteConfigTests extends BaseTestsCore {
             return false;
         }
 
-        for (Map.Entry<String, Object> entry : map1.entrySet())
-        {
-            for (Map.Entry<String, Object> entry2 : map2.entrySet())
-            {
-                if(entry.getKey().equals(entry2.getKey())){
+        for (Map.Entry<String, Object> entry : map1.entrySet()) {
+            for (Map.Entry<String, Object> entry2 : map2.entrySet()) {
+                if (entry.getKey().equals(entry2.getKey())) {
                     Object vv1 = entry.getValue();
                     Object vv2 = entry2.getValue();
                     boolean res = vv1.equals(vv2);
-                    if(!res){return false;}
+                    if (!res) {
+                        return false;
+                    }
                 }
             }
         }
@@ -121,7 +120,7 @@ public class ModuleRemoteConfigTests extends BaseTestsCore {
         return true;
     }
 
-    ModuleRemoteConfig.RemoteConfigValueStore createValueStore(){
+    ModuleRemoteConfig.RemoteConfigValueStore createValueStore() {
         ModuleRemoteConfig.RemoteConfigValueStore rcvs = new ModuleRemoteConfig.RemoteConfigValueStore();
         rcvs.values.put(keys[0], 123345567789645L);
         rcvs.values.put(keys[1], 23);
@@ -132,5 +131,4 @@ public class ModuleRemoteConfigTests extends BaseTestsCore {
 
         return rcvs;
     }
-
 }

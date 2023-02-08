@@ -28,6 +28,7 @@ public class Device extends DeviceCore {
 
     /**
      * Return device name stored by {@link #setDevice(String)}
+     *
      * @return String
      */
     public String getDevice() {
@@ -36,6 +37,7 @@ public class Device extends DeviceCore {
 
     /**
      * Set device name
+     *
      * @return this instance for method chaining
      */
     public Device setDevice(String device) {
@@ -45,6 +47,7 @@ public class Device extends DeviceCore {
 
     /**
      * Return resolution stored by {@link #setResolution(String)}
+     *
      * @return String
      */
     public String getResolution() {
@@ -53,6 +56,7 @@ public class Device extends DeviceCore {
 
     /**
      * Set device resolution
+     *
      * @return this instance for method chaining
      */
     public Device setResolution(String resolution) {
@@ -62,6 +66,7 @@ public class Device extends DeviceCore {
 
     /**
      * Return app version stored by {@link #setAppVersion(String)}
+     *
      * @return String
      */
     public String getAppVersion() {
@@ -70,6 +75,7 @@ public class Device extends DeviceCore {
 
     /**
      * Set app version
+     *
      * @return this instance for method chaining
      */
     public Device setAppVersion(String appVersion) {
@@ -79,6 +85,7 @@ public class Device extends DeviceCore {
 
     /**
      * Return device manufacturer stored by {@link #setManufacturer(String)}
+     *
      * @return String
      */
     public String getManufacturer() {
@@ -87,6 +94,7 @@ public class Device extends DeviceCore {
 
     /**
      * Set device manufacturer
+     *
      * @return this instance for method chaining
      */
     public Device setManufacturer(String manufacturer) {
@@ -96,6 +104,7 @@ public class Device extends DeviceCore {
 
     /**
      * Return CPU name stored by {@link #setCpu(String)}
+     *
      * @return String
      */
     public String getCpu() {
@@ -104,6 +113,7 @@ public class Device extends DeviceCore {
 
     /**
      * Set CPU name
+     *
      * @return this instance for method chaining
      */
     public Device setCpu(String cpu) {
@@ -113,6 +123,7 @@ public class Device extends DeviceCore {
 
     /**
      * Return OpenGL version stored by {@link #setOpenGL(String)}
+     *
      * @return String
      */
     public String getOpenGL() {
@@ -121,6 +132,7 @@ public class Device extends DeviceCore {
 
     /**
      * Set OpenGL version
+     *
      * @return this instance for method chaining
      */
     public Device setOpenGL(String openGL) {
@@ -130,6 +142,7 @@ public class Device extends DeviceCore {
 
     /**
      * Return battery level stored by {@link #setBatteryLevel(Float)}
+     *
      * @return Float
      */
     public Float getBatteryLevel() {
@@ -138,6 +151,7 @@ public class Device extends DeviceCore {
 
     /**
      * Set battery level (0 .. 1)
+     *
      * @return this instance for method chaining
      */
     public Device setBatteryLevel(Float batteryLevel) {
@@ -147,6 +161,7 @@ public class Device extends DeviceCore {
 
     /**
      * Return device orientation stored by {@link #setOrientation(String)}
+     *
      * @return String
      */
     public String getOrientation() {
@@ -155,6 +170,7 @@ public class Device extends DeviceCore {
 
     /**
      * Set device orientation
+     *
      * @return this instance for method chaining
      */
     public Device setOrientation(String orientation) {
@@ -164,6 +180,7 @@ public class Device extends DeviceCore {
 
     /**
      * Return whether the device is online stored by {@link #setDevice(String)}
+     *
      * @return Boolean
      */
     public Boolean isOnline() {
@@ -172,6 +189,7 @@ public class Device extends DeviceCore {
 
     /**
      * Set whether the device is online
+     *
      * @return this instance for method chaining
      */
     public Device setOnline(Boolean online) {
@@ -181,6 +199,7 @@ public class Device extends DeviceCore {
 
     /**
      * Return whether the device is muted stored by {@link #setDevice(String)}
+     *
      * @return Boolean
      */
     public Boolean isMuted() {
@@ -189,6 +208,7 @@ public class Device extends DeviceCore {
 
     /**
      * Set whether the device is muted
+     *
      * @return this instance for method chaining
      */
     public Device setMuted(Boolean muted) {
@@ -205,15 +225,14 @@ public class Device extends DeviceCore {
     public Params buildMetrics(final CtxCore sdkctx) {
         Params params = new Params();
         params.obj("metrics")
-                .put("_device", getDevice())
-                .put("_os", getOS())
-                .put("_os_version", getOSVersion())
-                .put("_resolution", getResolution())
-                .put("_locale", getLocale())
-                .put("_app_version", getAppVersion())
-                .add();
+            .put("_device", getDevice())
+            .put("_os", getOS())
+            .put("_os_version", getOSVersion())
+            .put("_resolution", getResolution())
+            .put("_locale", getLocale())
+            .put("_app_version", getAppVersion())
+            .add();
 
         return params;
     }
-
 }

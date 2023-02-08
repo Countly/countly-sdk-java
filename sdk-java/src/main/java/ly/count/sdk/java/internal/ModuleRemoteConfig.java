@@ -38,6 +38,7 @@ public class ModuleRemoteConfig extends ModuleBase {
     public interface RemoteConfigCallback {
         /**
          * Called after receiving remote config update result
+         *
          * @param error if is null, it means that no errors were encountered
          */
         void callback(String error);
@@ -56,29 +57,28 @@ public class ModuleRemoteConfig extends ModuleBase {
         InternalConfig cfg = ctx.getConfig();
 
         Long timeoutVal = cfg.getRemoteConfigUpdateTimeoutLength();
-        if(timeoutVal != null){
+        if (timeoutVal != null) {
             this.rcRequestTimeout = timeoutVal;
         }
 
         Boolean automEnabled = cfg.getRemoteConfigAutomaticUpdateEnabled();
-        if(automEnabled != null){
+        if (automEnabled != null) {
             automaticUpdateEnabled = automEnabled;
         }
 
-        if(automaticUpdateEnabled){
-            updateRemoteConfigValues(null, null,null);
+        if (automaticUpdateEnabled) {
+            updateRemoteConfigValues(null, null, null);
         }
     }
 
     @Override
-    public Boolean onRequest(Request request){
+    public Boolean onRequest(Request request) {
         //check if it's a old request or from this session
-        if(requestCallbacks.containsKey(request.storageId())) {
+        if (requestCallbacks.containsKey(request.storageId())) {
             //indicate that this module is the owner
             request.own(ModuleRemoteConfig.class);
             //returned to indicate that the request is ready
             return true;
-
         } else {
             //no reference in callback map
             //assume that it probably is from a old session and therefore throw
@@ -87,7 +87,7 @@ public class ModuleRemoteConfig extends ModuleBase {
         }
     }
 
-    public void disableModule(){
+    public void disableModule() {
         disabledModule = true;
     }
 
@@ -110,7 +110,6 @@ public class ModuleRemoteConfig extends ModuleBase {
                 RemoteConfigValueStore stored = getStoredValues();
                 stored.mergeValues(jobj);
                 saveStoredValues(stored);
-
             } catch (Exception e) {
                 L.e("Failed merging new values into old ones" + e);
                 error = "Error merging results";
@@ -121,33 +120,34 @@ public class ModuleRemoteConfig extends ModuleBase {
             error = "Server side error, [" + response + "]";
         }
 
-        if(callback != null){
+        if (callback != null) {
             callback.callback(error);
         }
     }
 
     /**
      * Internal call for updating remote config keys
+     *
      * @param keysOnly set if these are the only keys to update
      * @param keysExcept set if these keys should be ignored from the update
      * @param callback called after the update is done
      */
-    protected void updateRemoteConfigValues(String[] keysOnly, String[] keysExcept, RemoteConfigCallback callback){
+    protected void updateRemoteConfigValues(String[] keysOnly, String[] keysExcept, RemoteConfigCallback callback) {
         String sKOnly = null;
         String sKExcept = null;
 
-        if(keysOnly != null && keysOnly.length > 0){
+        if (keysOnly != null && keysOnly.length > 0) {
             //include list takes precedence
             //if there is at least one item, use it
             JSONArray includeArray = new JSONArray();
-            for (String key:keysOnly) {
+            for (String key : keysOnly) {
                 includeArray.put(key);
             }
             sKOnly = includeArray.toString();
-        } else if(keysExcept != null && keysExcept.length > 0){
+        } else if (keysExcept != null && keysExcept.length > 0) {
             //include list was not used, use the exclude list
             JSONArray excludeArray = new JSONArray();
-            for(String key:keysExcept){
+            for (String key : keysExcept) {
                 excludeArray.put(key);
             }
             sKExcept = excludeArray.toString();
@@ -158,18 +158,18 @@ public class ModuleRemoteConfig extends ModuleBase {
         ModuleRequests.pushAsync(ctx, req);
     }
 
-    protected Object getRemoteConfigValue(String key){
+    protected Object getRemoteConfigValue(String key) {
         RemoteConfigValueStore values = getStoredValues();
         return values.getValue(key);
     }
 
-    public RemoteConfigValueStore getStoredValues(){
+    public RemoteConfigValueStore getStoredValues() {
         RemoteConfigValueStore rcvs = new RemoteConfigValueStore();
         Storage.read(ctx, rcvs);
         return rcvs;
     }
 
-    public void saveStoredValues(RemoteConfigValueStore values){
+    public void saveStoredValues(RemoteConfigValueStore values) {
         Storage.push(ctx, values);
     }
 
@@ -177,8 +177,10 @@ public class ModuleRemoteConfig extends ModuleBase {
         public JSONObject values = new JSONObject();
 
         //add new values to the current storage
-        public void mergeValues(JSONObject newValues){
-            if(newValues == null) {return;}
+        public void mergeValues(JSONObject newValues) {
+            if (newValues == null) {
+                return;
+            }
 
             Iterator<String> iter = newValues.keys();
             while (iter.hasNext()) {
@@ -192,7 +194,7 @@ public class ModuleRemoteConfig extends ModuleBase {
             }
         }
 
-        public Object getValue(String key){
+        public Object getValue(String key) {
             return values.opt(key);
         }
 
@@ -219,7 +221,7 @@ public class ModuleRemoteConfig extends ModuleBase {
         @Override
         public boolean restore(byte[] data) {
             try {
-                String json = new String (data, Utils.UTF8);
+                String json = new String(data, Utils.UTF8);
                 try {
                     values = new JSONObject(json);
                 } catch (JSONException e) {
@@ -240,29 +242,41 @@ public class ModuleRemoteConfig extends ModuleBase {
     }
 
     public class RemoteConfig {
-        public void updateRemoteConfig(RemoteConfigCallback callback){
+        public void updateRemoteConfig(RemoteConfigCallback callback) {
             L.d("Manually calling to updateRemoteConfig");
-            if(disabledModule) { return; }
+            if (disabledModule) {
+                return;
+            }
             ModuleRemoteConfig.this.updateRemoteConfigValues(null, null, callback);
         }
 
-        public void updateRemoteConfigForKeysOnly(String[] keysOnly, RemoteConfigCallback callback){
+        public void updateRemoteConfigForKeysOnly(String[] keysOnly, RemoteConfigCallback callback) {
             L.d("Manually calling to updateRemoteConfig with include keys");
-            if(disabledModule) { return; }
-            if (keysOnly == null) { L.w("updateRemoteConfigExceptKeys passed 'keys to include' array is null"); }
+            if (disabledModule) {
+                return;
+            }
+            if (keysOnly == null) {
+                L.w("updateRemoteConfigExceptKeys passed 'keys to include' array is null");
+            }
             ModuleRemoteConfig.this.updateRemoteConfigValues(keysOnly, null, callback);
         }
 
         public void updateRemoteConfigExceptKeys(String[] keysExclude, RemoteConfigCallback callback) {
             L.d("Manually calling to updateRemoteConfig with exclude keys");
-            if (disabledModule) { return; }
-            if (keysExclude == null) { L.w("updateRemoteConfigExceptKeys passed 'keys to ignore' array is null"); }
+            if (disabledModule) {
+                return;
+            }
+            if (keysExclude == null) {
+                L.w("updateRemoteConfigExceptKeys passed 'keys to ignore' array is null");
+            }
             ModuleRemoteConfig.this.updateRemoteConfigValues(null, keysExclude, callback);
         }
 
-        public Object remoteConfigValueForKey(String key){
+        public Object remoteConfigValueForKey(String key) {
             L.d("Manually calling to remoteConfigValueForKey");
-            if(disabledModule) { return null; }
+            if (disabledModule) {
+                return null;
+            }
 
             return ModuleRemoteConfig.this.getRemoteConfigValue(key);
         }

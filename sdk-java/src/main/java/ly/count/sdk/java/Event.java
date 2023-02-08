@@ -34,11 +34,11 @@ public interface Event {
      * Set event segmentation from
      *
      * @param segmentation set of strings in form of (key1, value1, key2, value2, ...) to set
-     *                     segmentation from; cannot contain nulls or empty strings; must have
-     *                     even length
+     * segmentation from; cannot contain nulls or empty strings; must have
+     * even length
      * @return this instance for method chaining
      */
-    Event addSegments(String ...segmentation);
+    Event addSegments(String... segmentation);
 
     /**
      * Set event segmentation from a map

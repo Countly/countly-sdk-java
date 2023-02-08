@@ -28,7 +28,7 @@ public class Utils {
     /**
      * Joins objects with a separator
      *
-     * @param objects   objects to join
+     * @param objects objects to join
      * @param separator separator to use
      * @return resulting string
      */
@@ -62,7 +62,7 @@ public class Utils {
      * Get fields declared by class and its superclasses filtering test-related which
      * contain $ in their name
      *
-     * @param cls  class to check
+     * @param cls class to check
      * @param goUp whether to return parent class fields as well
      * @return list of declared fields
      */
@@ -177,10 +177,10 @@ public class Utils {
     /**
      * Reflective method call encapsulation.
      *
-     * @param className  class to call method in
-     * @param instance   instance to call on, null for static methods
+     * @param className class to call method in
+     * @param instance instance to call on, null for static methods
      * @param methodName method name
-     * @param args       optional arguments to pass to that method
+     * @param args optional arguments to pass to that method
      * @return false in case of failure, method result otherwise
      */
     public static Object reflectiveCall(String className, Object instance, String methodName, Object... args) {
@@ -221,10 +221,10 @@ public class Utils {
     /**
      * Reflective method call encapsulation with argument types specified explicitly before each parameter.
      *
-     * @param className  class to call method in
-     * @param instance   instance to call on, null for static methods
+     * @param className class to call method in
+     * @param instance instance to call on, null for static methods
      * @param methodName method name
-     * @param args       optional arguments to pass to that method in format [arg1 class, arg1 value, arg2 class, arg2 value]
+     * @param args optional arguments to pass to that method in format [arg1 class, arg1 value, arg2 class, arg2 value]
      * @return false in case of failure, method result otherwise
      */
     public static Object reflectiveCallStrict(String className, Object instance, String methodName, Object... args) {
@@ -288,7 +288,6 @@ public class Utils {
         return false;
     }
 
-
     public static <T> T reflectiveGetField(Object object, String name) {
         return utils._reflectiveGetField(object, object.getClass(), name);
     }
@@ -318,91 +317,90 @@ public class Utils {
         return null;
     }
 
-//    public static final class Reflection<T> {
-//        private T instance;
-//        private Class<?> cls;
-//
-//        Reflection(T instance) {
-//            this.instance = instance;
-//            this.cls = instance.getClass();
-//        }
-//
-//        Reflection(String className) throws ClassNotFoundException {
-//            this.cls = Class.forName(className);
-//        }
-//
-//        public Object call(String methodName, Object... args) {
-//            try {
-//                Class<?> types[] = null;
-//
-//                if (args != null && args.length > 0) {
-//                    types = new Class[args.length];
-//
-//                    for (int i = 0; i < types.length; i++) {
-//                        types[i] = args[i].getClass();
-//                    }
-//                }
-//                Method method = cls.getDeclaredMethod(methodName, types);
-//                return method.invoke(instance, args);
-//            } catch (NoSuchMethodException t) {
-//                System.out.print("Utils Cannot call " + methodName + " of " + cls.getName() + t.toString());
-//                return false;
-//            } catch (IllegalAccessException t) {
-//                System.out.print("Utils Cannot call " + methodName + " of " + cls.getName() + t.toString());
-//                return false;
-//            } catch (InvocationTargetException t) {
-//                System.out.print("Utils Cannot call " + methodName + " of " + cls.getName() + t.toString());
-//                return false;
-//            }
-//        }
-//
-//        public Object get(String fieldName) {
-//            try {
-//                Field field = instance == null ? cls.getDeclaredField(fieldName): instance.getClass().getDeclaredField(fieldName);
-//                boolean accessible = field.isAccessible();
-//                if (!accessible) {
-//                    field.setAccessible(true);
-//                }
-//                Object value = field.get(instance);
-//                if (!accessible) {
-//                    field.setAccessible(false);
-//                }
-//                return value;
-//            } catch (IllegalAccessException e) {
-//                System.out.print("Utils Cannot access field " + fieldName + " of " + cls.getName() + e.toString());
-//            } catch (NoSuchFieldException e) {
-//                System.out.print("Utils No field " + fieldName + " in " + cls.getName() + e.toString());
-//            }
-//            return null;
-//        }
-//
-//        public Boolean set(String fieldName, Object value) {
-//            try {
-//                Field field = instance == null ? cls.getDeclaredField(fieldName): instance.getClass().getDeclaredField(fieldName);
-//                boolean accessible = field.isAccessible();
-//                if (!accessible) {
-//                    field.setAccessible(true);
-//                }
-//                field.set(instance, value);
-//                if (!accessible) {
-//                    field.setAccessible(false);
-//                }
-//                return true;
-//            } catch (IllegalAccessException e) {
-//                System.out.print("Utils Cannot access field " + fieldName + " of " + cls.getName() + e.toString());
-//            } catch (NoSuchFieldException e) {
-//                System.out.print("Utils No field " + fieldName + " in " + cls.getName() + e.toString());
-//            }
-//            return false;
-//        }
-//    }
-
+    //    public static final class Reflection<T> {
+    //        private T instance;
+    //        private Class<?> cls;
+    //
+    //        Reflection(T instance) {
+    //            this.instance = instance;
+    //            this.cls = instance.getClass();
+    //        }
+    //
+    //        Reflection(String className) throws ClassNotFoundException {
+    //            this.cls = Class.forName(className);
+    //        }
+    //
+    //        public Object call(String methodName, Object... args) {
+    //            try {
+    //                Class<?> types[] = null;
+    //
+    //                if (args != null && args.length > 0) {
+    //                    types = new Class[args.length];
+    //
+    //                    for (int i = 0; i < types.length; i++) {
+    //                        types[i] = args[i].getClass();
+    //                    }
+    //                }
+    //                Method method = cls.getDeclaredMethod(methodName, types);
+    //                return method.invoke(instance, args);
+    //            } catch (NoSuchMethodException t) {
+    //                System.out.print("Utils Cannot call " + methodName + " of " + cls.getName() + t.toString());
+    //                return false;
+    //            } catch (IllegalAccessException t) {
+    //                System.out.print("Utils Cannot call " + methodName + " of " + cls.getName() + t.toString());
+    //                return false;
+    //            } catch (InvocationTargetException t) {
+    //                System.out.print("Utils Cannot call " + methodName + " of " + cls.getName() + t.toString());
+    //                return false;
+    //            }
+    //        }
+    //
+    //        public Object get(String fieldName) {
+    //            try {
+    //                Field field = instance == null ? cls.getDeclaredField(fieldName): instance.getClass().getDeclaredField(fieldName);
+    //                boolean accessible = field.isAccessible();
+    //                if (!accessible) {
+    //                    field.setAccessible(true);
+    //                }
+    //                Object value = field.get(instance);
+    //                if (!accessible) {
+    //                    field.setAccessible(false);
+    //                }
+    //                return value;
+    //            } catch (IllegalAccessException e) {
+    //                System.out.print("Utils Cannot access field " + fieldName + " of " + cls.getName() + e.toString());
+    //            } catch (NoSuchFieldException e) {
+    //                System.out.print("Utils No field " + fieldName + " in " + cls.getName() + e.toString());
+    //            }
+    //            return null;
+    //        }
+    //
+    //        public Boolean set(String fieldName, Object value) {
+    //            try {
+    //                Field field = instance == null ? cls.getDeclaredField(fieldName): instance.getClass().getDeclaredField(fieldName);
+    //                boolean accessible = field.isAccessible();
+    //                if (!accessible) {
+    //                    field.setAccessible(true);
+    //                }
+    //                field.set(instance, value);
+    //                if (!accessible) {
+    //                    field.setAccessible(false);
+    //                }
+    //                return true;
+    //            } catch (IllegalAccessException e) {
+    //                System.out.print("Utils Cannot access field " + fieldName + " of " + cls.getName() + e.toString());
+    //            } catch (NoSuchFieldException e) {
+    //                System.out.print("Utils No field " + fieldName + " in " + cls.getName() + e.toString());
+    //            }
+    //            return false;
+    //        }
+    //    }
 
     /**
      * Calculate digest (SHA-1, SHA-256, etc.) hash of the string provided
      *
      * @param digestName digest name like {@code "SHA-256"}, must be supported by Java, see {@link MessageDigest}
-     * @param string     string to hash
+     * @param string string to hash
      * @return hash of the string or null in case of error
      */
     public static String digestHex(String digestName, String string) {
@@ -494,7 +492,7 @@ public class Utils {
         return values;
     }
 
-    public static Map<String, String> fixSegmentKeysAndValues(final int keyLength, final int valueLength,final Map<String, String> segments, Log logger) {
+    public static Map<String, String> fixSegmentKeysAndValues(final int keyLength, final int valueLength, final Map<String, String> segments, Log logger) {
         if (segments == null || segments.size() == 0) {
             return segments;
         }
@@ -550,5 +548,4 @@ public class Utils {
             }
         }
     }
-
 }
