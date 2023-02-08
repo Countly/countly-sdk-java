@@ -43,7 +43,7 @@ public class DeviceCore {
     /**
      * Always increasing timer.
      */
-    static class UniformTimeGenerator implements TimeGenerator{
+    static class UniformTimeGenerator implements TimeGenerator {
         private Long last;
 
         @Override
@@ -115,7 +115,7 @@ public class DeviceCore {
      */
     public String getOSVersion() {
         return System.getProperty("os.version", "n/a");
-//                + " / " + System.getProperty("os.arch", "n/a");
+        //                + " / " + System.getProperty("os.arch", "n/a");
     }
 
     /**
@@ -145,11 +145,11 @@ public class DeviceCore {
     public Params buildMetrics(final CtxCore ctx) {
         Params params = new Params();
         params.obj("metrics")
-                .put("_os", getOS())
-                .put("_os_version", getOSVersion())
-                .put("_locale", getLocale())
-                .put("_store", ctx.getConfig().getApplicationName())
-                .put("_app_version", ctx.getConfig().getApplicationVersion())
+            .put("_os", getOS())
+            .put("_os_version", getOSVersion())
+            .put("_locale", getLocale())
+            .put("_store", ctx.getConfig().getApplicationName())
+            .put("_app_version", ctx.getConfig().getApplicationVersion())
             .add();
 
         return params;
@@ -273,14 +273,13 @@ public class DeviceCore {
                 value = m.group(1);
             }
             return Long.parseLong(value) / 1024;
-        } catch (NumberFormatException e){
+        } catch (NumberFormatException e) {
             System.out.print("[ERROR][DeviceCore] Cannot parse meminfo " + e.toString());
             return null;
         } catch (IOException e) {
             System.out.print("[ERROR] [DeviceCore] Cannot read meminfo " + e.toString());
             return null;
-        }
-        finally {
+        } finally {
             try {
                 if (reader != null) {
                     reader.close();
@@ -327,5 +326,4 @@ public class DeviceCore {
         }
         return total / BYTES_IN_MB;
     }
-
 }

@@ -28,10 +28,10 @@ public class SessionImplTests extends BaseTestsCore {
     }
 
     @Test
-    public void constructor_deserialize(){
+    public void constructor_deserialize() {
         long targetID = 11234L;
         SessionImpl session = new SessionImpl(ctx, targetID);
-        Assert.assertEquals(targetID, (long)session.getId());
+        Assert.assertEquals(targetID, (long) session.getId());
     }
 
     @Test
@@ -41,8 +41,8 @@ public class SessionImplTests extends BaseTestsCore {
         Assert.assertNotNull(session.params);
 
         StringBuilder sbParams = new StringBuilder();
-        String[] keys = new String[]{"a", "b", "c"};
-        String[] vals = new String[]{"11", "22", "33"};
+        String[] keys = new String[] { "a", "b", "c" };
+        String[] vals = new String[] { "11", "22", "33" };
 
         sbParams.append(keys[0]).append("=").append(vals[0]);
         session.addParam(keys[0], vals[0]);

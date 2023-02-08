@@ -7,7 +7,6 @@ package ly.count.sdk.java;
  * Only one session can send requests at a time, so even if you create 2 parallel sessions,
  * they will be made consequent automatically at the time of Countly SDK choice with no
  * correctness guarantees, so please avoid having parallel sessions.
- *
  */
 
 public interface Session extends Usage {
@@ -43,16 +42,15 @@ public interface Session extends Usage {
 
     /**
      * End this session, add corresponding request to queue.
-     *
      */
     void end();
 
     /**
      * Whether this session was started and haven't been ended yet.
      *
+     * @return {@code true} if session was started and haven't been ended yet, {@code false} otherwise
      * @see #begin()
      * @see #end()
-     * @return {@code true} if session was started and haven't been ended yet, {@code false} otherwise
      */
     boolean isActive();
 }

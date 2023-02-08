@@ -37,7 +37,7 @@ public class Request implements Storable {
         return this;
     }
 
-    public Request endpoint(String value){
+    public Request endpoint(String value) {
         this.params.add(ENDPOINT, value);
         return this;
     }
@@ -72,7 +72,9 @@ public class Request implements Storable {
         return (serverUrl.toString().length() + 3 + params.length() + addition) < 1024;
     }
 
-    static Request build(Object... params){ return new Request(params); }
+    static Request build(Object... params) {
+        return new Request(params);
+    }
 
     @Override
     public int hashCode() {
@@ -90,7 +92,7 @@ public class Request implements Storable {
 
     @Override
     public String toString() {
-        String p = params == null ? "" :params.toString();
+        String p = params == null ? "" : params.toString();
         return "[" + id + "] " + p;
     }
 

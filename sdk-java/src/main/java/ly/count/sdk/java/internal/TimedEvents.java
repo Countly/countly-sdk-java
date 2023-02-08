@@ -127,9 +127,9 @@ class TimedEvents implements Storable, EventImpl.EventRecorder {
 
     @Override
     public void recordEvent(Event event) {
-        if (events.containsKey(((EventImpl)event).getKey())) {
+        if (events.containsKey(((EventImpl) event).getKey())) {
             event.endAndRecord();
-            events.remove(((EventImpl)event).getKey());
+            events.remove(((EventImpl) event).getKey());
             Session session = SDKCore.instance.getSession();
             if (session != null) {
                 ((SessionImpl) session).recordEvent(event);

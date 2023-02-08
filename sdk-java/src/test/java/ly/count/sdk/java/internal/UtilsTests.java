@@ -38,7 +38,7 @@ public class UtilsTests {
 
     @Test
     public void trimValues() {
-        String[] result = Utils.trimValues(3, new String[]{"zelda", "link", "ganon"}, logger);
+        String[] result = Utils.trimValues(3, new String[] { "zelda", "link", "ganon" }, logger);
         Assert.assertEquals(3, result.length);
         Assert.assertEquals("zel", result[0]);
         Assert.assertEquals("lin", result[1]);
@@ -47,7 +47,7 @@ public class UtilsTests {
 
     @Test
     public void trimSegmentation() {
-        Map<String, String> segmentation  = new HashMap<String, String>() {{
+        Map<String, String> segmentation = new HashMap<String, String>() {{
             put("key_10", "value1_");
             put("key_20", "value2_");
         }};

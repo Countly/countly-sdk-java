@@ -73,7 +73,6 @@ public class BackendModeTests {
             put("start", "1");
         }};
 
-
         Assert.assertEquals(0L, moduleBackendMode.eventQSize);
         backendMode.recordView("device-id-1", "SampleView", segmentation, 1646640780130L);
 
@@ -228,7 +227,6 @@ public class BackendModeTests {
         JSONObject event = events.getJSONObject(0);
         validateEventFields("key-2", 1, 0.1, 10.0, 1, 8 + timezoneOffset, 1646640780130L, event);
 
-
         JSONObject segments = event.getJSONObject("segmentation");
         Assert.assertEquals("value1", segments.get("key1"));
         Assert.assertEquals("value2", segments.get("key2"));
@@ -241,7 +239,6 @@ public class BackendModeTests {
         Assert.assertEquals("key-2", event.get("key"));
         validateEventFields("key-2", 1, 0.1, 10.0, 1, 8 + timezoneOffset, 1646640780130L, event);
 
-
         segments = event.getJSONObject("segmentation");
         Assert.assertEquals("value1", segments.get("key1"));
         Assert.assertEquals("value2", segments.get("key2"));
@@ -249,7 +246,6 @@ public class BackendModeTests {
         event = events.getJSONObject(1);
         Assert.assertEquals("key-3", event.get("key"));
         validateEventFields("key-3", 2, 0.2, 20.0, 1, 9 + timezoneOffset, 1646644457826L, event);
-
 
         segments = event.getJSONObject("segmentation");
         Assert.assertEquals("value3", segments.get("key3"));
@@ -350,7 +346,6 @@ public class BackendModeTests {
         Assert.assertEquals(0, SDKCore.instance.requestQueueMemory.size());
         Assert.assertEquals(1, moduleBackendMode.eventQueues.get("device-id-1").length());
         Assert.assertEquals(2, moduleBackendMode.eventQueues.get("device-id-2").length());
-
     }
 
     /**
@@ -540,7 +535,6 @@ public class BackendModeTests {
             Assert.assertEquals("Operating System", crashJson.get("_os"));
             validateRequestTimeFields("device-id-1", 1646640780130L, request);
 
-
             JSONObject segments = crashJson.getJSONObject("_custom");
             Assert.assertEquals("value1", segments.get("key1"));
 
@@ -630,7 +624,6 @@ public class BackendModeTests {
 
         String userDetails = request.params.get("user_details");
         validateUserProperties(userDetails, true, true, true);
-
     }
 
     /**

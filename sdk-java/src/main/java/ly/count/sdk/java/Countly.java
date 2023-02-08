@@ -36,13 +36,13 @@ public class Countly implements Usage {
         this.ctx = ctx;
     }
 
-//    private static CtxImpl ctx(File directory) {
-//        return new CtxImpl(cly.sdk, cly.sdk.config(), directory);
-//    }
-//
-//    private static CtxImpl ctx(File directory, String view) {
-//        return new CtxImpl(cly.sdk, cly.sdk.config(), directory, view);
-//    }
+    //    private static CtxImpl ctx(File directory) {
+    //        return new CtxImpl(cly.sdk, cly.sdk.config(), directory);
+    //    }
+    //
+    //    private static CtxImpl ctx(File directory, String view) {
+    //        return new CtxImpl(cly.sdk, cly.sdk.config(), directory, view);
+    //    }
 
     //protected CtxImpl ctx;
 
@@ -53,11 +53,10 @@ public class Countly implements Usage {
      * @param directory storage location for Countly
      * @param config configuration object
      */
-    public static void init (final File directory, final Config config) {
+    public static void init(final File directory, final Config config) {
         if (config == null) {
             System.out.println("[ERROR][Countly] Config cannot be null");
-        }
-        else if (directory == null) {
+        } else if (directory == null) {
             System.out.println("[ERROR][Countly] File cannot be null");
         } else if (!directory.isDirectory()) {
             System.out.println("[ERROR][Countly] File must be a directory");
@@ -69,11 +68,11 @@ public class Countly implements Usage {
                 stop(false);
             }
 
-            if(config.enableBackendMode) {
+            if (config.enableBackendMode) {
                 config.sdkName = "java-native-backend";
             }
 
-            if(config.requestQueueMaxSize < 1) {
+            if (config.requestQueueMaxSize < 1) {
                 System.out.println("[ERROR][Countly] init: Request queue max size can not be less than 1.");
                 config.requestQueueMaxSize = 1;
             }
@@ -95,7 +94,7 @@ public class Countly implements Usage {
      *
      * @param clearData whether to clear all Countly data or not
      */
-    public static void stop (boolean clearData) {
+    public static void stop(boolean clearData) {
         if (cly != null) {
             System.out.println("[ERROR][Countly] Stopping SDK");
             cly.sdk.stop(cly.ctx, clearData);
@@ -110,15 +109,18 @@ public class Countly implements Usage {
      *
      * @return true if already initialized
      */
-    public static boolean isInitialized() { return cly != null; }
+    public static boolean isInitialized() {
+        return cly != null;
+    }
 
     /**
      * Returns whether Countly SDK has been given consent to record data for a particular {@link Config.Feature} or not.
      *
      * @return true if consent has been given
      */
-    public static boolean isTracking(Config.Feature feature) { return isInitialized() && ((Countly)cly).sdk.isTracking(feature.getIndex()); }
-
+    public static boolean isTracking(Config.Feature feature) {
+        return isInitialized() && ((Countly) cly).sdk.isTracking(feature.getIndex());
+    }
 
     /**
      * Returns active {@link Session} if any or creates new {@link Session} instance.
@@ -130,14 +132,14 @@ public class Countly implements Usage {
      *
      * @return active {@link Session} instance
      */
-    public static Session session(){
+    public static Session session() {
         if (!isInitialized()) {
             System.out.println("[ERROR][Countly] SDK is not initialized yet.");
         }
         return session(cly.ctx);
     }
 
-    public static ModuleBackendMode.BackendMode backendMode(){
+    public static ModuleBackendMode.BackendMode backendMode() {
         if (!isInitialized()) {
             System.out.println("[ERROR][Countly] SDK is not initialized yet.");
             return null;
@@ -166,11 +168,10 @@ public class Countly implements Usage {
      */
 
     /**
-     * @deprecated
-     * This method deprecated, please
+     * @deprecated This method deprecated, please
      * <p> use {@link #session()} instead.
      */
-    public static Session getSession(){
+    public static Session getSession() {
         if (!isInitialized()) {
             System.out.println("[ERROR][Countly] SDK is not initialized yet.");
         }
@@ -286,9 +287,9 @@ public class Countly implements Usage {
     /**
      * Get current User Profile object.
      *
+     * @return current User Profile instance
      * @see User#edit() to get {@link UserEditor} object
      * @see UserEditor#commit() to submit changes to the server
-     * @return current User Profile instance
      */
     @Override
     public User user() {

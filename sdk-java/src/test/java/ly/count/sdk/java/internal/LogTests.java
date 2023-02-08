@@ -34,12 +34,12 @@ public class LogTests {
     }
 
     @After
-    public void cleanupEveryTests(){
+    public void cleanupEveryTests() {
         config = null;
     }
 
     @Test(expected = NullPointerException.class)
-    public void logInit_null(){
+    public void logInit_null() {
         Log log = new Log(null, null);
     }
 /*

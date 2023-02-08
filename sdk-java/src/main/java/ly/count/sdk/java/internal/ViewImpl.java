@@ -37,7 +37,7 @@ class ViewImpl implements View {
 
     @Override
     public void start(boolean firstView) {
-        if(SDKCore.instance != null && SDKCore.instance.config.isBackendModeEnabled()) {
+        if (SDKCore.instance != null && SDKCore.instance.config.isBackendModeEnabled()) {
             L.w("[ViewImpl] start: Skipping view, backend mode is enabled!");
             return;
         }
@@ -50,8 +50,8 @@ class ViewImpl implements View {
         this.firstView = firstView;
 
         start = (EventImpl) session.event(EVENT).addSegments(NAME, this.name,
-                VISIT, VISIT_VALUE,
-                SEGMENT, DeviceCore.dev.getOS());
+            VISIT, VISIT_VALUE,
+            SEGMENT, DeviceCore.dev.getOS());
 
         if (firstView) {
             start.addSegment(START, START_VALUE);
@@ -62,7 +62,7 @@ class ViewImpl implements View {
 
     @Override
     public void stop(boolean lastView) {
-        if(SDKCore.instance != null && SDKCore.instance.config.isBackendModeEnabled()) {
+        if (SDKCore.instance != null && SDKCore.instance.config.isBackendModeEnabled()) {
             L.w("[ViewImpl] stop: Skipping view, backend mode is enabled!");
             return;
         }
@@ -80,7 +80,7 @@ class ViewImpl implements View {
         ended = true;
 
         EventImpl event = (EventImpl) session.event(EVENT).addSegments(NAME, this.name,
-                SEGMENT, SEGMENT_VALUE);
+            SEGMENT, SEGMENT_VALUE);
 
         event.setDuration(DeviceCore.dev.uniqueTimestamp() - start.getTimestamp());
 
@@ -98,12 +98,12 @@ class ViewImpl implements View {
     @Override
     public String toString() {
         return "ViewImpl{" +
-                "name='" + name + '\'' +
-                ", session=" + session +
-                ", start=" + start +
-                ", firstView=" + firstView +
-                ", started=" + started +
-                ", ended=" + ended +
-                '}';
+            "name='" + name + '\'' +
+            ", session=" + session +
+            ", start=" + start +
+            ", firstView=" + firstView +
+            ", started=" + started +
+            ", ended=" + ended +
+            '}';
     }
 }

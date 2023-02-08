@@ -68,7 +68,7 @@ public class ModuleRequests extends ModuleBase {
         }
 
         if (((session != null && session.hasConsent(CoreFeature.Location)) || (session == null && SDKCore.enabled(CoreFeature.Location)))
-                && request.params.has("begin_session")) {
+            && request.params.has("begin_session")) {
             User user = SDKCore.instance.user();
             if (user.country() != null) {
                 request.params.add("country_code", user.country());
@@ -125,8 +125,6 @@ public class ModuleRequests extends ModuleBase {
             return null;
         }
 
-
-
         Request request = sessionRequest(ctx, null, null, null);
         request.params.add("location", latitude + "," + longitude);
         return pushAsync(ctx, request);
@@ -154,7 +152,7 @@ public class ModuleRequests extends ModuleBase {
      * @param widgetId widget id
      * @return request instance
      */
-    public static Request ratingWidgetAvailabilityCheck(CtxCore ctx, String widgetId, Class<? extends Module> module){
+    public static Request ratingWidgetAvailabilityCheck(CtxCore ctx, String widgetId, Class<? extends Module> module) {
         Request req = Request.build("widget_id", widgetId, "app_key", ctx.getConfig().getServerAppKey());
         req.own(module);
         req.endpoint("/o/feedback/widget?");
@@ -162,12 +160,12 @@ public class ModuleRequests extends ModuleBase {
         return req;
     }
 
-    public static Request remoteConfigUpdate(CtxCore ctx, String keysInclude, String keysExclude, Class<? extends Module> module){
+    public static Request remoteConfigUpdate(CtxCore ctx, String keysInclude, String keysExclude, Class<? extends Module> module) {
         Request req = Request.build("method", "fetch_remote_config", "app_key", ctx.getConfig().getServerAppKey());
 
-        if(keysInclude != null){
+        if (keysInclude != null) {
             req.params.add("keys", keysInclude);
-        } else if(keysExclude != null) {
+        } else if (keysExclude != null) {
             req.params.add("omit_keys", keysExclude);
         }
 
@@ -207,14 +205,14 @@ public class ModuleRequests extends ModuleBase {
         }
 
         //add app key if needed
-        if(!request.params.has("app_key")){
+        if (!request.params.has("app_key")) {
             request.params.add("app_key", config.getServerAppKey());
         }
 
         //add other missing fields
         if (!request.params.has("sdk_name")) {
             request.params.add("sdk_name", config.getSdkName())
-                    .add("sdk_version", config.getSdkVersion());
+                .add("sdk_version", config.getSdkVersion());
         }
 
         return request;
@@ -254,9 +252,9 @@ public class ModuleRequests extends ModuleBase {
         }
 
         request.params.add("timestamp", DeviceCore.dev.uniqueTimestamp())
-                .add("tz", DeviceCore.dev.getTimezoneOffset())
-                .add("hour", DeviceCore.dev.currentHour())
-                .add("dow", DeviceCore.dev.currentDayOfWeek());
+            .add("tz", DeviceCore.dev.getTimezoneOffset())
+            .add("hour", DeviceCore.dev.currentHour())
+            .add("dow", DeviceCore.dev.currentDayOfWeek());
 
         return Storage.pushAsync(ctx, request, new Tasks.Callback<Boolean>() {
             @Override

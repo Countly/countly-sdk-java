@@ -18,7 +18,6 @@ public class Params {
     static final String PARAM_DEVICE_ID = "device_id";
     static final String PARAM_OLD_DEVICE_ID = "old_device_id";
 
-
     private StringBuilder params;
 
     public static final class Obj {
@@ -41,7 +40,7 @@ public class Params {
             return this;
         }
 
-        public Params add(){
+        public Params add() {
             params.add(key, json.toString());
             return params;
         }
@@ -64,9 +63,10 @@ public class Params {
         }
 
         public Arr put(Collection collection) {
-            for (Object value : collection) if (value instanceof JSONable) {
-                json.add(((JSONable)value).toJSON());
-            }
+            for (Object value : collection)
+                if (value instanceof JSONable) {
+                    json.add(((JSONable) value).toJSON());
+                }
             return this;
         }
 
@@ -135,11 +135,11 @@ public class Params {
     }
 
     public Obj obj(String key) {
-       return new Obj(key, this);
+        return new Obj(key, this);
     }
 
     public Arr arr(String key) {
-       return new Arr(key, this);
+        return new Arr(key, this);
     }
 
     public String remove(String key) {
@@ -204,7 +204,7 @@ public class Params {
         params = new StringBuilder();
     }
 
-    public String toString(){
+    public String toString() {
         return params.toString();
     }
 
@@ -218,7 +218,7 @@ public class Params {
         if (!(obj instanceof Params)) {
             return false;
         }
-        Params p = (Params)obj;
+        Params p = (Params) obj;
 
         return p.params.toString().equals(params.toString());
     }

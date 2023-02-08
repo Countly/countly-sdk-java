@@ -17,11 +17,10 @@ public interface CrashProcessor {
      * When {@link Config#crashProcessorClass} is set with your own implementation of this interface,
      * Countly calls this method to allow adding custom data to the crash.
      *
-     * @see Crash#setLogs(String[]) to add custom logs sent to the server along with a crash
-     * @see Crash#setSegments(Map) to add custom crash segments sent to the server along with a crash
-     *
      * @param crash {@link Crash} instance to process
      * @return {@code null} if crash shouldn't be sent, {@code crash} parameter value otherwise
+     * @see Crash#setLogs(String[]) to add custom logs sent to the server along with a crash
+     * @see Crash#setSegments(Map) to add custom crash segments sent to the server along with a crash
      */
     Crash process(Crash crash);
 }

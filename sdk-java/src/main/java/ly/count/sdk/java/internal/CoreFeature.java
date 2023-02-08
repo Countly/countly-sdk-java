@@ -26,7 +26,11 @@ public enum CoreFeature {
 
     private final int index;
 
-    CoreFeature(int index){ this.index = index; }
+    CoreFeature(int index) {
+        this.index = index;
+    }
 
-    public int getIndex(){ return index; }
+    public int getIndex() {
+        return index;
+    }
 }

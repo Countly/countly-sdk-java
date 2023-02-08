@@ -15,8 +15,8 @@ import ly.count.sdk.java.UserEditor;
  */
 
 public class UserImpl extends User implements Storable {
-   // private static final Log.Module L = Log.module("UserImpl");
-    
+    // private static final Log.Module L = Log.module("UserImpl");
+
     private Log L = null;
 
     String id, name, username, email, org, phone, picturePath, locale, country, city, location;
@@ -130,20 +130,20 @@ public class UserImpl extends User implements Storable {
             stream.close();
             return bytes.toByteArray();
         } catch (IOException e) {
-          L.e("[UserImpl Cannot serialize session" + e);
+            L.e("[UserImpl Cannot serialize session" + e);
         } finally {
             if (stream != null) {
                 try {
                     stream.close();
                 } catch (IOException e) {
-                  L.e("[UserImpl Cannot happen" + e);
+                    L.e("[UserImpl Cannot happen" + e);
                 }
             }
             if (bytes != null) {
                 try {
                     bytes.close();
                 } catch (IOException e) {
-                  L.e("[UserImpl Cannot happen" + e);
+                    L.e("[UserImpl Cannot happen" + e);
                 }
             }
         }
@@ -195,20 +195,20 @@ public class UserImpl extends User implements Storable {
 
             return true;
         } catch (IOException | ClassNotFoundException e) {
-          L.e("[UserImpl Cannot deserialize session" + e);
+            L.e("[UserImpl Cannot deserialize session" + e);
         } finally {
             if (stream != null) {
                 try {
                     stream.close();
                 } catch (IOException e) {
-                  L.e("[UserImpl Cannot happen" + e);
+                    L.e("[UserImpl Cannot happen" + e);
                 }
             }
             if (bytes != null) {
                 try {
                     bytes.close();
                 } catch (IOException e) {
-                  L.e("[UserImpl Cannot happen" + e);
+                    L.e("[UserImpl Cannot happen" + e);
                 }
             }
         }
@@ -219,24 +219,24 @@ public class UserImpl extends User implements Storable {
     @Override
     public String toString() {
         return "UserImpl{" +
-                "id='" + id + '\'' +
-                ", name='" + name + '\'' +
-                ", username='" + username + '\'' +
-                " + email='" + email + '\'' +
-                ", org='" + org + '\'' +
-                ", phone='" + phone + '\'' +
-                ", picturePath='" + picturePath + '\'' +
-                ", locale='" + locale + '\'' +
-                ", country='" + country + '\'' +
-                ", city='" + city + '\'' +
-                ", location='" + location + '\'' +
-                ", picture=" + Arrays.toString(picture) +
-                ", gender=" + gender +
-                ", birthyear=" + birthyear +
-                ", cohorts=" + cohorts +
-                ", custom=" + custom +
-                ", ctx=" + ctx +
-                '}';
+            "id='" + id + '\'' +
+            ", name='" + name + '\'' +
+            ", username='" + username + '\'' +
+            " + email='" + email + '\'' +
+            ", org='" + org + '\'' +
+            ", phone='" + phone + '\'' +
+            ", picturePath='" + picturePath + '\'' +
+            ", locale='" + locale + '\'' +
+            ", country='" + country + '\'' +
+            ", city='" + city + '\'' +
+            ", location='" + location + '\'' +
+            ", picture=" + Arrays.toString(picture) +
+            ", gender=" + gender +
+            ", birthyear=" + birthyear +
+            ", cohorts=" + cohorts +
+            ", custom=" + custom +
+            ", ctx=" + ctx +
+            '}';
     }
 
     @Override

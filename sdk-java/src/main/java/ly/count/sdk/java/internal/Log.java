@@ -11,9 +11,8 @@ public class Log {
     private final LogCallback logListener;
     private final Config.LoggingLevel loggingLevel;
 
-
     public Log(Config.LoggingLevel loggingLevel, LogCallback logListener) {
-        if(loggingLevel == null) {
+        if (loggingLevel == null) {
             throw new NullPointerException("Logging level can't null.");
         }
         this.loggingLevel = loggingLevel;

@@ -33,9 +33,13 @@ public class Config {
 
         private final int level;
 
-        LoggingLevel(int level){ this.level = level; }
+        LoggingLevel(int level) {
+            this.level = level;
+        }
 
-        public int getLevel(){ return level; }
+        public int getLevel() {
+            return level;
+        }
 
         public boolean prints(LoggingLevel l) {
             return level <= l.level;
@@ -74,9 +78,9 @@ public class Config {
         CrashReporting(CoreFeature.CrashReporting.getIndex()),
         Location(CoreFeature.Location.getIndex()),
         UserProfiles(CoreFeature.UserProfiles.getIndex());
-//        StarRating(1 << 12),
-//        RemoteConfig(1 << 13),
-//        PerformanceMonitoring(1 << 14);
+        //        StarRating(1 << 12),
+        //        RemoteConfig(1 << 13),
+        //        PerformanceMonitoring(1 << 14);
 
         private final int index;
 
@@ -101,12 +105,12 @@ public class Config {
                 return Location;
             } else if (index == UserProfiles.index) {
                 return UserProfiles;
-//            } else if (index == StarRating.index) {
-//                return StarRating;
-//            } else if (index == RemoteConfig.index) {
-//                return RemoteConfig;
-//            } else if (index == PerformanceMonitoring.index) {
-//                return PerformanceMonitoring;
+                //            } else if (index == StarRating.index) {
+                //                return StarRating;
+                //            } else if (index == RemoteConfig.index) {
+                //                return RemoteConfig;
+                //            } else if (index == PerformanceMonitoring.index) {
+                //                return PerformanceMonitoring;
             } else {
                 return null;
             }
@@ -133,10 +137,12 @@ public class Config {
 
         @Override
         public boolean equals(Object obj) {
-            if (obj == null || !(obj instanceof DID)) { return false; }
+            if (obj == null || !(obj instanceof DID)) {
+                return false;
+            }
             DID did = (DID) obj;
             return did.realm == realm && did.strategy == strategy &&
-                    (did.id == null ? id == null : did.id.equals(id));
+                (did.id == null ? id == null : did.id.equals(id));
         }
 
         @Override
@@ -192,7 +198,7 @@ public class Config {
                 stream = new ObjectInputStream(bytes);
 
                 Utils.reflectiveSetField(this, "realm", stream.readInt());
-                Utils.reflectiveSetField(this, "strategy",stream.readInt());
+                Utils.reflectiveSetField(this, "strategy", stream.readInt());
                 Utils.reflectiveSetField(this, "id", stream.readObject());
 
                 return true;
@@ -258,7 +264,6 @@ public class Config {
      * Log listener
      */
     protected LogCallback logListener = null;
-
 
     /**
      * Countly SDK name to be sent in HTTP requests
@@ -481,99 +486,99 @@ public class Config {
      */
     protected int requestQueueMaxSize = 1000;
 
-//    /**
-//    * Maximum size of all string keys
-//    */
-//    protected int maxKeyLength = 128;
-//
-//    /**
-//    * Maximum size of all values in our key-value pairs
-//    */
-//    protected int maxValueSize = 256;
-//
-//    /**
-//    * Max amount of custom (dev provided) segmentation in one event
-//    */
-//    protected int maxSegmentationValues = 30;
-//
-//    /**
-//    * Limits how many stack trace lines would be recorded per thread
-//    */
-//    protected int maxStackTraceLinesPerThread = 30;
-//
-//    /**
-//    * Limits how many characters are allowed per stack trace line
-//    */
-//    protected int maxStackTraceLineLength = 200;
-//
-//    /**
-//    * Set the maximum amount of breadcrumbs.
-//    */
-//    protected int totalBreadcrumbsAllowed = 100;
-//
-//    //endregion
-//
-//    public int getMaxKeyLength() {
-//        return maxKeyLength;
-//    }
-//
-//    public Config setMaxKeyLength(int maxKeyLength) {
-//        this.maxKeyLength = maxKeyLength;
-//        return this;
-//    }
-//
-//    public int getMaxValueSize() {
-//        return maxValueSize;
-//    }
-//
-//    public Config setMaxValueSize(int maxValueSize) {
-//        this.maxValueSize = maxValueSize;
-//        return this;
-//    }
-//
-//    public int getMaxSegmentationValues() {
-//        return maxSegmentationValues;
-//    }
-//
-//    public Config setMaxSegmentationValues(int maxSegmentationValues) {
-//        this.maxSegmentationValues = maxSegmentationValues;
-//        return this;
-//    }
-//
-//    public int getMaxStackTraceLinesPerThread() {
-//        return maxStackTraceLinesPerThread;
-//    }
-//
-//    public Config setMaxStackTraceLinesPerThread(int maxStackTraceLinesPerThread) {
-//        this.maxStackTraceLinesPerThread = maxStackTraceLinesPerThread;
-//        return this;
-//
-//    }
-//
-//    public int getMaxStackTraceLineLength() {
-//        return maxStackTraceLineLength;
-//    }
-//
-//    public Config setMaxStackTraceLineLength(int maxStackTraceLineLength) {
-//        this.maxStackTraceLineLength = maxStackTraceLineLength;
-//        return this;
-//    }
-//
-//    public int getTotalBreadcrumbsAllowed() {
-//        return totalBreadcrumbsAllowed;
-//    }
-//
-//    public Config setTotalBreadcrumbsAllowed(int totalBreadcrumbsAllowed) {
-//        this.totalBreadcrumbsAllowed = totalBreadcrumbsAllowed;
-//        return this;
-//
-//    }
-
+    //    /**
+    //    * Maximum size of all string keys
+    //    */
+    //    protected int maxKeyLength = 128;
+    //
+    //    /**
+    //    * Maximum size of all values in our key-value pairs
+    //    */
+    //    protected int maxValueSize = 256;
+    //
+    //    /**
+    //    * Max amount of custom (dev provided) segmentation in one event
+    //    */
+    //    protected int maxSegmentationValues = 30;
+    //
+    //    /**
+    //    * Limits how many stack trace lines would be recorded per thread
+    //    */
+    //    protected int maxStackTraceLinesPerThread = 30;
+    //
+    //    /**
+    //    * Limits how many characters are allowed per stack trace line
+    //    */
+    //    protected int maxStackTraceLineLength = 200;
+    //
+    //    /**
+    //    * Set the maximum amount of breadcrumbs.
+    //    */
+    //    protected int totalBreadcrumbsAllowed = 100;
+    //
+    //    //endregion
+    //
+    //    public int getMaxKeyLength() {
+    //        return maxKeyLength;
+    //    }
+    //
+    //    public Config setMaxKeyLength(int maxKeyLength) {
+    //        this.maxKeyLength = maxKeyLength;
+    //        return this;
+    //    }
+    //
+    //    public int getMaxValueSize() {
+    //        return maxValueSize;
+    //    }
+    //
+    //    public Config setMaxValueSize(int maxValueSize) {
+    //        this.maxValueSize = maxValueSize;
+    //        return this;
+    //    }
+    //
+    //    public int getMaxSegmentationValues() {
+    //        return maxSegmentationValues;
+    //    }
+    //
+    //    public Config setMaxSegmentationValues(int maxSegmentationValues) {
+    //        this.maxSegmentationValues = maxSegmentationValues;
+    //        return this;
+    //    }
+    //
+    //    public int getMaxStackTraceLinesPerThread() {
+    //        return maxStackTraceLinesPerThread;
+    //    }
+    //
+    //    public Config setMaxStackTraceLinesPerThread(int maxStackTraceLinesPerThread) {
+    //        this.maxStackTraceLinesPerThread = maxStackTraceLinesPerThread;
+    //        return this;
+    //
+    //    }
+    //
+    //    public int getMaxStackTraceLineLength() {
+    //        return maxStackTraceLineLength;
+    //    }
+    //
+    //    public Config setMaxStackTraceLineLength(int maxStackTraceLineLength) {
+    //        this.maxStackTraceLineLength = maxStackTraceLineLength;
+    //        return this;
+    //    }
+    //
+    //    public int getTotalBreadcrumbsAllowed() {
+    //        return totalBreadcrumbsAllowed;
+    //    }
+    //
+    //    public Config setTotalBreadcrumbsAllowed(int totalBreadcrumbsAllowed) {
+    //        this.totalBreadcrumbsAllowed = totalBreadcrumbsAllowed;
+    //        return this;
+    //
+    //    }
 
     // TODO: storage limits & configuration
-//    protected int maxRequestsStored = 0;
-//    protected int storageDirectory = "";
-//    protected int storagePrefix = "[CLY]_";
+    //    protected int maxRequestsStored = 0;
+    //    protected int storageDirectory = "";
+    //    protected int storagePrefix = "[CLY]_";
+
     /**
      * The only ConfigCore constructor.
      *
@@ -582,7 +587,7 @@ public class Config {
      */
     public Config(String serverURL, String serverAppKey) {
         //the last '/' should be deleted
-        if(serverURL != null && serverURL.length() > 0 && serverURL.charAt(serverURL.length() - 1) == '/') {
+        if (serverURL != null && serverURL.length() > 0 && serverURL.charAt(serverURL.length() - 1) == '/') {
             serverURL = serverURL.substring(0, serverURL.length() - 1);
         }
 
@@ -685,7 +690,7 @@ public class Config {
      * - {@link DeviceIdStrategy#UUID} to use standard java random UUID. Default.
      * - {@link DeviceIdStrategy#CUSTOM_ID} to use your own device id for Countly.
      *
-     * @param strategy       strategy to use instead of default OpenUDID
+     * @param strategy strategy to use instead of default OpenUDID
      * @param customDeviceId device id for use with {@link DeviceIdStrategy#CUSTOM_ID}
      * @return {@code this} instance for method chaining
      */
@@ -759,6 +764,7 @@ public class Config {
 
     /**
      * Enable SDK's backend mode.
+     *
      * @return {@code this} instance for method chaining
      */
     public Config enableBackendMode() {
@@ -772,6 +778,7 @@ public class Config {
 
     /**
      * In backend mode set the in memory request queue size.
+     *
      * @param requestQueueMaxSize int to set request queue maximum size for backend mode
      * @return {@code this} instance for method chaining
      */
@@ -888,9 +895,9 @@ public class Config {
      * Disable update requests completely. Only begin & end requests will be sent + some special
      * cases if applicable like User Profile change or Push token updated.
      *
+     * @return {@code this} instance for method chaining
      * @see #setSendUpdateEachSeconds(int)
      * @see #setEventsBufferSize(int)
-     * @return {@code this} instance for method chaining
      */
     public Config disableUpdateRequests() {
         this.sendUpdateEachSeconds = 0;
@@ -1181,7 +1188,9 @@ public class Config {
         return ftrs;
     }
 
-    public int getFeaturesMap() { return features; }
+    public int getFeaturesMap() {
+        return features;
+    }
 
     /**
      * Whether a feature is enabled in this config, that is exists in {@link #features}
@@ -1201,7 +1210,6 @@ public class Config {
         return moduleOverrides == null ? null : moduleOverrides.get(feature.index);
     }
 
-
     /**
      * Enable GDPR compliance by disallowing SDK to record any data until corresponding consent
      * calls are made.
@@ -1217,9 +1225,9 @@ public class Config {
     /**
      * Enable auto views tracking
      *
-     * @see #autoViewsTracking
      * @param autoViewsTracking whether to enable it or disable
      * @return {@code this} instance for method chaining
+     * @see #autoViewsTracking
      */
     public Config setAutoViewsTracking(boolean autoViewsTracking) {
         this.autoViewsTracking = autoViewsTracking;
@@ -1229,9 +1237,9 @@ public class Config {
     /**
      * Enable auto sessions tracking
      *
-     * @see #autoSessionsTracking
      * @param autoSessionsTracking whether to enable it or disable
      * @return {@code this} instance for method chaining
+     * @see #autoSessionsTracking
      */
     public Config setAutoSessionsTracking(boolean autoSessionsTracking) {
         this.autoSessionsTracking = autoSessionsTracking;
@@ -1241,9 +1249,9 @@ public class Config {
     /**
      * Wait this much time before ending session in auto session tracking mode
      *
-     * @see #autoSessionsTracking
      * @param sessionAutoCloseAfter time in seconds
      * @return {@code this} instance for method chaining
+     * @see #autoSessionsTracking
      */
     public Config setSessionAutoCloseAfter(int sessionAutoCloseAfter) {
         this.sessionAutoCloseAfter = sessionAutoCloseAfter;
@@ -1252,6 +1260,7 @@ public class Config {
 
     /**
      * Getter for {@link #autoSessionsTracking}
+     *
      * @return {@link #autoSessionsTracking} value
      */
     public boolean isAutoViewsTrackingEnabled() {
@@ -1260,6 +1269,7 @@ public class Config {
 
     /**
      * Getter for {@link #autoSessionsTracking}
+     *
      * @return {@link #autoSessionsTracking} value
      */
     public boolean isAutoSessionsTrackingEnabled() {
@@ -1268,6 +1278,7 @@ public class Config {
 
     /**
      * Getter for {@link #sessionAutoCloseAfter}
+     *
      * @return {@link #sessionAutoCloseAfter} value
      */
     public int getSessionAutoCloseAfter() {
@@ -1276,6 +1287,7 @@ public class Config {
 
     /**
      * Getter for {@link #serverURL}
+     *
      * @return {@link #serverURL} value
      */
     public URL getServerURL() {
@@ -1284,6 +1296,7 @@ public class Config {
 
     /**
      * Getter for {@link #serverAppKey}
+     *
      * @return {@link #serverAppKey} value
      */
     public String getServerAppKey() {
@@ -1292,6 +1305,7 @@ public class Config {
 
     /**
      * Getter for {@link #deviceIdStrategy}
+     *
      * @return {@link #deviceIdStrategy} value
      */
     public int getDeviceIdStrategy() {
@@ -1309,6 +1323,7 @@ public class Config {
 
     /**
      * Getter for {@link #customDeviceId}
+     *
      * @return {@link #customDeviceId} value
      */
     public String getCustomDeviceId() {
@@ -1317,6 +1332,7 @@ public class Config {
 
     /**
      * Getter for {@link #usePOST}
+     *
      * @return {@link #usePOST} value
      */
     public boolean isUsePOST() {
@@ -1325,6 +1341,7 @@ public class Config {
 
     /**
      * Getter for {@link #enableBackendMode}
+     *
      * @return {@link #enableBackendMode} value
      */
     public boolean isBackendModeEnabled() {
@@ -1333,6 +1350,7 @@ public class Config {
 
     /**
      * Getter for {@link #salt}
+     *
      * @return {@link #salt} value
      */
     public String getParameterTamperingProtectionSalt() {
@@ -1341,6 +1359,7 @@ public class Config {
 
     /**
      * Getter for {@link #sdkName}
+     *
      * @return {@link #sdkName} value
      */
     public String getSdkName() {
@@ -1349,6 +1368,7 @@ public class Config {
 
     /**
      * Getter for {@link #sdkVersion}
+     *
      * @return {@link #sdkVersion} value
      */
     public String getSdkVersion() {
@@ -1357,6 +1377,7 @@ public class Config {
 
     /**
      * Check if particular feature is enabled
+     *
      * @param feature index of feature to check
      * @return {@code true} if the feature is enabled
      */
@@ -1366,6 +1387,7 @@ public class Config {
 
     /**
      * Getter for {@link #applicationName}
+     *
      * @return {@link #applicationName} value
      */
     public String getApplicationName() {
@@ -1374,6 +1396,7 @@ public class Config {
 
     /**
      * Getter for {@link #applicationVersion}
+     *
      * @return {@link #applicationVersion} value
      */
     public String getApplicationVersion() {
@@ -1389,6 +1412,7 @@ public class Config {
 
     /**
      * Getter for {@link #loggingLevel}
+     *
      * @return {@link #loggingLevel} value
      */
     public LoggingLevel getLoggingLevel() {
@@ -1397,6 +1421,7 @@ public class Config {
 
     /**
      * Getter for {@link #logListener}
+     *
      * @return {@link #logListener} value
      */
     public LogCallback getLogListener() {
@@ -1405,6 +1430,7 @@ public class Config {
 
     /**
      * Getter for {@link #testMode}
+     *
      * @return {@link #testMode} value
      * @deprecated Calling this function will always return 'false'
      */
@@ -1414,6 +1440,7 @@ public class Config {
 
     /**
      * Getter for {@link #sendUpdateEachSeconds}
+     *
      * @return {@link #sendUpdateEachSeconds} value
      */
     public int getSendUpdateEachSeconds() {
@@ -1422,6 +1449,7 @@ public class Config {
 
     /**
      * Getter for {@link #sessionCooldownPeriod}
+     *
      * @return {@link #sessionCooldownPeriod} value
      */
     public int getSessionCooldownPeriod() {
@@ -1430,6 +1458,7 @@ public class Config {
 
     /**
      * Getter for {@link #eventsBufferSize}
+     *
      * @return {@link #eventsBufferSize} value
      */
     public int getEventsBufferSize() {
@@ -1438,6 +1467,7 @@ public class Config {
 
     /**
      * Getter for {@link #networkConnectionTimeout}
+     *
      * @return {@link #networkConnectionTimeout} value
      */
     public int getNetworkConnectionTimeout() {
@@ -1446,6 +1476,7 @@ public class Config {
 
     /**
      * Getter for {@link #networkReadTimeout}
+     *
      * @return {@link #networkReadTimeout} value
      */
     public int getNetworkReadTimeout() {
@@ -1454,6 +1485,7 @@ public class Config {
 
     /**
      * Getter for {@link #networkRequestCooldown}
+     *
      * @return {@link #networkRequestCooldown} value
      */
     public int getNetworkRequestCooldown() {
@@ -1462,6 +1494,7 @@ public class Config {
 
     /**
      * Getter for {@link #networkImportantRequestCooldown}
+     *
      * @return {@link #networkImportantRequestCooldown} value
      */
     public int getNetworkImportantRequestCooldown() {
@@ -1470,18 +1503,25 @@ public class Config {
 
     /**
      * Getter for {@link #publicKeyPins}
+     *
      * @return {@link #publicKeyPins} value
      */
-    public Set<String> getPublicKeyPins() { return publicKeyPins; }
+    public Set<String> getPublicKeyPins() {
+        return publicKeyPins;
+    }
 
     /**
      * Getter for {@link #certificatePins}
+     *
      * @return {@link #certificatePins} value
      */
-    public Set<String> getCertificatePins() { return certificatePins; }
+    public Set<String> getCertificatePins() {
+        return certificatePins;
+    }
 
     /**
      * Getter for {@link #crashReportingANRCheckingPeriod}
+     *
      * @return {@link #crashReportingANRCheckingPeriod} value
      */
     public int getCrashReportingANRCheckingPeriod() {
@@ -1490,6 +1530,7 @@ public class Config {
 
     /**
      * Getter for {@link #crashProcessorClass}
+     *
      * @return {@link #crashProcessorClass} value
      */
     public String getCrashProcessorClass() {
@@ -1498,6 +1539,7 @@ public class Config {
 
     /**
      * Getter for {@link #moduleOverrides}
+     *
      * @return {@link #moduleOverrides} value for {@code Feature} specified
      */
     public Class<? extends Module> getModuleOverride(int feature) {
@@ -1506,6 +1548,7 @@ public class Config {
 
     /**
      * Getter for {@link #requiresConsent}
+     *
      * @return {@link #requiresConsent} value
      */
     public boolean requiresConsent() {

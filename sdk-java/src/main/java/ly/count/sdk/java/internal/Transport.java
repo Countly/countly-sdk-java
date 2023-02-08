@@ -64,17 +64,15 @@ public class Transport implements X509TrustManager {
     private List<byte[]> certPins = null;   // list of parsed cert pins
     private X509TrustManager defaultTrustManager = null;    // default TrustManager to call along with Network one
 
-
     public Transport() {
     }
 
     /**
-     * @see Module#init(InternalConfig, Log)
-     *
      * @param config
      * @throws IllegalArgumentException
+     * @see Module#init(InternalConfig, Log)
      */
-    public void init (InternalConfig config, Log logger) throws IllegalArgumentException {
+    public void init(InternalConfig config, Log logger) throws IllegalArgumentException {
         // ssl config (cert & public key pinning)
         // sha1 signing
         // 301/302 handling, probably configurable (like allowFollowingRedirects) and with response
@@ -88,7 +86,6 @@ public class Transport implements X509TrustManager {
         L.i("[network] Server: " + config.getServerURL());
         this.config = config;
 
-
         try {
             setPins(config.getPublicKeyPins(), config.getCertificatePins());
         } catch (CertificateException e) {
@@ -96,12 +93,12 @@ public class Transport implements X509TrustManager {
         }
     }
 
-//    void onContext(android.content.Ctx context) {
-//        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(android.content.Ctx.CONNECTIVITY_SERVICE);
-//        NetworkInfo activeNetInfo = connectivityManager.getActiveNetworkInfo();
-//        NetworkInfo mobNetInfo = connectivityManager.getNetworkInfo(     ConnectivityManager.TYPE_MOBILE );
-//  https://stackoverflow.com/questions/1783117/network-listener-android
-//    }
+    //    void onContext(android.content.Ctx context) {
+    //        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(android.content.Ctx.CONNECTIVITY_SERVICE);
+    //        NetworkInfo activeNetInfo = connectivityManager.getActiveNetworkInfo();
+    //        NetworkInfo mobNetInfo = connectivityManager.getNetworkInfo(     ConnectivityManager.TYPE_MOBILE );
+    //  https://stackoverflow.com/questions/1783117/network-listener-android
+    //    }
 
     /**
      * For testing purposes
@@ -186,7 +183,6 @@ public class Transport implements X509TrustManager {
                     }
 
                     writer.append(Utils.CRLF).append("--").append(boundary).append("--").append(Utils.CRLF).flush();
-
                 } else {
                     if (config.getParameterTamperingProtectionSalt() != null) {
                         request.params.add(CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, request.params.toString() + config.getParameterTamperingProtectionSalt()));
@@ -203,12 +199,14 @@ public class Transport implements X509TrustManager {
                 if (writer != null) {
                     try {
                         writer.close();
-                    } catch (Throwable ignored){}
+                    } catch (Throwable ignored) {
+                    }
                 }
                 if (output != null) {
                     try {
                         output.close();
-                    } catch (Throwable ignored){}
+                    } catch (Throwable ignored) {
+                    }
                 }
             }
         }
@@ -223,7 +221,7 @@ public class Transport implements X509TrustManager {
             writer.append("Content-Type: ").append(contentType).append(Utils.CRLF);
             writer.append("Content-Transfer-Encoding: binary").append(Utils.CRLF);
             writer.append(Utils.CRLF).flush();
-            output.write((byte[])file);
+            output.write((byte[]) file);
             output.flush();
             writer.append(Utils.CRLF).flush();
         } else {
@@ -247,7 +245,7 @@ public class Transport implements X509TrustManager {
                     File f = new File(picture);
                     protocol = f.toURI().toURL().getProtocol();
                 } catch (Throwable tt) {
-                    L.w("[network] Couldn't determine picturePath protocol " +  tt);
+                    L.w("[network] Couldn't determine picturePath protocol " + tt);
                 }
             }
             if (protocol != null && protocol.equals("file")) {
@@ -280,10 +278,10 @@ public class Transport implements X509TrustManager {
         try {
             InputStream responseInputStream;
 
-            try{
+            try {
                 //assume there will be no error
                 responseInputStream = connection.getInputStream();
-            } catch (Exception ex){
+            } catch (Exception ex) {
                 //in case of exception, assume there was a error in the request
                 //and change streams
                 responseInputStream = connection.getErrorStream();
@@ -303,7 +301,8 @@ public class Transport implements X509TrustManager {
             if (reader != null) {
                 try {
                     reader.close();
-                } catch (IOException ignored) {}
+                } catch (IOException ignored) {
+                }
             }
         }
     }
@@ -348,7 +347,6 @@ public class Transport implements X509TrustManager {
                     SDKCore.instance.onRequestCompleted(request, response, code, requestOwner);
 
                     return processResponse(code, response, request.storageId());
-
                 } catch (IOException e) {
                     L.w("[network] Error while sending request " + request + " " + e);
                     return false;
@@ -362,7 +360,7 @@ public class Transport implements X509TrustManager {
     }
 
     Boolean processResponse(int code, String response, Long requestId) {
-        L.i("[network] [processResponse] Code [" + code + "] response [" + response + "] for request[" + requestId + "]" );
+        L.i("[network] [processResponse] Code [" + code + "] response [" + response + "] for request[" + requestId + "]");
 
         JSONObject jsonObject = new JSONObject(response);
         if (code >= 200 && code < 300 && jsonObject.has("result")) {
@@ -398,48 +396,52 @@ public class Transport implements X509TrustManager {
         keyPins = new ArrayList<>();
         certPins = new ArrayList<>();
 
-        if (keys != null) for (String key : keys) {
-            try {
-                byte[] data = Utils.readStream(Transport.class.getClassLoader().getResourceAsStream(key));
+        if (keys != null) {
+            for (String key : keys) {
+                try {
+                    byte[] data = Utils.readStream(Transport.class.getClassLoader().getResourceAsStream(key));
+                    if (data != null) {
+                        String string = new String(data);
+                        if (string.contains("--BEGIN")) {
+                            data = Utils.Base64.decode(trimPem(string));
+                        }
+                    } else {
+                        data = Utils.Base64.decode(trimPem(key));
+                    }
+
+                    try {
+                        X509EncodedKeySpec spec = new X509EncodedKeySpec(data);
+                        KeyFactory kf = KeyFactory.getInstance("RSA");
+                        PublicKey k = kf.generatePublic(spec);
+                        keyPins.add(k.getEncoded());
+                    } catch (InvalidKeySpecException e) {
+                        L.d("[network] Certificate in instead of public key it seems " + e);
+                        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+                        Certificate cert = cf.generateCertificate(new ByteArrayInputStream(data));
+                        keyPins.add(cert.getPublicKey().getEncoded());
+                    }
+                } catch (NoSuchAlgorithmException e) {
+                    L.d("[network] Shouldn't happen " + key);
+                }
+            }
+        }
+
+        if (certs != null) {
+            for (String cert : certs) {
+                byte[] data = Utils.readStream(Transport.class.getClassLoader().getResourceAsStream(cert));
                 if (data != null) {
                     String string = new String(data);
                     if (string.contains("--BEGIN")) {
                         data = Utils.Base64.decode(trimPem(string));
                     }
                 } else {
-                    data = Utils.Base64.decode(trimPem(key));
+                    data = Utils.Base64.decode(trimPem(cert));
                 }
 
-                try {
-                    X509EncodedKeySpec spec = new X509EncodedKeySpec(data);
-                    KeyFactory kf = KeyFactory.getInstance("RSA");
-                    PublicKey k = kf.generatePublic(spec);
-                    keyPins.add(k.getEncoded());
-                } catch (InvalidKeySpecException e) {
-                    L.d("[network] Certificate in instead of public key it seems " + e);
-                    CertificateFactory cf = CertificateFactory.getInstance("X.509");
-                    Certificate cert = cf.generateCertificate(new ByteArrayInputStream(data));
-                    keyPins.add(cert.getPublicKey().getEncoded());
-                }
-            } catch (NoSuchAlgorithmException e) {
-                L.d("[network] Shouldn't happen " + key);
+                CertificateFactory cf = CertificateFactory.getInstance("X.509");
+                Certificate certificate = cf.generateCertificate(new ByteArrayInputStream(data));
+                certPins.add(certificate.getEncoded());
             }
-        }
-
-        if (certs != null) for (String cert : certs) {
-            byte[] data = Utils.readStream(Transport.class.getClassLoader().getResourceAsStream(cert));
-            if (data != null) {
-                String string = new String(data);
-                if (string.contains("--BEGIN")) {
-                    data = Utils.Base64.decode(trimPem(string));
-                }
-            } else {
-                data = Utils.Base64.decode(trimPem(cert));
-            }
-
-            CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            Certificate certificate = cf.generateCertificate(new ByteArrayInputStream(data));
-            certPins.add(certificate.getEncoded());
         }
 
         try {
@@ -454,7 +456,7 @@ public class Transport implements X509TrustManager {
 
             if (!keyPins.isEmpty() || !certPins.isEmpty()) {
                 sslContext = SSLContext.getInstance("TLS");
-                sslContext.init(null, new TrustManager[]{this}, null);
+                sslContext.init(null, new TrustManager[] { this }, null);
             }
         } catch (Throwable t) {
             throw new CertificateException(t);

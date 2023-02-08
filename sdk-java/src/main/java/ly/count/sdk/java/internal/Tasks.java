@@ -25,6 +25,7 @@ public class Tasks {
         Task(Long id) {
             this.id = id;
         }
+
         abstract public T call() throws Exception;
     }
 
@@ -78,7 +79,7 @@ public class Tasks {
      */
     <T> Future<T> run(final Task<T> task, final Callback<T> callback) {
         synchronized (pending) {
-//            L.d("pending " + pending.keySet() + ", running " + task.id);
+            //            L.d("pending " + pending.keySet() + ", running " + task.id);
             if (!task.id.equals(0L)) {
                 @SuppressWarnings("unchecked")
                 Future<T> existing = pending.get(task.id);
@@ -86,7 +87,7 @@ public class Tasks {
                 // In case task with same id is already in queue and isn't running yet, return its future instead of adding another task
                 if (existing != null) {
                     if (!existing.isDone() && !existing.isCancelled() && (running == null || !running.equals(task.id))) {
-//                        L.d(task.id + " exists");
+                        //                        L.d(task.id + " exists");
                         return existing;
                     }
                 }
@@ -102,7 +103,7 @@ public class Tasks {
                             pending.remove(task.id);
                         }
                         running = null;
-//                        L.d("pending " + pending.keySet() + ", done running " + task.id);
+                        //                        L.d("pending " + pending.keySet() + ", done running " + task.id);
                     }
                     if (callback != null) {
                         callback.call(result);
@@ -125,7 +126,7 @@ public class Tasks {
 
     void shutdown() {
         if (!executor.isShutdown() && !executor.isTerminated()) {
-//            L.i("shutting down");
+            //            L.i("shutting down");
             executor.shutdown();
             try {
                 // Wait a while for existing tasks to terminate

@@ -193,10 +193,10 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
         this.consents = SDKCore.instance.consents;
 
-//        // TODO: check if needed
-//        for (Event event: timedEvents.values()) {
-//            event.endAndRecord();
-//        }
+        //        // TODO: check if needed
+        //        for (Event event: timedEvents.values()) {
+        //            event.endAndRecord();
+        //        }
 
         if (currentView != null) {
             currentView.stop(true);

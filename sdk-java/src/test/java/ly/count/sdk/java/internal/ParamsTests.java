@@ -12,15 +12,15 @@ import ly.count.sdk.java.internal.Params;
 @RunWith(JUnit4.class)
 public class ParamsTests {
     @Before
-    public void setupEveryTest(){
+    public void setupEveryTest() {
     }
 
     @After
-    public void cleanupEveryTests(){
+    public void cleanupEveryTests() {
     }
 
     @Test
-    public void setup_default(){
+    public void setup_default() {
         Params params = new Params();
 
         Assert.assertEquals(0, params.length());
@@ -28,7 +28,7 @@ public class ParamsTests {
     }
 
     @Test
-    public void setup_string(){
+    public void setup_string() {
         String value = "abcd";
         Params params = new Params(value);
 
@@ -40,15 +40,15 @@ public class ParamsTests {
         Assert.assertEquals("", params.toString());
     }
 
-    @Test (expected = NullPointerException.class)
-    public void setup_null(){
+    @Test(expected = NullPointerException.class)
+    public void setup_null() {
         String value = null;
         Params params = new Params(value);
     }
 
     @Test
-    public void setup_objects(){
-        String[] vals = new String[] {"232", "fds", "tyty", "844"};
+    public void setup_objects() {
+        String[] vals = new String[] { "232", "fds", "tyty", "844" };
         Params params = new Params(vals[0], vals[1], vals[2], vals[3]);
 
         Assert.assertEquals(vals[0].length() + vals[1].length() + vals[2].length() + vals[3].length() + 3, params.length());
@@ -56,7 +56,7 @@ public class ParamsTests {
     }
 
     @Test
-    public void add_keyValue(){
+    public void add_keyValue() {
         String key = "key";
         String value = "value";
 
@@ -69,7 +69,7 @@ public class ParamsTests {
     }
 
     @Test
-    public void add_object(){
+    public void add_object() {
         String key = "key";
         String value = "value";
         String combined = key + "=" + value;
@@ -82,10 +82,10 @@ public class ParamsTests {
     }
 
     @Test
-    public void add_objects(){
-        String[] keys = new String[] {"key", "other_key"};
-        String[] values = new String[] {"value", "other_value"};
-        String[] combined = new String[] {keys[0] + "=" + values[0], keys[1] + "=" + values[1]};
+    public void add_objects() {
+        String[] keys = new String[] { "key", "other_key" };
+        String[] values = new String[] { "value", "other_value" };
+        String[] combined = new String[] { keys[0] + "=" + values[0], keys[1] + "=" + values[1] };
 
         Params params = new Params();
         params.add(keys[0], values[0], keys[1], values[1]);
@@ -97,8 +97,8 @@ public class ParamsTests {
     }
 
     @Test
-    public void add_params(){
-        String[] vals = new String[] {"abc", "123"};
+    public void add_params() {
+        String[] vals = new String[] { "abc", "123" };
         String combined = vals[0] + "&" + vals[1];
         Params params1 = new Params(vals[0]);
         Params params2 = new Params(vals[1]);

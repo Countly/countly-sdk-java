@@ -6,5 +6,6 @@ package ly.count.sdk.java.internal;
 
 public interface Byteable {
     byte[] store();
+
     boolean restore(byte[] data);
 }

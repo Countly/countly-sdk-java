@@ -40,7 +40,6 @@ public abstract class SDKCore implements SDKInterface {
         this.modules = new TreeMap<>();
         instance = this;
         sdkStorage = new SDKStorage();
-
     }
 
     protected Log L = null;
@@ -114,7 +113,6 @@ public abstract class SDKCore implements SDKInterface {
         }
 
         L.i("[SDKCore] [SDKCore] Stopping Countly SDK" + (clear ? " and clearing all data" : ""));
-
 
         eachModule(new Modulator() {
             @Override
@@ -227,7 +225,7 @@ public abstract class SDKCore implements SDKInterface {
      *
      * @param ctx {@link CtxCore} object containing config with mapping overrides
      * @throws IllegalArgumentException in case some {@link Module} finds {@link #config} inconsistent.
-     * @throws IllegalStateException    when this module is run second time on the same {@code Core} instance.
+     * @throws IllegalStateException when this module is run second time on the same {@code Core} instance.
      */
     protected void prepareMappings(CtxCore ctx) throws IllegalStateException {
         if (modules.size() > 0) {
@@ -242,16 +240,15 @@ public abstract class SDKCore implements SDKInterface {
         }
     }
 
-
     /**
      * Create instances of {@link Module}s required by {@link #config}.
      * Uses {@link #moduleMappings} for {@code ConfigCore.Feature} / {@link CoreFeature}
      * - Class&lt;Module&gt; mapping to enable overriding by app developer.
      *
-     * @param ctx      {@link CtxCore} object
+     * @param ctx {@link CtxCore} object
      * @param features consents bitmask to check against
      * @throws IllegalArgumentException in case some {@link Module} finds {@link #config} inconsistent.
-     * @throws IllegalStateException    when this module is run second time on the same {@code Core} instance.
+     * @throws IllegalStateException when this module is run second time on the same {@code Core} instance.
      */
     protected void buildModules(CtxCore ctx, int features) throws IllegalArgumentException, IllegalStateException {
         // override module mappings in native/Android parts, overriding by ConfigCore ones if necessary
@@ -260,9 +257,9 @@ public abstract class SDKCore implements SDKInterface {
             throw new IllegalStateException("Modules can only be built once");
         }
 
-//        if (ctx.getConfig().getLoggingLevel() != Config.LoggingLevel.OFF) {
-//            modules.put(-10, instantiateModule(moduleMappings.get(CoreFeature.Logs.getIndex()), L));
-//        }
+        //        if (ctx.getConfig().getLoggingLevel() != Config.LoggingLevel.OFF) {
+        //            modules.put(-10, instantiateModule(moduleMappings.get(CoreFeature.Logs.getIndex()), L));
+        //        }
 
         // standard required internal features
         modules.put(-3, instantiateModule(moduleMappings.get(CoreFeature.DeviceId.getIndex()), L));
@@ -490,7 +487,6 @@ public abstract class SDKCore implements SDKInterface {
                 });
             }
 
-
             networking.check(ctx);
         }
 
@@ -511,7 +507,6 @@ public abstract class SDKCore implements SDKInterface {
 
             onContextAcquired(ctx);
         }
-
     }
 
     protected void onLimitedContextAcquired(final CtxCore ctx) {
@@ -531,7 +526,6 @@ public abstract class SDKCore implements SDKInterface {
             }
         });
     }
-
 
     @Override
     public UserImpl user() {
@@ -610,7 +604,6 @@ public abstract class SDKCore implements SDKInterface {
         }
     }
 
-
     public Future<Config.DID> acquireId(final CtxCore ctx, final Config.DID holder, final boolean fallbackAllowed, final Tasks.Callback<Config.DID> callback) {
         return ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).acquireId(ctx, holder, fallbackAllowed, callback);
     }
@@ -633,7 +626,7 @@ public abstract class SDKCore implements SDKInterface {
 
     public static boolean enabled(int feature) {
         return (feature & instance.consents) == feature &&
-                (feature & instance.config().getFeatures1()) == feature;
+            (feature & instance.config().getFeatures1()) == feature;
     }
 
     public static boolean enabled(CoreFeature feature) {

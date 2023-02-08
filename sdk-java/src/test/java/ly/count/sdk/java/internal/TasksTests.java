@@ -15,12 +15,12 @@ import ly.count.sdk.java.internal.DeviceCore;
 import ly.count.sdk.java.internal.Log;
 import ly.count.sdk.java.internal.Tasks;
 
-
 @RunWith(JUnit4.class)
 public class TasksTests extends BaseTestsCore {
     private Tasks tasks;
+
     @Test
-    public void filler(){
+    public void filler() {
 
     }
 
@@ -38,7 +38,7 @@ public class TasksTests extends BaseTestsCore {
     }
 
     @Test
-    public void testSetup(){
+    public void testSetup() {
         Assert.assertNotNull(Whitebox.getInternalState(tasks, "executor"));
         Assert.assertNotNull(Whitebox.getInternalState(tasks, "pending"));
     }
@@ -64,7 +64,7 @@ public class TasksTests extends BaseTestsCore {
     @Test
     public void testCallback() throws Exception {
         final int result = 123;
-        final Boolean[] called = new Boolean[]{false, false};
+        final Boolean[] called = new Boolean[] { false, false };
 
         tasks.run(new Tasks.Task<Object>(0L) {
             @Override
@@ -89,7 +89,7 @@ public class TasksTests extends BaseTestsCore {
     @Test
     public void testTaskIdsWork() throws Exception {
         final int result = 123;
-        final int[] modification = new int[]{0};
+        final int[] modification = new int[] { 0 };
 
         Tasks.Task<Integer> task0 = new Tasks.Task<Integer>(0L) {
             @Override

@@ -36,7 +36,6 @@ public abstract class SDKLifecycle extends SDKCore {
         config = null;
     }
 
-
     @Override
     public void onSignal(CtxCore ctx, int id, Byteable param1, Byteable param2) {
         if (id == Signal.DID.getIndex()) {
@@ -46,7 +45,7 @@ public abstract class SDKLifecycle extends SDKCore {
 
     @Override
     public void onSignal(CtxCore ctx, int id, String param) {
-        if (id == Signal.Ping.getIndex()){
+        if (id == Signal.Ping.getIndex()) {
             networking.check(ctx);
         } else if (id == Signal.Crash.getIndex()) {
             processCrash(ctx, Long.parseLong(param));
@@ -74,5 +73,4 @@ public abstract class SDKLifecycle extends SDKCore {
             return false;
         }
     }
-
 }
