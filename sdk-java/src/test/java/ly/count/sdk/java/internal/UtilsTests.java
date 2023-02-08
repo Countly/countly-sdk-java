@@ -17,7 +17,7 @@ public class UtilsTests {
 
     @Before
     public void setupEveryTest() {
-        logger = new Log(Config.LoggingLevel.DEBUG, null);
+        logger = new Log(Config.LoggingLevel.VERBOSE, null);
     }
 
     @After
