@@ -26,7 +26,7 @@ public class EventImplTests extends BaseTestsCore {
     @Before
     public void setupEveryTest() throws Exception {
         config = new InternalConfig(new Config("http://www.serverurl.com", "1234"));
-        L = new Log(config);
+        Log L = new Log(Config.LoggingLevel.VERBOSE, null);
         ctx = new CtxImpl(sdk, config, new Object(), L);
     }
 

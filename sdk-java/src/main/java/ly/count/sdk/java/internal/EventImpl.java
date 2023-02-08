@@ -1,5 +1,6 @@
 package ly.count.sdk.java.internal;
 
+import ly.count.sdk.java.Config;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -56,7 +57,7 @@ class EventImpl implements Event, JSONable {
 
     @Override
     public void record() {
-        if(SDKCore.instance != null && SDKCore.instance.config.isBackendModeEnabled()) {
+        if (SDKCore.instance != null && SDKCore.instance.config.isBackendModeEnabled()) {
             System.out.println("[EventImpl] record: Skipping event, backend mode is enabled!");
             return;
         }
@@ -71,7 +72,7 @@ class EventImpl implements Event, JSONable {
 
     @Override
     public void endAndRecord() {
-        if(SDKCore.instance != null && SDKCore.instance.config.isBackendModeEnabled()) {
+        if (SDKCore.instance != null && SDKCore.instance.config.isBackendModeEnabled()) {
             System.out.println("[EventImpl] endAndRecord: Skipping event, backend mode is enabled!");
             return;
         }
@@ -190,7 +191,7 @@ class EventImpl implements Event, JSONable {
         if (obj == null || !(obj instanceof EventImpl)) {
             return false;
         }
-        EventImpl event = (EventImpl)obj;
+        EventImpl event = (EventImpl) obj;
         if (timestamp != event.timestamp) {
             return false;
         }
@@ -223,6 +224,7 @@ class EventImpl implements Event, JSONable {
 
     /**
      * Serialize to JSON format according to Countly server requirements
+     *
      * @return JSON string
      */
     public String toJSON() {
@@ -255,6 +257,7 @@ class EventImpl implements Event, JSONable {
 
     /**
      * Deserialize from JSON format according to Countly server requirements
+     *
      * @return JSON string
      */
     static EventImpl fromJSON(String jsonString, EventRecorder recorder) {

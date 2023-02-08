@@ -1,5 +1,7 @@
 package ly.count.sdk.java.internal;
 
+import ly.count.sdk.java.Config;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,11 +12,7 @@ import java.lang.reflect.Method;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Utility class
@@ -464,6 +462,58 @@ public class Utils {
             } catch (Throwable ignored) {
             }
         }
+    }
+
+    public static String trimKey(final int limit, final String key, Log logger) {
+        String k = key;
+        if (key.length() > limit) {
+            logger.d("[Utils] RecordEventInternal : Max allowed key length is " + limit);
+            k = key.substring(0, limit);
+        }
+        return k;
+    }
+
+    public static String trimValue(final int limit, final String fieldName, final String value, Log logger) {
+        String v = value;
+        if (value != null && value.length() > limit) {
+            logger.d("[Utils] TrimValue : Max allowed '" + fieldName + "' length is " + limit + ". " + value + " will be truncated.");
+            v = value.substring(0, limit);
+        }
+
+        return v;
+    }
+
+    public static String[] trimValues(final int limit, final String[] values, Log logger) {
+        for (int i = 0; i < values.length; ++i) {
+            if (values[i].length() > limit) {
+                logger.d("[Utils] TrimKey : Max allowed value length is " + limit + ". " + values[i] + " will be truncated.");
+                values[i] = values[i].substring(0, limit);
+            }
+        }
+
+        return values;
+    }
+
+    public static Map<String, String> fixSegmentKeysAndValues(final int keyLength, final int valueLength,final Map<String, String> segments, Log logger) {
+        if (segments == null || segments.size() == 0) {
+            return segments;
+        }
+
+        Map<String, String> segmentation = new HashMap<>();
+
+        for (Map.Entry<String, String> entry : segments.entrySet()) {
+            String k = entry.getKey();
+            String v = entry.getValue();
+            if (k == null || k.length() == 0 || v == null) {
+                continue;
+            }
+
+            k = trimKey(keyLength, k, logger);
+            v = trimValue(valueLength, k, v, logger);
+
+            segmentation.put(k, v);
+        }
+        return segmentation;
     }
 
     public static class Base64 {

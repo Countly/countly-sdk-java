@@ -309,6 +309,7 @@ public class UserEditorImpl implements UserEditor {
         cohortsRemoved.addAll(cohortsToRemove);
     }
 
+
     @Override
     public UserEditor set(String key, Object value) {
         sets.put(key, value);

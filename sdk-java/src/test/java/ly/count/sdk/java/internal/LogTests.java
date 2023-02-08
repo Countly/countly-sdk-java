@@ -40,7 +40,7 @@ public class LogTests {
 
     @Test(expected = NullPointerException.class)
     public void logInit_null(){
-        Log log = new Log(null);
+        Log log = new Log(null, null);
     }
 /*
     @Test

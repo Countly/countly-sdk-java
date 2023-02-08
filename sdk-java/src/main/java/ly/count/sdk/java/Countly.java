@@ -79,7 +79,7 @@ public class Countly implements Usage {
             }
 
             InternalConfig internalConfig = new InternalConfig(config);
-            Log L = new Log(internalConfig);
+            Log L = new Log(internalConfig.loggingLevel, internalConfig.logListener);
             SDK sdk = new SDK();
             sdk.init(new CtxCore(sdk, internalConfig, L, directory), L);
 

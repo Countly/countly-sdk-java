@@ -20,12 +20,10 @@ import ly.count.sdk.java.View;
 
 /**
  * This class represents session concept, that is one indivisible usage occasion of your application.
- *
  * Any data sent to Countly server is processed in a context of Session.
  * Only one session can send requests at a time, so even if you create 2 parallel sessions,
  * they will be made consequent automatically at the time of Countly SDK choice with no
  * correctness guarantees, so please avoid having parallel sessions.
- *
  */
 
 public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
@@ -97,7 +95,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     @Override
     public Session begin() {
-        if(ctx.getConfig().isBackendModeEnabled()) {
+        if (ctx.getConfig().isBackendModeEnabled()) {
             L.w("[SessionImpl] begin: Skipping session begin, backend mode is enabled!");
             return this;
         }
@@ -136,7 +134,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     @Override
     public Session update() {
-        if(ctx.getConfig().isBackendModeEnabled()) {
+        if (ctx.getConfig().isBackendModeEnabled()) {
             L.w("[SessionImpl] update: Skipping session update, backend mode is enabled!");
             return this;
         }
@@ -171,7 +169,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     @Override
     public void end() {
-        if(ctx.getConfig().isBackendModeEnabled()) {
+        if (ctx.getConfig().isBackendModeEnabled()) {
             L.w("end: Skipping session end, backend mode is enabled!");
             return;
         }
@@ -264,7 +262,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
      *
      * @return calculated session duration to send in seconds
      */
-    private Long updateDuration(Long now){
+    private Long updateDuration(Long now) {
         now = now == null ? System.nanoTime() : now;
         Long duration;
 
@@ -285,7 +283,9 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         return timedEvents().event(ctx, key);
     }
 
-    protected TimedEvents timedEvents () { return SDKCore.instance.timedEvents(); }
+    protected TimedEvents timedEvents() {
+        return SDKCore.instance.timedEvents();
+    }
 
     @Override
     public void recordEvent(Event event) {
@@ -305,7 +305,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             }
 
             Config config = SDKCore.instance.config();
-            if (config != null && config.getEventsBufferSize() <= events.size()) {
+            if (config != null && ctx.getConfig().getEventsBufferSize() <= events.size()) {
                 update();
             }
         }
@@ -328,7 +328,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     @Override
     public Session addCrashReport(Throwable t, boolean fatal, String name, Map<String, String> segments, String... logs) {
-        if(ctx.getConfig().isBackendModeEnabled()) {
+        if (ctx.getConfig().isBackendModeEnabled()) {
             L.w("[SessionImpl] addCrashReport: Skipping crash, backend mode is enabled!");
             return this;
         }
@@ -337,13 +337,15 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             L.i("[SessionImpl] addCrashReport: Skipping event - feature is not enabled");
             return this;
         }
+
         SDKCore.instance.onCrash(ctx, t, fatal, name, segments, logs);
         return this;
     }
 
     @Override
     public Session addLocation(double latitude, double longitude) {
-        if(ctx.getConfig().isBackendModeEnabled()) {
+
+        if (ctx.getConfig().isBackendModeEnabled()) {
             L.w("[SessionImpl] addLocation: Skipping location, backend mode is enabled!");
             return this;
         }
@@ -353,7 +355,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             L.i("[SessionImpl] addLocation: Skipping event - feature is not enabled");
             return this;
         }
-        return addParam("location", latitude + "," + longitude);
+        return (Session) addParam("location", latitude + "," + longitude);
     }
 
     public View view(String name, boolean start) {
@@ -365,7 +367,9 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         if (currentView != null) {
             currentView.stop(false);
         }
+
         currentView = new ViewImpl(this, name, L);
+
         currentView.start(start);
         startView = false;
         return currentView;
@@ -401,7 +405,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     @Override
     public Usage changeDeviceIdWithMerge(String id) {
-        if(ctx.getConfig().isBackendModeEnabled()) {
+        if (ctx.getConfig().isBackendModeEnabled()) {
             L.w("[SessionImpl] changeDeviceIdWithMerge: Skipping change device id with merge, backend mode is enabled!");
             return this;
         }
@@ -413,7 +417,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     @Override
     public Usage changeDeviceIdWithoutMerge(String id) {
-        if(ctx.getConfig().isBackendModeEnabled()) {
+        if (ctx.getConfig().isBackendModeEnabled()) {
             L.w("[SessionImpl] changeDeviceIdWithoutMerge: Skipping change device id without merge, backend mode is enabled!");
             return this;
         }
@@ -573,7 +577,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             return false;
         }
 
-        SessionImpl session = (SessionImpl)obj;
+        SessionImpl session = (SessionImpl) obj;
         if (!id.equals(session.id)) {
             return false;
         }

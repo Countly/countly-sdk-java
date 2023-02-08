@@ -8,14 +8,16 @@ import ly.count.sdk.java.Config;
  */
 
 public class Log {
-    LogCallback logListener = null;
-    private Config.LoggingLevel configLevel;
+    private final LogCallback logListener;
+    private final Config.LoggingLevel loggingLevel;
 
 
-    public Log(InternalConfig config) {
-        // let it be specific int and not index for visibility
-        configLevel = config.getLoggingLevel();
-        logListener = config.getLogListener();
+    public Log(Config.LoggingLevel loggingLevel, LogCallback logListener) {
+        if(loggingLevel == null) {
+            throw new NullPointerException("Logging level can't null.");
+        }
+        this.loggingLevel = loggingLevel;
+        this.logListener = logListener;
     }
 
     /**
@@ -69,7 +71,7 @@ public class Log {
     }
 
     private void print(String msg, Config.LoggingLevel level) {
-        if (level != null && configLevel.prints(level)) {
+        if (level != null && loggingLevel.prints(level)) {
             System.out.println(msg);
         }
     }
