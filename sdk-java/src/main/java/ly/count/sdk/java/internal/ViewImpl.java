@@ -15,7 +15,7 @@ class ViewImpl implements View {
     static final String VISIT = "visit";
     static final String VISIT_VALUE = "1";
     static final String SEGMENT = "segment";
-    static final String SEGMENT_VALUE = "Android";
+    static final String SEGMENT_VALUE = System.getProperty("os.name");
     static final String START = "start";
     static final String START_VALUE = "1";
     static final String EXIT = "exit";

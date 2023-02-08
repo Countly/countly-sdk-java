@@ -6,7 +6,8 @@
 	- "isTestModeEnabled".
 	- "setLoggingTag"
 * ! Minor breaking change ! The "TestMode" functionality is being removed from the SDK.
-* ! Minor breaking change ! It is not possible to set the logging tag anymore
+* ! Minor breaking change ! It is not possible to set the logging tag anymore.
+* Fixed a bug where the wrong platform field value was being sent in the view request.
 
 20.11.5
 * Fixed a bug where the backend mode module produces "null pointer exceptions" in case not initialized.
