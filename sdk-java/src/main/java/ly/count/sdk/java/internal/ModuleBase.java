@@ -45,34 +45,6 @@ public abstract class ModuleBase implements Module {
     }
 
     @Override
-    public void onActivityCreated(CtxCore ctx) {
-    }
-
-    @Override
-    public void onActivityStarted(CtxCore ctx) {
-    }
-
-    @Override
-    public void onActivityResumed(CtxCore ctx) {
-    }
-
-    @Override
-    public void onActivityPaused(CtxCore ctx) {
-    }
-
-    @Override
-    public void onActivityStopped(CtxCore ctx) {
-    }
-
-    @Override
-    public void onActivitySaveInstanceState(CtxCore ctx) {
-    }
-
-    @Override
-    public void onActivityDestroyed(CtxCore ctx) {
-    }
-
-    @Override
     public void onSessionBegan(Session session, CtxCore ctx) {
     }
 
@@ -92,9 +64,5 @@ public abstract class ModuleBase implements Module {
     @Override
     public void onRequestCompleted(Request request, String response, int responseCode) {
 
-    }
-
-    @Override
-    public void onConfigurationChanged(CtxCore ctx) {
     }
 }
