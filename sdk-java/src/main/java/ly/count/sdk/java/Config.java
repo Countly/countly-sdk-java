@@ -386,14 +386,6 @@ public class Config {
     protected int sessionAutoCloseAfter = "Android".equals(System.getProperty("os.name")) ? 10 : 0;
 
     /**
-     * When not {@code null}, more than {@code 0} and {@code Feature.CrashReporting} is enabled,
-     * Countly watches main thread for unresponsiveness.
-     * When main thread doesn't respond for time more than this property in seconds,
-     * SDK reports ANR crash back to Countly server.
-     */
-    protected int crashReportingANRCheckingPeriod = 5;
-
-    /**
      * {@link CrashProcessor}-implementing class which is instantiated when application
      * crashes or crash is reported programmatically using {@link Session#addCrashReport(Throwable, boolean, String, Map, String...)}.
      * Crash processor helps you to add custom data in event of a crash: custom crash segments & crash logs.
@@ -1110,24 +1102,19 @@ public class Config {
      * To disable ANR reporting, use {@link #disableANRCrashReporting()}.
      *
      * @param periodInSeconds how much time the SDK waits between individual ANR checks
+     * @deprecated will do nothing
      * @return {@code this} instance for method chaining
      */
     public Config setCrashReportingANRCheckingPeriod(int periodInSeconds) {
-        if (periodInSeconds < 0) {
-            System.out.print("[ConfigCore] ANR timeout less than zero doesn't make sense");
-        } else {
-            this.crashReportingANRCheckingPeriod = periodInSeconds;
-        }
         return this;
     }
 
     /**
      * Disable ANR detection and thus reporting to Countly server.
-     *
+     * @deprecated will do nothing
      * @return {@code this} instance for method chaining
      */
     public Config disableANRCrashReporting() {
-        this.crashReportingANRCheckingPeriod = 0;
         return this;
     }
 
@@ -1516,11 +1503,11 @@ public class Config {
 
     /**
      * Getter for {@link #crashReportingANRCheckingPeriod}
-     *
+     * @Deprecated will always return "5"
      * @return {@link #crashReportingANRCheckingPeriod} value
      */
     public int getCrashReportingANRCheckingPeriod() {
-        return crashReportingANRCheckingPeriod;
+        return 5;
     }
 
     /**

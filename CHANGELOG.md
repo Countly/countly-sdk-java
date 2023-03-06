@@ -13,6 +13,9 @@
   - "setDeviceIdFallbackAllowed"
   - "overrideModule"
   - "getModuleOverride"
+  - "getCrashReportingANRCheckingPeriod"
+  - "setCrashReportingANRCheckingPeriod"
+  - "disableANRCrashReporting"
 * ! Minor breaking change ! The "TestMode" functionality is being removed from the SDK.
 * ! Minor breaking change ! The module override functionality is being removed from the SDK.
 * ! Minor breaking change ! It is not possible to set the logging tag anymore.
