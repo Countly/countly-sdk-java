@@ -9,6 +9,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Map;
 
 import ly.count.sdk.java.internal.ModuleRemoteConfig;
@@ -109,9 +111,35 @@ public class ModuleRemoteConfigTests extends BaseTestsCore {
                 if (entry.getKey().equals(entry2.getKey())) {
                     Object vv1 = entry.getValue();
                     Object vv2 = entry2.getValue();
-                    boolean res = vv1.equals(vv2);
-                    if (!res) {
-                        return false;
+
+                    if(vv2 instanceof BigDecimal) {
+                        vv1 = BigDecimal.valueOf((double) vv1);
+                    }
+
+                    //todo simplify this
+                    if(vv2 instanceof ArrayList) {
+                        ArrayList<Object> alVV1 = (ArrayList<Object>) vv1;
+                        ArrayList<Object> alVV2 = (ArrayList<Object>) vv2;
+                        Assert.assertEquals(alVV1.size(), alVV2.size());
+
+                        for(int a = 0 ; a < alVV1.size() ; a++) {
+                            Object vvv1 = alVV1.get(a);
+                            Object vvv2 = alVV2.get(a);
+
+                            if(vvv2 instanceof BigDecimal) {
+                                vvv1 = BigDecimal.valueOf((double) vvv1);
+                            }
+
+                            boolean resInternal = vvv1.equals(vvv2);
+                            if (!resInternal) {
+                                return false;
+                            }
+                        }
+                    } else {
+                        boolean res = vv1.equals(vv2);
+                        if (!res) {
+                            return false;
+                        }
                     }
                 }
             }

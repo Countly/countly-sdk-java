@@ -41,7 +41,7 @@ public class ModuleCrash extends ModuleBase {
                 Thread.setDefaultUncaughtExceptionHandler(previousHandler);
             }
             if (clear) {
-                ctx.getSDK().sdkStorage.storablePurge(ctx, CrashImplCore.getStoragePrefix());
+                ctx.getSDK().sdkStorage.storablePurge(ctx, CrashImpl.getStoragePrefix());
             }
         } catch (Throwable t) {
             L.e("[ModuleCrash] Exception while stopping crash reporting" + t);
@@ -77,7 +77,7 @@ public class ModuleCrash extends ModuleBase {
         return CoreFeature.CrashReporting.getIndex();
     }
 
-    public CrashImplCore onCrash(CtxCore ctx, Throwable t, boolean fatal, String name, Map<String, String> segments, String... logs) {
+    public CrashImpl onCrash(CtxCore ctx, Throwable t, boolean fatal, String name, Map<String, String> segments, String... logs) {
 
         if (ctx.getConfig().isBackendModeEnabled()) {
             L.w("[ModuleCrash] onCrash: Skipping crash, backend mode is enabled!");
@@ -88,12 +88,12 @@ public class ModuleCrash extends ModuleBase {
             L.e("[ModuleCrash] Throwable cannot be null");
             return null;
         }
-        return onCrash(ctx, new CrashImplCore(L).addThrowable(t).setFatal(fatal).setName(name).setSegments(segments).setLogs(logs));
+        return onCrash(ctx, new CrashImpl(L).addThrowable(t).setFatal(fatal).setName(name).setSegments(segments).setLogs(logs));
     }
 
-    public CrashImplCore onCrash(CtxCore ctx, CrashImplCore crash) {
+    public CrashImpl onCrash(CtxCore ctx, CrashImpl crash) {
         long running = started == 0 ? 0 : DeviceCore.dev.nsToMs(System.nanoTime() - started);
-        crash.putMetricsCore(ctx, running);
+        crash.putMetrics(ctx, running);
 
         if (!crash.getData().has("_os")) {
             L.w("[ModuleCrash] onCrash, While recording an exception 'OS name' was either null or empty");
@@ -126,11 +126,7 @@ public class ModuleCrash extends ModuleBase {
         return crash;
     }
 
-    public static void putCrashIntoParams(CrashImplCore crash, Params params) {
+    public static void putCrashIntoParams(CrashImpl crash, Params params) {
         params.add("crash", crash.getJSON());
-    }
-
-    public enum CrashType {
-        STACK_OVERFLOW, DIVISION_BY_ZERO, OOM, RUNTIME_EXCEPTION, NULLPOINTER_EXCEPTION, ANR
     }
 }

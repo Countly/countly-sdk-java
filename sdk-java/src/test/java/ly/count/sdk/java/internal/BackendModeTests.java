@@ -11,6 +11,7 @@ import org.junit.runners.JUnit4;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.math.BigDecimal;
 import java.util.*;
 
 @RunWith(JUnit4.class)
@@ -794,7 +795,7 @@ public class BackendModeTests {
         Assert.assertEquals(5, segments.length());
         Assert.assertEquals("value", segments.get("key2"));
         Assert.assertEquals(1, segments.get("key3"));
-        Assert.assertEquals(20.5, segments.get("key4"));
+        Assert.assertEquals(BigDecimal.valueOf(20.5), segments.get("key4"));
         Assert.assertEquals(true, segments.get("key5"));
         Assert.assertEquals(10, segments.get("key7"));
         Assert.assertEquals(10, segments.get("key7"));
@@ -915,7 +916,7 @@ public class BackendModeTests {
             //Custom properties
             JSONObject customPropertiesJson = userDetailsJson.getJSONObject("custom");
             Assert.assertEquals("black", customPropertiesJson.get("hair"));
-            Assert.assertEquals(5.9, customPropertiesJson.get("height"));
+            Assert.assertEquals(BigDecimal.valueOf(5.9), customPropertiesJson.get("height"));
         }
 
         if (validateOperation) {
