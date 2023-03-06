@@ -118,7 +118,8 @@ public class Config {
     }
 
     /**
-     * Holder class for various ids metadata and id itself. Final, unmodifiable.
+     * Holder class for various ids met
+     * adata and id itself. Final, unmodifiable.
      */
     public static final class DID implements Byteable {
         public static final int STRATEGY_UUID = 0;
@@ -276,7 +277,7 @@ public class Config {
     protected String sdkVersion = "22.09.0";
 
     /**
-     * Countly SDK name to be sent in HTTP requests
+     * Countly Application name to be sent in HTTP requests
      */
     protected String applicationName;
 
@@ -603,10 +604,10 @@ public class Config {
      * Whether to allow fallback from unavailable device id strategy to Countly OpenUDID derivative.
      *
      * @param deviceIdFallbackAllowed true if fallback is allowed
+     * @deprecated this will do nothing
      * @return {@code this} instance for method chaining
      */
     public Config setDeviceIdFallbackAllowed(boolean deviceIdFallbackAllowed) {
-        this.deviceIdFallbackAllowed = deviceIdFallbackAllowed;
         return this;
     }
 
@@ -924,14 +925,10 @@ public class Config {
      * Change name of SDK used in HTTP requests
      *
      * @param sdkName new name of SDK
+     * @deprecated Calling this function will do nothing
      * @return {@code this} instance for method chaining
      */
     public Config setSdkName(String sdkName) {
-        if (Utils.isEmptyOrNull(sdkName)) {
-            System.out.print("[ConfigCore] sdkName cannot be empty");
-        } else {
-            this.sdkName = sdkName;
-        }
         return this;
     }
 
@@ -939,14 +936,10 @@ public class Config {
      * Change version of SDK used in HTTP requests
      *
      * @param sdkVersion new version of SDK
+     * @deprecated Calling this function will do nothing
      * @return {@code this} instance for method chaining
      */
     public Config setSdkVersion(String sdkVersion) {
-        if (Utils.isEmptyOrNull(sdkVersion)) {
-            System.out.print("[ConfigCore] sdkVersion cannot be empty");
-        } else {
-            this.sdkVersion = sdkVersion;
-        }
         return this;
     }
 
@@ -1159,18 +1152,20 @@ public class Config {
      *
      * @param feature feature index to override
      * @param cls {@link Class} to use instead of Countly SDK standard class
+     * @deprecated this will do nothing
      * @return {@code this} instance for method chaining
      */
     protected Config overrideModule(Integer feature, Class<? extends Module> cls) {
-        if (feature == null || cls == null) {
-            System.out.print("[ConfigCore] Feature & class cannot be null");
-        } else {
-            if (moduleOverrides == null) {
-                moduleOverrides = new HashMap<>();
-            }
-            moduleOverrides.put(feature, cls);
-        }
         return this;
+        //if (feature == null || cls == null) {
+        //    System.out.print("[ConfigCore] Feature & class cannot be null");
+        //} else {
+        //    if (moduleOverrides == null) {
+        //        moduleOverrides = new HashMap<>();
+        //    }
+        //    moduleOverrides.put(feature, cls);
+        //}
+        //return this;
     }
 
     /**
@@ -1314,7 +1309,7 @@ public class Config {
 
     /**
      * Whether to allow fallback from unavailable device id strategy to any other available.
-     *
+     * @deprecated this will always return "true"
      * @return true if fallback is allowed
      */
     public boolean isDeviceIdFallbackAllowed() {
@@ -1359,7 +1354,7 @@ public class Config {
 
     /**
      * Getter for {@link #sdkName}
-     *
+     * @deprecated this will be removed
      * @return {@link #sdkName} value
      */
     public String getSdkName() {
@@ -1368,7 +1363,7 @@ public class Config {
 
     /**
      * Getter for {@link #sdkVersion}
-     *
+     * @deprecated this will be removed
      * @return {@link #sdkVersion} value
      */
     public String getSdkVersion() {
@@ -1539,11 +1534,12 @@ public class Config {
 
     /**
      * Getter for {@link #moduleOverrides}
-     *
+     * @deprecated this always return "null"
      * @return {@link #moduleOverrides} value for {@code Feature} specified
      */
     public Class<? extends Module> getModuleOverride(int feature) {
-        return moduleOverrides == null ? null : moduleOverrides.get(feature);
+        return null;
+        //return moduleOverrides == null ? null : moduleOverrides.get(feature);
     }
 
     /**

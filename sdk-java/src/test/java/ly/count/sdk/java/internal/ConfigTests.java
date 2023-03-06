@@ -74,7 +74,7 @@ public class ConfigTests extends BaseTestsCore {
         Assert.assertEquals("java-native", internalConfig.getSdkName());
 
         internalConfig.setSdkName("new-name");
-        Assert.assertEquals("new-name", internalConfig.getSdkName());
+        Assert.assertEquals("java-native", internalConfig.getSdkName());
     }
 
     @Test
@@ -89,7 +89,7 @@ public class ConfigTests extends BaseTestsCore {
         Assert.assertEquals(versionName, internalConfig.getSdkVersion());
 
         internalConfig.setSdkVersion("new-version");
-        Assert.assertEquals("new-version", internalConfig.getSdkVersion());
+        Assert.assertEquals(versionName, internalConfig.getSdkVersion());
     }
 
     @Test
