@@ -9,6 +9,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="countly-sdk-java.sdk-java.main" />
-    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.json:json:20180813" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.json:json:20230227" level="project" />
   </component>
 </module>

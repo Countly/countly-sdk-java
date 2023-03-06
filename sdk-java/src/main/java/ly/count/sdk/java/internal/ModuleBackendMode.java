@@ -81,7 +81,7 @@ public class ModuleBackendMode extends ModuleBase {
         L.d(String.format("recordEventInternal: deviceID = %s, key = %s,, count = %d, sum = %f, dur = %f, segmentation = %s, timestamp = %d", deviceID, key, count, sum, dur, segmentation, timestamp));
 
         if (timestamp == null || timestamp < 1) {
-            timestamp = DeviceCore.dev.uniqueTimestamp();
+            timestamp = Device.dev.uniqueTimestamp();
         }
 
         removeInvalidDataFromSegments(segmentation);
@@ -103,7 +103,7 @@ public class ModuleBackendMode extends ModuleBase {
         L.d(String.format("sessionBeginInternal: deviceID = %s, timestamp = %d", deviceID, timestamp));
 
         if (timestamp == null || timestamp < 1) {
-            timestamp = DeviceCore.dev.uniqueTimestamp();
+            timestamp = Device.dev.uniqueTimestamp();
         }
 
         Request request = new Request();
@@ -128,7 +128,7 @@ public class ModuleBackendMode extends ModuleBase {
         L.d(String.format("sessionUpdateInternal: deviceID = %s, duration = %f, timestamp = %d", deviceID, duration, timestamp));
 
         if (timestamp == null || timestamp < 1) {
-            timestamp = DeviceCore.dev.uniqueTimestamp();
+            timestamp = Device.dev.uniqueTimestamp();
         }
 
         Request request = new Request();
@@ -143,7 +143,7 @@ public class ModuleBackendMode extends ModuleBase {
         L.d(String.format("sessionEndInternal: deviceID = %s, duration = %f, timestamp = %d", deviceID, duration, timestamp));
 
         if (timestamp == null || timestamp < 1) {
-            timestamp = DeviceCore.dev.uniqueTimestamp();
+            timestamp = Device.dev.uniqueTimestamp();
         }
 
         //Add events against device ID to request Q
@@ -163,7 +163,7 @@ public class ModuleBackendMode extends ModuleBase {
         L.d(String.format("recordExceptionInternal: deviceID = %s, message = %s, stacktrace = %s, segmentation = %s, timestamp = %d", deviceID, message, stacktrace, segmentation, timestamp));
 
         if (timestamp == null || timestamp < 1) {
-            timestamp = DeviceCore.dev.uniqueTimestamp();
+            timestamp = Device.dev.uniqueTimestamp();
         }
 
         removeInvalidDataFromSegments(segmentation);
@@ -193,7 +193,7 @@ public class ModuleBackendMode extends ModuleBase {
         L.d(String.format("recordUserPropertiesInternal: deviceID = %s, userProperties = %s, timestamp = %d", deviceID, userProperties, timestamp));
 
         if (timestamp == null || timestamp < 1) {
-            timestamp = DeviceCore.dev.uniqueTimestamp();
+            timestamp = Device.dev.uniqueTimestamp();
         }
 
         removeInvalidDataFromSegments(userProperties);
@@ -234,7 +234,7 @@ public class ModuleBackendMode extends ModuleBase {
         L.d(String.format("recordDirectRequestInternal: deviceID = %s, requestJson = %s, timestamp = %d", deviceID, requestData, timestamp));
 
         if (timestamp == null || timestamp < 1) {
-            timestamp = DeviceCore.dev.uniqueTimestamp();
+            timestamp = Device.dev.uniqueTimestamp();
         }
 
         Request request = new Request();
@@ -292,7 +292,7 @@ public class ModuleBackendMode extends ModuleBase {
         request.params.add("dow", dow);
         request.params.add("hour", hour);
         request.params.add("timestamp", timestamp);
-        request.params.add("tz", DeviceCore.dev.getTimezoneOffset());
+        request.params.add("tz", Device.dev.getTimezoneOffset());
     }
 
     private synchronized void addEventsAgainstDeviceIdToRequestQ(String deviceID) {

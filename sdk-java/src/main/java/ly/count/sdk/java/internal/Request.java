@@ -28,7 +28,7 @@ public class Request implements Storable {
      * Create request from params with current time as id.
      */
     public Request(Object... params) {
-        this.id = DeviceCore.dev.uniformTimestamp();
+        this.id = Device.dev.uniformTimestamp();
         this.params = new Params(params);
     }
 

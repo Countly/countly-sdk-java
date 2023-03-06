@@ -7,8 +7,6 @@ import java.util.concurrent.TimeUnit;
 import ly.count.sdk.java.Config;
 
 public class ModuleSessions extends ModuleBase {
-
-    private int activityCount = 0;
     private ScheduledExecutorService executor = null;
 
     /**
@@ -111,51 +109,6 @@ public class ModuleSessions extends ModuleBase {
         L.d("[ModuleSessions] onDeviceId " + deviceId + ", old " + oldDeviceId);
         if (deviceId != null && oldDeviceId != null && deviceId.realm == Config.DID.REALM_DID && !deviceId.equals(oldDeviceId) && getSession() == null) {
             session(ctx, null).begin();
-        }
-    }
-
-    @Override
-    public synchronized void onActivityStarted(CtxCore ctx) {
-        if (ctx.getConfig().isAutoSessionsTrackingEnabled() && activityCount == 0) {
-            if (getSession() == null) {
-                L.i("[ModuleSessions] starting new session");
-                session(ctx, null).begin();
-            }
-        }
-        activityCount++;
-    }
-
-    @Override
-    public synchronized void onActivityStopped(CtxCore ctx) {
-        activityCount--;
-        if (activityCount == 0) {
-            if (executor == null && ctx.getConfig().isAutoSessionsTrackingEnabled()) {
-                executor = Executors.newScheduledThreadPool(1);
-            }
-            if (executor != null) {
-                L.i("[ModuleSessions] stopping session");
-                try {
-                    executor.schedule(new Runnable() {
-                        @Override
-                        public void run() {
-                            L.i("[ModuleSessions] ending session? activities " + activityCount + " session null? " + (getSession() == null) + " active? " + (getSession() != null && getSession().isActive()));
-                            if (activityCount == 0 && getSession() != null && getSession().isActive()) {
-                                getSession().end();
-                            }
-                        }
-                    }, ctx.getConfig().getSessionAutoCloseAfter(), TimeUnit.SECONDS);
-
-                    executor.shutdown();
-
-                    if (!executor.awaitTermination(Math.min(31, ctx.getConfig().getSessionAutoCloseAfter() + 1), TimeUnit.SECONDS)) {
-                        executor.shutdownNow();
-                    }
-                } catch (InterruptedException e) {
-                    L.w("[ModuleSessions] Interrupted while waiting for session update executor to stop" + e);
-                    executor.shutdownNow();
-                }
-                executor = null;
-            }
         }
     }
 

@@ -675,7 +675,7 @@ public abstract class SDKCore implements SDKInterface {
     }
 
     protected void recover(CtxCore ctx) {
-        List<Long> crashes = Storage.list(ctx, CrashImplCore.getStoragePrefix());
+        List<Long> crashes = Storage.list(ctx, CrashImpl.getStoragePrefix());
 
         for (Long id : crashes) {
             L.i("[SDKCore] [SDKCore] Found unprocessed crash " + id);
