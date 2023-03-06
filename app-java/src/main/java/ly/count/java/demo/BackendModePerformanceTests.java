@@ -2,7 +2,7 @@ package ly.count.java.demo;
 
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
-import ly.count.sdk.java.internal.DeviceCore;
+import ly.count.sdk.java.internal.Device;
 
 import java.io.File;
 import java.util.HashMap;
@@ -33,9 +33,9 @@ public class BackendModePerformanceTests {
     static void performLargeRequestQueueSizeTest() {
         System.out.println("===== Test Started: 'Large request queue size' =====");
         int requestQSize = 1000000;
-        System.out.printf("Before SDK Initialization: Total Memory = %dMb, Available RAM = %dMb %n", DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
+        System.out.printf("Before SDK Initialization: Total Memory = %dMb, Available RAM = %dMb %n", Device.dev.getRAMTotal(), Device.dev.getRAMAvailable());
         initSDK(1, requestQSize);
-        System.out.printf("After SDK Initialization: Total Memory = %d Mb, Available RAM= %d Mb %n", DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
+        System.out.printf("After SDK Initialization: Total Memory = %d Mb, Available RAM= %d Mb %n", Device.dev.getRAMTotal(), Device.dev.getRAMAvailable());
 
         int batchSize = requestQSize / 25;
 
@@ -106,7 +106,7 @@ public class BackendModePerformanceTests {
             Countly.backendMode().sessionBegin(DEVICE_ID, metrics, location, null);
         }
 
-        System.out.printf("After adding %d request: Total Memory = %d Mb, Available RAM= %d Mb %n", requestQSize, DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
+        System.out.printf("After adding %d request: Total Memory = %d Mb, Available RAM= %d Mb %n", requestQSize, Device.dev.getRAMTotal(), Device.dev.getRAMAvailable());
 
         Countly.stop(false);
         System.out.println("=====SDK Stop=====");
@@ -115,9 +115,9 @@ public class BackendModePerformanceTests {
     static void performLargeEventQueueTest() {
         int noOfEvents = 100000;
         System.out.println("===== Test Start: 'Large Event queues against multiple devices ids' =====");
-        System.out.printf("Before SDK Initialization: Total Memory = %dMb, Available RAM = %dMb %n", DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
+        System.out.printf("Before SDK Initialization: Total Memory = %dMb, Available RAM = %dMb %n", Device.dev.getRAMTotal(), Device.dev.getRAMAvailable());
         initSDK(noOfEvents, 1000);
-        System.out.printf("After SDK Initialization: Total Memory = %d Mb, Available RAM= %d Mb %n", DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
+        System.out.printf("After SDK Initialization: Total Memory = %d Mb, Available RAM= %d Mb %n", Device.dev.getRAMTotal(), Device.dev.getRAMAvailable());
 
         int noOfDevices = 10;
         for (int d = 0; d <= noOfDevices; ++d) {
@@ -132,7 +132,7 @@ public class BackendModePerformanceTests {
                 Countly.backendMode().recordEvent("device-id-" + d, "Event Key " + i, 1, 0.1, 5.0, segment, null);
             }
         }
-        System.out.printf("After adding %d events into event queue: Total Memory = %d Mb, Available RAM= %d Mb %n", noOfEvents * noOfDevices, DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
+        System.out.printf("After adding %d events into event queue: Total Memory = %d Mb, Available RAM= %d Mb %n", noOfEvents * noOfDevices, Device.dev.getRAMTotal(), Device.dev.getRAMAvailable());
 
         Countly.stop(false);
         System.out.println("=====SDK Stop=====");
@@ -141,9 +141,9 @@ public class BackendModePerformanceTests {
     static void recordBulkDataAndSendToServer() throws InterruptedException {
 
         System.out.println("===== Test Start: 'Record bulk data to server' =====");
-        System.out.printf("Before SDK Initialization: Total Memory = %dMb, Available RAM = %dMb %n", DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
+        System.out.printf("Before SDK Initialization: Total Memory = %dMb, Available RAM = %dMb %n", Device.dev.getRAMTotal(), Device.dev.getRAMAvailable());
         initSDK(100, 1000);
-        System.out.printf("After SDK Initialization: Total Memory = %d Mb, Available RAM= %d Mb %n", DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
+        System.out.printf("After SDK Initialization: Total Memory = %d Mb, Available RAM= %d Mb %n", Device.dev.getRAMTotal(), Device.dev.getRAMAvailable());
         int countOfRequest = 10;
         int remaining = countOfRequest;
         int secondsToSleep = 5;
@@ -166,7 +166,7 @@ public class BackendModePerformanceTests {
         } while (remaining != 0 || Countly.backendMode().getQueueSize() != 0);
 
 
-        System.out.printf("After successfully sending %d requests to server: Total Memory = %d Mb, Available RAM= %d Mb %n", countOfRequest, DeviceCore.dev.getRAMTotal(), DeviceCore.dev.getRAMAvailable());
+        System.out.printf("After successfully sending %d requests to server: Total Memory = %d Mb, Available RAM= %d Mb %n", countOfRequest, Device.dev.getRAMTotal(), Device.dev.getRAMAvailable());
 
         Countly.stop(false);
         System.out.println("=====SDK Stop=====");

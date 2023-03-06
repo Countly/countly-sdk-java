@@ -27,7 +27,7 @@ public class CrashImpl implements Crash, Storable {
     private Map<Thread, StackTraceElement[]> traces;
 
     protected CrashImpl(Log logger) {
-        this(DeviceCore.dev.uniformTimestamp(), logger);
+        this(Device.dev.uniformTimestamp(), logger);
     }
 
     protected CrashImpl(Long id, Log logger) {
@@ -228,35 +228,23 @@ public class CrashImpl implements Crash, Storable {
     }
 
     public CrashImpl putMetrics(CtxCore ctx, Long runningTime) {
-        String version = ctx.getConfig().getApplicationVersion();
-        //from core
-        add("_os", DeviceCore.dev.getOS())
-            .add("_app_version", Utils.isEmptyOrNull(version) ? "0.0" : version)
-            .add("_os_version", DeviceCore.dev.getOSVersion())
-            .add("_ram_current", DeviceCore.dev.getRAMAvailable())
-            .add("_ram_total", DeviceCore.dev.getRAMTotal())
-            .add("_disk_current", DeviceCore.dev.getDiskAvailable())
-            .add("_disk_total", DeviceCore.dev.getDiskTotal())
-            .add("_run", runningTime);
-
-        //from CrashImpl
-        add("_device", Device.dev.getDevice())
-            .add("_os", Device.dev.getOS())
-            .add("_os_version", Device.dev.getOSVersion())
-            .add("_resolution", Device.dev.getResolution())
-            .add("_app_version", Device.dev.getAppVersion())
-            .add("_manufacture", Device.dev.getManufacturer())
-            .add("_cpu", Device.dev.getCpu())
-            .add("_opengl", Device.dev.getOpenGL())
-            .add("_ram_current", Device.dev.getRAMAvailable())
-            .add("_ram_total", Device.dev.getRAMTotal())
-            .add("_disk_current", Device.dev.getDiskAvailable())
-            .add("_disk_total", Device.dev.getDiskTotal())
-            .add("_bat", Device.dev.getBatteryLevel())
-            .add("_run", runningTime)
-            .add("_orientation", Device.dev.getOrientation())
-            .add("_online", Device.dev.isOnline())
-            .add("_muted", Device.dev.isMuted());
+        add("_device", Device.dev.getDevice());
+        add("_os", Device.dev.getOS());
+        add("_os_version", Device.dev.getOSVersion());
+        add("_resolution", Device.dev.getResolution());
+        add("_app_version", Device.dev.getAppVersion());
+        add("_manufacture", Device.dev.getManufacturer());
+        add("_cpu", Device.dev.getCpu());
+        add("_opengl", Device.dev.getOpenGL());
+        add("_ram_current", Device.dev.getRAMAvailable());
+        add("_ram_total", Device.dev.getRAMTotal());
+        add("_disk_current", Device.dev.getDiskAvailable());
+        add("_disk_total", Device.dev.getDiskTotal());
+        add("_bat", Device.dev.getBatteryLevel());
+        add("_run", runningTime);
+        add("_orientation", Device.dev.getOrientation());
+        add("_online", Device.dev.isOnline());
+        add("_muted", Device.dev.isMuted());
         return this;
     }
 

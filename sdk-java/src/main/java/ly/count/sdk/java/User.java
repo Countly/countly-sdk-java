@@ -1,5 +1,7 @@
 package ly.count.sdk.java;
 
+import ly.count.sdk.java.internal.Device;
+
 import java.util.Map;
 import java.util.Set;
 
@@ -107,7 +109,7 @@ public abstract class User {
 
     /**
      * Current user locale in "lang_COUNTRY", like en_US or de_DE if default device locale is overridden.
-     * If not set, Countly will use {@link ly.count.sdk.java.internal.DeviceCore#getLocale()}.
+     * If not set, Countly will use {@link Device#getLocale()}.
      *
      * @return current user locale
      */

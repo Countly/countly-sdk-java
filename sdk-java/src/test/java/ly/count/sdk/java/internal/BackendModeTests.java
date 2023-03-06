@@ -892,7 +892,7 @@ public class BackendModeTests {
         final int hour = calendar.get(Calendar.HOUR_OF_DAY);
         final int dow = calendar.get(Calendar.DAY_OF_WEEK) - 1;
 
-        Assert.assertEquals(DeviceCore.dev.getTimezoneOffset() + "", request.params.get("tz"));
+        Assert.assertEquals(Device.dev.getTimezoneOffset() + "", request.params.get("tz"));
         Assert.assertEquals(dow + "", request.params.get("dow"));
         Assert.assertEquals(hour + "", request.params.get("hour"));
         Assert.assertEquals(deviceID, request.params.get("device_id"));

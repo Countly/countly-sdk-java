@@ -11,10 +11,6 @@ import org.powermock.reflect.Whitebox;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
-import ly.count.sdk.java.internal.DeviceCore;
-import ly.count.sdk.java.internal.Log;
-import ly.count.sdk.java.internal.Tasks;
-
 @RunWith(JUnit4.class)
 public class TasksTests extends BaseTestsCore {
     private Tasks tasks;
@@ -55,7 +51,7 @@ public class TasksTests extends BaseTestsCore {
         });
         long now = System.nanoTime();
         other.shutdown();
-        long timeToShutdown = DeviceCore.dev.nsToMs(System.nanoTime() - now);
+        long timeToShutdown = Device.dev.nsToMs(System.nanoTime() - now);
         Assert.assertTrue(Whitebox.<ExecutorService>getInternalState(other, "executor").isShutdown());
         Assert.assertTrue(Whitebox.<ExecutorService>getInternalState(other, "executor").isTerminated());
         //Assert.assertTrue(timeToShutdown > 100);//todo, this line fails when trying to publish (AK, 12.12.18)

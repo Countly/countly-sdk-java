@@ -596,8 +596,8 @@ public class Config {
      * Whether to allow fallback from unavailable device id strategy to Countly OpenUDID derivative.
      *
      * @param deviceIdFallbackAllowed true if fallback is allowed
-     * @deprecated this will do nothing
      * @return {@code this} instance for method chaining
+     * @deprecated this will do nothing
      */
     public Config setDeviceIdFallbackAllowed(boolean deviceIdFallbackAllowed) {
         return this;
@@ -917,8 +917,8 @@ public class Config {
      * Change name of SDK used in HTTP requests
      *
      * @param sdkName new name of SDK
-     * @deprecated Calling this function will do nothing
      * @return {@code this} instance for method chaining
+     * @deprecated Calling this function will do nothing
      */
     public Config setSdkName(String sdkName) {
         return this;
@@ -928,8 +928,8 @@ public class Config {
      * Change version of SDK used in HTTP requests
      *
      * @param sdkVersion new version of SDK
-     * @deprecated Calling this function will do nothing
      * @return {@code this} instance for method chaining
+     * @deprecated Calling this function will do nothing
      */
     public Config setSdkVersion(String sdkVersion) {
         return this;
@@ -1102,8 +1102,8 @@ public class Config {
      * To disable ANR reporting, use {@link #disableANRCrashReporting()}.
      *
      * @param periodInSeconds how much time the SDK waits between individual ANR checks
-     * @deprecated will do nothing
      * @return {@code this} instance for method chaining
+     * @deprecated will do nothing
      */
     public Config setCrashReportingANRCheckingPeriod(int periodInSeconds) {
         return this;
@@ -1111,8 +1111,9 @@ public class Config {
 
     /**
      * Disable ANR detection and thus reporting to Countly server.
-     * @deprecated will do nothing
+     *
      * @return {@code this} instance for method chaining
+     * @deprecated will do nothing
      */
     public Config disableANRCrashReporting() {
         return this;
@@ -1139,8 +1140,8 @@ public class Config {
      *
      * @param feature feature index to override
      * @param cls {@link Class} to use instead of Countly SDK standard class
-     * @deprecated this will do nothing
      * @return {@code this} instance for method chaining
+     * @deprecated this will do nothing
      */
     protected Config overrideModule(Integer feature, Class<? extends Module> cls) {
         return this;
@@ -1296,8 +1297,9 @@ public class Config {
 
     /**
      * Whether to allow fallback from unavailable device id strategy to any other available.
-     * @deprecated this will always return "true"
+     *
      * @return true if fallback is allowed
+     * @deprecated this will always return "true"
      */
     public boolean isDeviceIdFallbackAllowed() {
         return deviceIdFallbackAllowed;
@@ -1341,8 +1343,9 @@ public class Config {
 
     /**
      * Getter for {@link #sdkName}
-     * @deprecated this will be removed
+     *
      * @return {@link #sdkName} value
+     * @deprecated this will be removed
      */
     public String getSdkName() {
         return sdkName;
@@ -1350,8 +1353,9 @@ public class Config {
 
     /**
      * Getter for {@link #sdkVersion}
-     * @deprecated this will be removed
+     *
      * @return {@link #sdkVersion} value
+     * @deprecated this will be removed
      */
     public String getSdkVersion() {
         return sdkVersion;
@@ -1503,8 +1507,9 @@ public class Config {
 
     /**
      * Getter for {@link #crashReportingANRCheckingPeriod}
-     * @Deprecated will always return "5"
+     *
      * @return {@link #crashReportingANRCheckingPeriod} value
+     * @Deprecated will always return "5"
      */
     public int getCrashReportingANRCheckingPeriod() {
         return 5;
@@ -1521,8 +1526,9 @@ public class Config {
 
     /**
      * Getter for {@link #moduleOverrides}
-     * @deprecated this always return "null"
+     *
      * @return {@link #moduleOverrides} value for {@code Feature} specified
+     * @deprecated this always return "null"
      */
     public Class<? extends Module> getModuleOverride(int feature) {
         return null;

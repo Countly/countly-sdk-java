@@ -1,6 +1,5 @@
 package ly.count.sdk.java.internal;
 
-import ly.count.sdk.java.Config;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -50,9 +49,9 @@ class EventImpl implements Event, JSONable {
         this.recorder = recorder;
         this.key = key;
         this.count = 1;
-        this.timestamp = DeviceCore.dev.uniqueTimestamp();
-        this.hour = DeviceCore.dev.currentHour();
-        this.dow = DeviceCore.dev.currentDayOfWeek();
+        this.timestamp = Device.dev.uniqueTimestamp();
+        this.hour = Device.dev.currentHour();
+        this.dow = Device.dev.currentDayOfWeek();
     }
 
     @Override
@@ -77,7 +76,7 @@ class EventImpl implements Event, JSONable {
             return;
         }
 
-        setDuration((DeviceCore.dev.uniqueTimestamp() - timestamp) / 1000);
+        setDuration((Device.dev.uniqueTimestamp() - timestamp) / 1000);
         record();
     }
 

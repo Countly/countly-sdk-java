@@ -16,7 +16,6 @@ public class ModuleViews extends ModuleBase {
         super.init(config, logger);
     }
 
-
     // TODO: questionable
     @Override
     public Integer getFeature() {
