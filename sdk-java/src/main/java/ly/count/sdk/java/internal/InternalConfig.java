@@ -142,7 +142,7 @@ public final class InternalConfig extends Config implements Storable {
             stream.writeInt(eventsBufferSize);
             stream.writeInt(sessionCooldownPeriod);
             stream.writeBoolean(false);//for keeping backwards compatibility, remove in the future
-            stream.writeInt(crashReportingANRCheckingPeriod);
+            stream.writeInt(5);//for keeping backwards compatibility, remove in the future (crashReportingANRCheckingPeriod)
             stream.writeObject(crashProcessorClass);
             stream.writeInt(moduleOverrides == null ? 0 : moduleOverrides.size());
             if (moduleOverrides != null && moduleOverrides.size() > 0) {
@@ -231,7 +231,7 @@ public final class InternalConfig extends Config implements Storable {
             eventsBufferSize = stream.readInt();
             sessionCooldownPeriod = stream.readInt();
             boolean throwawayCountlyTestMode = stream.readBoolean();//we are only reading this for backwards compatibility. Throw away in the future
-            crashReportingANRCheckingPeriod = stream.readInt();
+            int throwawayCrashReportingANRCheckingPeriod = stream.readInt();//we are only reading this for backwards compatibility. Throw away in the future. crashReportingANRCheckingPeriod
             crashProcessorClass = (String) stream.readObject();
 
             l = stream.readInt();
