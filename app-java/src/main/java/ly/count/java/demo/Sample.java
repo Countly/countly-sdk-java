@@ -109,7 +109,7 @@ public class Sample {
                 .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
                 .enableFeatures(Config.Feature.Events, Config.Feature.Sessions, Config.Feature.CrashReporting, Config.Feature.Views, Config.Feature.UserProfiles, Config.Feature.Location)
                 .setRequiresConsent(true)
-                .enableParameterTamperingProtection("test-salt-checksum")
+                //.enableParameterTamperingProtection("test-salt-checksum")
                 .setLogListener(new LogCallback() {
                     @Override
                     public void LogHappened(String logMessage, Config.LoggingLevel logLevel) {

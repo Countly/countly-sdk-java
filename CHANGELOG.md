@@ -1,13 +1,23 @@
-22.06.0
+22.09.0
 * The "resetDeviceId", "login", and "logout" have been deprecated.
 * ! Minor breaking change ! The following methods and their functionality are deprecated from the "Config" class and will not function anymore: 
 	- "enableTestMode"
 	- "disableTestMode"
-	- "isTestModeEnabled".
+	- "isTestModeEnabled"
 	- "setLoggingTag"
+  - "setSdkName"
+  - "setSdkVersion"
+  - "getSdkName"
+  - "getSdkVersion"
+  - "isDeviceIdFallbackAllowed"
+  - "setDeviceIdFallbackAllowed"
+  - "overrideModule"
+  - "getModuleOverride"
 * ! Minor breaking change ! The "TestMode" functionality is being removed from the SDK.
+* ! Minor breaking change ! The module override functionality is being removed from the SDK.
 * ! Minor breaking change ! It is not possible to set the logging tag anymore.
 * Fixed a bug where the wrong platform field value was being sent in the view request.
+* Updated JSON library version from "20180813" to "20230227". 
 
 20.11.5
 * Fixed a bug where the backend mode module produces "null pointer exceptions" in case not initialized.
