@@ -19,7 +19,7 @@ import java.util.*;
  */
 
 public class Utils {
-    protected static final Utils utils = new Utils();
+    protected static final Utils utils = new Utils();//todo remove this when possible
 
     public static final String UTF8 = "UTF-8";
     public static final String CRLF = "\r\n";
@@ -316,85 +316,6 @@ public class Utils {
         }
         return null;
     }
-
-    //    public static final class Reflection<T> {
-    //        private T instance;
-    //        private Class<?> cls;
-    //
-    //        Reflection(T instance) {
-    //            this.instance = instance;
-    //            this.cls = instance.getClass();
-    //        }
-    //
-    //        Reflection(String className) throws ClassNotFoundException {
-    //            this.cls = Class.forName(className);
-    //        }
-    //
-    //        public Object call(String methodName, Object... args) {
-    //            try {
-    //                Class<?> types[] = null;
-    //
-    //                if (args != null && args.length > 0) {
-    //                    types = new Class[args.length];
-    //
-    //                    for (int i = 0; i < types.length; i++) {
-    //                        types[i] = args[i].getClass();
-    //                    }
-    //                }
-    //                Method method = cls.getDeclaredMethod(methodName, types);
-    //                return method.invoke(instance, args);
-    //            } catch (NoSuchMethodException t) {
-    //                System.out.print("Utils Cannot call " + methodName + " of " + cls.getName() + t.toString());
-    //                return false;
-    //            } catch (IllegalAccessException t) {
-    //                System.out.print("Utils Cannot call " + methodName + " of " + cls.getName() + t.toString());
-    //                return false;
-    //            } catch (InvocationTargetException t) {
-    //                System.out.print("Utils Cannot call " + methodName + " of " + cls.getName() + t.toString());
-    //                return false;
-    //            }
-    //        }
-    //
-    //        public Object get(String fieldName) {
-    //            try {
-    //                Field field = instance == null ? cls.getDeclaredField(fieldName): instance.getClass().getDeclaredField(fieldName);
-    //                boolean accessible = field.isAccessible();
-    //                if (!accessible) {
-    //                    field.setAccessible(true);
-    //                }
-    //                Object value = field.get(instance);
-    //                if (!accessible) {
-    //                    field.setAccessible(false);
-    //                }
-    //                return value;
-    //            } catch (IllegalAccessException e) {
-    //                System.out.print("Utils Cannot access field " + fieldName + " of " + cls.getName() + e.toString());
-    //            } catch (NoSuchFieldException e) {
-    //                System.out.print("Utils No field " + fieldName + " in " + cls.getName() + e.toString());
-    //            }
-    //            return null;
-    //        }
-    //
-    //        public Boolean set(String fieldName, Object value) {
-    //            try {
-    //                Field field = instance == null ? cls.getDeclaredField(fieldName): instance.getClass().getDeclaredField(fieldName);
-    //                boolean accessible = field.isAccessible();
-    //                if (!accessible) {
-    //                    field.setAccessible(true);
-    //                }
-    //                field.set(instance, value);
-    //                if (!accessible) {
-    //                    field.setAccessible(false);
-    //                }
-    //                return true;
-    //            } catch (IllegalAccessException e) {
-    //                System.out.print("Utils Cannot access field " + fieldName + " of " + cls.getName() + e.toString());
-    //            } catch (NoSuchFieldException e) {
-    //                System.out.print("Utils No field " + fieldName + " in " + cls.getName() + e.toString());
-    //            }
-    //            return false;
-    //        }
-    //    }
 
     /**
      * Calculate digest (SHA-1, SHA-256, etc.) hash of the string provided

@@ -7,7 +7,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.Future;
 
-public abstract class SDKCore implements SDKInterface {
+public class SDKCore implements SDKInterface {
 
     protected static SDKCore instance;
 
@@ -36,7 +36,7 @@ public abstract class SDKCore implements SDKInterface {
         }
     }
 
-    protected SDKCore() {
+    public SDKCore() {
         this.modules = new TreeMap<>();
         instance = this;
         sdkStorage = new SDKStorage();
@@ -130,6 +130,8 @@ public abstract class SDKCore implements SDKInterface {
         user = null;
         config = null;
         instance = null;
+
+        sdkStorage.stop(ctx, clear);//from original super class
     }
 
     private boolean addingConsent(int adding, CoreFeature feature) {
@@ -735,5 +737,12 @@ public abstract class SDKCore implements SDKInterface {
             L.e("[SDKLifecycle] Couldn't write request " + request.storageId() + " instead of crash " + crash.storageId());
             return false;
         }
+    }
+
+
+    //transferred from original subclass
+    @Override
+    public void onRequest(ly.count.sdk.java.internal.CtxCore ctx, Request request) {
+        onSignal(ctx, SDKCore.Signal.Ping.getIndex(), null);
     }
 }

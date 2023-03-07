@@ -25,11 +25,11 @@ public class Countly implements Usage {
     public static Device device = Device.dev;
 
     protected static Countly cly;
-    protected SDK sdk;
+    protected SDKCore sdk;
     protected CtxCore ctx;
     protected Log L;
 
-    protected Countly(SDK sdk, CtxCore ctx, Log logger) {
+    protected Countly(SDKCore sdk, CtxCore ctx, Log logger) {
         cly = this;
         L = logger;
         this.sdk = sdk;
@@ -79,7 +79,7 @@ public class Countly implements Usage {
 
             InternalConfig internalConfig = new InternalConfig(config);
             Log L = new Log(internalConfig.loggingLevel, internalConfig.logListener);
-            SDK sdk = new SDK();
+            SDKCore sdk = new SDKCore();
             sdk.init(new CtxCore(sdk, internalConfig, L, directory), L);
 
             // config has been changed, thus recreating ctx
