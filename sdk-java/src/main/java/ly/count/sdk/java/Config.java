@@ -1414,5 +1414,9 @@ public class Config {
     public boolean requiresConsent() {
         return requiresConsent;
     }
+
+    public Config setMetricOverride(Map<String, String> metricOverride) {
+        return this;
+    }
 }
 
