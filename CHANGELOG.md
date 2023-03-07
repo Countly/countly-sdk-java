@@ -30,6 +30,7 @@
 * ! Minor breaking change ! The module override functionality is being removed from the SDK.
 * ! Minor breaking change ! It is not possible to set the logging tag anymore.
 * Fixed a bug where the wrong platform field value was being sent in the view request.
+* Fixed a bug where view duration was reported in ms and not s.
 * Updated JSON library version from "20180813" to "20230227". 
 
 20.11.5
