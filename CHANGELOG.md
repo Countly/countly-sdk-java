@@ -16,6 +16,16 @@
   - "getCrashReportingANRCheckingPeriod"
   - "setCrashReportingANRCheckingPeriod"
   - "disableANRCrashReporting"
+
+* ! Minor breaking change ! The following methods have been removed from the "Config" class:
+  - "setAutoViewsTracking"
+  - "setAutoSessionsTracking"
+  - "setSessionAutoCloseAfter"
+  - "isAutoViewsTrackingEnabled"
+  - "isAutoSessionsTrackingEnabled"
+  - "getSessionAutoCloseAfter"
+  - "setSessionCooldownPeriod"
+
 * ! Minor breaking change ! The "TestMode" functionality is being removed from the SDK.
 * ! Minor breaking change ! The module override functionality is being removed from the SDK.
 * ! Minor breaking change ! It is not possible to set the logging tag anymore.

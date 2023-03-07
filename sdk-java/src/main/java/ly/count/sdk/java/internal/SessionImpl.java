@@ -222,16 +222,16 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     }
 
     Boolean recover(Config config) {
-        if ((System.currentTimeMillis() - id) < Device.dev.secToMs(config.getSessionCooldownPeriod() * 2)) {
+        if ((System.currentTimeMillis() - id) < 0) {
             return null;
         } else {
             Future<Boolean> future = null;
             if (began == null) {
                 return Storage.remove(ctx, this);
             } else if (ended == null && updated == null) {
-                future = end(began + Device.dev.secToNs(config.getSessionCooldownPeriod()), null, null);
+                future = end(began, null, null);
             } else if (ended == null) {
-                future = end(updated + Device.dev.secToNs(config.getSessionCooldownPeriod()), null, null);
+                future = end(updated, null, null);
             } else {
                 // began != null && ended != null
                 return Storage.remove(ctx, this);

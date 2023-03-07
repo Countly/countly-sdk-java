@@ -247,11 +247,6 @@ public class Config {
     protected int deviceIdStrategy = 0;
 
     /**
-     * Allow fallback from specified device id strategy to any other available strategy
-     */
-    protected boolean deviceIdFallbackAllowed = true;
-
-    /**
      * Developer specified device id
      */
     protected String customDeviceId;
@@ -374,18 +369,6 @@ public class Config {
     protected int eventsBufferSize = 10;
 
     /**
-     * Minimal amount of time between sessions in seconds.
-     * For now used only when recovering from a crash as a session extension period.
-     */
-    protected int sessionCooldownPeriod = 30;
-
-    /**
-     * How much time of user inactivity Countly should wait until automatically ending session.
-     * Works only with {@link #autoSessionsTracking} set to {@code true}.
-     */
-    protected int sessionAutoCloseAfter = "Android".equals(System.getProperty("os.name")) ? 10 : 0;
-
-    /**
      * {@link CrashProcessor}-implementing class which is instantiated when application
      * crashes or crash is reported programmatically using {@link Session#addCrashReport(Throwable, boolean, String, Map, String...)}.
      * Crash processor helps you to add custom data in event of a crash: custom crash segments & crash logs.
@@ -398,25 +381,10 @@ public class Config {
     protected Map<Integer, Class<? extends Module>> moduleOverrides = null;
 
     /**
-     * String-String map with custom parameters sent in each request, persistent.
-     */
-    protected Map<String, String> persistentParams = null;
-
-    /**
      * Requires GDPR-compliance calls.
      * If {@code true}, SDK waits for corresponding consent calls before recording any data.
      */
     protected boolean requiresConsent = false;
-
-    /**
-     * Automatically start session on app launch and stop it before it terminates
-     */
-    protected boolean autoSessionsTracking = true;
-
-    /**
-     * Automatically start a view on each activity start and stop it once activity is stopped
-     */
-    protected boolean autoViewsTracking = true;
 
     /**
      * If star rating dialog should be cancellable
@@ -898,22 +866,6 @@ public class Config {
     }
 
     /**
-     * Set minimal amount of time between sessions in seconds.
-     * For now used only when recovering from a crash as a session extension period.
-     *
-     * @param sessionCooldownPeriod min time interval between two sessions
-     * @return {@code this} instance for method chaining
-     */
-    public Config setSessionCooldownPeriod(int sessionCooldownPeriod) {
-        if (sessionCooldownPeriod < 0) {
-            System.out.print("[ConfigCore] sessionCooldownPeriod cannot be negative");
-        } else {
-            this.sessionCooldownPeriod = sessionCooldownPeriod;
-        }
-        return this;
-    }
-
-    /**
      * Change name of SDK used in HTTP requests
      *
      * @param sdkName new name of SDK
@@ -1094,7 +1046,7 @@ public class Config {
     /**
      * Change period when a check for ANR is made. ANR reporting is enabled by default once you enable {@code Feature.CrashReporting}.
      * Default period is 5 seconds. This is *NOT* a timeout for any possible time frame within app running time, it's a checking period.
-     * Meaning *some* ANRs are to be recorded if main thread is blocked for slightly more than {@link #crashReportingANRCheckingPeriod}.
+     * Meaning *some* ANRs are to be recorded if main thread is blocked for slightly more than #crashReportingANRCheckingPeriod.
      * Statistically it should be good enough as you don't really need all ANRs on the server.
      * *More* ANRs will be recorded in case main thread is blocked for {@code 1.5 * crashReportingANRCheckingPeriod}. Almost all ANRs
      * are going to be recorded once main thread is blocked for {@code 2 * crashReportingANRCheckingPeriod} or more seconds.
@@ -1145,15 +1097,6 @@ public class Config {
      */
     protected Config overrideModule(Integer feature, Class<? extends Module> cls) {
         return this;
-        //if (feature == null || cls == null) {
-        //    System.out.print("[ConfigCore] Feature & class cannot be null");
-        //} else {
-        //    if (moduleOverrides == null) {
-        //        moduleOverrides = new HashMap<>();
-        //    }
-        //    moduleOverrides.put(feature, cls);
-        //}
-        //return this;
     }
 
     /**
@@ -1188,9 +1131,10 @@ public class Config {
      * Getter for {@link #moduleOverrides}
      *
      * @return {@link #moduleOverrides} value for {@code Feature} specified
+     * @deprecated this will do nothing
      */
     public Class<? extends Module> getModuleOverride(Config.Feature feature) {
-        return moduleOverrides == null ? null : moduleOverrides.get(feature.index);
+        return null;
     }
 
     /**
@@ -1203,69 +1147,6 @@ public class Config {
     public Config setRequiresConsent(boolean requiresConsent) {
         this.requiresConsent = requiresConsent;
         return this;
-    }
-
-    /**
-     * Enable auto views tracking
-     *
-     * @param autoViewsTracking whether to enable it or disable
-     * @return {@code this} instance for method chaining
-     * @see #autoViewsTracking
-     */
-    public Config setAutoViewsTracking(boolean autoViewsTracking) {
-        this.autoViewsTracking = autoViewsTracking;
-        return this;
-    }
-
-    /**
-     * Enable auto sessions tracking
-     *
-     * @param autoSessionsTracking whether to enable it or disable
-     * @return {@code this} instance for method chaining
-     * @see #autoSessionsTracking
-     */
-    public Config setAutoSessionsTracking(boolean autoSessionsTracking) {
-        this.autoSessionsTracking = autoSessionsTracking;
-        return this;
-    }
-
-    /**
-     * Wait this much time before ending session in auto session tracking mode
-     *
-     * @param sessionAutoCloseAfter time in seconds
-     * @return {@code this} instance for method chaining
-     * @see #autoSessionsTracking
-     */
-    public Config setSessionAutoCloseAfter(int sessionAutoCloseAfter) {
-        this.sessionAutoCloseAfter = sessionAutoCloseAfter;
-        return this;
-    }
-
-    /**
-     * Getter for {@link #autoSessionsTracking}
-     *
-     * @return {@link #autoSessionsTracking} value
-     */
-    public boolean isAutoViewsTrackingEnabled() {
-        return autoViewsTracking;
-    }
-
-    /**
-     * Getter for {@link #autoSessionsTracking}
-     *
-     * @return {@link #autoSessionsTracking} value
-     */
-    public boolean isAutoSessionsTrackingEnabled() {
-        return autoSessionsTracking;
-    }
-
-    /**
-     * Getter for {@link #sessionAutoCloseAfter}
-     *
-     * @return {@link #sessionAutoCloseAfter} value
-     */
-    public int getSessionAutoCloseAfter() {
-        return sessionAutoCloseAfter;
     }
 
     /**
@@ -1302,7 +1183,7 @@ public class Config {
      * @deprecated this will always return "true"
      */
     public boolean isDeviceIdFallbackAllowed() {
-        return deviceIdFallbackAllowed;
+        return true;
     }
 
     /**
@@ -1415,9 +1296,9 @@ public class Config {
     }
 
     /**
-     * Getter for {@link #testMode}
+     * Getter for #testMode
      *
-     * @return {@link #testMode} value
+     * @return #testMode value
      * @deprecated Calling this function will always return 'false'
      */
     public boolean isTestModeEnabled() {
@@ -1431,15 +1312,6 @@ public class Config {
      */
     public int getSendUpdateEachSeconds() {
         return sendUpdateEachSeconds;
-    }
-
-    /**
-     * Getter for {@link #sessionCooldownPeriod}
-     *
-     * @return {@link #sessionCooldownPeriod} value
-     */
-    public int getSessionCooldownPeriod() {
-        return sessionCooldownPeriod;
     }
 
     /**
@@ -1506,10 +1378,10 @@ public class Config {
     }
 
     /**
-     * Getter for {@link #crashReportingANRCheckingPeriod}
+     * Getter for #crashReportingANRCheckingPeriod
      *
-     * @return {@link #crashReportingANRCheckingPeriod} value
-     * @Deprecated will always return "5"
+     * @return #crashReportingANRCheckingPeriod value
+     * @deprecated will always return "5"
      */
     public int getCrashReportingANRCheckingPeriod() {
         return 5;
@@ -1532,7 +1404,6 @@ public class Config {
      */
     public Class<? extends Module> getModuleOverride(int feature) {
         return null;
-        //return moduleOverrides == null ? null : moduleOverrides.get(feature);
     }
 
     /**
