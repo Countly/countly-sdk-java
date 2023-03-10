@@ -7,12 +7,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.Future;
 
-public class SDKCore implements SDKInterface {
+public class SDKCore {
 
     protected static SDKCore instance;
 
     protected SDKStorage sdkStorage;
     private UserImpl user;
+
     public InternalConfig config;
     protected Networking networking;
     protected Queue<Request> requestQueueMemory = null;
@@ -97,12 +98,10 @@ public class SDKCore implements SDKInterface {
         return modules != null && modules.containsKey(feat);
     }
 
-    @Override
     public void init(CtxCore ctx) {
         prepareMappings(ctx);
     }
 
-    @Override
     public void stop(final CtxCore ctx, final boolean clear) {
         if (instance == null) {
             return;
@@ -358,7 +357,12 @@ public class SDKCore implements SDKInterface {
         }
     }
 
-    @Override
+    /**
+     * Notify all {@link Module} instances about new session has just been started
+     *
+     * @param session session to begin
+     * @return supplied session for method chaining
+     */
     public SessionImpl onSessionBegan(CtxCore ctx, SessionImpl session) {
         for (Module m : modules.values()) {
             m.onSessionBegan(session, ctx);
@@ -366,7 +370,12 @@ public class SDKCore implements SDKInterface {
         return session;
     }
 
-    @Override
+    /**
+     * Notify all {@link Module} instances session was ended
+     *
+     * @param session session to end
+     * @return supplied session for method chaining
+     */
     public SessionImpl onSessionEnded(CtxCore ctx, SessionImpl session) {
         for (Module m : modules.values()) {
             m.onSessionEnded(session, ctx);
@@ -378,7 +387,6 @@ public class SDKCore implements SDKInterface {
         return session;
     }
 
-    @Override
     public SessionImpl getSession() {
         ModuleSessions sessions = (ModuleSessions) module(CoreFeature.Sessions.getIndex());
         if (sessions != null) {
@@ -387,7 +395,13 @@ public class SDKCore implements SDKInterface {
         return null;
     }
 
-    @Override
+    /**
+     * Get current {@link SessionImpl} or create new one if current is {@code null}.
+     *
+     * @param ctx Ctx to create new {@link SessionImpl} in
+     * @param id ID of new {@link SessionImpl} if needed
+     * @return current {@link SessionImpl} instance
+     */
     public SessionImpl session(CtxCore ctx, Long id) {
         ModuleSessions sessions = (ModuleSessions) module(CoreFeature.Sessions.getIndex());
         if (sessions != null) {
@@ -529,7 +543,6 @@ public class SDKCore implements SDKInterface {
         });
     }
 
-    @Override
     public UserImpl user() {
         return user;
     }
@@ -538,12 +551,10 @@ public class SDKCore implements SDKInterface {
         return ((ModuleSessions) module(CoreFeature.Sessions.getIndex())).timedEvents();
     }
 
-    @Override
     public InternalConfig config() {
         return config;
     }
 
-    @Override
     public void onCrash(CtxCore ctx, Throwable t, boolean fatal, String name, Map<String, String> segments, String[] logs) {
         L.i("[SDKCore] [SDKCore] onCrash: t: " + t.toString() + " fatal: " + fatal + " name: " + name + " segments: " + segments);
         ModuleCrash module = (ModuleCrash) module(CoreFeature.CrashReporting.getIndex());
@@ -552,7 +563,6 @@ public class SDKCore implements SDKInterface {
         }
     }
 
-    @Override
     public void onUserChanged(final CtxCore ctx, final JSONObject changes, final Set<String> cohortsAdded, final Set<String> cohortsRemoved) {
         eachModule(new Modulator() {
             @Override
@@ -562,7 +572,6 @@ public class SDKCore implements SDKInterface {
         });
     }
 
-    @Override
     public void onDeviceId(CtxCore ctx, Config.DID id, Config.DID old) {
         L.d((config.isLimited() ? "limited" : "non-limited") + " onDeviceId " + id + ", old " + old);
 
@@ -701,14 +710,13 @@ public class SDKCore implements SDKInterface {
      * Core instance config
      */
 
-    @Override
     public void onSignal(CtxCore ctx, int id, Byteable param1, Byteable param2) {
         if (id == Signal.DID.getIndex()) {
             networking.check(ctx);
         }
     }
 
-    @Override
+
     public void onSignal(CtxCore ctx, int id, String param) {
         if (id == Signal.Ping.getIndex()) {
             networking.check(ctx);
@@ -741,7 +749,6 @@ public class SDKCore implements SDKInterface {
 
 
     //transferred from original subclass
-    @Override
     public void onRequest(ly.count.sdk.java.internal.CtxCore ctx, Request request) {
         onSignal(ctx, SDKCore.Signal.Ping.getIndex(), null);
     }
