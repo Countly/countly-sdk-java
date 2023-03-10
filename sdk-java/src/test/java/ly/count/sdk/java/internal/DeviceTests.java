@@ -7,7 +7,7 @@ public class DeviceTests {
 
     @Test
     public void testAsIs() {
-        Device.UniqueTimeGenerator simulator = new Device.UniqueTimeGenerator();
+        UniqueTimeGenerator simulator = new UniqueTimeGenerator();
 
         long last = simulator.timestamp();
 
@@ -19,7 +19,7 @@ public class DeviceTests {
 
     @Test
     public void testMidTimeChange() {
-        Device.UniqueTimeGenerator simulator = new Device.UniqueTimeGenerator();
+        UniqueTimeGenerator simulator = new UniqueTimeGenerator();
 
         long last = simulator.timestamp();
 
@@ -52,7 +52,7 @@ public class DeviceTests {
 
     @Test
     public void testMidTimeRandomChange() {
-        Device.UniqueTimeGenerator simulator = new Device.UniqueTimeGenerator();
+        UniqueTimeGenerator simulator = new UniqueTimeGenerator();
 
         long last = simulator.timestamp();
 

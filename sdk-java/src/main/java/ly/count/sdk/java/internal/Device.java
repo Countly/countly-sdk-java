@@ -50,62 +50,6 @@ public class Device {
         long timestamp();
     }
 
-    /**
-     * Always increasing timer.
-     */
-    static class UniformTimeGenerator implements TimeGenerator {
-        private Long last;
-
-        @Override
-        public synchronized long timestamp() {
-            long ms = System.currentTimeMillis();
-            if (last == null) {
-                last = ms;
-            } else if (last >= ms) {
-                last = last + 1;
-                return last;
-            } else {
-                last = ms;
-            }
-            return ms;
-        }
-    }
-
-    /**
-     * Unique timer, keeps last 10 returned values in memory.
-     */
-    static class UniqueTimeGenerator implements TimeGenerator {
-        List<Long> lastTsMs = new ArrayList<>(10);
-        long addition = 0;
-
-        long currentTimeMillis() {
-            return System.currentTimeMillis() + addition;
-        }
-
-        public synchronized long timestamp() {
-            long ms = currentTimeMillis();
-
-            // change time back case
-            if (lastTsMs.size() > 2) {
-                long min = Collections.min(lastTsMs);
-                if (ms < min) {
-                    lastTsMs.clear();
-                    lastTsMs.add(ms);
-                    return ms;
-                }
-            }
-            // usual case
-            while (lastTsMs.contains(ms)) {
-                ms += 1;
-            }
-            while (lastTsMs.size() >= 10) {
-                lastTsMs.remove(0);
-            }
-            lastTsMs.add(ms);
-            return ms;
-        }
-    }
-
     protected TimeGenerator uniqueTimer = new UniqueTimeGenerator();
     protected TimeGenerator uniformTimer = new UniformTimeGenerator();
 
