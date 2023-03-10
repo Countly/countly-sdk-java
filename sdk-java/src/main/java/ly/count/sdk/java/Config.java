@@ -269,7 +269,7 @@ public class Config {
     /**
      * Countly SDK version to be sent in HTTP requests
      */
-    protected String sdkVersion = "22.09.0";
+    protected String sdkVersion = "22.09.1";
 
     /**
      * Countly Application name to be sent in HTTP requests
