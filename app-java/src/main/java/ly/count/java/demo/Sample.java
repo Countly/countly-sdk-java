@@ -104,6 +104,10 @@ public class Sample {
         String COUNTLY_SERVER_URL = "https://try.count.ly/";
         String COUNTLY_APP_KEY = "YOUR_APP_KEY";
 
+        Map<String, String> metricOverride = new HashMap<>();
+        metricOverride.put("aa", "11");
+        metricOverride.put("bb", "222");
+
         Config config = new Config(COUNTLY_SERVER_URL, COUNTLY_APP_KEY)
                 .setLoggingLevel(Config.LoggingLevel.DEBUG)
                 .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
@@ -115,7 +119,9 @@ public class Sample {
                     public void LogHappened(String logMessage, Config.LoggingLevel logLevel) {
                         System.out.println("[" + logLevel + "] " + logMessage);
                     }
-                });
+                })
+                .setMetricOverride(metricOverride)
+                .setApplicationVersion("123.56.h");
 
         // Countly needs persistent storage for requests, configuration storage, user profiles and other temporary data,
         // therefore requires a separate data folder to run

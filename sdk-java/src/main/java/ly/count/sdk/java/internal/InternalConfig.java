@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import ly.count.sdk.java.Config;
@@ -120,7 +121,7 @@ public final class InternalConfig extends Config implements Storable {
             stream.writeInt(loggingLevel.getLevel());
             stream.writeUTF(sdkName);
             stream.writeUTF(sdkVersion);
-            stream.writeObject(applicationName);
+            stream.writeObject("name");
             stream.writeObject(applicationVersion);
             stream.writeBoolean(usePOST);
             stream.writeObject(salt);
@@ -211,7 +212,7 @@ public final class InternalConfig extends Config implements Storable {
 
             sdkName = stream.readUTF();
             sdkVersion = stream.readUTF();
-            applicationName = (String) stream.readObject();
+            String throwawayApplicationName = (String) stream.readObject();//we are only reading this for backwards compatibility. Throw away in the future
             applicationVersion = (String) stream.readObject();
             usePOST = stream.readBoolean();
             salt = (String) stream.readObject();
@@ -375,4 +376,8 @@ public final class InternalConfig extends Config implements Storable {
         return remoteConfigUpdateRequestTimeout;
     }
     //endregion
+
+    public Map<String, String> getMetricOverride() {
+        return metricOverride;
+    }
 }

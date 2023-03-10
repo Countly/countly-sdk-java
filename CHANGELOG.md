@@ -1,3 +1,10 @@
+22.09.1
+* Adding a way to override metrics sent by "begin session" requests.
+* Fixed bug where "setApplicationVersion" would not set the application version in metrics
+* ! Minor breaking change ! The following methods and their functionality are deprecated from the "Config" class and will not function anymore:
+  - "getApplicationName"
+  - "setApplicationName"
+
 22.09.0
 * The "resetDeviceId", "login", and "logout" have been deprecated.
 * ! Minor breaking change ! The following methods and their functionality are deprecated from the "Config" class and will not function anymore: 

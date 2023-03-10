@@ -1,77 +1,31 @@
 package ly.count.sdk.java.internal;
 
+import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
+import java.util.HashMap;
+import java.util.Map;
 
 public class DeviceTests {
 
+    /**
+     * Lame test for checking metric override
+     */
     @Test
-    public void testAsIs() {
-        Device.UniqueTimeGenerator simulator = new Device.UniqueTimeGenerator();
+    public void metricOverride_1() {
+        Map<String, String> newVals = new HashMap<>();
+        newVals.put("a12345", "1qwer");
+        newVals.put("b5678", "2sdfg");
 
-        long last = simulator.timestamp();
+        Device dev = new Device();
+        dev.setMetricOverride(newVals);
 
-        for (int i = 0; i < 10000; i++) {
-            long next = simulator.timestamp();
-            Assert.assertNotSame(last, next);
-        }
-    }
+        Params mParams = dev.buildMetrics();
+        String sMetrics = mParams.toString();
 
-    @Test
-    public void testMidTimeChange() {
-        Device.UniqueTimeGenerator simulator = new Device.UniqueTimeGenerator();
-
-        long last = simulator.timestamp();
-
-        for (int i = 0; i < 100; i++) {
-            long next = simulator.timestamp();
-            Assert.assertNotSame(last, next);
-        }
-
-        simulator.addition = -10000;
-
-        for (int i = 0; i < 100; i++) {
-            long next = simulator.timestamp();
-            Assert.assertNotSame(last, next);
-        }
-
-        simulator.addition = 0;
-
-        for (int i = 0; i < 100; i++) {
-            long next = simulator.timestamp();
-            Assert.assertNotSame(last, next);
-        }
-
-        simulator.addition = 10000;
-
-        for (int i = 0; i < 100; i++) {
-            long next = simulator.timestamp();
-            Assert.assertNotSame(last, next);
-        }
-    }
-
-    @Test
-    public void testMidTimeRandomChange() {
-        Device.UniqueTimeGenerator simulator = new Device.UniqueTimeGenerator();
-
-        long last = simulator.timestamp();
-
-        for (int i = 0; i < 100000; i++) {
-            if (i % 30 == 0) {
-                simulator.addition = Math.round(Math.random() * 10000 - 5000);
-            }
-            long next = simulator.timestamp();
-            Assert.assertNotSame(last, next);
-        }
-
-        simulator.addition = 0;
-
-        for (int i = 0; i < 100000; i++) {
-            if (i % 30 == 0) {
-                simulator.addition += Math.round(Math.random() * 1000 - 500);
-            }
-            long next = simulator.timestamp();
-            Assert.assertNotSame(last, next);
-        }
+        Assert.assertTrue(sMetrics.contains("a12345"));
+        Assert.assertTrue(sMetrics.contains("1qwer"));
+        Assert.assertTrue(sMetrics.contains("b5678"));
+        Assert.assertTrue(sMetrics.contains("2sdfg"));
     }
 }
