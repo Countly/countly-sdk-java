@@ -148,6 +148,8 @@ public class Sample {
             System.out.println("9) Set user profile");
             System.out.println("10) Set user custom profile");
             System.out.println("11) Record an exception");
+            System.out.println("12) Start a view called 'example_view'");
+            System.out.println("13) End a view called 'example_view'");
             System.out.println("0) Exit ");
 
 
@@ -188,6 +190,12 @@ public class Sample {
                     break;
                 case 11:
                     recordCrash();
+                    break;
+                case 12:
+                    Countly.session().view("example_view").start(true);
+                    break;
+                case 13:
+                    Countly.session().view("example_view").stop(false);
                     break;
                 default:
                     break;
