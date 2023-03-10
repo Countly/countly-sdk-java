@@ -8,6 +8,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
 @RunWith(JUnit4.class)
 public class ConfigTests extends BaseTestsCore {
@@ -109,5 +111,22 @@ public class ConfigTests extends BaseTestsCore {
 
         internalConfig.setEventsBufferSize(60);
         Assert.assertEquals(60, internalConfig.getEventsBufferSize());
+    }
+
+    @Test
+    public void metricOverride() {
+        Map<String, String> initialVals = internalConfig.getMetricOverride();
+        Assert.assertEquals(0, initialVals.size());
+
+        Map<String, String> newVals = new HashMap<>();
+        newVals.put("a", "1");
+        newVals.put("b", "2");
+
+        internalConfig.setMetricOverride(newVals);
+
+        Map<String, String> postVals = internalConfig.getMetricOverride();
+        Assert.assertEquals(2, initialVals.size());
+        Assert.assertEquals("1", postVals.get("a"));
+        Assert.assertEquals("2", postVals.get("b"));
     }
 }

@@ -7,8 +7,10 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,6 +32,8 @@ public class Device {
     private String orientation;
     private Boolean online;
     private Boolean muted;
+
+    private Map<String, String> metricOverride = new HashMap<>();
 
     protected Device() {
         dev = this;
@@ -93,19 +97,39 @@ public class Device {
 
     /**
      * Build metrics {@link Params} object as required by Countly server
-     *
-     * @param ctx Ctx in which to request metrics
      */
-    public Params buildMetrics(final CtxCore ctx) {
+    public Params buildMetrics() {
         Params params = new Params();
-        params.obj("metrics")
+        Params.Obj metricObj = params.obj("metrics")
             .put("_device", getDevice())
             .put("_os", getOS())
             .put("_os_version", getOSVersion())
             .put("_resolution", getResolution())
             .put("_locale", getLocale())
-            .put("_app_version", getAppVersion())
-            .add();
+            .put("_app_version", getAppVersion());
+
+
+        //override metric values
+        if (metricOverride != null) {
+            for (String k : metricOverride.keySet()) {
+                if (k == null || k.length() == 0) {
+                    //L.w("Provided metric override key can't be null or empty");//todo add log
+                    continue;
+                }
+
+                String overrideValue = metricOverride.get(k);
+
+                if (overrideValue == null) {
+                    //L.w("Provided metric override value can't be null, key:[" + k + "]");//todo add log
+                    continue;
+                }
+
+                metricObj.put(k, overrideValue);
+            }
+        }
+
+        //add the object after adding the overrides
+        metricObj.add();
 
         return params;
     }
@@ -469,6 +493,11 @@ public class Device {
      */
     public Device setMuted(Boolean muted) {
         this.muted = muted;
+        return this;
+    }
+
+    public Device setMetricOverride(Map<String, String> givenMetricOverride) {
+        metricOverride.putAll(givenMetricOverride);
         return this;
     }
 }

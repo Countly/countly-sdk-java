@@ -24,7 +24,7 @@ public class ModuleRequests extends ModuleBase {
     @Override
     public void onContextAcquired(CtxCore ctx) {
         super.onContextAcquired(ctx);
-        ModuleRequests.metrics = Device.dev.buildMetrics(ctx);
+        ModuleRequests.metrics = Device.dev.buildMetrics();
     }
 
     @Override

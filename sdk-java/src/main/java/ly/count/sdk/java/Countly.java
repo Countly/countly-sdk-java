@@ -79,6 +79,12 @@ public class Countly implements Usage {
 
             InternalConfig internalConfig = new InternalConfig(config);
             Log L = new Log(internalConfig.loggingLevel, internalConfig.logListener);
+
+            device.setMetricOverride(internalConfig.getMetricOverride());
+            if (internalConfig.getApplicationVersion() != null) {
+                device.setAppVersion(internalConfig.getApplicationVersion());
+            }
+
             SDKCore sdk = new SDKCore();
             sdk.init(new CtxCore(sdk, internalConfig, L, directory), L);
 

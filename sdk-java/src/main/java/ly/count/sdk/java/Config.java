@@ -272,11 +272,6 @@ public class Config {
     protected String sdkVersion = "22.09.1";
 
     /**
-     * Countly Application name to be sent in HTTP requests
-     */
-    protected String applicationName;
-
-    /**
      * Countly SDK version to be sent in HTTP requests
      */
     protected String applicationVersion;
@@ -290,6 +285,8 @@ public class Config {
      * This would be a special state where the majority of the SDK calls don't work anymore and only a few special calls work.
      */
     protected boolean enableBackendMode = false;
+
+    protected Map<String, String> metricOverride = new HashMap<>();
 
     /**
      * Salt string for parameter tampering protection
@@ -892,13 +889,9 @@ public class Config {
      *
      * @param name new name
      * @return {@code this} instance for method chaining
+     * @deprecated this will do nothing
      */
     public Config setApplicationName(String name) {
-        if (Utils.isEmptyOrNull(name)) {
-            System.out.print("[ConfigCore] name cannot be empty");
-        } else {
-            this.applicationName = name;
-        }
         return this;
     }
 
@@ -1254,11 +1247,11 @@ public class Config {
 
     /**
      * Getter for {@link #applicationName}
-     *
+     * @deprecated will return empty string
      * @return {@link #applicationName} value
      */
     public String getApplicationName() {
-        return applicationName;
+        return "";
     }
 
     /**
@@ -1415,7 +1408,13 @@ public class Config {
         return requiresConsent;
     }
 
+    /**
+     * Mechanism for overriding metrics that are sent together with "begin session" requests and remote config
+     * @param metricOverride map of values to be used for override
+     * @return {@code this} instance for method chaining
+     */
     public Config setMetricOverride(Map<String, String> metricOverride) {
+        this.metricOverride.putAll(metricOverride);
         return this;
     }
 }
