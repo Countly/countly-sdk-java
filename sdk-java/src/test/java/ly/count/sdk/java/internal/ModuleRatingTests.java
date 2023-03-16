@@ -55,10 +55,10 @@ public class ModuleRatingTests extends BaseTestsCore {
     @Test
     public void BasicSerializeDeserialize() {
         ModuleRatingCore.StarRatingPreferences srp = CreatePreferences();
-        byte[] ser = srp.store();
+        byte[] ser = srp.store(null);
 
         ModuleRatingCore.StarRatingPreferences res = new ModuleRatingCore.StarRatingPreferences();
-        res.restore(ser);
+        res.restore(ser, null);
 
         Assert.assertTrue(RatingEqual(srp, res));
     }

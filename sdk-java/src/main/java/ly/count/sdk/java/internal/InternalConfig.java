@@ -77,11 +77,17 @@ public final class InternalConfig extends Config implements Storable {
                             l.setAccessible(false);
                         }
                     } catch (IllegalAccessException | IllegalArgumentException iae) {
-                        System.out.println("Cannot access field " + r.getName() + " " + iae);
+                        if (configLog != null) {
+                            configLog.e("[InternalConfig] Cannot access field " + r.getName() + " " + iae);
+                        }
                     }
                 }
             }
         }
+    }
+
+    protected String getSDKNameInternal() {
+        return sdkName;
     }
 
     public InternalConfig setLimited(boolean limited) {
@@ -108,7 +114,7 @@ public final class InternalConfig extends Config implements Storable {
     }
 
     @Override
-    public byte[] store() {
+    public byte[] store(Log L) {
         ByteArrayOutputStream bytes = null;
         ObjectOutputStream stream = null;
         try {
@@ -154,7 +160,7 @@ public final class InternalConfig extends Config implements Storable {
             }
             stream.writeInt(dids.size());
             for (DID did : dids) {
-                byte[] b = did.store();
+                byte[] b = did.store(L);
                 if (b != null) {
                     stream.writeInt(b.length);
                     stream.write(b);
@@ -163,20 +169,26 @@ public final class InternalConfig extends Config implements Storable {
             stream.close();
             return bytes.toByteArray();
         } catch (IOException e) {
-            System.out.println("Cannot serialize config " + e);
+            if (L != null) {
+                L.e("[InternalCore][Store] Cannot serialize config " + e);
+            }
         } finally {
             if (stream != null) {
                 try {
                     stream.close();
                 } catch (IOException e) {
-                    System.out.println("Cannot happen " + e);
+                    if (L != null) {
+                        L.e("[InternalCore][Store] Cannot happen " + e);
+                    }
                 }
             }
             if (bytes != null) {
                 try {
                     bytes.close();
                 } catch (IOException e) {
-                    System.out.println("Cannot happen " + e);
+                    if (L != null) {
+                        L.e("[InternalCore][Store] Cannot happen " + e);
+                    }
                 }
             }
         }
@@ -185,7 +197,7 @@ public final class InternalConfig extends Config implements Storable {
 
     @Override
     @SuppressWarnings("unchecked")
-    public boolean restore(byte[] data) {
+    public boolean restore(byte[] data, Log L) {
         ByteArrayInputStream bytes = null;
         ObjectInputStream stream = null;
 
@@ -194,10 +206,12 @@ public final class InternalConfig extends Config implements Storable {
             stream = new ObjectInputStream(bytes);
 
             try {
-                Utils.reflectiveSetField(this, "serverURL", new URL(stream.readUTF()));
-                Utils.reflectiveSetField(this, "serverAppKey", stream.readUTF());
+                Utils.reflectiveSetField(this, "serverURL", new URL(stream.readUTF()), L);
+                Utils.reflectiveSetField(this, "serverAppKey", stream.readUTF(), L);
             } catch (Exception e) {
-                System.out.println("Cannot happen " + e);
+                if (L != null) {
+                    L.e("[InternalCore][Restore] Cannot happen " + e);
+                }
             }
 
             features = stream.readInt();
@@ -244,7 +258,9 @@ public final class InternalConfig extends Config implements Storable {
                     try {
                         moduleOverrides.put(f, (Class<? extends Module>) Class.forName(cls));
                     } catch (Throwable t) {
-                        System.out.println("Cannot get class " + cls + " for feature override " + f);
+                        if (L != null) {
+                            L.e("[InternalCore][Restore] Cannot get class " + cls + " for feature override " + f);
+                        }
                     }
                 }
             }
@@ -255,26 +271,32 @@ public final class InternalConfig extends Config implements Storable {
                 DID did = new DID(DID.REALM_DID, DID.STRATEGY_UUID, null);
                 byte[] b = new byte[stream.readInt()];
                 stream.readFully(b);
-                did.restore(b);
+                did.restore(b, configLog);
                 dids.add(did);
             }
 
             return true;
         } catch (IOException | ClassNotFoundException e) {
-            System.out.println("Cannot deserialize config " + e);
+            if (L != null) {
+                L.e("[InternalCore][Restore] Cannot deserialize config " + e);
+            }
         } finally {
             if (stream != null) {
                 try {
                     stream.close();
                 } catch (IOException e) {
-                    System.out.println("Cannot happen " + e);
+                    if (L != null) {
+                        L.e("[InternalCore][Restore] Cannot happen " + e);
+                    }
                 }
             }
             if (bytes != null) {
                 try {
                     bytes.close();
                 } catch (IOException e) {
-                    System.out.println("Cannot happen " + e);
+                    if (L != null) {
+                        L.e("[InternalCore][Restore] Cannot happen " + e);
+                    }
                 }
             }
         }
@@ -297,7 +319,9 @@ public final class InternalConfig extends Config implements Storable {
 
     public DID setDeviceId(DID id) {
         if (id == null) {
-            System.out.println("DID cannot be null");
+            if (configLog != null) {
+                configLog.e("DID cannot be null");
+            }
         }
         DID old = null;
         for (DID did : dids) {

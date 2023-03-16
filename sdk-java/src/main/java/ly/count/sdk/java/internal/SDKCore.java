@@ -118,7 +118,7 @@ public class SDKCore {
             public void run(int feature, Module module) {
                 try {
                     module.stop(ctx, clear);
-                    Utils.reflectiveSetField(module, "active", false);
+                    Utils.reflectiveSetField(module, "active", false, L);
                 } catch (Throwable e) {
                     L.e("[SDKModules] Exception while stopping " + module.getClass() + " " + e);
                 }
@@ -436,7 +436,7 @@ public class SDKCore {
 
         sdkStorage.init(ctx, logger);
         config = prepareConfig(ctx);
-        Utils.reflectiveSetField(ctx, "config", config);
+        Utils.reflectiveSetField(ctx, "config", config, L);
 
         this.init(ctx);
 
@@ -452,7 +452,7 @@ public class SDKCore {
             public void run(int feature, Module module) {
                 try {
                     module.init(config, logger);
-                    Utils.reflectiveSetField(module, "active", true);
+                    Utils.reflectiveSetField(module, "active", true, L);
                 } catch (IllegalArgumentException | IllegalStateException e) {
                     L.e("[SDKCore] Error during module initialization" + e);
                     failed.add(feature);
@@ -493,7 +493,7 @@ public class SDKCore {
                 networking.init(ctx, new IStorageForRequestQueue() {
                     @Override
                     public Request getNextRequest() {
-                        return Storage.readOne(ctx, new Request(0L), true);
+                        return Storage.readOne(ctx, new Request(0L), true, L);
                     }
 
                     @Override
@@ -700,7 +700,7 @@ public class SDKCore {
             if (session == null) {
                 L.e("[SDKCore] no session with id " + id + " found while recovering");
             } else {
-                Boolean success = session.recover(config);
+                Boolean success = session.recover(config, L);
                 L.d("[SDKCore] session " + id + " recovery " + (success == null ? "won't recover" : success ? "success" : "failure"));
             }
         }
@@ -715,7 +715,6 @@ public class SDKCore {
             networking.check(ctx);
         }
     }
-
 
     public void onSignal(CtxCore ctx, int id, String param) {
         if (id == Signal.Ping.getIndex()) {
@@ -746,7 +745,6 @@ public class SDKCore {
             return false;
         }
     }
-
 
     //transferred from original subclass
     public void onRequest(ly.count.sdk.java.internal.CtxCore ctx, Request request) {

@@ -20,12 +20,17 @@ public class Params {
 
     private StringBuilder params;
 
+    Log L;
+
     public static final class Obj {
         private final String key;
         private final JSONObject json;
         private final Params params;
 
-        Obj(String key, Params params) {
+        Log L;
+
+        Obj(String key, Params params, Log givenL) {
+            this.L = givenL;
             this.params = params;
             this.key = key;
             this.json = new JSONObject();
@@ -35,7 +40,7 @@ public class Params {
             try {
                 json.put(key, value);
             } catch (JSONException e) {
-                System.out.println("Cannot put property into Params.Obj " + e.toString());
+                L.e("Cannot put property into Params.Obj " + e.toString());
             }
             return this;
         }
@@ -51,21 +56,24 @@ public class Params {
         private final Collection<String> json;
         private final Params params;
 
-        Arr(String key, Params params) {
+        Log L;
+
+        Arr(String key, Params params, Log givenL) {
+            this.L = givenL;
             this.params = params;
             this.key = key;
             this.json = new ArrayList<>();
         }
 
         public Arr put(JSONable value) {
-            json.add(value.toJSON());
+            json.add(value.toJSON(L));
             return this;
         }
 
         public Arr put(Collection collection) {
             for (Object value : collection)
                 if (value instanceof JSONable) {
-                    json.add(((JSONable) value).toJSON());
+                    json.add(((JSONable) value).toJSON(L));
                 }
             return this;
         }
@@ -111,7 +119,7 @@ public class Params {
         }
         params.append(key).append("=");
         if (value != null) {
-            params.append(Utils.urlencode(value.toString()));
+            params.append(Utils.urlencode(value.toString(), L));
         }
         return this;
     }
@@ -135,11 +143,11 @@ public class Params {
     }
 
     public Obj obj(String key) {
-        return new Obj(key, this);
+        return new Obj(key, this, L);
     }
 
     public Arr arr(String key) {
-        return new Arr(key, this);
+        return new Arr(key, this, L);
     }
 
     public String remove(String key) {
@@ -187,7 +195,7 @@ public class Params {
 
     private Params addObjects(Object[] objects) {
         if (objects.length % 2 != 0) {
-            System.out.println("Bad number of parameters");
+            L.e("Bad number of parameters");
         } else {
             for (int i = 0; i < objects.length; i += 2) {
                 add(objects[i] == null ? ("unknown" + i) : objects[i].toString(), objects.length > i + 1 ? objects[i + 1] : null);

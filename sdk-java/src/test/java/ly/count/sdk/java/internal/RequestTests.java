@@ -68,7 +68,7 @@ public class RequestTests {
         Request request = Whitebox.invokeConstructor(Request.class, paramVals);
 
         String manualSerialization = paramVals + Whitebox.<String>getInternalState(Request.class, "EOR");
-        String serializationRes = new String(request.store());
+        String serializationRes = new String(request.store(null));
         Assert.assertEquals(manualSerialization, serializationRes);
     }
 
@@ -77,22 +77,22 @@ public class RequestTests {
         String paramVals = "a=1&b=2";
         Request request = Whitebox.invokeConstructor(Request.class, paramVals);
 
-        byte[] serializationRes = request.store();
+        byte[] serializationRes = request.store(null);
         Request requestNew = new Request();
 
-        Assert.assertTrue(requestNew.restore(serializationRes));
+        Assert.assertTrue(requestNew.restore(serializationRes, null));
         Assert.assertEquals(paramVals, requestNew.params.toString());
     }
 
     @Test
     public void request_loadEmpty() {
-        Assert.assertFalse(new Request().restore("".getBytes()));
-        Assert.assertFalse(new Request().restore("a=1&b=2".getBytes()));
+        Assert.assertFalse(new Request().restore("".getBytes(), null));
+        Assert.assertFalse(new Request().restore("a=1&b=2".getBytes(), null));
     }
 
     @Test(expected = NullPointerException.class)
     public void request_loadNull() {
-        new Request().restore(null);
+        new Request().restore(null, null);
     }
 
     @Test

@@ -23,7 +23,7 @@ public class TasksTests extends BaseTestsCore {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        tasks = new Tasks("test");
+        tasks = new Tasks("test", null);
         defaultConfigWithLogsForConfigTests();
     }
 
@@ -41,7 +41,7 @@ public class TasksTests extends BaseTestsCore {
 
     @Test
     public void testShutdown() {
-        Tasks other = new Tasks("test");
+        Tasks other = new Tasks("test", null);
         other.run(new Tasks.Task<Object>(0L) {
             @Override
             public Object call() throws Exception {

@@ -56,41 +56,49 @@ public class Countly implements Usage {
     public static void init(final File directory, final Config config) {
         if (config == null) {
             System.out.println("[ERROR][Countly] Config cannot be null");
-        } else if (directory == null) {
-            System.out.println("[ERROR][Countly] File cannot be null");
-        } else if (!directory.isDirectory()) {
-            System.out.println("[ERROR][Countly] File must be a directory");
-        } else if (!directory.exists()) {
-            System.out.println("[ERROR][Countly] File must exist");
-        } else {
-            if (cly != null) {
-                System.out.println("[ERROR][Countly] Countly shouldn't be initialized twice. Please either use Countly.isInitialized() to check status or call Countly.stop() before second Countly.init().");
-                stop(false);
-            }
-
-            if (config.enableBackendMode) {
-                config.sdkName = "java-native-backend";
-            }
-
-            if (config.requestQueueMaxSize < 1) {
-                System.out.println("[ERROR][Countly] init: Request queue max size can not be less than 1.");
-                config.requestQueueMaxSize = 1;
-            }
-
-            InternalConfig internalConfig = new InternalConfig(config);
-            Log L = new Log(internalConfig.loggingLevel, internalConfig.logListener);
-
-            device.setMetricOverride(internalConfig.getMetricOverride());
-            if (internalConfig.getApplicationVersion() != null) {
-                device.setAppVersion(internalConfig.getApplicationVersion());
-            }
-
-            SDKCore sdk = new SDKCore();
-            sdk.init(new CtxCore(sdk, internalConfig, L, directory), L);
-
-            // config has been changed, thus recreating ctx
-            cly = new Countly(sdk, new CtxCore(sdk, sdk.config(), L, directory), L);
+            return;
         }
+
+        InternalConfig internalConfig = new InternalConfig(config);
+        Log L = new Log(internalConfig.loggingLevel, internalConfig.logListener);
+
+        if (directory == null) {
+            L.e("[Countly] File cannot be null");
+            return;
+        }
+        if (!directory.isDirectory()) {
+            L.e("[Countly] File must be a directory");
+            return;
+        }
+        if (!directory.exists()) {
+            L.e("[Countly] File must exist");
+            return;
+        }
+
+        if (cly != null) {
+            L.e("[Countly] Countly shouldn't be initialized twice. Please either use Countly.isInitialized() to check status or call Countly.stop() before second Countly.init().");
+            stop(false);
+        }
+
+        if (internalConfig.enableBackendMode) {
+            internalConfig.sdkName = "java-native-backend";
+        }
+
+        if (internalConfig.requestQueueMaxSize < 1) {
+            L.e("[Countly] init: Request queue max size can not be less than 1.");
+            internalConfig.requestQueueMaxSize = 1;
+        }
+
+        device.setMetricOverride(internalConfig.getMetricOverride());
+        if (internalConfig.getApplicationVersion() != null) {
+            device.setAppVersion(internalConfig.getApplicationVersion());
+        }
+
+        SDKCore sdk = new SDKCore();
+        sdk.init(new CtxCore(sdk, internalConfig, L, directory), L);
+
+        // config has been changed, thus recreating ctx
+        cly = new Countly(sdk, new CtxCore(sdk, sdk.config(), L, directory), L);
     }
 
     /**
@@ -102,11 +110,16 @@ public class Countly implements Usage {
      */
     public static void stop(boolean clearData) {
         if (cly != null) {
-            System.out.println("[ERROR][Countly] Stopping SDK");
+            if (cly.L != null) {
+                cly.L.e("[Countly] Stopping SDK");
+            }
             cly.sdk.stop(cly.ctx, clearData);
             cly = null;
         } else {
-            System.out.println("[ERROR][Countly] Countly isn't initialized to stop it");
+            //todo fix in the future
+            //if(cly.L != null) {
+            //    cly.L.e("[Countly] Countly isn't initialized to stop it");
+            //}
         }
     }
 
@@ -140,14 +153,20 @@ public class Countly implements Usage {
      */
     public static Session session() {
         if (!isInitialized()) {
-            System.out.println("[ERROR][Countly] SDK is not initialized yet.");
+            if (cly != null && cly.L != null) {
+                cly.L.e("[Countly] SDK is not initialized yet.");
+            }
+
+            return null;
         }
         return session(cly.ctx);
     }
 
     public static ModuleBackendMode.BackendMode backendMode() {
         if (!isInitialized()) {
-            System.out.println("[ERROR][Countly] SDK is not initialized yet.");
+            if (cly != null && cly.L != null) {
+                cly.L.e("[Countly] SDK is not initialized yet.");
+            }
             return null;
         } else {
             ModuleBackendMode mbm = cly.sdk.module(ModuleBackendMode.class);
@@ -155,7 +174,9 @@ public class Countly implements Usage {
                 return mbm.new BackendMode();
             }
             //if it is null, feature was not enabled, return mock
-            System.out.println("[WARNING][Countly] BackendMode was not enabled, returning dummy module");
+            if (cly != null && cly.L != null) {
+                cly.L.w("[Countly] BackendMode was not enabled, returning dummy module");
+            }
             ModuleBackendMode emptyMbm = new ModuleBackendMode();
             emptyMbm.disableModule();
             return emptyMbm.new BackendMode();
@@ -179,7 +200,10 @@ public class Countly implements Usage {
      */
     public static Session getSession() {
         if (!isInitialized()) {
-            System.out.println("[ERROR][Countly] SDK is not initialized yet.");
+            if (cly != null && cly.L != null) {
+                cly.L.e("[Countly] SDK is not initialized yet.");
+            }
+            return null;
         }
         return session(cly.ctx);
     }
@@ -195,14 +219,18 @@ public class Countly implements Usage {
 
     @Override
     public Usage login(String id) {
-        L.d("login");
+        if (cly.L != null) {
+            L.d("[Countly] login");
+        }
         sdk.login(ctx, id);
         return this;
     }
 
     @Override
     public Usage logout() {
-        L.d("logout");
+        if (cly.L != null) {
+            L.d("[Countly] logout");
+        }
         sdk.logout(ctx);
         return this;
     }
@@ -214,21 +242,27 @@ public class Countly implements Usage {
 
     @Override
     public Usage resetDeviceId(String id) {
-        L.d("resetDeviceId: id = " + id);
+        if (cly.L != null) {
+            L.d("[Countly] resetDeviceId: id = " + id);
+        }
         sdk.changeDeviceIdWithoutMerge(ctx, id);
         return this;
     }
 
     @Override
     public Usage changeDeviceIdWithMerge(String id) {
-        L.d("changeDeviceIdWithoutMerge: id = " + id);
+        if (cly.L != null) {
+            L.d("[Countly] changeDeviceIdWithoutMerge: id = " + id);
+        }
         sdk.changeDeviceIdWithMerge(ctx, id);
         return this;
     }
 
     @Override
     public Usage changeDeviceIdWithoutMerge(String id) {
-        L.d("changeDeviceIdWithoutMerge: id = " + id);
+        if (cly.L != null) {
+            L.d("[Countly] changeDeviceIdWithoutMerge: id = " + id);
+        }
         sdk.changeDeviceIdWithoutMerge(ctx, id);
         return this;
     }
@@ -242,10 +276,13 @@ public class Countly implements Usage {
      */
     public static void onConsent(Config.Feature... features) {
         if (!isInitialized()) {
-            System.out.println("[ERROR][Countly] SDK is not initialized yet.");
+            if (cly != null && cly.L != null) {
+                cly.L.e("[Countly] SDK is not initialized yet.");
+            }
         } else {
-            System.out.println("[DEBUG][Countly] onConsent: features = " + features);
-
+            if (cly != null && cly.L != null) {
+                cly.L.e("[Countly] onConsent: features = " + features);
+            }
             int ftrs = 0;
             for (Config.Feature f : features) {
                 ftrs = ftrs | f.getIndex();
@@ -262,9 +299,13 @@ public class Countly implements Usage {
      * @param features features to turn offf
      */
     public static void onConsentRemoval(Config.Feature... features) {
-        System.out.println("[DEBUG][Countly] onConsentRemoval: features = " + features);
+        if (cly != null && cly.L != null) {
+            cly.L.e("[Countly] onConsentRemoval: features = " + features);
+        }
         if (!isInitialized()) {
-            System.out.println("[ERROR][Countly] onConsentRemoval: SDK is not initialized yet.");
+            if (cly != null && cly.L != null) {
+                cly.L.e("[Countly] onConsentRemoval: SDK is not initialized yet.");
+            }
         } else {
             int ftrs = 0;
             for (Config.Feature f : features) {

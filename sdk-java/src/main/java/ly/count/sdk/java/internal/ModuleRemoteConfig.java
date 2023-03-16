@@ -108,7 +108,7 @@ public class ModuleRemoteConfig extends ModuleBase {
 
                 //merge them into current values and save them
                 RemoteConfigValueStore stored = getStoredValues();
-                stored.mergeValues(jobj);
+                stored.mergeValues(jobj, L);
                 saveStoredValues(stored);
             } catch (Exception e) {
                 L.e("Failed merging new values into old ones" + e);
@@ -177,7 +177,7 @@ public class ModuleRemoteConfig extends ModuleBase {
         public JSONObject values = new JSONObject();
 
         //add new values to the current storage
-        public void mergeValues(JSONObject newValues) {
+        public void mergeValues(JSONObject newValues, Log L) {
             if (newValues == null) {
                 return;
             }
@@ -189,7 +189,9 @@ public class ModuleRemoteConfig extends ModuleBase {
                     Object value = newValues.get(key);
                     values.put(key, value);
                 } catch (Exception e) {
-                    System.out.println("[ERROR][ModuleRemoteConfig]  Failed merging new remote config values " + e);
+                    if (L != null) {
+                        L.e("[ModuleRemoteConfig]  Failed merging new remote config values " + e);
+                    }
                 }
             }
         }
@@ -209,27 +211,33 @@ public class ModuleRemoteConfig extends ModuleBase {
         }
 
         @Override
-        public byte[] store() {
+        public byte[] store(Log L) {
             try {
                 return values.toString().getBytes(Utils.UTF8);
             } catch (UnsupportedEncodingException e) {
-                System.out.println("[ERROR][ModuleRemoteConfig]  UTF is not supported for RemoteConfigValueStore " + e);
+                if (L != null) {
+                    L.e("[ModuleRemoteConfig]  UTF is not supported for RemoteConfigValueStore " + e);
+                }
                 return null;
             }
         }
 
         @Override
-        public boolean restore(byte[] data) {
+        public boolean restore(byte[] data, Log L) {
             try {
                 String json = new String(data, Utils.UTF8);
                 try {
                     values = new JSONObject(json);
                 } catch (JSONException e) {
-                    System.out.println("[ERROR][ModuleRemoteConfig]  Couldn't decode RemoteConfigValueStore successfully " + e);
+                    if (L != null) {
+                        L.e("[ModuleRemoteConfig]  Couldn't decode RemoteConfigValueStore successfully " + e);
+                    }
                 }
                 return true;
             } catch (UnsupportedEncodingException e) {
-                System.out.println("[ERROR][ModuleRemoteConfig]  Cannot deserialize RemoteConfigValueStore " + e);
+                if (L != null) {
+                    L.e("[ModuleRemoteConfig]  Cannot deserialize RemoteConfigValueStore " + e);
+                }
             }
 
             return false;

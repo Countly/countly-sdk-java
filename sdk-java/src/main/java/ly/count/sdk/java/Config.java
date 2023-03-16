@@ -19,7 +19,6 @@ import ly.count.sdk.java.internal.Module;
  * Countly configuration object.
  */
 public class Config {
-
     /**
      * Logging level for {@link Log} module
      */
@@ -157,7 +156,7 @@ public class Config {
         }
 
         @Override
-        public byte[] store() {
+        public byte[] store(Log L) {
             ByteArrayOutputStream bytes = null;
             ObjectOutputStream stream = null;
             try {
@@ -169,20 +168,26 @@ public class Config {
                 stream.close();
                 return bytes.toByteArray();
             } catch (IOException e) {
-                System.out.print("[ConfigCore] Cannot serialize config" + e.toString());
+                if (L != null) {
+                    L.e("[ConfigCore] Cannot serialize config" + e.toString());
+                }
             } finally {
                 if (stream != null) {
                     try {
                         stream.close();
                     } catch (IOException e) {
-                        System.out.print("[ConfigCore] Cannot happen" + e.toString());
+                        if (L != null) {
+                            L.e("[ConfigCore] Cannot happen" + e.toString());
+                        }
                     }
                 }
                 if (bytes != null) {
                     try {
                         bytes.close();
                     } catch (IOException e) {
-                        System.out.print("[ConfigCore] Cannot happen" + e.toString());
+                        if (L != null) {
+                            L.e("[ConfigCore] Cannot happen" + e.toString());
+                        }
                     }
                 }
             }
@@ -190,7 +195,7 @@ public class Config {
         }
 
         @Override
-        public boolean restore(byte[] data) {
+        public boolean restore(byte[] data, Log L) {
             ByteArrayInputStream bytes = null;
             ObjectInputStream stream = null;
 
@@ -198,26 +203,32 @@ public class Config {
                 bytes = new ByteArrayInputStream(data);
                 stream = new ObjectInputStream(bytes);
 
-                Utils.reflectiveSetField(this, "realm", stream.readInt());
-                Utils.reflectiveSetField(this, "strategy", stream.readInt());
-                Utils.reflectiveSetField(this, "id", stream.readObject());
+                Utils.reflectiveSetField(this, "realm", stream.readInt(), L);
+                Utils.reflectiveSetField(this, "strategy", stream.readInt(), L);
+                Utils.reflectiveSetField(this, "id", stream.readObject(), L);
 
                 return true;
             } catch (IOException | ClassNotFoundException e) {
-                System.out.print("[ConfigCore] Cannot deserialize config" + e.toString());
+                if (L != null) {
+                    L.e("[ConfigCore] Cannot deserialize config" + e.toString());
+                }
             } finally {
                 if (stream != null) {
                     try {
                         stream.close();
                     } catch (IOException e) {
-                        System.out.print("[ConfigCore] Cannot happen" + e.toString());
+                        if (L != null) {
+                            L.e("[ConfigCore] Cannot happen" + e.toString());
+                        }
                     }
                 }
                 if (bytes != null) {
                     try {
                         bytes.close();
                     } catch (IOException e) {
-                        System.out.print("[ConfigCore] Cannot happen" + e.toString());
+                        if (L != null) {
+                            L.e("[ConfigCore] Cannot happen" + e.toString());
+                        }
                     }
                 }
             }
@@ -225,6 +236,8 @@ public class Config {
             return false;
         }
     }
+
+    protected Log configLog;
 
     /**
      * URL of Countly server
@@ -269,7 +282,7 @@ public class Config {
     /**
      * Countly SDK version to be sent in HTTP requests
      */
-    protected String sdkVersion = "22.09.1";
+    protected String sdkVersion = "22.09.2";
 
     /**
      * Countly SDK version to be sent in HTTP requests
@@ -576,11 +589,15 @@ public class Config {
      */
     public Config enableFeatures(Config.Feature... features) {
         if (features == null) {
-            System.out.print("[ConfigCore] Features array cannot be null");
+            if (configLog != null) {
+                configLog.e("[ConfigCore] Features array cannot be null");
+            }
         } else {
             for (Config.Feature f : features) {
                 if (f == null) {
-                    System.out.print("[ConfigCore] Feature cannot be null");
+                    if (configLog != null) {
+                        configLog.e("[ConfigCore] Feature cannot be null");
+                    }
                 } else {
                     this.features = this.features | f.getIndex();
                 }
@@ -597,11 +614,15 @@ public class Config {
      */
     public Config disableFeatures(Config.Feature... features) {
         if (features == null) {
-            System.out.print("[ConfigCore] Features array cannot be null");
+            if (configLog != null) {
+                configLog.e("[ConfigCore] Features array cannot be null");
+            }
         } else {
             for (Config.Feature f : features) {
                 if (f == null) {
-                    System.out.print("[ConfigCore] Feature cannot be null");
+                    if (configLog != null) {
+                        configLog.e("[ConfigCore] Feature cannot be null");
+                    }
                 } else {
                     this.features = this.features & ~f.getIndex();
                 }
@@ -634,7 +655,9 @@ public class Config {
         if (features != null && features.length > 0) {
             for (int i = 0; i < features.length; i++) {
                 if (features[i] == null) {
-                    System.out.print(i + "-th feature is null in setFeatures");
+                    if (configLog != null) {
+                        configLog.e("[ConfigCore] " + i + "-th feature is null in setFeatures");
+                    }
                 } else {
                     this.features = this.features | features[i].index;
                 }
@@ -654,7 +677,9 @@ public class Config {
      */
     public Config setDeviceIdStrategy(DeviceIdStrategy strategy, String customDeviceId) {
         if (strategy == null) {
-            System.out.print("[ConfigCore] DeviceIdStrategy cannot be null");
+            if (configLog != null) {
+                configLog.e("[ConfigCore] DeviceIdStrategy cannot be null");
+            }
         } else {
             if (strategy == DeviceIdStrategy.CUSTOM_ID) {
                 return setCustomDeviceId(customDeviceId);
@@ -682,7 +707,9 @@ public class Config {
      */
     public Config setCustomDeviceId(String customDeviceId) {
         if (Utils.isEmptyOrNull(customDeviceId)) {
-            System.out.print("[ConfigCore] DeviceIdStrategy.CUSTOM_ID strategy cannot be used without device id specified");
+            if (configLog != null) {
+                configLog.e("[ConfigCore] DeviceIdStrategy.CUSTOM_ID strategy cannot be used without device id specified");
+            }
         } else {
             this.customDeviceId = customDeviceId;
             this.deviceIdStrategy = DeviceIdStrategy.CUSTOM_ID.index;
@@ -753,7 +780,9 @@ public class Config {
      */
     public Config enableParameterTamperingProtection(String salt) {
         if (Utils.isEmptyOrNull(salt)) {
-            System.out.print("[ConfigCore] Salt cannot be empty in enableParameterTamperingProtection");
+            if (configLog != null) {
+                configLog.e("[ConfigCore] Salt cannot be empty in enableParameterTamperingProtection");
+            }
         } else {
             this.salt = salt;
         }
@@ -779,7 +808,9 @@ public class Config {
      */
     public Config setLoggingLevel(LoggingLevel loggingLevel) {
         if (loggingLevel == null) {
-            System.out.print("[ConfigCore] Logging level cannot be null");
+            if (configLog != null) {
+                configLog.e("[ConfigCore] Logging level cannot be null");
+            }
         } else {
             this.loggingLevel = loggingLevel;
         }
@@ -825,7 +856,9 @@ public class Config {
      */
     public Config setSendUpdateEachSeconds(int sendUpdateEachSeconds) {
         if (sendUpdateEachSeconds < 0) {
-            System.out.print("[ConfigCore] sendUpdateEachSeconds cannot be negative");
+            if (configLog != null) {
+                configLog.e("[ConfigCore] sendUpdateEachSeconds cannot be negative");
+            }
         } else {
             this.sendUpdateEachSeconds = sendUpdateEachSeconds;
         }
@@ -842,7 +875,9 @@ public class Config {
      */
     public Config setEventsBufferSize(int eventsBufferSize) {
         if (eventsBufferSize < 0) {
-            System.out.print("[ConfigCore] eventsBufferSize cannot be negative");
+            if (configLog != null) {
+                configLog.e("[ConfigCore] eventsBufferSize cannot be negative");
+            }
         } else {
             this.eventsBufferSize = eventsBufferSize;
         }
@@ -903,7 +938,9 @@ public class Config {
      */
     public Config setApplicationVersion(String version) {
         if (Utils.isEmptyOrNull(version)) {
-            System.out.print("[ConfigCore] version cannot be empty");
+            if (configLog != null) {
+                configLog.e("[ConfigCore] version cannot be empty");
+            }
         } else {
             this.applicationVersion = version;
         }
@@ -918,7 +955,9 @@ public class Config {
      */
     public Config setNetworkConnectTimeout(int seconds) {
         if (seconds <= 0 || seconds > 300) {
-            System.out.print("[ConfigCore] Connection timeout must be between 0 and 300");
+            if (configLog != null) {
+                configLog.e("[ConfigCore] Connection timeout must be between 0 and 300");
+            }
         } else {
             networkConnectionTimeout = seconds;
         }
@@ -933,7 +972,9 @@ public class Config {
      */
     public Config setNetworkReadTimeout(int seconds) {
         if (seconds <= 0 || seconds > 300) {
-            System.out.print("[ConfigCore] Read timeout must be between 0 and 300");
+            if (configLog != null) {
+                configLog.e("[ConfigCore] Read timeout must be between 0 and 300");
+            }
         } else {
             networkReadTimeout = seconds;
         }
@@ -949,7 +990,9 @@ public class Config {
      */
     public Config setNetworkRequestCooldown(int milliseconds) {
         if (milliseconds < 0 || milliseconds > 30000) {
-            System.out.print("[ConfigCore] Request cooldown must be between 0 and 30000");
+            if (configLog != null) {
+                configLog.e("[ConfigCore] Request cooldown must be between 0 and 30000");
+            }
         } else {
             networkRequestCooldown = milliseconds;
         }
@@ -965,7 +1008,9 @@ public class Config {
      */
     public Config setNetworkImportantRequestCooldown(int milliseconds) {
         if (milliseconds < 0 || milliseconds > 30) {
-            System.out.print("[ConfigCore] Important request cooldown must be between 0 and 30");
+            if (configLog != null) {
+                configLog.e("[ConfigCore] Important request cooldown must be between 0 and 30");
+            }
         } else {
             networkImportantRequestCooldown = milliseconds;
         }
@@ -993,7 +1038,9 @@ public class Config {
      */
     public Config addPublicKeyPin(String pemEncodedPublicKey) {
         if (Utils.isEmptyOrNull(pemEncodedPublicKey)) {
-            System.out.print("[ConfigCore] pemEncodedPublicKey cannot be empty");
+            if (configLog != null) {
+                configLog.e("[ConfigCore] pemEncodedPublicKey cannot be empty");
+            }
         } else {
             if (publicKeyPins == null) {
                 publicKeyPins = new HashSet<>();
@@ -1025,7 +1072,9 @@ public class Config {
      */
     public Config addCertificatePin(String pemEncodedCertificate) {
         if (Utils.isEmptyOrNull(pemEncodedCertificate)) {
-            System.out.print("[ConfigCore] pemEncodedCertificate cannot be empty");
+            if (configLog != null) {
+                configLog.e("[ConfigCore] pemEncodedCertificate cannot be empty");
+            }
         } else {
             if (certificatePins == null) {
                 certificatePins = new HashSet<>();
@@ -1073,7 +1122,9 @@ public class Config {
      */
     public Config setCrashProcessorClass(Class<? extends CrashProcessor> crashProcessorClass) {
         if (crashProcessorClass == null) {
-            System.out.print("[ConfigCore] crashProcessorClass cannot be null");
+            if (configLog != null) {
+                configLog.e("[ConfigCore] crashProcessorClass cannot be null");
+            }
         } else {
             this.crashProcessorClass = crashProcessorClass.getName();
         }
@@ -1246,9 +1297,10 @@ public class Config {
     }
 
     /**
-     * Getter for {@link #applicationName}
+     * Getter for applicationName
+     *
+     * @return applicationName value
      * @deprecated will return empty string
-     * @return {@link #applicationName} value
      */
     public String getApplicationName() {
         return "";
@@ -1410,6 +1462,7 @@ public class Config {
 
     /**
      * Mechanism for overriding metrics that are sent together with "begin session" requests and remote config
+     *
      * @param metricOverride map of values to be used for override
      * @return {@code this} instance for method chaining
      */

@@ -1,3 +1,6 @@
+22.09.2
+* Fixed internal log calls that did not respect the configured log level and did not work with the log listener.
+
 22.09.1
 * Adding a way to override metrics sent by "begin session" requests.
 * Fixed bug where "setApplicationVersion" would not set the application version in metrics

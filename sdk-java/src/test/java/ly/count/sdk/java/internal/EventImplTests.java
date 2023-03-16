@@ -26,7 +26,7 @@ public class EventImplTests extends BaseTestsCore {
     @Before
     public void setupEveryTest() throws Exception {
         config = new InternalConfig(new Config("http://www.serverurl.com", "1234"));
-        Log L = new Log(Config.LoggingLevel.VERBOSE, null);
+        L = new Log(Config.LoggingLevel.VERBOSE, null);
         ctx = new CtxImpl(sdk, config, new Object(), L);
     }
 
@@ -34,7 +34,7 @@ public class EventImplTests extends BaseTestsCore {
     public void constructor() {
         SessionImpl session = new SessionImpl(ctx);
         String key = "key";
-        EventImpl event = new EventImpl(session, key);
+        EventImpl event = new EventImpl(session, key, L);
 
         Assert.assertEquals(Whitebox.getInternalState(event, "key"), key);
         Assert.assertEquals((int) Whitebox.getInternalState(event, "count"), 1);
@@ -50,31 +50,31 @@ public class EventImplTests extends BaseTestsCore {
     public void constructor_deserialize() {
         SessionImpl session = new SessionImpl(ctx);
         String key = "key";
-        EventImpl event = (EventImpl) new EventImpl(session, key)
+        EventImpl event = (EventImpl) new EventImpl(session, key, L)
             .addSegment("key1", "value1")
             .addSegment("key2", "value2")
             .setCount(2)
             .setDuration(3)
             .setSum(4);
 
-        Assert.assertEquals(event, EventImpl.fromJSON(event.toJSON(), session));
+        Assert.assertEquals(event, EventImpl.fromJSON(event.toJSON(L), session, L));
     }
 
     @Test
     public void constructor_throwsIllegalStateExceptionWhenSessionIsNull() {
-        EventImpl event = new EventImpl(null, "key");
+        EventImpl event = new EventImpl(null, "key", L);
         Assert.assertTrue((boolean) Whitebox.getInternalState(event, "invalid"));
     }
 
     @Test
     public void constructor_throwsIllegalStateExceptionWhenKeyIsNull() {
-        EventImpl event = new EventImpl(new SessionImpl(ctx), null);
+        EventImpl event = new EventImpl(new SessionImpl(ctx), null, L);
         Assert.assertTrue((boolean) Whitebox.getInternalState(event, "invalid"));
     }
 
     @Test
     public void constructor_throwsIllegalStateExceptionWhenKeyIsEmpty() {
-        EventImpl event = new EventImpl(new SessionImpl(ctx), "");
+        EventImpl event = new EventImpl(new SessionImpl(ctx), "", L);
         Assert.assertTrue((boolean) Whitebox.getInternalState(event, "invalid"));
     }
 
@@ -82,7 +82,7 @@ public class EventImplTests extends BaseTestsCore {
     public void segmentation_throwsIllegalStateExceptionWhenNull() {
         SessionImpl session = new SessionImpl(ctx);
 
-        EventImpl event = new EventImpl(session, "key");
+        EventImpl event = new EventImpl(session, "key", L);
         Assert.assertNull(Whitebox.getInternalState(event, "segmentation"));
         event.addSegment("k", null);
         Assert.assertTrue((boolean) Whitebox.getInternalState(event, "invalid"));
@@ -92,7 +92,7 @@ public class EventImplTests extends BaseTestsCore {
     public void segmentation_throwsIllegalStateExceptionWhenValueEmpty() {
         SessionImpl session = new SessionImpl(ctx);
 
-        EventImpl event = new EventImpl(session, "key");
+        EventImpl event = new EventImpl(session, "key", L);
         Assert.assertNull(Whitebox.getInternalState(event, "segmentation"));
         event.addSegment("k", "");
         Assert.assertTrue((boolean) Whitebox.getInternalState(event, "invalid"));
@@ -104,7 +104,7 @@ public class EventImplTests extends BaseTestsCore {
         String key = "key", k = "k";
         String v = "whatever";
 
-        EventImpl event = new EventImpl(session, key);
+        EventImpl event = new EventImpl(session, key, L);
         Assert.assertNull(Whitebox.getInternalState(event, "segmentation"));
 
         event.addSegment(k, v);
@@ -119,7 +119,7 @@ public class EventImplTests extends BaseTestsCore {
         String key = "key", k1 = "k1", k2 = "k2";
         String v = "whatever";
 
-        EventImpl event = new EventImpl(session, key);
+        EventImpl event = new EventImpl(session, key, L);
         Assert.assertNull(Whitebox.getInternalState(event, "segmentation"));
 
         event.addSegments(k1, v, k2, v);
@@ -135,7 +135,7 @@ public class EventImplTests extends BaseTestsCore {
         String key = "key", k1 = "k1", k2 = "k2", k3 = "k3";
         String v = "whatever";
 
-        EventImpl event = new EventImpl(session, key);
+        EventImpl event = new EventImpl(session, key, L);
         Assert.assertNull(Whitebox.getInternalState(event, "segmentation"));
 
         event.addSegments(k1, v, k2, v);
@@ -153,31 +153,31 @@ public class EventImplTests extends BaseTestsCore {
 
     @Test
     public void sum_NaN() {
-        EventImpl event = (EventImpl) new EventImpl(new SessionImpl(ctx), "key").setSum(Double.NaN);
+        EventImpl event = (EventImpl) new EventImpl(new SessionImpl(ctx), "key", L).setSum(Double.NaN);
         Assert.assertTrue((boolean) Whitebox.getInternalState(event, "invalid"));
     }
 
     @Test
     public void sum_Inf() {
-        EventImpl event = (EventImpl) new EventImpl(new SessionImpl(ctx), "key").setSum(Double.NEGATIVE_INFINITY);
+        EventImpl event = (EventImpl) new EventImpl(new SessionImpl(ctx), "key", L).setSum(Double.NEGATIVE_INFINITY);
         Assert.assertTrue((boolean) Whitebox.getInternalState(event, "invalid"));
     }
 
     @Test
     public void dur_NaN() {
-        EventImpl event = (EventImpl) new EventImpl(new SessionImpl(ctx), "key").setDuration(Double.NaN);
+        EventImpl event = (EventImpl) new EventImpl(new SessionImpl(ctx), "key", L).setDuration(Double.NaN);
         Assert.assertTrue((boolean) Whitebox.getInternalState(event, "invalid"));
     }
 
     @Test
     public void dur_Inf() {
-        EventImpl event = (EventImpl) new EventImpl(new SessionImpl(ctx), "key").setDuration(Double.NEGATIVE_INFINITY);
+        EventImpl event = (EventImpl) new EventImpl(new SessionImpl(ctx), "key", L).setDuration(Double.NEGATIVE_INFINITY);
         Assert.assertTrue((boolean) Whitebox.getInternalState(event, "invalid"));
     }
 
     @Test
     public void dur_Neg() {
-        EventImpl event = (EventImpl) new EventImpl(new SessionImpl(ctx), "key").setDuration(-2);
+        EventImpl event = (EventImpl) new EventImpl(new SessionImpl(ctx), "key", L).setDuration(-2);
         Assert.assertTrue((boolean) Whitebox.getInternalState(event, "invalid"));
     }
 
@@ -185,7 +185,7 @@ public class EventImplTests extends BaseTestsCore {
     public void dur_Inf_invalid() {
         SessionImpl session = new SessionImpl(ctx);
 
-        Event event = new EventImpl(session, "key");
+        Event event = new EventImpl(session, "key", L);
         try {
             event.setDuration(Double.NEGATIVE_INFINITY);
         } catch (IllegalStateException ignored) {

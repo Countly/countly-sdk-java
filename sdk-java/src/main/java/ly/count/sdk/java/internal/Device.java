@@ -33,10 +33,16 @@ public class Device {
     private Boolean online;
     private Boolean muted;
 
+    private Log L;
+
     private Map<String, String> metricOverride = new HashMap<>();
 
     protected Device() {
         dev = this;
+    }
+
+    public void setLog(Log L) {
+        this.L = L;
     }
 
     /**
@@ -107,7 +113,6 @@ public class Device {
             .put("_resolution", getResolution())
             .put("_locale", getLocale())
             .put("_app_version", getAppVersion());
-
 
         //override metric values
         if (metricOverride != null) {
@@ -253,10 +258,15 @@ public class Device {
             }
             return Long.parseLong(value) / 1024;
         } catch (NumberFormatException e) {
-            System.out.print("[ERROR][DeviceCore] Cannot parse meminfo " + e.toString());
+            if (L != null) {
+                L.e("[DeviceCore] Cannot parse meminfo " + e.toString());
+            }
+
             return null;
         } catch (IOException e) {
-            System.out.print("[ERROR] [DeviceCore] Cannot read meminfo " + e.toString());
+            if (L != null) {
+                L.e("[DeviceCore] Cannot read meminfo " + e.toString());
+            }
             return null;
         } finally {
             try {

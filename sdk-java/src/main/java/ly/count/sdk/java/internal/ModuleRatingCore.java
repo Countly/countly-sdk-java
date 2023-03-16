@@ -200,7 +200,7 @@ public class ModuleRatingCore extends ModuleBase {
         /**
          * @return Create a JSONObject from the current state
          */
-        public JSONObject toJSON() {
+        public JSONObject toJSON(Log L) {
             final JSONObject json = new JSONObject();
 
             try {
@@ -216,7 +216,9 @@ public class ModuleRatingCore extends ModuleBase {
                 json.put(KEY_DIALOG_TEXT_MESSAGE, dialogTextMessage);
                 json.put(KEY_DIALOG_TEXT_DISMISS, dialogTextDismiss);
             } catch (JSONException e) {
-                System.out.println("[ModuleRatingCore] [Rating] Got exception converting an StarRatingPreferences to JSON " + e);
+                if (L != null) {
+                    L.e("[ModuleRatingCore] [Rating] Got exception converting an StarRatingPreferences to JSON " + e);
+                }
             }
 
             return json;
@@ -227,7 +229,7 @@ public class ModuleRatingCore extends ModuleBase {
          *
          * @param json object to parse
          */
-        public void fromJSON(final JSONObject json) {
+        public void fromJSON(final JSONObject json, Log L) {
 
             if (json != null) {
                 try {
@@ -252,7 +254,9 @@ public class ModuleRatingCore extends ModuleBase {
                         dialogTextDismiss = json.getString(KEY_DIALOG_TEXT_DISMISS);
                     }
                 } catch (JSONException e) {
-                    System.out.println("[ModuleRatingCore] [Rating] Got exception converting JSON to a StarRatingPreferences " + e);
+                    if (L != null) {
+                        L.e("[ModuleRatingCore] [Rating] Got exception converting JSON to a StarRatingPreferences " + e);
+                    }
                 }
             }
         }
@@ -268,28 +272,34 @@ public class ModuleRatingCore extends ModuleBase {
         }
 
         @Override
-        public byte[] store() {
+        public byte[] store(Log L) {
             try {
-                return toJSON().toString().getBytes(Utils.UTF8);
+                return toJSON(L).toString().getBytes(Utils.UTF8);
             } catch (UnsupportedEncodingException e) {
-                System.out.println("[ModuleRatingCore] [Rating] UTF is not supported for Rating " + e);
+                if (L != null) {
+                    L.e("[ModuleRatingCore] [Rating] UTF is not supported for Rating " + e);
+                }
                 return null;
             }
         }
 
         @Override
-        public boolean restore(byte[] data) {
+        public boolean restore(byte[] data, Log L) {
             try {
                 String json = new String(data, Utils.UTF8);
                 try {
                     JSONObject obj = new JSONObject(json);
-                    fromJSON(obj);
+                    fromJSON(obj, L);
                 } catch (JSONException e) {
-                    System.out.println("[ModuleRatingCore] [Rating] Couldn't decode Rating data successfully " + e);
+                    if (L != null) {
+                        L.e("[ModuleRatingCore] [Rating] Couldn't decode Rating data successfully " + e);
+                    }
                 }
                 return true;
             } catch (UnsupportedEncodingException e) {
-                System.out.println("[ModuleRatingCore] [Rating] Cannot deserialize Rating " + e);
+                if (L != null) {
+                    L.e("[ModuleRatingCore] [Rating] Cannot deserialize Rating " + e);
+                }
             }
 
             return false;

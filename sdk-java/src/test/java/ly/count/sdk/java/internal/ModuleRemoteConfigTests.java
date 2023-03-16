@@ -49,8 +49,8 @@ public class ModuleRemoteConfigTests extends BaseTestsCore {
         ModuleRemoteConfig.RemoteConfigValueStore rcvs = createValueStore();
         ModuleRemoteConfig.RemoteConfigValueStore rcvs2 = new ModuleRemoteConfig.RemoteConfigValueStore();
 
-        byte[] byteVal = rcvs.store();
-        rcvs2.restore(byteVal);
+        byte[] byteVal = rcvs.store(null);
+        rcvs2.restore(byteVal, null);
 
         Assert.assertTrue(compareValueStores(rcvs, rcvs2));
     }
@@ -66,7 +66,7 @@ public class ModuleRemoteConfigTests extends BaseTestsCore {
         jobj.put(keys[0], valsI[0]);
         jobj.put(keys[1], valsI[1]);
         jobj.put(keys[2], keys[0]);
-        rcvs.mergeValues(jobj);
+        rcvs.mergeValues(jobj, null);
 
         Assert.assertEquals(rcvs.getValue(keys[0]), valsI[0]);
         Assert.assertEquals(rcvs.getValue(keys[1]), valsI[1]);
@@ -82,7 +82,7 @@ public class ModuleRemoteConfigTests extends BaseTestsCore {
         jobj.put(keys[3], jarr);
         jobj.put(keys[1], valsI[3]);
         jobj.put(keys[2], keys[5]);
-        rcvs.mergeValues(jobj);
+        rcvs.mergeValues(jobj, null);
         jarr = new JSONArray();
         jarr.put(valsI[0]);
         jarr.put(valsI[1]);
@@ -112,21 +112,21 @@ public class ModuleRemoteConfigTests extends BaseTestsCore {
                     Object vv1 = entry.getValue();
                     Object vv2 = entry2.getValue();
 
-                    if(vv2 instanceof BigDecimal) {
+                    if (vv2 instanceof BigDecimal) {
                         vv1 = BigDecimal.valueOf((double) vv1);
                     }
 
                     //todo simplify this
-                    if(vv2 instanceof ArrayList) {
+                    if (vv2 instanceof ArrayList) {
                         ArrayList<Object> alVV1 = (ArrayList<Object>) vv1;
                         ArrayList<Object> alVV2 = (ArrayList<Object>) vv2;
                         Assert.assertEquals(alVV1.size(), alVV2.size());
 
-                        for(int a = 0 ; a < alVV1.size() ; a++) {
+                        for (int a = 0; a < alVV1.size(); a++) {
                             Object vvv1 = alVV1.get(a);
                             Object vvv2 = alVV2.get(a);
 
-                            if(vvv2 instanceof BigDecimal) {
+                            if (vvv2 instanceof BigDecimal) {
                                 vvv1 = BigDecimal.valueOf((double) vvv1);
                             }
 

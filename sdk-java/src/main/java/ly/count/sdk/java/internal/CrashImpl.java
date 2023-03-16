@@ -183,16 +183,18 @@ public class CrashImpl implements Crash, Storable {
     }
 
     @Override
-    public byte[] store() {
+    public byte[] store(Log L) {
         try {
             return data.toString().getBytes(Utils.UTF8);
         } catch (UnsupportedEncodingException e) {
-            L.e("[CrashImpl UTF is not supported" + e);
+            if (L != null) {
+                L.e("[CrashImpl UTF is not supported" + e);
+            }
             return null;
         }
     }
 
-    public boolean restore(byte[] data) {
+    public boolean restore(byte[] data, Log L) {
         try {
             String json = new String(data, Utils.UTF8);
             try {
@@ -203,11 +205,15 @@ public class CrashImpl implements Crash, Storable {
                     this.data.put(k, obj.get(k));
                 }
             } catch (JSONException e) {
-                L.e("[CrashImpl Couldn't decode crash data successfully" + e);
+                if (L != null) {
+                    L.e("[CrashImpl Couldn't decode crash data successfully" + e);
+                }
             }
             return true;
         } catch (UnsupportedEncodingException e) {
-            L.e("[CrashImpl Cannot deserialize crash" + e);
+            if (L != null) {
+                L.e("[CrashImpl Cannot deserialize crash" + e);
+            }
         }
 
         return false;
