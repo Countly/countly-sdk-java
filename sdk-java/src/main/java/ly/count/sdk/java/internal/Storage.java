@@ -248,7 +248,7 @@ public class Storage {
      * @return storable object passed as param when reading succeeded, null otherwise
      */
     public static <T extends Storable> T readOne(CtxCore ctx, T storable, boolean asc, Log L) {
-        ctx.getLogger().e("[Storage] readOne: " + name(storable) + " " + storable.toString());
+        ctx.getLogger().d("[Storage] readOne: " + name(storable) + " " + storable.toString());
 
         try {
             return readOneAsync(ctx, storable, asc, L).get();

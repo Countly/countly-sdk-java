@@ -69,7 +69,7 @@ class EventImpl implements Event, JSONable {
             invalid = true;
             recorder.recordEvent(this);
 
-            L.e("[EventImpl] record: " + this.toString());
+            L.d("[EventImpl] record: " + this.toString());
         }
     }
 
