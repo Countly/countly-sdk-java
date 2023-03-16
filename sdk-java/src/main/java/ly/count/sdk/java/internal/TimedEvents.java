@@ -30,7 +30,7 @@ class TimedEvents implements Storable, EventImpl.EventRecorder {
     EventImpl event(CtxCore ctx, String key) {
         EventImpl event = events.get(key);
         if (event == null) {
-            event = new EventImpl(this, key);
+            event = new EventImpl(this, key, L);
             events.put(key, event);
             Storage.pushAsync(ctx, this);
         }
@@ -52,7 +52,7 @@ class TimedEvents implements Storable, EventImpl.EventRecorder {
     }
 
     @Override
-    public byte[] store() {
+    public byte[] store(Log L) {
         ByteArrayOutputStream bytes = null;
         ObjectOutputStream stream = null;
         try {
@@ -61,25 +61,31 @@ class TimedEvents implements Storable, EventImpl.EventRecorder {
             stream.writeInt(events.size());
             for (String key : events.keySet()) {
                 stream.writeUTF(key);
-                stream.writeUTF(events.get(key).toJSON());
+                stream.writeUTF(events.get(key).toJSON(L));
             }
             stream.close();
             return bytes.toByteArray();
         } catch (IOException e) {
-            L.e("[TimedEvents] Cannot serialize timed events" + e);
+            if (L != null) {
+                L.e("[TimedEvents] Cannot serialize timed events" + e);
+            }
         } finally {
             if (stream != null) {
                 try {
                     stream.close();
                 } catch (IOException e) {
-                    L.e("[TimedEvents] Cannot happen" + e);
+                    if (L != null) {
+                        L.e("[TimedEvents] Cannot happen" + e);
+                    }
                 }
             }
             if (bytes != null) {
                 try {
                     bytes.close();
                 } catch (IOException e) {
-                    L.e("[TimedEvents] Cannot happen" + e);
+                    if (L != null) {
+                        L.e("[TimedEvents] Cannot happen" + e);
+                    }
                 }
             }
         }
@@ -87,7 +93,7 @@ class TimedEvents implements Storable, EventImpl.EventRecorder {
     }
 
     @Override
-    public boolean restore(byte[] data) {
+    public boolean restore(byte[] data, Log L) {
         ByteArrayInputStream bytes = null;
         ObjectInputStream stream = null;
 
@@ -98,26 +104,32 @@ class TimedEvents implements Storable, EventImpl.EventRecorder {
             int l = stream.readInt();
             while (l-- > 0) {
                 String key = stream.readUTF();
-                EventImpl event = EventImpl.fromJSON(stream.readUTF(), this);
+                EventImpl event = EventImpl.fromJSON(stream.readUTF(), this, L);
                 events.put(key, event);
             }
 
             return true;
         } catch (IOException e) {
-            L.e("[TimedEvents] Cannot deserialize config" + e);
+            if (L != null) {
+                L.e("[TimedEvents] Cannot deserialize config" + e);
+            }
         } finally {
             if (stream != null) {
                 try {
                     stream.close();
                 } catch (IOException e) {
-                    L.e("[TimedEvents] Cannot happen" + e);
+                    if (L != null) {
+                        L.e("[TimedEvents] Cannot happen" + e);
+                    }
                 }
             }
             if (bytes != null) {
                 try {
                     bytes.close();
                 } catch (IOException e) {
-                    L.e("[TimedEvents] Cannot happen" + e);
+                    if (L != null) {
+                        L.e("[TimedEvents] Cannot happen" + e);
+                    }
                 }
             }
         }

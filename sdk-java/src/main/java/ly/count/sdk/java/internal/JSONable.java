@@ -5,5 +5,5 @@ package ly.count.sdk.java.internal;
  */
 
 public interface JSONable {
-    String toJSON();
+    String toJSON(Log L);
 }

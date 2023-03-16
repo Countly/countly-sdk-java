@@ -5,7 +5,7 @@ package ly.count.sdk.java.internal;
  */
 
 public interface Byteable {
-    byte[] store();
+    byte[] store(Log L);
 
-    boolean restore(byte[] data);
+    boolean restore(byte[] data, Log L);
 }

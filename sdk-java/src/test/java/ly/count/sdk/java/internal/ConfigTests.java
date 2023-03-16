@@ -81,7 +81,7 @@ public class ConfigTests extends BaseTestsCore {
 
     @Test
     public void testSDKVersion() {
-        String versionName = "22.09.1";
+        String versionName = "22.09.2";
         Assert.assertEquals(versionName, internalConfig.getSdkVersion());
 
         internalConfig.setSdkVersion(null);

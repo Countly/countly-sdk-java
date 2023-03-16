@@ -14,7 +14,7 @@ public class DefaultNetworking implements Networking {
         shutdown = false;
         transport = new Transport();
         transport.init(ctx.getConfig(), ctx.getLogger());
-        tasks = new Tasks("network");
+        tasks = new Tasks("network", L);
         this.storageForRequestQueue = storageForRequestQueue;
     }
 

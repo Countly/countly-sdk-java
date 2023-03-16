@@ -141,7 +141,7 @@ public class Transport implements X509TrustManager {
         boolean usingGET = !config.isUsePOST() && request.isGettable(config.getServerURL()) && Utils.isEmptyOrNull(picture);
 
         if (usingGET && config.getParameterTamperingProtectionSalt() != null) {
-            request.params.add(CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, request.params.toString() + config.getParameterTamperingProtectionSalt()));
+            request.params.add(CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, request.params.toString() + config.getParameterTamperingProtectionSalt(), L));
         }
 
         HttpURLConnection connection = openConnection(path, request.params.toString(), usingGET);
@@ -179,13 +179,13 @@ public class Transport implements X509TrustManager {
                     }
 
                     if (config.getParameterTamperingProtectionSalt() != null) {
-                        addMultipart(output, writer, boundary, "text/plain", CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, salting.substring(0, salting.length() - 1) + config.getParameterTamperingProtectionSalt()), null);
+                        addMultipart(output, writer, boundary, "text/plain", CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, salting.substring(0, salting.length() - 1) + config.getParameterTamperingProtectionSalt(), L), null);
                     }
 
                     writer.append(Utils.CRLF).append("--").append(boundary).append("--").append(Utils.CRLF).flush();
                 } else {
                     if (config.getParameterTamperingProtectionSalt() != null) {
-                        request.params.add(CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, request.params.toString() + config.getParameterTamperingProtectionSalt()));
+                        request.params.add(CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, request.params.toString() + config.getParameterTamperingProtectionSalt(), L));
                     }
                     connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 
@@ -399,14 +399,14 @@ public class Transport implements X509TrustManager {
         if (keys != null) {
             for (String key : keys) {
                 try {
-                    byte[] data = Utils.readStream(Transport.class.getClassLoader().getResourceAsStream(key));
+                    byte[] data = Utils.readStream(Transport.class.getClassLoader().getResourceAsStream(key), L);
                     if (data != null) {
                         String string = new String(data);
                         if (string.contains("--BEGIN")) {
-                            data = Utils.Base64.decode(trimPem(string));
+                            data = Utils.Base64.decode(trimPem(string), L);
                         }
                     } else {
-                        data = Utils.Base64.decode(trimPem(key));
+                        data = Utils.Base64.decode(trimPem(key), L);
                     }
 
                     try {
@@ -428,14 +428,14 @@ public class Transport implements X509TrustManager {
 
         if (certs != null) {
             for (String cert : certs) {
-                byte[] data = Utils.readStream(Transport.class.getClassLoader().getResourceAsStream(cert));
+                byte[] data = Utils.readStream(Transport.class.getClassLoader().getResourceAsStream(cert), L);
                 if (data != null) {
                     String string = new String(data);
                     if (string.contains("--BEGIN")) {
-                        data = Utils.Base64.decode(trimPem(string));
+                        data = Utils.Base64.decode(trimPem(string), L);
                     }
                 } else {
-                    data = Utils.Base64.decode(trimPem(cert));
+                    data = Utils.Base64.decode(trimPem(cert), L);
                 }
 
                 CertificateFactory cf = CertificateFactory.getInstance("X.509");

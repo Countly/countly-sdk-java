@@ -103,7 +103,7 @@ public class UserImpl extends User implements Storable {
     }
 
     @Override
-    public byte[] store() {
+    public byte[] store(Log L) {
         ByteArrayOutputStream bytes = null;
         ObjectOutputStream stream = null;
         try {
@@ -130,20 +130,26 @@ public class UserImpl extends User implements Storable {
             stream.close();
             return bytes.toByteArray();
         } catch (IOException e) {
-            L.e("[UserImpl Cannot serialize session" + e);
+            if (L != null) {
+                L.e("[UserImpl Cannot serialize session" + e);
+            }
         } finally {
             if (stream != null) {
                 try {
                     stream.close();
                 } catch (IOException e) {
-                    L.e("[UserImpl Cannot happen" + e);
+                    if (L != null) {
+                        L.e("[UserImpl Cannot happen" + e);
+                    }
                 }
             }
             if (bytes != null) {
                 try {
                     bytes.close();
                 } catch (IOException e) {
-                    L.e("[UserImpl Cannot happen" + e);
+                    if (L != null) {
+                        L.e("[UserImpl Cannot happen" + e);
+                    }
                 }
             }
         }
@@ -151,7 +157,7 @@ public class UserImpl extends User implements Storable {
     }
 
     @SuppressWarnings("unchecked")
-    public boolean restore(byte[] data) {
+    public boolean restore(byte[] data, Log L) {
         ByteArrayInputStream bytes = null;
         ObjectInputStream stream = null;
 
@@ -195,20 +201,26 @@ public class UserImpl extends User implements Storable {
 
             return true;
         } catch (IOException | ClassNotFoundException e) {
-            L.e("[UserImpl Cannot deserialize session" + e);
+            if (L != null) {
+                L.e("[UserImpl Cannot deserialize session" + e);
+            }
         } finally {
             if (stream != null) {
                 try {
                     stream.close();
                 } catch (IOException e) {
-                    L.e("[UserImpl Cannot happen" + e);
+                    if (L != null) {
+                        L.e("[UserImpl Cannot happen" + e);
+                    }
                 }
             }
             if (bytes != null) {
                 try {
                     bytes.close();
                 } catch (IOException e) {
-                    L.e("[UserImpl Cannot happen" + e);
+                    if (L != null) {
+                        L.e("[UserImpl Cannot happen" + e);
+                    }
                 }
             }
         }

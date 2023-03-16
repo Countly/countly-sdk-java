@@ -56,7 +56,7 @@ public class BackendModeTests {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
         Assert.assertTrue(moduleBackendMode.internalConfig.isBackendModeEnabled());
         Assert.assertEquals(4, moduleBackendMode.internalConfig.getEventsBufferSize());
-        Assert.assertEquals("java-native-backend", moduleBackendMode.internalConfig.getSdkName());
+        Assert.assertEquals("java-native-backend", moduleBackendMode.internalConfig.getSDKNameInternal());
         Assert.assertEquals(1000, moduleBackendMode.internalConfig.getRequestQueueMaxSize());
     }
 

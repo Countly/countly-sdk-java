@@ -181,7 +181,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
         } else if (deviceId != null && oldDeviceId == null && deviceId.realm == Config.DID.REALM_DID) {
             // device id just acquired
             if (this.tasks == null) {
-                this.tasks = new Tasks("deviceId");
+                this.tasks = new Tasks("deviceId", L);
             }
             tasks.run(new Tasks.Task<Object>(0L) {
                 @Override
@@ -226,9 +226,9 @@ public class ModuleDeviceIdCore extends ModuleBase {
             @Override
             public byte[] doTheJob(Long id, byte[] data) {
                 Request request = new Request(id);
-                if (request.restore(data) && !request.params.has(Params.PARAM_DEVICE_ID)) {
+                if (request.restore(data, L) && !request.params.has(Params.PARAM_DEVICE_ID)) {
                     request.params.add(Params.PARAM_DEVICE_ID, deviceId);
-                    return request.store();
+                    return request.store(L);
                 }
                 return null;
             }
@@ -325,7 +325,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
     protected Future<Config.DID> acquireId(final CtxCore ctx, final Config.DID holder, final boolean fallbackAllowed, final Tasks.Callback<Config.DID> callback) {
         L.d("[ModuleDeviceIdCore] d4");
         if (this.tasks == null) {
-            this.tasks = new Tasks("deviceId");
+            this.tasks = new Tasks("deviceId", L);
         }
 
         return this.tasks.run(new Tasks.Task<Config.DID>(Tasks.ID_STRICT) {

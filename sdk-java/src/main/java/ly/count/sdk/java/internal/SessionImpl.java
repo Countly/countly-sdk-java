@@ -221,7 +221,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         return ret;
     }
 
-    Boolean recover(Config config) {
+    Boolean recover(Config config, Log L) {
         if ((System.currentTimeMillis() - id) < 0) {
             return null;
         } else {
@@ -244,7 +244,9 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             try {
                 return future.get();
             } catch (InterruptedException | ExecutionException e) {
-                L.e("[SessionImpl] Interrupted while resolving session recovery future" + e);
+                if (L != null) {
+                    L.e("[SessionImpl] Interrupted while resolving session recovery future" + e);
+                }
                 return false;
             }
         }
@@ -276,7 +278,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     }
 
     public Event event(String key) {
-        return new EventImpl(this, key);
+        return new EventImpl(this, key, L);
     }
 
     public Event timedEvent(String key) {
@@ -462,7 +464,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         return "session";
     }
 
-    public byte[] store() {
+    public byte[] store(Log L) {
         ByteArrayOutputStream bytes = null;
         ObjectOutputStream stream = null;
         try {
@@ -481,27 +483,33 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             stream.close();
             return bytes.toByteArray();
         } catch (IOException e) {
-            L.e("[SessionImpl] Cannot serialize session" + e);
+            if (L != null) {
+                L.e("[SessionImpl] Cannot serialize session" + e);
+            }
         } finally {
             if (stream != null) {
                 try {
                     stream.close();
                 } catch (IOException e) {
-                    L.e("[SessionImpl] Cannot happen" + e);
+                    if (L != null) {
+                        L.e("[SessionImpl] Cannot happen" + e);
+                    }
                 }
             }
             if (bytes != null) {
                 try {
                     bytes.close();
                 } catch (IOException e) {
-                    L.e("[SessionImpl] Cannot happen" + e);
+                    if (L != null) {
+                        L.e("[SessionImpl] Cannot happen" + e);
+                    }
                 }
             }
         }
         return null;
     }
 
-    public boolean restore(byte[] data) {
+    public boolean restore(byte[] data, Log L) {
         ByteArrayInputStream bytes = null;
         ObjectInputStream stream = null;
 
@@ -509,7 +517,9 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             bytes = new ByteArrayInputStream(data);
             stream = new ObjectInputStream(bytes);
             if (id != stream.readLong()) {
-                L.e("[SessionImpl] Wrong file for session deserialization");
+                if (L != null) {
+                    L.e("[SessionImpl] Wrong file for session deserialization");
+                }
             }
 
             began = stream.readLong();
@@ -521,7 +531,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
             int count = stream.readInt();
             for (int i = 0; i < count; i++) {
-                Event event = EventImpl.fromJSON(stream.readUTF(), null);
+                Event event = EventImpl.fromJSON(stream.readUTF(), null, L);
                 if (event != null) {
                     events.add(event);
                 }
@@ -532,20 +542,26 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
             return true;
         } catch (IOException e) {
-            L.e("[SessionImpl] Cannot deserialize session" + e);
+            if (L != null) {
+                L.e("[SessionImpl] Cannot deserialize session" + e);
+            }
         } finally {
             if (stream != null) {
                 try {
                     stream.close();
                 } catch (IOException e) {
-                    L.e("[SessionImpl] Cannot happen" + e);
+                    if (L != null) {
+                        L.e("[SessionImpl] Cannot happen" + e);
+                    }
                 }
             }
             if (bytes != null) {
                 try {
                     bytes.close();
                 } catch (IOException e) {
-                    L.e("[SessionImpl] Cannot happen" + e);
+                    if (L != null) {
+                        L.e("[SessionImpl] Cannot happen" + e);
+                    }
                 }
             }
         }

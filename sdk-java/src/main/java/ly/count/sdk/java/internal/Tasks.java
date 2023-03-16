@@ -19,6 +19,8 @@ public class Tasks {
     public static final Long ID_STRICT = 0L;
     public static final Long ID_LIST = -1L;
 
+    Log L;
+
     public static abstract class Task<T> implements Callable<T> {
         Long id;
 
@@ -44,7 +46,8 @@ public class Tasks {
      */
     private final Map<Long, Future> pending;
 
-    public Tasks(final String name) {
+    public Tasks(final String name, Log L) {
+        this.L = L;
         executor = Executors.newSingleThreadExecutor(new ThreadFactory() {
             @Override
             public Thread newThread(Runnable runnable) {
@@ -134,11 +137,15 @@ public class Tasks {
                     executor.shutdownNow(); // Cancel currently executing tasks
                     // Wait a while for tasks to respond to being cancelled
                     if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
-                        System.out.println("[Task] didn't shutdown gracefully");
+                        if (L != null) {
+                            L.e("[Task] didn't shutdown gracefully");
+                        }
                     }
                 }
             } catch (Throwable t) {
-                System.out.println("[Task] Error while shutting down tasks " + t);
+                if (L != null) {
+                    L.e("[Task] Error while shutting down tasks " + t);
+                }
             }
         }
     }
@@ -151,7 +158,9 @@ public class Tasks {
                 }
             }).get();
         } catch (InterruptedException | ExecutionException e) {
-            System.out.println("[Task] Interrupted while waiting for Tasks to finish running tasks " + e);
+            if (L != null) {
+                L.e("[Task] Interrupted while waiting for Tasks to finish running tasks " + e);
+            }
         }
     }
 }

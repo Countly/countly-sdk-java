@@ -22,7 +22,7 @@ public class SDKStorage {
     }
 
     public void stop(ly.count.sdk.java.internal.CtxCore ctx, boolean clear) {
-        Storage.await();
+        Storage.await(L);
         if (clear) {
             storablePurge(ctx, null);
         }
@@ -111,7 +111,7 @@ public class SDKStorage {
     }
 
     public <T extends Storable> Boolean storableWrite(ly.count.sdk.java.internal.CtxCore context, T storable) {
-        return storableWrite(context, storable.storagePrefix(), storable.storageId(), storable.store());
+        return storableWrite(context, storable.storagePrefix(), storable.storageId(), storable.store(L));
     }
 
     private String createFileFullPath(ly.count.sdk.java.internal.CtxCore context, String filename) {
@@ -179,7 +179,7 @@ public class SDKStorage {
         if (data == null) {
             return null;
         } else {
-            return storable.restore(data);
+            return storable.restore(data, L);
         }
     }
 

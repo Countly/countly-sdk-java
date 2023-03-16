@@ -111,7 +111,7 @@ public class Request implements Storable {
     }
 
     @Override
-    public byte[] store() {
+    public byte[] store(Log L) {
         try {
             return (params.toString() + EOR).getBytes(Utils.UTF8);
         } catch (UnsupportedEncodingException e) {
@@ -120,7 +120,7 @@ public class Request implements Storable {
     }
 
     @Override
-    public boolean restore(byte[] data) {
+    public boolean restore(byte[] data, Log L) {
         String str = new String(data, Charset.forName(Utils.UTF8));
         if (str.endsWith(EOR)) {
             params = new Params(str.substring(0, str.length() - EOR.length()));

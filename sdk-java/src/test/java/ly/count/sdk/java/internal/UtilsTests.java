@@ -63,7 +63,7 @@ public class UtilsTests {
         String decodeSource = "MTIzNDU=";
         String decodeTarget = "12345";
 
-        Assert.assertEquals(decodeTarget, Utils.Base64.decodeToString(decodeSource));
+        Assert.assertEquals(decodeTarget, Utils.Base64.decodeToString(decodeSource, null));
     }
 
     @Test
@@ -71,7 +71,7 @@ public class UtilsTests {
         String decodeSource = "MTIzNDU=";
         String decodeTarget = "12345";
         byte[] decodeTargetBytes = decodeTarget.getBytes();
-        byte[] resBytes = Utils.Base64.decode(decodeSource);
+        byte[] resBytes = Utils.Base64.decode(decodeSource, null);
 
         Assert.assertArrayEquals(decodeTargetBytes, resBytes);
     }
@@ -96,27 +96,27 @@ public class UtilsTests {
     @Test(expected = NullPointerException.class)
     public void urlencode_null() {
         final String givenString = null;
-        final String res = Utils.urlencode(givenString);
+        final String res = Utils.urlencode(givenString, null);
     }
 
     @Test
     public void urlencode_empty() {
         final String givenString = "";
-        final String res = Utils.urlencode(givenString);
+        final String res = Utils.urlencode(givenString, null);
         junit.framework.Assert.assertEquals(givenString, res);
     }
 
     @Test
     public void urlencode_symbols() {
         final String givenString = "~!@ #$%^&()_+{ }:\"|[]\\|,./<>?";
-        final String res = Utils.urlencode(givenString);
+        final String res = Utils.urlencode(givenString, null);
         junit.framework.Assert.assertEquals("%7E%21%40+%23%24%25%5E%26%28%29_%2B%7B+%7D%3A%22%7C%5B%5D%5C%7C%2C.%2F%3C%3E%3F", res);
     }
 
     @Test
     public void urlencode_basicAlphanumericals() {
         final String givenString = "TheQuickBrownFoxJumpsOverTheLazyDog1234567890.-*_";
-        final String res = Utils.urlencode(givenString);
+        final String res = Utils.urlencode(givenString, null);
         junit.framework.Assert.assertEquals(givenString, res);
     }
 
@@ -199,20 +199,20 @@ public class UtilsTests {
 
     @Test
     public void reflectiveClassExists() {
-        junit.framework.Assert.assertTrue(Utils.reflectiveClassExists("java.lang.Integer"));
-        junit.framework.Assert.assertFalse(Utils.reflectiveClassExists("lava.lang.Integer"));
+        junit.framework.Assert.assertTrue(Utils.reflectiveClassExists("java.lang.Integer", null));
+        junit.framework.Assert.assertFalse(Utils.reflectiveClassExists("lava.lang.Integer", null));
     }
 
     @Test
     public void reflectiveCall() {
         Integer i = 5;
         String s = i.toString();
-        junit.framework.Assert.assertEquals(s, Utils.reflectiveCall("java.lang.Integer", i, "toString"));
-        junit.framework.Assert.assertEquals(i, Utils.reflectiveCall("java.lang.Integer", null, "parseInt", s));
-        junit.framework.Assert.assertEquals(Boolean.FALSE, Utils.reflectiveCall("lava.lang.Integer", i, "nosuchclass"));
-        junit.framework.Assert.assertEquals(Boolean.FALSE, Utils.reflectiveCall("java.lang.Integer", i, "nosuchmethod"));
-        junit.framework.Assert.assertEquals(Boolean.FALSE, Utils.reflectiveCall("java.lang.Integer", null, "nosuchmethod", 0, 0));
-        junit.framework.Assert.assertEquals(Boolean.FALSE, Utils.reflectiveCall("java.lang.Integer", null, "toUnsignedString", 0, 0));
+        junit.framework.Assert.assertEquals(s, Utils.reflectiveCall("java.lang.Integer", i, "toString", null));
+        junit.framework.Assert.assertEquals(i, Utils.reflectiveCall("java.lang.Integer", null, "parseInt", null, s));
+        junit.framework.Assert.assertEquals(Boolean.FALSE, Utils.reflectiveCall("lava.lang.Integer", i, "nosuchclass", null));
+        junit.framework.Assert.assertEquals(Boolean.FALSE, Utils.reflectiveCall("java.lang.Integer", i, "nosuchmethod", null));
+        junit.framework.Assert.assertEquals(Boolean.FALSE, Utils.reflectiveCall("java.lang.Integer", null, "nosuchmethod", null, 0, 0));
+        junit.framework.Assert.assertEquals(Boolean.FALSE, Utils.reflectiveCall("java.lang.Integer", null, "toUnsignedString", null, 0, 0));
     }
 
     @Test
@@ -230,8 +230,8 @@ public class UtilsTests {
             }
         }
         Testy i = new Testy(5), j = new Testy(6);
-        junit.framework.Assert.assertEquals(Boolean.FALSE, Utils.reflectiveSetField(i, "nosuchattr", j));
-        junit.framework.Assert.assertEquals(Boolean.TRUE, Utils.reflectiveSetField(i, "x", 6));
+        junit.framework.Assert.assertEquals(Boolean.FALSE, Utils.reflectiveSetField(i, "nosuchattr", j, null));
+        junit.framework.Assert.assertEquals(Boolean.TRUE, Utils.reflectiveSetField(i, "x", 6, null));
         junit.framework.Assert.assertEquals(i, j);
     }
 
