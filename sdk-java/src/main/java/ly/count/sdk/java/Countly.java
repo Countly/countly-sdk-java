@@ -111,7 +111,7 @@ public class Countly implements Usage {
     public static void stop(boolean clearData) {
         if (cly != null) {
             if (cly.L != null) {
-                cly.L.e("[Countly] Stopping SDK");
+                cly.L.i("[Countly] Stopping SDK");
             }
             cly.sdk.stop(cly.ctx, clearData);
             cly = null;

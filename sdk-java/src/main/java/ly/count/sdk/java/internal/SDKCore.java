@@ -111,7 +111,7 @@ public class SDKCore {
             networking.stop(ctx);
         }
 
-        L.i("[SDKCore] [SDKCore] Stopping Countly SDK" + (clear ? " and clearing all data" : ""));
+        L.i("[SDKCore] Stopping Countly SDK" + (clear ? " and clearing all data" : ""));
 
         eachModule(new Modulator() {
             @Override
@@ -432,7 +432,7 @@ public class SDKCore {
 
     public void init(final CtxCore ctx, Log logger) {
         L = logger;
-        L.i("[SDKCore] [SDKCore] Initializing Countly in " + (ctx.getConfig().isLimited() ? "limited" : "full") + " mode");
+        L.i("[SDKCore] Initializing Countly in " + (ctx.getConfig().isLimited() ? "limited" : "full") + " mode");
 
         sdkStorage.init(ctx, logger);
         config = prepareConfig(ctx);
@@ -556,7 +556,7 @@ public class SDKCore {
     }
 
     public void onCrash(CtxCore ctx, Throwable t, boolean fatal, String name, Map<String, String> segments, String[] logs) {
-        L.i("[SDKCore] [SDKCore] onCrash: t: " + t.toString() + " fatal: " + fatal + " name: " + name + " segments: " + segments);
+        L.i("[SDKCore] onCrash: t: " + t.toString() + " fatal: " + fatal + " name: " + name + " segments: " + segments);
         ModuleCrash module = (ModuleCrash) module(CoreFeature.CrashReporting.getIndex());
         if (module != null) {
             module.onCrash(ctx, t, fatal, name, segments, logs);
@@ -689,7 +689,7 @@ public class SDKCore {
         List<Long> crashes = Storage.list(ctx, CrashImpl.getStoragePrefix());
 
         for (Long id : crashes) {
-            L.i("[SDKCore] [SDKCore] Found unprocessed crash " + id);
+            L.i("[SDKCore] Found unprocessed crash " + id);
             onSignal(ctx, Signal.Crash.getIndex(), id.toString());
         }
 
