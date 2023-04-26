@@ -399,13 +399,6 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     }
 
     @Override
-    public Usage resetDeviceId(String id) {
-        L.d("[SessionImpl] resetDeviceId: id = " + id);
-        SDKCore.instance.changeDeviceIdWithoutMerge(ctx, id);
-        return this;
-    }
-
-    @Override
     public Usage changeDeviceIdWithMerge(String id) {
         if (ctx.getConfig().isBackendModeEnabled()) {
             L.w("[SessionImpl] changeDeviceIdWithMerge: Skipping change device id with merge, backend mode is enabled!");

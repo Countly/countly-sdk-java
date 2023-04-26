@@ -36,16 +36,6 @@ public class Countly implements Usage {
         this.ctx = ctx;
     }
 
-    //    private static CtxImpl ctx(File directory) {
-    //        return new CtxImpl(cly.sdk, cly.sdk.config(), directory);
-    //    }
-    //
-    //    private static CtxImpl ctx(File directory, String view) {
-    //        return new CtxImpl(cly.sdk, cly.sdk.config(), directory, view);
-    //    }
-
-    //protected CtxImpl ctx;
-
     /**
      * Initialize Countly.
      * To be called only once on application start.
@@ -184,31 +174,6 @@ public class Countly implements Usage {
     }
 
     /**
-     * Returns active {@link Session} if any or {@code null} otherwise.
-     *
-     * NOTE: {@link Session} instances can expire, for example when {@link Config.DID} changes.
-     * {@link Session} also holds application context.
-     * So either do not store {@link Session} instances in any static variables and use this method or {@link #session()} every time you need it,
-     * or check {@link Session#isActive()} before using it.
-     *
-     * @return active {@link Session} instance if there is one, {@code null} otherwise
-     */
-
-    /**
-     * @deprecated This method deprecated, please
-     * <p> use {@link #session()} instead.
-     */
-    public static Session getSession() {
-        if (!isInitialized()) {
-            if (cly != null && cly.L != null) {
-                cly.L.e("[Countly] SDK is not initialized yet.");
-            }
-            return null;
-        }
-        return session(cly.ctx);
-    }
-
-    /**
      * Alternative to {@link #getSession()} & {@link #session()} method for accessing Countly SDK API.
      *
      * @return {@link Usage} instance
@@ -238,15 +203,6 @@ public class Countly implements Usage {
     @Override
     public String getDeviceId() {
         return ctx.getConfig().getDeviceId().id;
-    }
-
-    @Override
-    public Usage resetDeviceId(String id) {
-        if (cly.L != null) {
-            L.d("[Countly] resetDeviceId: id = " + id);
-        }
-        sdk.changeDeviceIdWithoutMerge(ctx, id);
-        return this;
     }
 
     @Override

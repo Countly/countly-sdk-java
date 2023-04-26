@@ -109,19 +109,20 @@ public class Sample {
         metricOverride.put("bb", "222");
 
         Config config = new Config(COUNTLY_SERVER_URL, COUNTLY_APP_KEY)
-                .setLoggingLevel(Config.LoggingLevel.DEBUG)
-                .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
-                .enableFeatures(Config.Feature.Events, Config.Feature.Sessions, Config.Feature.CrashReporting, Config.Feature.Views, Config.Feature.UserProfiles, Config.Feature.Location)
-                .setRequiresConsent(true)
-                //.enableParameterTamperingProtection("test-salt-checksum")
-                .setLogListener(new LogCallback() {
-                    @Override
-                    public void LogHappened(String logMessage, Config.LoggingLevel logLevel) {
-                        System.out.println("[" + logLevel + "] " + logMessage);
-                    }
-                })
-                .setMetricOverride(metricOverride)
-                .setApplicationVersion("123.56.h");
+            .setLoggingLevel(Config.LoggingLevel.DEBUG)
+            .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
+            .enableFeatures(Config.Feature.Events, Config.Feature.Sessions, Config.Feature.CrashReporting, Config.Feature.Views, Config.Feature.UserProfiles, Config.Feature.Location)
+            .setRequiresConsent(true)
+            //.enableParameterTamperingProtection("test-salt-checksum")
+            .setLogListener(new LogCallback() {
+                @Override
+                public void LogHappened(String logMessage, Config.LoggingLevel logLevel) {
+                    //System.out.println("[" + logLevel + "] " + logMessage);
+                }
+            })
+            .setEventsBufferSize(1)
+            .setMetricOverride(metricOverride)
+            .setApplicationVersion("123.56.h");
 
         // Countly needs persistent storage for requests, configuration storage, user profiles and other temporary data,
         // therefore requires a separate data folder to run
