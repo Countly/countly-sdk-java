@@ -8,6 +8,7 @@ import java.util.Scanner;
 
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
+import ly.count.sdk.java.View;
 import ly.count.sdk.java.internal.LogCallback;
 
 public class Sample {
@@ -18,8 +19,8 @@ public class Sample {
 
     static void eventWithSumAndCount() {
         Countly.api().event("Event With Sum And Count")
-                .setSum(23)
-                .setCount(2).record();
+            .setSum(23)
+            .setCount(2).record();
     }
 
     static void eventWithSegmentation() {
@@ -30,7 +31,7 @@ public class Sample {
         }};
 
         Countly.api().event("Event With Sum")
-                .setSegmentation(segment).record();
+            .setSegmentation(segment).record();
     }
 
     static void eventWithSumAndSegmentation() {
@@ -40,8 +41,8 @@ public class Sample {
         }};
 
         Countly.api().event("Event With Sum")
-                .setSum(23)
-                .setSegmentation(segment).record();
+            .setSum(23)
+            .setSegmentation(segment).record();
     }
 
     static void timedEventWithSumCountSegmentationAndDuration() {
@@ -51,10 +52,10 @@ public class Sample {
         }};
 
         Countly.api().timedEvent("timed event")
-                .setCount(2)
-                .setSum(5)
-                .setSegmentation(segment)
-                .setDuration(5.3).record();
+            .setCount(2)
+            .setSum(5)
+            .setSegmentation(segment)
+            .setDuration(5.3).record();
     }
 
     static void setLocation() {
@@ -63,21 +64,21 @@ public class Sample {
 
     static void setUserProfile() {
         Countly.api().user().edit()
-                .setName("Full name")
-                .setUsername("nickname")
-                .setEmail("test@test.com")
-                .setOrg("Tester")
-                .setPhone("+123456789")
-                .commit();
+            .setName("Full name")
+            .setUsername("nickname")
+            .setEmail("test@test.com")
+            .setOrg("Tester")
+            .setPhone("+123456789")
+            .commit();
     }
 
     static void setCustomProfile() {
         Countly.api().user().edit()
-                .set("mostFavoritePet", "dog")
-                .inc("phoneCalls", 1)
-                .pushUnique("tags", "fan")
-                .pushUnique("skill", "singer")
-                .commit();
+            .set("mostFavoritePet", "dog")
+            .inc("phoneCalls", 1)
+            .pushUnique("tags", "fan")
+            .pushUnique("skill", "singer")
+            .commit();
     }
 
     static void recordStartView() {
@@ -94,7 +95,6 @@ public class Sample {
         } catch (Exception e) {
             Countly.api().addCrashReport(e, false, "Divided by zero", null, "sample app");
         }
-
     }
 
     public static void main(String[] args) throws Exception {
@@ -157,7 +157,6 @@ public class Sample {
             System.out.println("12) Start a view called 'example_view'");
             System.out.println("13) End a view called 'example_view'");
             System.out.println("0) Exit ");
-
 
             int input = scanner.nextInt();
             switch (input) {
