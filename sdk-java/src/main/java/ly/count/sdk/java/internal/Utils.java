@@ -19,8 +19,6 @@ import java.util.*;
  */
 
 public class Utils {
-    protected static final Utils utils = new Utils();//todo remove this when possible
-
     public static final String UTF8 = "UTF-8";
     public static final String CRLF = "\r\n";
     public static final char[] BASE_16 = "0123456789ABCDEF".toCharArray();
@@ -156,7 +154,7 @@ public class Utils {
     }
 
     public static boolean reflectiveClassExists(String cls, Log L) {
-        boolean res = utils._reflectiveClassExists(cls, L);
+        boolean res = _reflectiveClassExists(cls, L);
         return res;
     }
 
@@ -166,7 +164,7 @@ public class Utils {
      * @param cls Class name to check
      * @return true if class exists, false otherwise
      */
-    public boolean _reflectiveClassExists(String cls, Log L) {
+    public static boolean _reflectiveClassExists(String cls, Log L) {
         try {
             Class.forName(cls);
             return true;
@@ -188,10 +186,10 @@ public class Utils {
      * @return false in case of failure, method result otherwise
      */
     public static Object reflectiveCall(String className, Object instance, String methodName, Log L, Object... args) {
-        return utils._reflectiveCall(className, instance, methodName, L, args);
+        return _reflectiveCall(className, instance, methodName, L, args);
     }
 
-    public Object _reflectiveCall(String className, Object instance, String methodName, Log L, Object... args) {
+    public static Object _reflectiveCall(String className, Object instance, String methodName, Log L, Object... args) {
         try {
             if (L != null) {
                 L.e("Utils cls " + className + ", inst " + instance);
@@ -242,10 +240,10 @@ public class Utils {
      * @return false in case of failure, method result otherwise
      */
     public static Object reflectiveCallStrict(String className, Object instance, String methodName, Log L, Object... args) {
-        return utils._reflectiveCallStrict(className, instance, methodName, L, args);
+        return _reflectiveCallStrict(className, instance, methodName, L, args);
     }
 
-    public Object _reflectiveCallStrict(String className, Object instance, String methodName, Log L, Object... args) {
+    public static Object _reflectiveCallStrict(String className, Object instance, String methodName, Log L, Object... args) {
         try {
             Class<?> cls = instance == null ? Class.forName(className) : instance.getClass();
             Class<?> types[] = args == null || args.length == 0 ? null : new Class[args.length / 2];
@@ -283,14 +281,14 @@ public class Utils {
     }
 
     public static Boolean reflectiveSetField(Object object, String name, Object value, Log L) {
-        return utils._reflectiveSetField(object, object.getClass(), name, value, L);
+        return _reflectiveSetField(object, object.getClass(), name, value, L);
     }
 
     public static Boolean reflectiveSetField(Class cls, String name, Object value, Log L) {
-        return utils._reflectiveSetField(null, cls, name, value, L);
+        return _reflectiveSetField(null, cls, name, value, L);
     }
 
-    public Boolean _reflectiveSetField(Object object, Class cls, String name, Object value, Log L) {
+    public static Boolean _reflectiveSetField(Object object, Class cls, String name, Object value, Log L) {
         try {
             Field field = findField(cls, name);
             boolean accessible = field.isAccessible();
@@ -315,15 +313,15 @@ public class Utils {
     }
 
     public static <T> T reflectiveGetField(Object object, String name, Log L) {
-        return utils._reflectiveGetField(object, object.getClass(), name, L);
+        return _reflectiveGetField(object, object.getClass(), name, L);
     }
 
     public static <T> T reflectiveGetField(Class cls, String name, Log L) {
-        return utils._reflectiveGetField(null, cls, name, L);
+        return _reflectiveGetField(null, cls, name, L);
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T _reflectiveGetField(Object object, Class cls, String name, Log L) {
+    public static <T> T _reflectiveGetField(Object object, Class cls, String name, Log L) {
         try {
             Field field = findField(cls, name);
             boolean accessible = field.isAccessible();

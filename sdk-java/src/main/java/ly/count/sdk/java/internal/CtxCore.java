@@ -17,8 +17,6 @@ public class CtxCore {
     private File directory;
     private String view;//todo not sure about the usefulness of this
 
-    private boolean expired = false;
-
     public CtxCore(SDKCore sdk, InternalConfig config, Log logger, File directory) {
         this.sdk = sdk;
         this.config = config;
@@ -34,9 +32,6 @@ public class CtxCore {
     }
 
     public File getContext() {
-        if (expired) {
-            L.w("[CtxImpl] Ctx is expired");
-        }
         return directory;
     }
 
@@ -48,10 +43,6 @@ public class CtxCore {
         return sdk;
     }
 
-    public boolean isExpired() {
-        return expired;
-    }
-
     public Log getLogger() {
         return L;
     }
@@ -60,9 +51,4 @@ public class CtxCore {
         return view;
     }
 
-    public void expire() {
-        config = null;
-        directory = null;
-        view = null;
-    }
 }
