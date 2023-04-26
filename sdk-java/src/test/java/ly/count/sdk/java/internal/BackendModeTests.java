@@ -83,7 +83,7 @@ public class BackendModeTests {
         Assert.assertEquals(1, backendMode.getQueueSize());
 
         JSONObject event = events.getJSONObject(0);
-        validateEventFields("[CLY]_view", 1, null, null, 1, 8 + timezoneOffset, 1646640780130L, event);
+        validateEventFields("[CLY]_view", 1, null, null, 1, 7 + timezoneOffset, 1646640780130L, event);
 
         JSONObject segments = event.getJSONObject("segmentation");
         Assert.assertEquals("SampleView", segments.get("name"));
@@ -99,7 +99,7 @@ public class BackendModeTests {
         Assert.assertEquals(2, backendMode.getQueueSize());
 
         event = events.getJSONObject(0);
-        validateEventFields("[CLY]_view", 1, null, null, 1, 8 + timezoneOffset, 1646640780130L, event);
+        validateEventFields("[CLY]_view", 1, null, null, 1, 7 + timezoneOffset, 1646640780130L, event);
 
         segments = event.getJSONObject("segmentation");
         Assert.assertEquals("SampleView2", segments.get("name"));
@@ -157,7 +157,7 @@ public class BackendModeTests {
         Assert.assertEquals(1, backendMode.getQueueSize());
 
         JSONObject event = events.getJSONObject(0);
-        validateEventFields("key-1", 1, 0.1, 10.0, 1, 8 + timezoneOffset, 1646640780130L, event);
+        validateEventFields("key-1", 1, 0.1, 10.0, 1, 7 + timezoneOffset, 1646640780130L, event);
 
         JSONObject segments = event.getJSONObject("segmentation");
         Assert.assertEquals("value1", segments.get("key1"));
@@ -226,7 +226,7 @@ public class BackendModeTests {
         Assert.assertEquals(2, events.length());
 
         JSONObject event = events.getJSONObject(0);
-        validateEventFields("key-2", 1, 0.1, 10.0, 1, 8 + timezoneOffset, 1646640780130L, event);
+        validateEventFields("key-2", 1, 0.1, 10.0, 1, 7 + timezoneOffset, 1646640780130L, event);
 
         JSONObject segments = event.getJSONObject("segmentation");
         Assert.assertEquals("value1", segments.get("key1"));
@@ -238,7 +238,7 @@ public class BackendModeTests {
 
         event = events.getJSONObject(0);
         Assert.assertEquals("key-2", event.get("key"));
-        validateEventFields("key-2", 1, 0.1, 10.0, 1, 8 + timezoneOffset, 1646640780130L, event);
+        validateEventFields("key-2", 1, 0.1, 10.0, 1, 7 + timezoneOffset, 1646640780130L, event);
 
         segments = event.getJSONObject("segmentation");
         Assert.assertEquals("value1", segments.get("key1"));
@@ -246,7 +246,7 @@ public class BackendModeTests {
 
         event = events.getJSONObject(1);
         Assert.assertEquals("key-3", event.get("key"));
-        validateEventFields("key-3", 2, 0.2, 20.0, 1, 9 + timezoneOffset, 1646644457826L, event);
+        validateEventFields("key-3", 2, 0.2, 20.0, 1, 8 + timezoneOffset, 1646644457826L, event);
 
         segments = event.getJSONObject("segmentation");
         Assert.assertEquals("value3", segments.get("key3"));
@@ -713,7 +713,7 @@ public class BackendModeTests {
         Assert.assertEquals(1, moduleBackendMode.eventQSize);
 
         JSONObject event = events.getJSONObject(0);
-        validateEventFields("key-1", 1, 0.1, 10.0, 1, 8 + timezoneOffset, 1646640780130L, event);
+        validateEventFields("key-1", 1, 0.1, 10.0, 1, 7 + timezoneOffset, 1646640780130L, event);
 
         JSONObject segments = event.getJSONObject("segmentation");
         Assert.assertEquals(5, segments.length());
