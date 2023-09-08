@@ -10,8 +10,6 @@ import ly.count.sdk.java.internal.*;
  * <ul>
  *     <li>Initialize Countly SDK using {@code #init(Application, Config)}.</li>
  *     <li>Stop Countly SDK with {@link #stop(boolean)} if needed.</li>
- *     <li>Use {@link #session()} to get a {@link Session} instance.</li>
- *     <li>Use {@link #login(String)} & {@link #logout()} when user logs in & logs out.</li>
  * </ul>
  */
 
@@ -149,7 +147,7 @@ public class Countly implements Usage {
 
             return null;
         }
-        return session(cly.ctx);
+        return cly.sdk.session(cly.ctx, null);
     }
 
     public static ModuleBackendMode.BackendMode backendMode() {
@@ -269,10 +267,6 @@ public class Countly implements Usage {
             }
             cly.sdk.onConsentRemoval(cly.ctx, ftrs);
         }
-    }
-
-    protected static Session session(CtxCore ctx) {
-        return cly.sdk.session(ctx, null);
     }
 
     @Override

@@ -9,8 +9,6 @@ import ly.count.sdk.java.internal.Log;
  * {@link CtxCore} implementation
  */
 public class CtxCore {
-    // private static final Log.Module L = Log.module("[CtxImpl]");
-
     Log L = null;
     private SDKCore sdk;
     private InternalConfig config;
