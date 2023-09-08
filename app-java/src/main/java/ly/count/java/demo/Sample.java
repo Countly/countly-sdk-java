@@ -97,6 +97,14 @@ public class Sample {
 
     }
 
+    static void changeDeviceIdWithMerge(){
+        Countly.session().changeDeviceIdWithMerge("your_user_identifier");
+    }
+
+    static void changeDeviceIdWithoutMerge(){
+        Countly.session().changeDeviceIdWithoutMerge("your_user_identifier");
+    }
+
     public static void main(String[] args) throws Exception {
 
         Scanner scanner = new Scanner(System.in);
@@ -156,6 +164,10 @@ public class Sample {
             System.out.println("11) Record an exception");
             System.out.println("12) Start a view called 'example_view'");
             System.out.println("13) End a view called 'example_view'");
+
+            System.out.println("14) Change device id with merge");
+            System.out.println("15) Change device id without merge");
+
             System.out.println("0) Exit ");
 
 
@@ -202,6 +214,12 @@ public class Sample {
                     break;
                 case 13:
                     Countly.session().view("example_view").stop(false);
+                    break;
+                case 14:
+                    changeDeviceIdWithMerge();
+                    break;
+                case 15:
+                    changeDeviceIdWithoutMerge();
                     break;
                 default:
                     break;
