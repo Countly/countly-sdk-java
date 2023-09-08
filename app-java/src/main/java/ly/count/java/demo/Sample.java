@@ -18,8 +18,8 @@ public class Sample {
 
     static void eventWithSumAndCount() {
         Countly.api().event("Event With Sum And Count")
-                .setSum(23)
-                .setCount(2).record();
+            .setSum(23)
+            .setCount(2).record();
     }
 
     static void eventWithSegmentation() {
@@ -30,7 +30,7 @@ public class Sample {
         }};
 
         Countly.api().event("Event With Sum")
-                .setSegmentation(segment).record();
+            .setSegmentation(segment).record();
     }
 
     static void eventWithSumAndSegmentation() {
@@ -40,8 +40,8 @@ public class Sample {
         }};
 
         Countly.api().event("Event With Sum")
-                .setSum(23)
-                .setSegmentation(segment).record();
+            .setSum(23)
+            .setSegmentation(segment).record();
     }
 
     static void timedEventWithSumCountSegmentationAndDuration() {
@@ -51,10 +51,10 @@ public class Sample {
         }};
 
         Countly.api().timedEvent("timed event")
-                .setCount(2)
-                .setSum(5)
-                .setSegmentation(segment)
-                .setDuration(5.3).record();
+            .setCount(2)
+            .setSum(5)
+            .setSegmentation(segment)
+            .setDuration(5.3).record();
     }
 
     static void setLocation() {
@@ -63,21 +63,21 @@ public class Sample {
 
     static void setUserProfile() {
         Countly.api().user().edit()
-                .setName("Full name")
-                .setUsername("nickname")
-                .setEmail("test@test.com")
-                .setOrg("Tester")
-                .setPhone("+123456789")
-                .commit();
+            .setName("Full name")
+            .setUsername("nickname")
+            .setEmail("test@test.com")
+            .setOrg("Tester")
+            .setPhone("+123456789")
+            .commit();
     }
 
     static void setCustomProfile() {
         Countly.api().user().edit()
-                .set("mostFavoritePet", "dog")
-                .inc("phoneCalls", 1)
-                .pushUnique("tags", "fan")
-                .pushUnique("skill", "singer")
-                .commit();
+            .set("mostFavoritePet", "dog")
+            .inc("phoneCalls", 1)
+            .pushUnique("tags", "fan")
+            .pushUnique("skill", "singer")
+            .commit();
     }
 
     static void recordStartView() {
@@ -94,18 +94,17 @@ public class Sample {
         } catch (Exception e) {
             Countly.api().addCrashReport(e, false, "Divided by zero", null, "sample app");
         }
-
     }
 
-    private static String randomId(){
-        return "_id"+System.currentTimeMillis();
+    private static String randomId() {
+        return "_id" + System.currentTimeMillis();
     }
 
-    static void changeDeviceIdWithMerge(){
+    static void changeDeviceIdWithMerge() {
         Countly.session().changeDeviceIdWithMerge(randomId());
     }
 
-    static void changeDeviceIdWithoutMerge(){
+    static void changeDeviceIdWithoutMerge() {
         Countly.session().changeDeviceIdWithoutMerge(randomId());
     }
 
@@ -121,19 +120,19 @@ public class Sample {
         metricOverride.put("bb", "222");
 
         Config config = new Config(COUNTLY_SERVER_URL, COUNTLY_APP_KEY)
-                .setLoggingLevel(Config.LoggingLevel.DEBUG)
-                .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
-                .enableFeatures(Config.Feature.Events, Config.Feature.Sessions, Config.Feature.CrashReporting, Config.Feature.Views, Config.Feature.UserProfiles, Config.Feature.Location)
-                .setRequiresConsent(true)
-                //.enableParameterTamperingProtection("test-salt-checksum")
-                .setLogListener(new LogCallback() {
-                    @Override
-                    public void LogHappened(String logMessage, Config.LoggingLevel logLevel) {
-                        System.out.println("[" + logLevel + "] " + logMessage);
-                    }
-                })
-                .setMetricOverride(metricOverride)
-                .setApplicationVersion("123.56.h");
+            .setLoggingLevel(Config.LoggingLevel.DEBUG)
+            .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
+            .enableFeatures(Config.Feature.Events, Config.Feature.Sessions, Config.Feature.CrashReporting, Config.Feature.Views, Config.Feature.UserProfiles, Config.Feature.Location)
+            .setRequiresConsent(true)
+            //.enableParameterTamperingProtection("test-salt-checksum")
+            .setLogListener(new LogCallback() {
+                @Override
+                public void LogHappened(String logMessage, Config.LoggingLevel logLevel) {
+                    System.out.println("[" + logLevel + "] " + logMessage);
+                }
+            })
+            .setMetricOverride(metricOverride)
+            .setApplicationVersion("123.56.h");
 
         // Countly needs persistent storage for requests, configuration storage, user profiles and other temporary data,
         // therefore requires a separate data folder to run. The data folder should be existed to run the app
@@ -175,7 +174,6 @@ public class Sample {
             System.out.println("15) Change device id without merge");
 
             System.out.println("0) Exit ");
-
 
             int input = scanner.nextInt();
             switch (input) {
@@ -230,7 +228,6 @@ public class Sample {
                 default:
                     break;
             }
-
         }
 
         // Gracefully stop SDK to stop all SDK threads and allow this app to exit
