@@ -21,7 +21,7 @@ buildscript {
 
 allprojects {
     ext.CLY_VERSION = "22.09.1"
-    ext.POWERMOCK_VERSION = "1.7.1"
+    ext.POWERMOCK_VERSION = "1.7.4"
 
     tasks.withType(Javadoc) {
         options.addStringOption('Xdoclint:none', '-quiet')

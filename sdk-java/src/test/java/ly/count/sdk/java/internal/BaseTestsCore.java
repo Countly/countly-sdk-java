@@ -19,7 +19,6 @@ public class BaseTestsCore {
     protected CtxCore ctx;
     protected InternalConfig config = null;
     protected Module dummy = null;
-    protected Utils utils = null;
 
     protected SDKCore sdk = null;
 
@@ -54,11 +53,6 @@ public class BaseTestsCore {
         }
 
         @Override
-        public boolean isExpired() {
-            return false;
-        }
-
-        @Override
         public Log getLogger() {
             return null;
         }
@@ -82,8 +76,6 @@ public class BaseTestsCore {
     public void setUp() throws Exception {
         Log L = new Log(Config.LoggingLevel.VERBOSE, null);
         ctx = new CtxImpl(this.sdk, this.config == null ? new InternalConfig(defaultConfig()) : this.config, getContext(), L);
-        utils = Mockito.spy(new Utils());
-        Utils.reflectiveSetField(Utils.class, "utils", utils, L);
     }
 
     protected void setUpApplication(Config config) throws Exception {

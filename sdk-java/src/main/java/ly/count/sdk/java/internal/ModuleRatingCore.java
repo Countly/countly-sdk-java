@@ -178,7 +178,7 @@ public class ModuleRatingCore extends ModuleBase {
         public int sessionAmount = 0; //session amount for the current version
         public boolean isShownForCurrentVersion = false; //if automatic star rating has been shown for the current version
         public boolean automaticRatingShouldBeShown = false; //if the automatic star rating should be shown
-        public boolean disabledAutomaticForNewVersions = false; //if the automatic star star should not be shown for every new apps version
+        public boolean disabledAutomaticForNewVersions = false; //if the automatic star should not be shown for every new apps version
         public boolean automaticHasBeenShown = false; //if automatic star rating has been shown for any app's version
         public boolean isDialogCancellable = true; //if star rating dialog is cancellable
         public String dialogTextTitle = "App rating";

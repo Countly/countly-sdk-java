@@ -130,12 +130,6 @@ public interface Usage {
     String getDeviceId();
 
     /**
-     * @deprecated This method is no longer acceptable to change device id.
-     * <p> Use {@link #changeDeviceIdWithoutMerge(String)} or {@link #changeDeviceIdWithMerge(String)}
-     */
-    Usage resetDeviceId(String id);
-
-    /**
      * Change device id with merging profiles on server, just set device id to new one.
      *
      * @param id new user / device id string, cannot be empty

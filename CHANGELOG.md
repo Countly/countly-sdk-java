@@ -1,3 +1,7 @@
+23.02.0
+* Deprecated call "Countly::getSession" is removed
+* Deprecated call "resetDeviceId" is removed
+
 22.09.2
 * Fixed internal log calls that did not respect the configured log level and did not work with the log listener.
 
@@ -5,36 +9,36 @@
 * Adding a way to override metrics sent by "begin session" requests.
 * Fixed bug where "setApplicationVersion" would not set the application version in metrics
 * ! Minor breaking change ! The following methods and their functionality are deprecated from the "Config" class and will not function anymore:
-  - "getApplicationName"
-  - "setApplicationName"
+  * "getApplicationName"
+  * "setApplicationName"
 
 22.09.0
 * The "resetDeviceId", "login", and "logout" have been deprecated.
 * ! Minor breaking change ! The following methods and their functionality are deprecated from the "Config" class and will not function anymore: 
-	- "enableTestMode"
-	- "disableTestMode"
-	- "isTestModeEnabled"
-	- "setLoggingTag"
-  - "setSdkName"
-  - "setSdkVersion"
-  - "getSdkName"
-  - "getSdkVersion"
-  - "isDeviceIdFallbackAllowed"
-  - "setDeviceIdFallbackAllowed"
-  - "overrideModule"
-  - "getModuleOverride"
-  - "getCrashReportingANRCheckingPeriod"
-  - "setCrashReportingANRCheckingPeriod"
-  - "disableANRCrashReporting"
+  * "enableTestMode"
+  * "disableTestMode"
+  * "isTestModeEnabled"
+  * "setLoggingTag"
+  * "setSdkName"
+  * "setSdkVersion"
+  * "getSdkName"
+  * "getSdkVersion"
+  * "isDeviceIdFallbackAllowed"
+  * "setDeviceIdFallbackAllowed"
+  * "overrideModule"
+  * "getModuleOverride"
+  * "getCrashReportingANRCheckingPeriod"
+  * "setCrashReportingANRCheckingPeriod"
+  * "disableANRCrashReporting"
 
 * ! Minor breaking change ! The following methods have been removed from the "Config" class:
-  - "setAutoViewsTracking"
-  - "setAutoSessionsTracking"
-  - "setSessionAutoCloseAfter"
-  - "isAutoViewsTrackingEnabled"
-  - "isAutoSessionsTrackingEnabled"
-  - "getSessionAutoCloseAfter"
-  - "setSessionCooldownPeriod"
+  * "setAutoViewsTracking"
+  * "setAutoSessionsTracking"
+  * "setSessionAutoCloseAfter"
+  * "isAutoViewsTrackingEnabled"
+  * "isAutoSessionsTrackingEnabled"
+  * "getSessionAutoCloseAfter"
+  * "setSessionCooldownPeriod"
 
 * ! Minor breaking change ! The "TestMode" functionality is being removed from the SDK.
 * ! Minor breaking change ! The module override functionality is being removed from the SDK.

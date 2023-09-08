@@ -8,6 +8,7 @@ import java.util.Scanner;
 
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
+import ly.count.sdk.java.View;
 import ly.count.sdk.java.internal.LogCallback;
 
 public class Sample {
@@ -128,9 +129,10 @@ public class Sample {
             .setLogListener(new LogCallback() {
                 @Override
                 public void LogHappened(String logMessage, Config.LoggingLevel logLevel) {
-                    System.out.println("[" + logLevel + "] " + logMessage);
+                    //System.out.println("[" + logLevel + "] " + logMessage);
                 }
             })
+            .setEventsBufferSize(1)//this should be only used for testing
             .setMetricOverride(metricOverride)
             .setApplicationVersion("123.56.h");
 
