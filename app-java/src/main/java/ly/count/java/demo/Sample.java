@@ -97,12 +97,16 @@ public class Sample {
 
     }
 
+    private static String randomId(){
+        return "_id"+System.currentTimeMillis();
+    }
+
     static void changeDeviceIdWithMerge(){
-        Countly.session().changeDeviceIdWithMerge("your_user_identifier");
+        Countly.session().changeDeviceIdWithMerge(randomId());
     }
 
     static void changeDeviceIdWithoutMerge(){
-        Countly.session().changeDeviceIdWithoutMerge("your_user_identifier");
+        Countly.session().changeDeviceIdWithoutMerge(randomId());
     }
 
     public static void main(String[] args) throws Exception {
