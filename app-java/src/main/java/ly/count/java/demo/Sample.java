@@ -132,10 +132,12 @@ public class Sample {
                 .setApplicationVersion("123.56.h");
 
         // Countly needs persistent storage for requests, configuration storage, user profiles and other temporary data,
-        // therefore requires a separate data folder to run
-        //File targetFolder = new File("/home/zahi/countly-workspace/data");
+        // therefore requires a separate data folder to run. The data folder should be existed to run the app
 
-        File targetFolder = new File("d:\\__COUNTLY\\java_test\\");
+        //File targetFolder = new File("/Users/YOUR_USER/COUNTLY_FOLDER"); Mac Folder Structure
+        //File targetFolder = new File("/home/YOUR_USER/COUNTLY_FOLDER"); Linux Folder Structure
+
+        File targetFolder = new File("d:\\__COUNTLY\\java_test\\"); // Windows Folder Structure
 
         // Main initialization call, SDK can be used after this one is done
         Countly.init(targetFolder, config);
