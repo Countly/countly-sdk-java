@@ -18,8 +18,6 @@ import java.util.*;
 public class BackendModeTests {
     private ModuleBackendMode moduleBackendMode;
 
-    int timezoneOffset = (TimeZone.getDefault().getOffset(new Date().getTime()) / 60000) / 60;
-
     @BeforeClass
     public static void init() {
         Config cc = new Config("https://try.count.ly", "COUNTLY_APP_KEY");
