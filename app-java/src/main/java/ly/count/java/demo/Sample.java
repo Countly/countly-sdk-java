@@ -97,6 +97,18 @@ public class Sample {
         }
     }
 
+    private static String randomId() {
+        return "_id" + System.currentTimeMillis();
+    }
+
+    static void changeDeviceIdWithMerge() {
+        Countly.session().changeDeviceIdWithMerge(randomId());
+    }
+
+    static void changeDeviceIdWithoutMerge() {
+        Countly.session().changeDeviceIdWithoutMerge(randomId());
+    }
+
     public static void main(String[] args) throws Exception {
 
         Scanner scanner = new Scanner(System.in);
@@ -120,15 +132,17 @@ public class Sample {
                     //System.out.println("[" + logLevel + "] " + logMessage);
                 }
             })
-            .setEventsBufferSize(1)
+            .setEventsBufferSize(1)//this should be only used for testing
             .setMetricOverride(metricOverride)
             .setApplicationVersion("123.56.h");
 
         // Countly needs persistent storage for requests, configuration storage, user profiles and other temporary data,
-        // therefore requires a separate data folder to run
-        //File targetFolder = new File("/home/zahi/countly-workspace/data");
+        // therefore requires a separate data folder to run. The data folder should be existed to run the app
 
-        File targetFolder = new File("d:\\__COUNTLY\\java_test\\");
+        //File targetFolder = new File("/Users/YOUR_USER/COUNTLY_FOLDER"); Mac Folder Structure
+        //File targetFolder = new File("/home/YOUR_USER/COUNTLY_FOLDER"); Linux Folder Structure
+
+        File targetFolder = new File("d:\\__COUNTLY\\java_test\\"); // Windows Folder Structure
 
         // Main initialization call, SDK can be used after this one is done
         Countly.init(targetFolder, config);
@@ -157,6 +171,10 @@ public class Sample {
             System.out.println("11) Record an exception");
             System.out.println("12) Start a view called 'example_view'");
             System.out.println("13) End a view called 'example_view'");
+
+            System.out.println("14) Change device id with merge");
+            System.out.println("15) Change device id without merge");
+
             System.out.println("0) Exit ");
 
             int input = scanner.nextInt();
@@ -203,10 +221,15 @@ public class Sample {
                 case 13:
                     Countly.session().view("example_view").stop(false);
                     break;
+                case 14:
+                    changeDeviceIdWithMerge();
+                    break;
+                case 15:
+                    changeDeviceIdWithoutMerge();
+                    break;
                 default:
                     break;
             }
-
         }
 
         // Gracefully stop SDK to stop all SDK threads and allow this app to exit
