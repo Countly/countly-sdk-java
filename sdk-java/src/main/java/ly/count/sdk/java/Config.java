@@ -885,6 +885,25 @@ public class Config {
     }
 
     /**
+     * Sets maximum number of events to hold until forcing update request to be sent to the server
+     *
+     * Update request is also sent when last update request was sent more than {@link #setSendUpdateEachSeconds(int)} seconds ago.
+     *
+     * @param eventsBufferSize max number of events between two update requests, set to 0 to disable update requests based on events.
+     * @return {@code this} instance for method chaining
+     */
+    public Config setEventQueueSizeToSend(int eventsBufferSize) {
+        if (eventsBufferSize < 0) {
+            if (configLog != null) {
+                configLog.e("[ConfigCore] eventsBufferSize cannot be negative");
+            }
+        } else {
+            this.eventsBufferSize = eventsBufferSize;
+        }
+        return this;
+    }
+
+    /**
      * Disable update requests completely. Only begin & end requests will be sent + some special
      * cases if applicable like User Profile change or Push token updated.
      *
