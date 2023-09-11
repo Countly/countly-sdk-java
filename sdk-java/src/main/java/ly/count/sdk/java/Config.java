@@ -856,14 +856,7 @@ public class Config {
      * @deprecated this will be removed, please use {@link #setUpdateSessionTimerDelay(int)}
      */
     public Config setSendUpdateEachSeconds(int sendUpdateEachSeconds) {
-        if (sendUpdateEachSeconds < 0) {
-            if (configLog != null) {
-                configLog.e("[Config] sendUpdateEachSeconds cannot be negative");
-            }
-        } else {
-            this.sendUpdateEachSeconds = sendUpdateEachSeconds;
-        }
-        return this;
+        return setUpdateSessionTimerDelay(sendUpdateEachSeconds);
     }
 
     /**
@@ -876,7 +869,7 @@ public class Config {
      * @return {@code this} instance for method chaining
      */
     public Config setUpdateSessionTimerDelay(int delay) {
-        if (sendUpdateEachSeconds < 0) {
+        if (delay < 0) {
             if (configLog != null) {
                 configLog.e("[Config] delay cannot be negative");
             }
@@ -896,14 +889,7 @@ public class Config {
      * @deprecated this will be removed, please use {@link #setEventQueueSizeToSend(int)}
      */
     public Config setEventsBufferSize(int eventsBufferSize) {
-        if (eventsBufferSize < 0) {
-            if (configLog != null) {
-                configLog.e("[Config] eventsBufferSize cannot be negative");
-            }
-        } else {
-            this.eventsBufferSize = eventsBufferSize;
-        }
-        return this;
+        return setEventQueueSizeToSend(eventsBufferSize);
     }
 
     /**
@@ -915,7 +901,7 @@ public class Config {
      * @return {@code this} instance for method chaining
      */
     public Config setEventQueueSizeToSend(int eventsQueueSize) {
-        if (eventsBufferSize < 0) {
+        if (eventsQueueSize < 0) {
             if (configLog != null) {
                 configLog.e("[Config] eventsQueueSize cannot be negative");
             }
