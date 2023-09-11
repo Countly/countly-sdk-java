@@ -860,10 +860,10 @@ public class Config {
     }
 
     /**
-     * Set maximum amount of time in seconds between two update requests to the server
-     * reporting session duration and other parameters if any added between update requests.
+     * Changes the maximum amount of time in seconds between two update requests to the server reporting
+     * session duration and other parameters, if any, added between update requests.
      *
-     * Update request is also sent when number of unsent events reached {@link #setEventQueueSizeToSend(int)}.
+     * An update request is also sent when the number of unsent events reaches {@link #setEventQueueSizeToSend(int)}.
      *
      * @param delay max time interval between two update requests, set to 0 to disable update requests based on time.
      * @return {@code this} instance for method chaining
@@ -893,9 +893,9 @@ public class Config {
     }
 
     /**
-     * Sets maximum number of events to hold until forcing update request to be sent to the server
+     * Changes the maximum number of events to hold until an update request is sent to the server
      *
-     * Update request is also sent when last update request was sent more than {@link #setUpdateSessionTimerDelay(int)} seconds ago.
+     * An update request is also sent when the last update request was sent more than {@link #setUpdateSessionTimerDelay(int)} seconds ago.
      *
      * @param eventsQueueSize max number of events between two update requests, set to 0 to disable update requests based on events.
      * @return {@code this} instance for method chaining
