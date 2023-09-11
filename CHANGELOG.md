@@ -1,3 +1,8 @@
+23.09.0
+* ! Minor breaking change ! The following methods are deprecated from the "Config" class and introduced as:
+  * "setEventsBufferSize" -> "setEventQueueSizeToSend"
+  * "setSendUpdateEachSeconds" -> "setUpdateSessionTimerDelay"
+
 23.02.0
 * Deprecated call "Countly::getSession" is removed
 * Deprecated call "resetDeviceId" is removed
