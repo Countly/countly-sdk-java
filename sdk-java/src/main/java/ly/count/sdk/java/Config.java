@@ -872,6 +872,7 @@ public class Config {
      *
      * @param eventsBufferSize max number of events between two update requests, set to 0 to disable update requests based on events.
      * @return {@code this} instance for method chaining
+     * @deprecated this will be removed, please use {@link #setEventQueueSizeToSend(int)}
      */
     public Config setEventsBufferSize(int eventsBufferSize) {
         if (eventsBufferSize < 0) {
@@ -909,7 +910,7 @@ public class Config {
      *
      * @return {@code this} instance for method chaining
      * @see #setSendUpdateEachSeconds(int)
-     * @see #setEventsBufferSize(int)
+     * @see #setEventQueueSizeToSend(int)
      */
     public Config disableUpdateRequests() {
         this.sendUpdateEachSeconds = 0;

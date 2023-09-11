@@ -132,7 +132,7 @@ public class Sample {
                     //System.out.println("[" + logLevel + "] " + logMessage);
                 }
             })
-            .setEventsBufferSize(1)//this should be only used for testing
+            .setEventQueueSizeToSend(1)//this should be only used for testing
             .setMetricOverride(metricOverride)
             .setApplicationVersion("123.56.h");
 

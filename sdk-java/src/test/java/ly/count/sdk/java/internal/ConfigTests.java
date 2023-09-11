@@ -109,7 +109,7 @@ public class ConfigTests extends BaseTestsCore {
     public void testEventBufferSize() {
         Assert.assertEquals(10, internalConfig.getEventsBufferSize());
 
-        internalConfig.setEventsBufferSize(60);
+        internalConfig.setEventQueueSizeToSend(60);
         Assert.assertEquals(60, internalConfig.getEventsBufferSize());
     }
 
