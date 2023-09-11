@@ -132,7 +132,7 @@ public class Sample {
                     //System.out.println("[" + logLevel + "] " + logMessage);
                 }
             })
-            .setEventQueueSizeToSend(1)//setting queue size to "1" should only be done for testing, unless you have a perfect reason to do it
+            .setEventQueueSizeToSend(1)//setting queue size to "1" should only be done for testing, unless you have a really good reason to do it
             .setMetricOverride(metricOverride)
             .setApplicationVersion("123.56.h");
 
