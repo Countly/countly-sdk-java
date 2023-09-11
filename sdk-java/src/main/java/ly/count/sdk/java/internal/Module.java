@@ -52,6 +52,13 @@ public interface Module {
     boolean isActive();
 
     /**
+     * Method to activate and deactivate module itself
+     *
+     * @param active a boolean parameter to either be true or false
+     */
+    void setActive(boolean active);
+
+    /**
      * SDK got a first context. Called only in main mode (from {@code Application#onCreate()})
      *
      * @param ctx {@link CtxCore} with application instance

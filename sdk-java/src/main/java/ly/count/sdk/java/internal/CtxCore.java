@@ -29,6 +29,10 @@ public class CtxCore {
         return config;
     }
 
+    public void setConfig(InternalConfig config) {
+        this.config = config;
+    }
+
     public SDKCore getSDK() {
         return sdk;
     }

@@ -37,6 +37,11 @@ public abstract class ModuleBase implements Module {
     }
 
     @Override
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    @Override
     public void onContextAcquired(CtxCore ctx) {
     }
 

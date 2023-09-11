@@ -1474,7 +1474,7 @@ public class Config {
      * @return {@link #moduleOverrides} value for {@code Feature} specified
      * @deprecated this always return "null"
      */
-    public Class<? extends Module> getModuleOverride(int feature) {
+    public Class<? extends ModuleBase> getModuleOverride(int feature) {
         return null;
     }
 
