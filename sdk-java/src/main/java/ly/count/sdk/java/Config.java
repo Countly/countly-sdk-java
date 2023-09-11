@@ -853,6 +853,7 @@ public class Config {
      *
      * @param sendUpdateEachSeconds max time interval between two update requests, set to 0 to disable update requests based on time.
      * @return {@code this} instance for method chaining
+     * @deprecated this will be removed, please use {@link #setUpdateSessionTimerDelay(int)}
      */
     public Config setSendUpdateEachSeconds(int sendUpdateEachSeconds) {
         if (sendUpdateEachSeconds < 0) {
@@ -861,6 +862,26 @@ public class Config {
             }
         } else {
             this.sendUpdateEachSeconds = sendUpdateEachSeconds;
+        }
+        return this;
+    }
+
+    /**
+     * Set maximum amount of time in seconds between two update requests to the server
+     * reporting session duration and other parameters if any added between update requests.
+     *
+     * Update request is also sent when number of unsent events reached {@link #setEventQueueSizeToSend(int)}.
+     *
+     * @param delay max time interval between two update requests, set to 0 to disable update requests based on time.
+     * @return {@code this} instance for method chaining
+     */
+    public Config setUpdateSessionTimerDelay(int delay) {
+        if (sendUpdateEachSeconds < 0) {
+            if (configLog != null) {
+                configLog.e("[ConfigCore] sendUpdateEachSeconds cannot be negative");
+            }
+        } else {
+            this.sendUpdateEachSeconds = delay;
         }
         return this;
     }
@@ -888,18 +909,18 @@ public class Config {
     /**
      * Sets maximum number of events to hold until forcing update request to be sent to the server
      *
-     * Update request is also sent when last update request was sent more than {@link #setSendUpdateEachSeconds(int)} seconds ago.
+     * Update request is also sent when last update request was sent more than {@link #setUpdateSessionTimerDelay(int)} seconds ago.
      *
-     * @param eventsBufferSize max number of events between two update requests, set to 0 to disable update requests based on events.
+     * @param eventsQueueSize max number of events between two update requests, set to 0 to disable update requests based on events.
      * @return {@code this} instance for method chaining
      */
-    public Config setEventQueueSizeToSend(int eventsBufferSize) {
+    public Config setEventQueueSizeToSend(int eventsQueueSize) {
         if (eventsBufferSize < 0) {
             if (configLog != null) {
                 configLog.e("[ConfigCore] eventsBufferSize cannot be negative");
             }
         } else {
-            this.eventsBufferSize = eventsBufferSize;
+            this.eventsBufferSize = eventsQueueSize;
         }
         return this;
     }
@@ -909,7 +930,7 @@ public class Config {
      * cases if applicable like User Profile change or Push token updated.
      *
      * @return {@code this} instance for method chaining
-     * @see #setSendUpdateEachSeconds(int)
+     * @see #setUpdateSessionTimerDelay(int)
      * @see #setEventQueueSizeToSend(int)
      */
     public Config disableUpdateRequests() {
