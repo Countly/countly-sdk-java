@@ -1,7 +1,6 @@
 23.09.0
-* ! Minor breaking change ! The following methods are deprecated from the "Config" class and introduced as:
-  * "setEventsBufferSize" -> "setEventQueueSizeToSend"
-  * "setSendUpdateEachSeconds" -> "setUpdateSessionTimerDelay"
+* Deprecated the init time configuration of 'setEventsBufferSize(eventsBufferSize)'. Introduced replacement 'setEventQueueSizeToSend(eventsQueueSize)
+* Deprecated the init time configuration of 'setSendUpdateEachSeconds(sendUpdateEachSeconds)'. Introduced replacement 'setUpdateSessionTimerDelay(delay)
 
 23.02.0
 * Deprecated call "Countly::getSession" is removed
