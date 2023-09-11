@@ -312,7 +312,7 @@ public class BackendModeExample {
                 .setRequestQueueMaxSize(10000)
                 .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
                 .setRequiresConsent(false)
-                .setEventsBufferSize(1000);
+                .setEventQueueSizeToSend(1000);
 
         // Countly needs persistent storage for requests, configuration storage, user profiles and other temporary data,
         // therefore requires a separate data folder to run

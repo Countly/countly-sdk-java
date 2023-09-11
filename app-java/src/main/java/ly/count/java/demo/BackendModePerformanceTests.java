@@ -22,7 +22,7 @@ public class BackendModePerformanceTests {
                 .setRequestQueueMaxSize(requestQueueSize)
                 .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
                 .setRequiresConsent(false)
-                .setEventsBufferSize(1);
+                .setEventQueueSizeToSend(1);
 
         File targetFolder = new File("d:\\__COUNTLY\\java_test\\");
 

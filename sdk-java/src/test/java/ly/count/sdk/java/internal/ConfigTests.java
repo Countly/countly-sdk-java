@@ -101,7 +101,7 @@ public class ConfigTests extends BaseTestsCore {
         internalConfig.disableUpdateRequests();
         Assert.assertEquals(0, internalConfig.getSendUpdateEachSeconds());
 
-        internalConfig.setSendUpdateEachSeconds(123);
+        internalConfig.setUpdateSessionTimerDelay(123);
         Assert.assertEquals(123, internalConfig.getSendUpdateEachSeconds());
     }
 
@@ -109,7 +109,7 @@ public class ConfigTests extends BaseTestsCore {
     public void testEventBufferSize() {
         Assert.assertEquals(10, internalConfig.getEventsBufferSize());
 
-        internalConfig.setEventsBufferSize(60);
+        internalConfig.setEventQueueSizeToSend(60);
         Assert.assertEquals(60, internalConfig.getEventsBufferSize());
     }
 

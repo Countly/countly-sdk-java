@@ -47,7 +47,7 @@ public class SDKCore {
     private static Module testDummyModule = null;//set during testing when trying to check the SDK's lifecycle
 
     /**
-     * All known mappings of {@code ConfigCore.Feature} to {@link Module} class.
+     * All known mappings of {@code Config.Feature} to {@link Module} class.
      */
     private static final Map<Integer, Class<? extends Module>> DEFAULT_MAPPINGS = new HashMap<>();
 
@@ -221,7 +221,7 @@ public class SDKCore {
 
     /**
      * Create instances of {@link Module}s required by {@link #config}.
-     * Uses {@link #moduleMappings} for {@code ConfigCore.Feature} / {@link CoreFeature}
+     * Uses {@link #moduleMappings} for {@code Config.Feature} / {@link CoreFeature}
      * - Class&lt;Module&gt; mapping to enable overriding by app developer.
      *
      * @param ctx {@link CtxCore} object containing config with mapping overrides
@@ -243,7 +243,7 @@ public class SDKCore {
 
     /**
      * Create instances of {@link Module}s required by {@link #config}.
-     * Uses {@link #moduleMappings} for {@code ConfigCore.Feature} / {@link CoreFeature}
+     * Uses {@link #moduleMappings} for {@code Config.Feature} / {@link CoreFeature}
      * - Class&lt;Module&gt; mapping to enable overriding by app developer.
      *
      * @param ctx {@link CtxCore} object
@@ -252,7 +252,7 @@ public class SDKCore {
      * @throws IllegalStateException when this module is run second time on the same {@code Core} instance.
      */
     protected void buildModules(CtxCore ctx, int features) throws IllegalArgumentException, IllegalStateException {
-        // override module mappings in native/Android parts, overriding by ConfigCore ones if necessary
+        // override module mappings in native/Android parts, overriding by Config ones if necessary
 
         if (modules.size() > 0) {
             throw new IllegalStateException("Modules can only be built once");
@@ -326,7 +326,7 @@ public class SDKCore {
     }
 
     /**
-     * Return module instance by {@code ConfigCore.Feature}
+     * Return module instance by {@code Config.Feature}
      *
      * @param feature to get a {@link Module} instance for
      * @return {@link Module} instance or null if no such module is instantiated
@@ -599,7 +599,7 @@ public class SDKCore {
         if (config.isLimited()) {
             config = Storage.read(ctx, new InternalConfig());
             if (config == null) {
-                L.e("[SDKCore] ConfigCore reload gave null instance");
+                L.e("[SDKCore] Config reload gave null instance");
             } else {
                 config.setLimited(true);
             }

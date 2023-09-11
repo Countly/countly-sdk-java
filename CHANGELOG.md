@@ -1,3 +1,7 @@
+23.09.0
+* Deprecated the init time configuration of 'setEventsBufferSize(eventsBufferSize)'. Introduced replacement 'setEventQueueSizeToSend(eventsQueueSize)'
+* Deprecated the init time configuration of 'setSendUpdateEachSeconds(sendUpdateEachSeconds)'. Introduced replacement 'setUpdateSessionTimerDelay(delay)'
+
 23.02.0
 * Deprecated call "Countly::getSession" is removed
 * Deprecated call "resetDeviceId" is removed
