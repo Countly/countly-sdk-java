@@ -225,6 +225,7 @@ public class SDKCore {
         registerDefaultModuleMappings();
 
         for (int feature : ctx.getConfig().getModuleOverrides()) {
+            //TODO maybe we can embed classes into Feature.enum
             registerModuleMapping(feature, ctx.getConfig().getModuleOverride(feature));
         }
     }
