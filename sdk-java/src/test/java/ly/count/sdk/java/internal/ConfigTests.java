@@ -101,7 +101,7 @@ public class ConfigTests extends BaseTestsCore {
         internalConfig.disableUpdateRequests();
         Assert.assertEquals(0, internalConfig.getSendUpdateEachSeconds());
 
-        internalConfig.setSendUpdateEachSeconds(123);
+        internalConfig.setUpdateSessionTimerDelay(123);
         Assert.assertEquals(123, internalConfig.getSendUpdateEachSeconds());
     }
 
