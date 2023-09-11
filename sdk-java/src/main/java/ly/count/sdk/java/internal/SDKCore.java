@@ -46,23 +46,14 @@ public class SDKCore {
     protected Log L = null;
     private static ModuleBase testDummyModule = null;//set during testing when trying to check the SDK's lifecycle
 
-    /**
-     * All known mappings of {@code Config.Feature} to {@link Module} class.
-     */
-    private static final Map<Integer, Class<? extends ModuleBase>> DEFAULT_MAPPINGS = new HashMap<>();
-
-    protected static void registerDefaultModuleMapping(int feature, Class<? extends ModuleBase> cls) {
-        DEFAULT_MAPPINGS.put(feature, cls);
-    }
-
-    static {
-        registerDefaultModuleMapping(CoreFeature.DeviceId.getIndex(), ModuleDeviceIdCore.class);
-        registerDefaultModuleMapping(CoreFeature.Requests.getIndex(), ModuleRequests.class);
-        //registerDefaultModuleMapping(CoreFeature.Logs.getIndex(), Log.class);
-        registerDefaultModuleMapping(CoreFeature.Views.getIndex(), ModuleViews.class);
-        registerDefaultModuleMapping(CoreFeature.Sessions.getIndex(), ModuleSessions.class);
-        registerDefaultModuleMapping(CoreFeature.CrashReporting.getIndex(), ModuleCrash.class);
-        registerDefaultModuleMapping(CoreFeature.BackendMode.getIndex(), ModuleBackendMode.class);
+    protected static void registerDefaultModuleMappings() {
+        moduleMappings.put(CoreFeature.DeviceId.getIndex(), ModuleDeviceIdCore.class);
+        moduleMappings.put(CoreFeature.Requests.getIndex(), ModuleRequests.class);
+        //DEFAULT_MAPPINGS.put(CoreFeature.Logs.getIndex(), Log.class);
+        moduleMappings.put(CoreFeature.Views.getIndex(), ModuleViews.class);
+        moduleMappings.put(CoreFeature.Sessions.getIndex(), ModuleSessions.class);
+        moduleMappings.put(CoreFeature.CrashReporting.getIndex(), ModuleCrash.class);
+        moduleMappings.put(CoreFeature.BackendMode.getIndex(), ModuleBackendMode.class);
     }
 
     public interface Modulator {
@@ -231,7 +222,7 @@ public class SDKCore {
         }
 
         moduleMappings.clear();
-        moduleMappings.putAll(DEFAULT_MAPPINGS);
+        registerDefaultModuleMappings();
 
         for (int feature : ctx.getConfig().getModuleOverrides()) {
             registerModuleMapping(feature, ctx.getConfig().getModuleOverride(feature));
@@ -303,20 +294,20 @@ public class SDKCore {
         try {
             return (ModuleBase) cls.getConstructors()[0].newInstance();
         } catch (InstantiationException e) {
-            L.e("[SDKModules] Module cannot be instantiated" + e);
+            L.e("[SDKCore] Module cannot be instantiated" + e);
         } catch (IllegalAccessException e) {
-            L.e("[SDKModules] Module constructor cannot be accessed" + e);
+            L.e("[SDKCore] Module constructor cannot be accessed" + e);
         } catch (InvocationTargetException e) {
-            L.e("[SDKModules] Module constructor cannot be invoked" + e);
+            L.e("[SDKCore] Module constructor cannot be invoked" + e);
         } catch (IllegalArgumentException e) {
             try {
                 return (ModuleBase) cls.getConstructors()[0].newInstance((Object) null);
             } catch (InstantiationException e1) {
-                L.e("[SDKModules] Module cannot be instantiated" + e);
+                L.e("[SDKCore] Module cannot be instantiated" + e);
             } catch (IllegalAccessException e1) {
-                L.e("[SDKModules] Module constructor cannot be accessed" + e);
+                L.e("[SDKCore] Module constructor cannot be accessed" + e);
             } catch (InvocationTargetException e1) {
-                L.e("[SDKModules] Module constructor cannot be invoked" + e);
+                L.e("[SDKCore] Module constructor cannot be invoked" + e);
             }
         }
         return null;
