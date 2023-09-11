@@ -169,7 +169,7 @@ public class Config {
                 return bytes.toByteArray();
             } catch (IOException e) {
                 if (L != null) {
-                    L.e("[ConfigCore] Cannot serialize config" + e.toString());
+                    L.e("[Config] Cannot serialize config" + e.toString());
                 }
             } finally {
                 if (stream != null) {
@@ -177,7 +177,7 @@ public class Config {
                         stream.close();
                     } catch (IOException e) {
                         if (L != null) {
-                            L.e("[ConfigCore] Cannot happen" + e.toString());
+                            L.e("[Config] Cannot happen" + e.toString());
                         }
                     }
                 }
@@ -186,7 +186,7 @@ public class Config {
                         bytes.close();
                     } catch (IOException e) {
                         if (L != null) {
-                            L.e("[ConfigCore] Cannot happen" + e.toString());
+                            L.e("[Config] Cannot happen" + e.toString());
                         }
                     }
                 }
@@ -210,7 +210,7 @@ public class Config {
                 return true;
             } catch (IOException | ClassNotFoundException e) {
                 if (L != null) {
-                    L.e("[ConfigCore] Cannot deserialize config" + e.toString());
+                    L.e("[Config] Cannot deserialize config" + e.toString());
                 }
             } finally {
                 if (stream != null) {
@@ -218,7 +218,7 @@ public class Config {
                         stream.close();
                     } catch (IOException e) {
                         if (L != null) {
-                            L.e("[ConfigCore] Cannot happen" + e.toString());
+                            L.e("[Config] Cannot happen" + e.toString());
                         }
                     }
                 }
@@ -227,7 +227,7 @@ public class Config {
                         bytes.close();
                     } catch (IOException e) {
                         if (L != null) {
-                            L.e("[ConfigCore] Cannot happen" + e.toString());
+                            L.e("[Config] Cannot happen" + e.toString());
                         }
                     }
                 }
@@ -551,7 +551,7 @@ public class Config {
     //    protected int storagePrefix = "[CLY]_";
 
     /**
-     * The only ConfigCore constructor.
+     * The only Config constructor.
      *
      * @param serverURL valid {@link URL} of Countly server
      * @param serverAppKey App Key from Management -> Applications section of your Countly Dashboard
@@ -590,13 +590,13 @@ public class Config {
     public Config enableFeatures(Config.Feature... features) {
         if (features == null) {
             if (configLog != null) {
-                configLog.e("[ConfigCore] Features array cannot be null");
+                configLog.e("[Config] Features array cannot be null");
             }
         } else {
             for (Config.Feature f : features) {
                 if (f == null) {
                     if (configLog != null) {
-                        configLog.e("[ConfigCore] Feature cannot be null");
+                        configLog.e("[Config] Feature cannot be null");
                     }
                 } else {
                     this.features = this.features | f.getIndex();
@@ -615,13 +615,13 @@ public class Config {
     public Config disableFeatures(Config.Feature... features) {
         if (features == null) {
             if (configLog != null) {
-                configLog.e("[ConfigCore] Features array cannot be null");
+                configLog.e("[Config] Features array cannot be null");
             }
         } else {
             for (Config.Feature f : features) {
                 if (f == null) {
                     if (configLog != null) {
-                        configLog.e("[ConfigCore] Feature cannot be null");
+                        configLog.e("[Config] Feature cannot be null");
                     }
                 } else {
                     this.features = this.features & ~f.getIndex();
@@ -656,7 +656,7 @@ public class Config {
             for (int i = 0; i < features.length; i++) {
                 if (features[i] == null) {
                     if (configLog != null) {
-                        configLog.e("[ConfigCore] " + i + "-th feature is null in setFeatures");
+                        configLog.e("[Config] " + i + "-th feature is null in setFeatures");
                     }
                 } else {
                     this.features = this.features | features[i].index;
@@ -678,7 +678,7 @@ public class Config {
     public Config setDeviceIdStrategy(DeviceIdStrategy strategy, String customDeviceId) {
         if (strategy == null) {
             if (configLog != null) {
-                configLog.e("[ConfigCore] DeviceIdStrategy cannot be null");
+                configLog.e("[Config] DeviceIdStrategy cannot be null");
             }
         } else {
             if (strategy == DeviceIdStrategy.CUSTOM_ID) {
@@ -708,7 +708,7 @@ public class Config {
     public Config setCustomDeviceId(String customDeviceId) {
         if (Utils.isEmptyOrNull(customDeviceId)) {
             if (configLog != null) {
-                configLog.e("[ConfigCore] DeviceIdStrategy.CUSTOM_ID strategy cannot be used without device id specified");
+                configLog.e("[Config] DeviceIdStrategy.CUSTOM_ID strategy cannot be used without device id specified");
             }
         } else {
             this.customDeviceId = customDeviceId;
@@ -781,7 +781,7 @@ public class Config {
     public Config enableParameterTamperingProtection(String salt) {
         if (Utils.isEmptyOrNull(salt)) {
             if (configLog != null) {
-                configLog.e("[ConfigCore] Salt cannot be empty in enableParameterTamperingProtection");
+                configLog.e("[Config] Salt cannot be empty in enableParameterTamperingProtection");
             }
         } else {
             this.salt = salt;
@@ -809,7 +809,7 @@ public class Config {
     public Config setLoggingLevel(LoggingLevel loggingLevel) {
         if (loggingLevel == null) {
             if (configLog != null) {
-                configLog.e("[ConfigCore] Logging level cannot be null");
+                configLog.e("[Config] Logging level cannot be null");
             }
         } else {
             this.loggingLevel = loggingLevel;
@@ -858,7 +858,7 @@ public class Config {
     public Config setSendUpdateEachSeconds(int sendUpdateEachSeconds) {
         if (sendUpdateEachSeconds < 0) {
             if (configLog != null) {
-                configLog.e("[ConfigCore] sendUpdateEachSeconds cannot be negative");
+                configLog.e("[Config] sendUpdateEachSeconds cannot be negative");
             }
         } else {
             this.sendUpdateEachSeconds = sendUpdateEachSeconds;
@@ -878,7 +878,7 @@ public class Config {
     public Config setUpdateSessionTimerDelay(int delay) {
         if (sendUpdateEachSeconds < 0) {
             if (configLog != null) {
-                configLog.e("[ConfigCore] sendUpdateEachSeconds cannot be negative");
+                configLog.e("[Config] delay cannot be negative");
             }
         } else {
             this.sendUpdateEachSeconds = delay;
@@ -898,7 +898,7 @@ public class Config {
     public Config setEventsBufferSize(int eventsBufferSize) {
         if (eventsBufferSize < 0) {
             if (configLog != null) {
-                configLog.e("[ConfigCore] eventsBufferSize cannot be negative");
+                configLog.e("[Config] eventsBufferSize cannot be negative");
             }
         } else {
             this.eventsBufferSize = eventsBufferSize;
@@ -917,7 +917,7 @@ public class Config {
     public Config setEventQueueSizeToSend(int eventsQueueSize) {
         if (eventsBufferSize < 0) {
             if (configLog != null) {
-                configLog.e("[ConfigCore] eventsBufferSize cannot be negative");
+                configLog.e("[Config] eventsQueueSize cannot be negative");
             }
         } else {
             this.eventsBufferSize = eventsQueueSize;
@@ -980,7 +980,7 @@ public class Config {
     public Config setApplicationVersion(String version) {
         if (Utils.isEmptyOrNull(version)) {
             if (configLog != null) {
-                configLog.e("[ConfigCore] version cannot be empty");
+                configLog.e("[Config] version cannot be empty");
             }
         } else {
             this.applicationVersion = version;
@@ -997,7 +997,7 @@ public class Config {
     public Config setNetworkConnectTimeout(int seconds) {
         if (seconds <= 0 || seconds > 300) {
             if (configLog != null) {
-                configLog.e("[ConfigCore] Connection timeout must be between 0 and 300");
+                configLog.e("[Config] Connection timeout must be between 0 and 300");
             }
         } else {
             networkConnectionTimeout = seconds;
@@ -1014,7 +1014,7 @@ public class Config {
     public Config setNetworkReadTimeout(int seconds) {
         if (seconds <= 0 || seconds > 300) {
             if (configLog != null) {
-                configLog.e("[ConfigCore] Read timeout must be between 0 and 300");
+                configLog.e("[Config] Read timeout must be between 0 and 300");
             }
         } else {
             networkReadTimeout = seconds;
@@ -1032,7 +1032,7 @@ public class Config {
     public Config setNetworkRequestCooldown(int milliseconds) {
         if (milliseconds < 0 || milliseconds > 30000) {
             if (configLog != null) {
-                configLog.e("[ConfigCore] Request cooldown must be between 0 and 30000");
+                configLog.e("[Config] Request cooldown must be between 0 and 30000");
             }
         } else {
             networkRequestCooldown = milliseconds;
@@ -1050,7 +1050,7 @@ public class Config {
     public Config setNetworkImportantRequestCooldown(int milliseconds) {
         if (milliseconds < 0 || milliseconds > 30) {
             if (configLog != null) {
-                configLog.e("[ConfigCore] Important request cooldown must be between 0 and 30");
+                configLog.e("[Config] Important request cooldown must be between 0 and 30");
             }
         } else {
             networkImportantRequestCooldown = milliseconds;
@@ -1080,7 +1080,7 @@ public class Config {
     public Config addPublicKeyPin(String pemEncodedPublicKey) {
         if (Utils.isEmptyOrNull(pemEncodedPublicKey)) {
             if (configLog != null) {
-                configLog.e("[ConfigCore] pemEncodedPublicKey cannot be empty");
+                configLog.e("[Config] pemEncodedPublicKey cannot be empty");
             }
         } else {
             if (publicKeyPins == null) {
@@ -1114,7 +1114,7 @@ public class Config {
     public Config addCertificatePin(String pemEncodedCertificate) {
         if (Utils.isEmptyOrNull(pemEncodedCertificate)) {
             if (configLog != null) {
-                configLog.e("[ConfigCore] pemEncodedCertificate cannot be empty");
+                configLog.e("[Config] pemEncodedCertificate cannot be empty");
             }
         } else {
             if (certificatePins == null) {
@@ -1164,7 +1164,7 @@ public class Config {
     public Config setCrashProcessorClass(Class<? extends CrashProcessor> crashProcessorClass) {
         if (crashProcessorClass == null) {
             if (configLog != null) {
-                configLog.e("[ConfigCore] crashProcessorClass cannot be null");
+                configLog.e("[Config] crashProcessorClass cannot be null");
             }
         } else {
             this.crashProcessorClass = crashProcessorClass.getName();
