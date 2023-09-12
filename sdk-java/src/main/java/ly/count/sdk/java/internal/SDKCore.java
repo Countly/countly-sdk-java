@@ -3,7 +3,6 @@ package ly.count.sdk.java.internal;
 import ly.count.sdk.java.Config;
 import org.json.JSONObject;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.Future;
 
@@ -159,15 +158,9 @@ public class SDKCore {
         for (Integer feature : moduleMappings.keySet()) {
             Module existing = module(moduleMappings.get(feature));
             if (SDKCore.enabled(feature) && existing == null) {
-                Class<? extends ModuleBase> cls = moduleMappings.get(feature);
-                if (cls == null) {
-                    L.i("[SDKModules] No module mapping for feature " + feature);
-                    continue;
-                }
-
-                ModuleBase module = instantiateModule(cls, L);
+                ModuleBase module = instantiateModule(feature);
                 if (module == null) {
-                    L.e("[SDKModules] Cannot instantiate module " + feature);
+                    L.e("[SDKCore] Cannot instantiate module " + feature);
                 } else {
                     module.init(ctx.getConfig(), L);
                     module.onContextAcquired(ctx);
@@ -254,9 +247,9 @@ public class SDKCore {
         //        }
 
         // standard required internal features
-        modules.put(-3, instantiateModule(moduleMappings.get(CoreFeature.DeviceId.getIndex()), L));
-        modules.put(-2, instantiateModule(moduleMappings.get(CoreFeature.Requests.getIndex()), L));
-        modules.put(CoreFeature.Sessions.getIndex(), instantiateModule(moduleMappings.get(CoreFeature.Sessions.getIndex()), L));
+        modules.put(-3, new ModuleDeviceIdCore());
+        modules.put(-2, new ModuleRequests());
+        modules.put(CoreFeature.Sessions.getIndex(), new ModuleSessions());
 
         if (ctx.getConfig().requiresConsent()) {
             consents = 0;
@@ -272,14 +265,14 @@ public class SDKCore {
                 }
                 ModuleBase existing = module(cls);
                 if ((features & feature) > 0 && existing == null) {
-                    ModuleBase m = instantiateModule(cls, L);
+                    ModuleBase m = instantiateModule(feature);
                     if (m != null) {
                         modules.put(feature, m);
                     }
                 }
             }
         }
-        modules.put(CoreFeature.BackendMode.getIndex(), instantiateModule(moduleMappings.get(CoreFeature.BackendMode.getIndex()), L));
+        modules.put(CoreFeature.BackendMode.getIndex(), new ModuleBackendMode());
 
         // dummy module for tests if any
         if (testDummyModule != null) {
@@ -290,30 +283,16 @@ public class SDKCore {
     /**
      * Create {@link ModuleBase} by executing its default constructor.
      *
-     * @param cls class of {@link ModuleBase}
+     * @param feature int value of feature
      * @return {@link ModuleBase} instance or null in case of error
      */
-    private static ModuleBase instantiateModule(Class<? extends ModuleBase> cls, Log L) {
-        try {
-            return (ModuleBase) cls.getConstructors()[0].newInstance();
-        } catch (InstantiationException e) {
-            L.e("[SDKCore] Module cannot be instantiated" + e);
-        } catch (IllegalAccessException e) {
-            L.e("[SDKCore] Module constructor cannot be accessed" + e);
-        } catch (InvocationTargetException e) {
-            L.e("[SDKCore] Module constructor cannot be invoked" + e);
-        } catch (IllegalArgumentException e) {
-            try {
-                return (ModuleBase) cls.getConstructors()[0].newInstance((Object) null);
-            } catch (InstantiationException e1) {
-                L.e("[SDKCore] Module cannot be instantiated" + e);
-            } catch (IllegalAccessException e1) {
-                L.e("[SDKCore] Module constructor cannot be accessed" + e);
-            } catch (InvocationTargetException e1) {
-                L.e("[SDKCore] Module constructor cannot be invoked" + e);
-            }
+    private ModuleBase instantiateModule(int feature) {
+        CoreFeature coreFeature = CoreFeature.byIndex(feature);
+
+        if (coreFeature.getCreator() == null) {
+            return null;
         }
-        return null;
+        return coreFeature.getCreator().create();
     }
 
     /**
