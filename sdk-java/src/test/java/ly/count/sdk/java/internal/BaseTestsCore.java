@@ -101,7 +101,7 @@ public class BaseTestsCore {
         }
 
         if (mock) {
-            List<Module> list = Whitebox.getInternalState(sdk, "modules");
+            List<ModuleBase> list = Whitebox.getInternalState(sdk, "modules");
             list.remove(module);
             module = Mockito.spy(module);
             list.add(1, module);

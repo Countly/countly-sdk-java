@@ -152,7 +152,7 @@ public class ModuleRequests extends ModuleBase {
      * @param widgetId widget id
      * @return request instance
      */
-    public static Request ratingWidgetAvailabilityCheck(CtxCore ctx, String widgetId, Class<? extends Module> module) {
+    public static Request ratingWidgetAvailabilityCheck(CtxCore ctx, String widgetId, Class<? extends ModuleBase> module) {
         Request req = Request.build("widget_id", widgetId, "app_key", ctx.getConfig().getServerAppKey());
         req.own(module);
         req.endpoint("/o/feedback/widget?");
@@ -160,7 +160,7 @@ public class ModuleRequests extends ModuleBase {
         return req;
     }
 
-    public static Request remoteConfigUpdate(CtxCore ctx, String keysInclude, String keysExclude, Class<? extends Module> module) {
+    public static Request remoteConfigUpdate(CtxCore ctx, String keysInclude, String keysExclude, Class<? extends ModuleBase> module) {
         Request req = Request.build("method", "fetch_remote_config", "app_key", ctx.getConfig().getServerAppKey());
 
         if (keysInclude != null) {
