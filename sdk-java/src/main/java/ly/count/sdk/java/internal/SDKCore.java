@@ -49,7 +49,7 @@ public class SDKCore {
     protected static void registerDefaultModuleMappings() {
         moduleMappings.put(CoreFeature.DeviceId.getIndex(), ModuleDeviceIdCore.class);
         moduleMappings.put(CoreFeature.Requests.getIndex(), ModuleRequests.class);
-        //DEFAULT_MAPPINGS.put(CoreFeature.Logs.getIndex(), Log.class);
+        //moduleMappings.put(CoreFeature.Logs.getIndex(), Log.class);
         moduleMappings.put(CoreFeature.Views.getIndex(), ModuleViews.class);
         moduleMappings.put(CoreFeature.Sessions.getIndex(), ModuleSessions.class);
         moduleMappings.put(CoreFeature.CrashReporting.getIndex(), ModuleCrash.class);
