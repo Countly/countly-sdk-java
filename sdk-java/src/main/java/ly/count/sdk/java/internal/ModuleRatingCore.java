@@ -272,6 +272,11 @@ public class ModuleRatingCore extends ModuleBase {
         }
 
         @Override
+        public void setId(Long id) {
+            //do nothing
+        }
+
+        @Override
         public byte[] store(Log L) {
             try {
                 return toJSON(L).toString().getBytes(Utils.UTF8);

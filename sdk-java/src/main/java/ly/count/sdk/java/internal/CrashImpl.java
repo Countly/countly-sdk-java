@@ -21,7 +21,7 @@ import ly.count.sdk.java.Crash;
 public class CrashImpl implements Crash, Storable {
     private Log L = null;
 
-    private final Long id;
+    private Long id;
     private final JSONObject data;
     private Throwable throwable;
     private Map<Thread, StackTraceElement[]> traces;
@@ -227,6 +227,11 @@ public class CrashImpl implements Crash, Storable {
     @Override
     public String storagePrefix() {
         return getStoragePrefix();
+    }
+
+    @Override
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public static String getStoragePrefix() {
