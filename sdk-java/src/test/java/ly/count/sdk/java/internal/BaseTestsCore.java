@@ -18,7 +18,7 @@ public class BaseTestsCore {
 
     protected CtxCore ctx;
     protected InternalConfig config = null;
-    protected Module dummy = null;
+    protected ModuleBase dummy = null;
 
     protected SDKCore sdk = null;
 
