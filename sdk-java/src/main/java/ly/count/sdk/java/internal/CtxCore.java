@@ -2,9 +2,6 @@ package ly.count.sdk.java.internal;
 
 import java.io.File;
 
-import ly.count.sdk.java.internal.InternalConfig;
-import ly.count.sdk.java.internal.Log;
-
 /**
  * {@link CtxCore} implementation
  */
@@ -27,6 +24,10 @@ public class CtxCore {
 
     public InternalConfig getConfig() {
         return config;
+    }
+
+    protected void setConfig(InternalConfig config) {
+        this.config = config;
     }
 
     public SDKCore getSDK() {

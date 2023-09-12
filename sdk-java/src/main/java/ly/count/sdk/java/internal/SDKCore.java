@@ -3,7 +3,6 @@ package ly.count.sdk.java.internal;
 import ly.count.sdk.java.Config;
 import org.json.JSONObject;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.Future;
 
@@ -44,29 +43,20 @@ public class SDKCore {
     }
 
     protected Log L = null;
-    private static Module testDummyModule = null;//set during testing when trying to check the SDK's lifecycle
+    private static ModuleBase testDummyModule = null;//set during testing when trying to check the SDK's lifecycle
 
-    /**
-     * All known mappings of {@code Config.Feature} to {@link Module} class.
-     */
-    private static final Map<Integer, Class<? extends Module>> DEFAULT_MAPPINGS = new HashMap<>();
-
-    protected static void registerDefaultModuleMapping(int feature, Class<? extends Module> cls) {
-        DEFAULT_MAPPINGS.put(feature, cls);
-    }
-
-    static {
-        registerDefaultModuleMapping(CoreFeature.DeviceId.getIndex(), ModuleDeviceIdCore.class);
-        registerDefaultModuleMapping(CoreFeature.Requests.getIndex(), ModuleRequests.class);
-        //registerDefaultModuleMapping(CoreFeature.Logs.getIndex(), Log.class);
-        registerDefaultModuleMapping(CoreFeature.Views.getIndex(), ModuleViews.class);
-        registerDefaultModuleMapping(CoreFeature.Sessions.getIndex(), ModuleSessions.class);
-        registerDefaultModuleMapping(CoreFeature.CrashReporting.getIndex(), ModuleCrash.class);
-        registerDefaultModuleMapping(CoreFeature.BackendMode.getIndex(), ModuleBackendMode.class);
+    protected static void registerDefaultModuleMappings() {
+        moduleMappings.put(CoreFeature.DeviceId.getIndex(), ModuleDeviceIdCore.class);
+        moduleMappings.put(CoreFeature.Requests.getIndex(), ModuleRequests.class);
+        //moduleMappings.put(CoreFeature.Logs.getIndex(), Log.class);
+        moduleMappings.put(CoreFeature.Views.getIndex(), ModuleViews.class);
+        moduleMappings.put(CoreFeature.Sessions.getIndex(), ModuleSessions.class);
+        moduleMappings.put(CoreFeature.CrashReporting.getIndex(), ModuleCrash.class);
+        moduleMappings.put(CoreFeature.BackendMode.getIndex(), ModuleBackendMode.class);
     }
 
     public interface Modulator {
-        void run(int feature, Module module);
+        void run(int feature, ModuleBase module);
     }
 
     /**
@@ -77,16 +67,16 @@ public class SDKCore {
     /**
      * Selected by config map of module mappings
      */
-    private static final Map<Integer, Class<? extends Module>> moduleMappings = new HashMap<>();
+    private static final Map<Integer, Class<? extends ModuleBase>> moduleMappings = new HashMap<>();
 
-    protected static void registerModuleMapping(int feature, Class<? extends Module> cls) {
+    protected static void registerModuleMapping(int feature, Class<? extends ModuleBase> cls) {
         if (cls != null) {
             moduleMappings.put(feature, cls);
         }
     }
 
     // TreeMap to keep modules sorted by their feature indexes
-    protected Map<Integer, Module> modules;
+    protected Map<Integer, ModuleBase> modules;
 
     /**
      * Check if consent has been given for a feature
@@ -115,12 +105,12 @@ public class SDKCore {
 
         eachModule(new Modulator() {
             @Override
-            public void run(int feature, Module module) {
+            public void run(int feature, ModuleBase module) {
                 try {
                     module.stop(ctx, clear);
-                    Utils.reflectiveSetField(module, "active", false, L);
+                    module.setActive(false);
                 } catch (Throwable e) {
-                    L.e("[SDKModules] Exception while stopping " + module.getClass() + " " + e);
+                    L.e("[SDKCore] Exception while stopping " + module.getClass() + " " + e);
                 }
             }
         });
@@ -168,15 +158,9 @@ public class SDKCore {
         for (Integer feature : moduleMappings.keySet()) {
             Module existing = module(moduleMappings.get(feature));
             if (SDKCore.enabled(feature) && existing == null) {
-                Class<? extends Module> cls = moduleMappings.get(feature);
-                if (cls == null) {
-                    L.i("[SDKModules] No module mapping for feature " + feature);
-                    continue;
-                }
-
-                Module module = instantiateModule(cls, L);
+                ModuleBase module = instantiateModule(feature);
                 if (module == null) {
-                    L.e("[SDKModules] Cannot instantiate module " + feature);
+                    L.e("[SDKCore] Cannot instantiate module " + feature);
                 } else {
                     module.init(ctx.getConfig(), L);
                     module.onContextAcquired(ctx);
@@ -229,12 +213,12 @@ public class SDKCore {
      * @throws IllegalStateException when this module is run second time on the same {@code Core} instance.
      */
     protected void prepareMappings(CtxCore ctx) throws IllegalStateException {
-        if (modules.size() > 0) {
+        if (!modules.isEmpty()) {
             throw new IllegalStateException("Modules can only be built once");
         }
 
         moduleMappings.clear();
-        moduleMappings.putAll(DEFAULT_MAPPINGS);
+        registerDefaultModuleMappings();
 
         for (int feature : ctx.getConfig().getModuleOverrides()) {
             registerModuleMapping(feature, ctx.getConfig().getModuleOverride(feature));
@@ -254,7 +238,7 @@ public class SDKCore {
     protected void buildModules(CtxCore ctx, int features) throws IllegalArgumentException, IllegalStateException {
         // override module mappings in native/Android parts, overriding by Config ones if necessary
 
-        if (modules.size() > 0) {
+        if (!modules.isEmpty()) {
             throw new IllegalStateException("Modules can only be built once");
         }
 
@@ -263,9 +247,9 @@ public class SDKCore {
         //        }
 
         // standard required internal features
-        modules.put(-3, instantiateModule(moduleMappings.get(CoreFeature.DeviceId.getIndex()), L));
-        modules.put(-2, instantiateModule(moduleMappings.get(CoreFeature.Requests.getIndex()), L));
-        modules.put(CoreFeature.Sessions.getIndex(), instantiateModule(moduleMappings.get(CoreFeature.Sessions.getIndex()), L));
+        modules.put(-3, new ModuleDeviceIdCore());
+        modules.put(-2, new ModuleRequests());
+        modules.put(CoreFeature.Sessions.getIndex(), new ModuleSessions());
 
         if (ctx.getConfig().requiresConsent()) {
             consents = 0;
@@ -275,20 +259,20 @@ public class SDKCore {
 
         if (!ctx.getConfig().requiresConsent()) {
             for (int feature : moduleMappings.keySet()) {
-                Class<? extends Module> cls = moduleMappings.get(feature);
+                Class<? extends ModuleBase> cls = moduleMappings.get(feature);
                 if (cls == null) {
                     continue;
                 }
-                Module existing = module(cls);
+                ModuleBase existing = module(cls);
                 if ((features & feature) > 0 && existing == null) {
-                    Module m = instantiateModule(cls, L);
+                    ModuleBase m = instantiateModule(feature);
                     if (m != null) {
                         modules.put(feature, m);
                     }
                 }
             }
         }
-        modules.put(CoreFeature.BackendMode.getIndex(), instantiateModule(moduleMappings.get(CoreFeature.BackendMode.getIndex()), L));
+        modules.put(CoreFeature.BackendMode.getIndex(), new ModuleBackendMode());
 
         // dummy module for tests if any
         if (testDummyModule != null) {
@@ -297,32 +281,18 @@ public class SDKCore {
     }
 
     /**
-     * Create {@link Module} by executing its default constructor.
+     * Create {@link ModuleBase} by executing its default constructor.
      *
-     * @param cls class of {@link Module}
-     * @return {@link Module} instance or null in case of error
+     * @param feature int value of feature
+     * @return {@link ModuleBase} instance or null if {@link ModuleBaseCreator} is not set for {@code feature}
      */
-    private static Module instantiateModule(Class<? extends Module> cls, Log L) {
-        try {
-            return (Module) cls.getConstructors()[0].newInstance();
-        } catch (InstantiationException e) {
-            L.e("[SDKModules] Module cannot be instantiated" + e);
-        } catch (IllegalAccessException e) {
-            L.e("[SDKModules] Module constructor cannot be accessed" + e);
-        } catch (InvocationTargetException e) {
-            L.e("[SDKModules] Module constructor cannot be invoked" + e);
-        } catch (IllegalArgumentException e) {
-            try {
-                return (Module) cls.getConstructors()[0].newInstance((Object) null);
-            } catch (InstantiationException e1) {
-                L.e("[SDKModules] Module cannot be instantiated" + e);
-            } catch (IllegalAccessException e1) {
-                L.e("[SDKModules] Module constructor cannot be accessed" + e);
-            } catch (InvocationTargetException e1) {
-                L.e("[SDKModules] Module constructor cannot be invoked" + e);
-            }
+    private ModuleBase instantiateModule(int feature) {
+        CoreFeature coreFeature = CoreFeature.byIndex(feature);
+
+        if (coreFeature.getCreator() == null) {
+            return null;
         }
-        return null;
+        return coreFeature.getCreator().create();
     }
 
     /**
@@ -336,14 +306,13 @@ public class SDKCore {
     }
 
     /**
-     * Return module instance by {@link Module} class
+     * Return module instance by {@link ModuleBase} class
      *
-     * @param cls class to get a {@link Module} instance for
-     * @return {@link Module} instance or null if no such module is instantiated
+     * @param cls class to get a {@link ModuleBase} instance for
+     * @return {@link ModuleBase} instance or null if no such module is instantiated
      */
-    @SuppressWarnings("unchecked")
-    public <T extends Module> T module(Class<T> cls) {
-        for (Module module : modules.values()) {
+    public <T extends ModuleBase> T module(Class<T> cls) {
+        for (ModuleBase module : modules.values()) {
             if (module.getClass().isAssignableFrom(cls)) {
                 return (T) module;
             }
@@ -436,7 +405,7 @@ public class SDKCore {
 
         sdkStorage.init(ctx, logger);
         config = prepareConfig(ctx);
-        Utils.reflectiveSetField(ctx, "config", config, L);
+        ctx.setConfig(config);
 
         this.init(ctx);
 
@@ -449,10 +418,10 @@ public class SDKCore {
         final List<Integer> failed = new ArrayList<>();
         eachModule(new Modulator() {
             @Override
-            public void run(int feature, Module module) {
+            public void run(int feature, ModuleBase module) {
                 try {
                     module.init(config, logger);
-                    Utils.reflectiveSetField(module, "active", true, L);
+                    module.setActive(true);
                 } catch (IllegalArgumentException | IllegalStateException e) {
                     L.e("[SDKCore] Error during module initialization" + e);
                     failed.add(feature);
@@ -528,7 +497,7 @@ public class SDKCore {
     protected void onLimitedContextAcquired(final CtxCore ctx) {
         eachModule(new Modulator() {
             @Override
-            public void run(int feature, Module module) {
+            public void run(int feature, ModuleBase module) {
                 module.onLimitedContextAcquired(ctx);
             }
         });
@@ -537,7 +506,7 @@ public class SDKCore {
     protected void onContextAcquired(final CtxCore ctx) {
         eachModule(new Modulator() {
             @Override
-            public void run(int feature, Module module) {
+            public void run(int feature, ModuleBase module) {
                 module.onContextAcquired(ctx);
             }
         });
@@ -566,7 +535,7 @@ public class SDKCore {
     public void onUserChanged(final CtxCore ctx, final JSONObject changes, final Set<String> cohortsAdded, final Set<String> cohortsRemoved) {
         eachModule(new Modulator() {
             @Override
-            public void run(int feature, Module module) {
+            public void run(int feature, ModuleBase module) {
                 module.onUserChanged(ctx, changes, cohortsAdded, cohortsRemoved);
             }
         });
@@ -658,7 +627,7 @@ public class SDKCore {
         if (cls == null) {
             return true;
         } else {
-            ModuleBase module = (ModuleBase) module(cls);
+            ModuleBase module = module(cls);
             request.params.remove(Request.MODULE);
             if (module == null) {
                 return true;
@@ -675,9 +644,9 @@ public class SDKCore {
      *
      * @param request the request that was sent, used to identify the request
      */
-    public void onRequestCompleted(Request request, String response, int responseCode, Class<? extends Module> requestOwner) {
+    public void onRequestCompleted(Request request, String response, int responseCode, Class<? extends ModuleBase> requestOwner) {
         if (requestOwner != null) {
-            Module module = module(requestOwner);
+            ModuleBase module = module(requestOwner);
 
             if (module != null) {
                 module.onRequestCompleted(request, response, responseCode);
@@ -736,12 +705,12 @@ public class SDKCore {
         Request request = ModuleRequests.nonSessionRequest(ctx);
         ModuleCrash.putCrashIntoParams(crash, request.params);
         if (Storage.push(ctx, request)) {
-            L.i("[SDKLifecycle] Added request " + request.storageId() + " instead of crash " + crash.storageId());
+            L.i("[SDKCore] Added request " + request.storageId() + " instead of crash " + crash.storageId());
             networking.check(ctx);
             Boolean success = Storage.remove(ctx, crash);
-            return success == null ? false : success;
+            return (success != null) && success;
         } else {
-            L.e("[SDKLifecycle] Couldn't write request " + request.storageId() + " instead of crash " + crash.storageId());
+            L.e("[SDKCore] Couldn't write request " + request.storageId() + " instead of crash " + crash.storageId());
             return false;
         }
     }

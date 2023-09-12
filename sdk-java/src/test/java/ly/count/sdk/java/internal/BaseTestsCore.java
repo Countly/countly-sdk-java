@@ -93,8 +93,7 @@ public class BaseTestsCore {
         this.ctx = new CtxImpl(this.sdk, this.config, getContext(), L);
     }
 
-    @SuppressWarnings("unchecked")
-    protected <T extends Module> T module(Class<T> cls, boolean mock) {
+    protected <T extends ModuleBase> T module(Class<T> cls, boolean mock) {
         T module = sdk.module(cls);
 
         if (module == null) {
