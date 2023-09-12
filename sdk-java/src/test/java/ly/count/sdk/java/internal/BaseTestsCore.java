@@ -86,7 +86,6 @@ public class BaseTestsCore {
         Log L = new Log(Config.LoggingLevel.VERBOSE, null);
 
         this.dummy = mock(ModuleBase.class);
-        Utils.reflectiveSetField(SDKCore.class, "testDummyModule", dummy, L);
         this.sdk = mock(SDKCore.class);
         this.sdk.init(new CtxImpl(this.sdk, new InternalConfig(defaultConfig()), getContext(), L));
         this.config = this.sdk.config();
@@ -120,6 +119,5 @@ public class BaseTestsCore {
             this.sdk.stop(ctx, true);
             this.sdk = null;
         }
-        Utils.reflectiveSetField(SDKCore.class, "testDummyModule", null, null);
     }
 }

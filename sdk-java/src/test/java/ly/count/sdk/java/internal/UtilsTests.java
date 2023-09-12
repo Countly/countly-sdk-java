@@ -1,5 +1,9 @@
 package ly.count.sdk.java.internal;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import ly.count.sdk.java.Config;
 import org.junit.After;
 import org.junit.Assert;
@@ -7,8 +11,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import java.util.*;
 
 @RunWith(JUnit4.class)
 public class UtilsTests {
@@ -195,44 +197,6 @@ public class UtilsTests {
 
         String res = Utils.join(objects, separator);
         junit.framework.Assert.assertEquals("str&string&int&999&float&0.2&long&2&double&0.2", res);
-    }
-
-    @Test
-    public void reflectiveClassExists() {
-        junit.framework.Assert.assertTrue(Utils.reflectiveClassExists("java.lang.Integer", null));
-        junit.framework.Assert.assertFalse(Utils.reflectiveClassExists("lava.lang.Integer", null));
-    }
-
-    @Test
-    public void reflectiveCall() {
-        Integer i = 5;
-        String s = i.toString();
-        junit.framework.Assert.assertEquals(s, Utils.reflectiveCall("java.lang.Integer", i, "toString", null));
-        junit.framework.Assert.assertEquals(i, Utils.reflectiveCall("java.lang.Integer", null, "parseInt", null, s));
-        junit.framework.Assert.assertEquals(Boolean.FALSE, Utils.reflectiveCall("lava.lang.Integer", i, "nosuchclass", null));
-        junit.framework.Assert.assertEquals(Boolean.FALSE, Utils.reflectiveCall("java.lang.Integer", i, "nosuchmethod", null));
-        junit.framework.Assert.assertEquals(Boolean.FALSE, Utils.reflectiveCall("java.lang.Integer", null, "nosuchmethod", null, 0, 0));
-        junit.framework.Assert.assertEquals(Boolean.FALSE, Utils.reflectiveCall("java.lang.Integer", null, "toUnsignedString", null, 0, 0));
-    }
-
-    @Test
-    public void reflectiveSetField() {
-        final class Testy {
-            private int x = 10;
-
-            Testy(int n) {
-                x = n;
-            }
-
-            @Override
-            public boolean equals(Object obj) {
-                return obj instanceof Testy && ((Testy) obj).x == x;
-            }
-        }
-        Testy i = new Testy(5), j = new Testy(6);
-        junit.framework.Assert.assertEquals(Boolean.FALSE, Utils.reflectiveSetField(i, "nosuchattr", j, null));
-        junit.framework.Assert.assertEquals(Boolean.TRUE, Utils.reflectiveSetField(i, "x", 6, null));
-        junit.framework.Assert.assertEquals(i, j);
     }
 
     @Test
