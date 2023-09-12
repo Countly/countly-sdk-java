@@ -104,12 +104,15 @@ public class SDKCore {
 
         L.i("[SDKCore] Stopping Countly SDK" + (clear ? " and clearing all data" : ""));
 
-        eachModule((feature, module) -> {
-            try {
-                module.stop(ctx, clear);
-                module.setActive(false);
-            } catch (Throwable e) {
-                L.e("[SDKCore] Exception while stopping " + module.getClass() + " " + e);
+        eachModule(new Modulator() {
+            @Override
+            public void run(int feature, ModuleBase module) {
+                try {
+                    module.stop(ctx, clear);
+                    module.setActive(false);
+                } catch (Throwable e) {
+                    L.e("[SDKCore] Exception while stopping " + module.getClass() + " " + e);
+                }
             }
         });
         modules.clear();
@@ -435,13 +438,16 @@ public class SDKCore {
         buildModules(ctx, consents);
 
         final List<Integer> failed = new ArrayList<>();
-        eachModule((feature, module) -> {
-            try {
-                module.init(config, logger);
-                module.setActive(true);
-            } catch (IllegalArgumentException | IllegalStateException e) {
-                L.e("[SDKCore] Error during module initialization" + e);
-                failed.add(feature);
+        eachModule(new Modulator() {
+            @Override
+            public void run(int feature, ModuleBase module) {
+                try {
+                    module.init(config, logger);
+                    module.setActive(true);
+                } catch (IllegalArgumentException | IllegalStateException e) {
+                    L.e("[SDKCore] Error during module initialization" + e);
+                    failed.add(feature);
+                }
             }
         });
 
@@ -511,11 +517,21 @@ public class SDKCore {
     }
 
     protected void onLimitedContextAcquired(final CtxCore ctx) {
-        eachModule((feature, module) -> module.onLimitedContextAcquired(ctx));
+        eachModule(new Modulator() {
+            @Override
+            public void run(int feature, ModuleBase module) {
+                module.onLimitedContextAcquired(ctx);
+            }
+        });
     }
 
     protected void onContextAcquired(final CtxCore ctx) {
-        eachModule((feature, module) -> module.onContextAcquired(ctx));
+        eachModule(new Modulator() {
+            @Override
+            public void run(int feature, ModuleBase module) {
+                module.onContextAcquired(ctx);
+            }
+        });
     }
 
     public UserImpl user() {
@@ -539,7 +555,12 @@ public class SDKCore {
     }
 
     public void onUserChanged(final CtxCore ctx, final JSONObject changes, final Set<String> cohortsAdded, final Set<String> cohortsRemoved) {
-        eachModule((feature, module) -> module.onUserChanged(ctx, changes, cohortsAdded, cohortsRemoved));
+        eachModule(new Modulator() {
+            @Override
+            public void run(int feature, ModuleBase module) {
+                module.onUserChanged(ctx, changes, cohortsAdded, cohortsRemoved);
+            }
+        });
     }
 
     public void onDeviceId(CtxCore ctx, Config.DID id, Config.DID old) {
