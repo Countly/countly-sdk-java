@@ -708,7 +708,7 @@ public class SDKCore {
             L.i("[SDKCore] Added request " + request.storageId() + " instead of crash " + crash.storageId());
             networking.check(ctx);
             Boolean success = Storage.remove(ctx, crash);
-            return success != null && success;
+            return (success != null) && success;
         } else {
             L.e("[SDKCore] Couldn't write request " + request.storageId() + " instead of crash " + crash.storageId());
             return false;
