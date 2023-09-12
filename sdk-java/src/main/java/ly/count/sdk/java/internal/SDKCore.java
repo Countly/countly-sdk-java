@@ -284,7 +284,7 @@ public class SDKCore {
      * Create {@link ModuleBase} by executing its default constructor.
      *
      * @param feature int value of feature
-     * @return {@link ModuleBase} instance or null in case of error
+     * @return {@link ModuleBase} instance or null if {@link ModuleBaseCreator} is not set for {@code feature}
      */
     private ModuleBase instantiateModule(int feature) {
         CoreFeature coreFeature = CoreFeature.byIndex(feature);

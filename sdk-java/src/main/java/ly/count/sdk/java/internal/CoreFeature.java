@@ -88,7 +88,7 @@ public enum CoreFeature {
         return index;
     }
 
-    private static Map<Integer, CoreFeature> featureMap = new HashMap<Integer, CoreFeature>() {{
+    private static final Map<Integer, CoreFeature> featureMap = new HashMap<Integer, CoreFeature>() {{
         put(Sessions.index, Sessions);
         put(Events.index, Events);
         put(Views.index, Views);
@@ -104,7 +104,7 @@ public enum CoreFeature {
         put(Logs.index, Logs);
     }};
 
-    protected static CoreFeature byIndex(int index) {
+    static CoreFeature byIndex(int index) {
         return featureMap.get(index);
     }
 }
