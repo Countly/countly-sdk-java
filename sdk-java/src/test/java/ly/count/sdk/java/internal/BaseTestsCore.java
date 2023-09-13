@@ -79,10 +79,10 @@ public class BaseTestsCore {
     }
 
     protected void setUpApplication(Config config) throws Exception {
-        setUpSDK(config == null ? defaultConfig() : config, false);
+        setUpSDK(config == null ? defaultConfig() : config);
     }
 
-    private void setUpSDK(Config config, boolean limited) throws Exception {
+    private void setUpSDK(Config config) throws Exception {
         Log L = new Log(Config.LoggingLevel.VERBOSE, null);
 
         this.dummy = mock(ModuleBase.class);
