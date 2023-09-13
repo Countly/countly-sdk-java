@@ -24,11 +24,6 @@ public final class InternalConfig extends Config implements Storable {
     // private static final Log.Module L = Log.module("InternalConfig");
 
     /**
-     * Running in limited mode, started by itself rather than by developer
-     */
-    private boolean limited = false;
-
-    /**
      * Whether to use default networking, meaning networking in the same process with SDK
      */
     private boolean defaultNetworking = true;
@@ -88,15 +83,6 @@ public final class InternalConfig extends Config implements Storable {
 
     protected String getSDKNameInternal() {
         return sdkName;
-    }
-
-    public InternalConfig setLimited(boolean limited) {
-        this.limited = limited;
-        return this;
-    }
-
-    public boolean isLimited() {
-        return limited;
     }
 
     @Override
