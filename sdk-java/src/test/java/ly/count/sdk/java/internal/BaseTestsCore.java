@@ -18,7 +18,7 @@ public class BaseTestsCore {
 
     protected CtxCore ctx;
     protected InternalConfig config = null;
-    protected Module dummy = null;
+    protected ModuleBase dummy = null;
 
     protected SDKCore sdk = null;
 
@@ -86,7 +86,6 @@ public class BaseTestsCore {
         Log L = new Log(Config.LoggingLevel.VERBOSE, null);
 
         this.dummy = mock(ModuleBase.class);
-        Utils.reflectiveSetField(SDKCore.class, "testDummyModule", dummy, L);
         this.sdk = mock(SDKCore.class);
         this.sdk.init(new CtxImpl(this.sdk, new InternalConfig(defaultConfig()), getContext(), L));
         this.config = this.sdk.config();
@@ -101,7 +100,7 @@ public class BaseTestsCore {
         }
 
         if (mock) {
-            List<Module> list = Whitebox.getInternalState(sdk, "modules");
+            List<ModuleBase> list = Whitebox.getInternalState(sdk, "modules");
             list.remove(module);
             module = Mockito.spy(module);
             list.add(1, module);
@@ -120,6 +119,5 @@ public class BaseTestsCore {
             this.sdk.stop(ctx, true);
             this.sdk = null;
         }
-        Utils.reflectiveSetField(SDKCore.class, "testDummyModule", null, null);
     }
 }

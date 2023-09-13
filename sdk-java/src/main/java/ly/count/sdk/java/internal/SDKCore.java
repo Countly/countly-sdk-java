@@ -153,7 +153,7 @@ public class SDKCore {
         consents = consents | (consent & ctx.getConfig().getFeatures1());
 
         for (Integer feature : moduleMappings.keySet()) {
-            Module existing = module(moduleMappings.get(feature));
+            ModuleBase existing = module(moduleMappings.get(feature));
             if (SDKCore.enabled(feature) && existing == null) {
                 ModuleBase module = instantiateModule(feature);
                 if (module == null) {
@@ -192,7 +192,7 @@ public class SDKCore {
         consents = consents & ~noConsent;
 
         for (Integer feature : moduleMappings.keySet()) {
-            Module existing = module(moduleMappings.get(feature));
+            ModuleBase existing = module(moduleMappings.get(feature));
             if (feature != CoreFeature.Sessions.getIndex() && existing != null) {
                 existing.stop(ctx, true);
                 modules.remove(feature);
@@ -201,12 +201,12 @@ public class SDKCore {
     }
 
     /**
-     * Create instances of {@link Module}s required by {@link #config}.
+     * Create instances of {@link ModuleBase}s required by {@link #config}.
      * Uses {@link #moduleMappings} for {@code Config.Feature} / {@link CoreFeature}
-     * - Class&lt;Module&gt; mapping to enable overriding by app developer.
+     * - Class&lt;ModuleBase&gt; mapping to enable overriding by app developer.
      *
      * @param ctx {@link CtxCore} object containing config with mapping overrides
-     * @throws IllegalArgumentException in case some {@link Module} finds {@link #config} inconsistent.
+     * @throws IllegalArgumentException in case some {@link ModuleBase} finds {@link #config} inconsistent.
      * @throws IllegalStateException when this module is run second time on the same {@code Core} instance.
      */
     protected void prepareMappings(CtxCore ctx) throws IllegalStateException {
@@ -223,13 +223,13 @@ public class SDKCore {
     }
 
     /**
-     * Create instances of {@link Module}s required by {@link #config}.
+     * Create instances of {@link ModuleBase}s required by {@link #config}.
      * Uses {@link #moduleMappings} for {@code Config.Feature} / {@link CoreFeature}
-     * - Class&lt;Module&gt; mapping to enable overriding by app developer.
+     * - Class&lt;ModuleBase&gt; mapping to enable overriding by app developer.
      *
      * @param ctx {@link CtxCore} object
      * @param features consents bitmask to check against
-     * @throws IllegalArgumentException in case some {@link Module} finds {@link #config} inconsistent.
+     * @throws IllegalArgumentException in case some {@link ModuleBase} finds {@link #config} inconsistent.
      * @throws IllegalStateException when this module is run second time on the same {@code Core} instance.
      */
     protected void buildModules(CtxCore ctx, int features) throws IllegalArgumentException, IllegalStateException {
@@ -295,10 +295,10 @@ public class SDKCore {
     /**
      * Return module instance by {@code Config.Feature}
      *
-     * @param feature to get a {@link Module} instance for
-     * @return {@link Module} instance or null if no such module is instantiated
+     * @param feature to get a {@link ModuleBase} instance for
+     * @return {@link ModuleBase} instance or null if no such module is instantiated
      */
-    protected Module module(int feature) {
+    protected ModuleBase module(int feature) {
         return module(moduleMappings.get(feature));
     }
 
@@ -324,26 +324,26 @@ public class SDKCore {
     }
 
     /**
-     * Notify all {@link Module} instances about new session has just been started
+     * Notify all {@link ModuleBase} instances about new session has just been started
      *
      * @param session session to begin
      * @return supplied session for method chaining
      */
     public SessionImpl onSessionBegan(CtxCore ctx, SessionImpl session) {
-        for (Module m : modules.values()) {
+        for (ModuleBase m : modules.values()) {
             m.onSessionBegan(session, ctx);
         }
         return session;
     }
 
     /**
-     * Notify all {@link Module} instances session was ended
+     * Notify all {@link ModuleBase} instances session was ended
      *
      * @param session session to end
      * @return supplied session for method chaining
      */
     public SessionImpl onSessionEnded(CtxCore ctx, SessionImpl session) {
-        for (Module m : modules.values()) {
+        for (ModuleBase m : modules.values()) {
             m.onSessionEnded(session, ctx);
         }
         ModuleSessions sessions = (ModuleSessions) module(CoreFeature.Sessions.getIndex());
@@ -536,7 +536,7 @@ public class SDKCore {
             }
         }
 
-        for (Module module : modules.values()) {
+        for (ModuleBase module : modules.values()) {
             module.onDeviceId(ctx, id, old);
         }
 

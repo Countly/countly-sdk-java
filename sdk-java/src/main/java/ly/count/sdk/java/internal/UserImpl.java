@@ -260,4 +260,9 @@ public class UserImpl extends User implements Storable {
     public String storagePrefix() {
         return "user";
     }
+
+    @Override
+    public void setId(Long id) {
+        this.id = id.toString();
+    }
 }

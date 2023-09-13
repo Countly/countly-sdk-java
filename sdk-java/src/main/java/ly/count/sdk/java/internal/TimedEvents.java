@@ -52,6 +52,11 @@ class TimedEvents implements Storable, EventImpl.EventRecorder {
     }
 
     @Override
+    public void setId(Long id) {
+        //do nothing
+    }
+
+    @Override
     public byte[] store(Log L) {
         ByteArrayOutputStream bytes = null;
         ObjectOutputStream stream = null;

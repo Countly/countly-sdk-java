@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.Set;
 
 import ly.count.sdk.java.internal.*;
-import ly.count.sdk.java.internal.Module;
 
 /**
  * Countly configuration object.
@@ -125,9 +124,9 @@ public class Config {
         public static final int STRATEGY_CUSTOM = 10;
         public static final int REALM_DID = 0;
 
-        public final int realm;
-        public final int strategy;
-        public final String id;
+        public int realm;
+        public int strategy;
+        public String id;
 
         public DID(int realm, int strategy, String id) {
             this.realm = realm;
@@ -203,9 +202,9 @@ public class Config {
                 bytes = new ByteArrayInputStream(data);
                 stream = new ObjectInputStream(bytes);
 
-                Utils.reflectiveSetField(this, "realm", stream.readInt(), L);
-                Utils.reflectiveSetField(this, "strategy", stream.readInt(), L);
-                Utils.reflectiveSetField(this, "id", stream.readObject(), L);
+                this.realm = stream.readInt();
+                this.strategy = stream.readInt();
+                this.id = (String) stream.readObject();
 
                 return true;
             } catch (IOException | ClassNotFoundException e) {
@@ -242,12 +241,12 @@ public class Config {
     /**
      * URL of Countly server
      */
-    protected final URL serverURL;
+    protected URL serverURL;
 
     /**
      * Application key of Countly server
      */
-    protected final String serverAppKey;
+    protected String serverAppKey;
 
     /**
      * Set of Countly SDK features enabled
@@ -386,9 +385,9 @@ public class Config {
     protected String crashProcessorClass = null;
 
     /**
-     * Feature-Class map which sets Module overrides.
+     * Feature-Class map which sets ModuleBase overrides.
      */
-    protected Map<Integer, Class<? extends Module>> moduleOverrides = null;
+    protected Map<Integer, Class<? extends ModuleBase>> moduleOverrides = null;
 
     /**
      * Requires GDPR-compliance calls.
@@ -1159,14 +1158,14 @@ public class Config {
     }
 
     /**
-     * Override some {@link Module} functionality with your own class.
+     * Override some {@link ModuleBase} functionality with your own class.
      *
      * @param feature feature index to override
      * @param cls {@link Class} to use instead of Countly SDK standard class
      * @return {@code this} instance for method chaining
      * @deprecated this will do nothing
      */
-    protected Config overrideModule(Integer feature, Class<? extends Module> cls) {
+    protected Config overrideModule(Integer feature, Class<? extends ModuleBase> cls) {
         return this;
     }
 
@@ -1204,7 +1203,7 @@ public class Config {
      * @return {@link #moduleOverrides} value for {@code Feature} specified
      * @deprecated this will do nothing
      */
-    public Class<? extends Module> getModuleOverride(Config.Feature feature) {
+    public Class<? extends ModuleBase> getModuleOverride(Config.Feature feature) {
         return null;
     }
 

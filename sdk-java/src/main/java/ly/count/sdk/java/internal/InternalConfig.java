@@ -109,6 +109,11 @@ public final class InternalConfig extends Config implements Storable {
         return getStoragePrefix();
     }
 
+    @Override
+    public void setId(Long id) {
+        //do nothing
+    }
+
     public static String getStoragePrefix() {
         return "config";
     }
@@ -206,8 +211,8 @@ public final class InternalConfig extends Config implements Storable {
             stream = new ObjectInputStream(bytes);
 
             try {
-                Utils.reflectiveSetField(this, "serverURL", new URL(stream.readUTF()), L);
-                Utils.reflectiveSetField(this, "serverAppKey", stream.readUTF(), L);
+                this.serverURL = new URL(stream.readUTF());
+                this.serverAppKey = stream.readUTF();
             } catch (Exception e) {
                 if (L != null) {
                     L.e("[InternalCore][Restore] Cannot happen " + e);
@@ -256,7 +261,7 @@ public final class InternalConfig extends Config implements Storable {
                     int f = stream.readInt();
                     String cls = stream.readUTF();
                     try {
-                        moduleOverrides.put(f, (Class<? extends Module>) Class.forName(cls));
+                        moduleOverrides.put(f, (Class<? extends ModuleBase>) Class.forName(cls));
                     } catch (Throwable t) {
                         if (L != null) {
                             L.e("[InternalCore][Restore] Cannot get class " + cls + " for feature override " + f);

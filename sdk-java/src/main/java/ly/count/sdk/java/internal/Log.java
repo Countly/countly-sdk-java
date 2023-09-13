@@ -4,7 +4,7 @@ import ly.count.sdk.java.Config;
 
 /**
  * Logging module. Exposes static functions for simplicity, thus can be used only from some point
- * in time when {@link Config} is created and {@link Module}s are up.
+ * in time when {@link Config} is created and {@link ModuleBase}s are up.
  */
 
 public class Log {
