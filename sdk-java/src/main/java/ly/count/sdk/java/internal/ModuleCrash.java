@@ -12,7 +12,6 @@ import ly.count.sdk.java.CrashProcessor;
 public class ModuleCrash extends ModuleBase {
 
     protected long started = 0;
-    private boolean limited = false;
     private boolean crashed = false;
 
     protected InternalConfig config;
@@ -23,7 +22,6 @@ public class ModuleCrash extends ModuleBase {
     public void init(InternalConfig config, Log logger) {
         super.init(config, logger);
         this.config = config;
-        limited = config.isLimited();
         if (config.getCrashProcessorClass() != null) {
             try {
                 Class cls = Class.forName(config.getCrashProcessorClass());
@@ -50,26 +48,24 @@ public class ModuleCrash extends ModuleBase {
 
     @Override
     public void onContextAcquired(final CtxCore ctx) {
-        if (!limited) {
-            previousHandler = Thread.getDefaultUncaughtExceptionHandler();
-            final Thread.UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
-            Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-                @Override
-                public void uncaughtException(Thread thread, Throwable throwable) {
-                    // needed since following UncaughtExceptionHandler can keep reference to this one
-                    crashed = true;
+        previousHandler = Thread.getDefaultUncaughtExceptionHandler();
+        final Thread.UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
+        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+            @Override
+            public void uncaughtException(Thread thread, Throwable throwable) {
+                // needed since following UncaughtExceptionHandler can keep reference to this one
+                crashed = true;
 
-                    if (isActive()) {
-                        onCrash(ctx, throwable, true, null, null);
-                    }
-
-                    if (handler != null) {
-                        handler.uncaughtException(thread, throwable);
-                    }
+                if (isActive()) {
+                    onCrash(ctx, throwable, true, null, null);
                 }
-            });
-            started = System.nanoTime();
-        }
+
+                if (handler != null) {
+                    handler.uncaughtException(thread, throwable);
+                }
+            }
+        });
+        started = System.nanoTime();
     }
 
     @Override

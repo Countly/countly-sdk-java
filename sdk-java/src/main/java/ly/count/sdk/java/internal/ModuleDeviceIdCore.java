@@ -142,9 +142,6 @@ public class ModuleDeviceIdCore extends ModuleBase {
 
     @Override
     public void onDeviceId(final CtxCore ctx, final Config.DID deviceId, final Config.DID oldDeviceId) {
-        if (ctx.getConfig().isLimited()) {
-            return;
-        }
         L.d("[ModuleDeviceIdCore] onDeviceId [" + deviceId + "]");
 
         SessionImpl session = SDKCore.instance.getSession();
@@ -353,8 +350,6 @@ public class ModuleDeviceIdCore extends ModuleBase {
                 L.e("[ModuleDeviceIdCore] Exception during tests " + ie);
             }
         }
-
-        L.d((ctx.getConfig().isLimited() ? "limited " : "") + "acquireIdSync " + holder + " / " + fallbackAllowed);
 
         L.i("[ModuleDeviceIdCore] Generating " + holder.strategy + " / " + holder.realm);
 

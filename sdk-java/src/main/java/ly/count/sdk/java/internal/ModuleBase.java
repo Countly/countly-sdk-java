@@ -93,15 +93,6 @@ public abstract class ModuleBase {
     }
 
     /**
-     * SDK got a first context. Called only in {@link InternalConfig#isLimited()} == true mode,
-     * that is from {@code Countly} or {@code android.content.BroadcastReceiver}.
-     *
-     * @param ctx {@link CtxCore} with application context instance
-     */
-    public void onLimitedContextAcquired(CtxCore ctx) {
-    }
-
-    /**
      * Session is started.
      *
      * @param session session which began
