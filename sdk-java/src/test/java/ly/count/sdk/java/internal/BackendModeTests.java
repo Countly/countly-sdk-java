@@ -21,11 +21,19 @@ public class BackendModeTests {
     @BeforeClass
     public static void init() {
         Config cc = new Config("https://try.count.ly", "COUNTLY_APP_KEY");
-        //File targetFolder = new File("/Users/zahidzafar/Projects/countly/countly-sdk-java");
 
         cc.setEventQueueSizeToSend(4).enableBackendMode();
 
-        File targetFolder = new File("d:\\__COUNTLY\\java_test\\");
+        String osName = System.getProperty("os.name").toLowerCase();
+        String targetFolderStr;
+
+        if (osName.contains("windows")) {
+            targetFolderStr = "d:\\__COUNTLY\\java_test\\";
+        } else {
+            targetFolderStr = "~/__COUNTLY/java_test/";
+        }
+
+        File targetFolder = new File(targetFolderStr);
         Countly.init(targetFolder, cc);
     }
 
