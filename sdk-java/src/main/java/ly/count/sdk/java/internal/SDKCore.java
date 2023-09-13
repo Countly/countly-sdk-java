@@ -512,8 +512,8 @@ public class SDKCore {
         }
     }
 
-    public void onUserChanged(final CtxCore ctx, final JSONObject changes, final Set<String> cohortsAdded, final Set<String> cohortsRemoved) {
-        eachModule((feature, module) -> module.onUserChanged(ctx, changes, cohortsAdded, cohortsRemoved));
+    public void onUserChanged(final CtxCore ctx, final JSONObject changes) {
+        eachModule((feature, module) -> module.onUserChanged(ctx, changes));
     }
 
     public void onDeviceId(CtxCore ctx, Config.DID id, Config.DID old) {

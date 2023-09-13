@@ -133,18 +133,15 @@ public class UserEditorImpl implements UserEditor {
     private final UserImpl user;
     private final Map<String, Object> sets;
     private final List<Op> ops;
-    private final List<String> cohortsToAdd, cohortsToRemove;
 
     UserEditorImpl(UserImpl user, Log logger) {
         this.L = logger;
         this.user = user;
         this.sets = new HashMap<>();
         this.ops = new ArrayList<>();
-        this.cohortsToAdd = new ArrayList<>();
-        this.cohortsToRemove = new ArrayList<>();
     }
 
-    void perform(JSONObject changes, Set<String> cohortsAdded, Set<String> cohortsRemoved) throws JSONException {
+    void perform(JSONObject changes) throws JSONException {
         for (String key : sets.keySet()) {
             Object value = sets.get(key);
             switch (key) {
@@ -301,11 +298,6 @@ public class UserEditorImpl implements UserEditor {
             op.apply(changes.getJSONObject(CUSTOM));
             op.apply(user.custom);
         }
-
-        user.cohorts.addAll(cohortsToAdd);
-        user.cohorts.removeAll(cohortsToRemove);
-        cohortsAdded.addAll(cohortsToAdd);
-        cohortsRemoved.addAll(cohortsToRemove);
     }
 
     @Override
@@ -526,21 +518,11 @@ public class UserEditorImpl implements UserEditor {
 
     @Override
     public UserEditor addToCohort(String key) {
-        L.d("addToCohort: key " + key);
-        if (cohortsToRemove.contains(key)) {
-            cohortsToRemove.remove(key);
-        }
-        cohortsToAdd.add(key);
         return this;
     }
 
     @Override
     public UserEditor removeFromCohort(String key) {
-        L.d("removeFromCohort: key " + key);
-        if (cohortsToAdd.contains(key)) {
-            cohortsToAdd.remove(key);
-        }
-        cohortsToRemove.add(key);
         return this;
     }
 
@@ -559,10 +541,8 @@ public class UserEditorImpl implements UserEditor {
 
         try {
             final JSONObject changes = new JSONObject();
-            final Set<String> cohortsAdded = new HashSet<>();
-            final Set<String> cohortsRemoved = new HashSet<>();
 
-            perform(changes, cohortsAdded, cohortsRemoved);
+            perform(changes);
 
             Storage.push(user.ctx, user);
 
@@ -576,12 +556,6 @@ public class UserEditorImpl implements UserEditor {
                         } catch (JSONException e) {
                             L.w("Won't send picturePath" + e);
                         }
-                    }
-                    if (cohortsAdded.size() > 0) {
-                        params.add("add_cohorts", new JSONArray(cohortsAdded).toString());
-                    }
-                    if (cohortsRemoved.size() > 0) {
-                        params.add("remove_cohorts", new JSONArray(cohortsRemoved).toString());
                     }
                     if (changes.has(LOCALE) && user.locale != null) {
                         params.add("locale", user.locale);
@@ -598,15 +572,13 @@ public class UserEditorImpl implements UserEditor {
                 }
             });
 
-            SDKCore.instance.onUserChanged(user.ctx, changes, cohortsAdded, cohortsRemoved);
+            SDKCore.instance.onUserChanged(user.ctx, changes);
         } catch (JSONException e) {
             L.e("[UserEditorImpl Exception while committing changes to User profile" + e);
         }
 
         sets.clear();
         ops.clear();
-        cohortsToAdd.clear();
-        cohortsToRemove.clear();
 
         return user;
     }
