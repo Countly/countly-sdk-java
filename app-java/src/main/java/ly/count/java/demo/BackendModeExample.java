@@ -309,16 +309,10 @@ public class BackendModeExample {
 
         // Countly needs persistent storage for requests, configuration storage, user profiles and other temporary data,
         // therefore requires a separate data folder to run
-        String osName = System.getProperty("os.name").toLowerCase();
-        String targetFolderStr;
 
-        if (osName.contains("windows")) {
-            targetFolderStr = "d:\\__COUNTLY\\java_test\\";
-        } else {
-            targetFolderStr = "~/__COUNTLY/java_test/";
-        }
-
-        File targetFolder = new File(targetFolderStr);
+        // System specific folder structure
+        String[] targetPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
+        File targetFolder = new File(String.join(File.separator, targetPath));
 
         // Main initialization call, SDK can be used after this one is done
         Countly.init(targetFolder, config);

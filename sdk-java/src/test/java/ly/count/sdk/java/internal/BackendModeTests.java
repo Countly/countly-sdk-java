@@ -24,16 +24,9 @@ public class BackendModeTests {
 
         cc.setEventQueueSizeToSend(4).enableBackendMode();
 
-        String osName = System.getProperty("os.name").toLowerCase();
-        String targetFolderStr;
-
-        if (osName.contains("windows")) {
-            targetFolderStr = "d:\\__COUNTLY\\java_test\\";
-        } else {
-            targetFolderStr = "~/__COUNTLY/java_test/";
-        }
-
-        File targetFolder = new File(targetFolderStr);
+        // System specific folder structure
+        String[] targetPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
+        File targetFolder = new File(String.join(File.separator, targetPath));
         Countly.init(targetFolder, cc);
     }
 
