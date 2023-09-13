@@ -12,7 +12,7 @@ import java.util.Map;
 public class Request implements Storable {
     public static final String MODULE = "module";
     public static final String ENDPOINT = "endpoint";
-    private final Long id;
+    private Long id;
 
     /**
      * This string is written to request file to ensure it can be fully read from other end of queue.
@@ -104,6 +104,11 @@ public class Request implements Storable {
     @Override
     public String storagePrefix() {
         return Request.getStoragePrefix();
+    }
+
+    @Override
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public static String getStoragePrefix() {

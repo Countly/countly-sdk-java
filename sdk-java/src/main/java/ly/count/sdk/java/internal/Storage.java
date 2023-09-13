@@ -275,8 +275,7 @@ public class Storage {
                 if (data == null) {
                     return null;
                 }
-                Utils.reflectiveSetField(storable, "id", data.getKey(), L);
-
+                storable.setId(data.getKey());
                 if (storable.restore(data.getValue(), L)) {
                     return storable;
                 } else {

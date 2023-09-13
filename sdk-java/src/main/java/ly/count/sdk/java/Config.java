@@ -124,9 +124,9 @@ public class Config {
         public static final int STRATEGY_CUSTOM = 10;
         public static final int REALM_DID = 0;
 
-        public final int realm;
-        public final int strategy;
-        public final String id;
+        public int realm;
+        public int strategy;
+        public String id;
 
         public DID(int realm, int strategy, String id) {
             this.realm = realm;
@@ -202,9 +202,9 @@ public class Config {
                 bytes = new ByteArrayInputStream(data);
                 stream = new ObjectInputStream(bytes);
 
-                Utils.reflectiveSetField(this, "realm", stream.readInt(), L);
-                Utils.reflectiveSetField(this, "strategy", stream.readInt(), L);
-                Utils.reflectiveSetField(this, "id", stream.readObject(), L);
+                this.realm = stream.readInt();
+                this.strategy = stream.readInt();
+                this.id = (String) stream.readObject();
 
                 return true;
             } catch (IOException | ClassNotFoundException e) {
@@ -241,12 +241,12 @@ public class Config {
     /**
      * URL of Countly server
      */
-    protected final URL serverURL;
+    protected URL serverURL;
 
     /**
      * Application key of Countly server
      */
-    protected final String serverAppKey;
+    protected String serverAppKey;
 
     /**
      * Set of Countly SDK features enabled

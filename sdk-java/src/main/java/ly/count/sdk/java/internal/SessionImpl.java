@@ -32,7 +32,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     /**
      * {@link System#nanoTime()} of time when {@link Session} object is created.
      */
-    protected final Long id;
+    protected Long id;
 
     protected final CtxCore ctx;
 
@@ -451,6 +451,11 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     public String storagePrefix() {
         return getStoragePrefix();
+    }
+
+    @Override
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public static String getStoragePrefix() {

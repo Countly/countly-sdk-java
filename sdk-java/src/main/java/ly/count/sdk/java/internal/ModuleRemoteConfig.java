@@ -211,6 +211,11 @@ public class ModuleRemoteConfig extends ModuleBase {
         }
 
         @Override
+        public void setId(Long id) {
+            //do nothing
+        }
+
+        @Override
         public byte[] store(Log L) {
             try {
                 return values.toString().getBytes(Utils.UTF8);
