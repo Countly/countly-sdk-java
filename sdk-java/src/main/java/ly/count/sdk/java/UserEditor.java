@@ -68,8 +68,22 @@ public interface UserEditor {
 
     UserEditor pushUnique(String key, Object value);
 
+    /**
+     * Add user to cohort
+     *
+     * @param key name of the cohort
+     * @return UserEditor instance to chain calls
+     * @deprecated this will do nothing
+     */
     UserEditor addToCohort(String key);
 
+    /**
+     * Remove user from cohort
+     *
+     * @param key name of the cohort
+     * @return UserEditor instance to chain calls
+     * @deprecated this will do nothing
+     */
     UserEditor removeFromCohort(String key);
 
     User commit();
