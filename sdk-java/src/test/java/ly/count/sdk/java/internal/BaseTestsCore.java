@@ -18,7 +18,7 @@ public class BaseTestsCore {
 
     protected CtxCore ctx;
     protected InternalConfig config = null;
-    protected Module dummy = null;
+    protected ModuleBase dummy = null;
 
     protected SDKCore sdk = null;
 
@@ -101,7 +101,7 @@ public class BaseTestsCore {
         }
 
         if (mock) {
-            List<Module> list = Whitebox.getInternalState(sdk, "modules");
+            List<ModuleBase> list = Whitebox.getInternalState(sdk, "modules");
             list.remove(module);
             module = Mockito.spy(module);
             list.add(1, module);

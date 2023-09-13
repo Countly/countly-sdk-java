@@ -32,7 +32,7 @@ public class Request implements Storable {
         this.params = new Params(params);
     }
 
-    public Request own(Class<? extends Module> module) {
+    public Request own(Class<? extends ModuleBase> module) {
         this.params.add(MODULE, module.getName());
         return this;
     }
@@ -43,10 +43,10 @@ public class Request implements Storable {
     }
 
     @SuppressWarnings("unchecked")
-    public Class<? extends Module> owner() {
+    public Class<? extends ModuleBase> owner() {
         String name = this.params.get(MODULE);
         try {
-            return name == null ? null : (Class<? extends Module>) Class.forName(name);
+            return name == null ? null : (Class<? extends ModuleBase>) Class.forName(name);
         } catch (ClassNotFoundException e) {
             return null;
         }

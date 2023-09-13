@@ -70,7 +70,7 @@ public class Transport implements X509TrustManager {
     /**
      * @param config
      * @throws IllegalArgumentException
-     * @see Module#init(InternalConfig, Log)
+     * @see ModuleBase#init(InternalConfig, Log)
      */
     public void init(InternalConfig config, Log logger) throws IllegalArgumentException {
         // ssl config (cert & public key pinning)

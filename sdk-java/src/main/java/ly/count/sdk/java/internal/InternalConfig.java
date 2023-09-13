@@ -256,7 +256,7 @@ public final class InternalConfig extends Config implements Storable {
                     int f = stream.readInt();
                     String cls = stream.readUTF();
                     try {
-                        moduleOverrides.put(f, (Class<? extends Module>) Class.forName(cls));
+                        moduleOverrides.put(f, (Class<? extends ModuleBase>) Class.forName(cls));
                     } catch (Throwable t) {
                         if (L != null) {
                             L.e("[InternalCore][Restore] Cannot get class " + cls + " for feature override " + f);
