@@ -81,7 +81,7 @@ public class Countly implements Usage {
             return;
         }
 
-        if (cly != null) {
+        if (isInitialized()) {
             L.e("[Countly] Countly shouldn't be initialized twice. Please either use Countly.isInitialized() to check status or call Countly.stop() before second Countly.init().");
             stop(false);
         }
@@ -174,7 +174,7 @@ public class Countly implements Usage {
      */
     public static Session session() {
         if (!isInitialized()) {
-            if (cly != null && cly.L != null) {
+            if (cly.L != null) {
                 cly.L.e("[Countly] SDK is not initialized yet.");
             }
 
@@ -185,7 +185,7 @@ public class Countly implements Usage {
 
     public static ModuleBackendMode.BackendMode backendMode() {
         if (!isInitialized()) {
-            if (cly != null && cly.L != null) {
+            if (cly.L != null) {
                 cly.L.e("[Countly] SDK is not initialized yet.");
             }
             return null;
@@ -195,7 +195,7 @@ public class Countly implements Usage {
                 return mbm.new BackendMode();
             }
             //if it is null, feature was not enabled, return mock
-            if (cly != null && cly.L != null) {
+            if (cly.L != null) {
                 cly.L.w("[Countly] BackendMode was not enabled, returning dummy module");
             }
             ModuleBackendMode emptyMbm = new ModuleBackendMode();
@@ -272,11 +272,11 @@ public class Countly implements Usage {
      */
     public static void onConsent(Config.Feature... features) {
         if (!isInitialized()) {
-            if (cly != null && cly.L != null) {
+            if (cly.L != null) {
                 cly.L.e("[Countly] SDK is not initialized yet.");
             }
         } else {
-            if (cly != null && cly.L != null) {
+            if (cly.L != null) {
                 cly.L.e("[Countly] onConsent: features = " + features);
             }
             int ftrs = 0;
@@ -295,11 +295,11 @@ public class Countly implements Usage {
      * @param features features to turn offf
      */
     public static void onConsentRemoval(Config.Feature... features) {
-        if (cly != null && cly.L != null) {
+        if (cly.L != null) {
             cly.L.e("[Countly] onConsentRemoval: features = " + features);
         }
         if (!isInitialized()) {
-            if (cly != null && cly.L != null) {
+            if (cly.L != null) {
                 cly.L.e("[Countly] onConsentRemoval: SDK is not initialized yet.");
             }
         } else {
