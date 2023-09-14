@@ -394,7 +394,7 @@ public class SDKCore {
 
     public void init(final CtxCore ctx, Log logger) {
         L = logger;
-        L.i("[SDKCore] Initializing Countly in " + (ctx.getConfig().isLimited() ? "limited" : "full") + " mode");
+        L.i("[SDKCore] Initializing Countly");
 
         sdkStorage.init(ctx, logger);
         config = prepareConfig(ctx);
@@ -505,22 +505,14 @@ public class SDKCore {
     }
 
     public void onDeviceId(CtxCore ctx, Config.DID id, Config.DID old) {
-        L.d((config.isLimited() ? "limited" : "non-limited") + " onDeviceId " + id + ", old " + old);
+        L.d("onDeviceId " + id + ", old " + old);
 
-        if (config.isLimited()) {
-            if (id != null && (!id.equals(old) || !id.equals(config.getDeviceId(id.realm)))) {
-                config.setDeviceId(id);
-            } else if (id == null && old != null) {
-                config.removeDeviceId(old);
-            }
-        } else {
-            if (id != null && (!id.equals(old) || !id.equals(config.getDeviceId(id.realm)))) {
-                config.setDeviceId(id);
-                Storage.push(ctx, instance.config);
-            } else if (id == null && old != null) {
-                if (config.removeDeviceId(old)) {
-                    Storage.push(ctx, config);
-                }
+        if (id != null && (!id.equals(old) || !id.equals(config.getDeviceId(id.realm)))) {
+            config.setDeviceId(id);
+            Storage.push(ctx, instance.config);
+        } else if (id == null && old != null) {
+            if (config.removeDeviceId(old)) {
+                Storage.push(ctx, config);
             }
         }
 
@@ -528,20 +520,7 @@ public class SDKCore {
             module.onDeviceId(ctx, id, old);
         }
 
-        if (config.isLimited()) {
-            config = Storage.read(ctx, new InternalConfig());
-            if (config == null) {
-                L.e("[SDKCore] Config reload gave null instance");
-            } else {
-                config.setLimited(true);
-            }
-            user = Storage.read(ctx, new UserImpl(ctx));
-            if (user == null) {
-                user = new UserImpl(ctx);
-            }
-        }
-
-        if (!config.isLimited() && id != null && id.realm == Config.DID.REALM_DID) {
+        if (id != null && id.realm == Config.DID.REALM_DID) {
             user.id = id.id;
             L.d("[SDKCore] 5");
         }
