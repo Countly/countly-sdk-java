@@ -1,3 +1,8 @@
+23.09.1
+* !! Major breaking change !! The following methods and their functionality are deprecated from the "UserEditor" interface and will not function anymore:
+  * "addToCohort(key)"
+  * "removeFromCohort(key)"
+
 23.09.0
 * Deprecated the init time configuration of 'setEventsBufferSize(eventsBufferSize)'. Introduced replacement 'setEventQueueSizeToSend(eventsQueueSize)'
 * Deprecated the init time configuration of 'setSendUpdateEachSeconds(sendUpdateEachSeconds)'. Introduced replacement 'setUpdateSessionTimerDelay(delay)'
