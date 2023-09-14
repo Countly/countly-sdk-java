@@ -118,17 +118,6 @@ public abstract class ModuleBase {
     }
 
     /**
-     * User object has been changed.
-     *
-     * @param ctx
-     * @param changes object with all the changes going to be sent to the server
-     * @param cohortsAdded set of cohorts this user has just been added to
-     * @param cohortsRemoved set of cohorts this user has just been removed from
-     */
-    public void onUserChanged(CtxCore ctx, JSONObject changes, Set<String> cohortsAdded, Set<String> cohortsRemoved) {
-    }
-
-    /**
      * This method is called only on owning module only if module marks request as owned ({@link Request#own(Class)}.
      * Gives a module another chance to modify request before sending. Being run in {@code Countly}.
      *
