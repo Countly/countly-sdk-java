@@ -465,27 +465,19 @@ public class SDKCore {
             networking.check(ctx);
         }
 
-        if (config.isLimited()) {
-            onLimitedContextAcquired(ctx);
-        } else {
-            recover(ctx);
+        recover(ctx);
 
-            try {
-                user = Storage.read(ctx, new UserImpl(ctx));
-                if (user == null) {
-                    user = new UserImpl(ctx);
-                }
-            } catch (Throwable e) {
-                L.e("[SDKCore] Cannot happen" + e);
+        try {
+            user = Storage.read(ctx, new UserImpl(ctx));
+            if (user == null) {
                 user = new UserImpl(ctx);
             }
-
-            onContextAcquired(ctx);
+        } catch (Throwable e) {
+            L.e("[SDKCore] Cannot happen" + e);
+            user = new UserImpl(ctx);
         }
-    }
 
-    protected void onLimitedContextAcquired(final CtxCore ctx) {
-        eachModule((feature, module) -> module.onLimitedContextAcquired(ctx));
+        onContextAcquired(ctx);
     }
 
     protected void onContextAcquired(final CtxCore ctx) {
@@ -510,10 +502,6 @@ public class SDKCore {
         if (module != null) {
             module.onCrash(ctx, t, fatal, name, segments, logs);
         }
-    }
-
-    public void onUserChanged(final CtxCore ctx, final JSONObject changes) {
-        eachModule((feature, module) -> module.onUserChanged(ctx, changes));
     }
 
     public void onDeviceId(CtxCore ctx, Config.DID id, Config.DID old) {

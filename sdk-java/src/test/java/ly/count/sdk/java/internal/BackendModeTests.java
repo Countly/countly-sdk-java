@@ -21,11 +21,17 @@ public class BackendModeTests {
     @BeforeClass
     public static void init() {
         Config cc = new Config("https://try.count.ly", "COUNTLY_APP_KEY");
-        //File targetFolder = new File("/Users/zahidzafar/Projects/countly/countly-sdk-java");
 
         cc.setEventQueueSizeToSend(4).enableBackendMode();
 
-        File targetFolder = new File("d:\\__COUNTLY\\java_test\\");
+        // System specific folder structure
+        String[] targetPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
+        File targetFolder = new File(String.join(File.separator, targetPath));
+
+        if(targetFolder.mkdirs()){
+            System.out.println("Directory creation failed");
+        }
+
         Countly.init(targetFolder, cc);
     }
 
