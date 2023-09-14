@@ -35,7 +35,7 @@ class EventImpl implements Event, JSONable {
 
     /**
      * True when some validation failed in any Event method. Results in event being discarded in
-     * production mode and {@link IllegalStateException} in test mode thanks to {@link Log#e(String, Throwable)}.
+     * production mode and {@link IllegalStateException} in test mode thanks to {@link Log#e(String)}.
      */
     private boolean invalid = false;
 
@@ -336,6 +336,18 @@ class EventImpl implements Event, JSONable {
 
     public boolean isInvalid() {
         return invalid;
+    }
+
+    public int getHour() {
+        return hour;
+    }
+
+    public int getDow() {
+        return dow;
+    }
+
+    public Map<String, String> getSegmentation() {
+        return segmentation;
     }
 
     @Override
