@@ -512,10 +512,6 @@ public class SDKCore {
         }
     }
 
-    public void onUserChanged(final CtxCore ctx, final JSONObject changes, final Set<String> cohortsAdded, final Set<String> cohortsRemoved) {
-        eachModule((feature, module) -> module.onUserChanged(ctx, changes, cohortsAdded, cohortsRemoved));
-    }
-
     public void onDeviceId(CtxCore ctx, Config.DID id, Config.DID old) {
         L.d((config.isLimited() ? "limited" : "non-limited") + " onDeviceId " + id + ", old " + old);
 
