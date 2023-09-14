@@ -117,18 +117,15 @@ public class ModuleDeviceIdCore extends ModuleBase {
             } else {
                 // regular flow - acquire id using specified strategy
                 Config.DID did = new Config.DID(Config.DID.REALM_DID, ctx.getConfig().getDeviceIdStrategy(), null);
-                acquireId(ctx, did, ctx.getConfig().isDeviceIdFallbackAllowed(), new Tasks.Callback<Config.DID>() {
-                    @Override
-                    public void call(Config.DID id) throws Exception {
-                        if (id != null) {
-                            if (id.strategy == Config.DID.STRATEGY_UUID) {
-                                L.i("During init, custom device id was not provided. SDK has generated a random device id.");
-                            }
-                            L.d("[ModuleDeviceIdCore] Got device id: " + id);
-                            SDKCore.instance.onDeviceId(ctx, id, null);
-                        } else {
-                            L.i("[ModuleDeviceIdCore] No device id of strategy [" + ctx.getConfig().getDeviceIdStrategy() + "] is available yet");
+                acquireId(ctx, did, ctx.getConfig().isDeviceIdFallbackAllowed(), id -> {
+                    if (id != null) {
+                        if (id.strategy == Config.DID.STRATEGY_UUID) {
+                            L.i("During init, custom device id was not provided. SDK has generated a random device id.");
                         }
+                        L.d("[ModuleDeviceIdCore] Got device id: " + id);
+                        SDKCore.instance.onDeviceId(ctx, id, null);
+                    } else {
+                        L.i("[ModuleDeviceIdCore] No device id of strategy [" + ctx.getConfig().getDeviceIdStrategy() + "] is available yet");
                     }
                 });
             }
@@ -214,16 +211,13 @@ public class ModuleDeviceIdCore extends ModuleBase {
      * @return {@code true} if {@link Request}s changed successfully, {@code false} otherwise
      */
     private boolean transformRequests(final CtxCore ctx, final String deviceId) {
-        return Storage.transform(ctx, Request.getStoragePrefix(), new Transformer() {
-            @Override
-            public byte[] doTheJob(Long id, byte[] data) {
-                Request request = new Request(id);
-                if (request.restore(data, L) && !request.params.has(Params.PARAM_DEVICE_ID)) {
-                    request.params.add(Params.PARAM_DEVICE_ID, deviceId);
-                    return request.store(L);
-                }
-                return null;
+        return Storage.transform(ctx, Request.getStoragePrefix(), (id, data) -> {
+            Request request = new Request(id);
+            if (request.restore(data, L) && !request.params.has(Params.PARAM_DEVICE_ID)) {
+                request.params.add(Params.PARAM_DEVICE_ID, deviceId);
+                return request.store(L);
             }
+            return null;
         });
     }
 
@@ -274,15 +268,13 @@ public class ModuleDeviceIdCore extends ModuleBase {
 
         SDKCore.instance.onDeviceId(ctx, null, old);
 
-        acquireId(ctx, new Config.DID(Config.DID.REALM_DID, ctx.getConfig().getDeviceIdStrategy(), null), ctx.getConfig().isDeviceIdFallbackAllowed(), new Tasks.Callback<Config.DID>() {
-            @Override
-            public void call(Config.DID id) throws Exception {
-                if (id != null) {
-                    L.d("[ModuleDeviceIdCore] Got device id: " + id);
-                    SDKCore.instance.onDeviceId(ctx, id, null);
-                } else {
-                    L.i("[ModuleDeviceIdCore] No device id of strategy [" + ctx.getConfig().getDeviceIdStrategy() + "] is available yet");
-                }
+        acquireId(ctx, new Config.DID(Config.DID.REALM_DID, ctx.getConfig().getDeviceIdStrategy(), null), ctx.getConfig().isDeviceIdFallbackAllowed(),
+            id -> {
+            if (id != null) {
+                L.d("[ModuleDeviceIdCore] Got device id: " + id);
+                SDKCore.instance.onDeviceId(ctx, id, null);
+            } else {
+                L.i("[ModuleDeviceIdCore] No device id of strategy [" + ctx.getConfig().getDeviceIdStrategy() + "] is available yet");
             }
         });
     }
@@ -392,5 +384,5 @@ public class ModuleDeviceIdCore extends ModuleBase {
         }
     }
 
-    private static long testSleep = 0L;
+    private static final long testSleep = 0L;
 }

@@ -68,12 +68,9 @@ public class TasksTests extends BaseTestsCore {
                 called[0] = true;
                 return result;
             }
-        }, new Tasks.Callback<Object>() {
-            @Override
-            public void call(Object param) {
-                Assert.assertEquals(result, param);
-                called[1] = true;
-            }
+        }, param -> {
+            Assert.assertEquals(result, param);
+            called[1] = true;
         });
 
         Thread.sleep(100);

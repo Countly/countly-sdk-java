@@ -50,19 +50,16 @@ public class ModuleCrash extends ModuleBase {
     public void onContextAcquired(final CtxCore ctx) {
         previousHandler = Thread.getDefaultUncaughtExceptionHandler();
         final Thread.UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
-        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-            @Override
-            public void uncaughtException(Thread thread, Throwable throwable) {
-                // needed since following UncaughtExceptionHandler can keep reference to this one
-                crashed = true;
+        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
+            // needed since following UncaughtExceptionHandler can keep reference to this one
+            crashed = true;
 
-                if (isActive()) {
-                    onCrash(ctx, throwable, true, null, null);
-                }
+            if (isActive()) {
+                onCrash(ctx, throwable, true, null, null);
+            }
 
-                if (handler != null) {
-                    handler.uncaughtException(thread, throwable);
-                }
+            if (handler != null) {
+                handler.uncaughtException(thread, throwable);
             }
         });
         started = System.nanoTime();

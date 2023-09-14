@@ -206,14 +206,11 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
         Long duration = updateDuration(now);
 
-        Future<Boolean> ret = ModuleRequests.sessionEnd(ctx, this, duration, did, new Tasks.Callback<Boolean>() {
-            @Override
-            public void call(Boolean removed) throws Exception {
-                if (!removed) {
-                    L.i("[SessionImpl] No data in session end request");
-                }
-                Storage.removeAsync(ctx, SessionImpl.this, callback);
+        Future<Boolean> ret = ModuleRequests.sessionEnd(ctx, this, duration, did, removed -> {
+            if (!removed) {
+                L.i("[SessionImpl] No data in session end request");
             }
+            Storage.removeAsync(ctx, SessionImpl.this, callback);
         });
 
         SDKCore.instance.onSessionEnded(ctx, this);
