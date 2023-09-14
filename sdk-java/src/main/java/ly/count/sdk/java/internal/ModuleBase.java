@@ -148,9 +148,4 @@ public abstract class ModuleBase {
     public void onRequestCompleted(Request request, String response, int responseCode) {
 
     }
-
-    /**
-     * @return Module feature index if any
-     */
-    public abstract Integer getFeature();
 }
