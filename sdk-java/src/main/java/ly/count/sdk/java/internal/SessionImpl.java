@@ -263,7 +263,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
      */
     private Long updateDuration(Long now) {
         now = now == null ? System.nanoTime() : now;
-        Long duration;
+        long duration;
 
         if (updated == null) {
             duration = now - began;
