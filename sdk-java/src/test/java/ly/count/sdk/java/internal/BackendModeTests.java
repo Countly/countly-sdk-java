@@ -27,6 +27,11 @@ public class BackendModeTests {
         // System specific folder structure
         String[] targetPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
         File targetFolder = new File(String.join(File.separator, targetPath));
+
+        if(targetFolder.mkdirs()){
+            System.out.println("Directory creation failed");
+        }
+
         Countly.init(targetFolder, cc);
     }
 

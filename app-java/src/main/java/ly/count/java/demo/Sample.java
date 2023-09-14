@@ -141,6 +141,10 @@ public class Sample {
         String[] targetPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
         File targetFolder = new File(String.join(File.separator, targetPath));
 
+        if(targetFolder.mkdirs()){
+            System.out.println("Directory creation failed");
+        }
+
         // Main initialization call, SDK can be used after this one is done
         Countly.init(targetFolder, config);
 
