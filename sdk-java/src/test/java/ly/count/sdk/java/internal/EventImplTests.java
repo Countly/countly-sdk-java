@@ -65,16 +65,29 @@ public class EventImplTests {
         json = jsonValue;
     }
 
+    /**
+     * This test case tests the record method of EventImpl class. It checks if the record method
+     * is called.
+     */
     @Test
     public void eventImpl_testRecorder() {
         event.record();
     }
 
+    /**
+     * This test case validates the toJSON method of EventImpl class. It checks if the JSON object
+     * returned by the toJSON method is same as the JSON object created in the setupEveryTest method.
+     */
     @Test
     public void eventImpl_validateToJson() {
         Assert.assertEquals(json.toString(), event.toJSON(L));
     }
 
+    /**
+     * This test case validates the fromJSON method of EventImpl class. It checks if the EventImpl
+     * object created by the fromJSON method is same as the EventImpl object created in the
+     * setupEveryTest method.
+     */
     @Test
     public void eventImpl_validateFromJson() {
 
@@ -91,6 +104,10 @@ public class EventImplTests {
         Assert.assertEquals(event.getSegmentation(), fromJson.getSegmentation());
     }
 
+    /**
+     * This test case validates the getters of EventImpl class. It checks if the values returned by
+     * the getters are same as the values set in the setupEveryTest method.
+     */
     @Test
     public void eventImpl_testGetters() {
         Assert.assertEquals("test_event", event.getKey());
@@ -100,6 +117,10 @@ public class EventImplTests {
         Assert.assertEquals("true", event.getSegment("test"));
     }
 
+    /**
+     * This test case validates the setters of EventImpl class. It checks if the values returned by
+     * the getters are same as the values set in the setupEveryTest method.
+     */
     @Test
     public void eventImpl_testSetters() {
         event.setCount(10);
