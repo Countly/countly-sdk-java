@@ -152,13 +152,6 @@ public abstract class User {
     public abstract String location();
 
     /**
-     * Current user cohorts set
-     *
-     * @return cohorts if it was set previously, null otherwise
-     */
-    public abstract Set<String> cohorts();
-
-    /**
      * Current user custom data map
      *
      * @return custom data if it was set previously, empty map otherwise

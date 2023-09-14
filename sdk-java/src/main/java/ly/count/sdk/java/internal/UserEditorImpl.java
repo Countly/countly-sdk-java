@@ -39,28 +39,6 @@ public class UserEditorImpl implements UserEditor {
             this.value = value;
         }
 
-        public void apply(Map<String, Object> custom) {
-            //todo, what is this? (AK, 04.02.2019)
-            //            switch (op) {
-            //                case INC:
-            //                    Object existing = custom.get(key);
-            //                    if (existing == null || !(existing instanceof Integer)) {
-            //                        custom.put(key, value);
-            //                    } else {
-            //                        custom.put(key, (Integer) custom.get(key) + (Integer) value);
-            //                    }
-            //                    break;
-            //                case MUL:
-            //                    Object existing = custom.get(key);
-            //                    if (existing == null || !(existing instanceof Integer)) {
-            //                        custom.put(key, value);
-            //                    } else {
-            //                        custom.put(key, (Integer) custom.get(key) + (Integer) value);
-            //                    }
-            //                    break;
-            //            }
-        }
-
         public void apply(JSONObject json) throws JSONException {
             JSONObject object;
             switch (op) {
@@ -199,7 +177,7 @@ public class UserEditorImpl implements UserEditor {
                         user.picture = (byte[]) value;
                         changes.put(PICTURE_PATH, PICTURE_IN_USER_PROFILE);
                     } else {
-                        L.e("[UserEditorImpl Won't set user picture (must be of type byte[])");
+                        L.e("[UserEditorImpl] Won't set user picture (must be of type byte[])");
                     }
                     break;
                 case PICTURE_PATH:
@@ -212,10 +190,10 @@ public class UserEditorImpl implements UserEditor {
                             user.picturePath = new URI((String) value).toString();
                             changes.put(PICTURE_PATH, user.picturePath);
                         } catch (URISyntaxException e) {
-                            L.e("[UserEditorImpl Supplied picturePath is not parsable to java.net.URI");
+                            L.e("[UserEditorImpl] Supplied picturePath is not parsable to java.net.URI");
                         }
                     } else {
-                        L.e("[UserEditorImpl Won't set user picturePath (must be String or null)");
+                        L.e("[UserEditorImpl] Won't set user picturePath (must be String or null)");
                     }
                     break;
                 case GENDER:
@@ -225,13 +203,13 @@ public class UserEditorImpl implements UserEditor {
                     } else if (value instanceof String) {
                         User.Gender gender = User.Gender.fromString((String) value);
                         if (gender == null) {
-                            L.e("[UserEditorImpl Cannot parse gender string: " + value + " (must be one of 'F' & 'M')");
+                            L.e("[UserEditorImpl] Cannot parse gender string: " + value + " (must be one of 'F' & 'M')");
                         } else {
                             user.gender = gender;
                             changes.put(GENDER, user.gender.toString());
                         }
                     } else {
-                        L.e("[UserEditorImpl Won't set user gender (must be of type User.Gender or one of following Strings: 'F', 'M')");
+                        L.e("[UserEditorImpl] Won't set user gender (must be of type User.Gender or one of following Strings: 'F', 'M')");
                     }
                     break;
                 case BIRTHYEAR:
@@ -243,10 +221,10 @@ public class UserEditorImpl implements UserEditor {
                             user.birthyear = Integer.parseInt((String) value);
                             changes.put(BIRTHYEAR, user.birthyear);
                         } catch (NumberFormatException e) {
-                            L.e("[UserEditorImpl user.birthyear must be either Integer or String which can be parsed to Integer" + e);
+                            L.e("[UserEditorImpl] user.birthyear must be either Integer or String which can be parsed to Integer" + e);
                         }
                     } else {
-                        L.e("[UserEditorImpl Won't set user birthyear (must be of type Integer or String which can be parsed to Integer)");
+                        L.e("[UserEditorImpl] Won't set user birthyear (must be of type Integer or String which can be parsed to Integer)");
                     }
                     break;
                 case LOCALE:
@@ -286,7 +264,7 @@ public class UserEditorImpl implements UserEditor {
                             user.custom.put(key, value);
                         }
                     } else {
-                        L.e("[UserEditorImpl Type of value " + value + " '" + value.getClass().getSimpleName() + "' is not supported yet, thus user property is not stored");
+                        L.e("[UserEditorImpl] Type of value " + value + " '" + value.getClass().getSimpleName() + "' is not supported yet, thus user property is not stored");
                     }
                     break;
             }
@@ -296,7 +274,6 @@ public class UserEditorImpl implements UserEditor {
         }
         for (Op op : ops) {
             op.apply(changes.getJSONObject(CUSTOM));
-            op.apply(user.custom);
         }
     }
 
@@ -420,11 +397,11 @@ public class UserEditorImpl implements UserEditor {
                 try {
                     return set(LOCATION, Double.valueOf(comps[0]) + "," + Double.valueOf(comps[1]));
                 } catch (Throwable t) {
-                    L.e("[UserEditorImpl Invalid location format: " + location + " " + t);
+                    L.e("[UserEditorImpl] Invalid location format: " + location + " " + t);
                     return this;
                 }
             } else {
-                L.e("[UserEditorImpl Invalid location format: " + location);
+                L.e("[UserEditorImpl] Invalid location format: " + location);
                 return this;
             }
         } else {
@@ -476,7 +453,7 @@ public class UserEditorImpl implements UserEditor {
     public UserEditor setOnce(String key, Object value) {
         L.d("setOnce: key " + key + " value " + value);
         if (value == null) {
-            L.e("[UserEditorImpl $setOnce operation operand cannot be null: key " + key);
+            L.e("[UserEditorImpl] $setOnce operation operand cannot be null: key " + key);
             return this;
         } else {
             return setCustomOp(Op.SET_ONCE, key, value);
@@ -487,7 +464,7 @@ public class UserEditorImpl implements UserEditor {
     public UserEditor pull(String key, Object value) {
         L.d("pull: key " + key + " value " + value);
         if (value == null) {
-            L.e("[UserEditorImpl $pull operation operand cannot be null: key " + key);
+            L.e("[UserEditorImpl] $pull operation operand cannot be null: key " + key);
             return this;
         } else {
             return setCustomOp(Op.PULL, key, value);
@@ -498,7 +475,7 @@ public class UserEditorImpl implements UserEditor {
     public UserEditor push(String key, Object value) {
         L.d("push: key " + key + " value " + value);
         if (value == null) {
-            L.e("[UserEditorImpl $push operation operand cannot be null: key " + key);
+            L.e("[UserEditorImpl] $push operation operand cannot be null: key " + key);
             return this;
         } else {
             return setCustomOp(Op.PUSH, key, value);
@@ -509,7 +486,7 @@ public class UserEditorImpl implements UserEditor {
     public UserEditor pushUnique(String key, Object value) {
         L.d("pushUnique: key " + key + " value " + value);
         if (value == null) {
-            L.e("[UserEditorImpl pushUnique / $addToSet operation operand cannot be null: key " + key);
+            L.e("[UserEditorImpl] pushUnique / $addToSet operation operand cannot be null: key " + key);
             return this;
         } else {
             return setCustomOp(Op.PUSH_UNIQUE, key, value);
@@ -518,11 +495,13 @@ public class UserEditorImpl implements UserEditor {
 
     @Override
     public UserEditor addToCohort(String key) {
+        L.w("[UserEditorImpl] addToCohort, this function is deprecated and is doing nothing.");
         return this;
     }
 
     @Override
     public UserEditor removeFromCohort(String key) {
+        L.w("[UserEditorImpl] removeFromCohort, this function is deprecated and is doing nothing.");
         return this;
     }
 
@@ -530,7 +509,7 @@ public class UserEditorImpl implements UserEditor {
     public User commit() {
         L.d("commit");
         if (SDKCore.instance == null) {
-            L.e("[UserEditorImpl Countly is not initialized");
+            L.e("[UserEditorImpl] Countly is not initialized");
             return null;
         }
 
@@ -574,7 +553,7 @@ public class UserEditorImpl implements UserEditor {
 
             SDKCore.instance.onUserChanged(user.ctx, changes);
         } catch (JSONException e) {
-            L.e("[UserEditorImpl Exception while committing changes to User profile" + e);
+            L.e("[UserEditorImpl] Exception while committing changes to User profile" + e);
         }
 
         sets.clear();

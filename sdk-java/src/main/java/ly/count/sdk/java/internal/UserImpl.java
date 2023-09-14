@@ -23,7 +23,6 @@ public class UserImpl extends User implements Storable {
     byte[] picture;
     Gender gender;
     Integer birthyear;
-    Set<String> cohorts;
     Map<String, Object> custom;
     CtxCore ctx;
 
@@ -31,7 +30,6 @@ public class UserImpl extends User implements Storable {
         this.L = ctx.getLogger();
         this.ctx = ctx;
         this.custom = new HashMap<>();
-        this.cohorts = new HashSet<>();
     }
 
     public String id() {
@@ -90,10 +88,6 @@ public class UserImpl extends User implements Storable {
         return location;
     }
 
-    public Set<String> cohorts() {
-        return cohorts;
-    }
-
     public Map<String, Object> custom() {
         return custom;
     }
@@ -125,7 +119,7 @@ public class UserImpl extends User implements Storable {
             stream.writeObject(country);
             stream.writeObject(city);
             stream.writeObject(location);
-            stream.writeObject(cohorts == null || cohorts.size() == 0 ? null : cohorts);
+            stream.writeObject(null);//this is for the removed "cohorts" functionality. just to keep the correct order. Throw away in the future
             stream.writeObject(custom);
             stream.close();
             return bytes.toByteArray();
@@ -191,8 +185,7 @@ public class UserImpl extends User implements Storable {
             city = (String) stream.readObject();
             location = (String) stream.readObject();
 
-            cohorts = (Set<String>) stream.readObject();
-            cohorts = cohorts == null ? new HashSet<String>() : cohorts;
+            Set<String> throwawayCohorts = (Set<String>) stream.readObject();//this is for keeping backwards compatibility. Throw away in the future
 
             custom = (Map<String, Object>) stream.readObject();
             if (custom == null) {
@@ -245,7 +238,6 @@ public class UserImpl extends User implements Storable {
             ", picture=" + Arrays.toString(picture) +
             ", gender=" + gender +
             ", birthyear=" + birthyear +
-            ", cohorts=" + cohorts +
             ", custom=" + custom +
             ", ctx=" + ctx +
             '}';
