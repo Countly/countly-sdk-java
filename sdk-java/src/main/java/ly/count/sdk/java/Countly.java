@@ -119,7 +119,7 @@ public class Countly implements Usage {
      */
     public static void init(final File directory, final Config config) {
         config.setTargetFolder(directory);
-        instance().init(config);
+        SingletonHolder.INSTANCE.init(config);
     }
 
     /**
