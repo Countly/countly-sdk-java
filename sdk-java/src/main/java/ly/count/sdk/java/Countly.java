@@ -22,26 +22,44 @@ public class Countly implements Usage {
      */
     public static Device device = Device.dev;
 
-    protected static Countly cly;
+    private static final Countly cly = SingletonHolder.INSTANCE;
+
+    private static class SingletonHolder {
+        private static final Countly INSTANCE = new Countly();
+
+        private static boolean isNull() {
+            return INSTANCE.sdk == null && INSTANCE.ctx == null;
+        }
+
+        private static void empty() {
+            INSTANCE.L = null;
+            INSTANCE.sdk = null;
+            INSTANCE.ctx = null;
+        }
+    }
+
     protected SDKCore sdk;
     protected CtxCore ctx;
     protected Log L;
 
     protected Countly(SDKCore sdk, CtxCore ctx, Log logger) {
-        cly = this;
         L = logger;
         this.sdk = sdk;
         this.ctx = ctx;
+    }
+
+    private Countly() {
     }
 
     /**
      * Initialize Countly.
      * To be called only once on application start.
      *
-     * @param directory storage location for Countly
      * @param config configuration object
      */
-    public static void init(final File directory, final Config config) {
+    public void init(final Config config) {
+        File directory = config.getTargetFolder();
+
         if (config == null) {
             System.out.println("[ERROR][Countly] Config cannot be null");
             return;
@@ -86,7 +104,22 @@ public class Countly implements Usage {
         sdk.init(new CtxCore(sdk, internalConfig, L, directory), L);
 
         // config has been changed, thus recreating ctx
-        cly = new Countly(sdk, new CtxCore(sdk, sdk.config(), L, directory), L);
+        this.sdk = sdk;
+        this.ctx = new CtxCore(sdk, sdk.config(), L, directory);
+        this.L = L;
+    }
+
+    /**
+     * Initialize Countly.
+     * To be called only once on application start.
+     *
+     * @param directory storage location for Countly
+     * @param config configuration object
+     * @deprecated use {@link #init(Config)} instead via api() call
+     */
+    public static void init(final File directory, final Config config) {
+        config.setTargetFolder(directory);
+        instance().init(config);
     }
 
     /**
@@ -97,12 +130,12 @@ public class Countly implements Usage {
      * @param clearData whether to clear all Countly data or not
      */
     public static void stop(boolean clearData) {
-        if (cly != null) {
+        if (isInitialized()) {
             if (cly.L != null) {
                 cly.L.i("[Countly] Stopping SDK");
             }
             cly.sdk.stop(cly.ctx, clearData);
-            cly = null;
+            SingletonHolder.empty();
         } else {
             //todo fix in the future
             //if(cly.L != null) {
@@ -117,7 +150,7 @@ public class Countly implements Usage {
      * @return true if already initialized
      */
     public static boolean isInitialized() {
-        return cly != null;
+        return !SingletonHolder.isNull();
     }
 
     /**
@@ -177,12 +210,21 @@ public class Countly implements Usage {
      * @return {@link Usage} instance
      */
     public static Usage api() {
-        return cly;
+        return instance();
+    }
+
+    /**
+     * Alternative to {@link #api()} & {@link #session()} method for accessing Countly Shared Instance.
+     *
+     * @return {@link Countly} instance
+     */
+    public static Countly instance() {
+        return SingletonHolder.INSTANCE;
     }
 
     @Override
     public Usage login(String id) {
-        if (cly.L != null) {
+        if (L != null) {
             L.d("[Countly] login");
         }
         sdk.login(ctx, id);
@@ -191,7 +233,7 @@ public class Countly implements Usage {
 
     @Override
     public Usage logout() {
-        if (cly.L != null) {
+        if (L != null) {
             L.d("[Countly] logout");
         }
         sdk.logout(ctx);
@@ -205,7 +247,7 @@ public class Countly implements Usage {
 
     @Override
     public Usage changeDeviceIdWithMerge(String id) {
-        if (cly.L != null) {
+        if (L != null) {
             L.d("[Countly] changeDeviceIdWithoutMerge: id = " + id);
         }
         sdk.changeDeviceIdWithMerge(ctx, id);
@@ -214,7 +256,7 @@ public class Countly implements Usage {
 
     @Override
     public Usage changeDeviceIdWithoutMerge(String id) {
-        if (cly.L != null) {
+        if (L != null) {
             L.d("[Countly] changeDeviceIdWithoutMerge: id = " + id);
         }
         sdk.changeDeviceIdWithoutMerge(ctx, id);
