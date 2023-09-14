@@ -15,10 +15,4 @@ public class ModuleViews extends ModuleBase {
     public void init(InternalConfig config, Log logger) {
         super.init(config, logger);
     }
-
-    // TODO: questionable
-    @Override
-    public Integer getFeature() {
-        return CoreFeature.Views.getIndex();
-    }
 }

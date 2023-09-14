@@ -11,9 +11,8 @@ import java.util.concurrent.CountDownLatch;
 
 public class BackendModeExample {
     final static String DEVICE_ID = "device-id";
-    final static String COUNTLY_APP_KEY = "YOUR_APP_KEY";
+    final static String COUNTLY_APP_KEY = "COUNTLY_APP_KEY";
     final static String COUNTLY_SERVER_URL = "https://try.count.ly/";
-
 
     private static void recordUserDetailAndProperties() {
         Map<String, Object> userDetail = new HashMap<>();
@@ -120,56 +119,51 @@ public class BackendModeExample {
 
         threads[0] = new Thread(() -> {
             try {
-                latch.await();          
+                latch.await();
                 System.out.println("Thread[00] executing at: " + System.currentTimeMillis());
                 recordEvent();
                 System.out.println("Thread[00] finished at: " + System.currentTimeMillis());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
         });
-
 
         threads[1] = new Thread(() -> {
             try {
-                latch.await();          
+                latch.await();
                 System.out.println("Thread[01] executing at: " + System.currentTimeMillis());
                 recordView();
                 System.out.println("Thread[01] finished at: " + System.currentTimeMillis());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
         });
 
         threads[2] = new Thread(() -> {
             try {
-                latch.await();          
+                latch.await();
                 System.out.println("Thread[02] executing at: " + System.currentTimeMillis());
                 recordUserDetailAndProperties();
                 System.out.println("Thread[02] finished at: " + System.currentTimeMillis());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
         });
 
         threads[3] = new Thread(() -> {
             try {
-                latch.await();          
+                latch.await();
                 System.out.println("Thread[03] executing at: " + System.currentTimeMillis());
                 recordExceptionWithThrowableAndSegmentation();
                 System.out.println("Thread[03] finished at: " + System.currentTimeMillis());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
         });
 
         threads[4] = new Thread(() -> {
             try {
-                latch.await();          
+                latch.await();
                 System.out.println("Thread[04] executing at: " + System.currentTimeMillis());
                 recordDirectRequest();
                 System.out.println("Thread[04] finished at: " + System.currentTimeMillis());
@@ -179,7 +173,7 @@ public class BackendModeExample {
         });
         threads[5] = new Thread(() -> {
             try {
-                latch.await();          
+                latch.await();
                 System.out.println("Thread[05] executing at: " + System.currentTimeMillis());
                 recordExceptionWithMessageAndSegmentation();
                 System.out.println("Thread[05] finished at: " + System.currentTimeMillis());
@@ -190,7 +184,7 @@ public class BackendModeExample {
 
         threads[6] = new Thread(() -> {
             try {
-                latch.await();          
+                latch.await();
                 System.out.println("Thread[06] executing at: " + System.currentTimeMillis());
                 recordDirectRequest();
                 System.out.println("Thread[06] finished at: " + System.currentTimeMillis());
@@ -201,7 +195,7 @@ public class BackendModeExample {
 
         threads[7] = new Thread(() -> {
             try {
-                latch.await();          
+                latch.await();
                 System.out.println("Thread[07] executing at: " + System.currentTimeMillis());
                 recordView();
                 System.out.println("Thread[07] finished at: " + System.currentTimeMillis());
@@ -212,7 +206,7 @@ public class BackendModeExample {
 
         threads[8] = new Thread(() -> {
             try {
-                latch.await();          
+                latch.await();
                 System.out.println("Thread[08] executing at: " + System.currentTimeMillis());
                 recordUserDetailAndProperties();
                 System.out.println("Thread[08] finished at: " + System.currentTimeMillis());
@@ -223,7 +217,7 @@ public class BackendModeExample {
 
         threads[9] = new Thread(() -> {
             try {
-                latch.await();          
+                latch.await();
                 System.out.println("Thread[09] executing at: " + System.currentTimeMillis());
                 recordUserDetailAndProperties();
                 System.out.println("Thread[09] finished at: " + System.currentTimeMillis());
@@ -234,7 +228,7 @@ public class BackendModeExample {
 
         threads[10] = new Thread(() -> {
             try {
-                latch.await();          
+                latch.await();
                 System.out.println("Thread[10] executing at: " + System.currentTimeMillis());
                 startSession();
                 System.out.println("Thread[10] finished at: " + System.currentTimeMillis());
@@ -244,7 +238,7 @@ public class BackendModeExample {
         });
         threads[11] = new Thread(() -> {
             try {
-                latch.await();          
+                latch.await();
                 System.out.println("Thread[11] executing at: " + System.currentTimeMillis());
                 recordView();
                 System.out.println("Thread[11] finished at: " + System.currentTimeMillis());
@@ -254,7 +248,7 @@ public class BackendModeExample {
         });
         threads[12] = new Thread(() -> {
             try {
-                latch.await();          
+                latch.await();
                 System.out.println("Thread[12] executing at: " + System.currentTimeMillis());
                 recordUserDetailAndProperties();
                 System.out.println("Thread[12] finished at: " + System.currentTimeMillis());
@@ -269,14 +263,14 @@ public class BackendModeExample {
 
         latch.countDown();
 
-       // System.out.println("All threads completed at: " + System.currentTimeMillis());
+        // System.out.println("All threads completed at: " + System.currentTimeMillis());
     }
 
     static void recordDataWithLegacyCalls() {
         // Record Event
         Countly.api().event("Event With Sum And Count")
-                .setSum(23)
-                .setCount(2).record();
+            .setSum(23)
+            .setCount(2).record();
 
         // Record view
         Countly.api().view("Start view");
@@ -286,12 +280,12 @@ public class BackendModeExample {
 
         // Record user properties
         Countly.api().user().edit()
-                .setName("Full name")
-                .setUsername("nickname")
-                .setEmail("test@test.com")
-                .setOrg("Tester")
-                .setPhone("+123456789")
-                .commit();
+            .setName("Full name")
+            .setUsername("nickname")
+            .setEmail("test@test.com")
+            .setOrg("Tester")
+            .setPhone("+123456789")
+            .commit();
 
         // Record crash
         try {
@@ -299,7 +293,6 @@ public class BackendModeExample {
         } catch (Exception e) {
             Countly.api().addCrashReport(e, false, "Divided by zero", null, "sample app");
         }
-
     }
 
     public static void main(String[] args) throws Exception {
@@ -307,16 +300,23 @@ public class BackendModeExample {
         Scanner scanner = new Scanner(System.in);
 
         Config config = new Config(COUNTLY_SERVER_URL, COUNTLY_APP_KEY)
-                .setLoggingLevel(Config.LoggingLevel.DEBUG)
-                .enableBackendMode()
-                .setRequestQueueMaxSize(10000)
-                .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
-                .setRequiresConsent(false)
-                .setEventQueueSizeToSend(1000);
+            .setLoggingLevel(Config.LoggingLevel.DEBUG)
+            .enableBackendMode()
+            .setRequestQueueMaxSize(10000)
+            .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
+            .setRequiresConsent(false)
+            .setEventQueueSizeToSend(1000);
 
         // Countly needs persistent storage for requests, configuration storage, user profiles and other temporary data,
         // therefore requires a separate data folder to run
-        File targetFolder = new File("d:\\__COUNTLY\\java_test\\");
+
+        // System specific folder structure
+        String[] targetPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
+        File targetFolder = new File(String.join(File.separator, targetPath));
+
+        if(targetFolder.mkdirs()){
+            System.out.println("Directory creation failed");
+        }
 
         // Main initialization call, SDK can be used after this one is done
         Countly.init(targetFolder, config);
@@ -386,7 +386,6 @@ public class BackendModeExample {
                 default:
                     break;
             }
-
         }
 
         // Gracefully stop SDK to stop all SDK threads and allow this app to exit

@@ -31,11 +31,6 @@ public class ModuleSessions extends ModuleBase {
     }
 
     @Override
-    public Integer getFeature() {
-        return CoreFeature.Sessions.getIndex();
-    }
-
-    @Override
     public void init(InternalConfig config, Log logger) throws IllegalStateException {
         super.init(config, logger);
     }

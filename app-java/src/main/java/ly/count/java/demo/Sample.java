@@ -1,6 +1,5 @@
 package ly.count.java.demo;
 
-import java.io.Console;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -8,7 +7,6 @@ import java.util.Scanner;
 
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
-import ly.count.sdk.java.View;
 import ly.count.sdk.java.internal.LogCallback;
 
 public class Sample {
@@ -114,7 +112,7 @@ public class Sample {
         Scanner scanner = new Scanner(System.in);
 
         String COUNTLY_SERVER_URL = "https://try.count.ly/";
-        String COUNTLY_APP_KEY = "YOUR_APP_KEY";
+        String COUNTLY_APP_KEY = "COUNTLY_APP_KEY";
 
         Map<String, String> metricOverride = new HashMap<>();
         metricOverride.put("aa", "11");
@@ -139,10 +137,13 @@ public class Sample {
         // Countly needs persistent storage for requests, configuration storage, user profiles and other temporary data,
         // therefore requires a separate data folder to run. The data folder should be existed to run the app
 
-        //File targetFolder = new File("/Users/YOUR_USER/COUNTLY_FOLDER"); Mac Folder Structure
-        //File targetFolder = new File("/home/YOUR_USER/COUNTLY_FOLDER"); Linux Folder Structure
+        // System specific folder structure
+        String[] targetPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
+        File targetFolder = new File(String.join(File.separator, targetPath));
 
-        File targetFolder = new File("d:\\__COUNTLY\\java_test\\"); // Windows Folder Structure
+        if(targetFolder.mkdirs()){
+            System.out.println("Directory creation failed");
+        }
 
         // Main initialization call, SDK can be used after this one is done
         Countly.init(targetFolder, config);

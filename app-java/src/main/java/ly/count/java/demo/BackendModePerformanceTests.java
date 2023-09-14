@@ -11,20 +11,25 @@ import java.util.Scanner;
 
 public class BackendModePerformanceTests {
     final static String DEVICE_ID = "device-id";
-    final static String COUNTLY_APP_KEY = "YOUR_APP_KEY";
+    final static String COUNTLY_APP_KEY = "COUNTLY_APP_KEY";
     final static String COUNTLY_SERVER_URL = "https://try.count.ly/";
-
 
     private static void initSDK(int eventQueueSize, int requestQueueSize) {
         Config config = new Config(COUNTLY_SERVER_URL, COUNTLY_APP_KEY)
-                .setLoggingLevel(Config.LoggingLevel.OFF)
-                .enableBackendMode()
-                .setRequestQueueMaxSize(requestQueueSize)
-                .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
-                .setRequiresConsent(false)
-                .setEventQueueSizeToSend(1);
+            .setLoggingLevel(Config.LoggingLevel.OFF)
+            .enableBackendMode()
+            .setRequestQueueMaxSize(requestQueueSize)
+            .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
+            .setRequiresConsent(false)
+            .setEventQueueSizeToSend(1);
 
-        File targetFolder = new File("d:\\__COUNTLY\\java_test\\");
+        // System specific folder structure
+        String[] targetPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
+        File targetFolder = new File(String.join(File.separator, targetPath));
+
+        if(targetFolder.mkdirs()){
+            System.out.println("Directory creation failed");
+        }
 
         // Main initialization call, SDK can be used after this one is done
         Countly.init(targetFolder, config);
@@ -64,7 +69,7 @@ public class BackendModePerformanceTests {
             }};
 
             Countly.backendMode().recordException(DEVICE_ID, "Message: " + i, "stack traces " + 1, segmentation, crashDetails,
-                    null);
+                null);
         }
 
         System.out.printf("Adding %d requests(user properties) into request Queue%n", batchSize);
@@ -160,11 +165,8 @@ public class BackendModePerformanceTests {
                     Countly.backendMode().recordEvent("device-id", "Event Key " + remaining, 1, 0.1, 5.0, segment, null);
                     --remaining;
                 }
-
             }
-
         } while (remaining != 0 || Countly.backendMode().getQueueSize() != 0);
-
 
         System.out.printf("After successfully sending %d requests to server: Total Memory = %d Mb, Available RAM= %d Mb %n", countOfRequest, Device.dev.getRAMTotal(), Device.dev.getRAMAvailable());
 
