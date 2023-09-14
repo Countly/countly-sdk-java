@@ -2,6 +2,7 @@ package ly.count.sdk.java;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -455,6 +456,11 @@ public class Config {
      * Maximum in memory request queue size.
      */
     protected int requestQueueMaxSize = 1000;
+
+    /**
+     * Storage path for storing requests and events queues
+     */
+    protected File targetFolder = null;
 
     //    /**
     //    * Maximum size of all string keys
@@ -1112,6 +1118,23 @@ public class Config {
     }
 
     /**
+     * Change storage path for Countly data
+     *
+     * @param targetFolder storage path for Countly data
+     * @return {@code this} instance for method chaining
+     */
+    public Config setTargetFolder(File targetFolder) {
+        if (targetFolder == null) {
+            if (configLog != null) {
+                configLog.e("[Config] targetFolder cannot be null");
+            }
+        } else {
+            this.targetFolder = targetFolder;
+        }
+        return this;
+    }
+
+    /**
      * Change period when a check for ANR is made. ANR reporting is enabled by default once you enable {@code Feature.CrashReporting}.
      * Default period is 5 seconds. This is *NOT* a timeout for any possible time frame within app running time, it's a checking period.
      * Meaning *some* ANRs are to be recorded if main thread is blocked for slightly more than #crashReportingANRCheckingPeriod.
@@ -1475,6 +1498,16 @@ public class Config {
      */
     public Class<? extends ModuleBase> getModuleOverride(int feature) {
         return null;
+    }
+
+
+    /**
+     * Getter for {@link #targetFolder}
+     *
+     * @return {@link #targetFolder} value
+     */
+    public File getTargetFolder() {
+        return targetFolder;
     }
 
     /**
