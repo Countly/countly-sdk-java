@@ -115,7 +115,7 @@ public class Countly implements Usage {
      *
      * @param directory storage location for Countly
      * @param config configuration object
-     * @deprecated use {@link #init(Config)} instead via api() call
+     * @deprecated use {@link #init(Config)} instead via instance() call
      */
     public static void init(final File directory, final Config config) {
         config.setTargetFolder(directory);
