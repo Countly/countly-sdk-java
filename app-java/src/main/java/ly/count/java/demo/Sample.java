@@ -145,8 +145,9 @@ public class Sample {
             System.out.println("Directory creation failed");
         }
 
+        config.setTargetFolder(targetFolder);
         // Main initialization call, SDK can be used after this one is done
-        Countly.init(targetFolder, config);
+        Countly.instance().init(config);
 
         Countly.onConsent(Config.Feature.Events, Config.Feature.Sessions, Config.Feature.CrashReporting, Config.Feature.Views, Config.Feature.UserProfiles, Config.Feature.Location);
 
