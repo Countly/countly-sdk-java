@@ -270,13 +270,13 @@ public class ModuleDeviceIdCore extends ModuleBase {
 
         acquireId(ctx, new Config.DID(Config.DID.REALM_DID, ctx.getConfig().getDeviceIdStrategy(), null), ctx.getConfig().isDeviceIdFallbackAllowed(),
             id -> {
-            if (id != null) {
-                L.d("[ModuleDeviceIdCore] Got device id: " + id);
-                SDKCore.instance.onDeviceId(ctx, id, null);
-            } else {
-                L.i("[ModuleDeviceIdCore] No device id of strategy [" + ctx.getConfig().getDeviceIdStrategy() + "] is available yet");
-            }
-        });
+                if (id != null) {
+                    L.d("[ModuleDeviceIdCore] Got device id: " + id);
+                    SDKCore.instance.onDeviceId(ctx, id, null);
+                } else {
+                    L.i("[ModuleDeviceIdCore] No device id of strategy [" + ctx.getConfig().getDeviceIdStrategy() + "] is available yet");
+                }
+            });
     }
 
     /**
