@@ -51,11 +51,6 @@ public class ModuleBackendMode extends ModuleBase {
     }
 
     @Override
-    public Integer getFeature() {
-        return CoreFeature.BackendMode.getIndex();
-    }
-
-    @Override
     public Boolean onRequest(Request request) {
         return true;
     }

@@ -93,15 +93,6 @@ public abstract class ModuleBase {
     }
 
     /**
-     * SDK got a first context. Called only in {@link InternalConfig#isLimited()} == true mode,
-     * that is from {@code Countly} or {@code android.content.BroadcastReceiver}.
-     *
-     * @param ctx {@link CtxCore} with application context instance
-     */
-    public void onLimitedContextAcquired(CtxCore ctx) {
-    }
-
-    /**
      * Session is started.
      *
      * @param session session which began
@@ -115,17 +106,6 @@ public abstract class ModuleBase {
      * @param session session which ended
      */
     public void onSessionEnded(Session session, CtxCore ctx) {
-    }
-
-    /**
-     * User object has been changed.
-     *
-     * @param ctx
-     * @param changes object with all the changes going to be sent to the server
-     * @param cohortsAdded set of cohorts this user has just been added to
-     * @param cohortsRemoved set of cohorts this user has just been removed from
-     */
-    public void onUserChanged(CtxCore ctx, JSONObject changes, Set<String> cohortsAdded, Set<String> cohortsRemoved) {
     }
 
     /**
@@ -148,9 +128,4 @@ public abstract class ModuleBase {
     public void onRequestCompleted(Request request, String response, int responseCode) {
 
     }
-
-    /**
-     * @return Module feature index if any
-     */
-    public abstract Integer getFeature();
 }

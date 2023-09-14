@@ -597,8 +597,6 @@ public class UserEditorImpl implements UserEditor {
                     }
                 }
             });
-
-            SDKCore.instance.onUserChanged(user.ctx, changes, cohortsAdded, cohortsRemoved);
         } catch (JSONException e) {
             L.e("[UserEditorImpl Exception while committing changes to User profile" + e);
         }

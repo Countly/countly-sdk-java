@@ -27,11 +27,6 @@ public class ModuleRequests extends ModuleBase {
         ModuleRequests.metrics = Device.dev.buildMetrics();
     }
 
-    @Override
-    public Integer getFeature() {
-        return CoreFeature.Requests.getIndex();
-    }
-
     private static Request sessionRequest(CtxCore ctx, SessionImpl session, String type, Long value) {
         Request request = Request.build();
 

@@ -30,11 +30,6 @@ public class ModuleRemoteConfig extends ModuleBase {
     //when a module is disabled, developer facing functions do nothing
     protected boolean disabledModule = false;
 
-    @Override
-    public Integer getFeature() {
-        return CoreFeature.RemoteConfig.getIndex();
-    }
-
     public interface RemoteConfigCallback {
         /**
          * Called after receiving remote config update result
