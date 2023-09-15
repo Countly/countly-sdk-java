@@ -1,5 +1,6 @@
 package ly.count.sdk.java;
 
+import javax.annotation.Nonnull;
 import java.util.Map;
 
 /**
@@ -28,7 +29,7 @@ public interface Event {
      * @param value value of segment, must not be null or empty
      * @return this instance for method chaining
      */
-    Event addSegment(String key, String value);
+    Event addSegment(@Nonnull String key, @Nonnull String value);
 
     /**
      * Set event segmentation from
@@ -38,7 +39,7 @@ public interface Event {
      * even length
      * @return this instance for method chaining
      */
-    Event addSegments(String... segmentation);
+    Event addSegments(@Nonnull String... segmentation);
 
     /**
      * Set event segmentation from a map
@@ -46,7 +47,7 @@ public interface Event {
      * @param segmentation map of segment pairs ({key1: value1, key2: value2}
      * @return this instance for method chaining
      */
-    Event setSegmentation(Map<String, String> segmentation);
+    Event setSegmentation(@Nonnull Map<String, String> segmentation);
 
     /**
      * Overwrite default count=1 for this event

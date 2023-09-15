@@ -1,5 +1,6 @@
 package ly.count.sdk.java.internal;
 
+import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -7,8 +8,11 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.powermock.reflect.Whitebox;
 
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Event;
@@ -16,189 +20,120 @@ import ly.count.sdk.java.Event;
 import static org.mockito.Mockito.mock;
 
 @RunWith(JUnit4.class)
-public class EventImplTests extends BaseTestsCore {
-    private CtxCore ctx;
-    SDKCore sdk;
-    InternalConfig config;
+public class EventImplTests {
 
-    Log L = null;
+    Log L = mock(Log.class);
 
-    @Test
-    public void filler(){
+    EventImpl event;
 
-    }
-    /*
+    JSONObject json;
+
     @Before
-    public void setupEveryTest() throws Exception {
-        sdk = mock(SDKCore.class);
-        config = new InternalConfig(new Config("http://www.serverurl.com", "1234"));
-        L = new Log(Config.LoggingLevel.VERBOSE, null);
-        ctx = new CtxImpl(sdk, config, new Object(), L);
-    }
+    public void setupEveryTest() {
+        EventImpl eventImpl = new EventImpl((event) -> {
 
-    @Test
-    public void constructor() {
-        SessionImpl session = new SessionImpl(ctx);
-        String key = "key";
-        EventImpl event = new EventImpl(session, key, L);
+            EventImpl eventImpl1 = (EventImpl) event;
 
-        Assert.assertEquals(Whitebox.getInternalState(event, "key"), key);
-        Assert.assertEquals((int) Whitebox.getInternalState(event, "count"), 1);
-        Assert.assertNull(Whitebox.getInternalState(event, "sum"));
-        Assert.assertNull(Whitebox.getInternalState(event, "duration"));
-        Assert.assertTrue((long) Whitebox.getInternalState(event, "timestamp") > 0);
-        Assert.assertTrue((int) Whitebox.getInternalState(event, "hour") >= 0);
-        Assert.assertTrue((int) Whitebox.getInternalState(event, "dow") >= 0);
-        Assert.assertNull(Whitebox.getInternalState(event, "segmentation"));
-    }
-
-    @Test
-    public void constructor_deserialize() {
-        SessionImpl session = new SessionImpl(ctx);
-        String key = "key";
-        EventImpl event = (EventImpl) new EventImpl(session, key, L)
-            .addSegment("key1", "value1")
-            .addSegment("key2", "value2")
-            .setCount(2)
-            .setDuration(3)
-            .setSum(4);
-
-        Assert.assertEquals(event, EventImpl.fromJSON(event.toJSON(L), session, L));
-    }
-
-    @Test
-    public void constructor_throwsIllegalStateExceptionWhenSessionIsNull() {
-        EventImpl event = new EventImpl(null, "key", L);
-        Assert.assertTrue((boolean) Whitebox.getInternalState(event, "invalid"));
-    }
-
-    @Test
-    public void constructor_throwsIllegalStateExceptionWhenKeyIsNull() {
-        EventImpl event = new EventImpl(new SessionImpl(ctx), null, L);
-        Assert.assertTrue((boolean) Whitebox.getInternalState(event, "invalid"));
-    }
-
-    @Test
-    public void constructor_throwsIllegalStateExceptionWhenKeyIsEmpty() {
-        EventImpl event = new EventImpl(new SessionImpl(ctx), "", L);
-        Assert.assertTrue((boolean) Whitebox.getInternalState(event, "invalid"));
-    }
-
-    @Test
-    public void segmentation_throwsIllegalStateExceptionWhenNull() {
-        SessionImpl session = new SessionImpl(ctx);
-
-        EventImpl event = new EventImpl(session, "key", L);
-        Assert.assertNull(Whitebox.getInternalState(event, "segmentation"));
-        event.addSegment("k", null);
-        Assert.assertTrue((boolean) Whitebox.getInternalState(event, "invalid"));
-    }
-
-    @Test
-    public void segmentation_throwsIllegalStateExceptionWhenValueEmpty() {
-        SessionImpl session = new SessionImpl(ctx);
-
-        EventImpl event = new EventImpl(session, "key", L);
-        Assert.assertNull(Whitebox.getInternalState(event, "segmentation"));
-        event.addSegment("k", "");
-        Assert.assertTrue((boolean) Whitebox.getInternalState(event, "invalid"));
-    }
-
-    @Test
-    public void segmentation_addsSegment() {
-        SessionImpl session = new SessionImpl(ctx);
-        String key = "key", k = "k";
-        String v = "whatever";
-
-        EventImpl event = new EventImpl(session, key, L);
-        Assert.assertNull(Whitebox.getInternalState(event, "segmentation"));
-
-        event.addSegment(k, v);
-        Assert.assertNotNull(Whitebox.getInternalState(event, "segmentation"));
-        Assert.assertEquals(1, ((Map) Whitebox.getInternalState(event, "segmentation")).size());
-        Assert.assertEquals(v, ((Map) Whitebox.getInternalState(event, "segmentation")).get(k));
-    }
-
-    @Test
-    public void segmentation_addsSegments() {
-        SessionImpl session = new SessionImpl(ctx);
-        String key = "key", k1 = "k1", k2 = "k2";
-        String v = "whatever";
-
-        EventImpl event = new EventImpl(session, key, L);
-        Assert.assertNull(Whitebox.getInternalState(event, "segmentation"));
-
-        event.addSegments(k1, v, k2, v);
-        Assert.assertNotNull(Whitebox.getInternalState(event, "segmentation"));
-        Assert.assertEquals(2, ((Map) Whitebox.getInternalState(event, "segmentation")).size());
-        Assert.assertEquals(v, ((Map) Whitebox.getInternalState(event, "segmentation")).get(k1));
-        Assert.assertEquals(v, ((Map) Whitebox.getInternalState(event, "segmentation")).get(k2));
-    }
-
-    @Test
-    public void segmentation_setsSegments() {
-        SessionImpl session = new SessionImpl(ctx);
-        String key = "key", k1 = "k1", k2 = "k2", k3 = "k3";
-        String v = "whatever";
-
-        EventImpl event = new EventImpl(session, key, L);
-        Assert.assertNull(Whitebox.getInternalState(event, "segmentation"));
-
-        event.addSegments(k1, v, k2, v);
+            Assert.assertEquals(5, eventImpl1.getCount());
+            Assert.assertEquals(new Double(21.0), eventImpl1.getDuration());
+            Assert.assertEquals(new Double(17.0), eventImpl1.getSum());
+            Assert.assertEquals("test_event", eventImpl1.getKey());
+            Assert.assertEquals("true", eventImpl1.getSegment("test"));
+        }, "test_event", L);
 
         Map<String, String> segmentation = new HashMap<>();
-        segmentation.put(k3, v);
+        segmentation.put("test", "true");
+
+        eventImpl.setCount(5);
+        eventImpl.setDuration(21);
+        eventImpl.setSum(17);
+        eventImpl.setSegmentation(segmentation);
+
+        event = eventImpl;
+
+        JSONObject jsonValue = new JSONObject();
+
+        jsonValue.put("key", "test_event");
+        jsonValue.put("count", 5);
+        jsonValue.put("sum", 17.0);
+        jsonValue.put("dur", 21.0);
+        jsonValue.put("timestamp", event.getTimestamp());
+        jsonValue.put("hour", event.getHour());
+        jsonValue.put("dow", event.getDow());
+        jsonValue.put("segmentation", event.getSegmentation());
+
+        json = jsonValue;
+    }
+
+    /**
+     * This test case tests the record method of EventImpl class. It checks if the record method
+     * is called.
+     */
+    @Test
+    public void eventImpl_testRecorder() {
+        event.record();
+    }
+
+    /**
+     * This test case validates the toJSON method of EventImpl class. It checks if the JSON object
+     * returned by the toJSON method is same as the JSON object created in the setupEveryTest method.
+     */
+    @Test
+    public void eventImpl_validateToJson() {
+        Assert.assertEquals(json.toString(), event.toJSON(L));
+    }
+
+    /**
+     * This test case validates the fromJSON method of EventImpl class. It checks if the EventImpl
+     * object created by the fromJSON method is same as the EventImpl object created in the
+     * setupEveryTest method.
+     */
+    @Test
+    public void eventImpl_validateFromJson() {
+
+        EventImpl fromJson = EventImpl.fromJSON(json.toString(), event1 -> {
+        }, L);
+
+        Assert.assertEquals(event.getKey(), fromJson.getKey());
+        Assert.assertEquals(event.getCount(), fromJson.getCount());
+        Assert.assertEquals(event.getSum(), fromJson.getSum());
+        Assert.assertEquals(event.getDuration(), fromJson.getDuration());
+        Assert.assertEquals(event.getTimestamp(), fromJson.getTimestamp());
+        Assert.assertEquals(event.getHour(), fromJson.getHour());
+        Assert.assertEquals(event.getDow(), fromJson.getDow());
+        Assert.assertEquals(event.getSegmentation(), fromJson.getSegmentation());
+    }
+
+    /**
+     * This test case validates the getters of EventImpl class. It checks if the values returned by
+     * the getters are same as the values set in the setupEveryTest method.
+     */
+    @Test
+    public void eventImpl_testGetters() {
+        Assert.assertEquals("test_event", event.getKey());
+        Assert.assertEquals(5, event.getCount());
+        Assert.assertEquals(new Double(21.0), event.getDuration());
+        Assert.assertEquals(new Double(17.0), event.getSum());
+        Assert.assertEquals("true", event.getSegment("test"));
+    }
+
+    /**
+     * This test case validates the setters of EventImpl class. It checks if the values returned by
+     * the getters are same as the values set in the setupEveryTest method.
+     */
+    @Test
+    public void eventImpl_testSetters() {
+        event.setCount(10);
+        event.setDuration(42);
+        event.setSum(34);
+
+        Map<String, String> segmentation = new HashMap<>();
+        segmentation.put("test", "false");
         event.setSegmentation(segmentation);
 
-        Assert.assertNotNull(Whitebox.getInternalState(event, "segmentation"));
-        Assert.assertEquals(1, ((Map) Whitebox.getInternalState(event, "segmentation")).size());
-        Assert.assertNull(((Map) Whitebox.getInternalState(event, "segmentation")).get(k1));
-        Assert.assertNull(((Map) Whitebox.getInternalState(event, "segmentation")).get(k2));
-        Assert.assertEquals(v, ((Map) Whitebox.getInternalState(event, "segmentation")).get(k3));
+        Assert.assertEquals(10, event.getCount());
+        Assert.assertEquals(new Double(42.0), event.getDuration());
+        Assert.assertEquals(new Double(34.0), event.getSum());
+        Assert.assertEquals("false", event.getSegment("test"));
     }
-
-    @Test
-    public void sum_NaN() {
-        EventImpl event = (EventImpl) new EventImpl(new SessionImpl(ctx), "key", L).setSum(Double.NaN);
-        Assert.assertTrue((boolean) Whitebox.getInternalState(event, "invalid"));
-    }
-
-    @Test
-    public void sum_Inf() {
-        EventImpl event = (EventImpl) new EventImpl(new SessionImpl(ctx), "key", L).setSum(Double.NEGATIVE_INFINITY);
-        Assert.assertTrue((boolean) Whitebox.getInternalState(event, "invalid"));
-    }
-
-    @Test
-    public void dur_NaN() {
-        EventImpl event = (EventImpl) new EventImpl(new SessionImpl(ctx), "key", L).setDuration(Double.NaN);
-        Assert.assertTrue((boolean) Whitebox.getInternalState(event, "invalid"));
-    }
-
-    @Test
-    public void dur_Inf() {
-        EventImpl event = (EventImpl) new EventImpl(new SessionImpl(ctx), "key", L).setDuration(Double.NEGATIVE_INFINITY);
-        Assert.assertTrue((boolean) Whitebox.getInternalState(event, "invalid"));
-    }
-
-    @Test
-    public void dur_Neg() {
-        EventImpl event = (EventImpl) new EventImpl(new SessionImpl(ctx), "key", L).setDuration(-2);
-        Assert.assertTrue((boolean) Whitebox.getInternalState(event, "invalid"));
-    }
-
-    @Test
-    public void dur_Inf_invalid() {
-        SessionImpl session = new SessionImpl(ctx);
-
-        Event event = new EventImpl(session, "key", L);
-        try {
-            event.setDuration(Double.NEGATIVE_INFINITY);
-        } catch (IllegalStateException ignored) {
-        }
-
-        event.record();
-        Assert.assertEquals(0, session.events.size());
-    }
-    */
 }

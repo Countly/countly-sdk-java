@@ -7,6 +7,7 @@ import java.util.Scanner;
 
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
+import ly.count.sdk.java.internal.LogCallback;
 
 public class Example {
 
@@ -123,8 +124,11 @@ public class Example {
             .enableFeatures(Config.Feature.Events, Config.Feature.Sessions, Config.Feature.CrashReporting, Config.Feature.Views, Config.Feature.UserProfiles, Config.Feature.Location)
             .setRequiresConsent(true)
             //.enableParameterTamperingProtection("test-salt-checksum")
-            .setLogListener((logMessage, logLevel) -> {
-                //System.out.println("[" + logLevel + "] " + logMessage);
+            .setLogListener(new LogCallback() {
+                @Override
+                public void LogHappened(String logMessage, Config.LoggingLevel logLevel) {
+                    //System.out.println("[" + logLevel + "] " + logMessage);
+                }
             })
             .setEventQueueSizeToSend(1)//setting queue size to "1" should only be done for testing, unless you have a really good reason to do it
             .setMetricOverride(metricOverride)
