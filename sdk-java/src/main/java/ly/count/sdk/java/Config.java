@@ -563,7 +563,7 @@ public class Config {
      * @deprecated use {@link #Config(String, String, File)} instead
      */
     public Config(String serverURL, String serverAppKey) {
-        this(serverURL,serverAppKey,null);
+        this(serverURL, serverAppKey, null);
     }
 
     /**
@@ -572,7 +572,7 @@ public class Config {
      * @param serverURL valid {@link URL} of Countly server
      * @param serverAppKey App Key from Management -> Applications section of your Countly Dashboard
      */
-    public Config(String serverURL, String serverAppKey,File targetFolder) {
+    public Config(String serverURL, String serverAppKey, File targetFolder) {
         //the last '/' should be deleted
         if (serverURL != null && serverURL.length() > 0 && serverURL.charAt(serverURL.length() - 1) == '/') {
             serverURL = serverURL.substring(0, serverURL.length() - 1);

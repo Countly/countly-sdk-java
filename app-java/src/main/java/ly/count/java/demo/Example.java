@@ -125,11 +125,11 @@ public class Example {
         String[] targetPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
         File targetFolder = new File(String.join(File.separator, targetPath));
 
-        if(targetFolder.mkdirs()){
+        if (targetFolder.mkdirs()) {
             System.out.println("Directory creation failed");
         }
 
-        Config config = new Config(COUNTLY_SERVER_URL, COUNTLY_APP_KEY,targetFolder)
+        Config config = new Config(COUNTLY_SERVER_URL, COUNTLY_APP_KEY, targetFolder)
             .setLoggingLevel(Config.LoggingLevel.DEBUG)
             .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
             .enableFeatures(Config.Feature.Events, Config.Feature.Sessions, Config.Feature.CrashReporting, Config.Feature.Views, Config.Feature.UserProfiles, Config.Feature.Location)
