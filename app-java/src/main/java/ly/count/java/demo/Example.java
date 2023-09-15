@@ -9,7 +9,7 @@ import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.internal.LogCallback;
 
-public class Sample {
+public class Example {
 
     static void basicEvent() {
         Countly.api().event("Basic Event").record();
