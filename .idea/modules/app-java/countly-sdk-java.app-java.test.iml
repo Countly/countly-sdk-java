@@ -9,6 +9,7 @@
     <orderEntry type="module" module-name="countly-sdk-java.app-java.main" />
     <orderEntry type="module" module-name="countly-sdk-java.sdk-java.main" />
     <orderEntry type="library" scope="RUNTIME" name="Gradle: org.json:json:20230227" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.google.code.findbugs:jsr305:3.0.2" level="project" />
   </component>
   <component name="TestModuleProperties" production-module="countly-sdk-java.app-java.main" />
 </module>
