@@ -19,7 +19,7 @@ public class Tasks {
     public static final Long ID_STRICT = 0L;
     public static final Long ID_LIST = -1L;
 
-    Log L;
+    final Log L;
 
     public static abstract class Task<T> implements Callable<T> {
         Long id;
@@ -48,12 +48,7 @@ public class Tasks {
 
     public Tasks(final String name, Log L) {
         this.L = L;
-        executor = Executors.newSingleThreadExecutor(new ThreadFactory() {
-            @Override
-            public Thread newThread(Runnable runnable) {
-                return new Thread(runnable, name);
-            }
-        });
+        executor = Executors.newSingleThreadExecutor(runnable -> new Thread(runnable, name));
         pending = new HashMap<>();
     }
 
@@ -152,10 +147,7 @@ public class Tasks {
 
     void await() {
         try {
-            executor.submit(new Runnable() {
-                @Override
-                public void run() {
-                }
+            executor.submit(() -> {
             }).get();
         } catch (InterruptedException | ExecutionException e) {
             if (L != null) {

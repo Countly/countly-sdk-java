@@ -4,33 +4,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum CoreFeature {
-    Sessions(1 << 1, new ModuleBaseCreator() {
-        @Override
-        public ModuleBase create() {
-            return new ModuleSessions();
-        }
-    }),
+    Sessions(1 << 1, ModuleSessions::new),
     Events(1 << 2),
-    Views(1 << 3, new ModuleBaseCreator() {
-        @Override
-        public ModuleBase create() {
-            return new ModuleViews();
-        }
-    }),
-    CrashReporting(1 << 4, new ModuleBaseCreator() {
-        @Override
-        public ModuleBase create() {
-            return new ModuleCrash();
-        }
-    }),
+    Views(1 << 3, ModuleViews::new),
+    CrashReporting(1 << 4, ModuleCrash::new),
     Location(1 << 5),
     UserProfiles(1 << 6),
-    StarRating(1 << 7, new ModuleBaseCreator() {
-        @Override
-        public ModuleBase create() {
-            return new ModuleRatingCore();
-        }
-    }),
+    StarRating(1 << 7, ModuleRatingCore::new),
 
     /*
     THESE ARE ONLY HERE AS DOCUMENTATION
@@ -40,31 +20,11 @@ public enum CoreFeature {
 
     PerformanceMonitoring(1 << 14);
     */
-    BackendMode(1 << 12, new ModuleBaseCreator() {
-        @Override
-        public ModuleBase create() {
-            return new ModuleBackendMode();
-        }
-    }),
-    RemoteConfig(1 << 13, new ModuleBaseCreator() {
-        @Override
-        public ModuleBase create() {
-            return new ModuleRemoteConfig();
-        }
-    }),
+    BackendMode(1 << 12, ModuleBackendMode::new),
+    RemoteConfig(1 << 13, ModuleRemoteConfig::new),
     TestDummy(1 << 19),//used during testing
-    DeviceId(1 << 20, new ModuleBaseCreator() {
-        @Override
-        public ModuleBase create() {
-            return new ModuleDeviceIdCore();
-        }
-    }),
-    Requests(1 << 21, new ModuleBaseCreator() {
-        @Override
-        public ModuleBase create() {
-            return new ModuleRequests();
-        }
-    }),
+    DeviceId(1 << 20, ModuleDeviceIdCore::new),
+    Requests(1 << 21, ModuleRequests::new),
     Logs(1 << 22);
 
     private final int index;

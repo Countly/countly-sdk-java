@@ -27,7 +27,7 @@ public class Params {
         private final JSONObject json;
         private final Params params;
 
-        Log L;
+        final Log L;
 
         Obj(String key, Params params, Log givenL) {
             this.L = givenL;
@@ -56,7 +56,7 @@ public class Params {
         private final Collection<String> json;
         private final Params params;
 
-        Log L;
+        final Log L;
 
         Arr(String key, Params params, Log givenL) {
             this.L = givenL;

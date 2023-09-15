@@ -17,8 +17,8 @@ import ly.count.sdk.java.internal.ModuleRemoteConfig;
 
 @RunWith(JUnit4.class)
 public class ModuleRemoteConfigTests extends BaseTestsCore {
-    String[] keys = new String[] { "qwe", "123", "asd", "zxc", "wer", "sdf", "xcv" };
-    JSONArray jsonArray = new JSONArray();
+    final String[] keys = new String[] { "qwe", "123", "asd", "zxc", "wer", "sdf", "xcv" };
+    final JSONArray jsonArray = new JSONArray();
 
     @Before
     public void setupEveryTest() {

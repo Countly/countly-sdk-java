@@ -47,13 +47,10 @@ public class ModuleSessions extends ModuleBase {
 
             if (ctx.getConfig().getSendUpdateEachSeconds() > 0 && executor == null) {
                 executor = Executors.newScheduledThreadPool(1);
-                executor.scheduleWithFixedDelay(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (!ctx.getConfig().isBackendModeEnabled() && isActive() && getSession() != null) {
-                            L.i("[ModuleSessions] updating session");
-                            getSession().update();
-                        }
+                executor.scheduleWithFixedDelay(() -> {
+                    if (!ctx.getConfig().isBackendModeEnabled() && isActive() && getSession() != null) {
+                        L.i("[ModuleSessions] updating session");
+                        getSession().update();
                     }
                 }, ctx.getConfig().getSendUpdateEachSeconds(), ctx.getConfig().getSendUpdateEachSeconds(), TimeUnit.SECONDS);
             }

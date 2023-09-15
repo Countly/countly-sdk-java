@@ -10,7 +10,7 @@ public class SDKCore {
 
     protected static SDKCore instance;
 
-    protected SDKStorage sdkStorage;
+    protected final SDKStorage sdkStorage;
     private UserImpl user;
 
     public InternalConfig config;
@@ -76,7 +76,7 @@ public class SDKCore {
     }
 
     // TreeMap to keep modules sorted by their feature indexes
-    protected Map<Integer, ModuleBase> modules;
+    protected final Map<Integer, ModuleBase> modules;
 
     /**
      * Check if consent has been given for a feature
