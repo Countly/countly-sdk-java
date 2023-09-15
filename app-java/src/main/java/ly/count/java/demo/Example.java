@@ -118,7 +118,18 @@ public class Example {
         metricOverride.put("aa", "11");
         metricOverride.put("bb", "222");
 
-        Config config = new Config(COUNTLY_SERVER_URL, COUNTLY_APP_KEY)
+        // Countly needs persistent storage for requests, configuration storage, user profiles and other temporary data,
+        // therefore requires a separate data folder to run. The data folder should be existed to run the app
+
+        // System specific folder structure
+        String[] targetPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
+        File targetFolder = new File(String.join(File.separator, targetPath));
+
+        if(targetFolder.mkdirs()){
+            System.out.println("Directory creation failed");
+        }
+
+        Config config = new Config(COUNTLY_SERVER_URL, COUNTLY_APP_KEY,targetFolder)
             .setLoggingLevel(Config.LoggingLevel.DEBUG)
             .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
             .enableFeatures(Config.Feature.Events, Config.Feature.Sessions, Config.Feature.CrashReporting, Config.Feature.Views, Config.Feature.UserProfiles, Config.Feature.Location)
@@ -134,18 +145,6 @@ public class Example {
             .setMetricOverride(metricOverride)
             .setApplicationVersion("123.56.h");
 
-        // Countly needs persistent storage for requests, configuration storage, user profiles and other temporary data,
-        // therefore requires a separate data folder to run. The data folder should be existed to run the app
-
-        // System specific folder structure
-        String[] targetPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
-        File targetFolder = new File(String.join(File.separator, targetPath));
-
-        if(targetFolder.mkdirs()){
-            System.out.println("Directory creation failed");
-        }
-
-        config.setTargetFolder(targetFolder);
         // Main initialization call, SDK can be used after this one is done
         Countly.instance().init(config);
 
