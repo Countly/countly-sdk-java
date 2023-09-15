@@ -460,7 +460,7 @@ public class Config {
     /**
      * Storage path for storing requests and events queues
      */
-    File sdkFolderRootDirectory = null;
+    File sdkStorageRootDirectory = null;
 
     //    /**
     //    * Maximum size of all string keys
@@ -571,9 +571,9 @@ public class Config {
      *
      * @param serverURL valid {@link URL} of Countly server
      * @param serverAppKey App Key from Management -> Applications section of your Countly Dashboard
-     * @param sdkFolderRootDirectory root directory for SDK files
+     * @param sdkStorageRootDirectory root directory for SDK files
      */
-    public Config(String serverURL, String serverAppKey, File sdkFolderRootDirectory) {
+    public Config(String serverURL, String serverAppKey, File sdkStorageRootDirectory) {
         //the last '/' should be deleted
         if (serverURL != null && serverURL.length() > 0 && serverURL.charAt(serverURL.length() - 1) == '/') {
             serverURL = serverURL.substring(0, serverURL.length() - 1);
@@ -585,7 +585,7 @@ public class Config {
             throw new IllegalArgumentException(e);
         }
         this.serverAppKey = serverAppKey;
-        this.sdkFolderRootDirectory = sdkFolderRootDirectory;
+        this.sdkStorageRootDirectory = sdkStorageRootDirectory;
     }
 
     /**

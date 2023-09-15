@@ -25,14 +25,14 @@ public class BackendModeTests {
         cc.setEventQueueSizeToSend(4).enableBackendMode();
 
         // System specific folder structure
-        String[] sdkFolderRootPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
-        File sdkFolderRootDirectory = new File(String.join(File.separator, sdkFolderRootPath));
+        String[] sdkStorageRootPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
+        File sdkStorageRootDirectory = new File(String.join(File.separator, sdkStorageRootPath));
 
-        if(sdkFolderRootDirectory.mkdirs()){
+        if(sdkStorageRootDirectory.mkdirs()){
             System.out.println("Directory creation failed");
         }
 
-        Countly.init(sdkFolderRootDirectory, cc);
+        Countly.init(sdkStorageRootDirectory, cc);
     }
 
     @AfterClass

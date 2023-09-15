@@ -58,7 +58,7 @@ public class Countly implements Usage {
      * @param config configuration object
      */
     public void init(final Config config) {
-        File directory = config.sdkFolderRootDirectory;
+        File directory = config.sdkStorageRootDirectory;
 
         if (config == null) {
             System.out.println("[ERROR][Countly] Config cannot be null");
@@ -113,12 +113,12 @@ public class Countly implements Usage {
      * Initialize Countly.
      * To be called only once on application start.
      *
-     * @param sdkFolderRootDirectory storage location for Countly
+     * @param sdkStorageRootDirectory storage location for Countly
      * @param config configuration object
      * @deprecated use {@link #init(Config)} instead via instance() call
      */
-    public static void init(final File sdkFolderRootDirectory, final Config config) {
-        config.sdkFolderRootDirectory = sdkFolderRootDirectory;
+    public static void init(final File sdkStorageRootDirectory, final Config config) {
+        config.sdkStorageRootDirectory = sdkStorageRootDirectory;
         SingletonHolder.INSTANCE.init(config);
     }
 

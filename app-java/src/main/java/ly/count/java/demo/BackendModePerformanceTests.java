@@ -24,15 +24,15 @@ public class BackendModePerformanceTests {
             .setEventQueueSizeToSend(1);
 
         // System specific folder structure
-        String[] sdkFolderRootPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
-        File sdkFolderRootDirectory = new File(String.join(File.separator, sdkFolderRootPath));
+        String[] sdkStorageRootPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
+        File sdkStorageRootDirectory = new File(String.join(File.separator, sdkStorageRootPath));
 
-        if(sdkFolderRootDirectory.mkdirs()){
+        if(sdkStorageRootDirectory.mkdirs()){
             System.out.println("Directory creation failed");
         }
 
         // Main initialization call, SDK can be used after this one is done
-        Countly.init(sdkFolderRootDirectory, config);
+        Countly.init(sdkStorageRootDirectory, config);
     }
 
     static void performLargeRequestQueueSizeTest() {

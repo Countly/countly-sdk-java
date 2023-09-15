@@ -122,14 +122,14 @@ public class Example {
         // therefore requires a separate data folder to run. The data folder should be existed to run the app
 
         // System specific folder structure
-        String[] sdkFolderRootPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
-        File sdkFolderRootDirectory = new File(String.join(File.separator, sdkFolderRootPath));
+        String[] sdkStorageRootPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
+        File sdkStorageRootDirectory = new File(String.join(File.separator, sdkStorageRootPath));
 
-        if(sdkFolderRootDirectory.mkdirs()){
+        if(sdkStorageRootDirectory.mkdirs()){
             System.out.println("Directory creation failed");
         }
 
-        Config config = new Config(COUNTLY_SERVER_URL, COUNTLY_APP_KEY, sdkFolderRootDirectory)
+        Config config = new Config(COUNTLY_SERVER_URL, COUNTLY_APP_KEY, sdkStorageRootDirectory)
             .setLoggingLevel(Config.LoggingLevel.DEBUG)
             .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
             .enableFeatures(Config.Feature.Events, Config.Feature.Sessions, Config.Feature.CrashReporting, Config.Feature.Views, Config.Feature.UserProfiles, Config.Feature.Location)
