@@ -8,6 +8,8 @@ import java.util.Iterator;
 import java.util.Map;
 
 import ly.count.sdk.java.Event;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Event base class implementation
@@ -39,7 +41,7 @@ class EventImpl implements Event, JSONable {
      */
     private boolean invalid = false;
 
-    EventImpl(EventRecorder recorder, String key, Log givenL) {
+    EventImpl(@Nonnull EventRecorder recorder, @Nonnull String key, @Nonnull Log givenL) {
         L = givenL;
         if (recorder == null) {
             invalid = true;
@@ -85,7 +87,7 @@ class EventImpl implements Event, JSONable {
     }
 
     @Override
-    public Event addSegment(String key, String value) {
+    public Event addSegment(@Nonnull String key, @Nonnull String value) {
         L.d("[EventImpl] addSegment: key = " + key + " value = " + value);
         if (key == null || "".equals(key)) {
             invalid = true;
@@ -109,7 +111,7 @@ class EventImpl implements Event, JSONable {
     }
 
     @Override
-    public Event addSegments(String... segmentation) {
+    public Event addSegments(@Nonnull String... segmentation) {
         L.d("[EventImpl] addSegment: segmentation = " + segmentation);
 
         if (segmentation == null || segmentation.length == 0) {
@@ -131,7 +133,7 @@ class EventImpl implements Event, JSONable {
     }
 
     @Override
-    public Event setSegmentation(Map<String, String> segmentation) {
+    public Event setSegmentation(@Nonnull Map<String, String> segmentation) {
         L.d("[EventImpl] setSegmentation: segmentation = " + segmentation);
 
         if (segmentation == null) {
@@ -230,7 +232,7 @@ class EventImpl implements Event, JSONable {
      *
      * @return JSON string
      */
-    public String toJSON(Log log) {
+    public String toJSON(@Nonnull Log log) {
         final JSONObject json = new JSONObject();
 
         try {
@@ -263,7 +265,7 @@ class EventImpl implements Event, JSONable {
      *
      * @return JSON string
      */
-    static EventImpl fromJSON(String jsonString, EventRecorder recorder, final Log L) {
+    static EventImpl fromJSON(@Nonnull String jsonString, EventRecorder recorder, @Nonnull final Log L) {
         try {
             JSONObject json = new JSONObject(jsonString);
 
