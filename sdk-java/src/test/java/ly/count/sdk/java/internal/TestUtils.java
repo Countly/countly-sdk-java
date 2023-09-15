@@ -63,7 +63,7 @@ public class TestUtils {
 
         //stream all files from target folder and filter only request files and sort them by last modified
         return Stream.of(files)
-            .filter(file -> file.getName().startsWith("[CLY]") && file.getName().contains("_request_"))
+            .filter(file -> file.getName().startsWith("[CLY]_request_"))
             .sorted(Comparator.comparing(File::lastModified))
             .toArray(File[]::new);
     }
