@@ -32,7 +32,7 @@ public final class InternalConfig extends Config implements Storable {
      * {@link DID} instances generated from Countly SDK (currently maximum 2: Countly device id + FCM).
      * Stored to be able to refresh them.
      */
-    private List<DID> dids = new ArrayList<>();
+    private final List<DID> dids = new ArrayList<>();
 
     /**
      * Shouldn't be used!

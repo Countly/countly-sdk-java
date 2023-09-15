@@ -23,8 +23,8 @@ class ViewImpl implements View {
     static final String BOUNCE = "bounce";
     static final String BOUNCE_VALUE = "1";
 
-    private String name;
-    private Session session;
+    private final String name;
+    private final Session session;
     private EventImpl start;
     private boolean firstView;
     private boolean started, ended;

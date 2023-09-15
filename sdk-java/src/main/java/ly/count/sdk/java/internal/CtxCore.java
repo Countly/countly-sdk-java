@@ -6,10 +6,10 @@ import java.io.File;
  * {@link CtxCore} implementation
  */
 public class CtxCore {
-    Log L = null;
-    private SDKCore sdk;
+    Log L;
+    private final SDKCore sdk;
     private InternalConfig config;
-    private File directory;
+    private final File directory;
 
     public CtxCore(SDKCore sdk, InternalConfig config, Log logger, File directory) {
         this.sdk = sdk;

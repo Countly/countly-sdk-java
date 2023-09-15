@@ -251,13 +251,10 @@ public class ModuleRequests extends ModuleBase {
             .add("hour", Device.dev.currentHour())
             .add("dow", Device.dev.currentDayOfWeek());
 
-        return Storage.pushAsync(ctx, request, new Tasks.Callback<Boolean>() {
-            @Override
-            public void call(Boolean param) throws Exception {
-                SDKCore.instance.onRequest(ctx, request);
-                if (callback != null) {
-                    callback.call(param);
-                }
+        return Storage.pushAsync(ctx, request, param -> {
+            SDKCore.instance.onRequest(ctx, request);
+            if (callback != null) {
+                callback.call(param);
             }
         });
     }

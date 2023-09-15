@@ -525,29 +525,26 @@ public class UserEditorImpl implements UserEditor {
 
             Storage.push(user.ctx, user);
 
-            ModuleRequests.injectParams(user.ctx, new ModuleRequests.ParamsInjector() {
-                @Override
-                public void call(Params params) {
-                    params.add("user_details", changes.toString());
-                    if (changes.has(PICTURE_PATH)) {
-                        try {
-                            params.add(PICTURE_PATH, changes.getString(PICTURE_PATH));
-                        } catch (JSONException e) {
-                            L.w("Won't send picturePath" + e);
-                        }
+            ModuleRequests.injectParams(user.ctx, params -> {
+                params.add("user_details", changes.toString());
+                if (changes.has(PICTURE_PATH)) {
+                    try {
+                        params.add(PICTURE_PATH, changes.getString(PICTURE_PATH));
+                    } catch (JSONException e) {
+                        L.w("Won't send picturePath" + e);
                     }
-                    if (changes.has(LOCALE) && user.locale != null) {
-                        params.add("locale", user.locale);
-                    }
-                    if (changes.has(COUNTRY) && user.country != null) {
-                        params.add("country_code", user.country);
-                    }
-                    if (changes.has(CITY) && user.city != null) {
-                        params.add("city", user.city);
-                    }
-                    if (changes.has(LOCATION) && user.location != null) {
-                        params.add("location", user.location);
-                    }
+                }
+                if (changes.has(LOCALE) && user.locale != null) {
+                    params.add("locale", user.locale);
+                }
+                if (changes.has(COUNTRY) && user.country != null) {
+                    params.add("country_code", user.country);
+                }
+                if (changes.has(CITY) && user.city != null) {
+                    params.add("city", user.city);
+                }
+                if (changes.has(LOCATION) && user.location != null) {
+                    params.add("location", user.location);
                 }
             });
         } catch (JSONException e) {

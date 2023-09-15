@@ -50,14 +50,11 @@ public class DefaultNetworking implements Networking {
                         Storage.remove(ctx, request);
                         return true;
                     } else {
-                        tasks.run(transport.send(request), new Tasks.Callback<Boolean>() {
-                            @Override
-                            public void call(Boolean result) throws Exception {
-                                L.d("[Networking] Request " + request.storageId() + " sent?: " + result);
-                                if (result) {
-                                    storageForRequestQueue.removeRequest(request);
-                                    check(ctx);
-                                }
+                        tasks.run(transport.send(request), result -> {
+                            L.d("[Networking] Request " + request.storageId() + " sent?: " + result);
+                            if (result) {
+                                storageForRequestQueue.removeRequest(request);
+                                check(ctx);
                             }
                         });
                         return true;

@@ -35,7 +35,7 @@ public class Device {
 
     private Log L;
 
-    private Map<String, String> metricOverride = new HashMap<>();
+    private final Map<String, String> metricOverride = new HashMap<>();
 
     protected Device() {
         dev = this;
@@ -60,8 +60,8 @@ public class Device {
         long timestamp();
     }
 
-    protected TimeGenerator uniqueTimer = new UniqueTimeGenerator();
-    protected TimeGenerator uniformTimer = new UniformTimeGenerator();
+    protected final TimeGenerator uniqueTimer = new UniqueTimeGenerator();
+    protected final TimeGenerator uniformTimer = new UniformTimeGenerator();
 
     /**
      * Get operation system name

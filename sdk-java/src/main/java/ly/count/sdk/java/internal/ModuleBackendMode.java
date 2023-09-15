@@ -25,7 +25,7 @@ public class ModuleBackendMode extends ModuleBase {
 
     private ScheduledExecutorService executor = null;
 
-    String[] userPredefinedKeys = { "name", "username", "email", "organization", "phone", "gender", "byear" };
+    final String[] userPredefinedKeys = { "name", "username", "email", "organization", "phone", "gender", "byear" };
 
     @Override
     public void init(InternalConfig config, Log logger) {

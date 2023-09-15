@@ -299,7 +299,7 @@ public class Config {
      */
     protected boolean enableBackendMode = false;
 
-    protected Map<String, String> metricOverride = new HashMap<>();
+    protected final Map<String, String> metricOverride = new HashMap<>();
 
     /**
      * Salt string for parameter tampering protection
