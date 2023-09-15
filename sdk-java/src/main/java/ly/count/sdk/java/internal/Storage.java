@@ -334,12 +334,7 @@ public class Storage {
             @Override
             public List<Long> call() throws Exception {
                 List<Long> list = ctx.getSDK().sdkStorage.storableList(ctx, prefix, slice);
-                Collections.sort(list, new Comparator<Long>() {
-                    @Override
-                    public int compare(Long o1, Long o2) {
-                        return slice >= 0 ? o1.compareTo(o2) : o2.compareTo(o1);
-                    }
-                });
+                list.sort((o1, o2) -> slice >= 0 ? o1.compareTo(o2) : o2.compareTo(o1));
                 return list;
             }
         });

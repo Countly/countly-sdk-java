@@ -16,7 +16,7 @@ class TimedEvents implements Storable, EventImpl.EventRecorder {
 
     private final Log L;
 
-    private Map<String, EventImpl> events;
+    private final Map<String, EventImpl> events;
 
     protected TimedEvents(Log logger) {
         L = logger;

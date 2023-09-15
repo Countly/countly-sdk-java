@@ -29,7 +29,7 @@ class EventImpl implements Event, JSONable {
     private int hour;
     private int dow;
 
-    Log L;
+    final Log L;
 
     public interface EventRecorder {
         void recordEvent(Event event);

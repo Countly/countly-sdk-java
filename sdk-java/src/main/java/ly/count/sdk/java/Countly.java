@@ -20,7 +20,7 @@ public class Countly implements Usage {
      * Call respective setters (i.e. {@link Device#setAppVersion(String)} prior to
      * initializing the SDK to make sure data is reported.
      */
-    public static Device device = Device.dev;
+    public static final Device device = Device.dev;
 
     protected static Countly cly;
     protected SDKCore sdk;

@@ -24,7 +24,7 @@ public class UserImpl extends User implements Storable {
     Gender gender;
     Integer birthyear;
     Map<String, Object> custom;
-    CtxCore ctx;
+    final CtxCore ctx;
 
     public UserImpl(CtxCore ctx) {
         this.L = ctx.getLogger();
