@@ -1,15 +1,12 @@
 package ly.count.sdk.java.internal;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-
-import ly.count.sdk.java.Event;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import ly.count.sdk.java.Event;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Event base class implementation
@@ -40,6 +37,20 @@ class EventImpl implements Event, JSONable {
      * production mode and {@link IllegalStateException} in test mode thanks to {@link Log#e(String)}.
      */
     private boolean invalid = false;
+
+    EventImpl(@Nonnull String key, int count, double sum, double duration, @Nonnull Map<String, String> segmentation, @Nonnull Log givenL) {
+        L = givenL;
+
+        this.recorder = null;
+        this.key = key;
+        this.count = count;
+        this.sum = sum;
+        this.duration = duration;
+        this.segmentation = segmentation;
+        this.timestamp = Device.dev.uniqueTimestamp();
+        this.hour = Device.dev.currentHour();
+        this.dow = Device.dev.currentDayOfWeek();
+    }
 
     EventImpl(@Nonnull EventRecorder recorder, @Nonnull String key, @Nonnull Log givenL) {
         L = givenL;
