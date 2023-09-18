@@ -9,25 +9,24 @@ import java.util.Map;
 
 import ly.count.sdk.java.Event;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 /**
  * Event base class implementation
  */
 
 class EventImpl implements Event, JSONable {
-    private final EventRecorder recorder;
-    private final String key;
+    protected final EventRecorder recorder;
+    protected final String key;
 
-    private Map<String, String> segmentation;
+    protected Map<String, String> segmentation;
 
-    private int count;
-    private Double sum;
-    private Double duration;
+    protected int count;
+    protected Double sum;
+    protected Double duration;
 
-    private long timestamp;
-    private int hour;
-    private int dow;
+    protected long timestamp;
+    protected int hour;
+    protected int dow;
 
     final Log L;
 
