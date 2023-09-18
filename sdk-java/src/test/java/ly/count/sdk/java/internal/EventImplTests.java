@@ -85,6 +85,22 @@ public class EventImplTests {
     }
 
     /**
+     * This method tests the setter of EventImpl class. It checks if the logger is null
+     * and throws NullPointerException
+     */
+    @Test(expected = NullPointerException.class)
+    public void eventImpl_TestSetter_NullLoggerThrowsException() {
+        EventImpl eventImpl = new EventImpl((event) -> {
+        }, "", null);
+
+        Assert.assertTrue(eventImpl.isInvalid());
+        Assert.assertEquals("", eventImpl.key);
+        Assert.assertEquals(1, eventImpl.count);
+
+        eventImpl.setSum(1.0);
+    }
+
+    /**
      * This test case tests the record method of EventImpl class. It checks if the record method
      * is called.
      */
@@ -168,7 +184,7 @@ public class EventImplTests {
         json.put(EventImpl.COUNT_KEY, 3);
         json.put(EventImpl.SUM_KEY, 7.0);
         json.put(EventImpl.DUR_KEY, 15.0);
-        json.put(EventImpl.SEGMENTATION_KEY, event.timestamp);
+        json.put(EventImpl.TIMESTAMP_KEY, event.timestamp);
         json.put(EventImpl.HOUR, event.hour);
         json.put(EventImpl.DAY_OF_WEEK, event.dow);
         json.put(EventImpl.SEGMENTATION_KEY, segmentation);
