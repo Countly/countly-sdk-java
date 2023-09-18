@@ -131,7 +131,7 @@ public class EventImplTests {
 
     /**
      * "toJSON" method of EventImpl class.
-     * It checks if the JSON object returned by the toJSON method is same as the JSON object created in the setupEveryTest method.
+     * It checks if the JSON object returned by the "toJSON" method is same.
      */
     @Test
     public void validateToJson() {
@@ -161,8 +161,7 @@ public class EventImplTests {
 
     /**
      * "fromJSON" method of EventImpl class.
-     * It checks if the EventImpl object created by the fromJSON method is same as the EventImpl object created in the
-     * setupEveryTest method.
+     * It checks if the EventImpl object created by the "fromJSON" method is same
      */
     @Test
     public void validateFromJson() {
@@ -204,7 +203,7 @@ public class EventImplTests {
 
     /**
      * getters of EventImpl class.
-     * It checks if the values returned by the getters are same as the values set in the setupEveryTest method.
+     * It checks if the values returned by the getters are same.
      */
     @Test
     public void testGetters() {
@@ -228,7 +227,7 @@ public class EventImplTests {
 
     /**
      * setters of EventImpl class.
-     * It checks if the values returned by the getters are same as the values set in the setupEveryTest method.
+     * It checks if the values set by the setters are same.
      */
     @Test
     public void testSetters() {
