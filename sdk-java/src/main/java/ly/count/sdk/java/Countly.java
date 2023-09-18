@@ -42,6 +42,8 @@ public class Countly implements Usage {
     protected CtxCore ctx;
     protected Log L;
 
+    ModuleEvents moduleEvents;
+
     protected Countly(SDKCore sdk, CtxCore ctx, Log logger) {
         L = logger;
         this.sdk = sdk;
@@ -107,6 +109,9 @@ public class Countly implements Usage {
         this.sdk = sdk;
         this.ctx = new CtxCore(sdk, sdk.config(), L, directory);
         this.L = L;
+
+        moduleEvents = new ModuleEvents();
+        moduleEvents.init(internalConfig, L);
     }
 
     /**
@@ -311,10 +316,26 @@ public class Countly implements Usage {
         }
     }
 
+    /**
+     * Record event with provided key.
+     *
+     * @param key key for this event, cannot be null or empty
+     * @return Builder object for this event
+     * @deprecated use {@link #events()} instead via instance() call
+     */
     @Override
     public Event event(String key) {
         L.d("[Cly] event: key = " + key);
         return ((Session) sdk.session(ctx, null)).event(key);
+    }
+
+    /**
+     * Event module calls
+     *
+     * @return event module
+     */
+    public ModuleEvents.Events events() {
+        return moduleEvents.new Events();
     }
 
     @Override
