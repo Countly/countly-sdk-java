@@ -44,6 +44,47 @@ public class EventImplTests {
     }
 
     /**
+     * This method tests the constructor of EventImpl class. It checks if the event is invalid
+     * when the recorder is null
+     */
+    @Test
+    public void eventImpl_TestConstructor_NullRecorder() {
+        EventImpl eventImpl = new EventImpl(null, "test_invalid_event", L);
+
+        Assert.assertTrue(eventImpl.isInvalid());
+        Assert.assertEquals("test_invalid_event", eventImpl.key);
+        Assert.assertEquals(1, eventImpl.count);
+    }
+
+    /**
+     * This method tests the constructor of EventImpl class. It checks if the event is invalid
+     * when the key is given as null
+     */
+    @Test
+    public void eventImpl_TestConstructor_NullKey() {
+        EventImpl eventImpl = new EventImpl((event) -> {
+        }, null, L);
+
+        Assert.assertTrue(eventImpl.isInvalid());
+        Assert.assertNull(eventImpl.key);
+        Assert.assertEquals(1, eventImpl.count);
+    }
+
+    /**
+     * This method tests the constructor of EventImpl class. It checks if the event is invalid
+     * when the key is given as empty string
+     */
+    @Test
+    public void eventImpl_TestConstructor_EmptyKey() {
+        EventImpl eventImpl = new EventImpl((event) -> {
+        }, "", L);
+
+        Assert.assertTrue(eventImpl.isInvalid());
+        Assert.assertEquals("", eventImpl.key);
+        Assert.assertEquals(1, eventImpl.count);
+    }
+
+    /**
      * This test case tests the record method of EventImpl class. It checks if the record method
      * is called.
      */
@@ -90,14 +131,14 @@ public class EventImplTests {
 
         JSONObject json = new JSONObject();
 
-        json.put("key", "test_buy_event");
-        json.put("count", 1);
-        json.put("sum", 9.0);
-        json.put("dur", 34.0);
-        json.put("timestamp", event.timestamp);
-        json.put("hour", Device.dev.currentHour());
-        json.put("dow", Device.dev.currentDayOfWeek());
-        json.put("segmentation", segmentation);
+        json.put(EventImpl.KEY_KEY, "test_buy_event");
+        json.put(EventImpl.COUNT_KEY, 1);
+        json.put(EventImpl.SUM_KEY, 9.0);
+        json.put(EventImpl.DUR_KEY, 34.0);
+        json.put(EventImpl.TIMESTAMP_KEY, event.timestamp);
+        json.put(EventImpl.HOUR, Device.dev.currentHour());
+        json.put(EventImpl.DAY_OF_WEEK, Device.dev.currentDayOfWeek());
+        json.put(EventImpl.SEGMENTATION_KEY, segmentation);
 
         Assert.assertEquals(json.toString(), event.toJSON(L));
     }
@@ -123,14 +164,14 @@ public class EventImplTests {
 
         JSONObject json = new JSONObject();
 
-        json.put("key", "test_sell_event");
-        json.put("count", 3);
-        json.put("sum", 7.0);
-        json.put("dur", 15.0);
-        json.put("timestamp", event.timestamp);
-        json.put("hour", event.hour);
-        json.put("dow", event.dow);
-        json.put("segmentation", segmentation);
+        json.put(EventImpl.KEY_KEY, "test_sell_event");
+        json.put(EventImpl.COUNT_KEY, 3);
+        json.put(EventImpl.SUM_KEY, 7.0);
+        json.put(EventImpl.DUR_KEY, 15.0);
+        json.put(EventImpl.SEGMENTATION_KEY, event.timestamp);
+        json.put(EventImpl.HOUR, event.hour);
+        json.put(EventImpl.DAY_OF_WEEK, event.dow);
+        json.put(EventImpl.SEGMENTATION_KEY, segmentation);
 
         EventImpl fromJson = EventImpl.fromJSON(json.toString(), event1 -> {
         }, L);

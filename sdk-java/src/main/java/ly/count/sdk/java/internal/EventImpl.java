@@ -217,14 +217,14 @@ class EventImpl implements Event, JSONable {
         return true;
     }
 
-    private static final String SEGMENTATION_KEY = "segmentation";
-    private static final String KEY_KEY = "key";
-    private static final String COUNT_KEY = "count";
-    private static final String SUM_KEY = "sum";
-    private static final String DUR_KEY = "dur";
-    private static final String TIMESTAMP_KEY = "timestamp";
-    private static final String DAY_OF_WEEK = "dow";
-    private static final String HOUR = "hour";
+    protected static final String SEGMENTATION_KEY = "segmentation";
+    protected static final String KEY_KEY = "key";
+    protected static final String COUNT_KEY = "count";
+    protected static final String SUM_KEY = "sum";
+    protected static final String DUR_KEY = "dur";
+    protected static final String TIMESTAMP_KEY = "timestamp";
+    protected static final String DAY_OF_WEEK = "dow";
+    protected static final String HOUR = "hour";
 
     /**
      * Serialize to JSON format according to Countly server requirements
