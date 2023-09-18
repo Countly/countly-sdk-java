@@ -25,11 +25,11 @@ public class EventImplTests {
     Log L = mock(Log.class);
 
     /**
-     * This method tests the constructor of EventImpl class. It checks if the default values set in the
-     * constructor are same
+     * Constructor of EventImpl class.
+     * It checks if the default values set in the constructor are same
      */
     @Test
-    public void eventImpl_TestDefaultConstructor() {
+    public void constructor_defaultValues() {
         EventImpl eventImpl = new EventImpl((event) -> {
         }, "test_event", L);
 
@@ -44,11 +44,11 @@ public class EventImplTests {
     }
 
     /**
-     * This method tests the constructor of EventImpl class. It checks if the event is invalid
-     * when the recorder is null
+     * Constructor of EventImpl class.
+     * It checks if the event is invalid when the recorder is "null"
      */
     @Test
-    public void eventImpl_TestConstructor_NullRecorder() {
+    public void constructor_NullRecorder() {
         EventImpl eventImpl = new EventImpl(null, "test_invalid_event", L);
 
         Assert.assertTrue(eventImpl.isInvalid());
@@ -57,11 +57,11 @@ public class EventImplTests {
     }
 
     /**
-     * This method tests the constructor of EventImpl class. It checks if the event is invalid
-     * when the key is given as null
+     * Constructor of EventImpl class.
+     * It checks if the event is invalid when the key is given as "null"
      */
     @Test
-    public void eventImpl_TestConstructor_NullKey() {
+    public void constructor_NullKey() {
         EventImpl eventImpl = new EventImpl((event) -> {
         }, null, L);
 
@@ -71,11 +71,11 @@ public class EventImplTests {
     }
 
     /**
-     * This method tests the constructor of EventImpl class. It checks if the event is invalid
-     * when the key is given as empty string
+     * Constructor of EventImpl class.
+     * It checks if the event is invalid when the key is given as empty string
      */
     @Test
-    public void eventImpl_TestConstructor_EmptyKey() {
+    public void constructor_EmptyKey() {
         EventImpl eventImpl = new EventImpl((event) -> {
         }, "", L);
 
@@ -85,11 +85,11 @@ public class EventImplTests {
     }
 
     /**
-     * This method tests the setter of EventImpl class. It checks if the logger is null
-     * and throws NullPointerException
+     * Constructor of EventImpl class.
+     * If the passed logger is "null", any actions causing printing would throw NullPointerException
      */
     @Test(expected = NullPointerException.class)
-    public void eventImpl_TestSetter_NullLoggerThrowsException() {
+    public void constructor_NullLoggerThrowsException() {
         EventImpl eventImpl = new EventImpl((event) -> {
         }, "", null);
 
@@ -101,11 +101,11 @@ public class EventImplTests {
     }
 
     /**
-     * This test case tests the record method of EventImpl class. It checks if the record method
-     * is called.
+     * "record" method of EventImpl class
+     * It checks if the "record" method is called. And if the event passed there has the correct values.
      */
     @Test
-    public void eventImpl_testRecorder() {
+    public void recorderCalledAfterRecord() {
 
         EventImpl event = new EventImpl((event1) -> {
 
@@ -130,11 +130,11 @@ public class EventImplTests {
     }
 
     /**
-     * This test case validates the toJSON method of EventImpl class. It checks if the JSON object
-     * returned by the toJSON method is same as the JSON object created in the setupEveryTest method.
+     * "toJSON" method of EventImpl class.
+     * It checks if the JSON object returned by the toJSON method is same as the JSON object created in the setupEveryTest method.
      */
     @Test
-    public void eventImpl_validateToJson() {
+    public void validateToJson() {
         EventImpl event = new EventImpl((event1) -> {
         }, "test_buy_event", L);
 
@@ -160,12 +160,12 @@ public class EventImplTests {
     }
 
     /**
-     * This test case validates the fromJSON method of EventImpl class. It checks if the EventImpl
-     * object created by the fromJSON method is same as the EventImpl object created in the
+     * "fromJSON" method of EventImpl class.
+     * It checks if the EventImpl object created by the fromJSON method is same as the EventImpl object created in the
      * setupEveryTest method.
      */
     @Test
-    public void eventImpl_validateFromJson() {
+    public void validateFromJson() {
 
         EventImpl event = new EventImpl((event1) -> {
         }, "test_sell_event", L);
@@ -203,11 +203,11 @@ public class EventImplTests {
     }
 
     /**
-     * This test case validates the getters of EventImpl class. It checks if the values returned by
-     * the getters are same as the values set in the setupEveryTest method.
+     * getters of EventImpl class.
+     * It checks if the values returned by the getters are same as the values set in the setupEveryTest method.
      */
     @Test
-    public void eventImpl_testGetters() {
+    public void testGetters() {
         EventImpl event = new EventImpl((event1) -> {
         }, "test_getter_event", L);
 
@@ -227,11 +227,11 @@ public class EventImplTests {
     }
 
     /**
-     * This test case validates the setters of EventImpl class. It checks if the values returned by
-     * the getters are same as the values set in the setupEveryTest method.
+     * setters of EventImpl class.
+     * It checks if the values returned by the getters are same as the values set in the setupEveryTest method.
      */
     @Test
-    public void eventImpl_testSetters() {
+    public void testSetters() {
         EventImpl event = new EventImpl((event1) -> {
         }, "test_setter_event", L);
 
