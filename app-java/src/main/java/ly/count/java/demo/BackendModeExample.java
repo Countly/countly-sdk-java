@@ -311,15 +311,15 @@ public class BackendModeExample {
         // therefore requires a separate data folder to run
 
         // System specific folder structure
-        String[] targetPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
-        File targetFolder = new File(String.join(File.separator, targetPath));
+        String[] sdkStorageRootPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
+        File sdkStorageRootDirectory = new File(String.join(File.separator, sdkStorageRootPath));
 
-        if(targetFolder.mkdirs()){
+        if(sdkStorageRootDirectory.mkdirs()){
             System.out.println("Directory creation failed");
         }
 
         // Main initialization call, SDK can be used after this one is done
-        Countly.init(targetFolder, config);
+        Countly.init(sdkStorageRootDirectory, config);
         boolean running = true;
         while (running) {
 

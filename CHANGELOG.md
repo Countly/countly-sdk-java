@@ -2,6 +2,8 @@
 * !! Major breaking change !! The following methods and their functionality are deprecated from the "UserEditor" interface and will not function anymore:
   * "addToCohort(key)"
   * "removeFromCohort(key)"
+ 
+* In Countly class, the old "init(directory,config)" method is deprecated, use "init(config)" instead via "instance()" call.
 
 23.09.0
 * Deprecated the init time configuration of 'setEventsBufferSize(eventsBufferSize)'. Introduced replacement 'setEventQueueSizeToSend(eventsQueueSize)'

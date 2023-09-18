@@ -2,6 +2,7 @@ package ly.count.sdk.java;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -456,6 +457,11 @@ public class Config {
      */
     protected int requestQueueMaxSize = 1000;
 
+    /**
+     * Storage path for storing requests and events queues
+     */
+    File sdkStorageRootDirectory = null;
+
     //    /**
     //    * Maximum size of all string keys
     //    */
@@ -554,8 +560,20 @@ public class Config {
      *
      * @param serverURL valid {@link URL} of Countly server
      * @param serverAppKey App Key from Management -> Applications section of your Countly Dashboard
+     * @deprecated use {@link #Config(String, String, File)} instead
      */
     public Config(String serverURL, String serverAppKey) {
+        this(serverURL, serverAppKey, null);
+    }
+
+    /**
+     * The only Config constructor.
+     *
+     * @param serverURL valid {@link URL} of Countly server
+     * @param serverAppKey App Key from Management -> Applications section of your Countly Dashboard
+     * @param sdkStorageRootDirectory root directory for SDK files
+     */
+    public Config(String serverURL, String serverAppKey, File sdkStorageRootDirectory) {
         //the last '/' should be deleted
         if (serverURL != null && serverURL.length() > 0 && serverURL.charAt(serverURL.length() - 1) == '/') {
             serverURL = serverURL.substring(0, serverURL.length() - 1);
@@ -567,6 +585,7 @@ public class Config {
             throw new IllegalArgumentException(e);
         }
         this.serverAppKey = serverAppKey;
+        this.sdkStorageRootDirectory = sdkStorageRootDirectory;
     }
 
     /**
