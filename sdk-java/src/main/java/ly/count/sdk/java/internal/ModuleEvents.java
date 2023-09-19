@@ -1,21 +1,13 @@
 package ly.count.sdk.java.internal;
 
-import java.awt.*;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 public class ModuleEvents extends ModuleBase {
     protected CtxCore ctx = null;
@@ -95,7 +87,6 @@ public class ModuleEvents extends ModuleBase {
     }
 
     protected void recordEventInternal(String key, int count, double sum, Map<String, Object> segmentation, double dur) {
-        removeInvalidDataFromSegments(segmentation);
         if (count <= 0) {
             L.w("[ModuleEvents] recordEventInternal: Count can't be less than 1, ignoring this event.");
             return;
@@ -106,16 +97,18 @@ public class ModuleEvents extends ModuleBase {
             return;
         }
 
-        Map<String, String> mappedSegmentation = new HashMap<>();
+        removeInvalidDataFromSegments(segmentation);
+        EventImpl event = new EventImpl(key, count, sum, dur, mapify(segmentation), L);
+        addEventToQueue(event);
+    }
 
-        if (segmentation != null) {
-            for (Map.Entry<String, Object> entry : segmentation.entrySet()) {
-                mappedSegmentation.put(entry.getKey(), entry.getValue().toString());
-            }
+    private Map<String, String> mapify(Map<String, Object> segmentation) {
+        if (segmentation == null) {
+            return new HashMap<>();
         }
 
-        EventImpl event = new EventImpl(key, count, sum, dur, mappedSegmentation, L);
-        addEventToQueue(event);
+        return segmentation.entrySet().stream()
+            .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().toString()));
     }
 
     private void addEventToQueue(EventImpl event) {
