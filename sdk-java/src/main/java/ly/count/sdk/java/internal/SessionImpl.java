@@ -310,7 +310,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         EventImpl eventImpl = (EventImpl) event;
         Map<String, Object> segmentation = new HashMap<>(eventImpl.segmentation);
 
-        eventsModule.recordEventInternal(eventImpl.key, eventImpl.count, eventImpl.sum, segmentation, eventImpl.timestamp);
+        eventsModule.recordEventInternal(eventImpl.key, eventImpl.count, eventImpl.sum, segmentation, eventImpl.duration);
     }
 
     @Override
