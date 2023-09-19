@@ -320,7 +320,7 @@ public class Countly implements Usage {
      */
     @Override
     public Event event(String key) {
-        L.d("[Countly] event: key = " + key);
+        L.d("[Cly] event: key = " + key);
         return ((Session) sdk.session(ctx, null)).event(key);
     }
 
@@ -341,7 +341,7 @@ public class Countly implements Usage {
 
     @Override
     public Event timedEvent(String key) {
-        L.d("[Countly] timedEvent: key = " + key);
+        L.d("[Cly] timedEvent: key = " + key);
         return ((Session) sdk.session(ctx, null)).timedEvent(key);
     }
 
@@ -354,43 +354,43 @@ public class Countly implements Usage {
      */
     @Override
     public User user() {
-        L.d("[Countly] user");
+        L.d("[Cly] user");
         return ((Session) sdk.session(ctx, null)).user();
     }
 
     @Override
     public Usage addParam(String key, Object value) {
-        L.d("[Countly] addParam: key = " + key + " value = " + value);
+        L.d("[Cly] addParam: key = " + key + " value = " + value);
         return ((Session) sdk.session(ctx, null)).addParam(key, value);
     }
 
     @Override
     public Usage addCrashReport(Throwable t, boolean fatal) {
-        L.d("[Countly] addCrashReport: t = " + t + " fatal = " + fatal);
+        L.d("[Cly] addCrashReport: t = " + t + " fatal = " + fatal);
         return ((Session) sdk.session(ctx, null)).addCrashReport(t, fatal);
     }
 
     @Override
     public Usage addCrashReport(Throwable t, boolean fatal, String name, Map<String, String> segments, String... logs) {
-        L.d("[Countly] addCrashReport: t = " + t + " fatal = " + fatal + " name = " + name + " segments = " + segments + " logs = " + logs);
+        L.d("[Cly] addCrashReport: t = " + t + " fatal = " + fatal + " name = " + name + " segments = " + segments + " logs = " + logs);
         return ((Session) sdk.session(ctx, null)).addCrashReport(t, fatal, name, segments, logs);
     }
 
     @Override
     public Usage addLocation(double latitude, double longitude) {
-        L.d("[Countly] addLocation: latitude = " + latitude + " longitude = " + longitude);
+        L.d("[Cly] addLocation: latitude = " + latitude + " longitude = " + longitude);
         return ((Session) sdk.session(ctx, null)).addLocation(latitude, longitude);
     }
 
     @Override
     public View view(String name, boolean start) {
-        L.d("[Countly] view: name = " + name + " start = " + start);
+        L.d("[Cly] view: name = " + name + " start = " + start);
         return ((Session) sdk.session(ctx, null)).view(name, start);
     }
 
     @Override
     public View view(String name) {
-        L.d("[Countly] view: name = " + name);
+        L.d("[Cly] view: name = " + name);
         return ((Session) sdk.session(ctx, null)).view(name);
     }
 }
