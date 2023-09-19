@@ -302,11 +302,6 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             return;
         }
 
-        if (!Countly.isInitialized()) {
-            L.e("[SessionImpl] recordEvent: Countly is not initialized");
-            return;
-        }
-
         if (began == null) {
             begin();
         }
