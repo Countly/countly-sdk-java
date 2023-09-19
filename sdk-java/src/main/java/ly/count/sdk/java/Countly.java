@@ -330,7 +330,7 @@ public class Countly implements Usage {
      * @return event module otherwise null if SDK is not initialized
      */
     public ModuleEvents.Events events() {
-        if(!isInitialized()){
+        if (!isInitialized()) {
             if (L != null) {
                 L.e("[Countly] SDK is not initialized yet.");
             }

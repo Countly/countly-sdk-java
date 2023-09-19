@@ -1,5 +1,6 @@
 package ly.count.sdk.java.internal;
 
+import java.awt.*;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -10,13 +11,16 @@ import java.util.Queue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class ModuleEvents extends ModuleBase {
     protected CtxCore ctx = null;
-    
-    protected final Queue<EventImpl> eventQueues = new ArrayDeque<>();
+
+    protected EventImplQueue eventQueue;
 
     private ScheduledExecutorService executor = null;
 
@@ -26,6 +30,7 @@ public class ModuleEvents extends ModuleBase {
     public void init(InternalConfig config, Log logger) {
         super.init(config, logger);
         L.d("[ModuleEvents] init: config = " + config);
+        eventQueue = new EventImplQueue(L);
         eventsInterface = new Events();
     }
 
@@ -45,87 +50,51 @@ public class ModuleEvents extends ModuleBase {
         }
     }
 
+    @Override
+    public Boolean onRequest(Request request) {
+        return true;
+    }
+
     private synchronized void addEventsToRequestQ() {
         L.d("[ModuleEvents] addEventsToRequestQ");
-        JSONArray events = new JSONArray();
-
-        if (eventQueues.isEmpty()) {
-            return;
-        }
-
-        for (EventImpl event : eventQueues) {
-            events.put(event.toJSON(L));
-        }
 
         Request request = new Request();
         request.params.add("device_id", Countly.instance().getDeviceId());
-        request.params.add("events", events);
-        addTimeInfoIntoRequest(request, System.currentTimeMillis());
+        request.params.arr("events").put(eventQueue.events).add();
         request.own(ModuleEvents.class);
-        addRequestToRequestQ(request);
 
-        eventQueues.clear();
+        ModuleRequests.pushAsync(ctx, request);
+
+        eventQueue.events.clear();
     }
 
-    private void addTimeInfoIntoRequest(Request request, Long timestamp) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(timestamp);
-
-        final int hour = calendar.get(Calendar.HOUR_OF_DAY);
-        final int dow = calendar.get(Calendar.DAY_OF_WEEK) - 1;
-
-        request.params.add("dow", dow);
-        request.params.add("hour", hour);
-        request.params.add("timestamp", timestamp);
-        request.params.add("tz", Device.dev.getTimezoneOffset());
-    }
-
-    private void addRequestToRequestQ(Request request) {
-        synchronized (SDKCore.instance.lockBRQStorage) {
-            L.d("[ModuleEvents] addRequestToRequestQ");
-            if (internalConfig.getRequestQueueMaxSize() == SDKCore.instance.requestQueueMemory.size()) {
-                L.d("[ModuleEvents] addRequestToRequestQ: In Memory request queue is full, dropping oldest request: " + request.params.toString());
-                SDKCore.instance.requestQueueMemory.remove();
-            }
-
-            SDKCore.instance.requestQueueMemory.add(request);
-            SDKCore.instance.networking.check(ctx);
-        }
-    }
-
-    protected Map<String, Object> removeInvalidDataFromSegments(Map<String, Object> segments) {
+    protected void removeInvalidDataFromSegments(Map<String, Object> segments) {
 
         if (segments == null || segments.isEmpty()) {
-            return segments;
+            return;
         }
 
-        int i = 0;
-        List<String> toRemove = new ArrayList<>();
-        for (Map.Entry<String, Object> item : segments.entrySet()) {
-            Object type = item.getValue();
+        List<String> toRemove = segments.entrySet().stream()
+            .filter(entry -> !isValidDataType(entry.getValue()))
+            .map(Map.Entry::getKey)
+            .collect(Collectors.toList());
 
-            boolean isValidDataType = (type instanceof Boolean
-                || type instanceof Integer
-                || type instanceof Long
-                || type instanceof String
-                || type instanceof Double
-                || type instanceof Float
-            );
-
-            if (!isValidDataType) {
-                toRemove.add(item.getKey());
-                L.w("[ModuleEvents] RemoveSegmentInvalidDataTypes: In segmentation Data type '" + type + "' of item '" + item.getValue() + "' isn't valid.");
-            }
-        }
-
-        for (String k : toRemove) {
-            segments.remove(k);
-        }
-
-        return segments;
+        toRemove.forEach(key -> {
+            L.w("[ModuleEvents] RemoveSegmentInvalidDataTypes: In segmentation Data type '" + segments.get(key) + "' of item '" + key + "' isn't valid.");
+            segments.remove(key);
+        });
     }
 
-    private void recordEventInternal(String key, int count, double sum, Map<String, Object> segmentation, double dur) {
+    private boolean isValidDataType(Object value) {
+        return value instanceof Boolean
+            || value instanceof Integer
+            || value instanceof Long
+            || value instanceof String
+            || value instanceof Double
+            || value instanceof Float;
+    }
+
+    protected void recordEventInternal(String key, int count, double sum, Map<String, Object> segmentation, double dur) {
         removeInvalidDataFromSegments(segmentation);
         if (count <= 0) {
             L.w("[ModuleEvents] recordEventInternal: Count can't be less than 1, ignoring this event.");
@@ -146,10 +115,16 @@ public class ModuleEvents extends ModuleBase {
         }
 
         EventImpl event = new EventImpl(key, count, sum, dur, mappedSegmentation, L);
-        eventQueues.add(event);
+        addEventToQueue(event);
+    }
 
-        if (eventQueues.size() >= internalConfig.getEventsBufferSize()) {
-            addEventsToRequestQ();
+    private void addEventToQueue(EventImpl event) {
+        synchronized (eventQueue.storageId()) {
+            eventQueue.events.add(event);
+            if (eventQueue.events.size() >= internalConfig.getEventsBufferSize()) {
+                addEventsToRequestQ();
+                //Storage.pushAsync(ctx, eventQueue);
+            }
         }
     }
 
