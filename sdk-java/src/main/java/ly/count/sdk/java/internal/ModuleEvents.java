@@ -25,6 +25,8 @@ public class ModuleEvents extends ModuleBase {
 
     private ScheduledExecutorService executor = null;
 
+    protected Events eventsInterface = new Events();
+
     @Override
     public void init(InternalConfig config, Log logger) {
         super.init(config, logger);

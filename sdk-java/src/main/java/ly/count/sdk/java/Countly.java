@@ -42,8 +42,6 @@ public class Countly implements Usage {
     protected CtxCore ctx;
     protected Log L;
 
-    ModuleEvents moduleEvents;
-
     protected Countly(SDKCore sdk, CtxCore ctx, Log logger) {
         L = logger;
         this.sdk = sdk;
@@ -109,9 +107,6 @@ public class Countly implements Usage {
         this.sdk = sdk;
         this.ctx = new CtxCore(sdk, sdk.config(), L, directory);
         this.L = L;
-
-        moduleEvents = new ModuleEvents();
-        moduleEvents.init(internalConfig, L);
     }
 
     /**
@@ -335,7 +330,7 @@ public class Countly implements Usage {
      * @return event module
      */
     public ModuleEvents.Events events() {
-        return moduleEvents.new Events();
+        return sdk.events();
     }
 
     @Override

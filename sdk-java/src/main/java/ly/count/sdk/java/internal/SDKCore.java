@@ -53,6 +53,7 @@ public class SDKCore {
         moduleMappings.put(CoreFeature.Sessions.getIndex(), ModuleSessions.class);
         moduleMappings.put(CoreFeature.CrashReporting.getIndex(), ModuleCrash.class);
         moduleMappings.put(CoreFeature.BackendMode.getIndex(), ModuleBackendMode.class);
+        moduleMappings.put(CoreFeature.Events.getIndex(), ModuleEvents.class);
     }
 
     public interface Modulator {
@@ -490,6 +491,10 @@ public class SDKCore {
 
     TimedEvents timedEvents() {
         return ((ModuleSessions) module(CoreFeature.Sessions.getIndex())).timedEvents();
+    }
+
+    public ModuleEvents.Events events() {
+        return ((ModuleEvents) module(CoreFeature.Events.getIndex())).eventsInterface;
     }
 
     public InternalConfig config() {
