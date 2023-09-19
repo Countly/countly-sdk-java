@@ -162,7 +162,7 @@ public class ModuleEvents extends ModuleBase {
         return false;
     }
 
-    private boolean endEventInternal(String key) {
+    private boolean endEventInternal(final String key, final Map<String, Object> segmentation, final int count, final double sum) {
         return false;
     }
 
@@ -276,7 +276,22 @@ public class ModuleEvents extends ModuleBase {
          * @return true if event with this key has been previously started, false otherwise
          */
         public boolean endEvent(final String key) {
-            return endEventInternal(key);
+            return endEventInternal(key,null,1,0);
+        }
+
+        /**
+         * End timed event with a specified key
+         *
+         * @param key name of the custom event, required, must not be the empty string
+         * @param segmentation segmentation dictionary to associate with the event, can be null
+         * @param count count to associate with the event, should be more than zero, default value is 1
+         * @param sum sum to associate with the event, default value is 0
+         * @return true if event with this key has been previously started, false otherwise
+         * @throws IllegalStateException if Countly SDK has not been initialized
+         * @throws IllegalArgumentException if key is null or empty, count is less than 1, or if segmentation contains null or empty keys or values
+         */
+        public boolean endEvent(final String key, final Map<String, Object> segmentation, final int count, final double sum) {
+            return endEventInternal(key,segmentation,count,sum);
         }
 
         /**
