@@ -145,6 +145,7 @@ public class ModuleEvents extends ModuleBase {
          * @param segmentation additional segmentation data that you want to set, leave null if you don't want to add anything
          */
         public void recordEvent(String key, int count, double sum, Map<String, Object> segmentation, double dur) {
+            L.i("[Events] recordEvent: key = " + key + ", count = " + count + ", sum = " + sum + ", segmentation = " + segmentation + ", dur = " + dur);
             if (!Countly.isInitialized()) {
                 L.e("[Events] recordEvent: Countly.instance().init must be called before recordEvent");
                 return;
@@ -229,6 +230,7 @@ public class ModuleEvents extends ModuleBase {
          * @return true if no event with this key existed before and event is started, false otherwise
          */
         public boolean startEvent(final String key) {
+            L.i("[Events] startEvent: key = " + key);
             return startEventInternal(key);
         }
 
@@ -239,6 +241,7 @@ public class ModuleEvents extends ModuleBase {
          * @return true if event with this key has been previously started, false otherwise
          */
         public boolean endEvent(final String key) {
+            L.i("[Events] endEvent: key = " + key);
             return endEventInternal(key, null, 1, 0);
         }
 
@@ -254,6 +257,7 @@ public class ModuleEvents extends ModuleBase {
          * @throws IllegalArgumentException if key is null or empty, count is less than 1, or if segmentation contains null or empty keys or values
          */
         public boolean endEvent(final String key, final Map<String, Object> segmentation, final int count, final double sum) {
+            L.i("[Events] endEvent: key = " + key + ", segmentation = " + segmentation + ", count = " + count + ", sum = " + sum);
             return endEventInternal(key, segmentation, count, sum);
         }
 
@@ -263,6 +267,7 @@ public class ModuleEvents extends ModuleBase {
          * @return true if event with this key has been previously started, false otherwise
          **/
         public boolean cancelEvent(final String key) {
+            L.i("[Events] cancelEvent: key = " + key);
             return cancelEventInternal(key);
         }
     }
