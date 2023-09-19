@@ -1,17 +1,14 @@
-23.09.1
-* !! Major breaking change !! The following methods and their functionality are deprecated from the "UserEditor" interface and will not function anymore:
-  * "addToCohort(key)"
-  * "removeFromCohort(key)"
- 
-* In Countly class, the old "init(directory,config)" method is deprecated, use "init(config)" instead via "instance()" call.
-
-23.09.0
+23.8.0
+* Deprecated call "Countly::getSession" is removed
+* Deprecated call "resetDeviceId" is removed
 * Deprecated the init time configuration of 'setEventsBufferSize(eventsBufferSize)'. Introduced replacement 'setEventQueueSizeToSend(eventsQueueSize)'
 * Deprecated the init time configuration of 'setSendUpdateEachSeconds(sendUpdateEachSeconds)'. Introduced replacement 'setUpdateSessionTimerDelay(delay)'
 
-23.02.0
-* Deprecated call "Countly::getSession" is removed
-* Deprecated call "resetDeviceId" is removed
+* !! Major breaking change !! The following methods and their functionality are deprecated from the "UserEditor" interface and will not function anymore:
+  * "addToCohort(key)"
+  * "removeFromCohort(key)"
+
+* In Countly class, the old "init(directory,config)" method is deprecated, use "init(config)" instead via "instance()" call.
 
 22.09.2
 * Fixed internal log calls that did not respect the configured log level and did not work with the log listener.
