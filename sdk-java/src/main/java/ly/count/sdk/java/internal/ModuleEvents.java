@@ -184,11 +184,6 @@ public class ModuleEvents extends ModuleBase {
          */
         public void recordEvent(String key, int count, double sum, Map<String, Object> segmentation, double dur) {
             L.i("[Events] recordEvent: key = " + key + ", count = " + count + ", sum = " + sum + ", segmentation = " + segmentation + ", dur = " + dur);
-            if (!Countly.isInitialized()) {
-                L.e("[Events] recordEvent: Countly.instance().init must be called before recordEvent");
-                return;
-            }
-
             recordEventInternal(key, count, sum, segmentation, dur);
         }
 
