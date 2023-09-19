@@ -14,6 +14,7 @@ public class ModuleEvents extends ModuleBase {
 
     protected EventImplQueue eventQueue;
 
+    static final Map<String, EventImpl> timedEvents = new HashMap<>();
     private ScheduledExecutorService executor = null;
 
     protected Events eventsInterface = null;
@@ -121,18 +122,55 @@ public class ModuleEvents extends ModuleBase {
         }
     }
 
-    private boolean startEventInternal(String key) {
-        return false;
+    boolean startEventInternal(final String key) {
+        if (key == null || key.isEmpty()) {
+            L.e("[ModuleEvents] Can't start event with a null or empty key");
+            return false;
+        }
+        if (timedEvents.containsKey(key)) {
+            return false;
+        }
+        L.d("[ModuleEvents] Starting event: [" + key + "]");
+        timedEvents.put(key, new EventImpl(null, key, L));
+        return true;
     }
 
-    private boolean endEventInternal(final String key, final Map<String, Object> segmentation, final int count, final double sum) {
-        return false;
+    boolean endEventInternal(final String key, final Map<String, Object> segmentation, final int count, final double sum) {
+        L.d("[ModuleEvents] Ending event: [" + key + "]");
+
+        if (key == null || key.isEmpty()) {
+            L.e("[ModuleEvents] Can't end event with a null or empty key");
+            return false;
+        }
+
+        EventImpl event = timedEvents.remove(key);
+
+        if (event != null) {
+            if (count < 1) {
+                throw new IllegalArgumentException("Countly event count should be greater than zero");
+            }
+            L.d("[ModuleEvents] Ending event: [" + key + "]");
+
+            long currentTimestamp = Device.dev.uniqueTimestamp();
+            double duration = (currentTimestamp - event.timestamp) / 1000.0;
+
+            recordEventInternal(key, count, sum, segmentation, duration);
+            return true;
+        } else {
+            return false;
+        }
     }
 
-    private boolean cancelEventInternal(String key) {
-        return false;
-    }
+    boolean cancelEventInternal(final String key) {
+        if (key == null || key.isEmpty()) {
+            L.e("[ModuleEvents] Can't cancel event with a null or empty key");
+            return false;
+        }
 
+        EventImpl event = timedEvents.remove(key);
+
+        return event != null;
+    }
     public class Events {
 
         /**
