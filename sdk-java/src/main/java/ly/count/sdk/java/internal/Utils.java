@@ -1,18 +1,21 @@
 package ly.count.sdk.java.internal;
 
-import ly.count.sdk.java.Config;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Utility class
@@ -40,6 +43,15 @@ public class Utils {
             }
         }
         return sb.toString();
+    }
+
+    protected static Map<String, String> mapify(Map<String, Object> segmentation) {
+        if (segmentation == null) {
+            return new HashMap<>();
+        }
+
+        return segmentation.entrySet().stream()
+            .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().toString()));
     }
 
     /**

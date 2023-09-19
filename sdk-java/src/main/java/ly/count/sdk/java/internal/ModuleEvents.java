@@ -99,17 +99,8 @@ public class ModuleEvents extends ModuleBase {
         }
 
         removeInvalidDataFromSegments(segmentation);
-        EventImpl event = new EventImpl(key, count, sum, dur, mapify(segmentation), L);
+        EventImpl event = new EventImpl(key, count, sum, dur, Utils.mapify(segmentation), L);
         addEventToQueue(event);
-    }
-
-    private Map<String, String> mapify(Map<String, Object> segmentation) {
-        if (segmentation == null) {
-            return new HashMap<>();
-        }
-
-        return segmentation.entrySet().stream()
-            .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().toString()));
     }
 
     private void addEventToQueue(EventImpl event) {
@@ -171,6 +162,7 @@ public class ModuleEvents extends ModuleBase {
 
         return event != null;
     }
+
     public class Events {
 
         /**
