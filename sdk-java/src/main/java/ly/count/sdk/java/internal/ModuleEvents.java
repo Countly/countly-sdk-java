@@ -14,24 +14,19 @@ import ly.count.sdk.java.Countly;
 import org.json.JSONArray;
 
 public class ModuleEvents extends ModuleBase {
-    protected InternalConfig internalConfig = null;
     protected CtxCore ctx = null;
-
-    //disabled is set when a empty module is created
-    //in instances when the rating feature was not enabled
-    //when a module is disabled, developer facing functions do nothing
-    protected boolean disabledModule = false;
+    
     protected final Queue<EventImpl> eventQueues = new ArrayDeque<>();
 
     private ScheduledExecutorService executor = null;
 
-    protected Events eventsInterface = new Events();
+    protected Events eventsInterface = null;
 
     @Override
     public void init(InternalConfig config, Log logger) {
         super.init(config, logger);
-        internalConfig = config;
         L.d("[ModuleEvents] init: config = " + config);
+        eventsInterface = new Events();
     }
 
     @Override
@@ -276,7 +271,7 @@ public class ModuleEvents extends ModuleBase {
          * @return true if event with this key has been previously started, false otherwise
          */
         public boolean endEvent(final String key) {
-            return endEventInternal(key,null,1,0);
+            return endEventInternal(key, null, 1, 0);
         }
 
         /**
@@ -291,7 +286,7 @@ public class ModuleEvents extends ModuleBase {
          * @throws IllegalArgumentException if key is null or empty, count is less than 1, or if segmentation contains null or empty keys or values
          */
         public boolean endEvent(final String key, final Map<String, Object> segmentation, final int count, final double sum) {
-            return endEventInternal(key,segmentation,count,sum);
+            return endEventInternal(key, segmentation, count, sum);
         }
 
         /**
