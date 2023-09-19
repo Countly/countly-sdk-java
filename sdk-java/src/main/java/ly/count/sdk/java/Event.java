@@ -90,6 +90,7 @@ public interface Event {
      *     <li>Invalid data supplied (count < 0, NaN as sum, duration < 0, etc.) while in production mode</li>
      *     <li>Event has been already recorded in session, thus should be discarded</li>
      * </ul>
+     * @deprecated this function is deprecated
      */
     boolean isInvalid();
 }

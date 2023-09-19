@@ -10,6 +10,7 @@
 
 * In Countly class, the old "init(directory,config)" method is deprecated, use "init(config)" instead via "instance()" call.
 * Deprecated "Countly::event" call, deprecated builder pattern. Use "Countly::events" instead.
+* Deprecated "Usage::event" call, deprecated builder pattern. Use "Countly::events" instead.
 
 * The following methods are deprecated from the "Event" interface:
   * "record"
@@ -20,6 +21,7 @@
   * "setSum"
   * "setCount"
   * "setDuration"
+  * "isInvalid"
 
 22.09.2
 * Fixed internal log calls that did not respect the configured log level and did not work with the log listener.
