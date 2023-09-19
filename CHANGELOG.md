@@ -10,6 +10,16 @@
 
 * In Countly class, the old "init(directory,config)" method is deprecated, use "init(config)" instead via "instance()" call.
 
+* The following methods are deprecated from the "Event" interface:
+  * "record"
+  * "endAndRecord"
+  * "addSegment"
+  * "addSegments"
+  * "setSegmentation"
+  * "setSum"
+  * "setCount"
+  * "setDuration"
+
 22.09.2
 * Fixed internal log calls that did not respect the configured log level and did not work with the log listener.
 
