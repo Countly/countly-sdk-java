@@ -1,4 +1,4 @@
-23.09.0
+23.8.0
 * Deprecated call "Countly::getSession" is removed
 * Deprecated call "resetDeviceId" is removed
 * Deprecated the init time configuration of 'setEventsBufferSize(eventsBufferSize)'. Introduced replacement 'setEventQueueSizeToSend(eventsQueueSize)'
