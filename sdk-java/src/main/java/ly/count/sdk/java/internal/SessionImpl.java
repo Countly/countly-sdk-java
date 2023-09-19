@@ -6,12 +6,14 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import ly.count.sdk.java.Config;
+import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.Event;
 import ly.count.sdk.java.Session;
 import ly.count.sdk.java.Usage;
@@ -286,6 +288,12 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         return SDKCore.instance.timedEvents();
     }
 
+    /**
+     * Record event to session.
+     *
+     * @param event
+     * @deprecated use {@link ModuleEvents.Events#recordEvent(String, int, double, Map, double)} instead
+     */
     @Override
     public void recordEvent(Event event) {
         L.d("[SessionImpl] recordEvent: " + event.toString());
@@ -293,21 +301,21 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             L.i("[SessionImpl] recordEvent: Skipping event - feature is not enabled");
             return;
         }
+
+        if (!Countly.isInitialized()) {
+            L.e("[SessionImpl] recordEvent: Countly is not initialized");
+            return;
+        }
+
         if (began == null) {
             begin();
         }
 
-        synchronized (storageId()) {
-            events.add(event);
-            if (pushOnChange) {
-                Storage.pushAsync(ctx, this);
-            }
+        ModuleEvents eventsModule = (ModuleEvents) SDKCore.instance.module(CoreFeature.Events.getIndex());
+        EventImpl eventImpl = (EventImpl) event;
+        Map<String, Object> segmentation = new HashMap<>(eventImpl.segmentation);
 
-            Config config = SDKCore.instance.config();
-            if (config != null && ctx.getConfig().getEventsBufferSize() <= events.size()) {
-                update();
-            }
-        }
+        eventsModule.recordEventInternal(eventImpl.key, eventImpl.count, eventImpl.sum, segmentation, eventImpl.timestamp);
     }
 
     @Override
