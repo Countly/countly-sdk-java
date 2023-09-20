@@ -231,7 +231,7 @@ public class ModuleEvents extends ModuleBase {
          * @param count how many of these events have occurred, default value is "1", must be greater than 0
          * @param sum set sum parameter of the event default value is "0"
          */
-        public void recordEvent(String key, double sum, int count) {
+        public void recordEvent(String key, int count, double sum) {
             recordEvent(key, count, sum, null);
         }
 
