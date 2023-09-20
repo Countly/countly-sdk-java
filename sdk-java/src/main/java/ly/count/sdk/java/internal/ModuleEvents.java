@@ -258,7 +258,7 @@ public class ModuleEvents extends ModuleBase {
          */
         public boolean endEvent(final String key) {
             L.i("[Events] endEvent: key = " + key);
-            return endEventInternal(key);
+            return endEventInternal(key, null, 1, 0);
         }
 
         /**
