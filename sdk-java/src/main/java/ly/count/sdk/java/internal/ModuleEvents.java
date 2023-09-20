@@ -255,7 +255,7 @@ public class ModuleEvents extends ModuleBase {
          * @return true if event with this key has been previously started, false otherwise
          */
         public boolean endEvent(final String key) {
-            return endEventInternal(key, null, 1, 0);
+            return endEventInternal(key);
         }
 
         /**
