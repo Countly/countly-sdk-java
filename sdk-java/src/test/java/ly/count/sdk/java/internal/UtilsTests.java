@@ -209,7 +209,7 @@ public class UtilsTests {
     @Test
     public void isNotEmpty() {
         junit.framework.Assert.assertTrue(Utils.isNotEmpty("notthatempty"));
-        junit.framework.Assert.assertFalse(Utils.isNotEmpty(""));
+        junit.framework.Assert.assertFalse(Utils.isNotEmpty("33"));
         junit.framework.Assert.assertFalse(Utils.isNotEmpty(null));
     }
 }
