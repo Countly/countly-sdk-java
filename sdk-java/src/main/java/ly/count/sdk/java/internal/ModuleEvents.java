@@ -10,13 +10,11 @@ import java.util.stream.Collectors;
 import ly.count.sdk.java.Countly;
 
 public class ModuleEvents extends ModuleBase {
+
     protected CtxCore ctx = null;
-
     protected EventImplQueue eventQueue = null;
-
     static final Map<String, EventImpl> timedEvents = new HashMap<>();
     private ScheduledExecutorService executor = null;
-
     protected Events eventsInterface = null;
 
     @Override
@@ -37,7 +35,7 @@ public class ModuleEvents extends ModuleBase {
             executor.scheduleWithFixedDelay(new Runnable() {
                 @Override
                 public void run() {
-                    //addEventsToRequestQ();
+                    addEventsToRequestQ();
                 }
             }, ctx.getConfig().getSendUpdateEachSeconds(), ctx.getConfig().getSendUpdateEachSeconds(), TimeUnit.SECONDS);
         }
@@ -56,6 +54,7 @@ public class ModuleEvents extends ModuleBase {
         request.params.arr("events").put(eventQueue.getEventList()).add();
         request.own(ModuleEvents.class);
 
+        eventQueue.clear();
         ModuleRequests.pushAsync(ctx, request);
     }
 
@@ -99,7 +98,6 @@ public class ModuleEvents extends ModuleBase {
         if (eventQueue.size >= internalConfig.getEventsBufferSize()) {
             L.d("[ModuleEvents] addEventToQueue: eventQueue.size >= internalConfig.getEventsBufferSize()");
             addEventsToRequestQ();
-            eventQueue.clear();
         }
     }
 
