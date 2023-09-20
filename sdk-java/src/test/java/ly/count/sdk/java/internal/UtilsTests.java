@@ -212,4 +212,40 @@ public class UtilsTests {
         junit.framework.Assert.assertFalse(Utils.isNotEmpty(""));
         junit.framework.Assert.assertFalse(Utils.isNotEmpty(null));
     }
+
+    @Test
+    public void mapify() {
+        Map<String, String> expected = new HashMap<String, String>() {{
+            put("count", "45");
+            put("sum", "76.345");
+            put("float", "0.2");
+            put("long", "2");
+            put("null", "");
+        }};
+
+        Map<String, Object> given = new HashMap<String, Object>() {{
+            put("count", 45);
+            put("sum", 76.345);
+            put("float", .2f);
+            put("long", 2L);
+            put("null", null);
+        }};
+
+        Assert.assertEquals(expected, Utils.mapify(given));
+    }
+
+    @Test
+    public void isValidDataType() {
+        Assert.assertTrue(Utils.isValidDataType("string"));
+        Assert.assertTrue(Utils.isValidDataType(6));
+        Assert.assertTrue(Utils.isValidDataType(6.0));
+        Assert.assertTrue(Utils.isValidDataType(6.0f));
+        Assert.assertTrue(Utils.isValidDataType(6L));
+        Assert.assertTrue(Utils.isValidDataType(true));
+        Assert.assertTrue(Utils.isValidDataType(false));
+        Assert.assertFalse(Utils.isValidDataType(null));
+        Assert.assertFalse(Utils.isValidDataType(new Object()));
+        Assert.assertFalse(Utils.isValidDataType(new ArrayList<>()));
+        Assert.assertFalse(Utils.isValidDataType(new HashMap<>()));
+    }
 }
