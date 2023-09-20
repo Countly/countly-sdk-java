@@ -1515,13 +1515,5 @@ public class Config {
         this.metricOverride.putAll(metricOverride);
         return this;
     }
-
-    /**
-     * Getter for {@link #sdkStorageRootDirectory}
-     * @return {@link #sdkStorageRootDirectory} value
-     */
-    public File getSdkStorageRootDirectory() {
-        return sdkStorageRootDirectory;
-    }
 }
 

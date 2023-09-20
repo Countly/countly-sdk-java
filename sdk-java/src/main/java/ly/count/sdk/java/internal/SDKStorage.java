@@ -266,11 +266,11 @@ public class SDKStorage {
         L.d("[SDKStorage] Writing EQ to json file");
 
         //write eventQueue that is consist of json objects of events and separated by ":::" delimiter
-        //to the config.getSdkStorageRootDirectory() folder named Storage.name(this) + ".events"
+        //to the ctx.getContext() folder named Storage.name(this) + ".events"
         //if file already exists overwrite it
         //if file doesn't exist create it
         //if file can't be created or written, log the error
-        File sdkStorageDirectory = ctx.getConfig().getSdkStorageRootDirectory();
+        File sdkStorageDirectory = ctx.getContext();
         File file = new File(sdkStorageDirectory, FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + "events");
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
@@ -285,7 +285,7 @@ public class SDKStorage {
 
     protected String readEventQueue() {
         L.d("[SDKStorage] Getting event queue");
-        File file = new File(ctx.getConfig().getSdkStorageRootDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + "events");
+        File file = new File(ctx.getContext(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + "events");
 
         if (!file.exists()) {
             return "";
