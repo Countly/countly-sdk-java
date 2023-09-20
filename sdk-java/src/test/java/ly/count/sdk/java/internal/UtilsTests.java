@@ -1,9 +1,7 @@
 package ly.count.sdk.java.internal;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+
 import ly.count.sdk.java.Config;
 import org.junit.After;
 import org.junit.Assert;
@@ -247,5 +245,12 @@ public class UtilsTests {
         Assert.assertFalse(Utils.isValidDataType(new Object()));
         Assert.assertFalse(Utils.isValidDataType(new ArrayList<>()));
         Assert.assertFalse(Utils.isValidDataType(new HashMap<>()));
+    }
+
+    @Test
+    public void joinCountlyStore() {
+        String expected = "1:::2:::3:::4:::5";
+
+        Assert.assertEquals(expected, Utils.joinStrings(Arrays.asList("1", "2", "3", "4", "5"),":::"));
     }
 }
