@@ -21,8 +21,8 @@ class EventImpl implements Event, JSONable {
     protected Map<String, String> segmentation;
 
     protected int count;
-    protected Double sum;
-    protected Double duration;
+    protected Double sum = 0.0;
+    protected Double duration = 0.0;
 
     protected long timestamp;
     protected int hour;
