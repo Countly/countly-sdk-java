@@ -68,7 +68,7 @@ public class ModuleEvents extends ModuleBase {
         }
 
         List<String> toRemove = segments.entrySet().stream()
-            .filter(entry -> !isValidDataType(entry.getValue()))
+            .filter(entry -> !Utils.isValidDataType(entry.getValue()))
             .map(Map.Entry::getKey)
             .collect(Collectors.toList());
 
@@ -76,15 +76,6 @@ public class ModuleEvents extends ModuleBase {
             L.w("[ModuleEvents] RemoveSegmentInvalidDataTypes: In segmentation Data type '" + segments.get(key) + "' of item '" + key + "' isn't valid.");
             segments.remove(key);
         });
-    }
-
-    private boolean isValidDataType(Object value) {
-        return value instanceof Boolean
-            || value instanceof Integer
-            || value instanceof Long
-            || value instanceof String
-            || value instanceof Double
-            || value instanceof Float;
     }
 
     protected void recordEventInternal(String key, int count, double sum, Map<String, Object> segmentation, double dur) {
@@ -99,7 +90,7 @@ public class ModuleEvents extends ModuleBase {
         }
 
         removeInvalidDataFromSegments(segmentation);
-        EventImpl event = new EventImpl(key, count, sum, dur, Utils.mapify(segmentation), L);
+        EventImpl event = new EventImpl(key, count, sum, dur, segmentation, L);
         addEventToQueue(event);
     }
 

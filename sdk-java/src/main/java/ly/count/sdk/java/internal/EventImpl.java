@@ -38,7 +38,7 @@ class EventImpl implements Event, JSONable {
      */
     private boolean invalid = false;
 
-    EventImpl(@Nonnull String key, int count, double sum, double duration, @Nonnull Map<String, String> segmentation, @Nonnull Log givenL) {
+    EventImpl(@Nonnull String key, int count, double sum, double duration, @Nonnull Map<String, Object> segmentation, @Nonnull Log givenL) {
         L = givenL;
 
         this.recorder = null;
