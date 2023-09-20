@@ -76,7 +76,6 @@ public class ModuleEvents extends ModuleBase {
     }
 
     protected void recordEventInternal(String key, int count, double sum, Map<String, Object> segmentation, double dur) {
-        L.d("[ModuleEvents] recordEventInternal: key = " + key + ", count = " + count + ", sum = " + sum + ", segmentation = " + segmentation + ", dur = " + dur);
         if (count <= 0) {
             L.w("[ModuleEvents] recordEventInternal: Count can't be less than 1, ignoring this event.");
             return;
