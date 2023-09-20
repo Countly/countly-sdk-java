@@ -1515,9 +1515,5 @@ public class Config {
         this.metricOverride.putAll(metricOverride);
         return this;
     }
-
-    public File getSdkStorageRootDirectory() {
-        return sdkStorageRootDirectory;
-    }
 }
 
