@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 /**
@@ -343,5 +344,18 @@ public class Utils {
                 return null;
             }
         }
+    }
+
+    /**
+     * Joins all the strings in the specified collection into a single string with the specified delimiter.
+     */
+    static String joinStrings(final Collection<String> collection, final String delimiter) {
+        StringJoiner joiner = new StringJoiner(delimiter);
+
+        for (String s : collection) {
+            joiner.add(s);
+        }
+
+        return joiner.toString();
     }
 }
