@@ -45,22 +45,6 @@ public class Utils {
         return sb.toString();
     }
 
-    public static Map<String, String> mapify(Map<String, Object> segmentation) {
-        if (segmentation == null) {
-            return new HashMap<>();
-        }
-
-        return segmentation.entrySet().stream()
-            .collect(Collectors.toMap(Map.Entry::getKey, entry -> {
-                Object value = entry.getValue();
-                if (value == null) {
-                    return "";
-                } else {
-                    return value.toString();
-                }
-            }));
-    }
-
     /**
      * URLDecoder wrapper to remove try-catch
      *

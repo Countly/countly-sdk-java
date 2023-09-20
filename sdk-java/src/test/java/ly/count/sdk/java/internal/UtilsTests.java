@@ -212,25 +212,4 @@ public class UtilsTests {
         junit.framework.Assert.assertFalse(Utils.isNotEmpty(""));
         junit.framework.Assert.assertFalse(Utils.isNotEmpty(null));
     }
-
-    @Test
-    public void mapify() {
-        Map<String, String> expected = new HashMap<String, String>() {{
-            put("count", "45");
-            put("sum", "76.345");
-            put("float", "0.2");
-            put("long", "2");
-            put("null", "");
-        }};
-
-        Map<String, Object> given = new HashMap<String, Object>() {{
-            put("count", 45);
-            put("sum", 76.345);
-            put("float", .2f);
-            put("long", 2L);
-            put("null", null);
-        }};
-
-        Assert.assertEquals(expected, Utils.mapify(given));
-    }
 }
