@@ -30,5 +30,6 @@ jobs:
       - name: Build with Gradle
         uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629
         with:
-          arguments: build
-          arguments: test
+          arguments: 
+            - build
+            - test
