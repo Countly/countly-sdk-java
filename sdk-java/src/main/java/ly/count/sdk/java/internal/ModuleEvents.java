@@ -12,7 +12,7 @@ import ly.count.sdk.java.Countly;
 public class ModuleEvents extends ModuleBase {
     protected CtxCore ctx = null;
 
-    protected EventImplQueue eventQueue;
+    protected EventImplQueue eventQueue = null;
 
     static final Map<String, EventImpl> timedEvents = new HashMap<>();
     private ScheduledExecutorService executor = null;
@@ -23,7 +23,7 @@ public class ModuleEvents extends ModuleBase {
     public void init(InternalConfig config, Log logger) {
         super.init(config, logger);
         L.d("[ModuleEvents] init: config = " + config);
-        eventQueue = new EventImplQueue(L);
+        eventQueue = new EventImplQueue(L, ctx);
         eventsInterface = new Events();
     }
 
@@ -37,7 +37,7 @@ public class ModuleEvents extends ModuleBase {
             executor.scheduleWithFixedDelay(new Runnable() {
                 @Override
                 public void run() {
-                    addEventsToRequestQ();
+                    //addEventsToRequestQ();
                 }
             }, ctx.getConfig().getSendUpdateEachSeconds(), ctx.getConfig().getSendUpdateEachSeconds(), TimeUnit.SECONDS);
         }
@@ -53,12 +53,10 @@ public class ModuleEvents extends ModuleBase {
 
         Request request = new Request();
         request.params.add("device_id", Countly.instance().getDeviceId());
-        request.params.arr("events").put(eventQueue.events).add();
+        request.params.arr("events").put(eventQueue.getEventList()).add();
         request.own(ModuleEvents.class);
 
         ModuleRequests.pushAsync(ctx, request);
-
-        eventQueue.events.clear();
     }
 
     protected void removeInvalidDataFromSegments(Map<String, Object> segments) {
@@ -79,6 +77,7 @@ public class ModuleEvents extends ModuleBase {
     }
 
     protected void recordEventInternal(String key, int count, double sum, Map<String, Object> segmentation, double dur) {
+        L.d("[ModuleEvents] recordEventInternal: key = " + key + ", count = " + count + ", sum = " + sum + ", segmentation = " + segmentation + ", dur = " + dur);
         if (count <= 0) {
             L.w("[ModuleEvents] recordEventInternal: Count can't be less than 1, ignoring this event.");
             return;
@@ -95,12 +94,12 @@ public class ModuleEvents extends ModuleBase {
     }
 
     private void addEventToQueue(EventImpl event) {
-        synchronized (eventQueue.storageId()) {
-            eventQueue.events.add(event);
-            if (eventQueue.events.size() >= internalConfig.getEventsBufferSize()) {
-                addEventsToRequestQ();
-                //Storage.pushAsync(ctx, eventQueue);
-            }
+        L.d("[ModuleEvents] addEventToQueue");
+        eventQueue.addEvent(event);
+        if (eventQueue.size >= internalConfig.getEventsBufferSize()) {
+            L.d("[ModuleEvents] addEventToQueue: eventQueue.size >= internalConfig.getEventsBufferSize()");
+            addEventsToRequestQ();
+            eventQueue.clear();
         }
     }
 
