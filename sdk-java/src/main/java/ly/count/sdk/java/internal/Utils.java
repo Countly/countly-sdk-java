@@ -278,6 +278,36 @@ public class Utils {
         return segmentation;
     }
 
+    public static Map<String, String> mapify(Map<String, Object> segmentation) {
+        if (segmentation == null) {
+            return new HashMap<>();
+        }
+
+        return segmentation.entrySet().stream()
+            .collect(Collectors.toMap(Map.Entry::getKey, entry -> {
+                Object value = entry.getValue();
+                if (value == null) {
+                    return "";
+                } else {
+                    return value.toString();
+                }
+            }));
+    }
+
+    public static boolean isValidDataType(Object value) {
+        if (value == null) {
+            return false;
+        }
+
+        return
+            value instanceof Boolean ||
+                value instanceof Integer ||
+                value instanceof Long ||
+                value instanceof String ||
+                value instanceof Double ||
+                value instanceof Float;
+    }
+
     public static class Base64 {
         public static String encode(byte[] bytes) {
             return ly.count.sdk.java.internal.Base64.encodeBytes(bytes);
