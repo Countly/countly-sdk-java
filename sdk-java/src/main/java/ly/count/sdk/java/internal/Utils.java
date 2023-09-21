@@ -87,18 +87,6 @@ public class Utils {
         return list;
     }
 
-    public static Field findField(Class cls, String name) throws NoSuchFieldException {
-        try {
-            return cls.getDeclaredField(name);
-        } catch (NoSuchFieldException e) {
-            if (cls.getSuperclass() == null) {
-                throw e;
-            } else {
-                return findField(cls.getSuperclass(), name);
-            }
-        }
-    }
-
     /**
      * StringUtils.isEmpty replacement.
      *
@@ -344,18 +332,5 @@ public class Utils {
                 return null;
             }
         }
-    }
-
-    /**
-     * Joins all the strings in the specified collection into a single string with the specified delimiter.
-     */
-    static String joinStrings(final Collection<String> collection, final String delimiter) {
-        StringJoiner joiner = new StringJoiner(delimiter);
-
-        for (String s : collection) {
-            joiner.add(s);
-        }
-
-        return joiner.toString();
     }
 }

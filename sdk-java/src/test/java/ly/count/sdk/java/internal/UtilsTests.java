@@ -1,7 +1,6 @@
 package ly.count.sdk.java.internal;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -214,6 +213,10 @@ public class UtilsTests {
         junit.framework.Assert.assertFalse(Utils.isNotEmpty(null));
     }
 
+    /**
+     * It checks if the "mapify" method is called.
+     * And if the map passed there is converted to the map of strings.
+     */
     @Test
     public void mapify() {
         Map<String, String> expected = new HashMap<String, String>() {{
@@ -222,6 +225,7 @@ public class UtilsTests {
             put("float", "0.2");
             put("long", "2");
             put("null", "");
+            put(null, "");
         }};
 
         Map<String, Object> given = new HashMap<String, Object>() {{
@@ -230,11 +234,28 @@ public class UtilsTests {
             put("float", .2f);
             put("long", 2L);
             put("null", null);
+            put(null, null);
         }};
 
         Assert.assertEquals(expected, Utils.mapify(given));
     }
 
+    /**
+     * It checks when map given as null
+     * function returns empty map.
+     */
+    @Test
+    public void mapify_nullMap() {
+        Map<String, String> expected = new HashMap<>();
+
+        Assert.assertEquals(expected, Utils.mapify(null));
+    }
+
+    /**
+     * It checks if the "isValidDataType" method is called.
+     * And if the data types passed there are valid
+     * for the segmentation.
+     */
     @Test
     public void isValidDataType() {
         Assert.assertTrue(Utils.isValidDataType("string"));
@@ -248,12 +269,5 @@ public class UtilsTests {
         Assert.assertFalse(Utils.isValidDataType(new Object()));
         Assert.assertFalse(Utils.isValidDataType(new ArrayList<>()));
         Assert.assertFalse(Utils.isValidDataType(new HashMap<>()));
-    }
-
-    @Test
-    public void joinCountlyStore() {
-        String expected = "1:::2:::3:::4:::5";
-
-        Assert.assertEquals(expected, Utils.joinStrings(Arrays.asList("1", "2", "3", "4", "5"),":::"));
     }
 }
