@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 /**
@@ -267,12 +266,23 @@ public class Utils {
         return segmentation;
     }
 
-    public static Map<String, String> mapify(Map<String, Object> segmentation) {
-        if (segmentation == null) {
+    /**
+     * Convert map of 'String, Object' key value pairs to
+     * 'String, String' key value pairs <br>
+     * <br>
+     * Null values are converted to empty strings <br>
+     * Null keys are accepted and stay null
+     * <p>
+     *
+     * @param map to convert
+     * @return resulting 'String, String' map
+     */
+    public static Map<String, String> mapify(Map<String, Object> map) {
+        if (map == null) {
             return new HashMap<>();
         }
 
-        return segmentation.entrySet().stream()
+        return map.entrySet().stream()
             .collect(Collectors.toMap(Map.Entry::getKey, entry -> {
                 Object value = entry.getValue();
                 if (value == null) {
@@ -283,6 +293,15 @@ public class Utils {
             }));
     }
 
+    /**
+     * Given value is valid if it is one of the following types: <br>
+     * Boolean, Integer, Long, String, Double, Float <br>
+     * <br>
+     * If value is null returns false
+     *
+     * @param value to check
+     * @return true if value is valid, false otherwise
+     */
     public static boolean isValidDataType(Object value) {
         if (value == null) {
             return false;
