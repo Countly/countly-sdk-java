@@ -21,10 +21,8 @@ public class SDKStorage {
 
     private Log L;
     private CtxCore ctx;
-
     private static final String FILE_NAME_PREFIX = "[CLY]";
     private static final String FILE_NAME_SEPARATOR = "_";
-
     private static final String EVENT_QUEUE_FILE_NAME = "event_queue";
 
     protected SDKStorage() {
@@ -34,6 +32,7 @@ public class SDKStorage {
     public void init(CtxCore ctx, Log logger) {
         this.L = logger;
         this.ctx = ctx;
+        Storage.init();
     }
 
     public void stop(ly.count.sdk.java.internal.CtxCore ctx, boolean clear) {

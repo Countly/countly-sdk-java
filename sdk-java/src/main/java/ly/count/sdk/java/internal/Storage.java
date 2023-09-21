@@ -1,7 +1,5 @@
 package ly.count.sdk.java.internal;
 
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -15,7 +13,11 @@ import java.util.concurrent.Future;
 
 public class Storage {
 
-    private static final Tasks tasks = new Tasks("storage", null);
+    private static Tasks tasks;
+
+    static void init() {
+        tasks = new Tasks("storage", null);
+    }
 
     public static String name(Storable storable) {
         return storable.storagePrefix() + "_" + storable.storageId();
