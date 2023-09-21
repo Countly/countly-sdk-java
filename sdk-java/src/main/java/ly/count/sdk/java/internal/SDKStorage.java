@@ -1,13 +1,11 @@
 package ly.count.sdk.java.internal;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.channels.FileLock;
@@ -32,6 +30,7 @@ public class SDKStorage {
     public void init(CtxCore ctx, Log logger) {
         this.L = logger;
         this.ctx = ctx;
+        Storage.init();
     }
 
     public void stop(ly.count.sdk.java.internal.CtxCore ctx, boolean clear) {
@@ -302,7 +301,7 @@ public class SDKStorage {
 
         String eventQueue = "";
 
-        try  {
+        try {
             eventQueue = Utils.readFileContent(file);
         } catch (IOException e) {
             // Handle the error if reading fails
