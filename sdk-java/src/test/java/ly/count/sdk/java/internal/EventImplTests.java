@@ -35,8 +35,8 @@ public class EventImplTests {
 
         Assert.assertEquals("test_event", eventImpl.key);
         Assert.assertEquals(1, eventImpl.count);
-        Assert.assertEquals(new Double(0.0), eventImpl.duration);
-        Assert.assertEquals(new Double(0.0), eventImpl.sum);
+        Assert.assertNull(eventImpl.duration);
+        Assert.assertNull(eventImpl.sum);
         Assert.assertTrue(eventImpl.getTimestamp() > 0);
         Assert.assertEquals(Device.dev.currentHour(), eventImpl.hour);
         Assert.assertEquals(Device.dev.currentDayOfWeek(), eventImpl.dow);
