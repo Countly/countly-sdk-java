@@ -63,6 +63,7 @@ public class EventImplQueue {
         }
         // order the events from least to most recent
         events.sort((e1, e2) -> (int) (e1.timestamp - e2.timestamp));
+        size = events.size();
         return events;
     }
 
@@ -78,5 +79,13 @@ public class EventImplQueue {
         L.d("[EventImplQueue] Getting events from disk");
         final String joinedEventsStr = SDKCore.instance.sdkStorage.readEventQueue();
         return joinedEventsStr.isEmpty() ? new String[0] : joinedEventsStr.split(DELIMITER);
+    }
+
+    /**
+     * Restores events from disk
+     */
+    void restore(){
+        L.d("[EventImplQueue] Restoring events from disk");
+        getEventList();
     }
 }
