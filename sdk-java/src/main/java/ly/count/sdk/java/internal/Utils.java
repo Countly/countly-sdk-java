@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
@@ -85,18 +86,6 @@ public class Utils {
             reflectiveGetDeclaredFields(list, cls.getSuperclass(), goUp);
         }
         return list;
-    }
-
-    public static Field findField(Class cls, String name) throws NoSuchFieldException {
-        try {
-            return cls.getDeclaredField(name);
-        } catch (NoSuchFieldException e) {
-            if (cls.getSuperclass() == null) {
-                throw e;
-            } else {
-                return findField(cls.getSuperclass(), name);
-            }
-        }
     }
 
     /**
@@ -279,12 +268,23 @@ public class Utils {
         return segmentation;
     }
 
-    public static Map<String, String> mapify(Map<String, Object> segmentation) {
-        if (segmentation == null) {
+    /**
+     * Convert map of 'String, Object' key value pairs to
+     * 'String, String' key value pairs <br>
+     * <br>
+     * Null values are converted to empty strings <br>
+     * Null keys are accepted and stay null
+     * <p>
+     *
+     * @param map to convert
+     * @return resulting 'String, String' map
+     */
+    public static Map<String, String> mapify(Map<String, Object> map) {
+        if (map == null) {
             return new HashMap<>();
         }
 
-        return segmentation.entrySet().stream()
+        return map.entrySet().stream()
             .collect(Collectors.toMap(Map.Entry::getKey, entry -> {
                 Object value = entry.getValue();
                 if (value == null) {
@@ -295,6 +295,15 @@ public class Utils {
             }));
     }
 
+    /**
+     * Given value is valid if it is one of the following types: <br>
+     * Boolean, Integer, Long, String, Double, Float, BigDecimal <br>
+     * <br>
+     * If value is null returns false
+     *
+     * @param value to check
+     * @return true if value is valid, false otherwise
+     */
     public static boolean isValidDataType(Object value) {
         if (value == null) {
             return false;
@@ -306,6 +315,7 @@ public class Utils {
                 value instanceof Long ||
                 value instanceof String ||
                 value instanceof Double ||
+                value instanceof BigDecimal ||
                 value instanceof Float;
     }
 
