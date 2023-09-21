@@ -1,6 +1,9 @@
 package ly.count.sdk.java.internal;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -289,6 +292,32 @@ public class Utils {
                 value instanceof Double ||
                 value instanceof BigDecimal ||
                 value instanceof Float;
+    }
+
+    /**
+     * Read file content using UTF-8 encoding into a string and
+     * append lines to a "StringBuilder" and return it
+     * If file doesn't exist, return empty string
+     *
+     * @param file to read
+     * @return file contents or empty string
+     * @throws IOException if file exists but couldn't be read
+     */
+    public static String readFileContent(File file) throws IOException {
+        StringBuilder fileContent = new StringBuilder();
+
+        if (!file.exists()) {
+            return fileContent.toString();
+        }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                fileContent.append(line);
+            }
+        }
+
+        return fileContent.toString();
     }
 
     public static class Base64 {
