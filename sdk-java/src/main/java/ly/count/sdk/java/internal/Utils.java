@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
@@ -295,7 +296,7 @@ public class Utils {
 
     /**
      * Given value is valid if it is one of the following types: <br>
-     * Boolean, Integer, Long, String, Double, Float <br>
+     * Boolean, Integer, Long, String, Double, Float, BigDecimal <br>
      * <br>
      * If value is null returns false
      *
@@ -313,6 +314,7 @@ public class Utils {
                 value instanceof Long ||
                 value instanceof String ||
                 value instanceof Double ||
+                value instanceof BigDecimal ||
                 value instanceof Float;
     }
 

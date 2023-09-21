@@ -1,5 +1,6 @@
 package ly.count.sdk.java.internal;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 import org.json.JSONObject;
@@ -190,6 +191,46 @@ public class EventImplTests {
         Assert.assertEquals(event.hour, fromJson.hour);
         Assert.assertEquals(event.dow, fromJson.dow);
         Assert.assertEquals(event.segmentation, fromJson.segmentation);
+    }
+
+    /**
+     * If the segmentation is same and the values
+     * are converted by "fromJSON" to the correct data types that are created
+     * by "toJSON" method "JSONObject" class.
+     */
+    @Test
+    public void validateFromJson_toJson_segmentation() {
+
+        EventImpl event = new EventImpl((event1) -> {
+        }, "test_sell_event", L);
+
+        Map<String, Object> segmentation = new HashMap<>();
+        segmentation.put("sold", true);
+        segmentation.put("price", 9.43);
+        segmentation.put("quantity", 3);
+        segmentation.put("name", "test");
+        segmentation.put("null", null);
+        segmentation.put("checksum", 56476587L);
+        segmentation.put("divisor", 0.2f);
+        event.segmentation = segmentation;
+
+        Map<String, Object> expectedSegmentation = new HashMap<>();
+        expectedSegmentation.put("sold", true);
+        expectedSegmentation.put("price", BigDecimal.valueOf(9.43));
+        expectedSegmentation.put("quantity", 3);
+        expectedSegmentation.put("name", "test");
+        expectedSegmentation.put("checksum", 56476587);
+        expectedSegmentation.put("divisor", BigDecimal.valueOf(0.2));
+
+        JSONObject json = new JSONObject();
+        json.put(EventImpl.KEY_KEY, "test_sell_event");
+        json.put(EventImpl.SEGMENTATION_KEY, segmentation);
+
+        EventImpl fromJson = EventImpl.fromJSON(event.toJSON(L), event1 -> {
+        }, L);
+
+        Assert.assertEquals(event.key, fromJson.key);
+        Assert.assertEquals(expectedSegmentation, fromJson.segmentation);
     }
 
     /**
