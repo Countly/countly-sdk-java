@@ -305,17 +305,15 @@ public class SDKStorage {
             return "";
         }
 
-        StringBuilder eventQueue = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                eventQueue.append(line);
-            }
+        String eventQueue = "";
+
+        try {
+            eventQueue = Utils.readFileContent(file);
         } catch (IOException e) {
             // Handle the error if reading fails
             L.e("[SDKStorage] Failed to read EQ from json file: " + e);
         }
 
-        return eventQueue.toString();
+        return eventQueue;
     }
 }
