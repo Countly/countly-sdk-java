@@ -1,21 +1,13 @@
 package ly.count.sdk.java.internal;
 
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 import org.json.JSONObject;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.powermock.reflect.Whitebox;
-
-import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-
-import ly.count.sdk.java.Config;
-import ly.count.sdk.java.Event;
 
 import static org.mockito.Mockito.mock;
 
@@ -115,11 +107,11 @@ public class EventImplTests {
             Assert.assertEquals(new Double(21.0), eventImpl1.duration);
             Assert.assertEquals(new Double(17.0), eventImpl1.sum);
             Assert.assertEquals("test_event", eventImpl1.key);
-            Assert.assertEquals("true", eventImpl1.getSegment("test"));
+            Assert.assertEquals(true, eventImpl1.getSegment("test"));
         }, "test_event", L);
 
-        Map<String, String> segmentation = new HashMap<>();
-        segmentation.put("test", "true");
+        Map<String, Object> segmentation = new HashMap<>();
+        segmentation.put("test", true);
 
         event.count = 5;
         event.duration = 21.0;
@@ -138,8 +130,8 @@ public class EventImplTests {
         EventImpl event = new EventImpl((event1) -> {
         }, "test_buy_event", L);
 
-        Map<String, String> segmentation = new HashMap<>();
-        segmentation.put("valid", "false");
+        Map<String, Object> segmentation = new HashMap<>();
+        segmentation.put("valid", false);
 
         event.duration = 34.0;
         event.sum = 9.0;
@@ -169,13 +161,13 @@ public class EventImplTests {
         EventImpl event = new EventImpl((event1) -> {
         }, "test_sell_event", L);
 
-        Map<String, String> segmentation = new HashMap<>();
-        segmentation.put("sold", "true");
+        Map<String, Object> segmentation = new HashMap<>();
+        segmentation.put("sold", true);
 
         event.count = 3;
         event.duration = 15.0;
         event.sum = 7.0;
-        event.setSegmentation(segmentation);
+        event.segmentation = segmentation;
 
         JSONObject json = new JSONObject();
 
@@ -202,6 +194,46 @@ public class EventImplTests {
     }
 
     /**
+     * If the segmentation is same and the values
+     * are converted by "fromJSON" to the correct data types that are created
+     * by "toJSON" method "JSONObject" class.
+     */
+    @Test
+    public void validateFromJson_toJson_segmentation() {
+
+        EventImpl event = new EventImpl((event1) -> {
+        }, "test_sell_event", L);
+
+        Map<String, Object> segmentation = new HashMap<>();
+        segmentation.put("sold", true);
+        segmentation.put("price", 9.43);
+        segmentation.put("quantity", 3);
+        segmentation.put("name", "test");
+        segmentation.put("null", null);
+        segmentation.put("checksum", 56476587L);
+        segmentation.put("divisor", 0.2f);
+        event.segmentation = segmentation;
+
+        Map<String, Object> expectedSegmentation = new HashMap<>();
+        expectedSegmentation.put("sold", true);
+        expectedSegmentation.put("price", BigDecimal.valueOf(9.43));
+        expectedSegmentation.put("quantity", 3);
+        expectedSegmentation.put("name", "test");
+        expectedSegmentation.put("checksum", 56476587);
+        expectedSegmentation.put("divisor", BigDecimal.valueOf(0.2));
+
+        JSONObject json = new JSONObject();
+        json.put(EventImpl.KEY_KEY, "test_sell_event");
+        json.put(EventImpl.SEGMENTATION_KEY, segmentation);
+
+        EventImpl fromJson = EventImpl.fromJSON(event.toJSON(L), event1 -> {
+        }, L);
+
+        Assert.assertEquals(event.key, fromJson.key);
+        Assert.assertEquals(expectedSegmentation, fromJson.segmentation);
+    }
+
+    /**
      * getters of EventImpl class.
      * It checks if the values returned by the getters are same.
      */
@@ -210,8 +242,8 @@ public class EventImplTests {
         EventImpl event = new EventImpl((event1) -> {
         }, "test_getter_event", L);
 
-        Map<String, String> segmentation = new HashMap<>();
-        segmentation.put("get_func", "yes");
+        Map<String, Object> segmentation = new HashMap<>();
+        segmentation.put("get_func", 90);
 
         event.count = 47;
         event.duration = 59.5;
@@ -222,7 +254,7 @@ public class EventImplTests {
         Assert.assertEquals(47, event.getCount());
         Assert.assertEquals(new Double(59.5), event.getDuration());
         Assert.assertEquals(new Double(37.0), event.getSum());
-        Assert.assertEquals("yes", event.getSegment("get_func"));
+        Assert.assertEquals(90, event.getSegment("get_func"));
     }
 
     /**

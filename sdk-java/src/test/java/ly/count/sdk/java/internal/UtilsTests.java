@@ -1,5 +1,6 @@
 package ly.count.sdk.java.internal;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -211,5 +212,26 @@ public class UtilsTests {
         junit.framework.Assert.assertTrue(Utils.isNotEmpty("notthatempty"));
         junit.framework.Assert.assertFalse(Utils.isNotEmpty(""));
         junit.framework.Assert.assertFalse(Utils.isNotEmpty(null));
+    }
+
+    /**
+     * It checks if the "isValidDataType" method is called.
+     * And if the data types passed there are valid
+     * for the segmentation.
+     */
+    @Test
+    public void isValidDataType() {
+        Assert.assertTrue(Utils.isValidDataType("string"));
+        Assert.assertTrue(Utils.isValidDataType(6));
+        Assert.assertTrue(Utils.isValidDataType(6.0));
+        Assert.assertTrue(Utils.isValidDataType(6.0f));
+        Assert.assertTrue(Utils.isValidDataType(BigDecimal.valueOf(6.0)));
+        Assert.assertTrue(Utils.isValidDataType(6L));
+        Assert.assertTrue(Utils.isValidDataType(true));
+        Assert.assertTrue(Utils.isValidDataType(false));
+        Assert.assertFalse(Utils.isValidDataType(null));
+        Assert.assertFalse(Utils.isValidDataType(new Object()));
+        Assert.assertFalse(Utils.isValidDataType(new ArrayList<>()));
+        Assert.assertFalse(Utils.isValidDataType(new HashMap<>()));
     }
 }

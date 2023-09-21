@@ -1,18 +1,22 @@
 package ly.count.sdk.java.internal;
 
-import ly.count.sdk.java.Config;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Utility class
@@ -81,18 +85,6 @@ public class Utils {
             reflectiveGetDeclaredFields(list, cls.getSuperclass(), goUp);
         }
         return list;
-    }
-
-    public static Field findField(Class cls, String name) throws NoSuchFieldException {
-        try {
-            return cls.getDeclaredField(name);
-        } catch (NoSuchFieldException e) {
-            if (cls.getSuperclass() == null) {
-                throw e;
-            } else {
-                return findField(cls.getSuperclass(), name);
-            }
-        }
     }
 
     /**
@@ -273,6 +265,30 @@ public class Utils {
             segmentation.put(k, v);
         }
         return segmentation;
+    }
+
+    /**
+     * Given value is valid if it is one of the following types: <br>
+     * Boolean, Integer, Long, String, Double, Float, BigDecimal <br>
+     * <br>
+     * If value is null returns false
+     *
+     * @param value to check
+     * @return true if value is valid, false otherwise
+     */
+    public static boolean isValidDataType(Object value) {
+        if (value == null) {
+            return false;
+        }
+
+        return
+            value instanceof Boolean ||
+                value instanceof Integer ||
+                value instanceof Long ||
+                value instanceof String ||
+                value instanceof Double ||
+                value instanceof BigDecimal ||
+                value instanceof Float;
     }
 
     public static class Base64 {
