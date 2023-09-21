@@ -11,17 +11,17 @@ public class EventImplQueue {
     private final Log L;
 
     protected int size = 0;
-    private final CtxCore ctx;
+    private final InternalConfig config;
 
-    protected EventImplQueue(Log logger, CtxCore ctx) {
+    protected EventImplQueue(Log logger, InternalConfig config) {
         L = logger;
-        this.ctx = ctx;
+        this.config = config;
     }
 
     void addEvent(final EventImpl event) {
         L.d("[EventImplQueue] Adding event: " + event.key);
         final List<EventImpl> events = getEventList();
-        if (events.size() < ctx.getConfig().getEventsBufferSize()) {
+        if (events.size() < config.getEventsBufferSize()) {
             events.add(event);
             size = events.size();
             setEventData(joinEvents(events));
@@ -43,7 +43,7 @@ public class EventImplQueue {
      */
     void setEventData(String eventData) {
         L.d("[EventImplQueue] Setting event data: " + eventData);
-        ctx.getSDK().sdkStorage.storeEventQueue(eventData);
+        SDKCore.instance.sdkStorage.storeEventQueue(eventData);
     }
 
     /**
@@ -68,7 +68,7 @@ public class EventImplQueue {
 
     public void clear() {
         size = 0;
-        ctx.getSDK().sdkStorage.storeEventQueue("");
+        SDKCore.instance.sdkStorage.storeEventQueue("");
     }
 
     /**
@@ -76,7 +76,7 @@ public class EventImplQueue {
      */
     private synchronized String[] getEvents() {
         L.d("[EventImplQueue] Getting events from disk");
-        final String joinedEventsStr = ctx.getSDK().sdkStorage.readEventQueue();
+        final String joinedEventsStr = SDKCore.instance.sdkStorage.readEventQueue();
         return joinedEventsStr.isEmpty() ? new String[0] : joinedEventsStr.split(DELIMITER);
     }
 }

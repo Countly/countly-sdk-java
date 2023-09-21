@@ -21,7 +21,7 @@ public class ModuleEvents extends ModuleBase {
     public void init(InternalConfig config, Log logger) {
         super.init(config, logger);
         L.d("[ModuleEvents] init: config = " + config);
-        eventQueue = new EventImplQueue(L, ctx);
+        eventQueue = new EventImplQueue(L, config);
         eventsInterface = new Events();
     }
 
