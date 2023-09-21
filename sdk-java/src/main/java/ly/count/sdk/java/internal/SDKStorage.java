@@ -1,8 +1,21 @@
 package ly.count.sdk.java.internal;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.channels.FileLock;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 public class SDKStorage {
 
@@ -11,6 +24,8 @@ public class SDKStorage {
 
     private static final String FILE_NAME_PREFIX = "[CLY]";
     private static final String FILE_NAME_SEPARATOR = "_";
+
+    private static final String EVENT_QUEUE_FILE_NAME = "event_queue";
 
     protected SDKStorage() {
 
@@ -261,7 +276,7 @@ public class SDKStorage {
         }
         return list;
     }
-    
+
     protected void storeEventQueue(String eventQueue) {
         L.d("[SDKStorage] Writing EQ to json file");
 
@@ -271,7 +286,7 @@ public class SDKStorage {
         //if file doesn't exist create it
         //if file can't be created or written, log the error
         File sdkStorageDirectory = ctx.getContext();
-        File file = new File(sdkStorageDirectory, FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + "events");
+        File file = new File(sdkStorageDirectory, FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + EVENT_QUEUE_FILE_NAME);
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
             // Write the eventQueue to the file
@@ -285,7 +300,7 @@ public class SDKStorage {
 
     protected String readEventQueue() {
         L.d("[SDKStorage] Getting event queue");
-        File file = new File(ctx.getContext(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + "events");
+        File file = new File(ctx.getContext(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + EVENT_QUEUE_FILE_NAME);
 
         if (!file.exists()) {
             return "";
