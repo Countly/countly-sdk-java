@@ -299,8 +299,8 @@ public class SDKStorage {
     }
 
     protected String readEventQueue() {
-        L.d("[SDKStorage] Getting event queue")
-        File file = new File(ctx.getContext(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + EVENT_QUEUE_FILE_NAME)
+        L.d("[SDKStorage] Getting event queue");
+        File file = new File(ctx.getContext(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + EVENT_QUEUE_FILE_NAME);
 
         if (!file.exists()) {
             return "";
