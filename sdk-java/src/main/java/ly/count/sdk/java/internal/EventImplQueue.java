@@ -33,7 +33,7 @@ public class EventImplQueue {
         for (EventImpl e : collection) {
             strings.add(e.toJSON(L));
         }
-        return Utils.joinStrings(strings, EventImplQueue.DELIMITER);
+        return Utils.join(strings, EventImplQueue.DELIMITER);
     }
 
     /**

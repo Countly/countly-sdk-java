@@ -268,11 +268,4 @@ public class UtilsTests {
         Assert.assertFalse(Utils.isValidDataType(new ArrayList<>()));
         Assert.assertFalse(Utils.isValidDataType(new HashMap<>()));
     }
-
-    @Test
-    public void joinCountlyStore() {
-        String expected = "1:::2:::3:::4:::5";
-
-        Assert.assertEquals(expected, Utils.joinStrings(Arrays.asList("1", "2", "3", "4", "5"),":::"));
-    }
 }
