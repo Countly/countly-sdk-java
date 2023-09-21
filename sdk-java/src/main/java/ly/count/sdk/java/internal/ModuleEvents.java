@@ -75,7 +75,7 @@ public class ModuleEvents extends ModuleBase {
         });
     }
 
-    protected void recordEventInternal(String key, int count, double sum, Map<String, Object> segmentation, double dur) {
+    protected void recordEventInternal(String key, int count, Double sum, Map<String, Object> segmentation, Double dur) {
         if (count <= 0) {
             L.w("[ModuleEvents] recordEventInternal: Count can't be less than 1, ignoring this event.");
             return;
@@ -113,7 +113,7 @@ public class ModuleEvents extends ModuleBase {
         return true;
     }
 
-    boolean endEventInternal(final String key, final Map<String, Object> segmentation, final int count, final double sum) {
+    boolean endEventInternal(final String key, final Map<String, Object> segmentation, final int count, final Double sum) {
         L.d("[ModuleEvents] Ending event: [" + key + "]");
 
         if (key == null || key.isEmpty()) {
@@ -157,81 +157,81 @@ public class ModuleEvents extends ModuleBase {
          *
          * @param key key for this event, cannot be null or empty
          * @param count how many of these events have occurred, default value is "1", must be greater than 0
-         * @param sum set sum parameter of the event default value is "0"
-         * @param dur set duration of event, default value is "0"
+         * @param sum set sum parameter of the event, can be null
+         * @param dur set duration of event, can be null
          * @param segmentation additional segmentation data that you want to set, leave null if you don't want to add anything
          */
-        public void recordEvent(String key, int count, double sum, Map<String, Object> segmentation, double dur) {
+        public void recordEvent(String key, int count, Double sum, Map<String, Object> segmentation, Double dur) {
             L.i("[Events] recordEvent: key = " + key + ", count = " + count + ", sum = " + sum + ", segmentation = " + segmentation + ", dur = " + dur);
             recordEventInternal(key, count, sum, segmentation, dur);
         }
 
         /**
-         * Record an event with "duration" 0
+         * Record an event with "duration" null by default
          *
          * @param key key for this event, cannot be null or empty
          * @param count how many of these events have occurred, default value is "1", must be greater than 0
-         * @param sum set sum parameter of the event default value is "0"
+         * @param sum set sum parameter of the event, can be null
          * @param segmentation additional segmentation data that you want to set, leave null if you don't want to add anything
          */
-        public void recordEvent(String key, int count, double sum, Map<String, Object> segmentation) {
-            recordEvent(key, count, sum, segmentation, 0.0);
+        public void recordEvent(String key, int count, Double sum, Map<String, Object> segmentation) {
+            recordEvent(key, count, sum, segmentation, null);
         }
 
         /**
          * Record an event with "segmentation","key" and "count" value only
-         * "duration" is zero by default
+         * "duration" is null by default
          *
          * @param key key for this event, cannot be null or empty
          * @param count how many of these events have occurred, default value is "1", must be greater than 0
          * @param segmentation additional segmentation data that you want to set, leave null if you don't want to add anything
          */
         public void recordEvent(String key, int count, Map<String, Object> segmentation) {
-            recordEvent(key, count, 0.0, segmentation);
+            recordEvent(key, count, null, segmentation);
         }
 
         /**
          * Record an event with "segmentation" and "key" value only
-         * "sum" and "duration" is zero by default
+         * "sum" and "duration" is null by default
          *
          * @param key key for this event, cannot be null or empty
          * @param segmentation additional segmentation data that you want to set, leave null if you don't want to add anything
          */
         public void recordEvent(String key, Map<String, Object> segmentation) {
-            recordEvent(key, 1, 0.0, segmentation);
+            recordEvent(key, 1, null, segmentation);
         }
 
         /**
          * Record an event with "key" only
-         * "sum" and "duration" is zero by default
+         * "sum" and "duration" is null by default
          * "count" is 1 by default
          *
          * @param key key for this event, cannot be null or empty
          */
         public void recordEvent(String key) {
-            recordEvent(key, 1, 0, null);
+            recordEvent(key, 1, null, null);
         }
 
         /**
          * Record an event with "key" and "count" only
-         * "sum" and "duration" is zero by default
+         * "sum" and "duration" is null by default
          *
          * @param key key for this event, cannot be null or empty
          * @param count how many of these events have occurred, default value is "1", must be greater than 0
          */
         public void recordEvent(String key, int count) {
-            recordEvent(key, count, 0, null);
+            recordEvent(key, count, null, null);
         }
 
         /**
          * Record an event with "key", "sum" and "count" only
-         * "duration" is zero by default
+         * "duration" is null by default
          *
          * @param key key for this event, cannot be null or empty
          * @param count how many of these events have occurred, default value is "1", must be greater than 0
-         * @param sum set sum parameter of the event default value is "0"
+         * @param sum set sum parameter of the event, can be null
          */
-        public void recordEvent(String key, int count, double sum) {
+        public void recordEvent(String key, int count, Double sum) {
             recordEvent(key, count, sum, null);
         }
 
@@ -254,7 +254,7 @@ public class ModuleEvents extends ModuleBase {
          */
         public boolean endEvent(final String key) {
             L.i("[Events] endEvent: key = " + key);
-            return endEventInternal(key, null, 1, 0);
+            return endEventInternal(key, null, 1, null);
         }
 
         /**
@@ -263,12 +263,12 @@ public class ModuleEvents extends ModuleBase {
          * @param key name of the custom event, required, must not be the empty string
          * @param segmentation segmentation dictionary to associate with the event, can be null
          * @param count count to associate with the event, should be more than zero, default value is 1
-         * @param sum sum to associate with the event, default value is 0
+         * @param sum sum to associate with the event, can be null
          * @return true if event with this key has been previously started, false otherwise
          * @throws IllegalStateException if Countly SDK has not been initialized
          * @throws IllegalArgumentException if key is null or empty, count is less than 1, or if segmentation contains null or empty keys or values
          */
-        public boolean endEvent(final String key, final Map<String, Object> segmentation, final int count, final double sum) {
+        public boolean endEvent(final String key, final Map<String, Object> segmentation, final int count, final Double sum) {
             L.i("[Events] endEvent: key = " + key + ", segmentation = " + segmentation + ", count = " + count + ", sum = " + sum);
             return endEventInternal(key, segmentation, count, sum);
         }
