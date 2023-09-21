@@ -315,8 +315,7 @@ class EventImpl implements Event, JSONable {
                         if (Utils.isValidDataType(segmKeyValue)) {
                             segmentation.put(key, segmKeyValue);
                         } else {
-                            String errorMessage = "[EventImpl] fromJSON: Invalid data type for segmentation key: " + key + " value: " + segmKeyValue;
-                            L.d(errorMessage);
+                            L.w("[EventImpl] fromJSON: Invalid data type for segmentation key: " + key + " value: " + segmKeyValue);
                         }
                     }
                 }

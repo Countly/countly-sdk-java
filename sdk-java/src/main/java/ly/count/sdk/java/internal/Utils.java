@@ -269,33 +269,6 @@ public class Utils {
     }
 
     /**
-     * Convert map of 'String, Object' key value pairs to
-     * 'String, String' key value pairs <br>
-     * <br>
-     * Null values are converted to empty strings <br>
-     * Null keys are accepted and stay null
-     * <p>
-     *
-     * @param map to convert
-     * @return resulting 'String, String' map
-     */
-    public static Map<String, String> mapify(Map<String, Object> map) {
-        if (map == null) {
-            return new HashMap<>();
-        }
-
-        return map.entrySet().stream()
-            .collect(Collectors.toMap(Map.Entry::getKey, entry -> {
-                Object value = entry.getValue();
-                if (value == null) {
-                    return "";
-                } else {
-                    return value.toString();
-                }
-            }));
-    }
-
-    /**
      * Given value is valid if it is one of the following types: <br>
      * Boolean, Integer, Long, String, Double, Float, BigDecimal <br>
      * <br>

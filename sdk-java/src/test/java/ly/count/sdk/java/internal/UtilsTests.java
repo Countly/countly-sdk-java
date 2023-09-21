@@ -2,6 +2,11 @@ package ly.count.sdk.java.internal;
 
 import java.util.*;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import ly.count.sdk.java.Config;
 import org.junit.After;
 import org.junit.Assert;
@@ -212,44 +217,6 @@ public class UtilsTests {
     }
 
     /**
-     * It checks if the "mapify" method is called.
-     * And if the map passed there is converted to the map of strings.
-     */
-    @Test
-    public void mapify() {
-        Map<String, String> expected = new HashMap<String, String>() {{
-            put("count", "45");
-            put("sum", "76.345");
-            put("float", "0.2");
-            put("long", "2");
-            put("null", "");
-            put(null, "");
-        }};
-
-        Map<String, Object> given = new HashMap<String, Object>() {{
-            put("count", 45);
-            put("sum", 76.345);
-            put("float", .2f);
-            put("long", 2L);
-            put("null", null);
-            put(null, null);
-        }};
-
-        Assert.assertEquals(expected, Utils.mapify(given));
-    }
-
-    /**
-     * It checks when map given as null
-     * function returns empty map.
-     */
-    @Test
-    public void mapify_nullMap() {
-        Map<String, String> expected = new HashMap<>();
-
-        Assert.assertEquals(expected, Utils.mapify(null));
-    }
-
-    /**
      * It checks if the "isValidDataType" method is called.
      * And if the data types passed there are valid
      * for the segmentation.
@@ -260,6 +227,7 @@ public class UtilsTests {
         Assert.assertTrue(Utils.isValidDataType(6));
         Assert.assertTrue(Utils.isValidDataType(6.0));
         Assert.assertTrue(Utils.isValidDataType(6.0f));
+        Assert.assertTrue(Utils.isValidDataType(BigDecimal.valueOf(6.0)));
         Assert.assertTrue(Utils.isValidDataType(6L));
         Assert.assertTrue(Utils.isValidDataType(true));
         Assert.assertTrue(Utils.isValidDataType(false));
