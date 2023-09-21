@@ -2,14 +2,14 @@ package ly.count.sdk.java.internal;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.stream.Stream;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import static ly.count.sdk.java.internal.SDKStorage.EVENT_QUEUE_FILE_NAME;
 import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_PREFIX;
@@ -62,12 +62,12 @@ public class TestUtils {
      * @param logger logger
      * @return array of json events
      */
-    protected static JSONArray getCurrentEventQueue(File targetFolder, Log logger) {
-        JSONArray result = new JSONArray();
+    protected static List<EventImpl> getCurrentEventQueue(File targetFolder, Log logger) {
+        List<EventImpl> events = new ArrayList<>();
 
         if (!targetFolder.isDirectory()) {
             logger.e("[TestUtils] " + targetFolder.getAbsolutePath() + " is not a directory");
-            return result;
+            return events;
         }
 
         File file = new File(targetFolder, FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + EVENT_QUEUE_FILE_NAME);
@@ -78,9 +78,26 @@ public class TestUtils {
             //do nothing
         }
 
-        Arrays.stream(fileContent.split(EventImplQueue.DELIMITER)).forEach(s -> result.put(new JSONObject(s)));
+        Arrays.stream(fileContent.split(EventImplQueue.DELIMITER)).forEach(s -> {
+            final EventImpl event = EventImpl.fromJSON(s, (ev) -> {
+            }, logger);
+            if (event != null) {
+                events.add(event);
+            }
+        });
 
-        return result;
+        return events;
+    }
+
+    /**
+     * Get last item from list
+     *
+     * @param list
+     * @param <T> type of list
+     * @return last item from list
+     */
+    public static <T> T getLastItem(List<T> list) {
+        return list.isEmpty() ? null : list.get(list.size() - 1);
     }
 
     /**
