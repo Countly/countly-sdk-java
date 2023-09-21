@@ -2,15 +2,22 @@ package ly.count.sdk.java.internal;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.stream.Stream;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import static ly.count.sdk.java.internal.SDKStorage.EVENT_QUEUE_FILE_NAME;
+import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_PREFIX;
+import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_SEPARATOR;
 
 public class TestUtils {
 
-    public TestUtils() {
+    private TestUtils() {
     }
 
     /**
@@ -20,7 +27,7 @@ public class TestUtils {
      * @param logger logger
      * @return array of request params
      */
-    public Map<String, String>[] getCurrentRequestQueue(File targetFolder, Log logger) {
+    protected static Map<String, String>[] getCurrentRequestQueue(File targetFolder, Log logger) {
 
         //check whether target folder is a directory or not
         if (!targetFolder.isDirectory()) {
@@ -49,12 +56,40 @@ public class TestUtils {
     }
 
     /**
+     * Get current event queue from target folder
+     *
+     * @param targetFolder where events are stored
+     * @param logger logger
+     * @return array of json events
+     */
+    protected static JSONArray getCurrentEventQueue(File targetFolder, Log logger) {
+        JSONArray result = new JSONArray();
+
+        if (!targetFolder.isDirectory()) {
+            logger.e("[TestUtils] " + targetFolder.getAbsolutePath() + " is not a directory");
+            return result;
+        }
+
+        File file = new File(targetFolder, FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + EVENT_QUEUE_FILE_NAME);
+        String fileContent = "";
+        try {
+            fileContent = Utils.readFileContent(file);
+        } catch (IOException e) {
+            //do nothing
+        }
+
+        Arrays.stream(fileContent.split(EventImplQueue.DELIMITER)).forEach(s -> result.put(new JSONObject(s)));
+
+        return result;
+    }
+
+    /**
      * Get request files from target folder, sorted by last modified
      *
      * @param targetFolder folder where requests are stored
      * @return array of request files sorted by last modified
      */
-    private File[] getRequestFiles(File targetFolder) {
+    private static File[] getRequestFiles(File targetFolder) {
 
         File[] files = targetFolder.listFiles();
         if (files == null) {
@@ -76,7 +111,7 @@ public class TestUtils {
      * @return map of request params
      * @throws IOException if file cannot be read
      */
-    private Map<String, String> parseRequestParams(File file) throws IOException {
+    private static Map<String, String> parseRequestParams(File file) throws IOException {
         try (Scanner scanner = new Scanner(file)) {
             String firstLine = scanner.nextLine();
             String urlDecodedStr = Utils.urldecode(firstLine);

@@ -21,11 +21,9 @@ public class SDKStorage {
 
     private Log L;
     private CtxCore ctx;
-
-    private static final String FILE_NAME_PREFIX = "[CLY]";
-    private static final String FILE_NAME_SEPARATOR = "_";
-
-    private static final String EVENT_QUEUE_FILE_NAME = "event_queue";
+    protected static final String FILE_NAME_PREFIX = "[CLY]";
+    protected static final String FILE_NAME_SEPARATOR = "_";
+    protected static final String EVENT_QUEUE_FILE_NAME = "event_queue";
 
     protected SDKStorage() {
 
@@ -302,21 +300,15 @@ public class SDKStorage {
         L.d("[SDKStorage] Getting event queue");
         File file = new File(ctx.getContext(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + EVENT_QUEUE_FILE_NAME);
 
-        if (!file.exists()) {
-            return "";
-        }
+        String eventQueue = "";
 
-        StringBuilder eventQueue = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                eventQueue.append(line);
-            }
+        try  {
+            eventQueue = Utils.readFileContent(file);
         } catch (IOException e) {
             // Handle the error if reading fails
             L.e("[SDKStorage] Failed to read EQ from json file: " + e);
         }
 
-        return eventQueue.toString();
+        return eventQueue;
     }
 }
