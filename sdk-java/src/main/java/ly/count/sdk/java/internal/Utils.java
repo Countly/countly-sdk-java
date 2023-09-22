@@ -1,6 +1,9 @@
 package ly.count.sdk.java.internal;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -16,7 +19,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Utility class
@@ -289,6 +291,39 @@ public class Utils {
                 value instanceof Double ||
                 value instanceof BigDecimal ||
                 value instanceof Float;
+    }
+
+    /**
+     * Read file content using UTF-8 encoding into a string and
+     * append lines to a "StringBuilder" and return it
+     * If file doesn't exist, return empty string
+     *
+     * @param file to read
+     * @param logger to log errors
+     * @return file contents or empty string
+     * @throws IOException if file exists but couldn't be read
+     */
+    public static String readFileContent(File file, Log logger) throws IOException {
+        StringBuilder fileContent = new StringBuilder();
+
+        if (!file.exists()) {
+            logger.v("[Utils] readFileContent : File doesn't exist: " + file.getAbsolutePath() + ". returning empty string");
+            return fileContent.toString();
+        }
+
+        if (!file.canRead()) {
+            logger.v("[Utils] readFileContent : File exists but can't be read: " + file.getAbsolutePath() + ". returning empty string");
+            return fileContent.toString();
+        }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                fileContent.append(line);
+            }
+        }
+
+        return fileContent.toString();
     }
 
     public static class Base64 {

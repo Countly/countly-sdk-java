@@ -1,5 +1,8 @@
 package ly.count.sdk.java.internal;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,6 +20,8 @@ import org.junit.runners.JUnit4;
 public class UtilsTests {
 
     Log logger;
+
+    static final String TEST_FILE_NAME = "testFile";
 
     @Before
     public void setupEveryTest() {
@@ -233,5 +238,69 @@ public class UtilsTests {
         Assert.assertFalse(Utils.isValidDataType(new Object()));
         Assert.assertFalse(Utils.isValidDataType(new ArrayList<>()));
         Assert.assertFalse(Utils.isValidDataType(new HashMap<>()));
+    }
+
+    /**
+     * It checks if the "readFileContent" method is called.
+     * And if the created file is read correctly.
+     */
+    @Test
+    public void readFileContent() throws IOException {
+        String fileName = "testFile";
+        String fileContent = "testContent";
+
+        File file = new File(fileName);
+        file.createNewFile();
+        FileWriter writer = new FileWriter(file);
+        writer.write(fileContent);
+        writer.close();
+
+        String result = Utils.readFileContent(file, logger);
+        //delete file
+        file.delete();
+        Assert.assertEquals(fileContent, result);
+    }
+
+    /**
+     * If the file does not exist,
+     * the method should return an empty string.
+     */
+    @Test
+    public void readFileContent_fileNotExist() throws IOException {
+        String fileName = "testFile";
+        String fileContent = "testContent";
+
+        File file = new File(fileName);
+
+        String result = Utils.readFileContent(file, logger);
+
+        Assert.assertNotEquals(fileContent, result);
+        Assert.assertEquals("", result);
+    }
+
+    /**
+     * If the file is not readable for some reason,
+     * the method should return empty string.
+     */
+    @Test
+    public void readFileContent_fileNotReadable() throws IOException {
+        try {
+            String fileContent = "testContent";
+
+            File file = new File(TEST_FILE_NAME);
+            file.createNewFile();
+            FileWriter writer = new FileWriter(file);
+            writer.write(fileContent);
+            writer.close();
+            file.setReadable(false);
+
+            String content = Utils.readFileContent(file, logger);
+            Assert.assertEquals("", content);
+        } finally {
+            File file = new File(TEST_FILE_NAME);
+            if (file.exists()) {
+                file.delete();
+            }
+        }
     }
 }
