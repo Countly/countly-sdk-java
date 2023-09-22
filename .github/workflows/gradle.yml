@@ -49,3 +49,7 @@ jobs:
               body: `Test report is available here: ${artifactLink}`,
             });
 
+      - name: Test github output
+        id: random-color-generator
+        run: echo "SELECTED_COLOR=green" >> "$GITHUB_OUTPUT"
+
