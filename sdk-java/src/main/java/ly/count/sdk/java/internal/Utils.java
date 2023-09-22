@@ -304,13 +304,20 @@ public class Utils {
      * If file doesn't exist, return empty string
      *
      * @param file to read
+     * @param logger to log errors
      * @return file contents or empty string
      * @throws IOException if file exists but couldn't be read
      */
-    public static String readFileContent(File file) throws IOException {
+    public static String readFileContent(File file, Log logger) throws IOException {
         StringBuilder fileContent = new StringBuilder();
 
         if (!file.exists()) {
+            logger.v("[Utils] readFileContent : File doesn't exist: " + file.getAbsolutePath() + ". returning empty string");
+            return fileContent.toString();
+        }
+
+        if (!file.canRead()) {
+            logger.v("[Utils] readFileContent : File exists but can't be read: " + file.getAbsolutePath() + ". returning empty string");
             return fileContent.toString();
         }
 

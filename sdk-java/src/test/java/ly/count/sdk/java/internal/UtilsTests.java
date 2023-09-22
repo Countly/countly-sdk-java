@@ -255,7 +255,7 @@ public class UtilsTests {
         writer.write(fileContent);
         writer.close();
 
-        String result = Utils.readFileContent(file);
+        String result = Utils.readFileContent(file, logger);
         //delete file
         file.delete();
         Assert.assertEquals(fileContent, result);
@@ -272,7 +272,7 @@ public class UtilsTests {
 
         File file = new File(fileName);
 
-        String result = Utils.readFileContent(file);
+        String result = Utils.readFileContent(file, logger);
 
         Assert.assertNotEquals(fileContent, result);
         Assert.assertEquals("", result);
@@ -280,9 +280,9 @@ public class UtilsTests {
 
     /**
      * If the file is not readable for some reason,
-     * the method should throw exception.
+     * the method should return empty string.
      */
-    @Test(expected = IOException.class)
+    @Test
     public void readFileContent_fileNotReadable() throws IOException {
         try {
             String fileContent = "testContent";
@@ -294,7 +294,8 @@ public class UtilsTests {
             writer.close();
             file.setReadable(false);
 
-            Utils.readFileContent(file);
+            String content = Utils.readFileContent(file, logger);
+            Assert.assertEquals("", content);
         } finally {
             File file = new File(TEST_FILE_NAME);
             if (file.exists()) {

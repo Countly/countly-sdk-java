@@ -364,6 +364,8 @@ public class Storage {
     }
 
     public static void stop() {
-        tasks.shutdown();
+        if (tasks != null) {
+            tasks.shutdown();
+        }
     }
 }

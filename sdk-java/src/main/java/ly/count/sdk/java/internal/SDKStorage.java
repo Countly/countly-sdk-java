@@ -302,7 +302,7 @@ public class SDKStorage {
         String eventQueue = "";
 
         try {
-            eventQueue = Utils.readFileContent(file);
+            eventQueue = Utils.readFileContent(file, L);
         } catch (IOException e) {
             // Handle the error if reading fails
             L.e("[SDKStorage] Failed to read EQ from json file: " + e);
