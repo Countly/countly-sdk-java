@@ -28,22 +28,8 @@ jobs:
       - name: Build and Test with Gradle
         run: ./gradlew build
 
-      - name: Upload Test Results
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v2
+      - name: HTML Preview
+        id: html_preview
+        uses: pavi2410/html-preview-action@v2
         with:
-          name: test-results
-          path: sdk-java/build/reports/tests/
-      
-      - name: Comment on PR with HTML Report Link
-        if: ${{ always() }}
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const artifactLink = `<a href="test/index.html" target="_blank">HTML Test Report</a>`;
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `Test report is available here: ${artifactLink}`,
-            });
+          html_file: 'sdk-java/build/reports/tests/test/index.html'
