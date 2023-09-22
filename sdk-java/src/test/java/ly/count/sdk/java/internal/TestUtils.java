@@ -75,7 +75,7 @@ public class TestUtils {
         File file = new File(targetFolder, FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + EVENT_QUEUE_FILE_NAME);
         String fileContent = "";
         try {
-            fileContent = Utils.readFileContent(file);
+            fileContent = Utils.readFileContent(file,logger);
         } catch (IOException e) {
             //do nothing
         }

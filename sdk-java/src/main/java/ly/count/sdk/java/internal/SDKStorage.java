@@ -1,13 +1,11 @@
 package ly.count.sdk.java.internal;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.channels.FileLock;
@@ -301,14 +299,10 @@ public class SDKStorage {
         L.d("[SDKStorage] Getting event queue");
         File file = new File(ctx.getContext(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + EVENT_QUEUE_FILE_NAME);
 
-        if (!file.exists()) {
-            return "";
-        }
-
         String eventQueue = "";
 
         try {
-            eventQueue = Utils.readFileContent(file);
+            eventQueue = Utils.readFileContent(file, L);
         } catch (IOException e) {
             // Handle the error if reading fails
             L.e("[SDKStorage] Failed to read EQ from json file: " + e);
