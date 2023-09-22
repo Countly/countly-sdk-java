@@ -41,11 +41,9 @@ jobs:
         with:
           script: |
             const artifactLink = `<a href="test/index.html" target="_blank">HTML Test Report</a>`;
-            github.issues.createComment({
+            github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: `Test report is available here: ${artifactLink}`,
             });
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
