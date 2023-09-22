@@ -33,4 +33,19 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: test-results
-          path: sdk-java/build/reports/tests/test/index.html
+          path: sdk-java/build/reports/tests/
+      
+      - name: Comment on PR with HTML Report Link
+        if: ${{ always() }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const artifactLink = `<a href="test/index.html" target="_blank">HTML Test Report</a>`;
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `Test report is available here: ${artifactLink}`,
+            });
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
