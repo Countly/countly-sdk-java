@@ -41,7 +41,7 @@ jobs:
         with:
           script: |
             const workspaceUrl = '${{ github.workspace }}/sdk-java/build/reports/tests/test/index.html';
-            const artifactLink = `<a href=${workspaceUrl}` target="_blank">HTML Test Report</a>`;
+            const artifactLink = `<a href=${workspaceUrl} target="_blank">HTML Test Report</a>`;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
