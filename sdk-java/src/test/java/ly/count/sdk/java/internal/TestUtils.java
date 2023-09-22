@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.stream.Stream;
+import ly.count.sdk.java.Config;
 
 import static ly.count.sdk.java.internal.SDKStorage.EVENT_QUEUE_FILE_NAME;
 import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_PREFIX;
@@ -17,9 +18,28 @@ import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_SEPARATOR;
 
 public class TestUtils {
 
-    private static String DELIMETER = ":::";
+    static String SERVER_URL = "https://try.count.ly";
+    static String SERVER_APP_KEY = "COUNTLY_APP_KEY";
 
     private TestUtils() {
+    }
+
+    static Config getBaseConfig() {
+        File sdkStorageRootDirectory = getSdkStorageRootDirectory();
+        checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
+        return new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
+    }
+
+    static File getSdkStorageRootDirectory() {
+        // System specific folder structure
+        String[] sdkStorageRootPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
+        return new File(String.join(File.separator, sdkStorageRootPath));
+    }
+
+    static void checkSdkStorageRootDirectoryExist(File directory) {
+        if (directory.mkdirs()) {
+            throw new RuntimeException("Directory creation failed");
+        }
     }
 
     /**
