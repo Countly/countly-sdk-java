@@ -25,15 +25,12 @@ jobs:
           java-version: '8'
           distribution: 'corretto'
 
-      - name: Build with Gradle
+      - name: Build and Test with Gradle
         run: ./gradlew build
-
-      - name: Run Tests
-        run: ./gradlew test
 
       - name: Upload Test Results
         if: ${{ always() }}
         uses: actions/upload-artifact@v2
         with:
           name: test-results
-          path: sdk-java/build/test-results
+          path: sdk-java/build/reports/tests/test/index.html
