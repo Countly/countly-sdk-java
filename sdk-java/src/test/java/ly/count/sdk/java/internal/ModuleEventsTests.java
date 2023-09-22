@@ -119,7 +119,7 @@ public class ModuleEventsTests {
      * existing event queue from storage
      */
     @Test
-    public void testInDiskEventQueue(){
+    public void recordEvent_reInitCountly(){
         Assert.assertEquals(0, moduleEvents.eventQueue.size);
 
         //create segmentation
