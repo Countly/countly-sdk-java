@@ -22,7 +22,7 @@ public class UtilsTests {
     Log logger;
 
     static final String TEST_FILE_NAME = "testFile";
-    
+
     @Before
     public void setupEveryTest() {
         logger = new Log(Config.LoggingLevel.VERBOSE, null);
@@ -255,7 +255,7 @@ public class UtilsTests {
         writer.write(fileContent);
         writer.close();
 
-        String result = Utils.readFileContent(file,logger);
+        String result = Utils.readFileContent(file, logger);
         //delete file
         file.delete();
         Assert.assertEquals(fileContent, result);
@@ -272,7 +272,7 @@ public class UtilsTests {
 
         File file = new File(fileName);
 
-        String result = Utils.readFileContent(file,logger);
+        String result = Utils.readFileContent(file, logger);
 
         Assert.assertNotEquals(fileContent, result);
         Assert.assertEquals("", result);
@@ -294,7 +294,7 @@ public class UtilsTests {
             writer.close();
             file.setReadable(false);
 
-            String content = Utils.readFileContent(file,logger);
+            String content = Utils.readFileContent(file, logger);
             Assert.assertEquals("", content);
         } finally {
             File file = new File(TEST_FILE_NAME);
