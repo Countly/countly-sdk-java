@@ -10,21 +10,18 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.junit.runners.MethodSorters;
 
 @RunWith(JUnit4.class)
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ModuleEventsTests {
 
     private ModuleEvents moduleEvents;
 
     @BeforeClass
     public static void init() {
-        if(Countly.isInitialized()) return;
+        if (Countly.isInitialized()) return;
         // System specific folder structure
         String[] sdkStorageRootPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
         File sdkStorageRootDirectory = new File(String.join(File.separator, sdkStorageRootPath));
@@ -86,6 +83,7 @@ public class ModuleEventsTests {
      */
     @Test
     public void recordEvent_fillEventQueue() {
+        recordEvent(); // fill the queue
         try {
             Assert.assertEquals(1, moduleEvents.eventQueue.size);
 
@@ -119,7 +117,8 @@ public class ModuleEventsTests {
      * existing event queue from storage
      */
     @Test
-    public void recordEvent_reInitCountly(){
+    public void recordEvent_reInitCountly() {
+        moduleEvents.eventQueue.clear();
         Assert.assertEquals(0, moduleEvents.eventQueue.size);
 
         //create segmentation
@@ -133,7 +132,6 @@ public class ModuleEventsTests {
 
         //now purposely re-init Countly
         stop();
-        System.out.println("Countly stopped");
         init();
         start();
 
@@ -146,5 +144,141 @@ public class ModuleEventsTests {
         EventImpl event = events.get(0);
         Assert.assertEquals("testInDiskEventQueue", event.key);
         Assert.assertEquals(segmentation, event.segmentation);
+    }
+
+    /**
+     * start event successfully created timed event and end it
+     */
+    @Test
+    public void startEvent() {
+        String eventName = "test-startEvent";
+
+        try {
+            startEvent(eventName);
+        } finally {
+            endEvent(eventName, null, 1, null);
+        }
+    }
+
+    /**
+     * start event should not create with empty key
+     */
+    @Test
+    public void startEvent_emptyKey() {
+        Assert.assertFalse(Countly.instance().events().startEvent(""));
+    }
+
+    /**
+     * start event should not create with null key
+     */
+    @Test
+    public void startEvent_nullKey() {
+        Assert.assertFalse(Countly.instance().events().startEvent(null));
+    }
+
+    /**
+     * start event should not create with already started event
+     */
+    @Test
+    public void startEvent_alreadyStarted() {
+
+        String eventName = "test-startEvent_alreadyStarted";
+
+        try {
+            startEvent(eventName);
+            boolean result = Countly.instance().events().startEvent(eventName);
+            Assert.assertFalse(result);
+        } finally {
+            endEvent(eventName, null, 1, null);
+        }
+    }
+
+    /**
+     * end event successfully ended the timed event
+     */
+    @Test
+    public void endEvent() {
+        String eventName = "test-endEvent";
+
+        startEvent(eventName); // start event to end it
+        endEvent(eventName, null, 1, null);
+    }
+
+    /**
+     * End event with empty key should not net
+     */
+    @Test
+    public void endEvent_emptyKey() {
+        Assert.assertFalse(Countly.instance().events().endEvent(""));
+    }
+
+    /**
+     * End event with null key should not end
+     */
+    @Test
+    public void endEvent_nullKey() {
+        Assert.assertFalse(Countly.instance().events().endEvent(null));
+    }
+
+    /**
+     * End event with not started event should not work
+     */
+    @Test
+    public void endEvent_notStarted() {
+        Assert.assertFalse(Countly.instance().events().endEvent("test-endEvent_notStarted"));
+    }
+
+    /**
+     * End event with already ended event should not process
+     */
+    @Test
+    public void endEvent_alreadyEnded() {
+        Assert.assertFalse(Countly.instance().events().endEvent("test-endEvent_alreadyEnded"));
+    }
+
+    /**
+     * End event with segmentation should end successfully
+     */
+    @Test
+    public void endEvent_withSegmentation() {
+
+        String eventName = "test-endEvent_withSegmentation";
+
+        startEvent(eventName); // start event to end it
+
+        Map<String, Object> segmentation = new HashMap<>();
+        segmentation.put("hair_color", "red");
+        segmentation.put("hair_length", "short");
+        segmentation.put("chauffeur", "g3chauffeur"); //
+
+        endEvent(eventName, segmentation, 1, 5.0);
+    }
+
+    /**
+     * End event with segmentation and negative count should throw <code>IllegalArgumentException</code>
+     */
+    @Test(expected = IllegalArgumentException.class)
+    public void endEvent_withSegmentation_negativeCount() {
+
+        String eventName = "test-endEvent_withSegmentation_negativeCount";
+
+        startEvent(eventName); // start event to end it
+
+        Map<String, Object> segmentation = new HashMap<>();
+        segmentation.put("horse_name", "Alice");
+        segmentation.put("bet_amount", 300);
+        segmentation.put("currency", "Dollar"); //
+
+        endEvent(eventName, segmentation, -7, 67.0);
+    }
+
+    private void endEvent(String key, Map<String, Object> segmentation, int count, Double sum) {
+        boolean result = Countly.instance().events().endEvent(key, segmentation, count, sum);
+        Assert.assertTrue(result);
+    }
+
+    private void startEvent(String key) {
+        boolean result = Countly.instance().events().startEvent(key);
+        Assert.assertTrue(result);
     }
 }
