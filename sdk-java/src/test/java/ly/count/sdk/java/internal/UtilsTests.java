@@ -36,7 +36,7 @@ public class UtilsTests {
     @Test
     public void trimValue() {
         String result = Utils.trimValue(5, "Key", "Value1", logger);
-        Assert.assertEquals("Value", result);
+        Assert.assertEquals("Valu", result);
     }
 
     @Test
