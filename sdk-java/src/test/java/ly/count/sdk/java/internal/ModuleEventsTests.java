@@ -52,7 +52,7 @@ public class ModuleEventsTests {
     @Test
     public void recordEvent() {
         moduleEvents.eventQueue.clear();
-        Assert.assertEquals(0, moduleEvents.eventQueue.size);
+        Assert.assertEquals(0, moduleEvents.eventQueue.eqSize());
 
         //create segmentation
         Map<String, Object> segmentation = new HashMap<>();
@@ -65,7 +65,7 @@ public class ModuleEventsTests {
 
         //check if event was recorded correctly and size of event queue is equal to size of events in queue
         List<EventImpl> events = TestUtils.getCurrentEventQueue(moduleEvents.ctx.getContext(), moduleEvents.L);
-        Assert.assertEquals(1, moduleEvents.eventQueue.size);
+        Assert.assertEquals(1, moduleEvents.eventQueue.eqSize());
         Assert.assertEquals(1, events.size());
 
         //check if event was recorded correctly
@@ -85,7 +85,7 @@ public class ModuleEventsTests {
     public void recordEvent_fillEventQueue() {
         recordEvent(); // fill the queue
         try {
-            Assert.assertEquals(1, moduleEvents.eventQueue.size);
+            Assert.assertEquals(1, moduleEvents.eventQueue.eqSize());
 
             //create segmentation
             Map<String, Object> segmentation = new HashMap<>();
@@ -100,7 +100,7 @@ public class ModuleEventsTests {
             List<EventImpl> events = TestUtils.getCurrentEventQueue(moduleEvents.ctx.getContext(), moduleEvents.L);
             EventImpl q1 = events.get(0);
             EventImpl q2 = events.get(1);
-            Assert.assertEquals(2, moduleEvents.eventQueue.size);
+            Assert.assertEquals(2, moduleEvents.eventQueue.eqSize());
             Assert.assertEquals(2, events.size());
             Assert.assertEquals("test-recordEvent", q1.key);
             Assert.assertEquals(67, q1.segmentation.get("weight"));
@@ -119,7 +119,7 @@ public class ModuleEventsTests {
     @Test
     public void recordEvent_reInitCountly() {
         moduleEvents.eventQueue.clear();
-        Assert.assertEquals(0, moduleEvents.eventQueue.size);
+        Assert.assertEquals(0, moduleEvents.eventQueue.eqSize());
 
         //create segmentation
         Map<String, Object> segmentation = new HashMap<>();
@@ -137,7 +137,7 @@ public class ModuleEventsTests {
 
         //check if event was recorded correctly and size of event queue is equal to size of events in queue
         List<EventImpl> events = TestUtils.getCurrentEventQueue(moduleEvents.ctx.getContext(), moduleEvents.L);
-        Assert.assertEquals(1, moduleEvents.eventQueue.size);
+        Assert.assertEquals(1, moduleEvents.eventQueue.eqSize());
         Assert.assertEquals(1, events.size());
 
         //check if event was recorded correctly

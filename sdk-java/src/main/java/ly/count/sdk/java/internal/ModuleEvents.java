@@ -7,6 +7,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 import ly.count.sdk.java.Countly;
 
 public class ModuleEvents extends ModuleBase {
@@ -27,9 +28,9 @@ public class ModuleEvents extends ModuleBase {
     }
 
     @Override
-    public void onContextAcquired(CtxCore ctx) {
+    public void onContextAcquired(@Nonnull CtxCore ctx) {
         this.ctx = ctx;
-        L.d("[ModuleEvents] onContextAcquired: " + ctx.toString());
+        L.d("[ModuleEvents] onContextAcquired: " + ctx);
 
         if (ctx.getConfig().getSendUpdateEachSeconds() > 0 && executor == null) {
             executor = Executors.newScheduledThreadPool(1);
@@ -52,7 +53,7 @@ public class ModuleEvents extends ModuleBase {
 
         Request request = new Request();
         request.params.add("device_id", Countly.instance().getDeviceId());
-        request.params.arr("events").put(eventQueue.getEventList()).add();
+        request.params.arr("events").put(eventQueue.eventQueueMemoryCache).add();
         request.own(ModuleEvents.class);
 
         eventQueue.clear();
@@ -95,7 +96,7 @@ public class ModuleEvents extends ModuleBase {
     private void addEventToQueue(EventImpl event) {
         L.d("[ModuleEvents] addEventToQueue");
         eventQueue.addEvent(event);
-        if (eventQueue.size >= internalConfig.getEventsBufferSize()) {
+        if (eventQueue.eqSize() >= internalConfig.getEventsBufferSize()) {
             L.d("[ModuleEvents] addEventToQueue: eventQueue.size >= internalConfig.getEventsBufferSize()");
             addEventsToRequestQ();
         }
