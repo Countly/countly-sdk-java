@@ -51,5 +51,5 @@ jobs:
 
       - name: Test github output
         id: random-color-generator
-        run: echo "SELECTED_COLOR=green" >> "$GITHUB_OUTPUT"
+        run: echo "### Hello world! :rocket:" >> $GITHUB_STEP_SUMMARY
 
