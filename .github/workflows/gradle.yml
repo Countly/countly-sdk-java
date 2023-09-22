@@ -38,7 +38,7 @@ jobs:
         with:
           check_name: "Unit Test Results :rocket:"
           comment_title: "Unit Test Results :rocket:"
-          time_unit: milliseconds
+          time_unit: "milliseconds"
           files: |
             sdk-java/build/test-results/**/*.xml
 
