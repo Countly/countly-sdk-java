@@ -50,11 +50,13 @@ public class TestUtils {
     }
 
     static void checkSdkStorageRootDirectoryExist(File directory) {
-        if (directory.mkdirs()) {
-            throw new RuntimeException("Directory creation failed");
+        if (!(directory.exists() && directory.isDirectory())) {
+            if (!directory.mkdirs()) {
+                throw new RuntimeException("Directory creation failed");
+            }
         }
     }
-
+    
     /**
      * Get current request queue from target folder
      *
