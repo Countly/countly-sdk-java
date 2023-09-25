@@ -14,6 +14,7 @@ import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
@@ -30,13 +31,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
-
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
-
 import ly.count.sdk.java.User;
 import org.json.JSONObject;
 
@@ -195,6 +194,69 @@ public class Transport implements X509TrustManager {
                     writer.write(request.params.toString());
                     writer.flush();
                 }
+            } finally {
+                if (writer != null) {
+                    try {
+                        writer.close();
+                    } catch (Throwable ignored) {
+                    }
+                }
+                if (output != null) {
+                    try {
+                        output.close();
+                    } catch (Throwable ignored) {
+                    }
+                }
+            }
+        }
+
+        return connection;
+    }
+
+    /**
+     * Open connection for particular request: choose GET or POST, choose multipart or urlencoded if POST,
+     * set SSL context, calculate and add checksum, load and send user picture if needed.
+     *
+     * @param request request to send
+     * @return connection, not {@link HttpURLConnection} yet
+     * @throws IOException from {@link HttpURLConnection} in case of error
+     */
+    HttpURLConnection connection(final Request request) throws IOException {
+        String endpoint = request.params.remove(Request.ENDPOINT);
+        if (endpoint == null) {
+            endpoint = "/i?";
+        }
+
+        String path = config.getServerURL().toString() + endpoint;
+        boolean usingGET = !config.isUsePOST() && request.isGettable(config.getServerURL());
+
+        if (usingGET && config.getParameterTamperingProtectionSalt() != null) {
+            request.params.add(CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, request.params + config.getParameterTamperingProtectionSalt(), L));
+        }
+
+        HttpURLConnection connection = openConnection(path, request.params.toString(), usingGET);
+        connection.setConnectTimeout(1000 * config.getNetworkConnectionTimeout());
+        connection.setReadTimeout(1000 * config.getNetworkReadTimeout());
+
+        if (connection instanceof HttpsURLConnection && sslContext != null) {
+            HttpsURLConnection https = (HttpsURLConnection) connection;
+            https.setSSLSocketFactory(sslContext.getSocketFactory());
+        }
+
+        if (!usingGET) {
+            OutputStream output = null;
+            PrintWriter writer = null;
+            try {
+                if (config.getParameterTamperingProtectionSalt() != null) {
+                    request.params.add(CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, request.params + config.getParameterTamperingProtectionSalt(), L));
+                }
+                connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+
+                output = connection.getOutputStream();
+                writer = new PrintWriter(new OutputStreamWriter(output, StandardCharsets.UTF_8), true);
+
+                writer.write(request.params.toString());
+                writer.flush();
             } finally {
                 if (writer != null) {
                     try {
