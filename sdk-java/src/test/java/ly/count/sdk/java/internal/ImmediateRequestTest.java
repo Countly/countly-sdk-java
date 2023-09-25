@@ -35,5 +35,7 @@ public class ImmediateRequestTest {
 
         Thread.sleep(2000); // wait for background thread to finish
         Assert.assertFalse(callbackResult.get()); // check if callback was called and response is null
+
+        Countly.stop(true);
     }
 }
