@@ -48,6 +48,14 @@ public class ModuleEvents extends ModuleBase {
         return true;
     }
 
+    @Override
+    public void stop(CtxCore ctx, boolean clear) {
+        super.stop(ctx, clear);
+        if (clear) {
+            eventQueue.clear();
+        }
+    }
+
     private synchronized void addEventsToRequestQ() {
         L.d("[ModuleEvents] addEventsToRequestQ");
 

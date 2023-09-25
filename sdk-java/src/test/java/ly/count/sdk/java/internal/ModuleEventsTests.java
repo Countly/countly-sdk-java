@@ -1,15 +1,11 @@
 package ly.count.sdk.java.internal;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -19,30 +15,13 @@ public class ModuleEventsTests {
 
     private ModuleEvents moduleEvents;
 
-    @BeforeClass
-    public static void init() {
-        if (Countly.isInitialized()) return;
-        // System specific folder structure
-        String[] sdkStorageRootPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
-        File sdkStorageRootDirectory = new File(String.join(File.separator, sdkStorageRootPath));
-
-        if (sdkStorageRootDirectory.mkdirs()) {
-            throw new RuntimeException("Directory creation failed");
-        }
-        Config cc = new Config("https://try.count.ly", "COUNTLY_APP_KEY", sdkStorageRootDirectory);
-
-        cc.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(4);
+    private void init(Config cc) {
         Countly.instance().init(cc);
-    }
-
-    @AfterClass
-    public static void stop() {
-        Countly.stop(false);
-    }
-
-    @Before
-    public void start() {
         moduleEvents = (ModuleEvents) SDKCore.instance.module(CoreFeature.Events.getIndex());
+    }
+
+    private void stop() {
+        Countly.stop(true);
     }
 
     /**
@@ -51,7 +30,10 @@ public class ModuleEventsTests {
      */
     @Test
     public void recordEvent() {
-        moduleEvents.eventQueue.clear();
+        Config config = TestUtils.getBaseConfig();
+        config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(4);
+        init(config);
+
         Assert.assertEquals(0, moduleEvents.eventQueue.eqSize());
 
         //create segmentation
@@ -70,12 +52,9 @@ public class ModuleEventsTests {
 
         //check if event was recorded correctly
         EventImpl event = events.get(0);
+        validateEvent(event, "test-recordEvent", segmentation, 1, 45.9, 32.0, event.dow, event.hour, event.timestamp);
 
-        Assert.assertEquals("test-recordEvent", event.key);
-        Assert.assertEquals(1, event.count);
-        Assert.assertEquals(segmentation, event.segmentation);
-        Assert.assertEquals(new Double(45.9), event.sum);
-        Assert.assertEquals(new Double(32.0), event.duration);
+        stop();
     }
 
     /**
@@ -83,33 +62,27 @@ public class ModuleEventsTests {
      */
     @Test
     public void recordEvent_fillEventQueue() {
-        recordEvent(); // fill the queue
-        try {
-            Assert.assertEquals(1, moduleEvents.eventQueue.eqSize());
+        Config config = TestUtils.getBaseConfig();
+        config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(4);
+        init(config);
+        Assert.assertEquals(0, moduleEvents.eventQueue.eqSize());
 
-            //create segmentation
-            Map<String, Object> segmentation = new HashMap<>();
-            segmentation.put("size", "xl");
-            segmentation.put("height", 184);
-            segmentation.put("married", false);
+        //create segmentation
+        Map<String, Object> segmentation = new HashMap<>();
+        segmentation.put("size", "xl");
+        segmentation.put("height", 184);
+        segmentation.put("married", false);
 
-            //record event with key segmentation
-            Countly.instance().events().recordEvent("test-recordEvent-Filler", segmentation);
+        //record event with key segmentation
+        Countly.instance().events().recordEvent("test-recordEvent-Filler", segmentation);
 
-            //check if event was recorded correctly and size of event queue is equal to size of events in queue
-            List<EventImpl> events = TestUtils.getCurrentEventQueue(moduleEvents.ctx.getContext(), moduleEvents.L);
-            EventImpl q1 = events.get(0);
-            EventImpl q2 = events.get(1);
-            Assert.assertEquals(2, moduleEvents.eventQueue.eqSize());
-            Assert.assertEquals(2, events.size());
-            Assert.assertEquals("test-recordEvent", q1.key);
-            Assert.assertEquals(67, q1.segmentation.get("weight"));
-            Assert.assertNotEquals(segmentation, q1.segmentation);
-            Assert.assertEquals(segmentation, q2.segmentation);
-            Assert.assertEquals("test-recordEvent-Filler", q2.key);
-        } finally {
-            moduleEvents.eventQueue.clear();
-        }
+        //check if event was recorded correctly and size of event queue is equal to size of events in queue
+        List<EventImpl> events = TestUtils.getCurrentEventQueue(moduleEvents.ctx.getContext(), moduleEvents.L);
+        EventImpl q1 = events.get(0);
+        Assert.assertEquals(1, moduleEvents.eventQueue.eqSize());
+        Assert.assertEquals(1, events.size());
+        validateEvent(q1, "test-recordEvent-Filler", segmentation, 1, null, null, q1.dow, q1.hour, q1.timestamp);
+        stop();
     }
 
     /**
@@ -118,6 +91,9 @@ public class ModuleEventsTests {
      */
     @Test
     public void recordEvent_reInitCountly() {
+        Config config = TestUtils.getBaseConfig();
+        config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(4);
+        init(config);
         moduleEvents.eventQueue.clear();
         Assert.assertEquals(0, moduleEvents.eventQueue.eqSize());
 
@@ -132,18 +108,6 @@ public class ModuleEventsTests {
 
         //now purposely re-init Countly
         stop();
-        init();
-        start();
-
-        //check if event was recorded correctly and size of event queue is equal to size of events in queue
-        List<EventImpl> events = TestUtils.getCurrentEventQueue(moduleEvents.ctx.getContext(), moduleEvents.L);
-        Assert.assertEquals(1, moduleEvents.eventQueue.eqSize());
-        Assert.assertEquals(1, events.size());
-
-        //check if event was recorded correctly
-        EventImpl event = events.get(0);
-        Assert.assertEquals("testInDiskEventQueue", event.key);
-        Assert.assertEquals(segmentation, event.segmentation);
     }
 
     /**
@@ -151,6 +115,9 @@ public class ModuleEventsTests {
      */
     @Test
     public void startEvent() {
+        Config config = TestUtils.getBaseConfig();
+        config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(4);
+        init(config);
         String eventName = "test-startEvent";
 
         try {
@@ -158,6 +125,7 @@ public class ModuleEventsTests {
         } finally {
             endEvent(eventName, null, 1, null);
         }
+        stop();
     }
 
     /**
@@ -165,7 +133,11 @@ public class ModuleEventsTests {
      */
     @Test
     public void startEvent_emptyKey() {
+        Config config = TestUtils.getBaseConfig();
+        config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(4);
+        init(config);
         Assert.assertFalse(Countly.instance().events().startEvent(""));
+        stop();
     }
 
     /**
@@ -173,7 +145,11 @@ public class ModuleEventsTests {
      */
     @Test
     public void startEvent_nullKey() {
+        Config config = TestUtils.getBaseConfig();
+        config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(4);
+        init(config);
         Assert.assertFalse(Countly.instance().events().startEvent(null));
+        stop();
     }
 
     /**
@@ -181,6 +157,9 @@ public class ModuleEventsTests {
      */
     @Test
     public void startEvent_alreadyStarted() {
+        Config config = TestUtils.getBaseConfig();
+        config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(4);
+        init(config);
 
         String eventName = "test-startEvent_alreadyStarted";
 
@@ -191,6 +170,7 @@ public class ModuleEventsTests {
         } finally {
             endEvent(eventName, null, 1, null);
         }
+        stop();
     }
 
     /**
@@ -198,10 +178,15 @@ public class ModuleEventsTests {
      */
     @Test
     public void endEvent() {
+        Config config = TestUtils.getBaseConfig();
+        config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(4);
+        init(config);
         String eventName = "test-endEvent";
 
         startEvent(eventName); // start event to end it
         endEvent(eventName, null, 1, null);
+
+        stop();
     }
 
     /**
@@ -209,7 +194,11 @@ public class ModuleEventsTests {
      */
     @Test
     public void endEvent_emptyKey() {
+        Config config = TestUtils.getBaseConfig();
+        config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(4);
+        init(config);
         Assert.assertFalse(Countly.instance().events().endEvent(""));
+        stop();
     }
 
     /**
@@ -217,7 +206,11 @@ public class ModuleEventsTests {
      */
     @Test
     public void endEvent_nullKey() {
+        Config config = TestUtils.getBaseConfig();
+        config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(4);
+        init(config);
         Assert.assertFalse(Countly.instance().events().endEvent(null));
+        stop();
     }
 
     /**
@@ -225,7 +218,11 @@ public class ModuleEventsTests {
      */
     @Test
     public void endEvent_notStarted() {
+        Config config = TestUtils.getBaseConfig();
+        config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(4);
+        init(config);
         Assert.assertFalse(Countly.instance().events().endEvent("test-endEvent_notStarted"));
+        stop();
     }
 
     /**
@@ -233,7 +230,11 @@ public class ModuleEventsTests {
      */
     @Test
     public void endEvent_alreadyEnded() {
+        Config config = TestUtils.getBaseConfig();
+        config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(4);
+        init(config);
         Assert.assertFalse(Countly.instance().events().endEvent("test-endEvent_alreadyEnded"));
+        stop();
     }
 
     /**
@@ -241,6 +242,9 @@ public class ModuleEventsTests {
      */
     @Test
     public void endEvent_withSegmentation() {
+        Config config = TestUtils.getBaseConfig();
+        config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(4);
+        init(config);
 
         String eventName = "test-endEvent_withSegmentation";
 
@@ -252,6 +256,7 @@ public class ModuleEventsTests {
         segmentation.put("chauffeur", "g3chauffeur"); //
 
         endEvent(eventName, segmentation, 1, 5.0);
+        stop();
     }
 
     /**
@@ -259,6 +264,9 @@ public class ModuleEventsTests {
      */
     @Test(expected = IllegalArgumentException.class)
     public void endEvent_withSegmentation_negativeCount() {
+        Config config = TestUtils.getBaseConfig();
+        config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(4);
+        init(config);
 
         String eventName = "test-endEvent_withSegmentation_negativeCount";
 
@@ -270,6 +278,19 @@ public class ModuleEventsTests {
         segmentation.put("currency", "Dollar"); //
 
         endEvent(eventName, segmentation, -7, 67.0);
+        stop();
+    }
+
+    private void validateEvent(EventImpl gonnaValidate, String key, Map<String, Object> segmentation,
+        int count, Double sum, Double duration, int dow, int hour, long timestamp) {
+        Assert.assertEquals(key, gonnaValidate.key);
+        Assert.assertEquals(segmentation, gonnaValidate.segmentation);
+        Assert.assertEquals(count, gonnaValidate.count);
+        Assert.assertEquals(sum, gonnaValidate.sum);
+        Assert.assertEquals(duration, gonnaValidate.duration);
+        Assert.assertEquals(dow, gonnaValidate.dow);
+        Assert.assertEquals(hour, gonnaValidate.hour);
+        Assert.assertEquals(timestamp, gonnaValidate.timestamp);
     }
 
     private void endEvent(String key, Map<String, Object> segmentation, int count, Double sum) {
