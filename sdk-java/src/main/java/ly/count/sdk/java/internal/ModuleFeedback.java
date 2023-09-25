@@ -66,17 +66,20 @@ public class ModuleFeedback extends ModuleBase {
         feedbackInterface = null;
     }
 
-    private void getAvailableFeedbackWidgetsInternal(RetrieveFeedbackWidgets callback) {
+    private List<CountlyFeedbackWidget> getAvailableFeedbackWidgetsInternal() {
+        return null;
     }
 
     private void reportFeedbackWidgetManuallyInternal(CountlyFeedbackWidget widgetInfo, JSONObject widgetData, Map<String, Object> widgetResult) {
 
     }
 
-    private void getFeedbackWidgetDataInternal(CountlyFeedbackWidget widgetInfo, RetrieveFeedbackWidgetData callback) {
+    private JSONObject getFeedbackWidgetDataInternal(CountlyFeedbackWidget widgetInfo) {
+        return null;
     }
 
-    private void constructFeedbackWidgetUrlInternal(CountlyFeedbackWidget widgetInfo, FeedbackCallback devCallback) {
+    private String constructFeedbackWidgetUrlInternal(CountlyFeedbackWidget widgetInfo) {
+        return null;
     }
 
     public class Feedback {
@@ -84,13 +87,13 @@ public class ModuleFeedback extends ModuleBase {
         /**
          * Get a list of available feedback widgets for this device ID
          *
-         * @param callback
+         * @return list of available feedback widgets
          */
-        public void getAvailableFeedbackWidgets(@Nullable RetrieveFeedbackWidgets callback) {
+        public List<CountlyFeedbackWidget> getAvailableFeedbackWidgets() {
             synchronized (internalConfig) {
                 L.i("[Feedback] Trying to retrieve feedback widget list");
 
-                getAvailableFeedbackWidgetsInternal(callback);
+                return getAvailableFeedbackWidgetsInternal();
             }
         }
 
@@ -98,13 +101,13 @@ public class ModuleFeedback extends ModuleBase {
          * Construct a URL that can be used to present a feedback widget in a web viewer
          *
          * @param widgetInfo
-         * @param devCallback
+         * @return feedback widget URL
          */
-        public void constructFeedbackWidgetUrl(@Nullable CountlyFeedbackWidget widgetInfo, @Nullable FeedbackCallback devCallback) {
+        public String constructFeedbackWidgetUrl(@Nullable CountlyFeedbackWidget widgetInfo) {
             synchronized (internalConfig) {
                 L.i("[Feedback] Trying to present feedback widget in an alert dialog");
 
-                constructFeedbackWidgetUrlInternal(widgetInfo, devCallback);
+                return constructFeedbackWidgetUrlInternal(widgetInfo);
             }
         }
 
@@ -113,13 +116,13 @@ public class ModuleFeedback extends ModuleBase {
          * When requesting this data, it will count as a shown widget (will increment that "shown" count in the dashboard)
          *
          * @param widgetInfo
-         * @param callback
+         * @return feedback widget data
          */
-        public void getFeedbackWidgetData(@Nullable CountlyFeedbackWidget widgetInfo, @Nullable RetrieveFeedbackWidgetData callback) {
+        public JSONObject getFeedbackWidgetData(@Nullable CountlyFeedbackWidget widgetInfo) {
             synchronized (internalConfig) {
                 L.i("[Feedback] Trying to retrieve feedback widget data");
 
-                getFeedbackWidgetDataInternal(widgetInfo, callback);
+                return getFeedbackWidgetDataInternal(widgetInfo);
             }
         }
 
