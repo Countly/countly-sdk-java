@@ -25,8 +25,9 @@ public class ModuleEventsTests {
     }
 
     /**
-     * Records an event and checks if it was recorded correctly
-     * by looking into event queue
+     * Recording an event with segmentation
+     * "recordEvent" function should create an event with given key and segmentation and add it to event queue
+     * recorded event should have correct key, segmentation, count, sum, duration, dow, hour and timestamp
      */
     @Test
     public void recordEvent() {
@@ -34,7 +35,8 @@ public class ModuleEventsTests {
         config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(4);
         init(config);
 
-        Assert.assertEquals(0, moduleEvents.eventQueue.eqSize());
+        List<EventImpl> events = TestUtils.getCurrentEventQueue(moduleEvents.ctx.getContext(), moduleEvents.L);
+        validateQueueSize(0, events);
 
         //create segmentation
         Map<String, Object> segmentation = new HashMap<>();
@@ -46,14 +48,14 @@ public class ModuleEventsTests {
         Countly.instance().events().recordEvent("test-recordEvent", 1, 45.9, segmentation, 32.0);
 
         //check if event was recorded correctly and size of event queue is equal to size of events in queue
-        List<EventImpl> events = TestUtils.getCurrentEventQueue(moduleEvents.ctx.getContext(), moduleEvents.L);
-        Assert.assertEquals(1, moduleEvents.eventQueue.eqSize());
-        Assert.assertEquals(1, events.size());
+        events = TestUtils.getCurrentEventQueue(moduleEvents.ctx.getContext(), moduleEvents.L);
+        validateQueueSize(1, events);
 
         //check if event was recorded correctly
         EventImpl event = events.get(0);
+        EventImpl eventInMemory = moduleEvents.eventQueue.eventQueueMemoryCache.get(0);
         validateEvent(event, "test-recordEvent", segmentation, 1, 45.9, 32.0, event.dow, event.hour, event.timestamp);
-
+        validateEvent(eventInMemory, "test-recordEvent", segmentation, 1, 45.9, 32.0, event.dow, event.hour, event.timestamp);
         stop();
     }
 
@@ -279,6 +281,11 @@ public class ModuleEventsTests {
 
         endEvent(eventName, segmentation, -7, 67.0);
         stop();
+    }
+
+    private void validateQueueSize(int expectedSize, List<EventImpl> events) {
+        Assert.assertEquals(expectedSize, events.size());
+        Assert.assertEquals(expectedSize, moduleEvents.eventQueue.eqSize());
     }
 
     private void validateEvent(EventImpl gonnaValidate, String key, Map<String, Object> segmentation,
