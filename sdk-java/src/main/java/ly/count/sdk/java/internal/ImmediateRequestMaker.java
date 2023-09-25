@@ -23,8 +23,8 @@ class ImmediateRequestMaker implements ImmediateRequestI {
         void callback(JSONObject checkResponse);
     }
 
-    InternalImmediateRequestCallback callback;
-    Log L;
+    private InternalImmediateRequestCallback callback;
+    private Log L;
 
     /**
      * params fields:
@@ -36,10 +36,9 @@ class ImmediateRequestMaker implements ImmediateRequestI {
      * 5 - callback
      * 6 - log module
      */
-    protected JSONObject doInBackground(String requestData, String customEndpoint, Transport cp, boolean requestShouldBeDelayed, boolean networkingIsEnabled, InternalImmediateRequestCallback callback, Log log) {
+    private JSONObject doInBackground(String requestData, String customEndpoint, Transport cp, boolean requestShouldBeDelayed, boolean networkingIsEnabled, InternalImmediateRequestCallback callback, Log log) {
         this.callback = callback;
         L = log;
-
         if (!networkingIsEnabled) {
             L.w("[ImmediateRequestMaker] ImmediateRequestMaker, Networking config is disabled, request cancelled. Endpoint[" + customEndpoint + "] request[" + requestData + "]");
 
@@ -63,7 +62,6 @@ class ImmediateRequestMaker implements ImmediateRequestI {
                     L.w("[ImmediateRequestMaker] While waiting for 0.5 seconds in ImmediateRequestMaker, sleep was interrupted");
                 }
             }
-
             Request request = new Request();
             request.params.add(requestData);
             request.endpoint(customEndpoint);
@@ -72,15 +70,12 @@ class ImmediateRequestMaker implements ImmediateRequestI {
                 connection = cp.connection(request);
             } catch (IOException e) {
                 L.e("[ImmediateRequestMaker] IOException while preparing remote config update request :[" + e.toString() + "]");
-
                 return null;
             }
-
             //connecting
             connection.connect();
 
             int code = connection.getResponseCode();
-
             String receivedBuffer = cp.response(connection);
 
             if (receivedBuffer == null) {
@@ -112,9 +107,8 @@ class ImmediateRequestMaker implements ImmediateRequestI {
         return null;
     }
 
-    protected void onFinished(JSONObject result) {
+    private void onFinished(JSONObject result) {
         L.v("[ImmediateRequestMaker] onPostExecute");
-
         if (callback != null) {
             callback.callback(result);
         }
