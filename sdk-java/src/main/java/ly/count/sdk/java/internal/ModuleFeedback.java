@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import ly.count.sdk.java.Countly;
 import org.json.JSONObject;
 
 public class ModuleFeedback extends ModuleBase {
@@ -66,20 +67,20 @@ public class ModuleFeedback extends ModuleBase {
         feedbackInterface = null;
     }
 
-    private List<CountlyFeedbackWidget> getAvailableFeedbackWidgetsInternal() {
-        return null;
+    private void getAvailableFeedbackWidgetsInternal(RetrieveFeedbackWidgets callback) {
+        callback.onFinished(null, "");
     }
 
     private void reportFeedbackWidgetManuallyInternal(CountlyFeedbackWidget widgetInfo, JSONObject widgetData, Map<String, Object> widgetResult) {
 
     }
 
-    private JSONObject getFeedbackWidgetDataInternal(CountlyFeedbackWidget widgetInfo) {
-        return null;
+    private void getFeedbackWidgetDataInternal(CountlyFeedbackWidget widgetInfo, RetrieveFeedbackWidgetData callback) {
+        callback.onFinished(null, "");
     }
 
-    private String constructFeedbackWidgetUrlInternal(CountlyFeedbackWidget widgetInfo) {
-        return null;
+    private void constructFeedbackWidgetUrlInternal(CountlyFeedbackWidget widgetInfo, FeedbackCallback callback) {
+        callback.onFinished("", "");
     }
 
     public class Feedback {
@@ -87,13 +88,13 @@ public class ModuleFeedback extends ModuleBase {
         /**
          * Get a list of available feedback widgets for this device ID
          *
-         * @return list of available feedback widgets
+         * @param callback
          */
-        public List<CountlyFeedbackWidget> getAvailableFeedbackWidgets() {
-            synchronized (internalConfig) {
+        public void getAvailableFeedbackWidgets(@Nullable RetrieveFeedbackWidgets callback) {
+            synchronized (Countly.instance()) {
                 L.i("[Feedback] Trying to retrieve feedback widget list");
 
-                return getAvailableFeedbackWidgetsInternal();
+                getAvailableFeedbackWidgetsInternal(callback);
             }
         }
 
@@ -101,13 +102,13 @@ public class ModuleFeedback extends ModuleBase {
          * Construct a URL that can be used to present a feedback widget in a web viewer
          *
          * @param widgetInfo
-         * @return feedback widget URL
+         * @param callback
          */
-        public String constructFeedbackWidgetUrl(@Nullable CountlyFeedbackWidget widgetInfo) {
-            synchronized (internalConfig) {
+        public void constructFeedbackWidgetUrl(@Nullable CountlyFeedbackWidget widgetInfo, @Nullable FeedbackCallback callback) {
+            synchronized (Countly.instance()) {
                 L.i("[Feedback] Trying to present feedback widget in an alert dialog");
 
-                return constructFeedbackWidgetUrlInternal(widgetInfo);
+                constructFeedbackWidgetUrlInternal(widgetInfo, callback);
             }
         }
 
@@ -116,13 +117,13 @@ public class ModuleFeedback extends ModuleBase {
          * When requesting this data, it will count as a shown widget (will increment that "shown" count in the dashboard)
          *
          * @param widgetInfo
-         * @return feedback widget data
+         * @param callback
          */
-        public JSONObject getFeedbackWidgetData(@Nullable CountlyFeedbackWidget widgetInfo) {
-            synchronized (internalConfig) {
+        public void getFeedbackWidgetData(@Nullable CountlyFeedbackWidget widgetInfo, @Nullable RetrieveFeedbackWidgetData callback) {
+            synchronized (Countly.instance()) {
                 L.i("[Feedback] Trying to retrieve feedback widget data");
 
-                return getFeedbackWidgetDataInternal(widgetInfo);
+                getFeedbackWidgetDataInternal(widgetInfo, callback);
             }
         }
 
@@ -135,7 +136,7 @@ public class ModuleFeedback extends ModuleBase {
          * @param widgetResult
          */
         public void reportFeedbackWidgetManually(@Nullable CountlyFeedbackWidget widgetInfo, @Nullable JSONObject widgetData, @Nullable Map<String, Object> widgetResult) {
-            synchronized (internalConfig) {
+            synchronized (Countly.instance()) {
                 L.i("[Feedback] Trying to report feedback widget manually");
 
                 reportFeedbackWidgetManuallyInternal(widgetInfo, widgetData, widgetResult);
