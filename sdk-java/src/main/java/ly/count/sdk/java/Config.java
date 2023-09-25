@@ -12,8 +12,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import ly.count.sdk.java.internal.*;
+import ly.count.sdk.java.internal.Byteable;
+import ly.count.sdk.java.internal.CoreFeature;
+import ly.count.sdk.java.internal.Log;
+import ly.count.sdk.java.internal.LogCallback;
+import ly.count.sdk.java.internal.ModuleBase;
+import ly.count.sdk.java.internal.Utils;
 
 /**
  * Countly configuration object.
