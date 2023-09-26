@@ -170,4 +170,13 @@ public class TestUtils {
             return paramMap;
         }
     }
+
+    /**
+     * Returns random UUID for test ids
+     *
+     * @return random UUID starting with test-
+     */
+    protected static String randomUUID() {
+        return "test-" + java.util.UUID.randomUUID();
+    }
 }

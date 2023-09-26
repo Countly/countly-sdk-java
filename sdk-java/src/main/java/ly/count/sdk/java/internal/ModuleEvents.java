@@ -14,7 +14,7 @@ public class ModuleEvents extends ModuleBase {
 
     protected CtxCore ctx = null;
     protected EventImplQueue eventQueue = null;
-    static final Map<String, EventImpl> timedEvents = new HashMap<>();
+    final Map<String, EventImpl> timedEvents = new HashMap<>();
     private ScheduledExecutorService executor = null;
     protected Events eventsInterface = null;
 
