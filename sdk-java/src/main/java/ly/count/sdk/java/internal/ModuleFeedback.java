@@ -1,6 +1,8 @@
 package ly.count.sdk.java.internal;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nonnull;
@@ -11,7 +13,17 @@ import org.json.JSONObject;
 
 public class ModuleFeedback extends ModuleBase {
 
-    public enum FeedbackWidgetType {survey, nps, rating}
+    public enum FeedbackWidgetType {
+        survey("[CLY]_survey"),
+        nps("[CLY]_nps"),
+        rating("[CLY]_star_rating");
+
+        final String eventKey;
+
+        FeedbackWidgetType(String eventKey) {
+            this.eventKey = eventKey;
+        }
+    }
 
     public static class CountlyFeedbackWidget {
         public String widgetId;
@@ -19,10 +31,6 @@ public class ModuleFeedback extends ModuleBase {
         public String name;
         public String[] tags;
     }
-
-    final static String NPS_EVENT_KEY = "[CLY]_nps";
-    final static String SURVEY_EVENT_KEY = "[CLY]_survey";
-    final static String RATING_EVENT_KEY = "[CLY]_star_rating";
 
     String cachedAppVersion;
     Feedback feedbackInterface = null;
@@ -181,7 +189,121 @@ public class ModuleFeedback extends ModuleBase {
     }
 
     private void reportFeedbackWidgetManuallyInternal(CountlyFeedbackWidget widgetInfo, JSONObject widgetData, Map<String, Object> widgetResult) {
+        if (widgetInfo == null) {
+            L.e("[ModuleFeedback] Can't report feedback widget data manually with 'null' widget info");
+            return;
+        }
 
+        L.d("[ModuleFeedback] reportFeedbackWidgetManuallyInternal, widgetData set:[" + (widgetData != null) + ", widget id:[" + widgetInfo.widgetId + "], widget type:[" + widgetInfo.type + "], widget result set:[" + (widgetResult != null) + "]");
+
+        if (internalConfig.isTemporaryIdEnabled()) {
+            L.e("[ModuleFeedback] feedback widget result can't be reported when in temporary device ID mode");
+            return;
+        }
+
+        if (widgetResult != null) {
+            //removing broken values first
+            Iterator<Map.Entry<String, Object>> iter = widgetResult.entrySet().iterator();
+            while (iter.hasNext()) {
+                Map.Entry<String, Object> entry = iter.next();
+                if (entry.getKey() == null) {
+                    L.w("[ModuleFeedback] provided feedback widget result contains a 'null' key, it will be removed, value[" + entry.getValue() + "]");
+                    iter.remove();
+                } else if (entry.getKey().isEmpty()) {
+                    L.w("[ModuleFeedback] provided feedback widget result contains an empty string key, it will be removed, value[" + entry.getValue() + "]");
+                    iter.remove();
+                } else if (entry.getValue() == null) {
+                    L.w("[ModuleFeedback] provided feedback widget result contains a 'null' value, it will be removed, key[" + entry.getKey() + "]");
+                    iter.remove();
+                }
+            }
+
+            if (widgetInfo.type == FeedbackWidgetType.nps) {
+                //in case a nps widget was completed
+                if (!widgetResult.containsKey("rating")) {
+                    L.e("Provided NPS widget result does not have a 'rating' field, result can't be reported");
+                    return;
+                }
+
+                //check rating data type
+                Object ratingValue = widgetResult.get("rating");
+                if (!(ratingValue instanceof Integer)) {
+                    L.e("Provided NPS widget 'rating' field is not an integer, result can't be reported");
+                    return;
+                }
+
+                //check rating value range
+                int ratingValI = (int) ratingValue;
+                if (ratingValI < 0 || ratingValI > 10) {
+                    L.e("Provided NPS widget 'rating' value is out of bounds of the required value '[0;10]', it is probably an error");
+                }
+
+                if (!widgetResult.containsKey("comment")) {
+                    L.w("Provided NPS widget result does not have a 'comment' field");
+                }
+            } else if (widgetInfo.type == FeedbackWidgetType.survey) {
+                //in case a survey widget was completed
+            } else if (widgetInfo.type == FeedbackWidgetType.rating) {
+                //in case a rating widget was completed
+                if (!widgetResult.containsKey("rating")) {
+                    L.e("Provided Rating widget result does not have a 'rating' field, result can't be reported");
+                    return;
+                }
+
+                //check rating data type
+                Object ratingValue = widgetResult.get("rating");
+                if (!(ratingValue instanceof Integer)) {
+                    L.e("Provided Rating widget 'rating' field is not an integer, result can't be reported");
+                    return;
+                }
+
+                //check rating value range
+                int ratingValI = (int) ratingValue;
+                if (ratingValI < 1 || ratingValI > 5) {
+                    L.e("Provided Rating widget 'rating' value is out of bounds of the required value '[1;5]', it is probably an error");
+                }
+            }
+        }
+
+        if (widgetData == null) {
+            L.d("[ModuleFeedback] reportFeedbackWidgetManuallyInternal, widgetInfo is 'null', no validation will be done");
+        } else {
+            //perform data validation
+
+            String idInData = widgetData.optString("_id");
+
+            if (!widgetInfo.widgetId.equals(idInData)) {
+                L.w("[ModuleFeedback] id in widget info does not match the id in widget data");
+            }
+
+            String typeInData = widgetData.optString("type");
+
+            if (!widgetInfo.type.name().equals(typeInData)) {
+                L.w("[ModuleFeedback] type in widget info [" + typeInData + "] does not match the type in widget data [" + widgetInfo.type.name() + "]");
+            }
+        }
+
+        Map<String, Object> segm = new HashMap<>();
+        segm.put("platform", "desktop");
+        segm.put("app_version", cachedAppVersion);
+        segm.put("widget_id", widgetInfo.widgetId);
+
+        if (widgetResult == null) {
+            //mark as closed
+            segm.put("closed", "1");
+        } else {
+            //widget was filled out
+            //merge given segmentation
+            segm.putAll(widgetResult);
+        }
+
+        //TODO This code block should be replaced when remaked event module merged
+        Map<String, String> segmString = new HashMap<>();
+        for (Map.Entry<String, Object> entry : segm.entrySet()) {
+            segmString.put(entry.getKey(), entry.getValue().toString());
+        }
+
+        Countly.instance().event(widgetInfo.type.eventKey).setSegmentation(segmString).record();
     }
 
     private void getFeedbackWidgetDataInternal(CountlyFeedbackWidget widgetInfo, RetrieveFeedbackWidgetData callback) {
