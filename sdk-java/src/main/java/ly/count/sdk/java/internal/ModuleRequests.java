@@ -1,7 +1,6 @@
 package ly.count.sdk.java.internal;
 
 import java.util.concurrent.Future;
-
 import ly.count.sdk.java.User;
 
 /**
@@ -181,13 +180,19 @@ public class ModuleRequests extends ModuleBase {
         }
     }
 
+    static void addRequiredTimeParams(Request request) {
+        request.params.add("timestamp", Device.dev.uniqueTimestamp())
+            .add("tz", Device.dev.getTimezoneOffset())
+            .add("hour", Device.dev.currentHour())
+            .add("dow", Device.dev.currentDayOfWeek());
+    }
+
     static Request addRequired(InternalConfig config, Request request) {
 
         if (request.isEmpty()) {
             //if nothing was in the request, no need to add these mandatory fields
             return request;
         }
-
         //check if it has the device ID
         if (!request.params.has(Params.PARAM_DEVICE_ID)) {
             if (config.getDeviceId() == null) {
