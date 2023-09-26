@@ -2,8 +2,13 @@ package ly.count.sdk.java;
 
 import java.io.File;
 import java.util.Map;
-
-import ly.count.sdk.java.internal.*;
+import ly.count.sdk.java.internal.CtxCore;
+import ly.count.sdk.java.internal.Device;
+import ly.count.sdk.java.internal.InternalConfig;
+import ly.count.sdk.java.internal.Log;
+import ly.count.sdk.java.internal.ModuleBackendMode;
+import ly.count.sdk.java.internal.ModuleEvents;
+import ly.count.sdk.java.internal.SDKCore;
 
 /**
  * Main Countly SDK API class.
@@ -128,6 +133,7 @@ public class Countly implements Usage {
      * Also clears all the data if called with {@code clearData = true}.
      *
      * @param clearData whether to clear all Countly data or not
+     * @deprecated use {@link #halt()} instead via instance() call
      */
     public static void stop(boolean clearData) {
         if (isInitialized()) {
@@ -142,6 +148,13 @@ public class Countly implements Usage {
             //    cly.L.e("[Countly] Countly isn't initialized to stop it");
             //}
         }
+    }
+
+    /**
+     * Stop Countly SDK. Stops all tasks and releases resources.
+     */
+    public void halt() {
+        stop(true);
     }
 
     /**

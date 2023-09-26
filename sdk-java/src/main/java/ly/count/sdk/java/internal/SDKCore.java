@@ -1,10 +1,14 @@
 package ly.count.sdk.java.internal;
 
-import ly.count.sdk.java.Config;
-import org.json.JSONObject;
-
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.TreeMap;
 import java.util.concurrent.Future;
+import ly.count.sdk.java.Config;
 
 public class SDKCore {
 
@@ -93,6 +97,13 @@ public class SDKCore {
         prepareMappings(ctx);
     }
 
+    /**
+     * Stop sdk core
+     *
+     * @param ctx {@link CtxCore} object
+     * @param clear if true, clear all data
+     * @deprecated use {@link #halt(CtxCore)} instead
+     */
     public void stop(final CtxCore ctx, final boolean clear) {
         if (instance == null) {
             return;
@@ -119,6 +130,15 @@ public class SDKCore {
         instance = null;
 
         sdkStorage.stop(ctx, clear);//from original super class
+    }
+
+    /**
+     * Stop sdk core
+     *
+     * @param ctxCore {@link CtxCore} object
+     */
+    public void halt(CtxCore ctxCore) {
+        stop(ctxCore, true);
     }
 
     private boolean addingConsent(int adding, CoreFeature feature) {

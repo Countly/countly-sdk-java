@@ -23,7 +23,7 @@ public class ModuleEventsTests {
 
     @After
     public void stop() {
-        Countly.stop(true);
+        Countly.instance().halt();
     }
 
     /**
