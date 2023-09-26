@@ -73,7 +73,7 @@ public class ModuleFeedback extends ModuleBase {
         L.d("[ModuleFeedback] getAvailableFeedbackWidgetsInternal, callback set:[" + (callback != null) + "]");
 
         if (callback == null) {
-            L.e("[ModuleFeedback] available feedback widget list can't be retrieved without a callback");
+            L.e("[ModuleFeedback] getAvailableFeedbackWidgetsInternal, available feedback widget list can't be retrieved without a callback");
             return;
         }
 
@@ -97,7 +97,7 @@ public class ModuleFeedback extends ModuleBase {
 
         iRGenerator.createImmediateRequestMaker().doWork(requestData, "/o/sdk", transport, false, networkingIsEnabled, checkResponse -> {
             if (checkResponse == null) {
-                L.d("[ModuleFeedback] Not possible to retrieve widget list. Probably due to lack of connection to the server");
+                L.d("[ModuleFeedback] getAvailableFeedbackWidgetsInternal, Not possible to retrieve widget list. Probably due to lack of connection to the server");
                 callback.onFinished(null, "Not possible to retrieve widget list. Probably due to lack of connection to the server");
                 return;
             }
@@ -112,7 +112,7 @@ public class ModuleFeedback extends ModuleBase {
 
     static List<CountlyFeedbackWidget> parseFeedbackList(JSONObject requestResponse) {
         Log L = SDKCore.instance.L;
-        L.d("[ModuleFeedback] calling 'parseFeedbackList'");
+        L.d("[ModuleFeedback] parseFeedbackList, calling");
 
         List<CountlyFeedbackWidget> parsedRes = new ArrayList<>();
         try {
@@ -189,7 +189,7 @@ public class ModuleFeedback extends ModuleBase {
 
     private void constructFeedbackWidgetUrlInternal(CountlyFeedbackWidget widgetInfo, FeedbackCallback callback) {
         if (widgetInfo == null) {
-            L.e("[ModuleFeedback] Can't present widget with null widget info");
+            L.e("[ModuleFeedback] constructFeedbackWidgetUrlInternal, Can't present widget with null widget info");
             if (callback != null) {
                 callback.onFinished(null, "Can't present widget with null widget info");
                 return;
@@ -224,7 +224,7 @@ public class ModuleFeedback extends ModuleBase {
 
         final String preparedWidgetUrl = widgetListUrl.toString();
 
-        L.d("[ModuleFeedback] Using following url for widget:[" + widgetListUrl + "]");
+        L.d("[ModuleFeedback] constructFeedbackWidgetUrlInternal, Using following url for widget:[" + widgetListUrl + "]");
 
         if (callback != null) {
             callback.onFinished(preparedWidgetUrl, null);
@@ -240,7 +240,7 @@ public class ModuleFeedback extends ModuleBase {
          */
         public void getAvailableFeedbackWidgets(@Nullable RetrieveFeedbackWidgets callback) {
             synchronized (Countly.instance()) {
-                L.i("[Feedback] Trying to retrieve feedback widget list");
+                L.i("[Feedback] getAvailableFeedbackWidgets, Trying to retrieve feedback widget list");
 
                 getAvailableFeedbackWidgetsInternal(callback);
             }
@@ -254,7 +254,7 @@ public class ModuleFeedback extends ModuleBase {
          */
         public void constructFeedbackWidgetUrl(@Nullable CountlyFeedbackWidget widgetInfo, @Nullable FeedbackCallback callback) {
             synchronized (Countly.instance()) {
-                L.i("[Feedback] Trying to present feedback widget in an alert dialog");
+                L.i("[Feedback] constructFeedbackWidgetUrl, Trying to present feedback widget in an alert dialog");
 
                 constructFeedbackWidgetUrlInternal(widgetInfo, callback);
             }
@@ -269,7 +269,7 @@ public class ModuleFeedback extends ModuleBase {
          */
         public void getFeedbackWidgetData(@Nullable CountlyFeedbackWidget widgetInfo, @Nullable RetrieveFeedbackWidgetData callback) {
             synchronized (Countly.instance()) {
-                L.i("[Feedback] Trying to retrieve feedback widget data");
+                L.i("[Feedback] getFeedbackWidgetData, Trying to retrieve feedback widget data");
 
                 getFeedbackWidgetDataInternal(widgetInfo, callback);
             }
@@ -285,7 +285,7 @@ public class ModuleFeedback extends ModuleBase {
          */
         public void reportFeedbackWidgetManually(@Nullable CountlyFeedbackWidget widgetInfo, @Nullable JSONObject widgetData, @Nullable Map<String, Object> widgetResult) {
             synchronized (Countly.instance()) {
-                L.i("[Feedback] Trying to report feedback widget manually");
+                L.i("[Feedback] reportFeedbackWidgetManually, Trying to report feedback widget manually");
 
                 reportFeedbackWidgetManuallyInternal(widgetInfo, widgetData, widgetResult);
             }
