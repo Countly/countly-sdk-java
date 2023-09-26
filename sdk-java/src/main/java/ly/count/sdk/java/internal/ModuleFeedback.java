@@ -48,7 +48,7 @@ public class ModuleFeedback extends ModuleBase {
         L.v("[ModuleFeedback] Initializing");
         super.init(config, logger);
 
-        cachedAppVersion = Device.dev.getAppVersion();
+        cachedAppVersion = config.getApplicationVersion();
         feedbackInterface = new Feedback();
     }
 
@@ -78,14 +78,14 @@ public class ModuleFeedback extends ModuleBase {
         }
 
         // If someday we decide to support temporary device ID mode, this check will be needed
-        //if (internalConfig.isTemporaryIdEnabled()) {
-        //    L.e("[ModuleFeedback] available feedback widget list can't be retrieved when in temporary device ID mode");
-        //    callback.onFinished(null, "[ModuleFeedback] available feedback widget list can't be retrieved when in temporary device ID mode");
-        //    return;
-        //}
+        if (internalConfig.isTemporaryIdEnabled()) {
+            L.e("[ModuleFeedback] available feedback widget list can't be retrieved when in temporary device ID mode");
+            callback.onFinished(null, "[ModuleFeedback] available feedback widget list can't be retrieved when in temporary device ID mode");
+            return;
+        }
 
         Transport transport = ctx.getSDK().networking.getTransport();
-        final boolean networkingIsEnabled = true; // this feature is not yet implemented
+        final boolean networkingIsEnabled = internalConfig.getNetworkingEnabled();
 
         Request request = new Request();
         ModuleRequests.addRequiredTimeParams(request);
@@ -185,26 +185,83 @@ public class ModuleFeedback extends ModuleBase {
     }
 
     private void getFeedbackWidgetDataInternal(CountlyFeedbackWidget widgetInfo, RetrieveFeedbackWidgetData callback) {
+        L.d("[ModuleFeedback] calling 'getFeedbackWidgetDataInternal', callback set:[" + (callback != null) + "]");
+
+        String error = validateFields(callback, widgetInfo);
+
+        if (error != null) {
+            String errorLog = "[ModuleFeedback] getFeedbackWidgetDataInternal, " + error;
+            L.e(errorLog);
+            if (callback != null) {
+                callback.onFinished(null, errorLog);
+            }
+            return;
+        }
+
+        StringBuilder requestData = new StringBuilder();
+        String widgetDataEndpoint = "/o/surveys/" + widgetInfo.type.name() + "/widget";
+
+        requestData.append("widget_id=");
+        requestData.append(Utils.urlencode(widgetInfo.widgetId, L));
+        requestData.append("&shown=1");
+        requestData.append("&sdk_version=");
+        requestData.append(internalConfig.getSdkVersion());
+        requestData.append("&sdk_name=");
+        requestData.append(internalConfig.getSdkName());
+        requestData.append("&platform=desktop");
+        requestData.append("&app_version=");
+        requestData.append(cachedAppVersion);
+
+        Transport cp = ctx.getSDK().networking.getTransport();
+        final boolean networkingIsEnabled = internalConfig.getNetworkingEnabled();
+        String requestDataStr = requestData.toString();
+
+        L.d("[ModuleFeedback] getFeedbackWidgetDataInternal, Using following request params for retrieving widget data:[" + requestDataStr + "]");
+
+        ImmediateRequestGenerator iRGenerator = internalConfig.immediateRequestGenerator;
+
+        iRGenerator.createImmediateRequestMaker().doWork(requestDataStr, widgetDataEndpoint, cp, false, networkingIsEnabled, checkResponse -> {
+            if (checkResponse == null) {
+                L.d("[ModuleFeedback] getFeedbackWidgetDataInternal, Not possible to retrieve widget data. Probably due to lack of connection to the server");
+                callback.onFinished(null, "Not possible to retrieve widget data. Probably due to lack of connection to the server");
+                return;
+            }
+
+            L.d("[ModuleFeedback] getFeedbackWidgetDataInternal, Retrieved widget data request: [" + checkResponse + "]");
+
+            callback.onFinished(checkResponse, null);
+        }, L);
+    }
+
+    private String validateFields(Object callback, CountlyFeedbackWidget widget) {
+        if (callback == null) {
+            return "Can't continue operation with null callback";
+        }
+
+        if (widget == null) {
+            return "Can't continue operation with null widget";
+        }
+
+        if (internalConfig.isTemporaryIdEnabled()) {
+            return "Can't continue operation when in temporary device ID mode";
+        }
+
+        return null;
     }
 
     private void constructFeedbackWidgetUrlInternal(CountlyFeedbackWidget widgetInfo, FeedbackCallback callback) {
-        if (widgetInfo == null) {
-            L.e("[ModuleFeedback] constructFeedbackWidgetUrlInternal, Can't present widget with null widget info");
+        L.d("[ModuleFeedback] constructFeedbackWidgetUrlInternal, callback set:[" + (callback != null) + ", widgetInfo :[" + widgetInfo + "]");
+
+        String error = validateFields(callback, widgetInfo);
+
+        if (error != null) {
+            String errorLog = "[ModuleFeedback] constructFeedbackWidgetUrlInternal, " + error;
+            L.e(errorLog);
             if (callback != null) {
-                callback.onFinished(null, "Can't present widget with null widget info");
-                return;
+                callback.onFinished(null, errorLog);
             }
+            return;
         }
-
-        L.d("[ModuleFeedback] constructFeedbackWidgetUrlInternal, callback set:[" + (callback != null) + ", widget id:[" + widgetInfo.widgetId + "], widget type:[" + widgetInfo.type + "]");
-
-        //if (internalConfig.isTemporaryIdEnabled()) {
-        //    L.e("[ModuleFeedback] available feedback widget list can't be retrieved when in temporary device ID mode");
-        //    if (callback != null) {
-        //        callback.onFinished(null,"[ModuleFeedback] available feedback widget list can't be retrieved when in temporary device ID mode");
-        //    }
-        //    return;
-        //}
 
         StringBuilder widgetListUrl = new StringBuilder();
         widgetListUrl.append(internalConfig.getServerURL());
@@ -226,9 +283,7 @@ public class ModuleFeedback extends ModuleBase {
 
         L.d("[ModuleFeedback] constructFeedbackWidgetUrlInternal, Using following url for widget:[" + widgetListUrl + "]");
 
-        if (callback != null) {
-            callback.onFinished(preparedWidgetUrl, null);
-        }
+        callback.onFinished(preparedWidgetUrl, null);
     }
 
     public class Feedback {

@@ -348,6 +348,26 @@ public final class InternalConfig extends Config implements Storable {
         this.defaultNetworking = defaultNetworking;
     }
 
+    /**
+     * This feature is not yet implemented
+     * and always return true
+     *
+     * @return true
+     */
+    public boolean getNetworkingEnabled() {
+        return true;
+    }
+
+    /**
+     * This feature is not yet implemented
+     * If someday we decide to support temporary device ID mode
+     *
+     * @return false
+     */
+    public boolean isTemporaryIdEnabled() {
+        return false;
+    }
+
     //region rating module
     public long getRatingWidgetTimeout() {
         return ratingWidgetTimeout;
