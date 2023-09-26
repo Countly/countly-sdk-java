@@ -53,8 +53,8 @@ public class ModuleFeedback extends ModuleBase {
 
     @Override
     public void init(InternalConfig config, Log logger) {
-        L.v("[ModuleFeedback] Initializing");
         super.init(config, logger);
+        L.v("[ModuleFeedback] Initializing");
 
         cachedAppVersion = config.getApplicationVersion();
         feedbackInterface = new Feedback();

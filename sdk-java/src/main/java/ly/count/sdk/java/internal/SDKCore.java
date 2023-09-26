@@ -23,16 +23,6 @@ public class SDKCore {
 
     protected final Object lockBRQStorage = new Object();
 
-    public ModuleFeedback.Feedback feedback() {
-
-        if (!hasConsentForFeature(CoreFeature.Feedback)) {
-            L.v("[SDKCore] feedback: Feedback feature has no consent, returning null");
-            return null;
-        }
-
-        return module(ModuleFeedback.class).feedbackInterface;
-    }
-
     public enum Signal {
         DID(1),
         Crash(2),
@@ -67,6 +57,7 @@ public class SDKCore {
         moduleMappings.put(CoreFeature.Sessions.getIndex(), ModuleSessions.class);
         moduleMappings.put(CoreFeature.CrashReporting.getIndex(), ModuleCrash.class);
         moduleMappings.put(CoreFeature.BackendMode.getIndex(), ModuleBackendMode.class);
+        moduleMappings.put(CoreFeature.Feedback.getIndex(), ModuleFeedback.class);
     }
 
     public interface Modulator {
@@ -377,6 +368,16 @@ public class SDKCore {
             return sessions.getSession();
         }
         return null;
+    }
+
+    public ModuleFeedback.Feedback feedback() {
+
+        if (!hasConsentForFeature(CoreFeature.Feedback)) {
+            L.v("[SDKCore] feedback: Feedback feature has no consent, returning null");
+            return null;
+        }
+
+        return module(ModuleFeedback.class).feedbackInterface;
     }
 
     /**
