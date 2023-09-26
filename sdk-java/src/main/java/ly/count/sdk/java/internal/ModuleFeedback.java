@@ -11,7 +11,7 @@ import org.json.JSONObject;
 
 public class ModuleFeedback extends ModuleBase {
 
-    public enum FeedbackWidgetType {SURVEY, NPS, RATING}
+    public enum FeedbackWidgetType {survey, nps, rating}
 
     public static class CountlyFeedbackWidget {
         public String widgetId;
@@ -153,13 +153,10 @@ public class ModuleFeedback extends ModuleBase {
                         }
 
                         FeedbackWidgetType plannedType;
-                        if (valType.equals("survey")) {
-                            plannedType = FeedbackWidgetType.SURVEY;
-                        } else if (valType.equals("nps")) {
-                            plannedType = FeedbackWidgetType.NPS;
-                        } else if (valType.equals("rating")) {
-                            plannedType = FeedbackWidgetType.RATING;
-                        } else {
+
+                        try {
+                            plannedType = FeedbackWidgetType.valueOf(valType);
+                        } catch (Exception ex) {
                             L.e("[ModuleFeedback] parseFeedbackList, retrieved unknown widget type, dropping");
                             continue;
                         }
@@ -188,11 +185,50 @@ public class ModuleFeedback extends ModuleBase {
     }
 
     private void getFeedbackWidgetDataInternal(CountlyFeedbackWidget widgetInfo, RetrieveFeedbackWidgetData callback) {
-        callback.onFinished(null, "");
     }
 
     private void constructFeedbackWidgetUrlInternal(CountlyFeedbackWidget widgetInfo, FeedbackCallback callback) {
-        callback.onFinished("", "");
+        if (widgetInfo == null) {
+            L.e("[ModuleFeedback] Can't present widget with null widget info");
+            if (callback != null) {
+                callback.onFinished(null, "Can't present widget with null widget info");
+                return;
+            }
+        }
+
+        L.d("[ModuleFeedback] constructFeedbackWidgetUrlInternal, callback set:[" + (callback != null) + ", widget id:[" + widgetInfo.widgetId + "], widget type:[" + widgetInfo.type + "]");
+
+        //if (internalConfig.isTemporaryIdEnabled()) {
+        //    L.e("[ModuleFeedback] available feedback widget list can't be retrieved when in temporary device ID mode");
+        //    if (callback != null) {
+        //        callback.onFinished(null,"[ModuleFeedback] available feedback widget list can't be retrieved when in temporary device ID mode");
+        //    }
+        //    return;
+        //}
+
+        StringBuilder widgetListUrl = new StringBuilder();
+        widgetListUrl.append(internalConfig.getServerURL());
+        widgetListUrl.append("/feedback/");
+        widgetListUrl.append(widgetInfo.type.name());
+        widgetListUrl.append("?widget_id=");
+        widgetListUrl.append(Utils.urlencode(widgetInfo.widgetId, L));
+        widgetListUrl.append("&device_id=");
+        widgetListUrl.append(Utils.urlencode(internalConfig.getDeviceId().id, L));
+        widgetListUrl.append("&app_key=");
+        widgetListUrl.append(Utils.urlencode(internalConfig.getServerAppKey(), L));
+        widgetListUrl.append("&sdk_version=");
+        widgetListUrl.append(internalConfig.getSdkVersion());
+        widgetListUrl.append("&sdk_name=");
+        widgetListUrl.append(internalConfig.getSdkName());
+        widgetListUrl.append("&platform=desktop");
+
+        final String preparedWidgetUrl = widgetListUrl.toString();
+
+        L.d("[ModuleFeedback] Using following url for widget:[" + widgetListUrl + "]");
+
+        if (callback != null) {
+            callback.onFinished(preparedWidgetUrl, null);
+        }
     }
 
     public class Feedback {
@@ -200,7 +236,7 @@ public class ModuleFeedback extends ModuleBase {
         /**
          * Get a list of available feedback widgets for this device ID
          *
-         * @param callback
+         * @param callback callback
          */
         public void getAvailableFeedbackWidgets(@Nullable RetrieveFeedbackWidgets callback) {
             synchronized (Countly.instance()) {
@@ -213,8 +249,8 @@ public class ModuleFeedback extends ModuleBase {
         /**
          * Construct a URL that can be used to present a feedback widget in a web viewer
          *
-         * @param widgetInfo
-         * @param callback
+         * @param widgetInfo widget info
+         * @param callback callback
          */
         public void constructFeedbackWidgetUrl(@Nullable CountlyFeedbackWidget widgetInfo, @Nullable FeedbackCallback callback) {
             synchronized (Countly.instance()) {
@@ -228,8 +264,8 @@ public class ModuleFeedback extends ModuleBase {
          * Download data for a specific widget so that it can be displayed with a custom UI
          * When requesting this data, it will count as a shown widget (will increment that "shown" count in the dashboard)
          *
-         * @param widgetInfo
-         * @param callback
+         * @param widgetInfo widget info
+         * @param callback callback
          */
         public void getFeedbackWidgetData(@Nullable CountlyFeedbackWidget widgetInfo, @Nullable RetrieveFeedbackWidgetData callback) {
             synchronized (Countly.instance()) {
@@ -243,9 +279,9 @@ public class ModuleFeedback extends ModuleBase {
          * Manually report a feedback widget in case the client used a custom interface
          * In case widgetResult is passed as "null," it would be assumed that the widget was canceled
          *
-         * @param widgetInfo
-         * @param widgetData
-         * @param widgetResult
+         * @param widgetInfo widget info
+         * @param widgetData widget data
+         * @param widgetResult widget result
          */
         public void reportFeedbackWidgetManually(@Nullable CountlyFeedbackWidget widgetInfo, @Nullable JSONObject widgetData, @Nullable Map<String, Object> widgetResult) {
             synchronized (Countly.instance()) {
