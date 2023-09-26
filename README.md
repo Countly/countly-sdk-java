@@ -2,7 +2,7 @@
 
 # Countly Java SDK
 
-This repository contains the Countly Java SDK, which can be integrated into Java applications. The Countly Java SDK is intended to be used with [Countly Community Edition](https://github.com/Countly/countly-server) or [Countly Enterprise Edition](https://count.ly/product).
+This repository contains the Countly Java SDK, which can be integrated into Java applications. The Countly Java SDK is intended to be used with [Countly Lite](https://github.com/Countly/countly-server), [Countly Flex](https://countly.com/flex), [Countly Enterprise](https://countly.com/enterprise).
 
 ## What is Countly?
 
@@ -12,16 +12,16 @@ and [desktop](https://count.ly/desktop-analytics) applications. [Ensuring privac
 Track, measure, and take action - all without leaving Countly.
 
 * **Questions or feature requests?** [Join the Countly Community on Discord](https://discord.gg/countly)
-* **Looking for the Countly Server?** [Countly Community Edition repository](https://github.com/Countly/countly-server)
+* **Looking for the Countly Server?** [Countly Server repository](https://github.com/Countly/countly-server)
 * **Looking for other Countly SDKs?** [An overview of all Countly SDKs for mobile, web and desktop](https://support.count.ly/hc/en-us/articles/360037236571-Downloading-and-Installing-SDKs#officially-supported-sdks)
 
 ## Integrating Countly SDK in your projects
 
 For a detailed description on how to use this SDK [check out our documentation](https://support.count.ly/hc/en-us/articles/360037813891-Java).
 
-For information about how to add the SDK to your project, please check [this section of the documentation](https://support.count.ly/hc/en-us/articles/360037813891-Java#adding-sdk-to-the-project).
+For information about how to add the SDK to your project, please check [this section of the documentation](https://support.count.ly/hc/en-us/articles/360037813891-Java#h_01HABV0K6BZ251ANK02RZK3Z5H).
 
-You can find minimal SDK integration information for your project in [this section of the documentation](https://support.count.ly/hc/en-us/articles/360037813891-Java#minimal-setup).
+You can find minimal SDK integration information for your project in [this section of the documentation](https://support.count.ly/hc/en-us/articles/360037813891-Java#h_01HABV0K6C4H1G71VV85BDXV91).
 
 For an example integration of this SDK, you can have a look [here](https://github.com/Countly/countly-sdk-java/tree/master/app-java/src/main/java/ly/count/java/demo).
 
