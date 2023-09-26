@@ -99,7 +99,7 @@ public class ModuleFeedback extends ModuleBase {
         ModuleRequests.addRequiredTimeParams(request);
         ModuleRequests.addRequired(internalConfig, request);
         request.params.add("method", "feedback");
-        String requestData = request.params.toString();
+        String requestData = "?" + request.params.toString();
 
         ImmediateRequestGenerator iRGenerator = internalConfig.immediateRequestGenerator;
 
