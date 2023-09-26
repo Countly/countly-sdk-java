@@ -323,7 +323,7 @@ public class ModuleFeedback extends ModuleBase {
         StringBuilder requestData = new StringBuilder();
         String widgetDataEndpoint = "/o/surveys/" + widgetInfo.type.name() + "/widget";
 
-        requestData.append("widget_id=");
+        requestData.append("?widget_id=");
         requestData.append(Utils.urlencode(widgetInfo.widgetId, L));
         requestData.append("&shown=1");
         requestData.append("&sdk_version=");
