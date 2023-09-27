@@ -81,8 +81,7 @@ public class Config {
         Views(CoreFeature.Views.getIndex()),
         CrashReporting(CoreFeature.CrashReporting.getIndex()),
         Location(CoreFeature.Location.getIndex()),
-        UserProfiles(CoreFeature.UserProfiles.getIndex()),
-        Feedback(CoreFeature.Feedback.getIndex());
+        UserProfiles(CoreFeature.UserProfiles.getIndex());
         //        StarRating(1 << 12),
         //        RemoteConfig(1 << 13),
         //        PerformanceMonitoring(1 << 14);
@@ -116,8 +115,6 @@ public class Config {
                 //                return RemoteConfig;
                 //            } else if (index == PerformanceMonitoring.index) {
                 //                return PerformanceMonitoring;
-            } else if (index == Feedback.index) {
-                return Feedback;
             } else {
                 return null;
             }
