@@ -193,6 +193,7 @@ public class ModuleRequests extends ModuleBase {
             //if nothing was in the request, no need to add these mandatory fields
             return request;
         }
+        
         //check if it has the device ID
         if (!request.params.has(Params.PARAM_DEVICE_ID)) {
             if (config.getDeviceId() == null) {
@@ -251,10 +252,7 @@ public class ModuleRequests extends ModuleBase {
             return null;
         }
 
-        request.params.add("timestamp", Device.dev.uniqueTimestamp())
-            .add("tz", Device.dev.getTimezoneOffset())
-            .add("hour", Device.dev.currentHour())
-            .add("dow", Device.dev.currentDayOfWeek());
+        addRequiredTimeParams(request);
 
         return Storage.pushAsync(ctx, request, param -> {
             SDKCore.instance.onRequest(ctx, request);
