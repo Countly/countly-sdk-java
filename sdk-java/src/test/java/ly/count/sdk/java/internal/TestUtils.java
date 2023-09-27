@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.stream.Stream;
+import ly.count.sdk.java.Config;
 
 import static ly.count.sdk.java.internal.SDKStorage.EVENT_QUEUE_FILE_NAME;
 import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_PREFIX;
@@ -17,9 +18,43 @@ import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_SEPARATOR;
 
 public class TestUtils {
 
-    private static String DELIMETER = ":::";
+    static String DELIMETER = ":::";
+    static String SERVER_URL = "https://test.count.ly";
+    static String SERVER_APP_KEY = "COUNTLY_APP_KEY";
+    static String DEVICE_ID = "some_random_test_device_id";
 
     private TestUtils() {
+    }
+
+    static Config getBaseConfig() {
+        File sdkStorageRootDirectory = getSdkStorageRootDirectory();
+        checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
+        Config config = new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
+        config.setCustomDeviceId(DEVICE_ID);
+
+        return config;
+    }
+
+    static Config getVariantConfig(ImmediateRequestGenerator generator) {
+        Config config = getBaseConfig();
+        InternalConfig internalConfig = new InternalConfig(config);
+
+        internalConfig.immediateRequestGenerator = generator;
+        return config;
+    }
+
+    static File getSdkStorageRootDirectory() {
+        // System specific folder structure
+        String[] sdkStorageRootPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
+        return new File(String.join(File.separator, sdkStorageRootPath));
+    }
+
+    static void checkSdkStorageRootDirectoryExist(File directory) {
+        if (!(directory.exists() && directory.isDirectory())) {
+            if (!directory.mkdirs()) {
+                throw new RuntimeException("Directory creation failed");
+            }
+        }
     }
 
     /**
@@ -80,7 +115,6 @@ public class TestUtils {
             //do nothing
         }
 
-        //EventImplQueue.DELIMITER
         Arrays.stream(fileContent.split(DELIMETER)).forEach(s -> {
             final EventImpl event = EventImpl.fromJSON(s, (ev) -> {
             }, logger);

@@ -13,7 +13,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import ly.count.sdk.java.Config;
 
 /**
@@ -33,6 +32,8 @@ public final class InternalConfig extends Config implements Storable {
      * Stored to be able to refresh them.
      */
     private final List<DID> dids = new ArrayList<>();
+
+    ImmediateRequestGenerator immediateRequestGenerator = null;
 
     /**
      * Shouldn't be used!

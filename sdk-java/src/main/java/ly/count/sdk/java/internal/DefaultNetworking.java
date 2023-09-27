@@ -69,4 +69,9 @@ public class DefaultNetworking implements Networking {
         shutdown = true;
         tasks.shutdown();
     }
+
+    @Override
+    public Transport getTransport() {
+        return transport;
+    }
 }
