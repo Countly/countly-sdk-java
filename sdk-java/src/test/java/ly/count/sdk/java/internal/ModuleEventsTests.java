@@ -47,7 +47,7 @@ public class ModuleEventsTests {
         segmentation.put("weight", 67);
         segmentation.put("bald", true);
 
-        String eventKey = TestUtils.randomUUID();
+        String eventKey = "recordEvent";
 
         //record event with key segmentation and count
         Countly.instance().events().recordEvent(eventKey, 1, 45.9, segmentation, 32.0);
@@ -83,7 +83,7 @@ public class ModuleEventsTests {
 
         validateQueueSize(0, events);
 
-        Countly.instance().events().recordEvent(TestUtils.randomUUID(), -1);
+        Countly.instance().events().recordEvent("recordEvent_negativeCount", -1);
         events = TestUtils.getCurrentEventQueue(moduleEvents.ctx.getContext(), moduleEvents.L);
 
         validateQueueSize(0, events);
@@ -155,7 +155,7 @@ public class ModuleEventsTests {
         expectedSegmentation.put("score", 67);
         expectedSegmentation.put("cheated", false);
 
-        String eventKey = TestUtils.randomUUID();
+        String eventKey = "recordEvent_invalidSegment";
         //record event with key segmentation
         Countly.instance().events().recordEvent(eventKey, segmentation);
 
@@ -175,7 +175,7 @@ public class ModuleEventsTests {
 
         List<EventImpl> events;
         validateTimedEventSize(0, 0);
-        String eventName = TestUtils.randomUUID();
+        String eventName = "startEvent";
 
         startEvent(eventName);
         validateTimedEventSize(0, 1);
@@ -238,7 +238,7 @@ public class ModuleEventsTests {
         List<EventImpl> events = null;
         validateTimedEventSize(0, 0);
 
-        String eventName = TestUtils.randomUUID();
+        String eventName = "startEvent_alreadyStarted";
         startEvent(eventName);
 
         validateTimedEventSize(0, 1);
@@ -305,7 +305,7 @@ public class ModuleEventsTests {
         init(config);
 
         validateTimedEventSize(0, 0);
-        Assert.assertFalse(Countly.instance().events().endEvent(TestUtils.randomUUID()));
+        Assert.assertFalse(Countly.instance().events().endEvent("endEvent_notExist"));
         validateTimedEventSize(0, 0);
     }
 
@@ -321,7 +321,7 @@ public class ModuleEventsTests {
         init(config);
 
         validateTimedEventSize(0, 0);
-        String eventName = TestUtils.randomUUID();
+        String eventName = "endEvent_withSegmentation";
 
         startEvent(eventName); // start event to end it
         validateTimedEventSize(0, 1);
@@ -356,7 +356,7 @@ public class ModuleEventsTests {
         init(config);
 
         validateTimedEventSize(0, 0);
-        String eventName = TestUtils.randomUUID();
+        String eventName = "endEvent_withSegmentation_negativeCount";
 
         startEvent(eventName); // start event to end it
         validateTimedEventSize(0, 1);

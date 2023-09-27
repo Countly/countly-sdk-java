@@ -17,8 +17,6 @@ import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_PREFIX;
 import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_SEPARATOR;
 
 public class TestUtils {
-
-    static String DELIMETER = ":::";
     static String SERVER_URL = "https://test.count.ly";
     static String SERVER_APP_KEY = "COUNTLY_APP_KEY";
     static String DEVICE_ID = "some_random_test_device_id";
@@ -29,7 +27,10 @@ public class TestUtils {
     static Config getBaseConfig() {
         File sdkStorageRootDirectory = getTestSDirectory();
         checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
-        return new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
+        Config config = new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
+        config.setCustomDeviceId(DEVICE_ID);
+
+        return config;
     }
 
     public static File getTestSDirectory() {
@@ -179,13 +180,5 @@ public class TestUtils {
         // System specific folder structure
         String[] sdkStorageRootPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
         return new File(String.join(File.separator, sdkStorageRootPath));
-    }
-
-    static void checkSdkStorageRootDirectoryExist(File directory) {
-        if (!(directory.exists() && directory.isDirectory())) {
-            if (!directory.mkdirs()) {
-                throw new RuntimeException("Directory creation failed");
-            }
-        }
     }
 }
