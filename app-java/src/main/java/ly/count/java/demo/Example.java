@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
-
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.internal.LogCallback;
@@ -125,8 +124,10 @@ public class Example {
         String[] sdkStorageRootPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
         File sdkStorageRootDirectory = new File(String.join(File.separator, sdkStorageRootPath));
 
-        if(sdkStorageRootDirectory.mkdirs()){
-            System.out.println("Directory creation failed");
+        if (!(sdkStorageRootDirectory.exists() && sdkStorageRootDirectory.isDirectory())) {
+            if (!sdkStorageRootDirectory.mkdirs()) {
+                System.out.println("Directory creation failed");
+            }
         }
 
         Config config = new Config(COUNTLY_SERVER_URL, COUNTLY_APP_KEY, sdkStorageRootDirectory)
