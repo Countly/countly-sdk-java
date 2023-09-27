@@ -1,24 +1,18 @@
 package ly.count.sdk.java.internal;
 
-import java.io.File;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.math.BigDecimal;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.math.BigDecimal;
+import java.util.*;
 
 @RunWith(JUnit4.class)
 public class BackendModeTests {
@@ -31,8 +25,12 @@ public class BackendModeTests {
         cc.setEventQueueSizeToSend(4).enableBackendMode();
 
         // System specific folder structure
-        File sdkStorageRootDirectory = TestUtils.getSdkStorageRootDirectory();
-        TestUtils.checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
+        String[] sdkStorageRootPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
+        File sdkStorageRootDirectory = new File(String.join(File.separator, sdkStorageRootPath));
+
+        if(sdkStorageRootDirectory.mkdirs()){
+            System.out.println("Directory creation failed");
+        }
 
         Countly.init(sdkStorageRootDirectory, cc);
     }

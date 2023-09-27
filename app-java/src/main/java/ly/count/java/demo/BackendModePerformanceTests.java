@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
-
 public class BackendModePerformanceTests {
     final static String DEVICE_ID = "device-id";
     final static String COUNTLY_APP_KEY = "COUNTLY_APP_KEY";
