@@ -13,25 +13,6 @@ import org.json.JSONObject;
 
 public class ModuleFeedback extends ModuleBase {
 
-    public enum FeedbackWidgetType {
-        survey("[CLY]_survey"),
-        nps("[CLY]_nps"),
-        rating("[CLY]_star_rating");
-
-        final String eventKey;
-
-        FeedbackWidgetType(String eventKey) {
-            this.eventKey = eventKey;
-        }
-    }
-
-    public static class CountlyFeedbackWidget {
-        public String widgetId;
-        public FeedbackWidgetType type;
-        public String name;
-        public String[] tags;
-    }
-
     String cachedAppVersion;
     Feedback feedbackInterface = null;
     private CtxCore ctx;
