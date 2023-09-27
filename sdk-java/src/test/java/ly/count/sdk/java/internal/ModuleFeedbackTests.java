@@ -15,8 +15,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import static org.mockito.Mockito.mock;
+
 @RunWith(JUnit4.class)
 public class ModuleFeedbackTests {
+
+    Log L = mock(Log.class);
 
     @After
     public void stop() {
@@ -226,6 +230,60 @@ public class ModuleFeedbackTests {
             Assert.assertNotNull(error);
             Assert.assertNull(response);
             Assert.assertEquals("Not possible to retrieve widget list. Probably due to lack of connection to the server", error);
+        });
+    }
+
+    /**
+     * Construct feedback widget url successfully
+     * "constructFeedbackWidgetUrl" function should return widget url
+     * returned url should be same as expected url
+     */
+    @Test
+    public void constructFeedbackWidgetUrl() {
+        Config config = TestUtils.getBaseConfig();
+        config.enableFeatures(Config.Feature.Feedback).setEventQueueSizeToSend(4);
+        init(config);
+
+        InternalConfig internalConfig = SDKCore.instance.config;
+
+        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] {});
+
+        StringBuilder widgetListUrl = new StringBuilder();
+        widgetListUrl.append(internalConfig.getServerURL());
+        widgetListUrl.append("/feedback/");
+        widgetListUrl.append(widgetInfo.type.name());
+        widgetListUrl.append("?widget_id=");
+        widgetListUrl.append(Utils.urlencode(widgetInfo.widgetId, L));
+        widgetListUrl.append("&device_id=");
+        widgetListUrl.append(Utils.urlencode(internalConfig.getDeviceId().id, L));
+        widgetListUrl.append("&app_key=");
+        widgetListUrl.append(Utils.urlencode(internalConfig.getServerAppKey(), L));
+        widgetListUrl.append("&sdk_version=");
+        widgetListUrl.append(internalConfig.getSdkVersion());
+        widgetListUrl.append("&sdk_name=");
+        widgetListUrl.append(internalConfig.getSdkName());
+        widgetListUrl.append("&platform=desktop");
+
+        Countly.instance().feedback().constructFeedbackWidgetUrl(widgetInfo, (response, error) -> {
+            Assert.assertNull(error);
+            Assert.assertEquals(widgetListUrl.toString(), response);
+        });
+    }
+
+    /**
+     * Construct feedback widget url with null widget info
+     * "constructFeedbackWidgetUrl" function should not return widget url and return error message
+     * url should be null and error message should same as expected
+     */
+    @Test
+    public void constructFeedbackWidgetUrl_nullWidgetInfo() {
+        Config config = TestUtils.getBaseConfig();
+        config.enableFeatures(Config.Feature.Feedback).setEventQueueSizeToSend(4);
+        init(config);
+
+        Countly.instance().feedback().constructFeedbackWidgetUrl(null, (response, error) -> {
+            Assert.assertNull(response);
+            Assert.assertEquals("[ModuleFeedback] constructFeedbackWidgetUrlInternal, Can't continue operation with null widget", error);
         });
     }
 
