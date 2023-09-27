@@ -25,12 +25,12 @@ public class TestUtils {
     }
 
     static Config getBaseConfig() {
-        File sdkStorageRootDirectory = getSdkStorageRootDirectory();
+        File sdkStorageRootDirectory = getTestSDirectory();
         checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
         return new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
     }
 
-    static File getSdkStorageRootDirectory() {
+    public static File getTestSDirectory() {
         // System specific folder structure
         String[] sdkStorageRootPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
         return new File(String.join(File.separator, sdkStorageRootPath));

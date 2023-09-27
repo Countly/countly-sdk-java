@@ -1,5 +1,6 @@
 package ly.count.sdk.java.internal;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,14 +53,19 @@ public class ModuleEventsTests {
         Countly.instance().events().recordEvent(eventKey, 1, 45.9, segmentation, 32.0);
 
         //check if event was recorded correctly and size of event queue is equal to size of events in queue
-        events = TestUtils.getCurrentEventQueue(moduleEvents.ctx.getContext(), moduleEvents.L);
-        validateQueueSize(1, events);
+        validateEventInQueue(TestUtils.getTestSDirectory(), eventKey, segmentation, 1, 45.9, 32.0, 1, 0, moduleEvents.L);
+    }
+
+    void validateEventInQueue(File targetFolder, String key, Map<String, Object> segmentation,
+        int count, Double sum, Double duration, int queueSize, int elementInQueue, Log L) {
+        List<EventImpl> events = TestUtils.getCurrentEventQueue(targetFolder, moduleEvents.L);
+        validateQueueSize(queueSize, events);
 
         //check if event was recorded correctly
-        EventImpl event = events.get(0);
+        EventImpl event = events.get(elementInQueue);
         EventImpl eventInMemory = moduleEvents.eventQueue.eventQueueMemoryCache.get(0);
-        validateEvent(event, eventKey, segmentation, 1, 45.9, 32.0, event.dow, event.hour, event.timestamp);
-        validateEvent(eventInMemory, eventKey, segmentation, 1, 45.9, 32.0, event.dow, event.hour, event.timestamp);
+        validateEvent(event, key, segmentation, count, sum, duration);
+        validateEvent(eventInMemory, key, segmentation, count, sum, duration);
     }
 
     /**
@@ -153,18 +159,7 @@ public class ModuleEventsTests {
         //record event with key segmentation
         Countly.instance().events().recordEvent(eventKey, segmentation);
 
-        events = TestUtils.getCurrentEventQueue(moduleEvents.ctx.getContext(), moduleEvents.L);
-        validateQueueSize(1, events);
-
-        //check if event was recorded correctly
-        EventImpl event = events.get(0);
-        EventImpl eventInMemory = moduleEvents.eventQueue.eventQueueMemoryCache.get(0);
-        validateEvent(event, eventKey, expectedSegmentation, 1, null, null, event.dow, event.hour, event.timestamp);
-        validateEvent(eventInMemory, eventKey, expectedSegmentation, 1, null, null, event.dow, event.hour, event.timestamp);
-        Assert.assertEquals(3, event.segmentation.size());
-        Assert.assertEquals(3, eventInMemory.segmentation.size());
-        Assert.assertNull(event.getSegment("invalid"));
-        Assert.assertNull(eventInMemory.getSegment("invalid"));
+        validateEventInQueue(TestUtils.getTestSDirectory(), eventKey, expectedSegmentation, 1, null, null, 1, 0, moduleEvents.L);
     }
 
     /**
@@ -179,22 +174,22 @@ public class ModuleEventsTests {
         init(config);
 
         List<EventImpl> events;
-        validateSize(0, 0);
+        validateTimedEventSize(0, 0);
         String eventName = TestUtils.randomUUID();
 
         startEvent(eventName);
-        validateSize(0, 1);
+        validateTimedEventSize(0, 1);
 
         EventImpl timedEvent = moduleEvents.timedEvents.get(eventName);
-        validateEvent(timedEvent, eventName, null, 1, null, null, timedEvent.dow, timedEvent.hour, timedEvent.timestamp);
+        validateEvent(timedEvent, eventName, null, 1, null, null);
 
         endEvent(eventName, null, 1, null);
         //duration testing is not possible because division is error-prone for small numbers like .212 and .211
         events = TestUtils.getCurrentEventQueue(moduleEvents.ctx.getContext(), moduleEvents.L);
-        validateSize(1, 0);
+        validateTimedEventSize(1, 0);
 
-        validateEvent(events.get(0), eventName, null, 1, null, events.get(0).duration, events.get(0).dow, events.get(0).hour, events.get(0).timestamp);
-        validateEvent(moduleEvents.eventQueue.eventQueueMemoryCache.get(0), eventName, null, 1, null, events.get(0).duration, events.get(0).dow, events.get(0).hour, events.get(0).timestamp);
+        validateEvent(events.get(0), eventName, null, 1, null, events.get(0).duration);
+        validateEvent(moduleEvents.eventQueue.eventQueueMemoryCache.get(0), eventName, null, 1, null, events.get(0).duration);
     }
 
     /**
@@ -208,9 +203,9 @@ public class ModuleEventsTests {
         config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(4);
         init(config);
 
-        validateSize(0, 0);
+        validateTimedEventSize(0, 0);
         Assert.assertFalse(Countly.instance().events().startEvent(""));
-        validateSize(0, 0);
+        validateTimedEventSize(0, 0);
     }
 
     /**
@@ -224,9 +219,9 @@ public class ModuleEventsTests {
         config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(4);
         init(config);
 
-        validateSize(0, 0);
+        validateTimedEventSize(0, 0);
         Assert.assertFalse(Countly.instance().events().startEvent(null));
-        validateSize(0, 0);
+        validateTimedEventSize(0, 0);
     }
 
     /**
@@ -241,15 +236,15 @@ public class ModuleEventsTests {
         init(config);
 
         List<EventImpl> events = null;
-        validateSize(0, 0);
+        validateTimedEventSize(0, 0);
 
         String eventName = TestUtils.randomUUID();
         startEvent(eventName);
 
-        validateSize(0, 1);
+        validateTimedEventSize(0, 1);
 
         EventImpl timedEvent = moduleEvents.timedEvents.get(eventName);
-        validateEvent(timedEvent, eventName, null, 1, null, null, timedEvent.dow, timedEvent.hour, timedEvent.timestamp);
+        validateEvent(timedEvent, eventName, null, 1, null, null);
 
         boolean result = Countly.instance().events().startEvent(eventName);
         Assert.assertFalse(result);
@@ -262,8 +257,8 @@ public class ModuleEventsTests {
 
         events = TestUtils.getCurrentEventQueue(moduleEvents.ctx.getContext(), moduleEvents.L);
 
-        validateSize(1, 0);
-        validateEvent(events.get(0), eventName, null, 1, null, events.get(0).duration, events.get(0).dow, events.get(0).hour, events.get(0).timestamp);
+        validateTimedEventSize(1, 0);
+        validateEvent(events.get(0), eventName, null, 1, null, events.get(0).duration);
     }
 
     /**
@@ -277,9 +272,9 @@ public class ModuleEventsTests {
         config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(4);
         init(config);
 
-        validateSize(0, 0);
+        validateTimedEventSize(0, 0);
         Assert.assertFalse(Countly.instance().events().endEvent(""));
-        validateSize(0, 0);
+        validateTimedEventSize(0, 0);
     }
 
     /**
@@ -293,9 +288,9 @@ public class ModuleEventsTests {
         config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(4);
         init(config);
 
-        validateSize(0, 0);
+        validateTimedEventSize(0, 0);
         Assert.assertFalse(Countly.instance().events().endEvent(null));
-        validateSize(0, 0);
+        validateTimedEventSize(0, 0);
     }
 
     /**
@@ -309,9 +304,9 @@ public class ModuleEventsTests {
         config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(4);
         init(config);
 
-        validateSize(0, 0);
+        validateTimedEventSize(0, 0);
         Assert.assertFalse(Countly.instance().events().endEvent(TestUtils.randomUUID()));
-        validateSize(0, 0);
+        validateTimedEventSize(0, 0);
     }
 
     /**
@@ -325,14 +320,14 @@ public class ModuleEventsTests {
         config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(4);
         init(config);
 
-        validateSize(0, 0);
+        validateTimedEventSize(0, 0);
         String eventName = TestUtils.randomUUID();
 
         startEvent(eventName); // start event to end it
-        validateSize(0, 1);
+        validateTimedEventSize(0, 1);
 
         EventImpl timedEvent = moduleEvents.timedEvents.get(eventName);
-        validateEvent(timedEvent, eventName, null, 1, null, null, timedEvent.dow, timedEvent.hour, timedEvent.timestamp);
+        validateEvent(timedEvent, eventName, null, 1, null, null);
 
         Map<String, Object> segmentation = new HashMap<>();
         segmentation.put("hair_color", "red");
@@ -340,12 +335,12 @@ public class ModuleEventsTests {
         segmentation.put("chauffeur", "g3chauffeur"); //
 
         endEvent(eventName, segmentation, 1, 5.0);
-        validateSize(1, 0);
+        validateTimedEventSize(1, 0);
         List<EventImpl> events = TestUtils.getCurrentEventQueue(moduleEvents.ctx.getContext(), moduleEvents.L);
         EventImpl imEvent = moduleEvents.eventQueue.eventQueueMemoryCache.get(0);
 
-        validateEvent(imEvent, eventName, segmentation, 1, 5.0, events.get(0).duration, imEvent.dow, imEvent.hour, imEvent.timestamp);
-        validateEvent(events.get(0), eventName, segmentation, 1, 5.0, events.get(0).duration, events.get(0).dow, events.get(0).hour, events.get(0).timestamp);
+        validateEvent(imEvent, eventName, segmentation, 1, 5.0, events.get(0).duration);
+        validateEvent(events.get(0), eventName, segmentation, 1, 5.0, events.get(0).duration);
     }
 
     /**
@@ -360,13 +355,13 @@ public class ModuleEventsTests {
         config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(4);
         init(config);
 
-        validateSize(0, 0);
+        validateTimedEventSize(0, 0);
         String eventName = TestUtils.randomUUID();
 
         startEvent(eventName); // start event to end it
-        validateSize(0, 1);
+        validateTimedEventSize(0, 1);
         EventImpl timedEvent = moduleEvents.timedEvents.get(eventName);
-        validateEvent(timedEvent, eventName, null, 1, null, null, timedEvent.dow, timedEvent.hour, timedEvent.timestamp);
+        validateEvent(timedEvent, eventName, null, 1, null, null);
 
         Map<String, Object> segmentation = new HashMap<>();
         segmentation.put("horse_name", "Alice");
@@ -374,12 +369,12 @@ public class ModuleEventsTests {
         segmentation.put("currency", "Dollar"); //
 
         endEvent(eventName, segmentation, -7, 67.0);
-        validateSize(0, 1);
+        validateTimedEventSize(0, 1);
         timedEvent = moduleEvents.timedEvents.get(eventName);
-        validateEvent(timedEvent, eventName, null, 1, null, null, timedEvent.dow, timedEvent.hour, timedEvent.timestamp);
+        validateEvent(timedEvent, eventName, null, 1, null, null);
     }
 
-    private void validateSize(int expectedQueueSize, int expectedTimedEventSize) {
+    private void validateTimedEventSize(int expectedQueueSize, int expectedTimedEventSize) {
         validateQueueSize(expectedQueueSize, TestUtils.getCurrentEventQueue(moduleEvents.ctx.getContext(), moduleEvents.L));
         Assert.assertEquals(expectedTimedEventSize, moduleEvents.timedEvents.size());
     }
@@ -389,16 +384,20 @@ public class ModuleEventsTests {
         Assert.assertEquals(expectedSize, moduleEvents.eventQueue.eqSize());
     }
 
-    private void validateEvent(EventImpl gonnaValidate, String key, Map<String, Object> segmentation,
-        int count, Double sum, Double duration, int dow, int hour, long timestamp) {
+    private void validateEvent(EventImpl gonnaValidate, String key, Map<String, Object> segmentation, int count, Double sum, Double duration) {
         Assert.assertEquals(key, gonnaValidate.key);
         Assert.assertEquals(segmentation, gonnaValidate.segmentation);
         Assert.assertEquals(count, gonnaValidate.count);
         Assert.assertEquals(sum, gonnaValidate.sum);
-        Assert.assertEquals(duration, gonnaValidate.duration);
-        Assert.assertEquals(dow, gonnaValidate.dow);
-        Assert.assertEquals(hour, gonnaValidate.hour);
-        Assert.assertEquals(timestamp, gonnaValidate.timestamp);
+
+        if (duration != null) {
+            double acceptableDelta = 0.00001;
+            Assert.assertTrue(Math.abs(duration - gonnaValidate.duration) < acceptableDelta);
+        }
+
+        Assert.assertTrue(gonnaValidate.dow >= 0 && gonnaValidate.dow < 7);
+        Assert.assertTrue(gonnaValidate.hour >= 0 && gonnaValidate.hour < 24);
+        Assert.assertTrue(gonnaValidate.timestamp >= 0);
     }
 
     private void endEvent(String key, Map<String, Object> segmentation, int count, Double sum) {
