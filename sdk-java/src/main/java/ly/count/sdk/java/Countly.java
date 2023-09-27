@@ -7,7 +7,6 @@ import ly.count.sdk.java.internal.Device;
 import ly.count.sdk.java.internal.InternalConfig;
 import ly.count.sdk.java.internal.Log;
 import ly.count.sdk.java.internal.ModuleBackendMode;
-import ly.count.sdk.java.internal.ModuleFeedback;
 import ly.count.sdk.java.internal.SDKCore;
 
 /**
@@ -314,16 +313,6 @@ public class Countly implements Usage {
             }
             cly.sdk.onConsentRemoval(cly.ctx, ftrs);
         }
-    }
-
-    /**
-     * <code>Feedback</code> interface to use feedback widgets nps,rating and forms.
-     * And do manual reporting of feedbacks.
-     *
-     * @return {@link ModuleFeedback.Feedback} instance.
-     */
-    public ModuleFeedback.Feedback feedback() {
-        return sdk.feedback();
     }
 
     @Override

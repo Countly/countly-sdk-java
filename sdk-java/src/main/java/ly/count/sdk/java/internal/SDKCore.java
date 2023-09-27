@@ -23,16 +23,6 @@ public class SDKCore {
 
     protected final Object lockBRQStorage = new Object();
 
-    public ModuleFeedback.Feedback feedback() {
-
-        if (!hasConsentForFeature(CoreFeature.Feedback)) {
-            L.v("[SDKCore] feedback: Feedback feature has no consent, returning null");
-            return null;
-        }
-
-        return module(ModuleFeedback.class).feedbackInterface;
-    }
-
     public enum Signal {
         DID(1),
         Crash(2),
