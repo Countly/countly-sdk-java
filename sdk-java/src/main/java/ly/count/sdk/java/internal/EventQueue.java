@@ -4,14 +4,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class EventImplQueue {
+public class EventQueue {
 
     static final String DELIMITER = ":::";
     private final Log L;
     private final InternalConfig config;
     final List<EventImpl> eventQueueMemoryCache;
 
-    protected EventImplQueue(Log logger, InternalConfig config) {
+    protected EventQueue(Log logger, InternalConfig config) {
         L = logger;
         this.config = config;
         eventQueueMemoryCache = new ArrayList<>(config.getEventsBufferSize());
@@ -25,7 +25,7 @@ public class EventImplQueue {
     }
 
     void addEvent(final EventImpl event) {
-        L.d("[EventImplQueue] Adding event: " + event.key);
+        L.d("[EventQueue] Adding event: " + event.key);
         if (eventQueueMemoryCache.size() < config.getEventsBufferSize()) {
             eventQueueMemoryCache.add(event);
             writeEventQueueToStorage();
@@ -38,7 +38,7 @@ public class EventImplQueue {
     void writeEventQueueToStorage() {
         final String eventQueue = joinEvents(eventQueueMemoryCache);
 
-        L.d("[EventImplQueue] Setting event data: " + eventQueue);
+        L.d("[EventQueue] Setting event data: " + eventQueue);
         SDKCore.instance.sdkStorage.storeEventQueue(eventQueue);
     }
 
@@ -46,7 +46,7 @@ public class EventImplQueue {
      * Restores events from disk
      */
     void restore() {
-        L.d("[EventImplQueue] Restoring events from disk");
+        L.d("[EventQueue] Restoring events from disk");
         eventQueueMemoryCache.clear();
 
         final String[] array = getEvents();
@@ -67,14 +67,14 @@ public class EventImplQueue {
         for (EventImpl e : collection) {
             strings.add(e.toJSON(L));
         }
-        return Utils.join(strings, EventImplQueue.DELIMITER);
+        return Utils.join(strings, EventQueue.DELIMITER);
     }
 
     /**
      * Returns an unsorted array of the current stored event JSON strings.
      */
     private synchronized String[] getEvents() {
-        L.d("[EventImplQueue] Getting events from disk");
+        L.d("[EventQueue] Getting events from disk");
         final String joinedEventsStr = SDKCore.instance.sdkStorage.readEventQueue();
         return joinedEventsStr.isEmpty() ? new String[0] : joinedEventsStr.split(DELIMITER);
     }

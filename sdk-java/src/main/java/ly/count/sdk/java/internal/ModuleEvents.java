@@ -13,7 +13,7 @@ import ly.count.sdk.java.Countly;
 public class ModuleEvents extends ModuleBase {
 
     protected CtxCore ctx = null;
-    protected EventImplQueue eventQueue = null;
+    protected EventQueue eventQueue = null;
     final Map<String, EventImpl> timedEvents = new HashMap<>();
     private ScheduledExecutorService executor = null;
     protected Events eventsInterface = null;
@@ -22,7 +22,7 @@ public class ModuleEvents extends ModuleBase {
     public void init(InternalConfig config, Log logger) {
         super.init(config, logger);
         L.d("[ModuleEvents] init: config = " + config);
-        eventQueue = new EventImplQueue(L, config);
+        eventQueue = new EventQueue(L, config);
         eventQueue.restore();
         eventsInterface = new Events();
     }

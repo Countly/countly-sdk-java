@@ -1,20 +1,12 @@
 package ly.count.sdk.java.internal;
 
+import ly.count.sdk.java.Config;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 import java.util.stream.Stream;
-import ly.count.sdk.java.Config;
 
-import static ly.count.sdk.java.internal.SDKStorage.EVENT_QUEUE_FILE_NAME;
-import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_PREFIX;
-import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_SEPARATOR;
+import static ly.count.sdk.java.internal.SDKStorage.*;
 
 public class TestUtils {
     static String SERVER_URL = "https://test.count.ly";
@@ -105,7 +97,7 @@ public class TestUtils {
             //do nothing
         }
 
-        Arrays.stream(fileContent.split(EventImplQueue.DELIMITER)).forEach(s -> {
+        Arrays.stream(fileContent.split(EventQueue.DELIMITER)).forEach(s -> {
             final EventImpl event = EventImpl.fromJSON(s, (ev) -> {
             }, logger);
             if (event != null) {
