@@ -26,10 +26,8 @@ public class EventQueue {
 
     void addEvent(final EventImpl event) {
         L.d("[EventQueue] Adding event: " + event.key);
-        if (eventQueueMemoryCache.size() < config.getEventsBufferSize()) {
-            eventQueueMemoryCache.add(event);
-            writeEventQueueToStorage();
-        }
+        eventQueueMemoryCache.add(event);
+        writeEventQueueToStorage();
     }
 
     /**
@@ -45,7 +43,7 @@ public class EventQueue {
     /**
      * Restores events from disk
      */
-    void restore() {
+    void restoreFromDisk() {
         L.d("[EventQueue] Restoring events from disk");
         eventQueueMemoryCache.clear();
 

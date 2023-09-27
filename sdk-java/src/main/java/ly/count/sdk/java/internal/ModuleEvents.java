@@ -23,7 +23,7 @@ public class ModuleEvents extends ModuleBase {
         super.init(config, logger);
         L.d("[ModuleEvents] init: config = " + config);
         eventQueue = new EventQueue(L, config);
-        eventQueue.restore();
+        eventQueue.restoreFromDisk();
         eventsInterface = new Events();
     }
 
@@ -104,8 +104,12 @@ public class ModuleEvents extends ModuleBase {
     private void addEventToQueue(EventImpl event) {
         L.d("[ModuleEvents] addEventToQueue");
         eventQueue.addEvent(event);
-        if (eventQueue.eqSize() >= internalConfig.getEventsBufferSize()) {
-            L.d("[ModuleEvents] addEventToQueue: eventQueue.size >= internalConfig.getEventsBufferSize()");
+        checkEventQueueToSend(false);
+    }
+
+    private void checkEventQueueToSend(boolean forceSend) {
+        if (forceSend || (eventQueue.eqSize() >= internalConfig.getEventsBufferSize())) {
+            L.d("[ModuleEvents] addEventToQueue: eventQueue.size >= internalConfig.getEventsBufferSize() || forceSend: " + forceSend);
             addEventsToRequestQ();
         }
     }
