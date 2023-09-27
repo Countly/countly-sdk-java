@@ -14,7 +14,6 @@ import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
@@ -67,8 +66,8 @@ public class Transport implements X509TrustManager {
     }
 
     /**
-     * @param config
-     * @throws IllegalArgumentException
+     * @param config configuration to use
+     * @throws IllegalArgumentException if certificate exception happens
      * @see ModuleBase#init(InternalConfig, Log)
      */
     public void init(InternalConfig config, Log logger) throws IllegalArgumentException {
@@ -91,13 +90,6 @@ public class Transport implements X509TrustManager {
             throw new IllegalArgumentException(e);
         }
     }
-
-    //    void onContext(android.content.Ctx context) {
-    //        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(android.content.Ctx.CONNECTIVITY_SERVICE);
-    //        NetworkInfo activeNetInfo = connectivityManager.getActiveNetworkInfo();
-    //        NetworkInfo mobNetInfo = connectivityManager.getNetworkInfo(     ConnectivityManager.TYPE_MOBILE );
-    //  https://stackoverflow.com/questions/1783117/network-listener-android
-    //    }
 
     /**
      * For testing purposes
@@ -213,69 +205,6 @@ public class Transport implements X509TrustManager {
         return connection;
     }
 
-    /**
-     * Open connection for particular request: choose GET or POST, choose multipart or urlencoded if POST,
-     * set SSL context, calculate and add checksum, load and send user picture if needed.
-     *
-     * @param request request to send
-     * @return connection, not {@link HttpURLConnection} yet
-     * @throws IOException from {@link HttpURLConnection} in case of error
-     */
-    HttpURLConnection connection(final Request request) throws IOException {
-        String endpoint = request.params.remove(Request.ENDPOINT);
-        if (endpoint == null) {
-            endpoint = "/i?";
-        }
-
-        String path = config.getServerURL().toString() + endpoint;
-        boolean usingGET = !config.isUsePOST() && request.isGettable(config.getServerURL());
-
-        if (usingGET && config.getParameterTamperingProtectionSalt() != null) {
-            request.params.add(CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, request.params + config.getParameterTamperingProtectionSalt(), L));
-        }
-
-        HttpURLConnection connection = openConnection(path, request.params.toString(), usingGET);
-        connection.setConnectTimeout(1000 * config.getNetworkConnectionTimeout());
-        connection.setReadTimeout(1000 * config.getNetworkReadTimeout());
-
-        if (connection instanceof HttpsURLConnection && sslContext != null) {
-            HttpsURLConnection https = (HttpsURLConnection) connection;
-            https.setSSLSocketFactory(sslContext.getSocketFactory());
-        }
-
-        if (!usingGET) {
-            OutputStream output = null;
-            PrintWriter writer = null;
-            try {
-                if (config.getParameterTamperingProtectionSalt() != null) {
-                    request.params.add(CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, request.params + config.getParameterTamperingProtectionSalt(), L));
-                }
-                connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-
-                output = connection.getOutputStream();
-                writer = new PrintWriter(new OutputStreamWriter(output, StandardCharsets.UTF_8), true);
-
-                writer.write(request.params.toString());
-                writer.flush();
-            } finally {
-                if (writer != null) {
-                    try {
-                        writer.close();
-                    } catch (Throwable ignored) {
-                    }
-                }
-                if (output != null) {
-                    try {
-                        output.close();
-                    } catch (Throwable ignored) {
-                    }
-                }
-            }
-        }
-
-        return connection;
-    }
-
     void addMultipart(OutputStream output, PrintWriter writer, String boundary, String contentType, String name, String value, Object file) throws IOException {
         writer.append("--").append(boundary).append(Utils.CRLF);
         if (file != null) {
@@ -294,6 +223,7 @@ public class Transport implements X509TrustManager {
     }
 
     byte[] pictureData(User user, String picture) throws IOException {
+        if (user == null) return null;
         byte[] data;
         if (UserEditorImpl.PICTURE_IN_USER_PROFILE.equals(picture)) {
             data = user.picture();
@@ -534,7 +464,7 @@ public class Transport implements X509TrustManager {
 
     @Override
     public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-        if (keyPins.size() == 0 && certPins.size() == 0) {
+        if (keyPins.isEmpty() && certPins.isEmpty()) {
             return;
         }
 
@@ -555,8 +485,8 @@ public class Transport implements X509TrustManager {
             defaultTrustManager.checkServerTrusted(chain, authType);
         }
 
-        byte serverPublicKey[] = chain[0].getPublicKey().getEncoded();
-        byte serverCertificate[] = chain[0].getEncoded();
+        byte[] serverPublicKey = chain[0].getPublicKey().getEncoded();
+        byte[] serverCertificate = chain[0].getEncoded();
 
         for (byte[] key : keyPins) {
             if (Arrays.equals(key, serverPublicKey)) {
