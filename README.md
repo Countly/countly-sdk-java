@@ -2,7 +2,7 @@
 
 # Countly Java SDK
 
-This repository contains the Countly Java SDK, which can be integrated into Java applications. The Countly Java SDK is intended to be used with [Countly Lite](https://github.com/Countly/countly-server), [Countly Flex](https://countly.com/flex), [Countly Enterprise](https://countly.com/enterprise).
+This repository contains the Countly Java SDK, which can be integrated into Java applications. The Countly Java SDK is intended to be used with [Countly Lite](https://countly.com/lite), [Countly Flex](https://countly.com/flex), [Countly Enterprise](https://countly.com/enterprise).
 
 ## What is Countly?
 
