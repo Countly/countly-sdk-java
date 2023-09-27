@@ -323,6 +323,12 @@ public class Countly implements Usage {
      * @return {@link ModuleFeedback.Feedback} instance.
      */
     public ModuleFeedback.Feedback feedback() {
+        if (!isInitialized()) {
+            if (L != null) {
+                L.e("[Countly] SDK is not initialized yet.");
+            }
+            return null;
+        }
         return sdk.feedback();
     }
 
