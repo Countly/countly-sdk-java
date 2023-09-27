@@ -3,6 +3,7 @@ package ly.count.sdk.java.internal;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import org.json.JSONArray;
@@ -155,6 +156,12 @@ public class ModuleFeedbackTests {
         responseJson.put("result", widgetsJson);
 
         ImmediateRequestI requestMaker = (requestData, customEndpoint, cp, requestShouldBeDelayed, networkingIsEnabled, callback, log) -> {
+            Assert.assertEquals("/o/sdk", customEndpoint);
+            Map<String, String> params = TestUtils.parseQueryParams(requestData);
+            Assert.assertEquals("feedback", params.get("method"));
+            Assert.assertFalse(requestShouldBeDelayed);
+            Assert.assertTrue(networkingIsEnabled);
+            validateRequiredParams(params);
             callback.callback(responseJson);
         };
         SDKCore.instance.config.immediateRequestGenerator = () -> requestMaker;
@@ -220,6 +227,21 @@ public class ModuleFeedbackTests {
             Assert.assertNull(response);
             Assert.assertEquals("Not possible to retrieve widget list. Probably due to lack of connection to the server", error);
         });
+    }
+
+    private void validateRequiredParams(Map<String, String> params) {
+        int hour = Integer.parseInt(params.get("hour"));
+        int dow = Integer.parseInt(params.get("dow"));
+        int tz = Integer.parseInt(params.get("tz"));
+
+        Assert.assertEquals(SDKCore.instance.config.getSdkVersion(), params.get("sdk_version"));
+        Assert.assertEquals(SDKCore.instance.config.getDeviceId().id, params.get("device_id"));
+        Assert.assertEquals(SDKCore.instance.config.getSdkName(), params.get("sdk_name"));
+        Assert.assertEquals(SDKCore.instance.config.getServerAppKey(), params.get("app_key"));
+        Assert.assertTrue(Long.valueOf(params.get("timestamp")) > 0);
+        Assert.assertTrue(hour > 0 && hour < 24);
+        Assert.assertTrue(dow >= 0 && dow < 7);
+        Assert.assertTrue(tz >= -720 && tz <= 840);
     }
 
     private CountlyFeedbackWidget createFeedbackWidget(FeedbackWidgetType type, String name, String id, String[] tags) {

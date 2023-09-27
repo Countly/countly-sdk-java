@@ -185,4 +185,24 @@ public class TestUtils {
             return paramMap;
         }
     }
+
+    /**
+     * Parse query params from string. String contains are urlencoded and
+     * separated by "&" symbol and key-value pairs are separated by "=" symbol (key=value).
+     *
+     * @param data string with query params
+     * @return map of query params
+     */
+    public static Map<String, String> parseQueryParams(String data) {
+        if (data.contains("?")) {
+            data = data.replace("?", "");
+        }
+        String[] params = data.split("&");
+        Map<String, String> paramMap = new HashMap<>();
+        for (String param : params) {
+            String[] pair = param.split("=");
+            paramMap.put(pair[0], pair[1]);
+        }
+        return paramMap;
+    }
 }
