@@ -19,7 +19,7 @@ import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_SEPARATOR;
 public class TestUtils {
 
     static String DELIMETER = ":::";
-    static String SERVER_URL = "https://try.count.ly";
+    static String SERVER_URL = "https://test.count.ly";
     static String SERVER_APP_KEY = "COUNTLY_APP_KEY";
     static String DEVICE_ID = "some_random_test_device_id";
 
