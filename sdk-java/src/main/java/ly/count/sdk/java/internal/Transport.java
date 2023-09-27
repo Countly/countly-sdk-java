@@ -30,13 +30,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
-
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
-
 import ly.count.sdk.java.User;
 import org.json.JSONObject;
 
@@ -68,8 +66,8 @@ public class Transport implements X509TrustManager {
     }
 
     /**
-     * @param config
-     * @throws IllegalArgumentException
+     * @param config configuration to use
+     * @throws IllegalArgumentException if certificate exception happens
      * @see ModuleBase#init(InternalConfig, Log)
      */
     public void init(InternalConfig config, Log logger) throws IllegalArgumentException {
@@ -92,13 +90,6 @@ public class Transport implements X509TrustManager {
             throw new IllegalArgumentException(e);
         }
     }
-
-    //    void onContext(android.content.Ctx context) {
-    //        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(android.content.Ctx.CONNECTIVITY_SERVICE);
-    //        NetworkInfo activeNetInfo = connectivityManager.getActiveNetworkInfo();
-    //        NetworkInfo mobNetInfo = connectivityManager.getNetworkInfo(     ConnectivityManager.TYPE_MOBILE );
-    //  https://stackoverflow.com/questions/1783117/network-listener-android
-    //    }
 
     /**
      * For testing purposes
@@ -232,6 +223,7 @@ public class Transport implements X509TrustManager {
     }
 
     byte[] pictureData(User user, String picture) throws IOException {
+        if (user == null) return null;
         byte[] data;
         if (UserEditorImpl.PICTURE_IN_USER_PROFILE.equals(picture)) {
             data = user.picture();
@@ -472,7 +464,7 @@ public class Transport implements X509TrustManager {
 
     @Override
     public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-        if (keyPins.size() == 0 && certPins.size() == 0) {
+        if (keyPins.isEmpty() && certPins.isEmpty()) {
             return;
         }
 
@@ -493,8 +485,8 @@ public class Transport implements X509TrustManager {
             defaultTrustManager.checkServerTrusted(chain, authType);
         }
 
-        byte serverPublicKey[] = chain[0].getPublicKey().getEncoded();
-        byte serverCertificate[] = chain[0].getEncoded();
+        byte[] serverPublicKey = chain[0].getPublicKey().getEncoded();
+        byte[] serverCertificate = chain[0].getEncoded();
 
         for (byte[] key : keyPins) {
             if (Arrays.equals(key, serverPublicKey)) {

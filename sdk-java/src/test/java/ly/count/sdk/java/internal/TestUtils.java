@@ -18,8 +18,10 @@ import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_SEPARATOR;
 
 public class TestUtils {
 
-    static String SERVER_URL = "https://try.count.ly";
+    static String DELIMETER = ":::";
+    static String SERVER_URL = "https://test.count.ly";
     static String SERVER_APP_KEY = "COUNTLY_APP_KEY";
+    static String DEVICE_ID = "some_random_test_device_id";
 
     private TestUtils() {
     }
@@ -37,8 +39,10 @@ public class TestUtils {
     }
 
     static void checkSdkStorageRootDirectoryExist(File directory) {
-        if (directory.mkdirs()) {
-            throw new RuntimeException("Directory creation failed");
+        if (!(directory.exists() && directory.isDirectory())) {
+            if (!directory.mkdirs()) {
+                throw new RuntimeException("Directory creation failed");
+            }
         }
     }
 
@@ -171,12 +175,17 @@ public class TestUtils {
         }
     }
 
-    /**
-     * Returns random UUID for test ids
-     *
-     * @return random UUID starting with test-
-     */
-    protected static String randomUUID() {
-        return "test-" + java.util.UUID.randomUUID();
+    static File getSdkStorageRootDirectory() {
+        // System specific folder structure
+        String[] sdkStorageRootPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
+        return new File(String.join(File.separator, sdkStorageRootPath));
+    }
+
+    static void checkSdkStorageRootDirectoryExist(File directory) {
+        if (!(directory.exists() && directory.isDirectory())) {
+            if (!directory.mkdirs()) {
+                throw new RuntimeException("Directory creation failed");
+            }
+        }
     }
 }

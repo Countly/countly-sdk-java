@@ -94,6 +94,10 @@ public class SDKCore {
     }
 
     public void init(CtxCore ctx) {
+        InternalConfig config = ctx.getConfig();
+        if (config.immediateRequestGenerator == null) {
+            config.immediateRequestGenerator = ImmediateRequestMaker::new;
+        }
         prepareMappings(ctx);
     }
 

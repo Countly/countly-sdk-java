@@ -25,7 +25,8 @@ public enum CoreFeature {
     TestDummy(1 << 19),//used during testing
     DeviceId(1 << 20, ModuleDeviceIdCore::new),
     Requests(1 << 21, ModuleRequests::new),
-    Logs(1 << 22);
+    Logs(1 << 22),
+    Feedback(1 << 23, ModuleFeedback::new);
 
     private final int index;
 
@@ -62,6 +63,7 @@ public enum CoreFeature {
         put(DeviceId.index, DeviceId);
         put(Requests.index, Requests);
         put(Logs.index, Logs);
+        put(Feedback.index, Feedback);
     }};
 
     static CoreFeature byIndex(int index) {

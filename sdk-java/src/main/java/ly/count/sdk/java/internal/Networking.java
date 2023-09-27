@@ -8,4 +8,6 @@ public interface Networking {
     boolean check(CtxCore ctx);
 
     void stop(CtxCore ctx);
+
+    Transport getTransport();
 }
