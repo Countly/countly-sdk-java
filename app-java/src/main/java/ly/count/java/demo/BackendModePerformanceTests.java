@@ -1,12 +1,14 @@
 package ly.count.java.demo;
 
+import ly.count.sdk.java.Config;
+import ly.count.sdk.java.Countly;
+import ly.count.sdk.java.internal.Device;
+
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
-import ly.count.sdk.java.Config;
-import ly.count.sdk.java.Countly;
-import ly.count.sdk.java.internal.Device;
+
 
 public class BackendModePerformanceTests {
     final static String DEVICE_ID = "device-id";
@@ -26,7 +28,7 @@ public class BackendModePerformanceTests {
         String[] sdkStorageRootPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
         File sdkStorageRootDirectory = new File(String.join(File.separator, sdkStorageRootPath));
 
-        if (sdkStorageRootDirectory.mkdirs()) {
+        if(sdkStorageRootDirectory.mkdirs()){
             System.out.println("Directory creation failed");
         }
 
