@@ -340,7 +340,7 @@ public class ModuleFeedbackTests {
         init(config);
 
         JSONObject responseJson = new JSONObject();
-        responseJson.put("resullt", "Success");
+        responseJson.put("result", "Success");
 
         CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] {});
 
@@ -355,6 +355,22 @@ public class ModuleFeedbackTests {
             Assert.assertNull(error);
             Assert.assertEquals(responseJson, response);
         });
+    }
+
+    /**
+     * Report feedback widget manually with null widget info
+     * "reportFeedbackWidgetManually" function should not record widget as an event,
+     * event queue should be empty
+     */
+    @Test
+    public void reportFeedbackWidgetManually_nullWidgetInfo() {
+        Config config = TestUtils.getBaseConfig();
+        config.enableFeatures(Config.Feature.Feedback).setEventQueueSizeToSend(4);
+        init(config);
+
+        Countly.instance().feedback().reportFeedbackWidgetManually(null, null, null);
+        List<EventImpl> events = TestUtils.getCurrentEventQueue(TestUtils.getSdkStorageRootDirectory(), L);
+        Assert.assertEquals(0, events.size());
     }
 
     private void validateWidgetDataParams(Map<String, String> params, CountlyFeedbackWidget widgetInfo) {
