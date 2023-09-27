@@ -17,18 +17,6 @@ public class ModuleFeedback extends ModuleBase {
     Feedback feedbackInterface = null;
     private CtxCore ctx;
 
-    public interface RetrieveFeedbackWidgets {
-        void onFinished(List<CountlyFeedbackWidget> retrievedWidgets, String error);
-    }
-
-    public interface RetrieveFeedbackWidgetData {
-        void onFinished(JSONObject retrievedWidgetData, String error);
-    }
-
-    public interface FeedbackCallback {
-        void onFinished(String url, String error);
-    }
-
     ModuleFeedback() {
     }
 
@@ -58,7 +46,7 @@ public class ModuleFeedback extends ModuleBase {
         feedbackInterface = null;
     }
 
-    private void getAvailableFeedbackWidgetsInternal(RetrieveFeedbackWidgets callback) {
+    private void getAvailableFeedbackWidgetsInternal(CallbackOnFinish<List<CountlyFeedbackWidget>> callback) {
         L.d("[ModuleFeedback] getAvailableFeedbackWidgetsInternal, callback set:[" + (callback != null) + "]");
 
         if (callback == null) {
@@ -287,17 +275,20 @@ public class ModuleFeedback extends ModuleBase {
         Countly.instance().event(widgetInfo.type.eventKey).setSegmentation(segmString).record();
     }
 
-    private void getFeedbackWidgetDataInternal(CountlyFeedbackWidget widgetInfo, RetrieveFeedbackWidgetData callback) {
+    private <T> void callCallback(String errorLog, CallbackOnFinish<T> callback) {
+        L.e(errorLog);
+        if (callback != null) {
+            callback.onFinished(null, errorLog);
+        }
+    }
+
+    private void getFeedbackWidgetDataInternal(CountlyFeedbackWidget widgetInfo, CallbackOnFinish<JSONObject> callback) {
         L.d("[ModuleFeedback] calling 'getFeedbackWidgetDataInternal', callback set:[" + (callback != null) + "]");
 
         String error = validateFields(callback, widgetInfo);
 
         if (error != null) {
-            String errorLog = "[ModuleFeedback] getFeedbackWidgetDataInternal, " + error;
-            L.e(errorLog);
-            if (callback != null) {
-                callback.onFinished(null, errorLog);
-            }
+            callCallback("[ModuleFeedback] getFeedbackWidgetDataInternal, " + error, callback);
             return;
         }
 
@@ -352,17 +343,13 @@ public class ModuleFeedback extends ModuleBase {
         return null;
     }
 
-    private void constructFeedbackWidgetUrlInternal(CountlyFeedbackWidget widgetInfo, FeedbackCallback callback) {
+    private void constructFeedbackWidgetUrlInternal(CountlyFeedbackWidget widgetInfo, CallbackOnFinish<String> callback) {
         L.d("[ModuleFeedback] constructFeedbackWidgetUrlInternal, callback set:[" + (callback != null) + ", widgetInfo :[" + widgetInfo + "]");
 
         String error = validateFields(callback, widgetInfo);
 
         if (error != null) {
-            String errorLog = "[ModuleFeedback] constructFeedbackWidgetUrlInternal, " + error;
-            L.e(errorLog);
-            if (callback != null) {
-                callback.onFinished(null, errorLog);
-            }
+            callCallback("[ModuleFeedback] constructFeedbackWidgetUrlInternal, " + error, callback);
             return;
         }
 
@@ -394,9 +381,9 @@ public class ModuleFeedback extends ModuleBase {
         /**
          * Get a list of available feedback widgets for this device ID
          *
-         * @param callback callback
+         * @param callback retrieve widget list callback
          */
-        public void getAvailableFeedbackWidgets(@Nullable RetrieveFeedbackWidgets callback) {
+        public void getAvailableFeedbackWidgets(@Nullable CallbackOnFinish<List<CountlyFeedbackWidget>> callback) {
             synchronized (Countly.instance()) {
                 L.i("[Feedback] getAvailableFeedbackWidgets, Trying to retrieve feedback widget list");
 
@@ -408,9 +395,9 @@ public class ModuleFeedback extends ModuleBase {
          * Construct a URL that can be used to present a feedback widget in a web viewer
          *
          * @param widgetInfo widget info
-         * @param callback callback
+         * @param callback feedback widget url callback
          */
-        public void constructFeedbackWidgetUrl(@Nullable CountlyFeedbackWidget widgetInfo, @Nullable FeedbackCallback callback) {
+        public void constructFeedbackWidgetUrl(@Nullable CountlyFeedbackWidget widgetInfo, @Nullable CallbackOnFinish<String> callback) {
             synchronized (Countly.instance()) {
                 L.i("[Feedback] constructFeedbackWidgetUrl, Trying to present feedback widget in an alert dialog");
 
@@ -423,9 +410,9 @@ public class ModuleFeedback extends ModuleBase {
          * When requesting this data, it will count as a shown widget (will increment that "shown" count in the dashboard)
          *
          * @param widgetInfo widget info
-         * @param callback callback
+         * @param callback retrieve widget data callback
          */
-        public void getFeedbackWidgetData(@Nullable CountlyFeedbackWidget widgetInfo, @Nullable RetrieveFeedbackWidgetData callback) {
+        public void getFeedbackWidgetData(@Nullable CountlyFeedbackWidget widgetInfo, @Nullable CallbackOnFinish<JSONObject> callback) {
             synchronized (Countly.instance()) {
                 L.i("[Feedback] getFeedbackWidgetData, Trying to retrieve feedback widget data");
 
