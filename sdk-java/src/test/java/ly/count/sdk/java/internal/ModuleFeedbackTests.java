@@ -160,11 +160,9 @@ public class ModuleFeedbackTests {
         responseJson.put("result", widgetsJson);
 
         ImmediateRequestI requestMaker = (requestData, customEndpoint, cp, requestShouldBeDelayed, networkingIsEnabled, callback, log) -> {
-            Assert.assertEquals("/o/sdk", customEndpoint);
             Map<String, String> params = TestUtils.parseQueryParams(requestData);
             Assert.assertEquals("feedback", params.get("method"));
-            Assert.assertFalse(requestShouldBeDelayed);
-            Assert.assertTrue(networkingIsEnabled);
+            validateWidgetRequiredParams("/o/sdk", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
             validateRequiredParams(params);
             callback.callback(responseJson);
         };
@@ -287,19 +285,109 @@ public class ModuleFeedbackTests {
         });
     }
 
+    /**
+     * Get feedback widget data with null widget info
+     * "getFeedbackWidgetData" function should not return widget data and return error message
+     * data should be null and error message should same as expected
+     */
+    @Test
+    public void getFeedbackWidgetData_nullWidgetInfo() {
+        Config config = TestUtils.getBaseConfig();
+        config.enableFeatures(Config.Feature.Feedback).setEventQueueSizeToSend(4);
+        init(config);
+
+        Countly.instance().feedback().getFeedbackWidgetData(null, (response, error) -> {
+            Assert.assertNull(response);
+            Assert.assertEquals("[ModuleFeedback] getFeedbackWidgetDataInternal, Can't continue operation with null widget", error);
+        });
+    }
+
+    /**
+     * Get feedback widget data network error
+     * "getFeedbackWidgetData" function should return null widget data and error message
+     * data should be null and error message should be same as expected
+     */
+    @Test
+    public void getFeedbackWidgetData_nullResponse() {
+        Config config = TestUtils.getBaseConfig();
+        config.enableFeatures(Config.Feature.Feedback).setEventQueueSizeToSend(4);
+        init(config);
+
+        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] {});
+
+        ImmediateRequestI requestMaker = (requestData, customEndpoint, cp, requestShouldBeDelayed, networkingIsEnabled, callback, log) -> {
+            validateWidgetRequiredParams("/o/surveys/" + widgetInfo.type.name() + "/widget", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
+            validateWidgetDataParams(TestUtils.parseQueryParams(requestData), widgetInfo);
+            callback.callback(null);
+        };
+        SDKCore.instance.config.immediateRequestGenerator = () -> requestMaker;
+
+        Countly.instance().feedback().getFeedbackWidgetData(widgetInfo, (response, error) -> {
+            Assert.assertEquals("Not possible to retrieve widget data. Probably due to lack of connection to the server", error);
+            Assert.assertNull(response);
+        });
+    }
+
+    /**
+     * Get feedback widget data successfully
+     * "getFeedbackWidgetData" function should return widget data and error message should be null
+     * data should be same as expected and error message should null
+     */
+    @Test
+    public void getFeedbackWidgetData_garbageResult() {
+        Config config = TestUtils.getBaseConfig();
+        config.enableFeatures(Config.Feature.Feedback).setEventQueueSizeToSend(4);
+        init(config);
+
+        JSONObject responseJson = new JSONObject();
+        responseJson.put("resullt", "Success");
+
+        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] {});
+
+        ImmediateRequestI requestMaker = (requestData, customEndpoint, cp, requestShouldBeDelayed, networkingIsEnabled, callback, log) -> {
+            validateWidgetRequiredParams("/o/surveys/" + widgetInfo.type.name() + "/widget", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
+            validateWidgetDataParams(TestUtils.parseQueryParams(requestData), widgetInfo);
+            callback.callback(responseJson);
+        };
+        SDKCore.instance.config.immediateRequestGenerator = () -> requestMaker;
+
+        Countly.instance().feedback().getFeedbackWidgetData(widgetInfo, (response, error) -> {
+            Assert.assertNull(error);
+            Assert.assertEquals(responseJson, response);
+        });
+    }
+
+    private void validateWidgetDataParams(Map<String, String> params, CountlyFeedbackWidget widgetInfo) {
+        Assert.assertEquals(widgetInfo.widgetId, params.get("widget_id"));
+        Assert.assertEquals("desktop", params.get("platform"));
+        Assert.assertEquals("1", params.get("shown"));
+        Assert.assertEquals(String.valueOf(Device.dev.getAppVersion()), params.get("app_version"));
+        validateSdkRelatedParams(params);
+    }
+
+    private void validateWidgetRequiredParams(String expectedEndpoint, String customEndpoint, Boolean requestShouldBeDelayed, Boolean networkingIsEnabled) {
+        Assert.assertEquals(expectedEndpoint, customEndpoint);
+        Assert.assertFalse(requestShouldBeDelayed);
+        Assert.assertTrue(networkingIsEnabled);
+    }
+
     private void validateRequiredParams(Map<String, String> params) {
         int hour = Integer.parseInt(params.get("hour"));
         int dow = Integer.parseInt(params.get("dow"));
         int tz = Integer.parseInt(params.get("tz"));
 
-        Assert.assertEquals(SDKCore.instance.config.getSdkVersion(), params.get("sdk_version"));
+        validateSdkRelatedParams(params);
         Assert.assertEquals(SDKCore.instance.config.getDeviceId().id, params.get("device_id"));
-        Assert.assertEquals(SDKCore.instance.config.getSdkName(), params.get("sdk_name"));
         Assert.assertEquals(SDKCore.instance.config.getServerAppKey(), params.get("app_key"));
         Assert.assertTrue(Long.valueOf(params.get("timestamp")) > 0);
         Assert.assertTrue(hour > 0 && hour < 24);
         Assert.assertTrue(dow >= 0 && dow < 7);
         Assert.assertTrue(tz >= -720 && tz <= 840);
+    }
+
+    private void validateSdkRelatedParams(Map<String, String> params) {
+        Assert.assertEquals(SDKCore.instance.config.getSdkVersion(), params.get("sdk_version"));
+        Assert.assertEquals(SDKCore.instance.config.getSdkName(), params.get("sdk_name"));
     }
 
     private CountlyFeedbackWidget createFeedbackWidget(FeedbackWidgetType type, String name, String id, String[] tags) {
