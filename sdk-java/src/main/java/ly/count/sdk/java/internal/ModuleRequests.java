@@ -1,7 +1,6 @@
 package ly.count.sdk.java.internal;
 
 import java.util.concurrent.Future;
-
 import ly.count.sdk.java.User;
 
 /**
@@ -181,6 +180,13 @@ public class ModuleRequests extends ModuleBase {
         }
     }
 
+    static void addRequiredTimeParams(Request request) {
+        request.params.add("timestamp", Device.dev.uniqueTimestamp())
+            .add("tz", Device.dev.getTimezoneOffset())
+            .add("hour", Device.dev.currentHour())
+            .add("dow", Device.dev.currentDayOfWeek());
+    }
+
     static Request addRequired(InternalConfig config, Request request) {
 
         if (request.isEmpty()) {
@@ -246,10 +252,7 @@ public class ModuleRequests extends ModuleBase {
             return null;
         }
 
-        request.params.add("timestamp", Device.dev.uniqueTimestamp())
-            .add("tz", Device.dev.getTimezoneOffset())
-            .add("hour", Device.dev.currentHour())
-            .add("dow", Device.dev.currentDayOfWeek());
+        addRequiredTimeParams(request);
 
         return Storage.pushAsync(ctx, request, param -> {
             SDKCore.instance.onRequest(ctx, request);
