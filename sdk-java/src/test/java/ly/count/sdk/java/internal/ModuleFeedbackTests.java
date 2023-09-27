@@ -69,6 +69,28 @@ public class ModuleFeedbackTests {
     }
 
     /**
+     * Parse feedback list successfully, remove garbage json
+     * "parseFeedbackList" function should return correct json feedback widget list without garbage json
+     * returned feedback widget list should not have garbage json
+     */
+    @Test
+    public void parseFeedbackList_oneGoodWithGarbage() throws JSONException {
+        Config config = TestUtils.getBaseConfig();
+        config.enableFeatures(Config.Feature.Feedback).setEventQueueSizeToSend(4);
+        init(config);
+
+        String requestJson =
+            "{\"result\":[{\"_id\":\"asd\",\"type\":\"qwe\",\"name\":\"zxc\",\"tg\":[]},{\"_id\":\"5f97284635935cc338e78200\",\"type\":\"nps\",\"name\":\"fsdfsdf\",\"tg\":[\"/\"]},{\"g4id\":\"asd1\",\"t4type\":\"432\",\"nagdfgme\":\"zxct\",\"tgm\":[\"/\"]}]}";
+
+        JSONObject jObj = new JSONObject(requestJson);
+
+        List<CountlyFeedbackWidget> ret = ModuleFeedback.parseFeedbackList(jObj);
+        Assert.assertNotNull(ret);
+        Assert.assertEquals(1, ret.size());
+        ValidateReturnedFeedbackWidget(FeedbackWidgetType.nps, "fsdfsdf", "5f97284635935cc338e78200", new String[] { "/" }, ret.get(0));
+    }
+
+    /**
      * Parse feedback list successfully, remove faulty widgets
      * "parseFeedbackList" function should return correct feedback widget list without faulty widgets
      * returned feedback widget list should not have faulty widgets
@@ -150,6 +172,34 @@ public class ModuleFeedbackTests {
     }
 
     /**
+     * Getting feedback widget list with garbage json
+     * "getAvailableFeedbackWidgets" function should return empty feedback widget list because json is garbage
+     * returned feedback widget list should be empty
+     */
+    @Test
+    public void getAvailableFeedbackWidgets_garbageJson() {
+        Config config = TestUtils.getBaseConfig();
+        config.enableFeatures(Config.Feature.Feedback).setEventQueueSizeToSend(4);
+        init(config);
+
+        JSONArray garbageArray = new JSONArray();
+        garbageArray.put(createGarbageJson());
+        garbageArray.put(createGarbageJson());
+        JSONObject responseJson = new JSONObject();
+        responseJson.put("result", garbageArray);
+
+        ImmediateRequestI requestMaker = (requestData, customEndpoint, cp, requestShouldBeDelayed, networkingIsEnabled, callback, log) -> {
+            callback.callback(responseJson);
+        };
+        SDKCore.instance.config.immediateRequestGenerator = () -> requestMaker;
+
+        Countly.instance().feedback().getAvailableFeedbackWidgets((response, error) -> {
+            Assert.assertNull(error);
+            Assert.assertEquals(0, response.size());
+        });
+    }
+
+    /**
      * Getting feedback widget list errored
      * "getAvailableFeedbackWidgets" function should return error message
      * returned feedback widget list should be empty and error message should not be empty
@@ -179,6 +229,15 @@ public class ModuleFeedbackTests {
         widget.widgetId = id;
         widget.tags = tags;
         return widget;
+    }
+
+    private JSONObject createGarbageJson() {
+        JSONObject garbageJson = new JSONObject();
+        garbageJson.put("garbage", "garbage");
+        garbageJson.put("_no_meaning", true);
+        garbageJson.put("_no_tear", 123);
+
+        return garbageJson;
     }
 
     private JSONObject createFeedbackWidgetJson(CountlyFeedbackWidget widget) throws JSONException {
