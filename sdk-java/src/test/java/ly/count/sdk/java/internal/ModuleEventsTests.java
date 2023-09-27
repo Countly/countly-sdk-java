@@ -56,18 +56,6 @@ public class ModuleEventsTests {
         validateEventInQueue(TestUtils.getTestSDirectory(), eventKey, segmentation, 1, 45.9, 32.0, 1, 0, moduleEvents.L);
     }
 
-    void validateEventInQueue(File targetFolder, String key, Map<String, Object> segmentation,
-        int count, Double sum, Double duration, int queueSize, int elementInQueue, Log L) {
-        List<EventImpl> events = TestUtils.getCurrentEventQueue(targetFolder, moduleEvents.L);
-        validateQueueSize(queueSize, events);
-
-        //check if event was recorded correctly
-        EventImpl event = events.get(elementInQueue);
-        EventImpl eventInMemory = moduleEvents.eventQueue.eventQueueMemoryCache.get(0);
-        validateEvent(event, key, segmentation, count, sum, duration);
-        validateEvent(eventInMemory, key, segmentation, count, sum, duration);
-    }
-
     /**
      * Recording an event with negative count
      * "recordEvent" function should not create an event with given key and negative count
@@ -173,23 +161,21 @@ public class ModuleEventsTests {
         config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(4);
         init(config);
 
-        List<EventImpl> events;
         validateTimedEventSize(0, 0);
         String eventName = "startEvent";
 
         startEvent(eventName);
+        long start = System.currentTimeMillis();
         validateTimedEventSize(0, 1);
 
         EventImpl timedEvent = moduleEvents.timedEvents.get(eventName);
         validateEvent(timedEvent, eventName, null, 1, null, null);
 
         endEvent(eventName, null, 1, null);
+        long end = System.currentTimeMillis();
         //duration testing is not possible because division is error-prone for small numbers like .212 and .211
-        events = TestUtils.getCurrentEventQueue(moduleEvents.ctx.getContext(), moduleEvents.L);
-        validateTimedEventSize(1, 0);
-
-        validateEvent(events.get(0), eventName, null, 1, null, events.get(0).duration);
-        validateEvent(moduleEvents.eventQueue.eventQueueMemoryCache.get(0), eventName, null, 1, null, events.get(0).duration);
+        Assert.assertEquals(0, moduleEvents.timedEvents.size());
+        validateEventInQueue(TestUtils.getTestSDirectory(), eventName, null, 1, null, (double) (end - start) / 1000, 1, 0, moduleEvents.L);
     }
 
     /**
@@ -235,11 +221,11 @@ public class ModuleEventsTests {
         config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(4);
         init(config);
 
-        List<EventImpl> events = null;
         validateTimedEventSize(0, 0);
 
         String eventName = "startEvent_alreadyStarted";
         startEvent(eventName);
+        long start = System.currentTimeMillis();
 
         validateTimedEventSize(0, 1);
 
@@ -249,16 +235,13 @@ public class ModuleEventsTests {
         boolean result = Countly.instance().events().startEvent(eventName);
         Assert.assertFalse(result);
 
-        events = TestUtils.getCurrentEventQueue(moduleEvents.ctx.getContext(), moduleEvents.L);
-        validateQueueSize(0, events);
-        Assert.assertEquals(1, moduleEvents.timedEvents.size());
+        validateTimedEventSize(0, 1);
 
         endEvent(eventName, null, 1, null);
+        long end = System.currentTimeMillis();
 
-        events = TestUtils.getCurrentEventQueue(moduleEvents.ctx.getContext(), moduleEvents.L);
-
-        validateTimedEventSize(1, 0);
-        validateEvent(events.get(0), eventName, null, 1, null, events.get(0).duration);
+        Assert.assertEquals(0, moduleEvents.timedEvents.size());
+        validateEventInQueue(TestUtils.getTestSDirectory(), eventName, null, 1, null, (double) (end - start) / 1000, 1, 0, moduleEvents.L);
     }
 
     /**
@@ -324,6 +307,7 @@ public class ModuleEventsTests {
         String eventName = "endEvent_withSegmentation";
 
         startEvent(eventName); // start event to end it
+        long start = System.currentTimeMillis();
         validateTimedEventSize(0, 1);
 
         EventImpl timedEvent = moduleEvents.timedEvents.get(eventName);
@@ -335,12 +319,10 @@ public class ModuleEventsTests {
         segmentation.put("chauffeur", "g3chauffeur"); //
 
         endEvent(eventName, segmentation, 1, 5.0);
-        validateTimedEventSize(1, 0);
-        List<EventImpl> events = TestUtils.getCurrentEventQueue(moduleEvents.ctx.getContext(), moduleEvents.L);
-        EventImpl imEvent = moduleEvents.eventQueue.eventQueueMemoryCache.get(0);
+        long end = System.currentTimeMillis();
 
-        validateEvent(imEvent, eventName, segmentation, 1, 5.0, events.get(0).duration);
-        validateEvent(events.get(0), eventName, segmentation, 1, 5.0, events.get(0).duration);
+        Assert.assertEquals(0, moduleEvents.timedEvents.size());
+        validateEventInQueue(TestUtils.getTestSDirectory(), eventName, segmentation, 1, 5.0, (double) (end - start) / 1000, 1, 0, moduleEvents.L);
     }
 
     /**
@@ -391,8 +373,8 @@ public class ModuleEventsTests {
         Assert.assertEquals(sum, gonnaValidate.sum);
 
         if (duration != null) {
-            double acceptableDelta = 0.00001;
-            Assert.assertTrue(Math.abs(duration - gonnaValidate.duration) < acceptableDelta);
+            double delta = 0.1;
+            Assert.assertTrue(Math.abs(duration - gonnaValidate.duration) < delta);
         }
 
         Assert.assertTrue(gonnaValidate.dow >= 0 && gonnaValidate.dow < 7);
@@ -408,5 +390,17 @@ public class ModuleEventsTests {
     private void startEvent(String key) {
         boolean result = Countly.instance().events().startEvent(key);
         Assert.assertTrue(result);
+    }
+
+    void validateEventInQueue(File targetFolder, String key, Map<String, Object> segmentation,
+        int count, Double sum, Double duration, int queueSize, int elementInQueue, Log L) {
+        List<EventImpl> events = TestUtils.getCurrentEventQueue(targetFolder, moduleEvents.L);
+        validateQueueSize(queueSize, events);
+
+        //check if event was recorded correctly
+        EventImpl event = events.get(elementInQueue);
+        EventImpl eventInMemory = moduleEvents.eventQueue.eventQueueMemoryCache.get(0);
+        validateEvent(event, key, segmentation, count, sum, duration);
+        validateEvent(eventInMemory, key, segmentation, count, sum, duration);
     }
 }
