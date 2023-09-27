@@ -956,4 +956,3 @@ public class BackendModeTests {
 
         return calendar.get(Calendar.HOUR_OF_DAY);
     }
-}
