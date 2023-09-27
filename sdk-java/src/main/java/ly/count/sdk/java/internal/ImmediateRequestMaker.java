@@ -69,7 +69,7 @@ class ImmediateRequestMaker implements ImmediateRequestI {
             try {
                 connection = cp.connection(request, null);
             } catch (IOException e) {
-                L.e("[ImmediateRequestMaker] IOException while preparing remote config update request :[" + e.toString() + "]");
+                L.e("[ImmediateRequestMaker] IOException while preparing remote config update request :[" + e + "]");
                 return null;
             }
             //connecting
