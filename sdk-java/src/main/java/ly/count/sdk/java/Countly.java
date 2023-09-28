@@ -349,11 +349,13 @@ public class Countly implements Usage {
         return sdk.feedback();
     }
 
+    /**
      * Record event with provided key.
      *
      * @param key key for this event, cannot be null or empty
      * @return Builder object for this event
      * @deprecated use {@link #events()} instead via instance() call
+     */
     @Override
     public Event event(String key) {
         L.d("[Countly] event: key = " + key);
