@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import static ly.count.sdk.java.internal.TestUtils.eKeys;
 import static ly.count.sdk.java.internal.TestUtils.validateEvent;
 
 @RunWith(JUnit4.class)
@@ -67,16 +68,17 @@ public class ModuleEventsTests {
         validateQueueSize(0);
         Assert.assertEquals(0, TestUtils.getCurrentRequestQueue().length);
 
-        Countly.instance().events().recordEvent("recordEvent_queueSizeOver1", 1, 45.9, null, 32.0);
+        Countly.instance().events().recordEvent(eKeys[0], 1, 45.9, null, 32.0);
         validateQueueSize(1);
         Assert.assertEquals(0, TestUtils.getCurrentRequestQueue().length);
 
-        Countly.instance().events().recordEvent("recordEvent_queueSizeOver2", 1, 45.9, null, 32.0);
+        Countly.instance().events().recordEvent(eKeys[1], 1, 45.9, null, 32.0);
         validateQueueSize(0);
         Assert.assertEquals(1, TestUtils.getCurrentRequestQueue().length);
 
-        Map<String, String> request = TestUtils.getCurrentRequestQueue()[0];
-        Assert.assertTrue(request.get("events").contains("recordEvent_queueSizeOver1") && request.get("events").contains("recordEvent_queueSizeOver2"));
+        List<EventImpl> eventsInRequest = TestUtils.readEventsFromRequest();
+        validateEvent(eventsInRequest.get(0), eKeys[0], null, 1, 45.9, 32.0);
+        validateEvent(eventsInRequest.get(1), eKeys[1], null, 1, 45.9, 32.0);
     }
 
     /**
@@ -86,17 +88,19 @@ public class ModuleEventsTests {
      */
     @Test
     public void recordEvent_queueSizeOverMemory() throws IOException {
-        EventQueueTests.writeToEventQueue("{\"hour\":10,\"count\":1,\"dow\":4,\"key\":\"test-joinEvents-1\",\"timestamp\":1695887006647}:::{\"hour\":10,\"count\":1,\"dow\":4,\"key\":\"test-joinEvents-2\",\"timestamp\":1695887006657}", false);
+        EventQueueTests.writeToEventQueue("{\"hour\":10,\"count\":5,\"dow\":4,\"key\":\"test-joinEvents-1\",\"timestamp\":1695887006647}:::{\"hour\":10,\"count\":1,\"dow\":4,\"key\":\"test-joinEvents-2\",\"timestamp\":1695887006657}", false);
         init(TestUtils.getConfigEvents(2));
 
         Assert.assertEquals(0, TestUtils.getCurrentRequestQueue().length);
         validateQueueSize(2);
-        Countly.instance().events().recordEvent("recordEvent_queueSizeOver", 1, 45.9, null, 32.0);
+        Countly.instance().events().recordEvent(eKeys[0], 1, 45.9, null, 32.0);
         validateQueueSize(0);
         Assert.assertEquals(1, TestUtils.getCurrentRequestQueue().length);
 
-        Map<String, String> request = TestUtils.getCurrentRequestQueue()[0];
-        Assert.assertTrue(request.get("events").contains("recordEvent_queueSizeOver") && request.get("events").contains("test-joinEvents-1") && request.get("events").contains("test-joinEvents-2"));
+        List<EventImpl> eventsInRequest = TestUtils.readEventsFromRequest();
+        validateEvent(eventsInRequest.get(0), "test-joinEvents-1", null, 5, null, null);
+        validateEvent(eventsInRequest.get(1), "test-joinEvents-2", null, 1, null, null);
+        validateEvent(eventsInRequest.get(2), eKeys[0], null, 1, 45.9, 32.0);
     }
 
     /**

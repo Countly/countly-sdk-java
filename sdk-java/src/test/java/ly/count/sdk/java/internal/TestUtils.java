@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.stream.Stream;
 import ly.count.sdk.java.Config;
+import org.json.JSONArray;
 import org.junit.Assert;
 
 import static ly.count.sdk.java.internal.SDKStorage.EVENT_QUEUE_FILE_NAME;
@@ -148,6 +149,18 @@ public class TestUtils {
         });
 
         return events;
+    }
+
+    static List<EventImpl> readEventsFromRequest() {
+        JSONArray array = new JSONArray(getCurrentRequestQueue()[0].get("events"));
+        List<EventImpl> result = new ArrayList<>();
+
+        array.forEach(value -> {
+            result.add(EventImpl.fromJSON(value.toString(), (ev) -> {
+            }, mock(Log.class)));
+        });
+
+        return result;
     }
 
     /**
