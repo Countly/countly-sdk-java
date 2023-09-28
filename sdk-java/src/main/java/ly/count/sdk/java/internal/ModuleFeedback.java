@@ -421,7 +421,7 @@ public class ModuleFeedback extends ModuleBase {
          * In case widgetResult is passed as "null," it would be assumed that the widget was canceled
          *
          * @param widgetInfo widget info
-         * @param widgetData widget data
+         * @param widgetData widget data to validate
          * @param widgetResult widget result
          */
         public void reportFeedbackWidgetManually(@Nullable CountlyFeedbackWidget widgetInfo, @Nullable JSONObject widgetData, @Nullable Map<String, Object> widgetResult) {
