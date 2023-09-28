@@ -2,6 +2,7 @@ package ly.count.sdk.java.internal;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import ly.count.sdk.java.Config;
@@ -16,6 +17,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import static ly.count.sdk.java.internal.TestUtils.getOs;
+import static ly.count.sdk.java.internal.TestUtils.validateEvent;
+import static ly.count.sdk.java.internal.TestUtils.validateEventQueueSize;
 import static org.mockito.Mockito.mock;
 
 @RunWith(JUnit4.class)
@@ -377,17 +380,20 @@ public class ModuleFeedbackTests {
     }
 
     /**
-     * Report feedback widget manually with null widget info
+     * Report feedback widget manually with null widgetData and widgetResult
      * "reportFeedbackWidgetManually" function should not record widget as an event,
-     * event queue should be empty
+     * event queue should contain it and it should have correct segmentation
      */
     @Test
     public void reportFeedbackWidgetManually() {
-        init(TestUtils.getConfigFeedback());
+        init(TestUtils.getConfigFeedback(Config.Feature.Events));
 
         CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] {});
+        validateEventQueueSize(0, moduleEvents().eventQueue);
+        Countly.instance().feedback().reportFeedbackWidgetManually(widgetInfo, null, null);
+        validateEventQueueSize(1, moduleEvents().eventQueue);
 
-        //Countly.instance().feedback().reportFeedbackWidgetManually(widgetInfo, null, null);
+        validateEvent(TestUtils.getCurrentEventQueue(TestUtils.getTestSDirectory(), L).get(0), FeedbackWidgetType.nps.eventKey, requiredWidgetSegmentation(widgetInfo.widgetId, null), 1, null, null);
     }
 
     private void validateWidgetDataParams(Map<String, String> params, CountlyFeedbackWidget widgetInfo) {
@@ -455,5 +461,22 @@ public class ModuleFeedbackTests {
         Assert.assertEquals(wName, fWidget.name);
         Assert.assertEquals(wId, fWidget.widgetId);
         Assert.assertArrayEquals(wTags, fWidget.tags);
+    }
+
+    private ModuleEvents moduleEvents() {
+        return SDKCore.instance.module(ModuleEvents.class);
+    }
+
+    private Map<String, Object> requiredWidgetSegmentation(String widgetId, Map<String, Object> widgetResult) {
+        Map<String, Object> segm = new HashMap<>();
+        segm.put("platform", getOs());
+        segm.put("app_version", Device.dev.getAppVersion());
+        segm.put("widget_id", widgetId);
+        if (widgetResult != null) {
+            segm.putAll(widgetResult);
+        } else {
+            segm.put("closed", "1");
+        }
+        return segm;
     }
 }

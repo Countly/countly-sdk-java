@@ -56,11 +56,17 @@ public class TestUtils {
     }
 
     static Config getConfigFeedback() {
+        return getConfigFeedback((Config.Feature) null);
+    }
+
+    static Config getConfigFeedback(Config.Feature... features) {
         File sdkStorageRootDirectory = getTestSDirectory();
         checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
         Config config = new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
         config.setCustomDeviceId(DEVICE_ID);
+        config.setApplicationVersion("1.0");
 
+        config.enableFeatures(features);
         config.enableFeatures(Config.Feature.Feedback);
 
         return config;
