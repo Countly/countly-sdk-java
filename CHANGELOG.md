@@ -9,6 +9,7 @@
   * "removeFromCohort(key)"
 
 * In Countly class, the old "init(directory,config)" method is deprecated, use "init(config)" instead via "instance()" call.
+* Deprecated "Countly::stop(boolean)" call, use "Countly::halt" or "Countly::stop" instead via "instance()" call.
 
 22.09.2
 * Fixed internal log calls that did not respect the configured log level and did not work with the log listener.

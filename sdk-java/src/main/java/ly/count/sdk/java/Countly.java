@@ -132,6 +132,8 @@ public class Countly implements Usage {
      * Also clears all the data if called with {@code clearData = true}.
      *
      * @param clearData whether to clear all Countly data or not
+     * @deprecated use {@link #halt()} instead via instance() call to clear data
+     * or {@link #stop()} to keep data
      */
     public static void stop(boolean clearData) {
         if (isInitialized()) {
@@ -146,6 +148,20 @@ public class Countly implements Usage {
             //    cly.L.e("[Countly] Countly isn't initialized to stop it");
             //}
         }
+    }
+
+    /**
+     * Stop Countly SDK. Stops all tasks.
+     */
+    public void stop() {
+        stop(false);
+    }
+
+    /**
+     * Stop Countly SDK. Stops all tasks and releases resources.
+     */
+    public void halt() {
+        stop(true);
     }
 
     /**
@@ -171,7 +187,7 @@ public class Countly implements Usage {
      *
      * NOTE: {@link Session} instances can expire, for example when {@link Config.DID} changes.
      * {@link Session} also holds application context.
-     * So either do not store {@link Session} instances in any static variables and use this method or {@link #getSession()} every time you need it,
+     * So either do not store {@link Session} instances in any static variables and use this method every time you need it,
      * or check {@link Session#isActive()} before using it.
      *
      * @return active {@link Session} instance
@@ -209,7 +225,7 @@ public class Countly implements Usage {
     }
 
     /**
-     * Alternative to {@link #getSession()} & {@link #session()} method for accessing Countly SDK API.
+     * Alternative to {@link #session()} method for accessing Countly SDK API.
      *
      * @return {@link Usage} instance
      */
