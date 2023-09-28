@@ -173,7 +173,7 @@ public class ModuleEventsTests {
 
         endEvent(eventName, null, 1, null);
         long end = System.currentTimeMillis();
-        //duration testing is not possible because division is error-prone for small numbers like .212 and .211
+
         Assert.assertEquals(0, moduleEvents.timedEvents.size());
         validateEventInQueue(TestUtils.getTestSDirectory(), eventName, null, 1, null, (double) (end - start) / 1000, 1, 0, moduleEvents.L);
     }

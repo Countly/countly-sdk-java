@@ -295,7 +295,11 @@ public class UtilsTests {
             file.setReadable(false);
 
             String content = Utils.readFileContent(file, logger);
-            Assert.assertEquals("", content);//todo this might fail on windows. Potentiall add a platform check for this test
+            if (System.getProperty("os.name").toLowerCase().contains("win")) {
+                Assert.assertEquals(fileContent, content);
+            } else {
+                Assert.assertEquals("", content);
+            }
         } finally {
             File file = new File(TEST_FILE_NAME);
             if (file.exists()) {
