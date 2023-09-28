@@ -469,7 +469,7 @@ public class Config {
     /**
      * If sdk used across multiple platforms
      */
-    protected String sdkPlatform = "Desktop";
+    protected String sdkPlatform = System.getProperty("os.name");
 
     //    /**
     //    * Maximum size of all string keys
@@ -1526,7 +1526,7 @@ public class Config {
     }
 
     /**
-     * Default sdk platform is "Desktop"
+     * Default sdk platform is os name
      * If you want to override it, you can use this method
      *
      * @param platform sdk platform
