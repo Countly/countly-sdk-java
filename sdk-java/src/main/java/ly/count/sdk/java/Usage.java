@@ -1,5 +1,6 @@
 package ly.count.sdk.java;
 
+import ly.count.sdk.java.internal.ModuleEvents;
 import java.util.Map;
 
 /**
@@ -20,6 +21,7 @@ public interface Usage {
      * @param key key for this event, cannot be null or empty
      * @return Event instance.
      * @see Event#record()
+     * @deprecated this function is deprecated, use {@link ModuleEvents.Events#recordEvent} instead
      */
     Event event(String key);
 

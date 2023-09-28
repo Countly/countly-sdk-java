@@ -1,5 +1,6 @@
 package ly.count.sdk.java;
 
+import ly.count.sdk.java.internal.ModuleEvents;
 import javax.annotation.Nonnull;
 import java.util.Map;
 
@@ -10,7 +11,9 @@ import java.util.Map;
 public interface Event {
     /**
      * Add event to the buffer, send it to the server in case number of events in the session
-     * is equal or bigger than {@link Config#eventsBufferSize} or wait until next {@link Session#update()}.
+     * is equal or bigger than {@link Config#eventQueueThreshold} or wait until next {@link Session#update()}.
+     *
+     * @deprecated this function is deprecated, use {@link ModuleEvents.Events#recordEvent(String, int, double, Map, double)} instead
      */
     void record();
 
@@ -18,7 +21,9 @@ public interface Event {
      * Set timed {@link Event} duration as difference between moment {@link Event} was created
      * and current time in seconds. Then add the event to its session (if they're enabled),
      * send it to the server in case number of events in the session is equal or bigger
-     * than {@link Config#eventsBufferSize} or wait until next {@link Session#update()}.
+     * than {@link Config#eventQueueThreshold} or wait until next {@link Session#update()}.
+     *
+     * @deprecated this function is deprecated, use {@link ModuleEvents.Events#endEvent(String, Map, int, double)} instead
      */
     void endAndRecord();
 
@@ -28,6 +33,7 @@ public interface Event {
      * @param key key of segment, must not be null or empty
      * @param value value of segment, must not be null or empty
      * @return this instance for method chaining
+     * @deprecated this function is deprecated, use {@link ModuleEvents.Events#recordEvent(String, int, double, Map, double)} instead
      */
     Event addSegment(@Nonnull String key, @Nonnull String value);
 
@@ -38,6 +44,7 @@ public interface Event {
      * segmentation from; cannot contain nulls or empty strings; must have
      * even length
      * @return this instance for method chaining
+     * @deprecated this function is deprecated, use {@link ModuleEvents.Events#recordEvent(String, int, double, Map, double)} instead
      */
     Event addSegments(@Nonnull String... segmentation);
 
@@ -46,6 +53,7 @@ public interface Event {
      *
      * @param segmentation map of segment pairs ({key1: value1, key2: value2}
      * @return this instance for method chaining
+     * @deprecated this function is deprecated, use {@link ModuleEvents.Events#recordEvent(String, int, double, Map, double)} instead
      */
     Event setSegmentation(@Nonnull Map<String, String> segmentation);
 
@@ -54,6 +62,7 @@ public interface Event {
      *
      * @param count event count, cannot be 0
      * @return this instance for method chaining
+     * @deprecated this function is deprecated, use {@link ModuleEvents.Events#recordEvent(String, int, double, Map, double)} instead
      */
     Event setCount(int count);
 
@@ -62,6 +71,7 @@ public interface Event {
      *
      * @param sum event sum
      * @return this instance for method chaining
+     * @deprecated this function is deprecated, use {@link ModuleEvents.Events#recordEvent(String, int, double, Map, double)} instead
      */
     Event setSum(double sum);
 
@@ -70,6 +80,7 @@ public interface Event {
      *
      * @param duration event duration
      * @return this instance for method chaining
+     * @deprecated this function is deprecated, use {@link ModuleEvents.Events#recordEvent(String, int, double, Map, double)} instead
      */
     Event setDuration(double duration);
 
@@ -81,6 +92,7 @@ public interface Event {
      *     <li>Invalid data supplied (count < 0, NaN as sum, duration < 0, etc.) while in production mode</li>
      *     <li>Event has been already recorded in session, thus should be discarded</li>
      * </ul>
+     * @deprecated this function is deprecated
      */
     boolean isInvalid();
 }

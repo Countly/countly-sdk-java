@@ -31,7 +31,7 @@ public class BackendModeTests {
         cc.setEventQueueSizeToSend(4).enableBackendMode();
 
         // System specific folder structure
-        File sdkStorageRootDirectory = TestUtils.getSdkStorageRootDirectory();
+        File sdkStorageRootDirectory = TestUtils.getTestSDirectory();
         TestUtils.checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
 
         Countly.init(sdkStorageRootDirectory, cc);
