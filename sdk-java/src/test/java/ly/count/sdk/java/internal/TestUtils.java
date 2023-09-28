@@ -257,4 +257,8 @@ public class TestUtils {
     static void validateEventQueueSize(int expectedSize, EventQueue eventQueue) {
         validateEventQueueSize(expectedSize, TestUtils.getCurrentEventQueue(getTestSDirectory(), mock(Log.class)), eventQueue);
     }
+
+    static String getOs() {
+        return System.getProperty("os.name");
+    }
 }
