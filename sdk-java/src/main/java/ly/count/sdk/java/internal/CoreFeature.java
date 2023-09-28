@@ -5,7 +5,7 @@ import java.util.Map;
 
 public enum CoreFeature {
     Sessions(1 << 1, ModuleSessions::new),
-    Events(1 << 2),
+    Events(1 << 2, ModuleEvents::new),
     Views(1 << 3, ModuleViews::new),
     CrashReporting(1 << 4, ModuleCrash::new),
     Location(1 << 5),

@@ -11,23 +11,25 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.stream.Stream;
 import ly.count.sdk.java.Config;
+import org.junit.Assert;
 
 import static ly.count.sdk.java.internal.SDKStorage.EVENT_QUEUE_FILE_NAME;
 import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_PREFIX;
 import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_SEPARATOR;
+import static org.mockito.Mockito.mock;
 
 public class TestUtils {
-
-    static String DELIMETER = ":::";
     static String SERVER_URL = "https://test.count.ly";
     static String SERVER_APP_KEY = "COUNTLY_APP_KEY";
     static String DEVICE_ID = "some_random_test_device_id";
+
+    public static final String[] eKeys = new String[] { "eventKey1", "eventKey2", "eventKey3", "eventKey4", "eventKey5", "eventKey6", "eventKey7" };
 
     private TestUtils() {
     }
 
     static Config getBaseConfig() {
-        File sdkStorageRootDirectory = getSdkStorageRootDirectory();
+        File sdkStorageRootDirectory = getTestSDirectory();
         checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
         Config config = new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
         config.setCustomDeviceId(DEVICE_ID);
@@ -35,15 +37,22 @@ public class TestUtils {
         return config;
     }
 
-    static Config getVariantConfig(ImmediateRequestGenerator generator) {
-        Config config = getBaseConfig();
-        InternalConfig internalConfig = new InternalConfig(config);
+    static Config getConfigEvents(Integer eventThreshold) {
+        File sdkStorageRootDirectory = getTestSDirectory();
+        checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
+        Config config = new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
+        config.setCustomDeviceId(DEVICE_ID);
 
-        internalConfig.immediateRequestGenerator = generator;
+        config.enableFeatures(Config.Feature.Events);
+
+        if (eventThreshold != null) {
+            config.setEventQueueSizeToSend(eventThreshold);
+        }
+
         return config;
     }
 
-    static File getSdkStorageRootDirectory() {
+    public static File getTestSDirectory() {
         // System specific folder structure
         String[] sdkStorageRootPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
         return new File(String.join(File.separator, sdkStorageRootPath));
@@ -55,6 +64,10 @@ public class TestUtils {
                 throw new RuntimeException("Directory creation failed");
             }
         }
+    }
+
+    protected static Map<String, String>[] getCurrentRequestQueue() {
+        return getCurrentRequestQueue(getTestSDirectory(), mock(Log.class));
     }
 
     /**
@@ -115,7 +128,7 @@ public class TestUtils {
             //do nothing
         }
 
-        Arrays.stream(fileContent.split(DELIMETER)).forEach(s -> {
+        Arrays.stream(fileContent.split(EventQueue.DELIMITER)).forEach(s -> {
             final EventImpl event = EventImpl.fromJSON(s, (ev) -> {
             }, logger);
             if (event != null) {
@@ -184,5 +197,21 @@ public class TestUtils {
 
             return paramMap;
         }
+    }
+
+    static void validateEvent(EventImpl gonnaValidate, String key, Map<String, Object> segmentation, int count, Double sum, Double duration) {
+        Assert.assertEquals(key, gonnaValidate.key);
+        Assert.assertEquals(segmentation, gonnaValidate.segmentation);
+        Assert.assertEquals(count, gonnaValidate.count);
+        Assert.assertEquals(sum, gonnaValidate.sum);
+
+        if (duration != null) {
+            double delta = 0.1;
+            Assert.assertTrue(Math.abs(duration - gonnaValidate.duration) < delta);
+        }
+
+        Assert.assertTrue(gonnaValidate.dow >= 0 && gonnaValidate.dow < 7);
+        Assert.assertTrue(gonnaValidate.hour >= 0 && gonnaValidate.hour < 24);
+        Assert.assertTrue(gonnaValidate.timestamp >= 0);
     }
 }

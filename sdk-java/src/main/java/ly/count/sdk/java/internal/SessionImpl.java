@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Event;
 import ly.count.sdk.java.Session;
@@ -286,6 +285,12 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         return SDKCore.instance.timedEvents();
     }
 
+    /**
+     * Record event to session.
+     *
+     * @param event
+     * @deprecated use {@link ModuleEvents.Events#recordEvent(String, int, double, Map, double)} instead
+     */
     @Override
     public void recordEvent(Event event) {
         L.d("[SessionImpl] recordEvent: " + event.toString());
@@ -293,21 +298,14 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             L.i("[SessionImpl] recordEvent: Skipping event - feature is not enabled");
             return;
         }
+
         if (began == null) {
             begin();
         }
 
-        synchronized (storageId()) {
-            events.add(event);
-            if (pushOnChange) {
-                Storage.pushAsync(ctx, this);
-            }
-
-            Config config = SDKCore.instance.config();
-            if (config != null && ctx.getConfig().getEventsBufferSize() <= events.size()) {
-                update();
-            }
-        }
+        ModuleEvents eventsModule = (ModuleEvents) SDKCore.instance.module(CoreFeature.Events.getIndex());
+        EventImpl eventImpl = (EventImpl) event;
+        eventsModule.recordEventInternal(eventImpl.key, eventImpl.count, eventImpl.sum, eventImpl.segmentation, eventImpl.duration);
     }
 
     @Override
