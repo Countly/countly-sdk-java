@@ -283,6 +283,33 @@ public class ModuleFeedbackTests {
     }
 
     /**
+     * Get feedback widget data
+     * "getFeedbackWidgetData" function should return widget data related to it
+     * data should fill with correct data
+     */
+    @Test
+    public void getFeedbackWidgetData() {
+        init(TestUtils.getConfigFeedback());
+
+        JSONObject result = new JSONObject();
+        result.put("result", TestUtils.feedbackWidgetData);
+
+        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] {});
+
+        ImmediateRequestI requestMaker = (requestData, customEndpoint, cp, requestShouldBeDelayed, networkingIsEnabled, callback, log) -> {
+            validateWidgetRequiredParams("/o/surveys/" + widgetInfo.type.name() + "/widget", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
+            validateWidgetDataParams(TestUtils.parseQueryParams(requestData), widgetInfo);
+            callback.callback(result);
+        };
+        SDKCore.instance.config.immediateRequestGenerator = () -> requestMaker;
+
+        Countly.instance().feedback().getFeedbackWidgetData(widgetInfo, (response, error) -> {
+            Assert.assertNull(error);
+            Assert.assertEquals(TestUtils.feedbackWidgetData, response.get("result"));
+        });
+    }
+
+    /**
      * Get feedback widget data network error
      * "getFeedbackWidgetData" function should return null widget data and error message
      * data should be null and error message should be same as expected
