@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Set;
 import ly.count.sdk.java.internal.Byteable;
 import ly.count.sdk.java.internal.CoreFeature;
-import ly.count.sdk.java.internal.ImmediateRequestGenerator;
 import ly.count.sdk.java.internal.Log;
 import ly.count.sdk.java.internal.LogCallback;
 import ly.count.sdk.java.internal.ModuleBase;
@@ -467,7 +466,10 @@ public class Config {
      */
     File sdkStorageRootDirectory = null;
 
-    protected ImmediateRequestGenerator immediateRequestGenerator = null;
+    /**
+     * If sdk used across multiple platforms
+     */
+    protected String sdkPlatform = System.getProperty("os.name");
 
     //    /**
     //    * Maximum size of all string keys
@@ -1521,6 +1523,27 @@ public class Config {
     public Config setMetricOverride(Map<String, String> metricOverride) {
         this.metricOverride.putAll(metricOverride);
         return this;
+    }
+
+    /**
+     * Default sdk platform is os name
+     * If you want to override it, you can use this method
+     *
+     * @param platform sdk platform
+     * @return {@code this} instance for method chaining
+     */
+    public Config setSdkPlatform(String platform) {
+        this.sdkPlatform = platform;
+        return this;
+    }
+
+    /**
+     * Getter for {@link #sdkPlatform}
+     *
+     * @return {@link #sdkPlatform} value
+     */
+    public String getSdkPlatform() {
+        return sdkPlatform;
     }
 }
 
