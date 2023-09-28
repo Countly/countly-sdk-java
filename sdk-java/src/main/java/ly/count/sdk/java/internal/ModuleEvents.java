@@ -108,8 +108,8 @@ public class ModuleEvents extends ModuleBase {
     }
 
     private void checkEventQueueToSend(boolean forceSend) {
+        L.d("[ModuleEvents] queue size:[" + eventQueue.eqSize() + "] || forceSend: " + forceSend);
         if (forceSend || (eventQueue.eqSize() >= internalConfig.getEventsBufferSize())) {
-            L.d("[ModuleEvents] addEventToQueue: eventQueue.size >= internalConfig.getEventsBufferSize() || forceSend: " + forceSend);
             addEventsToRequestQ();
         }
     }

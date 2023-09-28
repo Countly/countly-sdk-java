@@ -10,9 +10,9 @@ public class EventQueue {
     private final Log L;
     final List<EventImpl> eventQueueMemoryCache;
 
-    protected EventQueue(Log logger, int bufferSize) {
+    protected EventQueue(Log logger, int eventThreshold) {
         L = logger;
-        eventQueueMemoryCache = new ArrayList<>(bufferSize);
+        eventQueueMemoryCache = new ArrayList<>(eventThreshold);
     }
 
     /**
@@ -25,11 +25,11 @@ public class EventQueue {
     void addEvent(final EventImpl event) {
         if (event == null) {
             L.w("[EventQueue] Event is null, skipping");
-        } else {
-            L.d("[EventQueue] Adding event: " + event.key);
-            eventQueueMemoryCache.add(event);
-            writeEventQueueToStorage();
+            return;
         }
+        L.d("[EventQueue] Adding event: " + event.key);
+        eventQueueMemoryCache.add(event);
+        writeEventQueueToStorage();
     }
 
     /**

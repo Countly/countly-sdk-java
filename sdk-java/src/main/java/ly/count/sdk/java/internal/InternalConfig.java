@@ -138,7 +138,7 @@ public final class InternalConfig extends Config implements Storable {
                 }
             }
             stream.writeInt(sendUpdateEachSeconds);
-            stream.writeInt(eventsBufferSize);
+            stream.writeInt(eventQueueThreshold);
             stream.writeInt(0);//for keeping backwards compatibility, remove in the future. sessionCooldownPeriod
             stream.writeBoolean(false);//for keeping backwards compatibility, remove in the future
             stream.writeInt(5);//for keeping backwards compatibility, remove in the future (crashReportingANRCheckingPeriod)
@@ -235,7 +235,7 @@ public final class InternalConfig extends Config implements Storable {
                 certificatePins.add(stream.readUTF());
             }
             sendUpdateEachSeconds = stream.readInt();
-            eventsBufferSize = stream.readInt();
+            eventQueueThreshold = stream.readInt();
             int throwawaySessionCooldownPeriod = stream.readInt();//we are only reading this for backwards compatibility. Throw away in the future
             boolean throwawayCountlyTestMode = stream.readBoolean();//we are only reading this for backwards compatibility. Throw away in the future
             int throwawayCrashReportingANRCheckingPeriod = stream.readInt();//we are only reading this for backwards compatibility. Throw away in the future. crashReportingANRCheckingPeriod

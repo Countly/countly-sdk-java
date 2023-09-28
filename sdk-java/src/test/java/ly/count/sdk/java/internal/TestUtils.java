@@ -21,6 +21,8 @@ public class TestUtils {
     static String SERVER_URL = "https://test.count.ly";
     static String SERVER_APP_KEY = "COUNTLY_APP_KEY";
     static String DEVICE_ID = "some_random_test_device_id";
+    
+    public static final String[] eKeys = new String[] { "eventKey1", "eventKey2", "eventKey3", "eventKey4", "eventKey5", "eventKey6", "eventKey7" };
 
     private TestUtils() {
     }
@@ -30,6 +32,21 @@ public class TestUtils {
         checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
         Config config = new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
         config.setCustomDeviceId(DEVICE_ID);
+
+        return config;
+    }
+
+    static Config getConfigEvents(Integer eventThreshold) {
+        File sdkStorageRootDirectory = getTestSDirectory();
+        checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
+        Config config = new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
+        config.setCustomDeviceId(DEVICE_ID);
+
+        config.enableFeatures(Config.Feature.Events);
+
+        if (eventThreshold != null) {
+            config.setEventQueueSizeToSend(eventThreshold);
+        }
 
         return config;
     }
