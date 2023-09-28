@@ -301,7 +301,7 @@ public class ModuleEventsTests {
     }
 
     /**
-     * End an event with empty key
+     * End an event with null key
      * "endEvent" function should not work with null key
      * in memory , timed events and cache queue not contain it
      */
@@ -394,6 +394,79 @@ public class ModuleEventsTests {
         validateTimedEventSize(0, 1);
         timedEvent = moduleEvents.timedEvents.get(eventName);
         validateEvent(timedEvent, eventName, null, 1, null, null);
+    }
+
+    /**
+     * Cancel an event with empty key
+     * "cancelEvent" function should not work with empty key
+     * in memory , timed events and cache queue not contain it
+     */
+    @Test
+    public void cancelEvent_emptyKey() {
+        Config config = TestUtils.getBaseConfig();
+        config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(4);
+        init(config);
+
+        validateTimedEventSize(0, 0);
+        Assert.assertFalse(Countly.instance().events().cancelEvent(""));
+        validateTimedEventSize(0, 0);
+    }
+
+    /**
+     * Cancel an event with null key
+     * "cancelEvent" function should not work with null key
+     * in memory , timed events and cache queue not contain it
+     */
+    @Test
+    public void cancelEvent_nullKey() {
+        Config config = TestUtils.getBaseConfig();
+        config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(4);
+        init(config);
+
+        validateTimedEventSize(0, 0);
+        Assert.assertFalse(Countly.instance().events().cancelEvent(null));
+        validateTimedEventSize(0, 0);
+    }
+
+    /**
+     * Cancel a not existing event
+     * "cancelEvent" function should not work with not existing event key
+     * in memory , timed events and cache queue not contain it
+     */
+    @Test
+    public void cancelEvent_notExist() {
+        Config config = TestUtils.getBaseConfig();
+        config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(4);
+        init(config);
+
+        validateTimedEventSize(0, 0);
+        Assert.assertFalse(Countly.instance().events().cancelEvent("cancelEvent_notExist"));
+        validateTimedEventSize(0, 0);
+    }
+
+    /**
+     * Cancel an event
+     * "cancelEvent" function should cancel an event
+     * in memory , timed events and cache queue should contain it
+     */
+    @Test
+    public void cancelEvent() {
+        Config config = TestUtils.getBaseConfig();
+        config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(4);
+        init(config);
+
+        validateTimedEventSize(0, 0);
+        String eventName = "cancelEvent";
+
+        startEvent(eventName); // start event to end it
+        validateTimedEventSize(0, 1);
+
+        EventImpl timedEvent = moduleEvents.timedEvents.get(eventName);
+        validateEvent(timedEvent, eventName, null, 1, null, null);
+
+        Assert.assertTrue(Countly.instance().events().cancelEvent(eventName));
+        Assert.assertEquals(0, moduleEvents.timedEvents.size());
+        validateQueueSize(0);
     }
 
     private void validateTimedEventSize(int expectedQueueSize, int expectedTimedEventSize) {
