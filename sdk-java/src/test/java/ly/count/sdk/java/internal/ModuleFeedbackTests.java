@@ -15,6 +15,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import static ly.count.sdk.java.internal.TestUtils.getOs;
 import static org.mockito.Mockito.mock;
 
 @RunWith(JUnit4.class)
@@ -244,7 +245,8 @@ public class ModuleFeedbackTests {
         widgetListUrl.append(internalConfig.getSdkVersion());
         widgetListUrl.append("&sdk_name=");
         widgetListUrl.append(internalConfig.getSdkName());
-        widgetListUrl.append("&platform=desktop");
+        widgetListUrl.append("&platform=");
+        widgetListUrl.append(getOs());
 
         Countly.instance().feedback().constructFeedbackWidgetUrl(widgetInfo, (response, error) -> {
             Assert.assertNull(error);
@@ -374,9 +376,23 @@ public class ModuleFeedbackTests {
         Assert.assertEquals(0, events.size());
     }
 
+    /**
+     * Report feedback widget manually with null widget info
+     * "reportFeedbackWidgetManually" function should not record widget as an event,
+     * event queue should be empty
+     */
+    @Test
+    public void reportFeedbackWidgetManually() {
+        init(TestUtils.getConfigFeedback());
+
+        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] {});
+
+        //Countly.instance().feedback().reportFeedbackWidgetManually(widgetInfo, null, null);
+    }
+
     private void validateWidgetDataParams(Map<String, String> params, CountlyFeedbackWidget widgetInfo) {
         Assert.assertEquals(widgetInfo.widgetId, params.get("widget_id"));
-        Assert.assertEquals("desktop", params.get("platform"));
+        Assert.assertEquals(getOs(), params.get("platform"));
         Assert.assertEquals("1", params.get("shown"));
         Assert.assertEquals(String.valueOf(Device.dev.getAppVersion()), params.get("app_version"));
         validateSdkRelatedParams(params);
