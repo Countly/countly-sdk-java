@@ -248,8 +248,4 @@ public class TestUtils {
         Assert.assertTrue(gonnaValidate.hour >= 0 && gonnaValidate.hour < 24);
         Assert.assertTrue(gonnaValidate.timestamp >= 0);
     }
-
-    static String getOs() {
-        return System.getProperty("os.name");
-    }
 }
