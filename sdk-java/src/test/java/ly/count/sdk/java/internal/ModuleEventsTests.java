@@ -12,6 +12,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import static ly.count.sdk.java.internal.TestUtils.validateEvent;
+
 @RunWith(JUnit4.class)
 public class ModuleEventsTests {
 
@@ -53,7 +55,7 @@ public class ModuleEventsTests {
         Countly.instance().events().recordEvent(eventKey, 1, 45.9, segmentation, 32.0);
 
         //check if event was recorded correctly and size of event queue is equal to size of events in queue
-        validateEventInQueue(TestUtils.getTestSDirectory(), eventKey, segmentation, 1, 45.9, 32.0, 1, 0, moduleEvents.L);
+        validateEventInQueue(TestUtils.getTestSDirectory(), eventKey, segmentation, 1, 45.9, 32.0, 1, 0);
     }
 
     /**
@@ -147,7 +149,7 @@ public class ModuleEventsTests {
         //record event with key segmentation
         Countly.instance().events().recordEvent(eventKey, segmentation);
 
-        validateEventInQueue(TestUtils.getTestSDirectory(), eventKey, expectedSegmentation, 1, null, null, 1, 0, moduleEvents.L);
+        validateEventInQueue(TestUtils.getTestSDirectory(), eventKey, expectedSegmentation, 1, null, null, 1, 0);
     }
 
     /**
@@ -175,7 +177,7 @@ public class ModuleEventsTests {
         long end = System.currentTimeMillis();
 
         Assert.assertEquals(0, moduleEvents.timedEvents.size());
-        validateEventInQueue(TestUtils.getTestSDirectory(), eventName, null, 1, null, (double) (end - start) / 1000, 1, 0, moduleEvents.L);
+        validateEventInQueue(TestUtils.getTestSDirectory(), eventName, null, 1, null, (double) (end - start) / 1000, 1, 0);
     }
 
     /**
@@ -241,7 +243,7 @@ public class ModuleEventsTests {
         long end = System.currentTimeMillis();
 
         Assert.assertEquals(0, moduleEvents.timedEvents.size());
-        validateEventInQueue(TestUtils.getTestSDirectory(), eventName, null, 1, null, (double) (end - start) / 1000, 1, 0, moduleEvents.L);
+        validateEventInQueue(TestUtils.getTestSDirectory(), eventName, null, 1, null, (double) (end - start) / 1000, 1, 0);
     }
 
     /**
@@ -322,7 +324,7 @@ public class ModuleEventsTests {
         long end = System.currentTimeMillis();
 
         Assert.assertEquals(0, moduleEvents.timedEvents.size());
-        validateEventInQueue(TestUtils.getTestSDirectory(), eventName, segmentation, 1, 5.0, (double) (end - start) / 1000, 1, 0, moduleEvents.L);
+        validateEventInQueue(TestUtils.getTestSDirectory(), eventName, segmentation, 1, 5.0, (double) (end - start) / 1000, 1, 0);
     }
 
     /**
@@ -366,22 +368,6 @@ public class ModuleEventsTests {
         Assert.assertEquals(expectedSize, moduleEvents.eventQueue.eqSize());
     }
 
-    private void validateEvent(EventImpl gonnaValidate, String key, Map<String, Object> segmentation, int count, Double sum, Double duration) {
-        Assert.assertEquals(key, gonnaValidate.key);
-        Assert.assertEquals(segmentation, gonnaValidate.segmentation);
-        Assert.assertEquals(count, gonnaValidate.count);
-        Assert.assertEquals(sum, gonnaValidate.sum);
-
-        if (duration != null) {
-            double delta = 0.1;
-            Assert.assertTrue(Math.abs(duration - gonnaValidate.duration) < delta);
-        }
-
-        Assert.assertTrue(gonnaValidate.dow >= 0 && gonnaValidate.dow < 7);
-        Assert.assertTrue(gonnaValidate.hour >= 0 && gonnaValidate.hour < 24);
-        Assert.assertTrue(gonnaValidate.timestamp >= 0);
-    }
-
     private void endEvent(String key, Map<String, Object> segmentation, int count, Double sum) {
         boolean result = Countly.instance().events().endEvent(key, segmentation, count, sum);
         Assert.assertTrue(result);
@@ -393,7 +379,7 @@ public class ModuleEventsTests {
     }
 
     void validateEventInQueue(File targetFolder, String key, Map<String, Object> segmentation,
-        int count, Double sum, Double duration, int queueSize, int elementInQueue, Log L) {
+        int count, Double sum, Double duration, int queueSize, int elementInQueue) {
         List<EventImpl> events = TestUtils.getCurrentEventQueue(targetFolder, moduleEvents.L);
         validateQueueSize(queueSize, events);
 

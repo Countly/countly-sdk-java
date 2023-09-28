@@ -23,15 +23,24 @@ public class EventQueue {
     }
 
     void addEvent(final EventImpl event) {
-        L.d("[EventQueue] Adding event: " + event.key);
-        eventQueueMemoryCache.add(event);
-        writeEventQueueToStorage();
+        if (event == null) {
+            L.w("[EventQueue] Event is null, skipping");
+        } else {
+            L.d("[EventQueue] Adding event: " + event.key);
+            eventQueueMemoryCache.add(event);
+            writeEventQueueToStorage();
+        }
     }
 
     /**
      * set the new value in event data storage
      */
     void writeEventQueueToStorage() {
+        if (eventQueueMemoryCache.isEmpty()) {
+            L.d("[EventQueue] No events to write to disk");
+            return;
+        }
+
         final String eventQueue = joinEvents(eventQueueMemoryCache);
 
         L.d("[EventQueue] Setting event data: " + eventQueue);
@@ -58,7 +67,7 @@ public class EventQueue {
         eventQueueMemoryCache.sort((e1, e2) -> (int) (e1.timestamp - e2.timestamp));
     }
 
-    private String joinEvents(final Collection<EventImpl> collection) {
+    String joinEvents(final Collection<EventImpl> collection) {
         final List<String> strings = new ArrayList<>();
         for (EventImpl e : collection) {
             strings.add(e.toJSON(L));

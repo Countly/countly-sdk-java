@@ -1,12 +1,21 @@
 package ly.count.sdk.java.internal;
 
-import ly.count.sdk.java.Config;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
 import java.util.stream.Stream;
+import ly.count.sdk.java.Config;
+import org.junit.Assert;
 
-import static ly.count.sdk.java.internal.SDKStorage.*;
+import static ly.count.sdk.java.internal.SDKStorage.EVENT_QUEUE_FILE_NAME;
+import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_PREFIX;
+import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_SEPARATOR;
 
 public class TestUtils {
     static String SERVER_URL = "https://test.count.ly";
@@ -168,9 +177,19 @@ public class TestUtils {
         }
     }
 
-    static File getSdkStorageRootDirectory() {
-        // System specific folder structure
-        String[] sdkStorageRootPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
-        return new File(String.join(File.separator, sdkStorageRootPath));
+    static void validateEvent(EventImpl gonnaValidate, String key, Map<String, Object> segmentation, int count, Double sum, Double duration) {
+        Assert.assertEquals(key, gonnaValidate.key);
+        Assert.assertEquals(segmentation, gonnaValidate.segmentation);
+        Assert.assertEquals(count, gonnaValidate.count);
+        Assert.assertEquals(sum, gonnaValidate.sum);
+
+        if (duration != null) {
+            double delta = 0.1;
+            Assert.assertTrue(Math.abs(duration - gonnaValidate.duration) < delta);
+        }
+
+        Assert.assertTrue(gonnaValidate.dow >= 0 && gonnaValidate.dow < 7);
+        Assert.assertTrue(gonnaValidate.hour >= 0 && gonnaValidate.hour < 24);
+        Assert.assertTrue(gonnaValidate.timestamp >= 0);
     }
 }
