@@ -230,12 +230,6 @@ public class TestUtils {
         return paramMap;
     }
 
-    static File getSdkStorageRootDirectory() {
-        // System specific folder structure
-        String[] sdkStorageRootPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
-        return new File(String.join(File.separator, sdkStorageRootPath));
-    }
-
     static void validateEvent(EventImpl gonnaValidate, String key, Map<String, Object> segmentation, int count, Double sum, Double duration) {
         Assert.assertEquals(key, gonnaValidate.key);
         Assert.assertEquals(segmentation, gonnaValidate.segmentation);

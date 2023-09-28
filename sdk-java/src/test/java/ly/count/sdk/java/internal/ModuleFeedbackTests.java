@@ -343,7 +343,7 @@ public class ModuleFeedbackTests {
         init(TestUtils.getConfigFeedback());
 
         Countly.instance().feedback().reportFeedbackWidgetManually(null, null, null);
-        List<EventImpl> events = TestUtils.getCurrentEventQueue(TestUtils.getSdkStorageRootDirectory(), L);
+        List<EventImpl> events = TestUtils.getCurrentEventQueue(TestUtils.getTestSDirectory(), L);
         Assert.assertEquals(0, events.size());
     }
 
