@@ -9,13 +9,11 @@ import ly.count.sdk.java.View;
 
 class ViewImpl implements View {
     private Log L = null;
-
     static final String EVENT = "[CLY]_view";
     static final String NAME = "name";
     static final String VISIT = "visit";
     static final String VISIT_VALUE = "1";
     static final String SEGMENT = "segment";
-    static final String SEGMENT_VALUE = System.getProperty("os.name");
     static final String START = "start";
     static final String START_VALUE = "1";
     static final String EXIT = "exit";
@@ -49,7 +47,7 @@ class ViewImpl implements View {
         this.started = true;
         this.firstView = firstView;
 
-        start = (EventImpl) session.event(EVENT).addSegments(NAME, this.name, VISIT, VISIT_VALUE, SEGMENT, Device.dev.getOS());
+        start = (EventImpl) session.event(EVENT).addSegments(NAME, this.name, VISIT, VISIT_VALUE, SEGMENT, SDKCore.instance.config.getSdkPlatform());
 
         if (firstView) {
             start.addSegment(START, START_VALUE);
@@ -76,8 +74,7 @@ class ViewImpl implements View {
             return;
         }
         ended = true;
-
-        EventImpl event = (EventImpl) session.event(EVENT).addSegments(NAME, this.name, SEGMENT, SEGMENT_VALUE);
+        EventImpl event = (EventImpl) session.event(EVENT).addSegments(NAME, this.name, SEGMENT, SDKCore.instance.config.getSdkPlatform());
 
         long startTs = Device.dev.uniqueTimestamp();
         long endTs = start.getTimestamp();

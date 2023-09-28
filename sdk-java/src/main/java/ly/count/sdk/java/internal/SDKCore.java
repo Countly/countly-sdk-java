@@ -57,6 +57,7 @@ public class SDKCore {
         moduleMappings.put(CoreFeature.Sessions.getIndex(), ModuleSessions.class);
         moduleMappings.put(CoreFeature.CrashReporting.getIndex(), ModuleCrash.class);
         moduleMappings.put(CoreFeature.BackendMode.getIndex(), ModuleBackendMode.class);
+        moduleMappings.put(CoreFeature.Events.getIndex(), ModuleEvents.class);
     }
 
     public interface Modulator {
@@ -100,6 +101,13 @@ public class SDKCore {
         prepareMappings(ctx);
     }
 
+    /**
+     * Stop sdk core
+     *
+     * @param ctx {@link CtxCore} object
+     * @param clear if true, clear all data
+     * @deprecated use {@link #halt(CtxCore)} instead
+     */
     public void stop(final CtxCore ctx, final boolean clear) {
         if (instance == null) {
             return;
@@ -126,6 +134,15 @@ public class SDKCore {
         instance = null;
 
         sdkStorage.stop(ctx, clear);//from original super class
+    }
+
+    /**
+     * Stop sdk core
+     *
+     * @param ctxCore {@link CtxCore} object
+     */
+    public void halt(CtxCore ctxCore) {
+        stop(ctxCore, true);
     }
 
     private boolean addingConsent(int adding, CoreFeature feature) {
@@ -498,6 +515,10 @@ public class SDKCore {
 
     TimedEvents timedEvents() {
         return ((ModuleSessions) module(CoreFeature.Sessions.getIndex())).timedEvents();
+    }
+
+    public ModuleEvents.Events events() {
+        return ((ModuleEvents) module(CoreFeature.Events.getIndex())).eventsInterface;
     }
 
     public InternalConfig config() {

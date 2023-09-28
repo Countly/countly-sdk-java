@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Set;
 import ly.count.sdk.java.internal.Byteable;
 import ly.count.sdk.java.internal.CoreFeature;
-import ly.count.sdk.java.internal.ImmediateRequestGenerator;
 import ly.count.sdk.java.internal.Log;
 import ly.count.sdk.java.internal.LogCallback;
 import ly.count.sdk.java.internal.ModuleBase;
@@ -368,7 +367,7 @@ public class Config {
      * Maximum amount of time in seconds between two update requests to the server
      * reporting session duration and other parameters if any added between update requests.
      *
-     * Update request is also sent when number of unsent events reached {@link #eventsBufferSize}.
+     * Update request is also sent when number of unsent events reached {@link #eventQueueThreshold}.
      *
      * Set to 0 to disable update requests based on time.
      */
@@ -381,7 +380,7 @@ public class Config {
      *
      * Set to 0 to disable buffering.
      */
-    protected int eventsBufferSize = 10;
+    protected int eventQueueThreshold = 10;
 
     /**
      * {@link CrashProcessor}-implementing class which is instantiated when application
@@ -467,7 +466,10 @@ public class Config {
      */
     File sdkStorageRootDirectory = null;
 
-    protected ImmediateRequestGenerator immediateRequestGenerator = null;
+    /**
+     * If sdk used across multiple platforms
+     */
+    protected String sdkPlatform = System.getProperty("os.name");
 
     //    /**
     //    * Maximum size of all string keys
@@ -909,12 +911,12 @@ public class Config {
      *
      * Update request is also sent when last update request was sent more than {@link #setSendUpdateEachSeconds(int)} seconds ago.
      *
-     * @param eventsBufferSize max number of events between two update requests, set to 0 to disable update requests based on events.
+     * @param eventQueueThreshold max number of events between two update requests, set to 0 to disable update requests based on events.
      * @return {@code this} instance for method chaining
      * @deprecated this will be removed, please use {@link #setEventQueueSizeToSend(int)}
      */
-    public Config setEventsBufferSize(int eventsBufferSize) {
-        return setEventQueueSizeToSend(eventsBufferSize);
+    public Config setEventsBufferSize(int eventQueueThreshold) {
+        return setEventQueueSizeToSend(eventQueueThreshold);
     }
 
     /**
@@ -931,7 +933,7 @@ public class Config {
                 configLog.e("[Config] eventsQueueSize cannot be negative");
             }
         } else {
-            this.eventsBufferSize = eventsQueueSize;
+            this.eventQueueThreshold = eventsQueueSize;
         }
         return this;
     }
@@ -1412,12 +1414,13 @@ public class Config {
     }
 
     /**
-     * Getter for {@link #eventsBufferSize}
+     * Getter for {@link #eventQueueThreshold}
      *
-     * @return {@link #eventsBufferSize} value
+     * @return {@link #eventQueueThreshold} value
+     * @deprecated
      */
     public int getEventsBufferSize() {
-        return eventsBufferSize;
+        return eventQueueThreshold;
     }
 
     /**
@@ -1521,6 +1524,27 @@ public class Config {
     public Config setMetricOverride(Map<String, String> metricOverride) {
         this.metricOverride.putAll(metricOverride);
         return this;
+    }
+
+    /**
+     * Default sdk platform is os name
+     * If you want to override it, you can use this method
+     *
+     * @param platform sdk platform
+     * @return {@code this} instance for method chaining
+     */
+    public Config setSdkPlatform(String platform) {
+        this.sdkPlatform = platform;
+        return this;
+    }
+
+    /**
+     * Getter for {@link #sdkPlatform}
+     *
+     * @return {@link #sdkPlatform} value
+     */
+    public String getSdkPlatform() {
+        return sdkPlatform;
     }
 }
 

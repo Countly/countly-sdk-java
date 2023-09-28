@@ -7,6 +7,7 @@ import ly.count.sdk.java.internal.Device;
 import ly.count.sdk.java.internal.InternalConfig;
 import ly.count.sdk.java.internal.Log;
 import ly.count.sdk.java.internal.ModuleBackendMode;
+import ly.count.sdk.java.internal.ModuleEvents;
 import ly.count.sdk.java.internal.SDKCore;
 
 /**
@@ -331,10 +332,32 @@ public class Countly implements Usage {
         }
     }
 
+    /**
+     * Record event with provided key.
+     *
+     * @param key key for this event, cannot be null or empty
+     * @return Builder object for this event
+     * @deprecated use {@link #events()} instead via instance() call
+     */
     @Override
     public Event event(String key) {
         L.d("[Countly] event: key = " + key);
         return ((Session) sdk.session(ctx, null)).event(key);
+    }
+
+    /**
+     * Event module calls
+     *
+     * @return event module otherwise null if SDK is not initialized
+     */
+    public ModuleEvents.Events events() {
+        if (!isInitialized()) {
+            if (L != null) {
+                L.e("[Countly] SDK is not initialized yet.");
+            }
+            return null;
+        }
+        return sdk.events();
     }
 
     @Override
