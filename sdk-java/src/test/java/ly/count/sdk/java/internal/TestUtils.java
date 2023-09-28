@@ -185,18 +185,4 @@ public class TestUtils {
             return paramMap;
         }
     }
-
-    static File getSdkStorageRootDirectory() {
-        // System specific folder structure
-        String[] sdkStorageRootPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
-        return new File(String.join(File.separator, sdkStorageRootPath));
-    }
-
-    static void checkSdkStorageRootDirectoryExist(File directory) {
-        if (!(directory.exists() && directory.isDirectory())) {
-            if (!directory.mkdirs()) {
-                throw new RuntimeException("Directory creation failed");
-            }
-        }
-    }
 }
