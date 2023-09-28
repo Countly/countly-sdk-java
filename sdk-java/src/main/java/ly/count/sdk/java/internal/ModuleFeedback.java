@@ -253,7 +253,7 @@ public class ModuleFeedback extends ModuleBase {
         }
 
         Map<String, Object> segm = new HashMap<>();
-        segm.put("platform", "desktop");
+        segm.put("platform", internalConfig.getSdkPlatform());
         segm.put("app_version", cachedAppVersion);
         segm.put("widget_id", widgetInfo.widgetId);
 
@@ -266,13 +266,7 @@ public class ModuleFeedback extends ModuleBase {
             segm.putAll(widgetResult);
         }
 
-        //TODO This code block should be replaced when remaked event module merged
-        Map<String, String> segmString = new HashMap<>();
-        for (Map.Entry<String, Object> entry : segm.entrySet()) {
-            segmString.put(entry.getKey(), entry.getValue().toString());
-        }
-
-        Countly.instance().event(widgetInfo.type.eventKey).setSegmentation(segmString).record();
+        Countly.instance().events().recordEvent(widgetInfo.type.eventKey, segm);
     }
 
     private <T> void callCallback(String errorLog, CallbackOnFinish<T> callback) {
@@ -302,7 +296,8 @@ public class ModuleFeedback extends ModuleBase {
         requestData.append(internalConfig.getSdkVersion());
         requestData.append("&sdk_name=");
         requestData.append(internalConfig.getSdkName());
-        requestData.append("&platform=desktop");
+        requestData.append("&platform=");
+        requestData.append(internalConfig.getSdkPlatform());
         requestData.append("&app_version=");
         requestData.append(cachedAppVersion);
 
@@ -367,7 +362,8 @@ public class ModuleFeedback extends ModuleBase {
         widgetListUrl.append(internalConfig.getSdkVersion());
         widgetListUrl.append("&sdk_name=");
         widgetListUrl.append(internalConfig.getSdkName());
-        widgetListUrl.append("&platform=desktop");
+        widgetListUrl.append("&platform=");
+        widgetListUrl.append(internalConfig.getSdkPlatform());
 
         final String preparedWidgetUrl = widgetListUrl.toString();
 
