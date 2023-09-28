@@ -1,6 +1,7 @@
 package ly.count.sdk.java.internal;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +57,43 @@ public class ModuleEventsTests {
 
         //check if event was recorded correctly and size of event queue is equal to size of events in queue
         validateEventInQueue(TestUtils.getTestSDirectory(), eventKey, segmentation, 1, 45.9, 32.0, 1, 0);
+    }
+
+    /**
+     * Recording an event and no event to recover
+     * "recordEvent" function should create an event with given key
+     * event queue should be empty when reached to event queue size to send
+     */
+    @Test
+    public void recordEvent_queueSizeOver() {
+        Config config = TestUtils.getBaseConfig();
+        config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(2);
+        init(config);
+
+        validateQueueSize(0);
+
+        Countly.instance().events().recordEvent("recordEvent_queueSizeOver", 1, 45.9, null, 32.0);
+        validateQueueSize(1);
+
+        Countly.instance().events().recordEvent("recordEvent_queueSizeOver", 1, 45.9, null, 32.0);
+        validateQueueSize(0);
+    }
+
+    /**
+     * Recording an event with recovered events
+     * "recordEvent" function should create an event with given key and create a request with memory data
+     * event queue should be empty when reached to event queue size to send
+     */
+    @Test
+    public void recordEvent_queueSizeOverMemory() throws IOException {
+        EventQueueTests.writeToEventQueue("{\"hour\":10,\"count\":1,\"dow\":4,\"key\":\"test-joinEvents-1\",\"timestamp\":1695887006647}:::{\"hour\":10,\"count\":1,\"dow\":4,\"key\":\"test-joinEvents-2\",\"timestamp\":1695887006657}", false);
+        Config config = TestUtils.getBaseConfig();
+        config.enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(2);
+        init(config);
+
+        validateQueueSize(2);
+        Countly.instance().events().recordEvent("recordEvent_queueSizeOver", 1, 45.9, null, 32.0);
+        validateQueueSize(0);
     }
 
     /**
@@ -366,6 +404,10 @@ public class ModuleEventsTests {
     private void validateQueueSize(int expectedSize, List<EventImpl> events) {
         Assert.assertEquals(expectedSize, events.size());
         Assert.assertEquals(expectedSize, moduleEvents.eventQueue.eqSize());
+    }
+
+    private void validateQueueSize(int expectedSize) {
+        validateQueueSize(expectedSize, TestUtils.getCurrentEventQueue(moduleEvents.ctx.getContext(), moduleEvents.L));
     }
 
     private void endEvent(String key, Map<String, Object> segmentation, int count, Double sum) {

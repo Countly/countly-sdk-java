@@ -256,7 +256,7 @@ public class EventQueueTests {
         validateEvent(eventQueue.eventQueueMemoryCache.get(0), "test-joinEvents-1", null, 1, null, null);
     }
 
-    private void writeToEventQueue(String fileContent, boolean delete) throws IOException {
+    static void writeToEventQueue(String fileContent, boolean delete) throws IOException {
         File file = new File(TestUtils.getTestSDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + EVENT_QUEUE_FILE_NAME);
         file.createNewFile();
         if (delete) {
