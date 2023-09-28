@@ -1,5 +1,7 @@
 package ly.count.sdk.java.internal;
 
+import ly.count.sdk.java.Countly;
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -7,10 +9,13 @@ import java.util.List;
 public class EventQueue {
 
     static final String DELIMITER = ":::";
-    private final Log L;
-    final List<EventImpl> eventQueueMemoryCache;
+    Log L;
+    List<EventImpl> eventQueueMemoryCache;
 
-    protected EventQueue(Log logger, int eventThreshold) {
+    protected EventQueue() {
+    }
+
+    protected EventQueue(@Nonnull Log logger, int eventThreshold) {
         L = logger;
         eventQueueMemoryCache = new ArrayList<>(eventThreshold);
     }
@@ -22,7 +27,7 @@ public class EventQueue {
         return eventQueueMemoryCache.size();
     }
 
-    void addEvent(final EventImpl event) {
+    void addEvent(@Nonnull final EventImpl event) {
         if (event == null) {
             L.w("[EventQueue] Event is null, skipping");
             return;
@@ -67,7 +72,7 @@ public class EventQueue {
         eventQueueMemoryCache.sort((e1, e2) -> (int) (e1.timestamp - e2.timestamp));
     }
 
-    String joinEvents(final Collection<EventImpl> collection) {
+    @Nonnull String joinEvents(@Nonnull final Collection<EventImpl> collection) {
         final List<String> strings = new ArrayList<>();
         for (EventImpl e : collection) {
             strings.add(e.toJSON(L));
@@ -78,7 +83,7 @@ public class EventQueue {
     /**
      * Returns an unsorted array of the current stored event JSON strings.
      */
-    private synchronized String[] getEvents() {
+    private synchronized @Nonnull String[] getEvents() {
         L.d("[EventQueue] Getting events from disk");
         final String joinedEventsStr = SDKCore.instance.sdkStorage.readEventQueue();
         return joinedEventsStr.isEmpty() ? new String[0] : joinedEventsStr.split(DELIMITER);

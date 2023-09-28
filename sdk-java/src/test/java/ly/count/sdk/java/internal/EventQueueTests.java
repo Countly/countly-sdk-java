@@ -21,6 +21,7 @@ import static ly.count.sdk.java.internal.TestUtils.validateEvent;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
 @RunWith(JUnit4.class)
@@ -48,15 +49,11 @@ public class EventQueueTests {
      */
     @Test
     public void addEvent() {
-        Config config = TestUtils.getBaseConfig();
-        config.setEventQueueSizeToSend(2);
-        init(config);
+        init(TestUtils.getConfigEvents(2));
 
         validateQueueSize(0);
         EventImpl event = createEvent("test-addEvent", null, 1, null, null);
         eventQueue.addEvent(event);
-        validateQueueSize(1);
-
         validateEventInQueue(event.key, null, 1, null, null, 1, 0);
     }
 
@@ -67,9 +64,7 @@ public class EventQueueTests {
      */
     @Test
     public void addEvent_null() {
-        Config config = TestUtils.getBaseConfig();
-        config.setEventQueueSizeToSend(2);
-        init(config);
+        init(TestUtils.getConfigEvents(2));
 
         validateQueueSize(0);
         eventQueue.addEvent(null);
@@ -83,9 +78,7 @@ public class EventQueueTests {
      */
     @Test
     public void writeEventQueueToStorage() {
-        Config config = TestUtils.getBaseConfig();
-        config.setEventQueueSizeToSend(2);
-        init(config);
+        init(TestUtils.getConfigEvents(2));
 
         validateQueueSize(0);
         EventImpl event = createEvent("test-writeEventQueueToStorage", null, 1, null, null);
@@ -101,7 +94,9 @@ public class EventQueueTests {
      */
     @Test
     public void writeEventQueueToStorage_emptyCache() {
-        eventQueue = mock(EventQueue.class);
+        eventQueue = spy(EventQueue.class);
+        eventQueue.L = mock(Log.class);
+        eventQueue.eventQueueMemoryCache = new ArrayList<>();
 
         eventQueue.writeEventQueueToStorage();
         verify(eventQueue, never()).joinEvents(anyCollection());
@@ -114,9 +109,7 @@ public class EventQueueTests {
      */
     @Test
     public void joinEvents() {
-        Config config = TestUtils.getBaseConfig();
-        config.setEventQueueSizeToSend(2);
-        init(config);
+        init(TestUtils.getConfigEvents(2));
 
         List<EventImpl> list = new ArrayList<>();
         list.add(createEvent("test-joinEvents-1", null, 1, null, null));
@@ -135,9 +128,7 @@ public class EventQueueTests {
      */
     @Test
     public void joinEvents_emptyCollection() {
-        Config config = TestUtils.getBaseConfig();
-        config.setEventQueueSizeToSend(2);
-        init(config);
+        init(TestUtils.getConfigEvents(2));
 
         List<EventImpl> list = new ArrayList<>();
 
@@ -152,9 +143,7 @@ public class EventQueueTests {
      */
     @Test(expected = NullPointerException.class)
     public void joinEvents_nullCollection() {
-        Config config = TestUtils.getBaseConfig();
-        config.setEventQueueSizeToSend(2);
-        init(config);
+        init(TestUtils.getConfigEvents(2));
 
         eventQueue.joinEvents(null);
     }
@@ -166,9 +155,7 @@ public class EventQueueTests {
      */
     @Test
     public void clear() {
-        Config config = TestUtils.getBaseConfig();
-        config.setEventQueueSizeToSend(2);
-        init(config);
+        init(TestUtils.getConfigEvents(2));
 
         validateQueueSize(0);
 
@@ -188,9 +175,7 @@ public class EventQueueTests {
      */
     @Test
     public void restoreFromDisk() throws IOException {
-        Config config = TestUtils.getBaseConfig();
-        config.setEventQueueSizeToSend(2);
-        init(config);
+        init(TestUtils.getConfigEvents(2));
 
         validateQueueSize(0);
         writeToEventQueue("{\"hour\":10,\"count\":1,\"dow\":4,\"key\":\"test-joinEvents-1\",\"timestamp\":1695887006647}:::{\"hour\":10,\"count\":1,\"dow\":4,\"key\":\"test-joinEvents-2\",\"timestamp\":1695887006657}", false);
@@ -208,9 +193,7 @@ public class EventQueueTests {
      */
     @Test
     public void restoreFromDisk_notExist() throws IOException {
-        Config config = TestUtils.getBaseConfig();
-        config.setEventQueueSizeToSend(2);
-        init(config);
+        init(TestUtils.getConfigEvents(2));
 
         validateQueueSize(0);
         writeToEventQueue(null, true);
@@ -226,9 +209,7 @@ public class EventQueueTests {
      */
     @Test
     public void restoreFromDisk_garbageFile() throws IOException {
-        Config config = TestUtils.getBaseConfig();
-        config.setEventQueueSizeToSend(2);
-        init(config);
+        init(TestUtils.getConfigEvents(2));
 
         validateQueueSize(0);
         writeToEventQueue("{\"hour\":10,\"asdasd\":\"askjdn\",\"timestamp\":1695887006647}::{\"hour\":10,\"count\":1,\"dow\":4,\"asda\":\"test-joinEvents-2\"}", false);
@@ -244,9 +225,7 @@ public class EventQueueTests {
      */
     @Test
     public void restoreFromDisk_corruptedData() throws IOException {
-        Config config = TestUtils.getBaseConfig();
-        config.setEventQueueSizeToSend(2);
-        init(config);
+        init(TestUtils.getConfigEvents(2));
 
         validateQueueSize(0);
         writeToEventQueue("{\"hour\":10,\"count\":1,\"dow\":4,\"key\":\"test-joinEvents-1\",\"timestamp\":1695887006647}:::{\"hour\":10,\"count\":1,\"dow\":4,\"keya\":\"test-joinEvents-2\",\"timestamp\":1695887006657}", false);

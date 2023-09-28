@@ -16,12 +16,13 @@ import org.junit.Assert;
 import static ly.count.sdk.java.internal.SDKStorage.EVENT_QUEUE_FILE_NAME;
 import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_PREFIX;
 import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_SEPARATOR;
+import static org.mockito.Mockito.mock;
 
 public class TestUtils {
     static String SERVER_URL = "https://test.count.ly";
     static String SERVER_APP_KEY = "COUNTLY_APP_KEY";
     static String DEVICE_ID = "some_random_test_device_id";
-    
+
     public static final String[] eKeys = new String[] { "eventKey1", "eventKey2", "eventKey3", "eventKey4", "eventKey5", "eventKey6", "eventKey7" };
 
     private TestUtils() {
@@ -63,6 +64,10 @@ public class TestUtils {
                 throw new RuntimeException("Directory creation failed");
             }
         }
+    }
+
+    protected static Map<String, String>[] getCurrentRequestQueue() {
+        return getCurrentRequestQueue(getTestSDirectory(), mock(Log.class));
     }
 
     /**
