@@ -52,6 +52,17 @@ public class TestUtils {
         return config;
     }
 
+    static Config getConfigFeedback() {
+        File sdkStorageRootDirectory = getTestSDirectory();
+        checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
+        Config config = new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
+        config.setCustomDeviceId(DEVICE_ID);
+
+        config.enableFeatures(Config.Feature.Feedback);
+
+        return config;
+    }
+
     public static File getTestSDirectory() {
         // System specific folder structure
         String[] sdkStorageRootPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
@@ -224,7 +235,7 @@ public class TestUtils {
         String[] sdkStorageRootPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
         return new File(String.join(File.separator, sdkStorageRootPath));
     }
-  
+
     static void validateEvent(EventImpl gonnaValidate, String key, Map<String, Object> segmentation, int count, Double sum, Double duration) {
         Assert.assertEquals(key, gonnaValidate.key);
         Assert.assertEquals(segmentation, gonnaValidate.segmentation);

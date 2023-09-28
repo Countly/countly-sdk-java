@@ -38,9 +38,7 @@ public class ModuleFeedbackTests {
      */
     @Test
     public void parseFeedbackList_null() throws JSONException {
-        Config config = TestUtils.getBaseConfig();
-        config.enableFeatures(Config.Feature.Feedback).setEventQueueSizeToSend(4);
-        init(config);
+        init(TestUtils.getConfigFeedback());
 
         List<CountlyFeedbackWidget> result = ModuleFeedback.parseFeedbackList(null);
         Assert.assertNotNull(result);
@@ -54,9 +52,7 @@ public class ModuleFeedbackTests {
      */
     @Test
     public void parseFeedbackList() throws JSONException {
-        Config config = TestUtils.getBaseConfig();
-        config.enableFeatures(Config.Feature.Feedback).setEventQueueSizeToSend(4);
-        init(config);
+        init(TestUtils.getConfigFeedback());
 
         String requestJson =
             "{\"result\":[{\"_id\":\"5f8c6f959627f99e8e7de746\",\"type\":\"survey\",\"exitPolicy\":\"onAbandon\",\"appearance\":{\"show\":\"uSubmit\",\"position\":\"bLeft\",\"color\":\"#2eb52b\"},\"name\":\"sdfsdfdsf\",\"tg\":[\"/\"]},{\"_id\":\"5f8c6fd81ac8659e8846acf4\",\"type\":\"nps\",\"name\":\"fdsfsd\",\"tg\":[\"a\",\"0\"]},{\"_id\":\"5f97284635935cc338e78200\",\"type\":\"nps\",\"name\":\"fsdfsdf\",\"tg\":[]},{\"_id\":\"614871419f030e44be07d82f\",\"type\":\"rating\",\"appearance\":{\"position\":\"mleft\",\"bg_color\":\"#fff\",\"text_color\":\"#ddd\",\"text\":\"Feedback\"},\"tg\":[\"\\/\"],\"name\":\"ratingName1\"}]}";
@@ -80,9 +76,7 @@ public class ModuleFeedbackTests {
      */
     @Test
     public void parseFeedbackList_oneGoodWithGarbage() throws JSONException {
-        Config config = TestUtils.getBaseConfig();
-        config.enableFeatures(Config.Feature.Feedback).setEventQueueSizeToSend(4);
-        init(config);
+        init(TestUtils.getConfigFeedback());
 
         String requestJson =
             "{\"result\":[{\"_id\":\"asd\",\"type\":\"qwe\",\"name\":\"zxc\",\"tg\":[]},{\"_id\":\"5f97284635935cc338e78200\",\"type\":\"nps\",\"name\":\"fsdfsdf\",\"tg\":[\"/\"]},{\"g4id\":\"asd1\",\"t4type\":\"432\",\"nagdfgme\":\"zxct\",\"tgm\":[\"/\"]}]}";
@@ -102,9 +96,7 @@ public class ModuleFeedbackTests {
      */
     @Test
     public void parseFeedbackList_faulty() throws JSONException {
-        Config config = TestUtils.getBaseConfig();
-        config.enableFeatures(Config.Feature.Feedback).setEventQueueSizeToSend(4);
-        init(config);
+        init(TestUtils.getConfigFeedback());
         // 9 widgets (3 from each)
         // First variation => no 'tg' key
         // Second variation => no 'name' key
@@ -143,9 +135,7 @@ public class ModuleFeedbackTests {
      */
     @Test
     public void getAvailableFeedbackWidgets() {
-        Config config = TestUtils.getBaseConfig();
-        config.enableFeatures(Config.Feature.Feedback).setEventQueueSizeToSend(4);
-        init(config);
+        init(TestUtils.getConfigFeedback());
 
         List<CountlyFeedbackWidget> widgets = new ArrayList<>();
         widgets.add(createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] {}));
@@ -187,9 +177,7 @@ public class ModuleFeedbackTests {
      */
     @Test
     public void getAvailableFeedbackWidgets_garbageJson() {
-        Config config = TestUtils.getBaseConfig();
-        config.enableFeatures(Config.Feature.Feedback).setEventQueueSizeToSend(4);
-        init(config);
+        init(TestUtils.getConfigFeedback());
 
         JSONArray garbageArray = new JSONArray();
         garbageArray.put(createGarbageJson());
@@ -215,9 +203,7 @@ public class ModuleFeedbackTests {
      */
     @Test
     public void getAvailableFeedbackWidgets_null() {
-        Config config = TestUtils.getBaseConfig();
-        config.enableFeatures(Config.Feature.Feedback).setEventQueueSizeToSend(4);
-        init(config);
+        init(TestUtils.getConfigFeedback());
 
         ImmediateRequestI requestMaker = (requestData, customEndpoint, cp, requestShouldBeDelayed, networkingIsEnabled, callback, log) ->
             callback.callback(null);
@@ -238,9 +224,7 @@ public class ModuleFeedbackTests {
      */
     @Test
     public void constructFeedbackWidgetUrl() {
-        Config config = TestUtils.getBaseConfig();
-        config.enableFeatures(Config.Feature.Feedback).setEventQueueSizeToSend(4);
-        init(config);
+        init(TestUtils.getConfigFeedback());
 
         InternalConfig internalConfig = SDKCore.instance.config;
 
@@ -275,9 +259,7 @@ public class ModuleFeedbackTests {
      */
     @Test
     public void constructFeedbackWidgetUrl_nullWidgetInfo() {
-        Config config = TestUtils.getBaseConfig();
-        config.enableFeatures(Config.Feature.Feedback).setEventQueueSizeToSend(4);
-        init(config);
+        init(TestUtils.getConfigFeedback());
 
         Countly.instance().feedback().constructFeedbackWidgetUrl(null, (response, error) -> {
             Assert.assertNull(response);
@@ -292,9 +274,7 @@ public class ModuleFeedbackTests {
      */
     @Test
     public void getFeedbackWidgetData_nullWidgetInfo() {
-        Config config = TestUtils.getBaseConfig();
-        config.enableFeatures(Config.Feature.Feedback).setEventQueueSizeToSend(4);
-        init(config);
+        init(TestUtils.getConfigFeedback());
 
         Countly.instance().feedback().getFeedbackWidgetData(null, (response, error) -> {
             Assert.assertNull(response);
@@ -309,9 +289,7 @@ public class ModuleFeedbackTests {
      */
     @Test
     public void getFeedbackWidgetData_nullResponse() {
-        Config config = TestUtils.getBaseConfig();
-        config.enableFeatures(Config.Feature.Feedback).setEventQueueSizeToSend(4);
-        init(config);
+        init(TestUtils.getConfigFeedback());
 
         CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] {});
 
@@ -335,9 +313,7 @@ public class ModuleFeedbackTests {
      */
     @Test
     public void getFeedbackWidgetData_garbageResult() {
-        Config config = TestUtils.getBaseConfig();
-        config.enableFeatures(Config.Feature.Feedback).setEventQueueSizeToSend(4);
-        init(config);
+        init(TestUtils.getConfigFeedback());
 
         JSONObject responseJson = new JSONObject();
         responseJson.put("result", "Success");
@@ -364,9 +340,7 @@ public class ModuleFeedbackTests {
      */
     @Test
     public void reportFeedbackWidgetManually_nullWidgetInfo() {
-        Config config = TestUtils.getBaseConfig();
-        config.enableFeatures(Config.Feature.Feedback).setEventQueueSizeToSend(4);
-        init(config);
+        init(TestUtils.getConfigFeedback());
 
         Countly.instance().feedback().reportFeedbackWidgetManually(null, null, null);
         List<EventImpl> events = TestUtils.getCurrentEventQueue(TestUtils.getSdkStorageRootDirectory(), L);
