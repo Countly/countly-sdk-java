@@ -8,13 +8,11 @@ public class EventQueue {
 
     static final String DELIMITER = ":::";
     private final Log L;
-    private final InternalConfig config;
     final List<EventImpl> eventQueueMemoryCache;
 
-    protected EventQueue(Log logger, InternalConfig config) {
+    protected EventQueue(Log logger, int bufferSize) {
         L = logger;
-        this.config = config;
-        eventQueueMemoryCache = new ArrayList<>(config.getEventsBufferSize());
+        eventQueueMemoryCache = new ArrayList<>(bufferSize);
     }
 
     /**
