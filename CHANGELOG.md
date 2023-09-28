@@ -9,6 +9,7 @@
   * "removeFromCohort(key)"
 
 * In Countly class, the old "init(directory,config)" method is deprecated, use "init(config)" instead via "instance()" call.
+* Deprecated "Countly::stop(boolean)" call, use "Countly::halt" or "Countly::stop" instead via "instance()" call.
 * Deprecated "Countly::event" call, deprecated builder pattern. Use "Countly::events" instead.
 * Deprecated "Usage::event" call, deprecated builder pattern. Use "Countly::events" instead.
 * Deprecated "Countly::stop(boolean)" call, use "Countly::halt" instead via "instance()" call.
