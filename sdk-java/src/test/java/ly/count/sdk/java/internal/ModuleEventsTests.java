@@ -14,6 +14,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import static ly.count.sdk.java.internal.TestUtils.validateEvent;
+import static org.mockito.Mockito.mock;
 
 @RunWith(JUnit4.class)
 public class ModuleEventsTests {
@@ -73,6 +74,7 @@ public class ModuleEventsTests {
 
         Countly.instance().events().recordEvent("recordEvent_queueSizeOver2", 1, 45.9, null, 32.0);
         validateQueueSize(0);
+        
         Assert.assertEquals(1, TestUtils.getCurrentRequestQueue().length);
 
         Map<String, String> request = TestUtils.getCurrentRequestQueue()[0];
@@ -93,6 +95,7 @@ public class ModuleEventsTests {
         validateQueueSize(2);
         Countly.instance().events().recordEvent("recordEvent_queueSizeOver", 1, 45.9, null, 32.0);
         validateQueueSize(0);
+
         Assert.assertEquals(1, TestUtils.getCurrentRequestQueue().length);
 
         Map<String, String> request = TestUtils.getCurrentRequestQueue()[0];
