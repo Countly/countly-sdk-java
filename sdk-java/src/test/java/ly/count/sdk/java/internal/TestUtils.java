@@ -285,4 +285,23 @@ public class TestUtils {
     static String getOs() {
         return System.getProperty("os.name");
     }
+
+    public static void validateRequiredParams(Map<String, String> params) {
+        int hour = Integer.parseInt(params.get("hour"));
+        int dow = Integer.parseInt(params.get("dow"));
+        int tz = Integer.parseInt(params.get("tz"));
+
+        validateSdkIdentityParams(params);
+        Assert.assertEquals(SDKCore.instance.config.getDeviceId().id, params.get("device_id"));
+        Assert.assertEquals(SDKCore.instance.config.getServerAppKey(), params.get("app_key"));
+        Assert.assertTrue(Long.valueOf(params.get("timestamp")) > 0);
+        Assert.assertTrue(hour > 0 && hour < 24);
+        Assert.assertTrue(dow >= 0 && dow < 7);
+        Assert.assertTrue(tz >= -720 && tz <= 840);
+    }
+
+    public static void validateSdkIdentityParams(Map<String, String> params) {
+        Assert.assertEquals(SDKCore.instance.config.getSdkVersion(), params.get("sdk_version"));
+        Assert.assertEquals(SDKCore.instance.config.getSdkName(), params.get("sdk_name"));
+    }
 }
