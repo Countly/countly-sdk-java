@@ -79,6 +79,7 @@ public class TestUtils {
      * @return array of request params
      */
     protected static Map<String, String>[] getCurrentRequestQueue(File targetFolder, Log logger) {
+        Storage.await(mock(Log.class)); // wait for request to be write to the disk
 
         //check whether target folder is a directory or not
         if (!targetFolder.isDirectory()) {
@@ -226,5 +227,14 @@ public class TestUtils {
         });
 
         return result;
+    }
+  
+    static void validateEventQueueSize(int expectedSize, List<EventImpl> events, EventQueue eventQueue) {
+        Assert.assertEquals(expectedSize, events.size());
+        Assert.assertEquals(expectedSize, eventQueue.eqSize());
+    }
+
+    static void validateEventQueueSize(int expectedSize, EventQueue eventQueue) {
+        validateEventQueueSize(expectedSize, TestUtils.getCurrentEventQueue(getTestSDirectory(), mock(Log.class)), eventQueue);
     }
 }
