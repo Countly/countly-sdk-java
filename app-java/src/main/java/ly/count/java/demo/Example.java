@@ -1,11 +1,14 @@
 package ly.count.java.demo;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
+import ly.count.sdk.java.internal.CountlyFeedbackWidget;
 import ly.count.sdk.java.internal.LogCallback;
 
 public class Example {
@@ -78,6 +81,56 @@ public class Example {
             .commit();
     }
 
+    static List<CountlyFeedbackWidget> getFeedbackWidgets() {
+        List<CountlyFeedbackWidget> widgets = new ArrayList<>();
+        Countly.instance().feedback().getAvailableFeedbackWidgets((retrievedWidgets, error) -> {
+            if (error != null) {
+                System.out.println("Error while retrieving feedback widgets: " + error);
+                return;
+            }
+            System.out.println("Retrieved feedback widgets: " + retrievedWidgets.size());
+
+            for (int i = 0; i < retrievedWidgets.size(); i++) {
+                System.out.println(i + ") Widget: " + retrievedWidgets.get(i).toString());
+            }
+
+            widgets.addAll(retrievedWidgets);
+        });
+
+        return widgets;
+    }
+
+    static void getFeedbackWidgetUrl(CountlyFeedbackWidget widget) {
+        Countly.instance().feedback().constructFeedbackWidgetUrl(widget, (constructedUrl, error) -> {
+            if (error != null) {
+                System.out.println("Error while retrieving feedback widget url: " + error);
+                return;
+            }
+
+            System.out.println("Retrieved feedback widget url: " + constructedUrl);
+        });
+    }
+
+    static void getFeedbackWidgetData(CountlyFeedbackWidget widget) {
+
+        Countly.instance().feedback().getFeedbackWidgetData(widget, (jsonObject, error) -> {
+            if (error != null) {
+                System.out.println("Error while retrieving feedback widget url: " + error);
+                return;
+            }
+            System.out.println("Retrieved feedback widget data: " + jsonObject.toString());
+        });
+    }
+
+    static void reportFeedbackWidgetManually(CountlyFeedbackWidget widget) {
+        Map<String, Object> widgetResult = new HashMap<>();
+        widgetResult.put("rating", 5);
+        widgetResult.put("comment", "This is a comment");
+        widgetResult.put("email", "test@count.ly");
+
+        Countly.instance().feedback().reportFeedbackWidgetManually(widget, null, widgetResult);
+    }
+
     static void recordStartView() {
         Countly.api().view("Start view");
     }
@@ -104,6 +157,41 @@ public class Example {
 
     static void changeDeviceIdWithoutMerge() {
         Countly.session().changeDeviceIdWithoutMerge(randomId());
+    }
+
+    static void feedbackWidgets(Scanner scanner) {
+
+        List<CountlyFeedbackWidget> feedbackWidgets = new ArrayList<>();
+        boolean running = true;
+        while (running) {
+            System.out.println("Choose your option for feedback: ");
+
+            System.out.println("1) Get feedback widgets");
+            System.out.println("2.X) Get feedback widget data with index of widget");
+            System.out.println("3.X) Report feedback widget manually with index of widget");
+            System.out.println("4.X) Construct feedback widget url with index of widget");
+
+            String[] input = scanner.next().split("\\.");
+            switch (input[0]) {
+                case "0":
+                    running = false;
+                    break;
+                case "1":
+                    feedbackWidgets = getFeedbackWidgets();
+                    break;
+                case "2":
+                    getFeedbackWidgetData(feedbackWidgets.get(Integer.parseInt(input[1])));
+                    break;
+                case "3":
+                    reportFeedbackWidgetManually(feedbackWidgets.get(Integer.parseInt(input[1])));
+                    break;
+                case "4":
+                    getFeedbackWidgetUrl(feedbackWidgets.get(Integer.parseInt(input[1])));
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 
     public static void main(String[] args) throws Exception {
@@ -133,7 +221,7 @@ public class Example {
         Config config = new Config(COUNTLY_SERVER_URL, COUNTLY_APP_KEY, sdkStorageRootDirectory)
             .setLoggingLevel(Config.LoggingLevel.DEBUG)
             .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
-            .enableFeatures(Config.Feature.Events, Config.Feature.Sessions, Config.Feature.CrashReporting, Config.Feature.Views, Config.Feature.UserProfiles, Config.Feature.Location)
+            .enableFeatures(Config.Feature.Events, Config.Feature.Sessions, Config.Feature.CrashReporting, Config.Feature.Views, Config.Feature.UserProfiles, Config.Feature.Location, Config.Feature.Feedback)
             .setRequiresConsent(true)
             //.enableParameterTamperingProtection("test-salt-checksum")
             .setLogListener(new LogCallback() {
@@ -149,7 +237,7 @@ public class Example {
         // Main initialization call, SDK can be used after this one is done
         Countly.instance().init(config);
 
-        Countly.onConsent(Config.Feature.Events, Config.Feature.Sessions, Config.Feature.CrashReporting, Config.Feature.Views, Config.Feature.UserProfiles, Config.Feature.Location);
+        Countly.onConsent(Config.Feature.Events, Config.Feature.Sessions, Config.Feature.CrashReporting, Config.Feature.Views, Config.Feature.UserProfiles, Config.Feature.Location, Config.Feature.Feedback);
 
         // Usually, all interactions with SDK are to be done through a session instance:
         Countly.session().begin();
@@ -176,6 +264,8 @@ public class Example {
 
             System.out.println("14) Change device id with merge");
             System.out.println("15) Change device id without merge");
+
+            System.out.println("16) Enter to feedback widget functionality");
 
             System.out.println("0) Exit ");
 
@@ -228,6 +318,9 @@ public class Example {
                     break;
                 case 15:
                     changeDeviceIdWithoutMerge();
+                    break;
+                case 16:
+                    feedbackWidgets(scanner);
                     break;
                 default:
                     break;
