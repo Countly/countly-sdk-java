@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.stream.Stream;
 import ly.count.sdk.java.Config;
+import org.json.JSONArray;
 import org.junit.Assert;
 
 import static ly.count.sdk.java.internal.SDKStorage.EVENT_QUEUE_FILE_NAME;
@@ -216,6 +217,22 @@ public class TestUtils {
         Assert.assertTrue(gonnaValidate.timestamp >= 0);
     }
 
+    static List<EventImpl> readEventsFromRequest() {
+        return readEventsFromRequest(0);
+    }
+
+    static List<EventImpl> readEventsFromRequest(int requestIndex) {
+        JSONArray array = new JSONArray(getCurrentRequestQueue()[requestIndex].get("events"));
+        List<EventImpl> result = new ArrayList<>();
+
+        array.forEach(value -> {
+            result.add(EventImpl.fromJSON(value.toString(), (ev) -> {
+            }, mock(Log.class)));
+        });
+
+        return result;
+    }
+  
     static void validateEventQueueSize(int expectedSize, List<EventImpl> events, EventQueue eventQueue) {
         Assert.assertEquals(expectedSize, events.size());
         Assert.assertEquals(expectedSize, eventQueue.eqSize());
