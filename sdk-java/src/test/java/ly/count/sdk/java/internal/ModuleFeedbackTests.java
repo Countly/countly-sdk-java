@@ -28,7 +28,7 @@ public class ModuleFeedbackTests {
 
     @After
     public void stop() {
-        Countly.stop(true);
+        Countly.instance().halt();
     }
 
     private void init(Config cc) {
@@ -142,8 +142,8 @@ public class ModuleFeedbackTests {
         init(TestUtils.getConfigFeedback());
 
         List<CountlyFeedbackWidget> widgets = new ArrayList<>();
-        widgets.add(createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] {}));
-        widgets.add(createFeedbackWidget(FeedbackWidgetType.rating, "rating1", "ratingID1", new String[] {}));
+        widgets.add(createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "123", "89" }));
+        widgets.add(createFeedbackWidget(FeedbackWidgetType.rating, "rating1", "ratingID1", new String[] { "vbn" }));
         widgets.add(createFeedbackWidget(FeedbackWidgetType.survey, "surv1", "survID1", new String[] {}));
 
         JSONArray widgetsJson = new JSONArray();
@@ -299,7 +299,7 @@ public class ModuleFeedbackTests {
         JSONObject result = new JSONObject();
         result.put("result", TestUtils.feedbackWidgetData);
 
-        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] {});
+        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "hgj" });
 
         ImmediateRequestI requestMaker = (requestData, customEndpoint, cp, requestShouldBeDelayed, networkingIsEnabled, callback, log) -> {
             validateWidgetRequiredParams("/o/surveys/" + widgetInfo.type.name() + "/widget", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
@@ -323,7 +323,7 @@ public class ModuleFeedbackTests {
     public void getFeedbackWidgetData_nullResponse() {
         init(TestUtils.getConfigFeedback());
 
-        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] {});
+        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "jyg", "jhg" });
 
         ImmediateRequestI requestMaker = (requestData, customEndpoint, cp, requestShouldBeDelayed, networkingIsEnabled, callback, log) -> {
             validateWidgetRequiredParams("/o/surveys/" + widgetInfo.type.name() + "/widget", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
@@ -350,7 +350,7 @@ public class ModuleFeedbackTests {
         JSONObject responseJson = new JSONObject();
         responseJson.put("result", "Success");
 
-        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] {});
+        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "yh" });
 
         ImmediateRequestI requestMaker = (requestData, customEndpoint, cp, requestShouldBeDelayed, networkingIsEnabled, callback, log) -> {
             validateWidgetRequiredParams("/o/surveys/" + widgetInfo.type.name() + "/widget", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
@@ -388,7 +388,7 @@ public class ModuleFeedbackTests {
     public void reportFeedbackWidgetManually() {
         init(TestUtils.getConfigFeedback(Config.Feature.Events));
 
-        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] {});
+        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "kjh" });
         validateEventQueueSize(0, moduleEvents().eventQueue);
         Countly.instance().feedback().reportFeedbackWidgetManually(widgetInfo, null, null);
         validateEventQueueSize(1, moduleEvents().eventQueue);
@@ -405,7 +405,7 @@ public class ModuleFeedbackTests {
     public void reportFeedbackWidgetManually_nullWidgetResultValueKeys() {
         init(TestUtils.getConfigFeedback(Config.Feature.Events));
 
-        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.survey, "nps1", "npsID1", new String[] {});
+        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.survey, "nps1", "npsID1", new String[] { "fg", "lh" });
         validateEventQueueSize(0, moduleEvents().eventQueue);
 
         Map<String, Object> widgetResult = new HashMap<>();
@@ -432,7 +432,7 @@ public class ModuleFeedbackTests {
     public void reportFeedbackWidgetManually_nonExistingRating() {
         init(TestUtils.getConfigFeedback(Config.Feature.Events));
 
-        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] {});
+        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "ou" });
         validateEventQueueSize(0, moduleEvents().eventQueue);
 
         Map<String, Object> widgetResult = new HashMap<>();
@@ -455,7 +455,7 @@ public class ModuleFeedbackTests {
     public void reportFeedbackWidgetManually_invalidRating() {
         init(TestUtils.getConfigFeedback(Config.Feature.Events));
 
-        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] {});
+        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "as" });
         validateEventQueueSize(0, moduleEvents().eventQueue);
 
         Map<String, Object> widgetResult = new HashMap<>();
@@ -478,7 +478,7 @@ public class ModuleFeedbackTests {
     public void reportFeedbackWidgetManually_validRating() {
         init(TestUtils.getConfigFeedback(Config.Feature.Events));
 
-        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] {});
+        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "sa" });
         validateEventQueueSize(0, moduleEvents().eventQueue);
 
         Map<String, Object> widgetResult = new HashMap<>();
@@ -504,7 +504,7 @@ public class ModuleFeedbackTests {
     public void reportFeedbackWidgetManually_rq() {
         init(TestUtils.getConfigFeedback(Config.Feature.Events).setEventQueueSizeToSend(2));
 
-        CountlyFeedbackWidget widgetInfoNps = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] {});
+        CountlyFeedbackWidget widgetInfoNps = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "rt" });
         validateEventQueueSize(0, moduleEvents().eventQueue);
         Assert.assertEquals(0, TestUtils.getCurrentRequestQueue().length);
 
@@ -538,7 +538,7 @@ public class ModuleFeedbackTests {
         widgetData.put("_id", "diff");
         widgetData.put("type", "rating");
 
-        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] {});
+        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "ty" });
         validateEventQueueSize(0, moduleEvents().eventQueue);
         Countly.instance().feedback().reportFeedbackWidgetManually(widgetInfo, widgetData, null);
         validateEventQueueSize(1, moduleEvents().eventQueue);
@@ -583,7 +583,7 @@ public class ModuleFeedbackTests {
         widgetJson.put("_id", widget.widgetId);
         widgetJson.put("type", widget.type.toString());
         widgetJson.put("name", widget.name);
-        widgetJson.put("tg", widget.tags);
+        widgetJson.put("tg", new JSONArray(widget.tags));
         return widgetJson;
     }
 
