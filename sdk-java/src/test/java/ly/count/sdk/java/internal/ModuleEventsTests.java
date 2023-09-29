@@ -62,7 +62,7 @@ public class ModuleEventsTests {
      * event queue should be empty when reached to event queue size to send
      */
     @Test
-    public void recordEvent_queueSizeOver() throws InterruptedException {
+    public void recordEvent_queueSizeOver() {
         init(TestUtils.getConfigEvents(2));
 
         validateQueueSize(0);
@@ -87,7 +87,7 @@ public class ModuleEventsTests {
      * event queue should be empty when reached to event queue size to send
      */
     @Test
-    public void recordEvent_queueSizeOverMemory() throws IOException, InterruptedException {
+    public void recordEvent_queueSizeOverMemory() throws IOException {
         EventQueueTests.writeToEventQueue("{\"hour\":10,\"count\":1,\"dow\":4,\"key\":\"test-joinEvents-1\",\"timestamp\":1695887006647}:::{\"hour\":10,\"count\":1,\"dow\":4,\"key\":\"test-joinEvents-2\",\"timestamp\":1695887006657}", false);
         init(TestUtils.getConfigEvents(2));
 
