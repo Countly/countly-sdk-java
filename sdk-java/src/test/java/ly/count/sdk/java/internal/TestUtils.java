@@ -218,7 +218,11 @@ public class TestUtils {
     }
 
     static List<EventImpl> readEventsFromRequest() {
-        JSONArray array = new JSONArray(getCurrentRequestQueue()[0].get("events"));
+        return readEventsFromRequest(0);
+    }
+
+    static List<EventImpl> readEventsFromRequest(int requestIndex) {
+        JSONArray array = new JSONArray(getCurrentRequestQueue()[requestIndex].get("events"));
         List<EventImpl> result = new ArrayList<>();
 
         array.forEach(value -> {
