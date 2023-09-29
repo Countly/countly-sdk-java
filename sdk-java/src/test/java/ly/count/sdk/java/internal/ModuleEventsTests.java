@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import static ly.count.sdk.java.internal.TestUtils.eKeys;
 import static ly.count.sdk.java.internal.TestUtils.validateEvent;
 
 @RunWith(JUnit4.class)
@@ -49,10 +50,10 @@ public class ModuleEventsTests {
         segmentation.put("bald", true);
 
         //record event with key segmentation and count
-        Countly.instance().events().recordEvent(TestUtils.eKeys[0], 1, 45.9, segmentation, 32.0);
+        Countly.instance().events().recordEvent(eKeys[0], 1, 45.9, segmentation, 32.0);
 
         //check if event was recorded correctly and size of event queue is equal to size of events in queue
-        validateEventInEventQueue(TestUtils.getTestSDirectory(), TestUtils.eKeys[0], segmentation, 1, 45.9, 32.0, 1, 0);
+        validateEventInEventQueue(TestUtils.getTestSDirectory(), eKeys[0], segmentation, 1, 45.9, 32.0, 1, 0);
     }
 
     /**
@@ -67,16 +68,18 @@ public class ModuleEventsTests {
         validateQueueSize(0);
         Assert.assertEquals(0, TestUtils.getCurrentRequestQueue().length);
 
-        Countly.instance().events().recordEvent("recordEvent_queueSizeOver1", 1, 45.9, null, 32.0);
+        Countly.instance().events().recordEvent(eKeys[0], 1, 45.9, null, 32.0);
         validateQueueSize(1);
         Assert.assertEquals(0, TestUtils.getCurrentRequestQueue().length);
 
-        Countly.instance().events().recordEvent("recordEvent_queueSizeOver2", 1, 45.9, null, 32.0);
+        Countly.instance().events().recordEvent(eKeys[1], 1, 45.9, null, 32.0);
         validateQueueSize(0);
+        Storage.await(moduleEvents.L); // wait for request to be write to the disk
         Assert.assertEquals(1, TestUtils.getCurrentRequestQueue().length);
 
-        Map<String, String> request = TestUtils.getCurrentRequestQueue()[0];
-        Assert.assertTrue(request.get("events").contains("recordEvent_queueSizeOver1") && request.get("events").contains("recordEvent_queueSizeOver2"));
+        List<EventImpl> eventsInRequest = TestUtils.readEventsFromRequest();
+        validateEvent(eventsInRequest.get(0), eKeys[0], null, 1, 45.9, 32.0);
+        validateEvent(eventsInRequest.get(1), eKeys[1], null, 1, 45.9, 32.0);
     }
 
     /**
@@ -86,17 +89,20 @@ public class ModuleEventsTests {
      */
     @Test
     public void recordEvent_queueSizeOverMemory() throws IOException {
-        EventQueueTests.writeToEventQueue("{\"hour\":10,\"count\":1,\"dow\":4,\"key\":\"test-joinEvents-1\",\"timestamp\":1695887006647}:::{\"hour\":10,\"count\":1,\"dow\":4,\"key\":\"test-joinEvents-2\",\"timestamp\":1695887006657}", false);
+        EventQueueTests.writeToEventQueue("{\"hour\":10,\"count\":5,\"dow\":4,\"key\":\"test-joinEvents-1\",\"timestamp\":1695887006647}:::{\"hour\":10,\"count\":1,\"dow\":4,\"key\":\"test-joinEvents-2\",\"timestamp\":1695887006657}", false);
         init(TestUtils.getConfigEvents(2));
 
         Assert.assertEquals(0, TestUtils.getCurrentRequestQueue().length);
         validateQueueSize(2);
-        Countly.instance().events().recordEvent("recordEvent_queueSizeOver", 1, 45.9, null, 32.0);
+        Countly.instance().events().recordEvent(eKeys[0], 1, 45.9, null, 32.0);
         validateQueueSize(0);
+        Storage.await(moduleEvents.L); // wait for request to be written to the disk
         Assert.assertEquals(1, TestUtils.getCurrentRequestQueue().length);
 
-        Map<String, String> request = TestUtils.getCurrentRequestQueue()[0];
-        Assert.assertTrue(request.get("events").contains("recordEvent_queueSizeOver") && request.get("events").contains("test-joinEvents-1") && request.get("events").contains("test-joinEvents-2"));
+        List<EventImpl> eventsInRequest = TestUtils.readEventsFromRequest();
+        validateEvent(eventsInRequest.get(0), "test-joinEvents-1", null, 5, null, null);
+        validateEvent(eventsInRequest.get(1), "test-joinEvents-2", null, 1, null, null);
+        validateEvent(eventsInRequest.get(2), eKeys[0], null, 1, 45.9, 32.0);
     }
 
     /**
@@ -179,9 +185,9 @@ public class ModuleEventsTests {
         expectedSegmentation.put("cheated", false);
 
         //record event with key segmentation
-        Countly.instance().events().recordEvent(TestUtils.eKeys[0], segmentation);
+        Countly.instance().events().recordEvent(eKeys[0], segmentation);
 
-        validateEventInEventQueue(TestUtils.getTestSDirectory(), TestUtils.eKeys[0], expectedSegmentation, 1, null, null, 1, 0);
+        validateEventInEventQueue(TestUtils.getTestSDirectory(), eKeys[0], expectedSegmentation, 1, null, null, 1, 0);
     }
 
     /**
@@ -195,16 +201,16 @@ public class ModuleEventsTests {
 
         validateTimedEventSize(0, 0);
 
-        startEvent(TestUtils.eKeys[0]);
+        startEvent(eKeys[0]);
         validateTimedEventSize(0, 1);
 
-        EventImpl timedEvent = moduleEvents.timedEvents.get(TestUtils.eKeys[0]);
-        validateEvent(timedEvent, TestUtils.eKeys[0], null, 1, null, null);
+        EventImpl timedEvent = moduleEvents.timedEvents.get(eKeys[0]);
+        validateEvent(timedEvent, eKeys[0], null, 1, null, null);
 
-        endEvent(TestUtils.eKeys[0], null, 1, null);
+        endEvent(eKeys[0], null, 1, null);
 
         Assert.assertEquals(0, moduleEvents.timedEvents.size());
-        validateEventInEventQueue(TestUtils.getTestSDirectory(), TestUtils.eKeys[0], null, 1, null, 0.0, 1, 0);
+        validateEventInEventQueue(TestUtils.getTestSDirectory(), eKeys[0], null, 1, null, 0.0, 1, 0);
     }
 
     /**
@@ -246,22 +252,22 @@ public class ModuleEventsTests {
 
         validateTimedEventSize(0, 0);
 
-        startEvent(TestUtils.eKeys[0]);
+        startEvent(eKeys[0]);
 
         validateTimedEventSize(0, 1);
 
-        EventImpl timedEvent = moduleEvents.timedEvents.get(TestUtils.eKeys[0]);
-        validateEvent(timedEvent, TestUtils.eKeys[0], null, 1, null, null);
+        EventImpl timedEvent = moduleEvents.timedEvents.get(eKeys[0]);
+        validateEvent(timedEvent, eKeys[0], null, 1, null, null);
 
-        boolean result = Countly.instance().events().startEvent(TestUtils.eKeys[0]);
+        boolean result = Countly.instance().events().startEvent(eKeys[0]);
         Assert.assertFalse(result);
 
         validateTimedEventSize(0, 1);
 
-        endEvent(TestUtils.eKeys[0], null, 1, null);
+        endEvent(eKeys[0], null, 1, null);
 
         Assert.assertEquals(0, moduleEvents.timedEvents.size());
-        validateEventInEventQueue(TestUtils.getTestSDirectory(), TestUtils.eKeys[0], null, 1, null, 0.0, 1, 0);
+        validateEventInEventQueue(TestUtils.getTestSDirectory(), eKeys[0], null, 1, null, 0.0, 1, 0);
     }
 
     /**
@@ -317,21 +323,21 @@ public class ModuleEventsTests {
 
         validateTimedEventSize(0, 0);
 
-        startEvent(TestUtils.eKeys[0]); // start event to end it
+        startEvent(eKeys[0]); // start event to end it
         validateTimedEventSize(0, 1);
 
-        EventImpl timedEvent = moduleEvents.timedEvents.get(TestUtils.eKeys[0]);
-        validateEvent(timedEvent, TestUtils.eKeys[0], null, 1, null, null);
+        EventImpl timedEvent = moduleEvents.timedEvents.get(eKeys[0]);
+        validateEvent(timedEvent, eKeys[0], null, 1, null, null);
 
         Map<String, Object> segmentation = new HashMap<>();
         segmentation.put("hair_color", "red");
         segmentation.put("hair_length", "short");
         segmentation.put("chauffeur", "g3chauffeur"); //
 
-        endEvent(TestUtils.eKeys[0], segmentation, 1, 5.0);
+        endEvent(eKeys[0], segmentation, 1, 5.0);
 
         Assert.assertEquals(0, moduleEvents.timedEvents.size());
-        validateEventInEventQueue(TestUtils.getTestSDirectory(), TestUtils.eKeys[0], segmentation, 1, 5.0, 0.0, 1, 0);
+        validateEventInEventQueue(TestUtils.getTestSDirectory(), eKeys[0], segmentation, 1, 5.0, 0.0, 1, 0);
     }
 
     /**
@@ -346,20 +352,20 @@ public class ModuleEventsTests {
 
         validateTimedEventSize(0, 0);
 
-        startEvent(TestUtils.eKeys[0]); // start event to end it
+        startEvent(eKeys[0]); // start event to end it
         validateTimedEventSize(0, 1);
-        EventImpl timedEvent = moduleEvents.timedEvents.get(TestUtils.eKeys[0]);
-        validateEvent(timedEvent, TestUtils.eKeys[0], null, 1, null, null);
+        EventImpl timedEvent = moduleEvents.timedEvents.get(eKeys[0]);
+        validateEvent(timedEvent, eKeys[0], null, 1, null, null);
 
         Map<String, Object> segmentation = new HashMap<>();
         segmentation.put("horse_name", "Alice");
         segmentation.put("bet_amount", 300);
         segmentation.put("currency", "Dollar"); //
 
-        endEvent(TestUtils.eKeys[0], segmentation, -7, 67.0);
+        endEvent(eKeys[0], segmentation, -7, 67.0);
         validateTimedEventSize(0, 1);
-        timedEvent = moduleEvents.timedEvents.get(TestUtils.eKeys[0]);
-        validateEvent(timedEvent, TestUtils.eKeys[0], null, 1, null, null);
+        timedEvent = moduleEvents.timedEvents.get(eKeys[0]);
+        validateEvent(timedEvent, eKeys[0], null, 1, null, null);
     }
 
     /**
@@ -415,13 +421,13 @@ public class ModuleEventsTests {
 
         validateTimedEventSize(0, 0);
 
-        startEvent(TestUtils.eKeys[0]); // start event to end it
+        startEvent(eKeys[0]); // start event to end it
         validateTimedEventSize(0, 1);
 
-        EventImpl timedEvent = moduleEvents.timedEvents.get(TestUtils.eKeys[0]);
-        validateEvent(timedEvent, TestUtils.eKeys[0], null, 1, null, null);
+        EventImpl timedEvent = moduleEvents.timedEvents.get(eKeys[0]);
+        validateEvent(timedEvent, eKeys[0], null, 1, null, null);
 
-        Assert.assertTrue(Countly.instance().events().cancelEvent(TestUtils.eKeys[0]));
+        Assert.assertTrue(Countly.instance().events().cancelEvent(eKeys[0]));
         Assert.assertEquals(0, moduleEvents.timedEvents.size());
         validateQueueSize(0);
     }
@@ -431,23 +437,23 @@ public class ModuleEventsTests {
         init(TestUtils.getConfigEvents(4));
         validateTimedEventSize(0, 0);
 
-        startEvent(TestUtils.eKeys[0]); // start event to end it
+        startEvent(eKeys[0]); // start event to end it
         validateTimedEventSize(0, 1);
 
         Thread.sleep(1000);
-        startEvent(TestUtils.eKeys[1]); // start event to end it
+        startEvent(eKeys[1]); // start event to end it
         validateTimedEventSize(0, 2);
 
         Thread.sleep(1000);
-        endEvent(TestUtils.eKeys[1], null, 3, 15.0);
+        endEvent(eKeys[1], null, 3, 15.0);
 
         Assert.assertEquals(1, moduleEvents.timedEvents.size());
-        validateEventInEventQueue(TestUtils.getTestSDirectory(), TestUtils.eKeys[1], null, 3, 15.0, 1.0, 1, 0);
+        validateEventInEventQueue(TestUtils.getTestSDirectory(), eKeys[1], null, 3, 15.0, 1.0, 1, 0);
 
-        endEvent(TestUtils.eKeys[0], null, 2, 4.0);
+        endEvent(eKeys[0], null, 2, 4.0);
 
         Assert.assertEquals(0, moduleEvents.timedEvents.size());
-        validateEventInEventQueue(TestUtils.getTestSDirectory(), TestUtils.eKeys[0], null, 2, 4.0, 2.0, 2, 1);
+        validateEventInEventQueue(TestUtils.getTestSDirectory(), eKeys[0], null, 2, 4.0, 2.0, 2, 1);
     }
 
     private void validateTimedEventSize(int expectedQueueSize, int expectedTimedEventSize) {
