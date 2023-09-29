@@ -82,13 +82,12 @@ class ImmediateRequestMaker implements ImmediateRequestI {
                 L.e("[ImmediateRequestMaker] Encountered problem while making a immediate server request, received result was null");
                 return null;
             }
-
-            char firstChar = receivedBuffer.trim().charAt(0);
-            if (code >= 200 && code < 300 && (firstChar == '[' || receivedBuffer.contains("result"))) {
+            
+            if (code >= 200 && code < 300) {
                 L.d("[ImmediateRequestMaker] Received the following response, :[" + receivedBuffer + "]");
 
                 // we check if the result was a json array or json object and convert the array into an object if necessary
-                if (firstChar == '[') {
+                if (receivedBuffer.trim().charAt(0) == '[') {
                     return new JSONObject("{\"jsonArray\":" + receivedBuffer + "}");
                 }
                 return new JSONObject(receivedBuffer);

@@ -297,7 +297,7 @@ public class ModuleFeedback extends ModuleBase {
         requestData.append("&sdk_name=");
         requestData.append(internalConfig.getSdkName());
         requestData.append("&platform=");
-        requestData.append(internalConfig.getSdkPlatform());
+        requestData.append(Utils.urlencode(internalConfig.getSdkPlatform(), L));
         requestData.append("&app_version=");
         requestData.append(cachedAppVersion);
 
@@ -363,7 +363,7 @@ public class ModuleFeedback extends ModuleBase {
         widgetListUrl.append("&sdk_name=");
         widgetListUrl.append(internalConfig.getSdkName());
         widgetListUrl.append("&platform=");
-        widgetListUrl.append(internalConfig.getSdkPlatform());
+        widgetListUrl.append(Utils.urlencode(internalConfig.getSdkPlatform(), L));
 
         final String preparedWidgetUrl = widgetListUrl.toString();
 
