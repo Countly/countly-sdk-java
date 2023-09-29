@@ -272,7 +272,7 @@ public class TestUtils {
 
         return result;
     }
-  
+
     static void validateEventQueueSize(int expectedSize, List<EventImpl> events, EventQueue eventQueue) {
         Assert.assertEquals(expectedSize, events.size());
         Assert.assertEquals(expectedSize, eventQueue.eqSize());
