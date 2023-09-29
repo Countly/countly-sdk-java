@@ -78,6 +78,7 @@ public class TestUtils {
      * @return array of request params
      */
     protected static Map<String, String>[] getCurrentRequestQueue(File targetFolder, Log logger) {
+        Storage.await(mock(Log.class)); // wait for request to be write to the disk
 
         //check whether target folder is a directory or not
         if (!targetFolder.isDirectory()) {

@@ -74,7 +74,7 @@ public class ModuleEventsTests {
 
         Countly.instance().events().recordEvent("recordEvent_queueSizeOver2", 1, 45.9, null, 32.0);
         validateQueueSize(0);
-        Storage.await(mock(Log.class)); // wait for request to be write to the disk
+        
         Assert.assertEquals(1, TestUtils.getCurrentRequestQueue().length);
 
         Map<String, String> request = TestUtils.getCurrentRequestQueue()[0];
@@ -95,7 +95,7 @@ public class ModuleEventsTests {
         validateQueueSize(2);
         Countly.instance().events().recordEvent("recordEvent_queueSizeOver", 1, 45.9, null, 32.0);
         validateQueueSize(0);
-        Storage.await(mock(Log.class)); // wait for request to be write to the disk
+
         Assert.assertEquals(1, TestUtils.getCurrentRequestQueue().length);
 
         Map<String, String> request = TestUtils.getCurrentRequestQueue()[0];
