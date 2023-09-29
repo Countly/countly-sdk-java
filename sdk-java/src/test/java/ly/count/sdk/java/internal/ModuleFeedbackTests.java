@@ -518,7 +518,6 @@ public class ModuleFeedbackTests {
         Countly.instance().feedback().reportFeedbackWidgetManually(widgetInfoRating, null, null);
         validateEventQueueSize(0, moduleEvents().eventQueue);
 
-        Storage.await(L); // wait for request queue to be processed
         Assert.assertEquals(1, TestUtils.getCurrentRequestQueue().length);
 
         List<EventImpl> eventsInRequest = TestUtils.readEventsFromRequest();
