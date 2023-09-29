@@ -496,6 +496,37 @@ public class ModuleFeedbackTests {
     }
 
     /**
+     * Report feedback widget manually with null widgetData and null widget result
+     * "reportFeedbackWidgetManually" function should record, and widgets should be written to request queue
+     * event queue should contain widget event, and it should have correct segmentation, also request queue should contain
+     */
+    @Test
+    public void reportFeedbackWidgetManually_rq() {
+        init(TestUtils.getConfigFeedback(Config.Feature.Events).setEventQueueSizeToSend(2));
+
+        CountlyFeedbackWidget widgetInfoNps = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] {});
+        validateEventQueueSize(0, moduleEvents().eventQueue);
+        Assert.assertEquals(0, TestUtils.getCurrentRequestQueue().length);
+
+        Countly.instance().feedback().reportFeedbackWidgetManually(widgetInfoNps, null, null);
+        validateEventQueueSize(1, moduleEvents().eventQueue);
+        Assert.assertEquals(0, TestUtils.getCurrentRequestQueue().length);
+
+        validateEvent(TestUtils.getCurrentEventQueue(TestUtils.getTestSDirectory(), L).get(0), FeedbackWidgetType.nps.eventKey, requiredWidgetSegmentation(widgetInfoNps.widgetId, null), 1, null, null);
+
+        CountlyFeedbackWidget widgetInfoRating = createFeedbackWidget(FeedbackWidgetType.rating, "rating1", "ratingID1", new String[] {});
+        Countly.instance().feedback().reportFeedbackWidgetManually(widgetInfoRating, null, null);
+        validateEventQueueSize(0, moduleEvents().eventQueue);
+
+        Storage.await(L); // wait for request queue to be processed
+        Assert.assertEquals(1, TestUtils.getCurrentRequestQueue().length);
+
+        List<EventImpl> eventsInRequest = TestUtils.readEventsFromRequest();
+        validateEvent(eventsInRequest.get(0), FeedbackWidgetType.nps.eventKey, requiredWidgetSegmentation(widgetInfoNps.widgetId, null), 1, null, null);
+        validateEvent(eventsInRequest.get(1), FeedbackWidgetType.rating.eventKey, requiredWidgetSegmentation(widgetInfoRating.widgetId, null), 1, null, null);
+    }
+
+    /**
      * Report feedback widget manually with invalid widgetData and null widgetResult
      * "reportFeedbackWidgetManually" function should record widget as an event,
      * event queue should contain it and it should have correct segmentation
