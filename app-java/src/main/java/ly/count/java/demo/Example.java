@@ -164,7 +164,10 @@ public class Example {
         List<CountlyFeedbackWidget> feedbackWidgets = new ArrayList<>();
         boolean running = true;
         while (running) {
+            System.out.println("You should get feedback widgets first");
             System.out.println("Choose your option for feedback: ");
+
+            System.out.println("0) To exit from feedback widget functionality");
 
             System.out.println("1) Get feedback widgets");
             System.out.println("2.X) Get feedback widget data with index of widget");
