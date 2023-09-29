@@ -215,4 +215,13 @@ public class TestUtils {
         Assert.assertTrue(gonnaValidate.hour >= 0 && gonnaValidate.hour < 24);
         Assert.assertTrue(gonnaValidate.timestamp >= 0);
     }
+
+    static void validateEventQueueSize(int expectedSize, List<EventImpl> events, EventQueue eventQueue) {
+        Assert.assertEquals(expectedSize, events.size());
+        Assert.assertEquals(expectedSize, eventQueue.eqSize());
+    }
+
+    static void validateEventQueueSize(int expectedSize, EventQueue eventQueue) {
+        validateEventQueueSize(expectedSize, TestUtils.getCurrentEventQueue(getTestSDirectory(), mock(Log.class)), eventQueue);
+    }
 }
