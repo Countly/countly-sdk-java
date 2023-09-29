@@ -15,6 +15,7 @@ import org.junit.runners.JUnit4;
 
 import static ly.count.sdk.java.internal.TestUtils.validateEvent;
 import static ly.count.sdk.java.internal.TestUtils.validateEventQueueSize;
+import static org.mockito.Mockito.mock;
 
 @RunWith(JUnit4.class)
 public class ModuleEventsTests {
@@ -93,7 +94,8 @@ public class ModuleEventsTests {
         validateEventQueueSize(2, moduleEvents.eventQueue);
         Countly.instance().events().recordEvent("recordEvent_queueSizeOver", 1, 45.9, null, 32.0);
         validateEventQueueSize(0, moduleEvents.eventQueue);
-        //Assert.assertEquals(1, TestUtils.getCurrentRequestQueue().length); todo this fails why?
+
+        Assert.assertEquals(1, TestUtils.getCurrentRequestQueue().length);
 
         Map<String, String> request = TestUtils.getCurrentRequestQueue()[0];
         Assert.assertTrue(request.get("events").contains("recordEvent_queueSizeOver") && request.get("events").contains("test-joinEvents-1") && request.get("events").contains("test-joinEvents-2"));
