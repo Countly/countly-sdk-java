@@ -68,7 +68,7 @@ public class ModuleEventsTests {
 
         validateEventQueueSize(0, moduleEvents.eventQueue);
         Assert.assertEquals(0, TestUtils.getCurrentRequestQueue().length);
-      
+
         Countly.instance().events().recordEvent(eKeys[0], 1, 45.9, null, 32.0);
         validateEventQueueSize(1, moduleEvents.eventQueue);
         Assert.assertEquals(0, TestUtils.getCurrentRequestQueue().length);

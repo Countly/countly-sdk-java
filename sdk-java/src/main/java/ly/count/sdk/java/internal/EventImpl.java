@@ -52,8 +52,6 @@ class EventImpl implements Event, JSONable {
         this.dow = Device.dev.currentDayOfWeek();
     }
 
-
-
     EventImpl(@Nonnull EventRecorder recorder, @Nonnull String key, @Nonnull Log givenL) {
         L = givenL;
         if (recorder == null) {

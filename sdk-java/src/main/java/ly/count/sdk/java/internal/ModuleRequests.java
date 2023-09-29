@@ -193,7 +193,7 @@ public class ModuleRequests extends ModuleBase {
             //if nothing was in the request, no need to add these mandatory fields
             return request;
         }
-        
+
         //check if it has the device ID
         if (!request.params.has(Params.PARAM_DEVICE_ID)) {
             if (config.getDeviceId() == null) {

@@ -107,10 +107,10 @@ public class ModuleFeedbackTests {
         // First variation => no '_id' key
         String requestJson =
             "{\"result\":["
-                + "{\"_id\":\"survID1\",\"type\":\"survey\",\"exitPolicy\":\"onAbandon\",\"appearance\":{\"show\":\"uSubmit\",\"position\":\"bLeft\",\"color\":\"#2eb52b\"},\"name\":\"surv1\"},"
+                + "{\"_id\":\"survID1\",\"type\":\"survey\",\"exitPolicy\":\"onAbandon\",\"appearance\":{\"show\":\"uSubmit\",\"position\":\"bLeft\",\"color\":\"#2eb52b\"},\"name\":\"surv1\",\"tg\":[\"aaa\"]},"
                 + "{\"_id\":\"survID2\",\"type\":\"survey\",\"exitPolicy\":\"onAbandon\",\"appearance\":{\"show\":\"uSubmit\",\"position\":\"bLeft\",\"color\":\"#2eb52b\"},\"tg\":[\"/\"]},"
                 + "{\"type\":\"survey\",\"exitPolicy\":\"onAbandon\",\"appearance\":{\"show\":\"uSubmit\",\"position\":\"bLeft\",\"color\":\"#2eb52b\"},\"name\":\"surv3\",\"tg\":[\"/\"]},"
-                + "{\"_id\":\"npsID1\",\"type\":\"nps\",\"name\":\"nps1\"},"
+                + "{\"_id\":\"npsID1\",\"type\":\"nps\",\"name\":\"nps1\",\"tg\":[\"bbb\", \"123\"]},"
                 + "{\"_id\":\"npsID2\",\"type\":\"nps\",\"tg\":[]},"
                 + "{\"type\":\"nps\",\"name\":\"nps3\",\"tg\":[]},"
                 + "{\"_id\":\"ratingID1\",\"type\":\"rating\",\"appearance\":{\"position\":\"mleft\",\"bg_color\":\"#fff\",\"text_color\":\"#ddd\",\"text\":\"Feedback\"},\"name\":\"rating1\"},"
@@ -124,9 +124,9 @@ public class ModuleFeedbackTests {
         Assert.assertNotNull(ret);
         Assert.assertEquals(6, ret.size());
 
-        ValidateReturnedFeedbackWidget(FeedbackWidgetType.survey, "surv1", "survID1", new String[] {}, ret.get(0));
+        ValidateReturnedFeedbackWidget(FeedbackWidgetType.survey, "surv1", "survID1", new String[] { "aaa" }, ret.get(0));
         ValidateReturnedFeedbackWidget(FeedbackWidgetType.survey, "", "survID2", new String[] { "/" }, ret.get(1));
-        ValidateReturnedFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] {}, ret.get(2));
+        ValidateReturnedFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "bbb", "123" }, ret.get(2));
         ValidateReturnedFeedbackWidget(FeedbackWidgetType.nps, "", "npsID2", new String[] {}, ret.get(3));
         ValidateReturnedFeedbackWidget(FeedbackWidgetType.rating, "rating1", "ratingID1", new String[] {}, ret.get(4));
         ValidateReturnedFeedbackWidget(FeedbackWidgetType.rating, "", "ratingID2", new String[] { "/" }, ret.get(5));
@@ -157,7 +157,7 @@ public class ModuleFeedbackTests {
             Map<String, String> params = TestUtils.parseQueryParams(requestData);
             Assert.assertEquals("feedback", params.get("method"));
             validateWidgetRequiredParams("/o/sdk", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
-            validateRequiredParams(params);
+            TestUtils.validateRequiredParams(params);
             callback.callback(responseJson);
         };
         SDKCore.instance.config.immediateRequestGenerator = () -> requestMaker;
@@ -551,32 +551,13 @@ public class ModuleFeedbackTests {
         Assert.assertEquals(getOs(), params.get("platform"));
         Assert.assertEquals("1", params.get("shown"));
         Assert.assertEquals(String.valueOf(Device.dev.getAppVersion()), params.get("app_version"));
-        validateSdkRelatedParams(params);
+        TestUtils.validateSdkIdentityParams(params);
     }
 
     private void validateWidgetRequiredParams(String expectedEndpoint, String customEndpoint, Boolean requestShouldBeDelayed, Boolean networkingIsEnabled) {
         Assert.assertEquals(expectedEndpoint, customEndpoint);
         Assert.assertFalse(requestShouldBeDelayed);
         Assert.assertTrue(networkingIsEnabled);
-    }
-
-    private void validateRequiredParams(Map<String, String> params) {
-        int hour = Integer.parseInt(params.get("hour"));
-        int dow = Integer.parseInt(params.get("dow"));
-        int tz = Integer.parseInt(params.get("tz"));
-
-        validateSdkRelatedParams(params);
-        Assert.assertEquals(SDKCore.instance.config.getDeviceId().id, params.get("device_id"));
-        Assert.assertEquals(SDKCore.instance.config.getServerAppKey(), params.get("app_key"));
-        Assert.assertTrue(Long.valueOf(params.get("timestamp")) > 0);
-        Assert.assertTrue(hour > 0 && hour < 24);
-        Assert.assertTrue(dow >= 0 && dow < 7);
-        Assert.assertTrue(tz >= -720 && tz <= 840);
-    }
-
-    private void validateSdkRelatedParams(Map<String, String> params) {
-        Assert.assertEquals(SDKCore.instance.config.getSdkVersion(), params.get("sdk_version"));
-        Assert.assertEquals(SDKCore.instance.config.getSdkName(), params.get("sdk_name"));
     }
 
     private CountlyFeedbackWidget createFeedbackWidget(FeedbackWidgetType type, String name, String id, String[] tags) {
