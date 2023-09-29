@@ -14,6 +14,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import static ly.count.sdk.java.internal.TestUtils.validateEvent;
+import static org.mockito.Mockito.mock;
 
 @RunWith(JUnit4.class)
 public class ModuleEventsTests {
@@ -61,7 +62,7 @@ public class ModuleEventsTests {
      * event queue should be empty when reached to event queue size to send
      */
     @Test
-    public void recordEvent_queueSizeOver() {
+    public void recordEvent_queueSizeOver() throws InterruptedException {
         init(TestUtils.getConfigEvents(2));
 
         validateQueueSize(0);
@@ -73,6 +74,7 @@ public class ModuleEventsTests {
 
         Countly.instance().events().recordEvent("recordEvent_queueSizeOver2", 1, 45.9, null, 32.0);
         validateQueueSize(0);
+        Storage.await(mock(Log.class)); // wait for request to be write to the disk
         Assert.assertEquals(1, TestUtils.getCurrentRequestQueue().length);
 
         Map<String, String> request = TestUtils.getCurrentRequestQueue()[0];
@@ -85,7 +87,7 @@ public class ModuleEventsTests {
      * event queue should be empty when reached to event queue size to send
      */
     @Test
-    public void recordEvent_queueSizeOverMemory() throws IOException {
+    public void recordEvent_queueSizeOverMemory() throws IOException, InterruptedException {
         EventQueueTests.writeToEventQueue("{\"hour\":10,\"count\":1,\"dow\":4,\"key\":\"test-joinEvents-1\",\"timestamp\":1695887006647}:::{\"hour\":10,\"count\":1,\"dow\":4,\"key\":\"test-joinEvents-2\",\"timestamp\":1695887006657}", false);
         init(TestUtils.getConfigEvents(2));
 
@@ -93,6 +95,7 @@ public class ModuleEventsTests {
         validateQueueSize(2);
         Countly.instance().events().recordEvent("recordEvent_queueSizeOver", 1, 45.9, null, 32.0);
         validateQueueSize(0);
+        Storage.await(mock(Log.class)); // wait for request to be write to the disk
         Assert.assertEquals(1, TestUtils.getCurrentRequestQueue().length);
 
         Map<String, String> request = TestUtils.getCurrentRequestQueue()[0];
