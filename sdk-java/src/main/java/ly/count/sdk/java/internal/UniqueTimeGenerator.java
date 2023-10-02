@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Unique timer, keeps last 10 returned values in memory.
  */
-class UniqueTimeGenerator implements Device.TimeGenerator {
+class UniqueTimeGenerator {
     final List<Long> lastTsMs = new ArrayList<>(10);
     long addition = 0;
 

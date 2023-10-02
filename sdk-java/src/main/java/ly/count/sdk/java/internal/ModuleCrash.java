@@ -80,7 +80,7 @@ public class ModuleCrash extends ModuleBase {
     }
 
     public CrashImpl onCrash(CtxCore ctx, CrashImpl crash) {
-        long running = started == 0 ? 0 : Device.dev.nsToMs(System.nanoTime() - started);
+        long running = started == 0 ? 0 : TimeUtils.nsToMs(System.nanoTime() - started);
         crash.putMetrics(ctx, running);
 
         if (!crash.getData().has("_os")) {
