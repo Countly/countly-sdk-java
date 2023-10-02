@@ -181,10 +181,11 @@ public class ModuleRequests extends ModuleBase {
     }
 
     static void addRequiredTimeParams(Request request) {
-        request.params.add("timestamp", Device.dev.uniqueTimestamp())
-            .add("tz", Device.dev.getTimezoneOffset())
-            .add("hour", Device.dev.currentHour())
-            .add("dow", Device.dev.currentDayOfWeek());
+        TimeUtils.Instant instant = TimeUtils.getCurrentInstant();
+        request.params.add("timestamp", instant.timestamp)
+            .add("tz", instant.tz)
+            .add("hour", instant.hour)
+            .add("dow", instant.dow);
     }
 
     static Request addRequired(InternalConfig config, Request request) {

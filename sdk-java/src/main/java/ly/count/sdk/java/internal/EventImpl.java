@@ -47,12 +47,11 @@ class EventImpl implements Event, JSONable {
         this.sum = sum;
         this.duration = duration;
         this.segmentation = segmentation;
-        this.timestamp = Device.dev.uniqueTimestamp();
-        this.hour = Device.dev.currentHour();
-        this.dow = Device.dev.currentDayOfWeek();
+        TimeUtils.Instant instant = TimeUtils.getCurrentInstant();
+        this.timestamp = instant.timestamp;
+        this.hour = instant.hour;
+        this.dow = instant.dow;
     }
-
-
 
     EventImpl(@Nonnull EventRecorder recorder, @Nonnull String key, @Nonnull Log givenL) {
         L = givenL;
@@ -68,9 +67,10 @@ class EventImpl implements Event, JSONable {
         this.recorder = recorder;
         this.key = key;
         this.count = 1;
-        this.timestamp = Device.dev.uniqueTimestamp();
-        this.hour = Device.dev.currentHour();
-        this.dow = Device.dev.currentDayOfWeek();
+        TimeUtils.Instant instant = TimeUtils.getCurrentInstant();
+        this.timestamp = instant.timestamp;
+        this.hour = instant.hour;
+        this.dow = instant.dow;
     }
 
     @Override
@@ -95,7 +95,7 @@ class EventImpl implements Event, JSONable {
             return;
         }
 
-        setDuration((Device.dev.uniqueTimestamp() - timestamp) / 1000);
+        setDuration((TimeUtils.uniqueTimestampMs() - timestamp) / 1000);
         record();
     }
 
