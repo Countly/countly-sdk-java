@@ -312,6 +312,9 @@ public class TestUtils {
 
     public static void createCleanTestState() {
         Countly.instance().halt();
-        //todo finish the thing
+        for (File file : getTestSDirectory().listFiles()) {
+            System.out.println(file);
+            file.delete();
+        }
     }
 }

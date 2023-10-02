@@ -12,7 +12,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -27,17 +26,13 @@ public class ModuleFeedbackTests {
 
     Log L = mock(Log.class);
 
-    @Before
-    public void beforeTest() {
-        TestUtils.createCleanTestState();
-    }
-
     @After
     public void stop() {
         Countly.instance().halt();
     }
 
     private void init(Config cc) {
+        TestUtils.createCleanTestState();
         Countly.instance().init(cc);
     }
 
@@ -555,7 +550,7 @@ public class ModuleFeedbackTests {
         Assert.assertEquals(widgetInfo.widgetId, params.get("widget_id"));
         Assert.assertEquals(Utils.urlencode(getOs(), L), params.get("platform"));
         Assert.assertEquals("1", params.get("shown"));
-        Assert.assertEquals(String.valueOf(Device.dev.getAppVersion()), params.get("app_version"));
+        Assert.assertEquals(String.valueOf(SDKCore.instance.config.getApplicationVersion()), params.get("app_version"));
         TestUtils.validateSdkIdentityParams(params);
     }
 
@@ -606,7 +601,7 @@ public class ModuleFeedbackTests {
     private Map<String, Object> requiredWidgetSegmentation(String widgetId, Map<String, Object> widgetResult) {
         Map<String, Object> segm = new HashMap<>();
         segm.put("platform", getOs());
-        segm.put("app_version", Device.dev.getAppVersion());
+        segm.put("app_version", SDKCore.instance.config.getApplicationVersion());
         segm.put("widget_id", widgetId);
         if (widgetResult != null) {
             segm.putAll(widgetResult);
