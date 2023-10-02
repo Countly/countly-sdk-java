@@ -293,9 +293,9 @@ public class ModuleFeedback extends ModuleBase {
         requestData.append(Utils.urlencode(widgetInfo.widgetId, L));
         requestData.append("&shown=1");
         requestData.append("&sdk_version=");
-        requestData.append(internalConfig.getSdkVersion());
+        requestData.append(Utils.urlencode(internalConfig.getSdkVersion(), L));
         requestData.append("&sdk_name=");
-        requestData.append(internalConfig.getSdkName());
+        requestData.append(Utils.urlencode(internalConfig.getSdkName(), L));
         requestData.append("&platform=");
         requestData.append(Utils.urlencode(internalConfig.getSdkPlatform(), L));
         requestData.append("&app_version=");

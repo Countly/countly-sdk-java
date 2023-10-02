@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.stream.Stream;
 import ly.count.sdk.java.Config;
+import ly.count.sdk.java.Countly;
 import org.json.JSONArray;
 import org.junit.Assert;
 
@@ -125,6 +126,10 @@ public class TestUtils {
         }
 
         return resultMapArray;
+    }
+
+    protected static List<EventImpl> getCurrentEventQueue() {
+        return getCurrentEventQueue(getTestSDirectory(), mock(Log.class));
     }
 
     /**
@@ -303,5 +308,10 @@ public class TestUtils {
     public static void validateSdkIdentityParams(Map<String, String> params) {
         Assert.assertEquals(SDKCore.instance.config.getSdkVersion(), params.get("sdk_version"));
         Assert.assertEquals(SDKCore.instance.config.getSdkName(), params.get("sdk_name"));
+    }
+
+    public static void createCleanTestState() {
+        Countly.instance().halt();
+        //todo finish the thing
     }
 }
