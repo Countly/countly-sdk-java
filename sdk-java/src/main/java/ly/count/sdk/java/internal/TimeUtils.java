@@ -4,6 +4,15 @@ import java.util.Calendar;
 
 public class TimeUtils {
 
+    /**
+     * One second in nanoseconds
+     */
+    protected static final Double NS_IN_SECOND = 1000000000.0d;
+    protected static final Double NS_IN_MS = 1000000.0d;
+    protected static final Double MS_IN_SECOND = 1000d;
+    private static final Device.TimeGenerator uniqueTimer = new UniqueTimeGenerator();
+    private static final Device.TimeGenerator uniformTimer = new UniformTimeGenerator();
+
     public static class Time {
         public final long timestamp;
         public final int hour;
@@ -18,6 +27,12 @@ public class TimeUtils {
         }
     }
 
+    /**
+     * Generates unique time in milliseconds.
+     * And extracts hour, day of week and timezone offset to time objects.
+     *
+     * @return time object
+     */
     public static Time getTime() {
         long timestamp = uniqueTimestamp();
 
@@ -35,9 +50,6 @@ public class TimeUtils {
     public interface TimeGenerator {
         long timestamp();
     }
-
-    protected static final Device.TimeGenerator uniqueTimer = new UniqueTimeGenerator();
-    protected static final Device.TimeGenerator uniformTimer = new UniformTimeGenerator();
 
     /**
      * Wraps {@link System#currentTimeMillis()} to always return different value, even within
@@ -57,5 +69,45 @@ public class TimeUtils {
      */
     public static synchronized long uniformTimestamp() {
         return uniformTimer.timestamp();
+    }
+
+    /**
+     * Convert time in nanoseconds to milliseconds
+     *
+     * @param ns time in nanoseconds
+     * @return ns in milliseconds
+     */
+    public static long nsToMs(long ns) {
+        return Math.round(ns / NS_IN_MS);
+    }
+
+    /**
+     * Convert time in nanoseconds to seconds
+     *
+     * @param ns time in nanoseconds
+     * @return ns in seconds
+     */
+    public static long nsToSec(long ns) {
+        return Math.round(ns / NS_IN_SECOND);
+    }
+
+    /**
+     * Convert time in seconds to nanoseconds
+     *
+     * @param sec time in seconds
+     * @return sec in nanoseconds
+     */
+    public static long secToNs(long sec) {
+        return Math.round(sec * NS_IN_SECOND);
+    }
+
+    /**
+     * Convert time in seconds to milliseconds
+     *
+     * @param sec time in seconds
+     * @return sec in nanoseconds
+     */
+    public static long secToMs(long sec) {
+        return Math.round(sec * MS_IN_SECOND);
     }
 }
