@@ -13,15 +13,15 @@ import org.junit.runners.JUnit4;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
 
 @RunWith(JUnit4.class)
 public class SessionImplTests {
 
-    CtxCore ctx = mock(CtxCore.class);
+    CtxCore ctx;
 
     private void init(Config cc) {
         Countly.instance().init(cc);
+        ctx = TestUtils.getCtxCore();
     }
 
     @After
@@ -35,6 +35,7 @@ public class SessionImplTests {
      */
     @Test
     public void constructor() {
+        init(TestUtils.getConfigSessions());
         // Arrange
         Long id = 12345L;
 
@@ -52,6 +53,7 @@ public class SessionImplTests {
      */
     @Test
     public void constructor_nullId() {
+        init(TestUtils.getConfigSessions());
         // Act
         SessionImpl session = new SessionImpl(ctx, null);
 
@@ -312,6 +314,118 @@ public class SessionImplTests {
         session.begin().end();
 
         validateNotStarted(session);
+    }
+
+    /**
+     * Change device id with merge
+     * "changeDeviceIdWithMerge(String)" function should change the device id.
+     * should be same as the one passed to the function
+     */
+    @Test
+    public void changeDeviceIdWithMerge() {
+        init(TestUtils.getConfigSessions());
+
+        SessionImpl session = (SessionImpl) Countly.session();
+        session.changeDeviceIdWithMerge("newDeviceId");
+        Assert.assertEquals("newDeviceId", ctx.getConfig().getDeviceId().id);
+    }
+
+    /**
+     * Change device id with merge null id
+     * "changeDeviceIdWithMerge(String)" function should not change the device id.
+     * should be same as the test device id
+     */
+    @Test
+    public void changeDeviceIdWithMerge_nullId() {
+        init(TestUtils.getConfigSessions());
+
+        SessionImpl session = (SessionImpl) Countly.session();
+        session.changeDeviceIdWithMerge(null);
+        Assert.assertEquals(TestUtils.DEVICE_ID, ctx.getConfig().getDeviceId().id);
+    }
+
+    /**
+     * Change device id with merge empty id
+     * "changeDeviceIdWithMerge(String)" function should not change the device id.
+     * should be same as the test device id
+     */
+    @Test
+    public void changeDeviceIdWithMerge_emptyId() {
+        init(TestUtils.getConfigSessions());
+
+        SessionImpl session = (SessionImpl) Countly.session();
+        session.changeDeviceIdWithMerge("");
+        Assert.assertEquals(TestUtils.DEVICE_ID, ctx.getConfig().getDeviceId().id);
+    }
+
+    /**
+     * Change device id with merge with backend mode enabled.
+     * "changeDeviceIdWithMerge(String)" function should not change the device id.
+     * should be same as the test device id
+     */
+    @Test
+    public void changeDeviceIdWithMerge_backendModeEnabled() {
+        init(TestUtils.getConfigSessions().enableBackendMode());
+
+        SessionImpl session = (SessionImpl) Countly.session();
+        session.changeDeviceIdWithMerge("newDeviceId");
+        Assert.assertEquals(TestUtils.DEVICE_ID, ctx.getConfig().getDeviceId().id);
+    }
+
+    /**
+     * Change device id without merge
+     * "changeDeviceIdWithoutMerge(String)" function should change the device id.
+     * should be same as the one passed to the function
+     */
+    @Test
+    public void changeDeviceIdWithoutMerge() {
+        init(TestUtils.getConfigSessions());
+
+        SessionImpl session = (SessionImpl) Countly.session();
+        session.changeDeviceIdWithoutMerge("newDeviceId");
+        Assert.assertEquals("newDeviceId", ctx.getConfig().getDeviceId().id);
+    }
+
+    /**
+     * Change device id with merge null id
+     * "changeDeviceIdWithoutMerge(String)" function should not change the device id.
+     * should be same as the test device id
+     */
+    @Test
+    public void changeDeviceIdWithoutMerge_nullId() {
+        init(TestUtils.getConfigSessions());
+
+        SessionImpl session = (SessionImpl) Countly.session();
+        session.changeDeviceIdWithoutMerge(null);
+        Assert.assertEquals(TestUtils.DEVICE_ID, ctx.getConfig().getDeviceId().id);
+    }
+
+    /**
+     * Change device id with merge empty id
+     * "changeDeviceIdWithoutMerge(String)" function should not change the device id.
+     * should be same as the test device id
+     */
+    @Test
+    public void changeDeviceIdWithoutMerge_emptyId() {
+        init(TestUtils.getConfigSessions());
+
+        SessionImpl session = (SessionImpl) Countly.session();
+        session.changeDeviceIdWithoutMerge("");
+        Assert.assertEquals(TestUtils.DEVICE_ID, ctx.getConfig().getDeviceId().id);
+    }
+
+    /**
+     * Change device id with merge with backend mode enabled.
+     * "changeDeviceIdWithoutMerge(String)" function should not change the device id.
+     * should be same as the test device id
+     */
+    @Test
+    public void changeDeviceIdWithoutMerge_backendModeEnabled() {
+        init(TestUtils.getConfigSessions().enableBackendMode());
+
+        SessionImpl session = (SessionImpl) Countly.session();
+        session.changeDeviceIdWithoutMerge("newDeviceId");
+        Assert.assertEquals(TestUtils.DEVICE_ID, ctx.getConfig().getDeviceId().id);
     }
 
     private void validateBeganSession(SessionImpl session) {
