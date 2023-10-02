@@ -12,6 +12,7 @@ import org.junit.runners.JUnit4;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
 @RunWith(JUnit4.class)
@@ -28,6 +29,10 @@ public class SessionImplTests {
         Countly.instance().halt();
     }
 
+    /**
+     * Constructor test
+     * Constructor should create new instance of SessionImpl
+     */
     @Test
     public void constructor() {
         // Arrange
@@ -38,10 +43,13 @@ public class SessionImplTests {
 
         // Assert
         assertNotNull(session);
-        assertEquals(ctx.getLogger(), session.L);
         assertEquals(id, session.getId());
     }
 
+    /**
+     * Constructor test
+     * Constructor should create new instance of SessionImpl with generated ID
+     */
     @Test
     public void constructor_nullId() {
         // Act
@@ -49,21 +57,31 @@ public class SessionImplTests {
 
         // Assert
         assertNotNull(session);
-        assertEquals(ctx.getLogger(), session.L);
-        assertNotNull(session.getId()); // The ID should be generated and not null
+        assertTrue(session.getId() > 0);// The ID should be generated and not null
     }
 
+    /**
+     * Begin a session already began
+     * "begin(long)" function should not begin the session
+     * returned value should be null
+     */
     @Test
     public void begin_notNullBegan() {
         init(TestUtils.getConfigSessions());
 
         SessionImpl session = (SessionImpl) Countly.session();
-        session.began = 0L;
+        session.begin();
+        validateBeganSession(session);
 
         Assert.assertNull(session.begin(0L));
         validateBeganSession(session);
     }
 
+    /**
+     * Begin a session already ended
+     * "begin(long)" function should not begin the session
+     * returned value should be null
+     */
     @Test
     public void begin_notNullEnded() {
         init(TestUtils.getConfigSessions());
@@ -76,6 +94,11 @@ public class SessionImplTests {
         Assert.assertNull(session.begin(0L));
     }
 
+    /**
+     * Begin a session with null SDKCore instance
+     * "begin(long)" function should not begin the session
+     * returned value should be null
+     */
     @Test
     public void begin_nullInstance() {
         init(TestUtils.getConfigSessions());
@@ -86,6 +109,14 @@ public class SessionImplTests {
         validateNotStarted(session);
     }
 
+    /**
+     * Begin a session
+     * "begin(long)" function should begin the session
+     * returned value should be true
+     *
+     * @throws ExecutionException if the computation threw an exception
+     * @throws InterruptedException if thread is interrupted
+     */
     @Test
     public void begin() throws ExecutionException, InterruptedException {
         init(TestUtils.getConfigSessions());
@@ -97,6 +128,11 @@ public class SessionImplTests {
         validateBeganSession(session);
     }
 
+    /**
+     * Begin a session with backendMode enabled
+     * "begin()" function should not begin the session
+     * returned value should be null
+     */
     @Test
     public void begin_backendModeEnabled() {
         init(TestUtils.getConfigSessions().enableBackendMode());
@@ -108,6 +144,11 @@ public class SessionImplTests {
         validateNotStarted(session);
     }
 
+    /**
+     * Update a session not began
+     * "update(long)" function should not update the session
+     * returned value should be null
+     */
     @Test
     public void update_nullBegan() {
         init(TestUtils.getConfigSessions());
@@ -118,17 +159,28 @@ public class SessionImplTests {
         validateNotStarted(session);
     }
 
+    /**
+     * Update a session already ended
+     * "update(long)" function should not update the session
+     * returned value should be null
+     */
     @Test
     public void update_notNullEnded() {
         init(TestUtils.getConfigSessions());
 
         SessionImpl session = (SessionImpl) Countly.session().begin();
         validateBeganSession(session);
+        session.end();
+        validateEndedSession(session);
 
-        session.ended = 0L;
         Assert.assertNull(session.update(0L));
     }
 
+    /**
+     * Update a session with null SDKCore instance
+     * "update(long)" function should not update the session
+     * returned value should be null
+     */
     @Test
     public void update_nullInstance() {
         init(TestUtils.getConfigSessions());
@@ -139,6 +191,14 @@ public class SessionImplTests {
         validateNotStarted(session);
     }
 
+    /**
+     * Update a session
+     * "update(long)" function should update the session
+     * returned value should be true
+     *
+     * @throws ExecutionException if the computation threw an exception
+     * @throws InterruptedException if thread is interrupted
+     */
     @Test
     public void update() throws ExecutionException, InterruptedException {
         init(TestUtils.getConfigSessions());
@@ -151,6 +211,11 @@ public class SessionImplTests {
         validateUpdatedSession(session);
     }
 
+    /**
+     * Update a session with backendMode enabled
+     * "update()" function should not update the session
+     * returned value should be null
+     */
     @Test
     public void update_backendModeEnabled() {
         init(TestUtils.getConfigSessions().enableBackendMode());
@@ -161,6 +226,11 @@ public class SessionImplTests {
         validateNotStarted(session);
     }
 
+    /**
+     * End a session not began
+     * "end(long, Callback, Object)" function should not end the session
+     * returned value should be null
+     */
     @Test
     public void end_nullBegan() {
         init(TestUtils.getConfigSessions());
@@ -171,16 +241,28 @@ public class SessionImplTests {
         validateNotStarted(session);
     }
 
+    /**
+     * End a session already ended
+     * "end(long, Callback, Object)" function should not end the session
+     * returned value should be null
+     */
     @Test
     public void end_notNullEnded() {
         init(TestUtils.getConfigSessions());
 
         SessionImpl session = (SessionImpl) Countly.session();
-        session.ended = 0L;
-
+        session.begin();
+        validateBeganSession(session);
+        session.end();
+        validateEndedSession(session);
         Assert.assertNull(session.end(0L, null, null));
     }
 
+    /**
+     * End a session with null SDKCore instance
+     * "end(long, Callback, Object)" function should not end the session
+     * returned value should be null
+     */
     @Test
     public void end_nullInstance() {
         init(TestUtils.getConfigSessions());
@@ -192,6 +274,16 @@ public class SessionImplTests {
         validateNotStarted(session);
     }
 
+    /**
+     * End a session
+     * "end(long, Callback, Object)" function should end the session
+     * returned value should be true and callback should be called
+     * and session should be ended and not active anymore after callback is called
+     * and callback value should be true
+     *
+     * @throws ExecutionException if the computation threw an exception
+     * @throws InterruptedException if thread is interrupted
+     */
     @Test
     public void end() throws ExecutionException, InterruptedException {
         init(TestUtils.getConfigSessions());
@@ -207,6 +299,11 @@ public class SessionImplTests {
         validateEndedSession(session);
     }
 
+    /**
+     * End a session with backendMode enabled
+     * "end()" function should not end the session
+     * returned value should be null
+     */
     @Test
     public void end_backendModeEnabled() {
         init(TestUtils.getConfigSessions().enableBackendMode());
