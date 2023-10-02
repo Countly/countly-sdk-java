@@ -3,10 +3,7 @@ package ly.count.sdk.java.internal;
 import java.util.Calendar;
 
 public class TimeUtils {
-
-    /**
-     * One second in nanoseconds
-     */
+    
     protected static final Double NS_IN_SECOND = 1000000000.0d;
     protected static final Double NS_IN_MS = 1000000.0d;
     protected static final Double MS_IN_SECOND = 1000d;
