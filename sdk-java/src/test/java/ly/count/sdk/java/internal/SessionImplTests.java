@@ -13,6 +13,12 @@ import org.junit.runners.JUnit4;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @RunWith(JUnit4.class)
 public class SessionImplTests {
@@ -402,6 +408,129 @@ public class SessionImplTests {
     public void changeDeviceIdWithoutMerge_backendModeEnabled() {
         init(TestUtils.getConfigSessions().enableBackendMode());
         validateDeviceIdMerge("newDeviceId", TestUtils.DEVICE_ID, false);
+    }
+
+    /**
+     * Get user with null SDKCore instance
+     * "user()" function should return null because SDKCore is null
+     * returned value should be null
+     */
+    @Test
+    public void user_instanceNull() {
+        init(TestUtils.getConfigSessions());
+        SDKCore.instance = null;
+
+        Assert.assertNull(Countly.session().user());
+    }
+
+    /**
+     * Get user
+     * "user()" function should return user
+     * returned value should be not null
+     */
+    @Test
+    public void user() {
+        init(TestUtils.getConfigSessions());
+        Assert.assertNotNull(Countly.session().user());
+    }
+
+    /**
+     * Add param with null key and value
+     * "addParam(String, Object)" function should add param
+     * added value should be null
+     */
+    @Test
+    public void addParam_nullKeyValue() {
+        init(TestUtils.getConfigSessions());
+        SessionImpl session = (SessionImpl) Countly.session();
+        session.addParam(null, null);
+        Assert.assertTrue(session.params.get("null") == null);
+    }
+
+    /**
+     * Add location with no consent to location
+     * "addLocation(double, double)" function should not add location
+     * added value should be null
+     */
+    @Test
+    public void addLocation_locationNotEnabled() {
+        init(TestUtils.getConfigSessions());
+        SessionImpl session = (SessionImpl) Countly.session();
+        session.addLocation(1.0, 2.0);
+        Assert.assertTrue(session.params.get("location") == null);
+    }
+
+    /**
+     * Add location with consent to location
+     * "addLocation(double, double)" function should add location
+     * added value should be same
+     */
+    @Test
+    public void addLocation() {
+        init(TestUtils.getConfigSessions(Config.Feature.Sessions, Config.Feature.Location));
+        SessionImpl session = (SessionImpl) Countly.session();
+        session.addLocation(1.0, 2.0);
+        Assert.assertTrue(session.params.get("location").equals("1.0,2.0"));
+    }
+
+    /**
+     * Add location with backend mode enabled
+     * "addLocation(double, double)" function should not add location
+     * added value should be null
+     */
+    @Test
+    public void addLocation_backendModeEnabled() {
+        init(TestUtils.getConfigSessions().enableBackendMode());
+        SessionImpl session = (SessionImpl) Countly.session();
+        session.addLocation(1.0, 2.0);
+        Assert.assertTrue(session.params.get("location") == null);
+    }
+
+    /**
+     * Add crash report with no consent to crash reporting
+     * "addCrashReport(Throwable, boolean)" function should not add crash report
+     * SDKCore.instance().onCrash() should not be called
+     */
+    @Test
+    public void addCrashReport_crashReportingNotEnabled() {
+        init(TestUtils.getConfigSessions());
+        SessionImpl session = (SessionImpl) Countly.session();
+        SDKCore.instance = spy(SDKCore.instance);
+        session.addCrashReport(new Exception(), true);
+
+        verify(SDKCore.instance, never()).onCrash(any(), any(), anyBoolean(), any(), any(), any());
+    }
+
+    /**
+     * Add crash report with consent to crash reporting
+     * "addCrashReport(Throwable, boolean)" function should add crash report
+     * SDKCore.instance().onCrash() should be called once
+     */
+    @Test
+    public void addCrashReport() {
+        init(TestUtils.getConfigSessions(Config.Feature.Sessions, Config.Feature.CrashReporting));
+        SessionImpl session = (SessionImpl) Countly.session();
+        SDKCore.instance = spy(SDKCore.instance);
+        session.addCrashReport(new Exception(), false);
+
+        verify(SDKCore.instance, times(1)).onCrash(any(), any(), anyBoolean(), any(), any(), any());
+    }
+
+    /**
+     * Add crash report with backend mode enabled
+     * "addCrashReport(Throwable, boolean)" function should not add crash report
+     * SDKCore.instance().onCrash() should not be called and desired warning should be logged
+     */
+    @Test
+    public void addCrashReport_backendModeEnabled() {
+        init(TestUtils.getConfigSessions().enableBackendMode());
+        SessionImpl session = (SessionImpl) Countly.session();
+        SDKCore.instance = spy(SDKCore.instance);
+        session.L = spy(session.L);
+        session.addCrashReport(new Exception(), false);
+
+        verify(SDKCore.instance, never()).onCrash(any(), any(), anyBoolean(), any(), any(), any());
+        verify(session.L, times(1)).w("[SessionImpl] addCrashReport: Skipping crash, backend mode is enabled!");
     }
 
     private void validateDeviceIdMerge(String deviceId, String expected, boolean merge) {
