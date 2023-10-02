@@ -324,10 +324,7 @@ public class SessionImplTests {
     @Test
     public void changeDeviceIdWithMerge() {
         init(TestUtils.getConfigSessions());
-
-        SessionImpl session = (SessionImpl) Countly.session();
-        session.changeDeviceIdWithMerge("newDeviceId");
-        Assert.assertEquals("newDeviceId", ctx.getConfig().getDeviceId().id);
+        validateDeviceIdMerge("newDeviceId", "newDeviceId", true);
     }
 
     /**
@@ -338,10 +335,7 @@ public class SessionImplTests {
     @Test
     public void changeDeviceIdWithMerge_nullId() {
         init(TestUtils.getConfigSessions());
-
-        SessionImpl session = (SessionImpl) Countly.session();
-        session.changeDeviceIdWithMerge(null);
-        Assert.assertEquals(TestUtils.DEVICE_ID, ctx.getConfig().getDeviceId().id);
+        validateDeviceIdMerge(null, TestUtils.DEVICE_ID, true);
     }
 
     /**
@@ -352,10 +346,7 @@ public class SessionImplTests {
     @Test
     public void changeDeviceIdWithMerge_emptyId() {
         init(TestUtils.getConfigSessions());
-
-        SessionImpl session = (SessionImpl) Countly.session();
-        session.changeDeviceIdWithMerge("");
-        Assert.assertEquals(TestUtils.DEVICE_ID, ctx.getConfig().getDeviceId().id);
+        validateDeviceIdMerge("", TestUtils.DEVICE_ID, true);
     }
 
     /**
@@ -366,10 +357,7 @@ public class SessionImplTests {
     @Test
     public void changeDeviceIdWithMerge_backendModeEnabled() {
         init(TestUtils.getConfigSessions().enableBackendMode());
-
-        SessionImpl session = (SessionImpl) Countly.session();
-        session.changeDeviceIdWithMerge("newDeviceId");
-        Assert.assertEquals(TestUtils.DEVICE_ID, ctx.getConfig().getDeviceId().id);
+        validateDeviceIdMerge("newDeviceId", TestUtils.DEVICE_ID, true);
     }
 
     /**
@@ -380,10 +368,7 @@ public class SessionImplTests {
     @Test
     public void changeDeviceIdWithoutMerge() {
         init(TestUtils.getConfigSessions());
-
-        SessionImpl session = (SessionImpl) Countly.session();
-        session.changeDeviceIdWithoutMerge("newDeviceId");
-        Assert.assertEquals("newDeviceId", ctx.getConfig().getDeviceId().id);
+        validateDeviceIdMerge("newDeviceId", "newDeviceId", false);
     }
 
     /**
@@ -394,10 +379,7 @@ public class SessionImplTests {
     @Test
     public void changeDeviceIdWithoutMerge_nullId() {
         init(TestUtils.getConfigSessions());
-
-        SessionImpl session = (SessionImpl) Countly.session();
-        session.changeDeviceIdWithoutMerge(null);
-        Assert.assertEquals(TestUtils.DEVICE_ID, ctx.getConfig().getDeviceId().id);
+        validateDeviceIdMerge(null, TestUtils.DEVICE_ID, false);
     }
 
     /**
@@ -408,10 +390,7 @@ public class SessionImplTests {
     @Test
     public void changeDeviceIdWithoutMerge_emptyId() {
         init(TestUtils.getConfigSessions());
-
-        SessionImpl session = (SessionImpl) Countly.session();
-        session.changeDeviceIdWithoutMerge("");
-        Assert.assertEquals(TestUtils.DEVICE_ID, ctx.getConfig().getDeviceId().id);
+        validateDeviceIdMerge("", TestUtils.DEVICE_ID, false);
     }
 
     /**
@@ -422,10 +401,16 @@ public class SessionImplTests {
     @Test
     public void changeDeviceIdWithoutMerge_backendModeEnabled() {
         init(TestUtils.getConfigSessions().enableBackendMode());
+        validateDeviceIdMerge("newDeviceId", TestUtils.DEVICE_ID, false);
+    }
 
-        SessionImpl session = (SessionImpl) Countly.session();
-        session.changeDeviceIdWithoutMerge("newDeviceId");
-        Assert.assertEquals(TestUtils.DEVICE_ID, ctx.getConfig().getDeviceId().id);
+    private void validateDeviceIdMerge(String deviceId, String expected, boolean merge) {
+        if (merge) {
+            Countly.session().changeDeviceIdWithMerge(deviceId);
+        } else {
+            Countly.session().changeDeviceIdWithoutMerge(deviceId);
+        }
+        Assert.assertEquals(expected, ctx.getConfig().getDeviceId().id);
     }
 
     private void validateBeganSession(SessionImpl session) {
