@@ -13,9 +13,9 @@ public class TimeUtilsTests {
      * Validate whether the "getTime" method returns a valid time object.
      */
     @Test
-    public void getTime() {
+    public void getInstant() {
 
-        TimeUtils.Time time = TimeUtils.getTime();
+        TimeUtils.Instant time = TimeUtils.getTime();
 
         Assert.assertTrue(time.timestamp > 0);
         Assert.assertTrue(time.hour >= 0 && time.hour <= 23);

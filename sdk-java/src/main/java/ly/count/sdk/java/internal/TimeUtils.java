@@ -3,20 +3,20 @@ package ly.count.sdk.java.internal;
 import java.util.Calendar;
 
 public class TimeUtils {
-    
+
     protected static final Double NS_IN_SECOND = 1000000000.0d;
     protected static final Double NS_IN_MS = 1000000.0d;
     protected static final Double MS_IN_SECOND = 1000d;
     private static final Device.TimeGenerator uniqueTimer = new UniqueTimeGenerator();
     private static final Device.TimeGenerator uniformTimer = new UniformTimeGenerator();
 
-    public static class Time {
+    public static class Instant {
         public final long timestamp;
         public final int hour;
         public final int dow;
         public final int tz;
 
-        private Time(long timestamp, int hour, int dow, int tz) {
+        private Instant(long timestamp, int hour, int dow, int tz) {
             this.timestamp = timestamp;
             this.hour = hour;
             this.dow = dow;
@@ -30,12 +30,12 @@ public class TimeUtils {
      *
      * @return time object
      */
-    public static Time getTime() {
+    public static Instant getTime() {
         long timestamp = uniqueTimestamp();
 
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(timestamp);
-        return new Time(timestamp,
+        return new Instant(timestamp,
             calendar.get(Calendar.HOUR_OF_DAY),
             calendar.get(Calendar.DAY_OF_WEEK) - 1, // Calendar days are 1-based, Countly days are 0-based
             calendar.get(Calendar.ZONE_OFFSET) / 60000); //convert it to seconds
