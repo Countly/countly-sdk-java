@@ -372,7 +372,7 @@ public class SessionImplTests {
     }
 
     /**
-     * Change device id with merge null id
+     * Change device id without merge null id
      * "changeDeviceIdWithoutMerge(String)" function should not change the device id.
      * should be same as the test device id
      */
@@ -383,7 +383,7 @@ public class SessionImplTests {
     }
 
     /**
-     * Change device id with merge empty id
+     * Change device id without merge empty id
      * "changeDeviceIdWithoutMerge(String)" function should not change the device id.
      * should be same as the test device id
      */
@@ -394,7 +394,7 @@ public class SessionImplTests {
     }
 
     /**
-     * Change device id with merge with backend mode enabled.
+     * Change device id without merge with backend mode enabled.
      * "changeDeviceIdWithoutMerge(String)" function should not change the device id.
      * should be same as the test device id
      */
