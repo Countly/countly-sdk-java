@@ -7,8 +7,7 @@ public class TimeUtils {
     protected static final Double NS_IN_SECOND = 1000000000.0d;
     protected static final Double NS_IN_MS = 1000000.0d;
     protected static final Double MS_IN_SECOND = 1000d;
-    private static final Device.TimeGenerator uniqueTimer = new UniqueTimeGenerator();
-    private static final Device.TimeGenerator uniformTimer = new UniformTimeGenerator();
+    private static final UniqueTimeGenerator uniqueTimer = new UniqueTimeGenerator();
 
     public static class Instant {
         public final long timestamp;
@@ -30,8 +29,8 @@ public class TimeUtils {
      *
      * @return time object
      */
-    public static Instant getTime() {
-        long timestamp = uniqueTimestamp();
+    public static Instant getCurrentInstant() {
+        long timestamp = uniqueTimestampMs();
 
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(timestamp);
@@ -42,30 +41,13 @@ public class TimeUtils {
     }
 
     /**
-     * General interface for time generators.
-     */
-    public interface TimeGenerator {
-        long timestamp();
-    }
-
-    /**
      * Wraps {@link System#currentTimeMillis()} to always return different value, even within
      * same millisecond and even when time changes. Works in a limited window of 10 timestamps for now.
      *
      * @return unique time in ms
      */
-    public static synchronized long uniqueTimestamp() {
+    public static synchronized long uniqueTimestampMs() {
         return uniqueTimer.timestamp();
-    }
-
-    /**
-     * Wraps {@link System#currentTimeMillis()} to return always rising values.
-     * Resolves issue with device time updates via NTP or manually where time must go up.
-     *
-     * @return uniform time in ms
-     */
-    public static synchronized long uniformTimestamp() {
-        return uniformTimer.timestamp();
     }
 
     /**
@@ -106,5 +88,40 @@ public class TimeUtils {
      */
     public static long secToMs(long sec) {
         return Math.round(sec * MS_IN_SECOND);
+    }
+
+    /**
+     * Get current day of week
+     *
+     * @return day of week value, Sunday = 0, Saturday = 6
+     */
+    public static int currentDayOfWeek() {
+        int day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK);
+        switch (day) {
+            case Calendar.SUNDAY:
+                return 0;
+            case Calendar.MONDAY:
+                return 1;
+            case Calendar.TUESDAY:
+                return 2;
+            case Calendar.WEDNESDAY:
+                return 3;
+            case Calendar.THURSDAY:
+                return 4;
+            case Calendar.FRIDAY:
+                return 5;
+            case Calendar.SATURDAY:
+                return 6;
+        }
+        return 0;
+    }
+
+    /**
+     * Get current hour of day
+     *
+     * @return current hour of day
+     */
+    public static int currentHour() {
+        return Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
     }
 }

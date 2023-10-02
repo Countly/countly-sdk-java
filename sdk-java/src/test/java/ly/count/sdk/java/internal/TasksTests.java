@@ -51,7 +51,7 @@ public class TasksTests extends BaseTestsCore {
         });
         long now = System.nanoTime();
         other.shutdown();
-        long timeToShutdown = Device.dev.nsToMs(System.nanoTime() - now);
+        long timeToShutdown = TimeUtils.nsToMs(System.nanoTime() - now);
         Assert.assertTrue(Whitebox.<ExecutorService>getInternalState(other, "executor").isShutdown());
         Assert.assertTrue(Whitebox.<ExecutorService>getInternalState(other, "executor").isTerminated());
         //Assert.assertTrue(timeToShutdown > 100);//todo, this line fails when trying to publish (AK, 12.12.18)

@@ -54,16 +54,6 @@ public class Device {
     protected static final Long BYTES_IN_MB = 1024L * 1024;
 
     /**
-     * General interface for time generators.
-     */
-    public interface TimeGenerator {
-        long timestamp();
-    }
-
-    protected final TimeGenerator uniqueTimer = new UniqueTimeGenerator();
-    protected final TimeGenerator uniformTimer = new UniformTimeGenerator();
-
-    /**
      * Get operation system name
      *
      * @return the display name of the current operating system.
@@ -137,105 +127,6 @@ public class Device {
         metricObj.add();
 
         return params;
-    }
-
-    /**
-     * Wraps {@link System#currentTimeMillis()} to always return different value, even within
-     * same millisecond and even when time changes. Works in a limited window of 10 timestamps for now.
-     *
-     * @return unique time in ms
-     */
-    public synchronized long uniqueTimestamp() {
-        return uniqueTimer.timestamp();
-    }
-
-    /**
-     * Wraps {@link System#currentTimeMillis()} to return always rising values.
-     * Resolves issue with device time updates via NTP or manually where time must go up.
-     *
-     * @return uniform time in ms
-     */
-    public synchronized long uniformTimestamp() {
-        return uniformTimer.timestamp();
-    }
-
-    /**
-     * Get current day of week
-     *
-     * @return day of week value, Sunday = 0, Saturday = 6
-     */
-    public int currentDayOfWeek() {
-        int day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK);
-        switch (day) {
-            case Calendar.SUNDAY:
-                return 0;
-            case Calendar.MONDAY:
-                return 1;
-            case Calendar.TUESDAY:
-                return 2;
-            case Calendar.WEDNESDAY:
-                return 3;
-            case Calendar.THURSDAY:
-                return 4;
-            case Calendar.FRIDAY:
-                return 5;
-            case Calendar.SATURDAY:
-                return 6;
-        }
-        return 0;
-    }
-
-    /**
-     * Get current hour of day
-     *
-     * @return current hour of day
-     */
-    public int currentHour() {
-        return Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
-    }
-
-    public int getHourFromCalendar(Calendar calendar) {
-        return calendar.get(Calendar.HOUR_OF_DAY);
-    }
-
-    /**
-     * Convert time in nanoseconds to milliseconds
-     *
-     * @param ns time in nanoseconds
-     * @return ns in milliseconds
-     */
-    public long nsToMs(long ns) {
-        return Math.round(ns / NS_IN_MS);
-    }
-
-    /**
-     * Convert time in nanoseconds to seconds
-     *
-     * @param ns time in nanoseconds
-     * @return ns in seconds
-     */
-    public long nsToSec(long ns) {
-        return Math.round(ns / NS_IN_SECOND);
-    }
-
-    /**
-     * Convert time in seconds to nanoseconds
-     *
-     * @param sec time in seconds
-     * @return sec in nanoseconds
-     */
-    public long secToNs(long sec) {
-        return Math.round(sec * NS_IN_SECOND);
-    }
-
-    /**
-     * Convert time in seconds to milliseconds
-     *
-     * @param sec time in seconds
-     * @return sec in nanoseconds
-     */
-    public long secToMs(long sec) {
-        return Math.round(sec * MS_IN_SECOND);
     }
 
     /**

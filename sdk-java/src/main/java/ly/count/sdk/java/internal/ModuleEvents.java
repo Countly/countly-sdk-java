@@ -143,7 +143,7 @@ public class ModuleEvents extends ModuleBase {
             }
             L.d("[ModuleEvents] Ending event: [" + key + "]");
 
-            long currentTimestamp = Device.dev.uniqueTimestamp();
+            long currentTimestamp = TimeUtils.uniqueTimestampMs();
             double duration = (currentTimestamp - event.timestamp) / 1000.0;
 
             recordEventInternal(key, count, sum, segmentation, duration);
