@@ -38,6 +38,21 @@ public class TestUtils {
         return config;
     }
 
+    static Config getConfigSessions(Config.Feature... features) {
+        File sdkStorageRootDirectory = getTestSDirectory();
+        checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
+        Config config = new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
+        config.setCustomDeviceId(DEVICE_ID);
+        config.setEventQueueSizeToSend(2);
+        config.enableFeatures(features);
+
+        return config;
+    }
+
+    static Config getConfigSessions() {
+        return getConfigSessions(Config.Feature.Sessions);
+    }
+
     static Config getConfigEvents(Integer eventThreshold) {
         File sdkStorageRootDirectory = getTestSDirectory();
         checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
@@ -232,7 +247,7 @@ public class TestUtils {
 
         return result;
     }
-  
+
     static void validateEventQueueSize(int expectedSize, List<EventImpl> events, EventQueue eventQueue) {
         Assert.assertEquals(expectedSize, events.size());
         Assert.assertEquals(expectedSize, eventQueue.eqSize());

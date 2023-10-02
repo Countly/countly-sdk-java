@@ -289,7 +289,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
      * Record event to session.
      *
      * @param event
-     * @deprecated use {@link ModuleEvents.Events#recordEvent(String, int, double, Map, double)} instead
+     * @deprecated use {@link ModuleEvents.Events#recordEvent(String, int, Double, Map, Double)} instead
      */
     @Override
     public void recordEvent(Event event) {
