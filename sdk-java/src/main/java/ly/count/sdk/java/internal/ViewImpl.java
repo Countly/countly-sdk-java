@@ -76,7 +76,7 @@ class ViewImpl implements View {
         ended = true;
         EventImpl event = (EventImpl) session.event(EVENT).addSegments(NAME, this.name, SEGMENT, SDKCore.instance.config.getSdkPlatform());
 
-        long startTs = Device.dev.uniqueTimestamp();
+        long startTs = TimeUtils.uniqueTimestampMs();
         long endTs = start.getTimestamp();
 
         long viewDurationSeconds = (startTs - endTs) / 1000;

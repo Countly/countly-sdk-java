@@ -76,7 +76,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
      */
     protected SessionImpl(CtxCore ctx) {
         L = ctx.getLogger();
-        this.id = Device.dev.uniformTimestamp();
+        this.id = TimeUtils.uniqueTimestampMs();
         this.ctx = ctx;
     }
 
@@ -86,7 +86,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     public SessionImpl(CtxCore ctx, Long id) {
         L = ctx.getLogger();
         this.ctx = ctx;
-        this.id = id == null ? Device.dev.uniformTimestamp() : id;
+        this.id = id == null ? TimeUtils.uniqueTimestampMs() : id;
         if (SDKCore.instance != null) {
             this.consents = SDKCore.instance.consents;
         }
@@ -270,7 +270,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             duration = now - updated;
         }
         updated = now;
-        return Device.dev.nsToSec(duration);
+        return TimeUtils.nsToSec(duration);
     }
 
     public Event event(String key) {

@@ -30,8 +30,8 @@ public class EventImplTests {
         Assert.assertNull(eventImpl.duration);
         Assert.assertNull(eventImpl.sum);
         Assert.assertTrue(eventImpl.getTimestamp() > 0);
-        Assert.assertEquals(Device.dev.currentHour(), eventImpl.hour);
-        Assert.assertEquals(Device.dev.currentDayOfWeek(), eventImpl.dow);
+        Assert.assertEquals(TimeUtils.currentHour(), eventImpl.hour);
+        Assert.assertEquals(TimeUtils.currentDayOfWeek(), eventImpl.dow);
         Assert.assertNull(eventImpl.segmentation);
     }
 
@@ -144,8 +144,8 @@ public class EventImplTests {
         json.put(EventImpl.SUM_KEY, 9.0);
         json.put(EventImpl.DUR_KEY, 34.0);
         json.put(EventImpl.TIMESTAMP_KEY, event.timestamp);
-        json.put(EventImpl.HOUR, Device.dev.currentHour());
-        json.put(EventImpl.DAY_OF_WEEK, Device.dev.currentDayOfWeek());
+        json.put(EventImpl.HOUR, TimeUtils.currentHour());
+        json.put(EventImpl.DAY_OF_WEEK, TimeUtils.currentDayOfWeek());
         json.put(EventImpl.SEGMENTATION_KEY, segmentation);
 
         Assert.assertEquals(json.toString(), event.toJSON(L));
