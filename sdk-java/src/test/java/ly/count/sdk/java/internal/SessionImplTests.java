@@ -2,6 +2,8 @@ package ly.count.sdk.java.internal;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import org.junit.After;
@@ -531,6 +533,110 @@ public class SessionImplTests {
 
         verify(SDKCore.instance, never()).onCrash(any(), any(), anyBoolean(), any(), any(), any());
         verify(session.L, times(1)).w("[SessionImpl] addCrashReport: Skipping crash, backend mode is enabled!");
+    }
+
+    /**
+     * "hashCode" function of SessionImpl
+     * should return the same value as the ID
+     */
+    @Test
+    public void hashCode_id() {
+        init(TestUtils.getConfigSessions());
+        SessionImpl session = new SessionImpl(ctx, 12345L);
+        Assert.assertEquals(new Long(12345L).hashCode(), session.hashCode());
+    }
+
+    /**
+     * "equals" function of SessionImpl
+     * should return true if the IDs are the same
+     */
+    @Test
+    public void equals() {
+        init(TestUtils.getConfigSessions());
+        SessionImpl session = new SessionImpl(ctx, 12345L);
+        session.begin().update().end();
+        session.addParam("test", "value");
+        SessionImpl session2 = new SessionImpl(ctx, 12345L);
+        session2.began = session.began;
+        session2.updated = session.updated;
+        session2.ended = session.ended;
+        session2.addParam("test", "value");
+        Assert.assertTrue(session.equals(session2));
+    }
+
+    /**
+     * "equals" function of SessionImpl
+     * should return false if the object is from different class
+     */
+    @Test
+    public void equals_notInstanceOf() {
+        init(TestUtils.getConfigSessions());
+        SessionImpl session = new SessionImpl(ctx, 12345L);
+        Assert.assertFalse(session.equals(new Object()));
+    }
+
+    /**
+     * "equals" function of SessionImpl
+     * should return false if the IDs are different
+     */
+    @Test
+    public void equals_differentId() {
+        validateNotEquals(1, ((session, session2) -> ts -> {
+        }));
+    }
+
+    /**
+     * "equals" function of SessionImpl IDs are same
+     * should return false if the began values are different
+     */
+    @Test
+    public void equals_differentBegan() {
+        validateNotEquals(0, (session1, session2) -> ts -> {
+            session1.began = ts;
+            session2.began = ts + 1;
+        });
+    }
+
+    /**
+     * "equals" function of SessionImpl IDs are same
+     * should return false if the updated values are different
+     */
+    @Test
+    public void equals_differentUpdated() {
+        validateNotEquals(0, (session1, session2) -> ts -> {
+            session1.updated = ts;
+            session2.updated = ts + 1;
+        });
+    }
+
+    /**
+     * "equals" function of SessionImpl IDs are same
+     * should return false if the ended values are different
+     */
+    @Test
+    public void equals_differentEnded() {
+        validateNotEquals(0, (session1, session2) -> ts -> {
+            session1.ended = ts;
+            session2.ended = ts + 1;
+        });
+    }
+
+    /**
+     * "equals" function of SessionImpl IDs are same
+     * should return false if the params values are different
+     */
+    @Test
+    public void equals_differentParams() {
+        validateNotEquals(0, (session1, session2) -> ts -> session1.addParam("key", "value"));
+    }
+
+    private void validateNotEquals(int idOffset, BiFunction<SessionImpl, SessionImpl, Consumer<Long>> setter) {
+        init(TestUtils.getConfigSessions());
+        long ts = TimeUtils.uniqueTimestampMs();
+        SessionImpl session = new SessionImpl(ctx, 12345L);
+        SessionImpl session2 = new SessionImpl(ctx, 12345L + idOffset);
+        setter.apply(session, session).accept(ts);
+        Assert.assertFalse(session.equals(session2));
     }
 
     private void validateDeviceIdMerge(String deviceId, String expected, boolean merge) {
