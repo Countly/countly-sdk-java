@@ -524,6 +524,10 @@ public class SDKCore {
         return user;
     }
 
+    /**
+     * @return timedEvents interface
+     * @deprecated use {@link ModuleEvents.Events#startEvent(String)} instead via <code>instance().events()</code> call
+     */
     TimedEvents timedEvents() {
         return ((ModuleSessions) module(CoreFeature.Sessions.getIndex())).timedEvents();
     }
