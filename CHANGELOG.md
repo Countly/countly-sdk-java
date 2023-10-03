@@ -13,6 +13,7 @@
 * Deprecated "Countly::event" call, deprecated builder pattern. Use "Countly::events" instead.
 * Deprecated "Usage::event" call, deprecated builder pattern. Use "Countly::events" instead.
 * Deprecated "Countly::stop(boolean)" call, use "Countly::halt" instead via "instance()" call.
+* Deprecated "Countly::timedEvent(String)" call, use "Countly::events::startEvent" instead via "instance()" call.
 * The following methods are deprecated from the "Event" interface:
   * "record"
   * "endAndRecord"
