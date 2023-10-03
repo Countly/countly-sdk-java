@@ -338,14 +338,22 @@ public class ModuleFeedback extends ModuleBase {
         return null;
     }
 
-    private void constructFeedbackWidgetUrlInternal(CountlyFeedbackWidget widgetInfo, CallbackOnFinish<String> callback) {
-        L.d("[ModuleFeedback] constructFeedbackWidgetUrlInternal, callback set:[" + (callback != null) + ", widgetInfo :[" + widgetInfo + "]");
+    private String constructFeedbackWidgetUrlInternal(CountlyFeedbackWidget widgetInfo) {
+        L.d("[ModuleFeedback] constructFeedbackWidgetUrlInternal, widgetInfo :[" + widgetInfo + "]");
 
-        String error = validateFields(callback, widgetInfo);
+        if (widgetInfo == null) {
+            L.e("[ModuleFeedback] constructFeedbackWidgetUrlInternal, can't continue operation with null widget");
+            return null;
+        }
 
-        if (error != null) {
-            callCallback("[ModuleFeedback] constructFeedbackWidgetUrlInternal, " + error, callback);
-            return;
+        if (internalConfig.isTemporaryIdEnabled()) {
+            L.e("[ModuleFeedback] constructFeedbackWidgetUrlInternal, can't continue operation when in temporary device ID mode");
+            return null;
+        }
+
+        if (widgetInfo.type == null || widgetInfo.widgetId == null || widgetInfo.widgetId.isEmpty()) {
+            L.e("[ModuleFeedback] constructFeedbackWidgetUrlInternal, can't continue operation, provided widget type or ID is 'null' or the provided ID is empty string");
+            return null;
         }
 
         StringBuilder widgetListUrl = new StringBuilder();
@@ -368,8 +376,7 @@ public class ModuleFeedback extends ModuleBase {
         final String preparedWidgetUrl = widgetListUrl.toString();
 
         L.d("[ModuleFeedback] constructFeedbackWidgetUrlInternal, Using following url for widget:[" + widgetListUrl + "]");
-
-        callback.onFinished(preparedWidgetUrl, null);
+        return preparedWidgetUrl;
     }
 
     public class Feedback {
@@ -391,13 +398,12 @@ public class ModuleFeedback extends ModuleBase {
          * Construct a URL that can be used to present a feedback widget in a web viewer
          *
          * @param widgetInfo widget info
-         * @param callback feedback widget url callback
          */
-        public void constructFeedbackWidgetUrl(@Nullable CountlyFeedbackWidget widgetInfo, @Nullable CallbackOnFinish<String> callback) {
+        public String constructFeedbackWidgetUrl(@Nullable CountlyFeedbackWidget widgetInfo) {
             synchronized (Countly.instance()) {
                 L.i("[Feedback] constructFeedbackWidgetUrl, Trying to present feedback widget in an alert dialog");
 
-                constructFeedbackWidgetUrlInternal(widgetInfo, callback);
+                return constructFeedbackWidgetUrlInternal(widgetInfo);
             }
         }
 

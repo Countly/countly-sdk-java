@@ -101,14 +101,8 @@ public class Example {
     }
 
     static void getFeedbackWidgetUrl(CountlyFeedbackWidget widget) {
-        Countly.instance().feedback().constructFeedbackWidgetUrl(widget, (constructedUrl, error) -> {
-            if (error != null) {
-                System.out.println("Error while retrieving feedback widget url: " + error);
-                return;
-            }
-
-            System.out.println("Retrieved feedback widget url: " + constructedUrl);
-        });
+        String constructedUrl = Countly.instance().feedback().constructFeedbackWidgetUrl(widget);
+        System.out.println("Retrieved feedback widget url: " + constructedUrl);
     }
 
     static void getFeedbackWidgetData(CountlyFeedbackWidget widget) {

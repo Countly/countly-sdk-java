@@ -25,6 +25,10 @@ public class TestUtils {
     static String SERVER_APP_KEY = "COUNTLY_APP_KEY";
     static String DEVICE_ID = "some_random_test_device_id";
 
+    static String SDK_NAME = "java-native";
+
+    static String SDK_VERSION = "23.8.0";
+
     public static final String[] eKeys = new String[] { "eventKey1", "eventKey2", "eventKey3", "eventKey4", "eventKey5", "eventKey6", "eventKey7" };
 
     static String feedbackWidgetData =

@@ -42,8 +42,8 @@ public class ModuleFeedbackTests {
     }
 
     /**
-     * Parse feedback list response given null
-     * "parseFeedbackList" function should return empty list
+     * "parseFeedbackList"
+     * receives a "null" response to parse
      * returned feedback widget list should be empty
      */
     @Test
@@ -56,8 +56,8 @@ public class ModuleFeedbackTests {
     }
 
     /**
-     * Parse feedback list successfully
-     * "parseFeedbackList" function should return correct feedback widget list
+     * "parseFeedbackList"
+     * Correct response is given with all widget types
      * returned feedback widget list should have same widgets as in the response
      */
     @Test
@@ -80,10 +80,11 @@ public class ModuleFeedbackTests {
     }
 
     /**
-     * Parse feedback list successfully, remove garbage json
-     * "parseFeedbackList" function should return correct json feedback widget list without garbage json
-     * returned feedback widget list should not have garbage json
+     * "parseFeedbackList"
+     * Response with a correct entry and bad entries is given
+     * The correct entry should be correctly parsed and the bad ones should be ignored
      */
+    //todo: can this test be combined with the next one?
     @Test
     public void parseFeedbackList_oneGoodWithGarbage() throws JSONException {
         init(TestUtils.getConfigFeedback());
@@ -100,9 +101,9 @@ public class ModuleFeedbackTests {
     }
 
     /**
-     * Parse feedback list successfully, remove faulty widgets
-     * "parseFeedbackList" function should return correct feedback widget list without faulty widgets
-     * returned feedback widget list should not have faulty widgets
+     * "parseFeedbackList"
+     * Response with partial entries given
+     * Only the entries with all important fields given should be returned
      */
     @Test
     public void parseFeedbackList_faulty() throws JSONException {
@@ -139,14 +140,12 @@ public class ModuleFeedbackTests {
     }
 
     /**
-     * Getting feedback widget list successfully
-     * "getAvailableFeedbackWidgets" function should return correct feedback widget list
-     * returned feedback widget list should be equal to the expected feedback widget list
+     * "getAvailableFeedbackWidgets" with mocked server response
+     * server responds with a correct response with all widget type
+     * All returned widgets should match the received ones
      */
     @Test
-    public void getAvailableFeedbackWidgets() {
-        init(TestUtils.getConfigFeedback());
-
+    public void getAvailableFeedbackWidgets_properResponse() {
         List<CountlyFeedbackWidget> widgets = new ArrayList<>();
         widgets.add(createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "123", "89" }));
         widgets.add(createFeedbackWidget(FeedbackWidgetType.rating, "rating1", "ratingID1", new String[] { "vbn" }));
@@ -159,123 +158,146 @@ public class ModuleFeedbackTests {
         JSONObject responseJson = new JSONObject();
         responseJson.put("result", widgetsJson);
 
-        ImmediateRequestI requestMaker = (requestData, customEndpoint, cp, requestShouldBeDelayed, networkingIsEnabled, callback, log) -> {
-            Map<String, String> params = TestUtils.parseQueryParams(requestData);
-            Assert.assertEquals("feedback", params.get("method"));
-            validateWidgetRequiredParams("/o/sdk", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
-            TestUtils.validateRequiredParams(params);
-            callback.callback(responseJson);
-        };
-        SDKCore.instance.config.immediateRequestGenerator = () -> requestMaker;
-
-        List<CountlyFeedbackWidget> widgetResponse = new ArrayList<>();
-        Countly.instance().feedback().getAvailableFeedbackWidgets((response, error) -> {
-            Assert.assertNull(error);
-            Assert.assertEquals(3, response.size());
-            widgetResponse.addAll(response);
-        });
-
-        widgetResponse.sort(Comparator.comparing(o -> o.widgetId));
-        Assert.assertEquals(3, widgetResponse.size());
-        Assert.assertEquals(widgetResponse, widgets);
+        getAvailableFeedbackWidgets_base(widgets, responseJson);
     }
 
     /**
-     * Getting feedback widget list with garbage json
-     * "getAvailableFeedbackWidgets" function should return empty feedback widget list because json is garbage
+     * "getAvailableFeedbackWidgets" with mocked server response
+     * server responds with a response that on the surface looks as expected (JSON with "result") but inside it has garbage JSON
      * returned feedback widget list should be empty
      */
     @Test
-    public void getAvailableFeedbackWidgets_garbageJson() {
-        init(TestUtils.getConfigFeedback());
-
+    public void getAvailableFeedbackWidgets_garbageJsonInCorrectStructure() {
         JSONArray garbageArray = new JSONArray();
         garbageArray.put(createGarbageJson());
         garbageArray.put(createGarbageJson());
         JSONObject responseJson = new JSONObject();
         responseJson.put("result", garbageArray);
 
+        getAvailableFeedbackWidgets_base(new ArrayList<>(), responseJson);
+    }
+
+    /**
+     * "getAvailableFeedbackWidgets" with mocked server response
+     * server responds with a response that is a JSON but with the wrong root field, and inside it has garbage JSON
+     * returned feedback widget list should be empty
+     */
+    @Test
+    public void getAvailableFeedbackWidgets_garbageJsonInWrongStructure() {
+        JSONArray garbageArray = new JSONArray();
+        garbageArray.put(createGarbageJson());
+        garbageArray.put(createGarbageJson());
+        JSONObject responseJson = new JSONObject();
+        responseJson.put("xxxx", garbageArray);
+
+        getAvailableFeedbackWidgets_base(new ArrayList<>(), responseJson);
+    }
+
+    /**
+     * "getAvailableFeedbackWidgets" with mocked server response
+     * IRM failed to parse response and therefore returns "null"
+     * returned feedback widget list should be empty and error message should contain the expected text
+     */
+    @Test
+    public void getAvailableFeedbackWidgets_null() {
+        getAvailableFeedbackWidgets_base(null, null);
+    }
+
+    public void getAvailableFeedbackWidgets_base(List<CountlyFeedbackWidget> expectedWidgets, JSONObject returnedResponse) {
+        init(TestUtils.getConfigFeedback());
+
         ImmediateRequestI requestMaker = (requestData, customEndpoint, cp, requestShouldBeDelayed, networkingIsEnabled, callback, log) -> {
-            callback.callback(responseJson);
+            Map<String, String> params = TestUtils.parseQueryParams(requestData);
+            Assert.assertEquals("feedback", params.get("method"));
+            validateWidgetRequiredParams("/o/sdk", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
+            TestUtils.validateRequiredParams(params);
+            callback.callback(returnedResponse);
         };
         SDKCore.instance.config.immediateRequestGenerator = () -> requestMaker;
 
         Countly.instance().feedback().getAvailableFeedbackWidgets((response, error) -> {
-            Assert.assertNull(error);
-            Assert.assertEquals(0, response.size());
+            if (expectedWidgets != null) {
+                Assert.assertNull(error);
+                Assert.assertEquals(expectedWidgets.size(), response.size());
+
+                List<CountlyFeedbackWidget> widgetResponse = new ArrayList<>(response);
+
+                widgetResponse.sort(Comparator.comparing(o -> o.widgetId));
+                Assert.assertEquals(widgetResponse, expectedWidgets);
+            } else {
+                Assert.assertNull(response);
+                Assert.assertEquals("Not possible to retrieve widget list. Probably due to lack of connection to the server", error);
+            }
         });
     }
 
     /**
-     * Getting feedback widget list errored
-     * "getAvailableFeedbackWidgets" function should return error message
-     * returned feedback widget list should be empty and error message should not be empty
-     */
-    @Test
-    public void getAvailableFeedbackWidgets_null() {
-        init(TestUtils.getConfigFeedback());
-
-        ImmediateRequestI requestMaker = (requestData, customEndpoint, cp, requestShouldBeDelayed, networkingIsEnabled, callback, log) ->
-            callback.callback(null);
-
-        SDKCore.instance.config.immediateRequestGenerator = () -> requestMaker;
-
-        Countly.instance().feedback().getAvailableFeedbackWidgets((response, error) -> {
-            Assert.assertNotNull(error);
-            Assert.assertNull(response);
-            Assert.assertEquals("Not possible to retrieve widget list. Probably due to lack of connection to the server", error);
-        });
-    }
-
-    /**
-     * Construct feedback widget url successfully
-     * "constructFeedbackWidgetUrl" function should return widget url
-     * returned url should be same as expected url
+     * "constructFeedbackWidgetUrl"
+     * We are passing a valid "CountlyFeedbackWidget" structure
+     * A correct URL should be produced
      */
     @Test
     public void constructFeedbackWidgetUrl() {
         init(TestUtils.getConfigFeedback());
-
-        InternalConfig internalConfig = SDKCore.instance.config;
-
         CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] {});
 
         StringBuilder widgetListUrl = new StringBuilder();
-        widgetListUrl.append(internalConfig.getServerURL());
+        widgetListUrl.append(TestUtils.SERVER_URL);
         widgetListUrl.append("/feedback/");
         widgetListUrl.append(widgetInfo.type.name());
         widgetListUrl.append("?widget_id=");
         widgetListUrl.append(Utils.urlencode(widgetInfo.widgetId, L));
         widgetListUrl.append("&device_id=");
-        widgetListUrl.append(Utils.urlencode(internalConfig.getDeviceId().id, L));
+        widgetListUrl.append(Utils.urlencode(TestUtils.DEVICE_ID, L));
         widgetListUrl.append("&app_key=");
-        widgetListUrl.append(Utils.urlencode(internalConfig.getServerAppKey(), L));
+        widgetListUrl.append(Utils.urlencode(TestUtils.SERVER_APP_KEY, L));
         widgetListUrl.append("&sdk_version=");
-        widgetListUrl.append(internalConfig.getSdkVersion());
+        widgetListUrl.append(TestUtils.SDK_VERSION);
         widgetListUrl.append("&sdk_name=");
-        widgetListUrl.append(internalConfig.getSdkName());
+        widgetListUrl.append(TestUtils.SDK_NAME);
         widgetListUrl.append("&platform=");
         widgetListUrl.append(Utils.urlencode(getOs(), L));
 
-        Countly.instance().feedback().constructFeedbackWidgetUrl(widgetInfo, (response, error) -> {
-            Assert.assertNull(error);
-            Assert.assertEquals(widgetListUrl.toString(), response);
-        });
+        Assert.assertEquals(widgetListUrl.toString(), Countly.instance().feedback().constructFeedbackWidgetUrl(widgetInfo));
     }
 
     /**
-     * Construct feedback widget url with null widget info
-     * "constructFeedbackWidgetUrl" function should not return widget url and return error message
-     * url should be null and error message should same as expected
+     * "constructFeedbackWidgetUrl"
+     * We pass a "null" widgetInfo
+     * Response should be "null" as that is bad input
      */
     @Test
     public void constructFeedbackWidgetUrl_nullWidgetInfo() {
         init(TestUtils.getConfigFeedback());
+        Assert.assertNull(Countly.instance().feedback().constructFeedbackWidgetUrl(null));
+    }
 
-        Countly.instance().feedback().constructFeedbackWidgetUrl(null, (response, error) -> {
-            Assert.assertNull(response);
-            Assert.assertEquals("[ModuleFeedback] constructFeedbackWidgetUrlInternal, Can't continue operation with null widget", error);
-        });
+    /**
+     * "constructFeedbackWidgetUrl"
+     * We pass a default widgetInfo, all fields would be "null"
+     * Response should be "null" as that is bad input
+     */
+    @Test
+    public void constructFeedbackWidgetUrl_defaultWidgetInfo() {
+        init(TestUtils.getConfigFeedback());
+        CountlyFeedbackWidget widgetInfo = new CountlyFeedbackWidget();
+        Assert.assertNull(Countly.instance().feedback().constructFeedbackWidgetUrl(widgetInfo));
+    }
+
+    /**
+     * "constructFeedbackWidgetUrl"
+     * We pass a default widgetInfo, all fields would be "null"
+     * Response should be "null" as that is bad input
+     */
+    @Test
+    public void constructFeedbackWidgetUrl_emptyWidgetInfo() {
+        init(TestUtils.getConfigFeedback());
+        CountlyFeedbackWidget widgetInfo = new CountlyFeedbackWidget();
+        widgetInfo.widgetId = "";
+        widgetInfo.name = "";
+        widgetInfo.type = FeedbackWidgetType.nps;
+        widgetInfo.tags = new String[] {};
+        Assert.assertNull(Countly.instance().feedback().constructFeedbackWidgetUrl(widgetInfo));
     }
 
     /**
