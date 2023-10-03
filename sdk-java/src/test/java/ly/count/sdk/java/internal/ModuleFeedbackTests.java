@@ -511,7 +511,7 @@ public class ModuleFeedbackTests {
 
     /**
      * "reportFeedbackWidgetManually"
-     * Record a amount of widgtets that exceed the event threshold
+     * Record an amount of widgtets that exceed the event threshold
      * After exceeding the threshold the events should be spotted in the RQ
      */
     @Test
