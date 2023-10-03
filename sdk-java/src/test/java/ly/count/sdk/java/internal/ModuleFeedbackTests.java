@@ -12,6 +12,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -26,13 +27,17 @@ public class ModuleFeedbackTests {
 
     Log L = mock(Log.class);
 
+    @Before
+    public void beforeTest() {
+        TestUtils.createCleanTestState();
+    }
+
     @After
     public void stop() {
         Countly.instance().halt();
     }
 
     private void init(Config cc) {
-        TestUtils.createCleanTestState();
         Countly.instance().init(cc);
     }
 
