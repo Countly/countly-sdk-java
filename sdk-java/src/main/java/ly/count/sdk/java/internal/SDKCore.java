@@ -57,6 +57,7 @@ public class SDKCore {
         moduleMappings.put(CoreFeature.Sessions.getIndex(), ModuleSessions.class);
         moduleMappings.put(CoreFeature.CrashReporting.getIndex(), ModuleCrash.class);
         moduleMappings.put(CoreFeature.BackendMode.getIndex(), ModuleBackendMode.class);
+        moduleMappings.put(CoreFeature.Feedback.getIndex(), ModuleFeedback.class);
         moduleMappings.put(CoreFeature.Events.getIndex(), ModuleEvents.class);
     }
 
@@ -384,6 +385,16 @@ public class SDKCore {
             return sessions.getSession();
         }
         return null;
+    }
+
+    public ModuleFeedback.Feedback feedback() {
+
+        if (!hasConsentForFeature(CoreFeature.Feedback)) {
+            L.v("[SDKCore] feedback: Feedback feature has no consent, returning null");
+            return null;
+        }
+
+        return module(ModuleFeedback.class).feedbackInterface;
     }
 
     /**

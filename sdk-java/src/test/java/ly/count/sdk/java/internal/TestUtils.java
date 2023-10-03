@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.stream.Stream;
 import ly.count.sdk.java.Config;
+import ly.count.sdk.java.Countly;
 import org.json.JSONArray;
 import org.junit.Assert;
 
@@ -24,7 +25,14 @@ public class TestUtils {
     static String SERVER_APP_KEY = "COUNTLY_APP_KEY";
     static String DEVICE_ID = "some_random_test_device_id";
 
+    static String SDK_NAME = "java-native";
+
+    static String SDK_VERSION = "23.8.0";
+
     public static final String[] eKeys = new String[] { "eventKey1", "eventKey2", "eventKey3", "eventKey4", "eventKey5", "eventKey6", "eventKey7" };
+
+    static String feedbackWidgetData =
+        "[{\"_id\":\"5b2158ea790ce051e713db07\",\"email\":\"user@mailprovider.com\",\"comment\":\"Notbad,thismightbebetter.\",\"ts\":1528912105570,\"device_id\":\"fb@count.ly\",\"cd\":\"2018-06-13T17:48:26.071Z\",\"uid\":\"1\",\"contact_me\":false,\"rating\":3,\"widget_id\":\"5b21581b967c4850a7818617\"},{\"_id\":\"5b2b80823a69147963e5b826\",\"email\":\"5score@rating.com\",\"comment\":\"5comment.\",\"ts\":1529577665765,\"device_id\":\"fb@count.ly\",\"cd\":\"2018-06-21T10:40:02.746Z\",\"uid\":\"1\",\"contact_me\":true,\"rating\":5,\"widget_id\":\"5b21581b967c4850a7818617\"}]";
 
     private TestUtils() {
     }
@@ -49,6 +57,23 @@ public class TestUtils {
         if (eventThreshold != null) {
             config.setEventQueueSizeToSend(eventThreshold);
         }
+
+        return config;
+    }
+
+    static Config getConfigFeedback() {
+        return getConfigFeedback((Config.Feature) null);
+    }
+
+    static Config getConfigFeedback(Config.Feature... features) {
+        File sdkStorageRootDirectory = getTestSDirectory();
+        checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
+        Config config = new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
+        config.setCustomDeviceId(DEVICE_ID);
+        config.setApplicationVersion("1.0");
+
+        config.enableFeatures(features);
+        config.enableFeatures(Config.Feature.Feedback);
 
         return config;
     }
@@ -105,6 +130,10 @@ public class TestUtils {
         }
 
         return resultMapArray;
+    }
+
+    protected static List<EventImpl> getCurrentEventQueue() {
+        return getCurrentEventQueue(getTestSDirectory(), mock(Log.class));
     }
 
     /**
@@ -201,6 +230,26 @@ public class TestUtils {
         }
     }
 
+    /**
+     * Parse query params from string. String contains are urlencoded and
+     * separated by "&" symbol and key-value pairs are separated by "=" symbol (key=value).
+     *
+     * @param data string with query params
+     * @return map of query params
+     */
+    public static Map<String, String> parseQueryParams(String data) {
+        if (data.contains("?")) {
+            data = data.replace("?", "");
+        }
+        String[] params = data.split("&");
+        Map<String, String> paramMap = new HashMap<>();
+        for (String param : params) {
+            String[] pair = param.split("=");
+            paramMap.put(pair[0], pair[1]);
+        }
+        return paramMap;
+    }
+
     static void validateEvent(EventImpl gonnaValidate, String key, Map<String, Object> segmentation, int count, Double sum, Double duration) {
         Assert.assertEquals(key, gonnaValidate.key);
         Assert.assertEquals(segmentation, gonnaValidate.segmentation);
@@ -232,7 +281,7 @@ public class TestUtils {
 
         return result;
     }
-  
+
     static void validateEventQueueSize(int expectedSize, List<EventImpl> events, EventQueue eventQueue) {
         Assert.assertEquals(expectedSize, events.size());
         Assert.assertEquals(expectedSize, eventQueue.eqSize());
@@ -240,5 +289,36 @@ public class TestUtils {
 
     static void validateEventQueueSize(int expectedSize, EventQueue eventQueue) {
         validateEventQueueSize(expectedSize, TestUtils.getCurrentEventQueue(getTestSDirectory(), mock(Log.class)), eventQueue);
+    }
+
+    static String getOS() {
+        return System.getProperty("os.name");
+    }
+
+    public static void validateRequiredParams(Map<String, String> params) {
+        int hour = Integer.parseInt(params.get("hour"));
+        int dow = Integer.parseInt(params.get("dow"));
+        int tz = Integer.parseInt(params.get("tz"));
+
+        validateSdkIdentityParams(params);
+        Assert.assertEquals(SDKCore.instance.config.getDeviceId().id, params.get("device_id"));
+        Assert.assertEquals(SDKCore.instance.config.getServerAppKey(), params.get("app_key"));
+        Assert.assertTrue(Long.valueOf(params.get("timestamp")) > 0);
+        Assert.assertTrue(hour > 0 && hour < 24);
+        Assert.assertTrue(dow >= 0 && dow < 7);
+        Assert.assertTrue(tz >= -720 && tz <= 840);
+    }
+
+    public static void validateSdkIdentityParams(Map<String, String> params) {
+        Assert.assertEquals(SDKCore.instance.config.getSdkVersion(), params.get("sdk_version"));
+        Assert.assertEquals(SDKCore.instance.config.getSdkName(), params.get("sdk_name"));
+    }
+
+    public static void createCleanTestState() {
+        Countly.instance().halt();
+        for (File file : getTestSDirectory().listFiles()) {
+            System.out.println(file);
+            file.delete();
+        }
     }
 }
