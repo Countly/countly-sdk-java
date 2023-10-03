@@ -1,21 +1,18 @@
 23.8.0
+* !! Major breaking change !! The following methods and their functionality are deprecated from the "UserEditor" interface and will not function anymore:
+  * "addToCohort(key)"
+  * "removeFromCohort(key)"
+* Added the feedback widget feature. Added consent for it "Config.Feature.Feedback".
+* Feedback module is accessible through "Countly::instance()::feedback()" call.
 * Deprecated call "Countly::getSession" is removed
 * Deprecated call "resetDeviceId" is removed
 * Deprecated the init time configuration of 'setEventsBufferSize(eventsBufferSize)'. Introduced replacement 'setEventQueueSizeToSend(eventsQueueSize)'
 * Deprecated the init time configuration of 'setSendUpdateEachSeconds(sendUpdateEachSeconds)'. Introduced replacement 'setUpdateSessionTimerDelay(delay)'
-* Added the feedback widget feature. Added consent for it "Config.Feature.Feedback".
-* Feedback module is accessible through "Countly::instance()::feedback()" call.
-
-* !! Major breaking change !! The following methods and their functionality are deprecated from the "UserEditor" interface and will not function anymore:
-  * "addToCohort(key)"
-  * "removeFromCohort(key)"
-
 * In Countly class, the old "init(directory,config)" method is deprecated, use "init(config)" instead via "instance()" call.
 * Deprecated "Countly::stop(boolean)" call, use "Countly::halt" or "Countly::stop" instead via "instance()" call.
 * Deprecated "Countly::event" call, deprecated builder pattern. Use "Countly::events" instead.
 * Deprecated "Usage::event" call, deprecated builder pattern. Use "Countly::events" instead.
 * Deprecated "Countly::stop(boolean)" call, use "Countly::halt" instead via "instance()" call.
-
 * The following methods are deprecated from the "Event" interface:
   * "record"
   * "endAndRecord"
