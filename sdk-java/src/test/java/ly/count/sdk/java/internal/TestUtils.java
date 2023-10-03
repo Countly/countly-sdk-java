@@ -45,6 +45,7 @@ public class TestUtils {
         config.setCustomDeviceId(DEVICE_ID);
         config.setEventQueueSizeToSend(2);
         config.enableFeatures(features);
+        config.enableFeatures(Config.Feature.Sessions);
 
         return config;
     }
@@ -54,7 +55,7 @@ public class TestUtils {
     }
 
     static Config getConfigSessions() {
-        return getConfigSessions(Config.Feature.Sessions);
+        return getConfigSessions((Config.Feature) null);
     }
 
     static Config getConfigEvents(Integer eventThreshold) {
@@ -161,6 +162,15 @@ public class TestUtils {
     }
 
     /**
+     * Get current event queue from target folder
+     *
+     * @return array of json events
+     */
+    protected static List<EventImpl> getCurrentEventQueue() {
+        return getCurrentEventQueue(getTestSDirectory(), mock(Log.class));
+    }
+
+    /**
      * Get last item from list
      *
      * @param list
@@ -258,6 +268,11 @@ public class TestUtils {
     }
 
     static void validateEventQueueSize(int expectedSize, EventQueue eventQueue) {
-        validateEventQueueSize(expectedSize, TestUtils.getCurrentEventQueue(getTestSDirectory(), mock(Log.class)), eventQueue);
+        validateEventQueueSize(expectedSize, TestUtils.getCurrentEventQueue(), eventQueue);
+    }
+
+    static void validateEventQueueSize(int expectedSize) {
+        EventQueue eventQueue = SDKCore.instance.module(ModuleEvents.class).eventQueue;
+        validateEventQueueSize(expectedSize, TestUtils.getCurrentEventQueue(), eventQueue);
     }
 }

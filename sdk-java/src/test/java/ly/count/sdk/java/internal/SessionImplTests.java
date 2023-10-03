@@ -1,5 +1,6 @@
 package ly.count.sdk.java.internal;
 
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
@@ -7,6 +8,7 @@ import java.util.function.Consumer;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.Session;
+import ly.count.sdk.java.View;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -470,7 +472,7 @@ public class SessionImplTests {
      */
     @Test
     public void addLocation() {
-        init(TestUtils.getConfigSessions(Config.Feature.Sessions, Config.Feature.Location));
+        init(TestUtils.getConfigSessions(Config.Feature.Location));
         SessionImpl session = (SessionImpl) Countly.session();
         session.addLocation(1.0, 2.0);
         Assert.assertTrue(session.params.get("location").equals("1.0,2.0"));
@@ -511,7 +513,7 @@ public class SessionImplTests {
      */
     @Test
     public void addCrashReport() {
-        init(TestUtils.getConfigSessions(Config.Feature.Sessions, Config.Feature.CrashReporting));
+        init(TestUtils.getConfigSessions(Config.Feature.CrashReporting));
         SessionImpl session = (SessionImpl) Countly.session();
         SDKCore.instance = spy(SDKCore.instance);
         session.addCrashReport(new Exception(), false);
@@ -629,6 +631,62 @@ public class SessionImplTests {
     @Test
     public void equals_differentParams() {
         validateNotEquals(0, (session1, session2) -> ts -> session1.addParam("key", "value"));
+    }
+
+    /**
+     * Create a view with no consent to views
+     * "view(String)" function should not create a view
+     * returned value should be null and desired log should be logged
+     */
+    @Test
+    public void view_viewsNotEnabled() {
+        init(TestUtils.getConfigSessions());
+        SessionImpl session = (SessionImpl) Countly.session();
+        session.L = spy(session.L);
+        View view = session.view("view");
+        verify(session.L, times(1)).i("[SessionImpl] view: Skipping view - feature is not enabled");
+        Assert.assertNull(view);
+    }
+
+    /**
+     * Create a view
+     * "view(String)" function should create a view and save it to EQ
+     * event queue should contain it
+     */
+    @Test
+    public void view() {
+        init(TestUtils.getConfigSessions(Config.Feature.Views, Config.Feature.Events).setEventQueueSizeToSend(4));
+        Session session = Countly.session();
+        TestUtils.validateEventQueueSize(0);
+        validateViewInEQ((ViewImpl) session.view("view"), 0, 1);
+    }
+
+    /**
+     * Create a view and stop it with <code>session::view</code> call
+     * "view(String)" function should create a view and save it to EQ
+     * event queue should contain 3 events - start, stop, and next view
+     */
+    @Test
+    public void view_stopStartedAndNext() {
+        init(TestUtils.getConfigSessions(Config.Feature.Views, Config.Feature.Events).setEventQueueSizeToSend(4));
+        Session session = Countly.session();
+        TestUtils.validateEventQueueSize(0);
+        session.view("start");
+        TestUtils.validateEventQueueSize(1);
+        validateViewInEQ((ViewImpl) session.view("next"), 2, 3);
+    }
+
+    private void validateViewInEQ(ViewImpl view, int eqIdx, int eqSize) {
+        List<EventImpl> eventList = TestUtils.getCurrentEventQueue();
+        Assert.assertEquals(eqSize, eventList.size());
+        EventImpl event = eventList.get(eqIdx);
+        Assert.assertEquals(event.sum, view.start.sum);
+        Assert.assertEquals(event.count, view.start.count);
+        Assert.assertEquals(event.key, view.start.key);
+        Assert.assertEquals(event.segmentation, view.start.segmentation);
+        Assert.assertEquals(event.hour, view.start.hour);
+        Assert.assertEquals(event.dow, view.start.dow);
+        Assert.assertEquals(event.duration, view.start.duration);
     }
 
     private void validateNotEquals(int idOffset, BiFunction<SessionImpl, SessionImpl, Consumer<Long>> setter) {
