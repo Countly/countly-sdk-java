@@ -17,7 +17,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import static ly.count.sdk.java.internal.TestUtils.getOs;
+import static ly.count.sdk.java.internal.TestUtils.getOS;
 import static ly.count.sdk.java.internal.TestUtils.validateEvent;
 import static ly.count.sdk.java.internal.TestUtils.validateEventQueueSize;
 import static org.mockito.Mockito.mock;
@@ -231,15 +231,13 @@ public class ModuleFeedbackTests {
         });
     }
 
-    /**
-     * "constructFeedbackWidgetUrl"
-     * We are passing a valid "CountlyFeedbackWidget" structure
-     * A correct URL should be produced
-     */
-    @Test
-    public void constructFeedbackWidgetUrl() {
+    public void constructFeedbackWidgetUrl_base(CountlyFeedbackWidget widgetInfo, boolean goodResult) {
         init(TestUtils.getConfigFeedback());
-        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] {});
+
+        if (!goodResult) {
+            Assert.assertNull(Countly.instance().feedback().constructFeedbackWidgetUrl(widgetInfo));
+            return;
+        }
 
         StringBuilder widgetListUrl = new StringBuilder();
         widgetListUrl.append(TestUtils.SERVER_URL);
@@ -256,9 +254,21 @@ public class ModuleFeedbackTests {
         widgetListUrl.append("&sdk_name=");
         widgetListUrl.append(TestUtils.SDK_NAME);
         widgetListUrl.append("&platform=");
-        widgetListUrl.append(Utils.urlencode(getOs(), L));
+        widgetListUrl.append(Utils.urlencode(getOS(), L));
 
         Assert.assertEquals(widgetListUrl.toString(), Countly.instance().feedback().constructFeedbackWidgetUrl(widgetInfo));
+    }
+
+    /**
+     * "constructFeedbackWidgetUrl"
+     * We are passing a valid "CountlyFeedbackWidget" structure
+     * A correct URL should be produced
+     */
+    @Test
+    public void constructFeedbackWidgetUrl_propperWidgets() {
+        constructFeedbackWidgetUrl_base(createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "fff" }), true);
+        constructFeedbackWidgetUrl_base(createFeedbackWidget(FeedbackWidgetType.rating, "rating4", "1234", new String[] { "343" }), true);
+        constructFeedbackWidgetUrl_base(createFeedbackWidget(FeedbackWidgetType.survey, "SurveyTrip", "rtyu", new String[] {}), true);
     }
 
     /**
@@ -268,8 +278,7 @@ public class ModuleFeedbackTests {
      */
     @Test
     public void constructFeedbackWidgetUrl_nullWidgetInfo() {
-        init(TestUtils.getConfigFeedback());
-        Assert.assertNull(Countly.instance().feedback().constructFeedbackWidgetUrl(null));
+        constructFeedbackWidgetUrl_base(null, false);
     }
 
     /**
@@ -279,9 +288,7 @@ public class ModuleFeedbackTests {
      */
     @Test
     public void constructFeedbackWidgetUrl_defaultWidgetInfo() {
-        init(TestUtils.getConfigFeedback());
-        CountlyFeedbackWidget widgetInfo = new CountlyFeedbackWidget();
-        Assert.assertNull(Countly.instance().feedback().constructFeedbackWidgetUrl(widgetInfo));
+        constructFeedbackWidgetUrl_base(new CountlyFeedbackWidget(), false);
     }
 
     /**
@@ -291,242 +298,221 @@ public class ModuleFeedbackTests {
      */
     @Test
     public void constructFeedbackWidgetUrl_emptyWidgetInfo() {
-        init(TestUtils.getConfigFeedback());
-        CountlyFeedbackWidget widgetInfo = new CountlyFeedbackWidget();
-        widgetInfo.widgetId = "";
-        widgetInfo.name = "";
-        widgetInfo.type = FeedbackWidgetType.nps;
-        widgetInfo.tags = new String[] {};
-        Assert.assertNull(Countly.instance().feedback().constructFeedbackWidgetUrl(widgetInfo));
+        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "", "", new String[] {});
+        constructFeedbackWidgetUrl_base(widgetInfo, false);
     }
 
     /**
-     * Get feedback widget data with null widget info
-     * "getFeedbackWidgetData" function should not return widget data and return error message
-     * data should be null and error message should same as expected
+     * "getFeedbackWidgetData"
+     * pass "null" widget info
+     * Callback response should be "null" due to faulty input. Error message should also be proper
      */
     @Test
     public void getFeedbackWidgetData_nullWidgetInfo() {
-        init(TestUtils.getConfigFeedback());
-
-        Countly.instance().feedback().getFeedbackWidgetData(null, (response, error) -> {
-            Assert.assertNull(response);
-            Assert.assertEquals("[ModuleFeedback] getFeedbackWidgetDataInternal, Can't continue operation with null widget", error);
-        });
+        getFeedbackWidgetData_base(null, null, "[ModuleFeedback] getFeedbackWidgetDataInternal, Can't continue operation with null widget");
     }
 
     /**
-     * Get feedback widget data
-     * "getFeedbackWidgetData" function should return widget data related to it
-     * data should fill with correct data
+     * "getFeedbackWidgetData"
+     * Passing correct "CountlyFeedbackWidget". Returning mocked correct server response. Validating created request params.
+     * The returned response should match the initial input
      */
     @Test
     public void getFeedbackWidgetData() {
-        init(TestUtils.getConfigFeedback());
-
-        JSONObject result = new JSONObject();
-        result.put("result", TestUtils.feedbackWidgetData);
+        JSONObject responseJson = new JSONObject();
+        responseJson.put("result", TestUtils.feedbackWidgetData);
 
         CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "hgj" });
 
-        ImmediateRequestI requestMaker = (requestData, customEndpoint, cp, requestShouldBeDelayed, networkingIsEnabled, callback, log) -> {
-            validateWidgetRequiredParams("/o/surveys/" + widgetInfo.type.name() + "/widget", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
-            validateWidgetDataParams(TestUtils.parseQueryParams(requestData), widgetInfo);
-            callback.callback(result);
-        };
-        SDKCore.instance.config.immediateRequestGenerator = () -> requestMaker;
-
-        Countly.instance().feedback().getFeedbackWidgetData(widgetInfo, (response, error) -> {
-            Assert.assertNull(error);
-            Assert.assertEquals(TestUtils.feedbackWidgetData, response.get("result"));
-        });
+        getFeedbackWidgetData_base(responseJson, widgetInfo, null);
     }
 
     /**
-     * Get feedback widget data network error
-     * "getFeedbackWidgetData" function should return null widget data and error message
-     * data should be null and error message should be same as expected
+     * "getFeedbackWidgetData"
+     * Passing correct "CountlyFeedbackWidget". Returning mocked "null" response. Validating created request params.
+     * Returned response should be null and the correct error message returned
      */
     @Test
     public void getFeedbackWidgetData_nullResponse() {
-        init(TestUtils.getConfigFeedback());
-
-        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "jyg", "jhg" });
-
-        ImmediateRequestI requestMaker = (requestData, customEndpoint, cp, requestShouldBeDelayed, networkingIsEnabled, callback, log) -> {
-            validateWidgetRequiredParams("/o/surveys/" + widgetInfo.type.name() + "/widget", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
-            validateWidgetDataParams(TestUtils.parseQueryParams(requestData), widgetInfo);
-            callback.callback(null);
-        };
-        SDKCore.instance.config.immediateRequestGenerator = () -> requestMaker;
-
-        Countly.instance().feedback().getFeedbackWidgetData(widgetInfo, (response, error) -> {
-            Assert.assertEquals("Not possible to retrieve widget data. Probably due to lack of connection to the server", error);
-            Assert.assertNull(response);
-        });
+        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.survey, "nps1", "npsID1", new String[] { "jyg", "jhg" });
+        getFeedbackWidgetData_base(null, widgetInfo, "Not possible to retrieve widget data. Probably due to lack of connection to the server");
     }
 
     /**
-     * Get feedback widget data successfully
-     * "getFeedbackWidgetData" function should return widget data and error message should be null
-     * data should be same as expected and error message should null
+     * "getFeedbackWidgetData"
+     * Passing correct "CountlyFeedbackWidget". Returning mocked garbage response. Validating created request params.
+     * SDK does not filter returned output and just passes it along.
      */
     @Test
     public void getFeedbackWidgetData_garbageResult() {
+        JSONObject responseJson = new JSONObject();
+        responseJson.put("xxx", "123");
+
+        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.rating, "nps1", "npsID1", new String[] { "yh" });
+        getFeedbackWidgetData_base(responseJson, widgetInfo, null);
+    }
+
+    public void getFeedbackWidgetData_base(JSONObject responseJson, CountlyFeedbackWidget widgetInfo, String errorMessage) {
         init(TestUtils.getConfigFeedback());
 
-        JSONObject responseJson = new JSONObject();
-        responseJson.put("result", "Success");
-
-        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "yh" });
-
-        ImmediateRequestI requestMaker = (requestData, customEndpoint, cp, requestShouldBeDelayed, networkingIsEnabled, callback, log) -> {
-            validateWidgetRequiredParams("/o/surveys/" + widgetInfo.type.name() + "/widget", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
-            validateWidgetDataParams(TestUtils.parseQueryParams(requestData), widgetInfo);
-            callback.callback(responseJson);
-        };
-        SDKCore.instance.config.immediateRequestGenerator = () -> requestMaker;
+        if (widgetInfo != null) {
+            ImmediateRequestI requestMaker = (requestData, customEndpoint, cp, requestShouldBeDelayed, networkingIsEnabled, callback, log) -> {
+                validateWidgetRequiredParams("/o/surveys/" + widgetInfo.type.name() + "/widget", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
+                validateWidgetDataParams(TestUtils.parseQueryParams(requestData), widgetInfo);
+                callback.callback(responseJson);
+            };
+            SDKCore.instance.config.immediateRequestGenerator = () -> requestMaker;
+        }
 
         Countly.instance().feedback().getFeedbackWidgetData(widgetInfo, (response, error) -> {
-            Assert.assertNull(error);
-            Assert.assertEquals(responseJson, response);
+            if (errorMessage == null) {
+                Assert.assertNull(error);
+                Assert.assertEquals(responseJson, response);
+            } else {
+                Assert.assertEquals(errorMessage, error);
+                Assert.assertNull(response);
+            }
         });
     }
 
     /**
-     * Report feedback widget manually with null widget info
-     * "reportFeedbackWidgetManually" function should not record widget as an event,
-     * event queue should be empty
+     * "reportFeedbackWidgetManually"
+     * All passed fields are "null"
+     * No event should be recorded due to this
      */
     @Test
     public void reportFeedbackWidgetManually_nullWidgetInfo() {
-        init(TestUtils.getConfigFeedback());
-
-        Countly.instance().feedback().reportFeedbackWidgetManually(null, null, null);
-        List<EventImpl> events = TestUtils.getCurrentEventQueue();
-        Assert.assertEquals(0, events.size());
+        init(TestUtils.getConfigFeedback(Config.Feature.Events));
+        validateRecordingWidgetsManually(null, null, null, 0, false);
     }
 
     /**
-     * Report feedback widget manually with null widgetData and widgetResult
-     * "reportFeedbackWidgetManually" function should record widget as an event,
-     * event queue should contain it and it should have correct segmentation
+     * "reportFeedbackWidgetManually"
+     * Report widget with "null" widgetData and widgetResult
+     * The closed event should be recorded properly in the EQ
      */
     @Test
-    public void reportFeedbackWidgetManually() {
+    public void reportFeedbackWidgetManually_closeEventNPS() {
         init(TestUtils.getConfigFeedback(Config.Feature.Events));
 
-        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "kjh" });
-        validateEventQueueSize(0, moduleEvents().eventQueue);
-        Countly.instance().feedback().reportFeedbackWidgetManually(widgetInfo, null, null);
-        validateEventQueueSize(1, moduleEvents().eventQueue);
-
-        feedbackValidateManualResultEQ(FeedbackWidgetType.nps.eventKey, widgetInfo.widgetId, null, 0);
+        validateRecordingWidgetsManually(createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "sa" }), null, null, 0, true);
+        validateRecordingWidgetsManually(createFeedbackWidget(FeedbackWidgetType.survey, "survey", "npsID112", new String[] {}), null, null, 1, true);
+        validateRecordingWidgetsManually(createFeedbackWidget(FeedbackWidgetType.rating, "rating", "npsID133", new String[] { "hhhh" }), null, null, 2, true);
     }
 
+    //we want to know that the closing event can be recorded for all. missing Survey, Rating
+    //that all widget types can be recorded normally. missing survey
+
     /**
-     * Report feedback widget manually with null widgetData and null key-value widget results
-     * "reportFeedbackWidgetManually" function should record widget as an event,
-     * event queue should contain it and it should have correct segmentation
+     * "reportFeedbackWidgetManually"
+     * Record NPS. Pass "null", empty keys and "null" values.
+     * Bad entries should be removed
      */
     @Test
     public void reportFeedbackWidgetManually_nullWidgetResultValueKeys() {
         init(TestUtils.getConfigFeedback(Config.Feature.Events));
-
-        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.survey, "nps1", "npsID1", new String[] { "fg", "lh" });
-        validateEventQueueSize(0, moduleEvents().eventQueue);
 
         Map<String, Object> widgetResult = new HashMap<>();
         widgetResult.put("key1", null);
         widgetResult.put(null, null);
         widgetResult.put("", 6);
         widgetResult.put("accepted", true);
+        widgetResult.put("rating", 6);
 
         Map<String, Object> expectedWidgetResult = new HashMap<>();
         expectedWidgetResult.put("accepted", true);
+        expectedWidgetResult.put("rating", 6);
 
-        Countly.instance().feedback().reportFeedbackWidgetManually(widgetInfo, null, widgetResult);
-        validateEventQueueSize(1, moduleEvents().eventQueue);
-
-        feedbackValidateManualResultEQ(FeedbackWidgetType.survey.eventKey, widgetInfo.widgetId, widgetResult, 0);
+        validateRecordingWidgetsManually(createFeedbackWidget(FeedbackWidgetType.survey, "nps1", "npsID1", new String[] { "sa" }), null, widgetResult, 0, true, expectedWidgetResult);
+        validateRecordingWidgetsManually(createFeedbackWidget(FeedbackWidgetType.rating, "survey", "npsID331", new String[] { "sa" }), null, widgetResult, 1, true, expectedWidgetResult);
+        validateRecordingWidgetsManually(createFeedbackWidget(FeedbackWidgetType.nps, "rating", "npsI44D1", new String[] { "sa" }), null, widgetResult, 2, true, expectedWidgetResult);
     }
 
     /**
-     * Report a nps and a rating feedback widget manually with null widgetData and not existing rating
-     * "reportFeedbackWidgetManually" function should not record,
-     * event queue should be empty
+     * "reportFeedbackWidgetManually"
+     * Report a nps and a rating widget with "null" widgetData and no "rating" entry
+     * No events should be recorded since the "rating" field is mandatory
      */
     @Test
-    public void reportFeedbackWidgetManually_nonExistingRating() {
+    public void reportFeedbackWidgetManually_nonExistingRatingField() {
         init(TestUtils.getConfigFeedback(Config.Feature.Events));
-
-        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "ou" });
-        validateEventQueueSize(0, moduleEvents().eventQueue);
 
         Map<String, Object> widgetResult = new HashMap<>();
         widgetResult.put("accepted", true);
 
-        Countly.instance().feedback().reportFeedbackWidgetManually(widgetInfo, null, widgetResult);
-        validateEventQueueSize(0, moduleEvents().eventQueue);
-
-        widgetInfo = createFeedbackWidget(FeedbackWidgetType.rating, "rating1", "ratingID1", new String[] {});
-        Countly.instance().feedback().reportFeedbackWidgetManually(widgetInfo, null, widgetResult);
-        validateEventQueueSize(0, moduleEvents().eventQueue);
+        validateRecordingWidgetsManually(createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "sa" }), null, widgetResult, 0, false);
+        validateRecordingWidgetsManually(createFeedbackWidget(FeedbackWidgetType.rating, "rating1", "ratingID1", new String[] {}), null, widgetResult, 0, false);
     }
 
     /**
-     * Report a nps and a rating feedback widget manually with null widgetData and invalid rating result
-     * "reportFeedbackWidgetManually" function should not record,
-     * event queue should be empty
+     * "reportFeedbackWidgetManually"
+     * Report a nps and a rating widget with "null" widgetData and the rating field has the wrong data type
+     * No events should be recorded since the "rating" field should be an integer
      */
     @Test
-    public void reportFeedbackWidgetManually_invalidRating() {
+    public void reportFeedbackWidgetManually_invalidRatingField() {
         init(TestUtils.getConfigFeedback(Config.Feature.Events));
-
-        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "as" });
-        validateEventQueueSize(0, moduleEvents().eventQueue);
 
         Map<String, Object> widgetResult = new HashMap<>();
         widgetResult.put("rating", true);
 
-        Countly.instance().feedback().reportFeedbackWidgetManually(widgetInfo, null, widgetResult);
-        validateEventQueueSize(0, moduleEvents().eventQueue);
-
-        widgetInfo = createFeedbackWidget(FeedbackWidgetType.rating, "rating1", "ratingID1", new String[] {});
-        Countly.instance().feedback().reportFeedbackWidgetManually(widgetInfo, null, widgetResult);
-        validateEventQueueSize(0, moduleEvents().eventQueue);
+        validateRecordingWidgetsManually(createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "sa" }), null, widgetResult, 0, false);
+        validateRecordingWidgetsManually(createFeedbackWidget(FeedbackWidgetType.rating, "rating1", "ratingID1", new String[] {}), null, widgetResult, 0, false);
     }
 
     /**
-     * Report a nps and a rating feedback widget manually with null widgetData and valid rating result
-     * "reportFeedbackWidgetManually" function should record,
-     * event queue should contain widget event and it should have correct segmentation
+     * "reportFeedbackWidgetManually"
+     * Recording rating and nps widgets with correct data
+     * EQ should contain their recorded events
      */
     @Test
-    public void reportFeedbackWidgetManually_validRating() {
+    public void reportFeedbackWidgetManually_validRatingField() {
         init(TestUtils.getConfigFeedback(Config.Feature.Events));
-
-        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "sa" });
-        validateEventQueueSize(0, moduleEvents().eventQueue);
 
         Map<String, Object> widgetResult = new HashMap<>();
         widgetResult.put("rating", 11);
 
-        Countly.instance().feedback().reportFeedbackWidgetManually(widgetInfo, null, widgetResult);
-        validateEventQueueSize(1, moduleEvents().eventQueue);
-
-        feedbackValidateManualResultEQ(FeedbackWidgetType.nps.eventKey, widgetInfo.widgetId, widgetResult, 0);
-
-        widgetInfo = createFeedbackWidget(FeedbackWidgetType.rating, "rating1", "ratingID1", new String[] {});
-        Countly.instance().feedback().reportFeedbackWidgetManually(widgetInfo, null, widgetResult);
-        validateEventQueueSize(2, moduleEvents().eventQueue);
-        feedbackValidateManualResultEQ(FeedbackWidgetType.rating.eventKey, widgetInfo.widgetId, widgetResult, 1);
+        validateRecordingWidgetsManually(createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "sa" }), null, widgetResult, 0, true);
+        validateRecordingWidgetsManually(createFeedbackWidget(FeedbackWidgetType.rating, "rating1", "ratingID1", new String[] {}), null, widgetResult, 1, true);
     }
 
     /**
-     * Report feedback widget manually with null widgetData and null widget result
-     * "reportFeedbackWidgetManually" function should record, and widgets should be written to request queue
-     * event queue should contain widget event, and it should have correct segmentation, also request queue should contain
+     * "reportFeedbackWidgetManually"
+     * Record a NPS closing event. Pass widget data structure
+     * Everything proceeds normally
+     */
+    @Test
+    public void reportFeedbackWidgetManually_invalidWidgetData() {
+        init(TestUtils.getConfigFeedback(Config.Feature.Events));
+
+        JSONObject widgetData = new JSONObject();
+        widgetData.put("_id", "diff");
+        widgetData.put("type", "rating");
+
+        validateRecordingWidgetsManually(createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "sa" }), widgetData, null, 0, true);
+    }
+
+    void validateRecordingWidgetsManually(CountlyFeedbackWidget widgetInfo, JSONObject widgetData, Map<String, Object> widgetResult, int initialEQSize, boolean goodResult, Map<String, Object> expectedWidgetResult) {
+        validateEventQueueSize(initialEQSize, moduleEvents().eventQueue);
+
+        Countly.instance().feedback().reportFeedbackWidgetManually(widgetInfo, widgetData, expectedWidgetResult == null ? widgetResult : expectedWidgetResult);
+
+        if (goodResult) {
+            validateEventQueueSize(initialEQSize + 1, moduleEvents().eventQueue);
+            feedbackValidateManualResultEQ(widgetInfo.type.eventKey, widgetInfo.widgetId, expectedWidgetResult == null ? widgetResult : expectedWidgetResult, initialEQSize);
+        } else {
+            validateEventQueueSize(initialEQSize, moduleEvents().eventQueue);
+        }
+    }
+
+    void validateRecordingWidgetsManually(CountlyFeedbackWidget widgetInfo, JSONObject widgetData, Map<String, Object> widgetResult, int initialEQSize, boolean goodResult) {
+        validateRecordingWidgetsManually(widgetInfo, widgetData, widgetResult, initialEQSize, goodResult, null);
+    }
+
+    /**
+     * "reportFeedbackWidgetManually"
+     * Record a amount of widgtets that exceed the event threshold
+     * After exceeding the threshold the events should be spotted in the RQ
      */
     @Test
     public void reportFeedbackWidgetManually_rq() {
@@ -552,30 +538,9 @@ public class ModuleFeedbackTests {
         feedbackValidateManualResultRQ(FeedbackWidgetType.rating.eventKey, widgetInfoRating.widgetId, null, 1);
     }
 
-    /**
-     * Report feedback widget manually with invalid widgetData and null widgetResult
-     * "reportFeedbackWidgetManually" function should record widget as an event,
-     * event queue should contain it and it should have correct segmentation
-     */
-    @Test
-    public void reportFeedbackWidgetManually_invalidWidgetData() {
-        init(TestUtils.getConfigFeedback(Config.Feature.Events));
-
-        JSONObject widgetData = new JSONObject();
-        widgetData.put("_id", "diff");
-        widgetData.put("type", "rating");
-
-        CountlyFeedbackWidget widgetInfo = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "ty" });
-        validateEventQueueSize(0, moduleEvents().eventQueue);
-        Countly.instance().feedback().reportFeedbackWidgetManually(widgetInfo, widgetData, null);
-        validateEventQueueSize(1, moduleEvents().eventQueue);
-
-        feedbackValidateManualResultEQ(FeedbackWidgetType.nps.eventKey, widgetInfo.widgetId, null, 0);
-    }
-
     private void validateWidgetDataParams(Map<String, String> params, CountlyFeedbackWidget widgetInfo) {
         Assert.assertEquals(widgetInfo.widgetId, params.get("widget_id"));
-        Assert.assertEquals(Utils.urlencode(getOs(), L), params.get("platform"));
+        Assert.assertEquals(Utils.urlencode(getOS(), L), params.get("platform"));
         Assert.assertEquals("1", params.get("shown"));
         Assert.assertEquals(String.valueOf(SDKCore.instance.config.getApplicationVersion()), params.get("app_version"));
         TestUtils.validateSdkIdentityParams(params);
@@ -627,7 +592,7 @@ public class ModuleFeedbackTests {
 
     private Map<String, Object> requiredWidgetSegmentation(String widgetId, Map<String, Object> widgetResult) {
         Map<String, Object> segm = new HashMap<>();
-        segm.put("platform", getOs());
+        segm.put("platform", getOS());
         segm.put("app_version", SDKCore.instance.config.getApplicationVersion());
         segm.put("widget_id", widgetId);
         if (widgetResult != null) {
@@ -638,11 +603,11 @@ public class ModuleFeedbackTests {
         return segm;
     }
 
-    void feedbackValidateManualResultEQ(String eventKey, String widgetID, Map<String, Object> feedbacklResult, int eqIndex) {
-        validateEvent(TestUtils.getCurrentEventQueue().get(eqIndex), eventKey, requiredWidgetSegmentation(widgetID, feedbacklResult), 1, null, null);
+    void feedbackValidateManualResultEQ(String eventKey, String widgetID, Map<String, Object> feedbackWidgetResult, int eqIndex) {
+        validateEvent(TestUtils.getCurrentEventQueue().get(eqIndex), eventKey, requiredWidgetSegmentation(widgetID, feedbackWidgetResult), 1, null, null);
     }
 
-    void feedbackValidateManualResultRQ(String eventKey, String widgetID, Map<String, Object> feedbacklResult, int eqIndex) {
-        validateEvent(TestUtils.readEventsFromRequest().get(eqIndex), eventKey, requiredWidgetSegmentation(widgetID, feedbacklResult), 1, null, null);
+    void feedbackValidateManualResultRQ(String eventKey, String widgetID, Map<String, Object> feedbackWidgetResult, int eqIndex) {
+        validateEvent(TestUtils.readEventsFromRequest().get(eqIndex), eventKey, requiredWidgetSegmentation(widgetID, feedbackWidgetResult), 1, null, null);
     }
 }

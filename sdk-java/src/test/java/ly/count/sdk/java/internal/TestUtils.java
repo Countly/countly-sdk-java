@@ -291,7 +291,7 @@ public class TestUtils {
         validateEventQueueSize(expectedSize, TestUtils.getCurrentEventQueue(getTestSDirectory(), mock(Log.class)), eventQueue);
     }
 
-    static String getOs() {
+    static String getOS() {
         return System.getProperty("os.name");
     }
 

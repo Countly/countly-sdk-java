@@ -318,6 +318,7 @@ public class ModuleFeedback extends ModuleBase {
 
             L.d("[ModuleFeedback] getFeedbackWidgetDataInternal, Retrieved widget data request: [" + checkResponse + "]");
 
+            //TODO: in the future add some validation for some common widget data fields
             callback.onFinished(checkResponse, null);
         }, L);
     }
