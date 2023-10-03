@@ -6,6 +6,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
+import ly.count.sdk.java.Session;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -640,12 +641,13 @@ public class SessionImplTests {
     }
 
     private void validateDeviceIdMerge(String deviceId, String expected, boolean merge) {
+        Session session = Countly.session();
         if (merge) {
-            Countly.session().changeDeviceIdWithMerge(deviceId);
+            session.changeDeviceIdWithMerge(deviceId);
         } else {
-            Countly.session().changeDeviceIdWithoutMerge(deviceId);
+            session.changeDeviceIdWithoutMerge(deviceId);
         }
-        Assert.assertEquals(expected, ctx.getConfig().getDeviceId().id);
+        Assert.assertEquals(expected, session.getDeviceId());
     }
 
     private void validateBeganSession(SessionImpl session) {
