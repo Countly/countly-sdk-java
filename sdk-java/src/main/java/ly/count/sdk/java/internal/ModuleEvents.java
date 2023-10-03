@@ -125,8 +125,14 @@ public class ModuleEvents extends ModuleBase {
         if (timedEvents.containsKey(key)) {
             return false;
         }
+
         L.d("[ModuleEvents] Starting event: [" + key + "]");
-        timedEvents.put(key, new EventImpl(null, key, L));
+        timedEvents.put(key, new EventImpl(event -> {
+            EventImpl eventImpl = (EventImpl) event;
+            L.d("[ModuleEvents] Ending event: [" + key + "]");
+            endEventInternal(key, eventImpl.segmentation, eventImpl.count, eventImpl.sum);
+        }, key, L));
+        
         return true;
     }
 
