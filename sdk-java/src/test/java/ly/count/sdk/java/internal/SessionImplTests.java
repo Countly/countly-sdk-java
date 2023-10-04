@@ -83,8 +83,7 @@ public class SessionImplTests {
      */
     @Test
     public void begin_ended() {
-        SessionImpl session = endedSession();
-        Assert.assertNull(session.begin(0L));
+        Assert.assertNull(endedSession().begin(0L));
     }
 
     /**
@@ -126,8 +125,7 @@ public class SessionImplTests {
     public void begin_backendModeEnabled() {
         SessionImpl session = notStarted(TestUtils.getConfigSessions().enableBackendMode());
 
-        session = (SessionImpl) session.begin();
-        validateNotStarted(session);
+        validateNotStarted((SessionImpl) session.begin());
     }
 
     /**
@@ -150,8 +148,7 @@ public class SessionImplTests {
      */
     @Test
     public void update_ended() {
-        SessionImpl session = endedSession();
-        Assert.assertNull(session.update(0L));
+        Assert.assertNull(endedSession().update(0L));
     }
 
     /**
