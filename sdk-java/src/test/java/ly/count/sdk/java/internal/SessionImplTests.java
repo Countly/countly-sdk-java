@@ -16,6 +16,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.verification.VerificationMode;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -358,9 +359,7 @@ public class SessionImplTests {
      */
     @Test
     public void addLocation_locationNotEnabled() {
-        SessionImpl session = session();
-        session.addLocation(1.0, 2.0);
-        Assert.assertNull(session.params.get("location"));
+        addLocation_base(TestUtils.getConfigSessions(), null);
     }
 
     /**
@@ -370,9 +369,7 @@ public class SessionImplTests {
      */
     @Test
     public void addLocation() {
-        SessionImpl session = session(TestUtils.getConfigSessions(Config.Feature.Location));
-        session.addLocation(1.0, 2.0);
-        assertEquals("1.0,2.0", session.params.get("location"));
+        addLocation_base(TestUtils.getConfigSessions(Config.Feature.Location), "1.0,2.0");
     }
 
     /**
@@ -382,9 +379,13 @@ public class SessionImplTests {
      */
     @Test
     public void addLocation_backendModeEnabled() {
-        SessionImpl session = session(TestUtils.getConfigSessions().enableBackendMode());
+        addLocation_base(TestUtils.getConfigSessions().enableBackendMode(), null);
+    }
+
+    private void addLocation_base(Config config, Object expected) {
+        SessionImpl session = session(config);
         session.addLocation(1.0, 2.0);
-        Assert.assertNull(session.params.get("location"));
+        Assert.assertEquals(expected, session.params.get("location"));
     }
 
     /**
@@ -394,11 +395,7 @@ public class SessionImplTests {
      */
     @Test
     public void addCrashReport_crashReportingNotEnabled() {
-        SessionImpl session = session();
-        SDKCore.instance = spy(SDKCore.instance);
-        session.addCrashReport(new Exception(), true);
-
-        verify(SDKCore.instance, never()).onCrash(any(), any(), anyBoolean(), any(), any(), any());
+        addCrashReport_base(TestUtils.getConfigSessions(), never());
     }
 
     /**
@@ -408,11 +405,7 @@ public class SessionImplTests {
      */
     @Test
     public void addCrashReport() {
-        SessionImpl session = session(TestUtils.getConfigSessions(Config.Feature.CrashReporting));
-        SDKCore.instance = spy(SDKCore.instance);
-        session.addCrashReport(new Exception(), false);
-
-        verify(SDKCore.instance, times(1)).onCrash(any(), any(), anyBoolean(), any(), any(), any());
+        addCrashReport_base(TestUtils.getConfigSessions(Config.Feature.CrashReporting), times(1));
     }
 
     /**
@@ -422,14 +415,18 @@ public class SessionImplTests {
      */
     @Test
     public void addCrashReport_backendModeEnabled() {
-        SessionImpl session = session(TestUtils.getConfigSessions(Config.Feature.CrashReporting).enableBackendMode());
+        SessionImpl session = addCrashReport_base(TestUtils.getConfigSessions().enableBackendMode(), never());
+        verify(session.L, times(1)).w("[SessionImpl] addCrashReport: Skipping crash, backend mode is enabled!");
+    }
+
+    private SessionImpl addCrashReport_base(Config config, VerificationMode verificationMode) {
+        SessionImpl session = session(config);
         SDKCore.instance = spy(SDKCore.instance);
         session.L = spy(session.L);
         session.addCrashReport(new Exception(), false);
 
-        verify(SDKCore.instance, never()).onCrash(any(), any(), anyBoolean(), any(), any(), any());
-        verify(session.L, times(1)).w("[SessionImpl] addCrashReport: Skipping crash, backend mode is enabled!");
-        verify(SDKCore.instance, never()).onCrash(any(), any(), anyBoolean(), any(), any(), any());
+        verify(SDKCore.instance, verificationMode).onCrash(any(), any(), anyBoolean(), any(), any(), any());
+        return session;
     }
 
     /**
