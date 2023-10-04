@@ -13,3 +13,4 @@ app-java/out/
 data
 sdk-java/out/
 /.vscode/
+*.class
