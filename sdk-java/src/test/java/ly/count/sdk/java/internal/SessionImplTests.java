@@ -362,9 +362,9 @@ public class SessionImplTests {
     }
 
     /**
-     * Add param with null key and value
-     * "addParam(String, Object)" function should add param
-     * added value should be null
+     * "addParam" with null key and value
+     * Given key and value are null, validating that they are added,
+     * added mock null key and value should exist in the params
      */
     @Test
     public void addParam_nullKeyValue() {
@@ -374,9 +374,9 @@ public class SessionImplTests {
     }
 
     /**
-     * Add location with no consent to location
-     * "addLocation(double, double)" function should not add location
-     * added value should be null
+     * "addLocation" with no consent to location
+     * mocked location given to function and validating from params
+     * location should not be existed in the params
      */
     @Test
     public void addLocation_locationNotEnabled() {
@@ -386,9 +386,9 @@ public class SessionImplTests {
     }
 
     /**
-     * Add location with consent to location
-     * "addLocation(double, double)" function should add location
-     * added value should be same
+     * "addLocation"
+     * mocked latitude longitude given to function and validating from params
+     * given location should be existed in the params
      */
     @Test
     public void addLocation() {
@@ -398,9 +398,9 @@ public class SessionImplTests {
     }
 
     /**
-     * Add location with backend mode enabled
-     * "addLocation(double, double)" function should not add location
-     * added value should be null
+     * "addLocation" with backend mode enabled
+     * mocked location given to function and validating from params
+     * location should not be existed in the params
      */
     @Test
     public void addLocation_backendModeEnabled() {
@@ -410,8 +410,8 @@ public class SessionImplTests {
     }
 
     /**
-     * Add crash report with no consent to crash reporting
-     * "addCrashReport(Throwable, boolean)" function should not add crash report
+     * "addCrashReport" with no consent to crash reporting
+     * mocked exception given to function and validating function calls
      * SDKCore.instance().onCrash() should not be called
      */
     @Test
@@ -424,8 +424,8 @@ public class SessionImplTests {
     }
 
     /**
-     * Add crash report with consent to crash reporting
-     * "addCrashReport(Throwable, boolean)" function should add crash report
+     * "addCrashReport"
+     * mocked exception given to function and validating function calls
      * SDKCore.instance().onCrash() should be called once
      */
     @Test
@@ -438,9 +438,9 @@ public class SessionImplTests {
     }
 
     /**
-     * Add crash report with backend mode enabled
-     * "addCrashReport(Throwable, boolean)" function should not add crash report
-     * SDKCore.instance().onCrash() should not be called and desired warning should be logged
+     * "addCrashReport" with backend mode enabled
+     * mocked exception given to function and validating function calls
+     * SDKCore.instance().onCrash() should not be called and expected log should be logged
      */
     @Test
     public void addCrashReport_backendModeEnabled() {
@@ -451,6 +451,7 @@ public class SessionImplTests {
 
         verify(SDKCore.instance, never()).onCrash(any(), any(), anyBoolean(), any(), any(), any());
         verify(session.L, times(1)).w("[SessionImpl] addCrashReport: Skipping crash, backend mode is enabled!");
+        verify(SDKCore.instance, never()).onCrash(any(), any(), anyBoolean(), any(), any(), any());
     }
 
     /**
