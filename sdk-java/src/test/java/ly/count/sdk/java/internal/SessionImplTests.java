@@ -265,7 +265,6 @@ public class SessionImplTests {
      */
     @Test
     public void changeDeviceIdWithMerge() {
-        init(TestUtils.getConfigSessions());
         validateDeviceIdMerge("newDeviceId", "newDeviceId", true);
     }
 
@@ -276,7 +275,6 @@ public class SessionImplTests {
      */
     @Test
     public void changeDeviceIdWithMerge_nullId() {
-        init(TestUtils.getConfigSessions());
         validateDeviceIdMerge(null, TestUtils.DEVICE_ID, true);
     }
 
@@ -287,7 +285,6 @@ public class SessionImplTests {
      */
     @Test
     public void changeDeviceIdWithMerge_emptyId() {
-        init(TestUtils.getConfigSessions());
         validateDeviceIdMerge("", TestUtils.DEVICE_ID, true);
     }
 
@@ -298,8 +295,7 @@ public class SessionImplTests {
      */
     @Test
     public void changeDeviceIdWithMerge_backendModeEnabled() {
-        init(TestUtils.getConfigSessions().enableBackendMode());
-        validateDeviceIdMerge("newDeviceId", TestUtils.DEVICE_ID, true);
+        validateDeviceIdMerge("newDeviceId", TestUtils.DEVICE_ID, true, TestUtils.getConfigSessions().enableBackendMode());
     }
 
     /**
@@ -309,7 +305,6 @@ public class SessionImplTests {
      */
     @Test
     public void changeDeviceIdWithoutMerge() {
-        init(TestUtils.getConfigSessions());
         validateDeviceIdMerge("newDeviceId", "newDeviceId", false);
     }
 
@@ -320,7 +315,6 @@ public class SessionImplTests {
      */
     @Test
     public void changeDeviceIdWithoutMerge_nullId() {
-        init(TestUtils.getConfigSessions());
         validateDeviceIdMerge(null, TestUtils.DEVICE_ID, false);
     }
 
@@ -331,7 +325,6 @@ public class SessionImplTests {
      */
     @Test
     public void changeDeviceIdWithoutMerge_emptyId() {
-        init(TestUtils.getConfigSessions());
         validateDeviceIdMerge("", TestUtils.DEVICE_ID, false);
     }
 
@@ -342,8 +335,7 @@ public class SessionImplTests {
      */
     @Test
     public void changeDeviceIdWithoutMerge_backendModeEnabled() {
-        init(TestUtils.getConfigSessions().enableBackendMode());
-        validateDeviceIdMerge("newDeviceId", TestUtils.DEVICE_ID, false);
+        validateDeviceIdMerge("newDeviceId", TestUtils.DEVICE_ID, false, TestUtils.getConfigSessions().enableBackendMode());
     }
 
     /**
@@ -628,6 +620,11 @@ public class SessionImplTests {
     }
 
     private void validateDeviceIdMerge(String deviceId, String expected, boolean merge) {
+        validateDeviceIdMerge(deviceId, expected, merge, TestUtils.getConfigSessions());
+    }
+
+    private void validateDeviceIdMerge(String deviceId, String expected, boolean merge, Config config) {
+        init(config);
         Session session = Countly.session();
         if (merge) {
             session.changeDeviceIdWithMerge(deviceId);
