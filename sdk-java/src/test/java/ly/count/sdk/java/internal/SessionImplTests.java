@@ -70,7 +70,7 @@ public class SessionImplTests {
      * returned result should be null
      */
     @Test
-    public void begin_notNullBegan() {
+    public void begin_began() {
         init(TestUtils.getConfigSessions());
 
         SessionImpl session = (SessionImpl) Countly.session();
@@ -87,7 +87,7 @@ public class SessionImplTests {
      * returned result should be null
      */
     @Test
-    public void begin_notNullEnded() {
+    public void begin_ended() {
         init(TestUtils.getConfigSessions());
 
         SessionImpl session = (SessionImpl) Countly.session();
@@ -132,7 +132,7 @@ public class SessionImplTests {
     }
 
     /**
-     * "begin(long)" with backend mode enabled
+     * "begin()" with backend mode enabled
      * Try to begin a session, validate that it is not started
      * returned result should be null
      */
@@ -147,12 +147,12 @@ public class SessionImplTests {
     }
 
     /**
-     * Update a session not began
-     * "update(long)" function should not update the session
-     * returned value should be null
+     * "update(long)" with not began session
+     * Try to update a session, validate that it is not started and updated
+     * returned result should be null
      */
     @Test
-    public void update_nullBegan() {
+    public void update_notStarted() {
         init(TestUtils.getConfigSessions());
 
         SessionImpl session = (SessionImpl) Countly.session();
@@ -162,12 +162,12 @@ public class SessionImplTests {
     }
 
     /**
-     * Update a session already ended
-     * "update(long)" function should not update the session
-     * returned value should be null
+     * "update(long)" with ended session
+     * Try to update a session, validate that it's result is null
+     * returned result should be null
      */
     @Test
-    public void update_notNullEnded() {
+    public void update_ended() {
         init(TestUtils.getConfigSessions());
 
         SessionImpl session = (SessionImpl) Countly.session().begin();
@@ -179,9 +179,9 @@ public class SessionImplTests {
     }
 
     /**
-     * Update a session with null SDKCore instance
-     * "update(long)" function should not update the session
-     * returned value should be null
+     * "update(long)" with null SDKCore instance
+     * Try to update a session, validate that it is not started and updated
+     * returned result should be null
      */
     @Test
     public void update_nullInstance() {
@@ -194,9 +194,9 @@ public class SessionImplTests {
     }
 
     /**
-     * Update a session
-     * "update(long)" function should update the session
-     * returned value should be true
+     * "update(long)"
+     * Try to update a session, validate that it is updated
+     * returned result should be true
      *
      * @throws ExecutionException if the computation threw an exception
      * @throws InterruptedException if thread is interrupted
@@ -214,9 +214,9 @@ public class SessionImplTests {
     }
 
     /**
-     * Update a session with backendMode enabled
-     * "update()" function should not update the session
-     * returned value should be null
+     * "update()" with backend mode enabled
+     * Try to update a session, validate that it is not started and updated
+     * returned result should be not started and updated
      */
     @Test
     public void update_backendModeEnabled() {
