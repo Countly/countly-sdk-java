@@ -430,7 +430,7 @@ public class SessionImplTests {
      */
     @Test
     public void addCrashReport() {
-        SessionImpl session = session();
+        SessionImpl session = session(TestUtils.getConfigSessions(Config.Feature.CrashReporting));
         SDKCore.instance = spy(SDKCore.instance);
         session.addCrashReport(new Exception(), false);
 
@@ -444,7 +444,7 @@ public class SessionImplTests {
      */
     @Test
     public void addCrashReport_backendModeEnabled() {
-        SessionImpl session = session();
+        SessionImpl session = session(TestUtils.getConfigSessions(Config.Feature.CrashReporting).enableBackendMode());
         SDKCore.instance = spy(SDKCore.instance);
         session.L = spy(session.L);
         session.addCrashReport(new Exception(), false);
