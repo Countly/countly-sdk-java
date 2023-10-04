@@ -259,9 +259,9 @@ public class SessionImplTests {
     }
 
     /**
-     * Change device id with merge
-     * "changeDeviceIdWithMerge(String)" function should change the device id.
-     * should be same as the one passed to the function
+     * "changeDeviceIdWithMerge"
+     * Passing mock device id and validating that it is set
+     * device id should be same as the one passed to the function
      */
     @Test
     public void changeDeviceIdWithMerge() {
@@ -270,9 +270,9 @@ public class SessionImplTests {
     }
 
     /**
-     * Change device id with merge null id
-     * "changeDeviceIdWithMerge(String)" function should not change the device id.
-     * should be same as the test device id
+     * "changeDeviceIdWithMerge" with null id
+     * Passing null device id and validating that it is not set
+     * should be same as the initial device id
      */
     @Test
     public void changeDeviceIdWithMerge_nullId() {
@@ -281,9 +281,9 @@ public class SessionImplTests {
     }
 
     /**
-     * Change device id with merge empty id
-     * "changeDeviceIdWithMerge(String)" function should not change the device id.
-     * should be same as the test device id
+     * "changeDeviceIdWithMerge" with empty id
+     * Passing empty device id and validating that it is not set
+     * should be same as the initial device id
      */
     @Test
     public void changeDeviceIdWithMerge_emptyId() {
@@ -292,9 +292,9 @@ public class SessionImplTests {
     }
 
     /**
-     * Change device id with merge with backend mode enabled.
-     * "changeDeviceIdWithMerge(String)" function should not change the device id.
-     * should be same as the test device id
+     * "changeDeviceIdWithMerge" with backend mode enabled
+     * Passing mock device id and validating that it is not set
+     * should be same as the initial device id
      */
     @Test
     public void changeDeviceIdWithMerge_backendModeEnabled() {
@@ -303,9 +303,9 @@ public class SessionImplTests {
     }
 
     /**
-     * Change device id without merge
-     * "changeDeviceIdWithoutMerge(String)" function should change the device id.
-     * should be same as the one passed to the function
+     * "changeDeviceIdWithoutMerge"
+     * Passing mock device id and validating that it is set
+     * device id should be same as the one passed to the function
      */
     @Test
     public void changeDeviceIdWithoutMerge() {
@@ -314,9 +314,9 @@ public class SessionImplTests {
     }
 
     /**
-     * Change device id without merge null id
-     * "changeDeviceIdWithoutMerge(String)" function should not change the device id.
-     * should be same as the test device id
+     * "changeDeviceIdWithoutMerge" with null id
+     * Passing null device id and validating that it is not set
+     * should be same as the initial device id
      */
     @Test
     public void changeDeviceIdWithoutMerge_nullId() {
@@ -325,9 +325,9 @@ public class SessionImplTests {
     }
 
     /**
-     * Change device id without merge empty id
-     * "changeDeviceIdWithoutMerge(String)" function should not change the device id.
-     * should be same as the test device id
+     * "changeDeviceIdWithoutMerge" with empty id
+     * Passing empty device id and validating that it is not set
+     * should be same as the initial device id
      */
     @Test
     public void changeDeviceIdWithoutMerge_emptyId() {
@@ -336,9 +336,9 @@ public class SessionImplTests {
     }
 
     /**
-     * Change device id without merge with backend mode enabled.
-     * "changeDeviceIdWithoutMerge(String)" function should not change the device id.
-     * should be same as the test device id
+     * "changeDeviceIdWithoutMerge" with backend mode enabled
+     * Passing mock device id and validating that it is not set
+     * should be same as the initial device id
      */
     @Test
     public void changeDeviceIdWithoutMerge_backendModeEnabled() {
@@ -347,8 +347,8 @@ public class SessionImplTests {
     }
 
     /**
-     * Get user with null SDKCore instance
-     * "user()" function should return null because SDKCore is null
+     * "user" with null SDKCore instance
+     * Setting SDKCore.instance to null and calling "user()" function
      * returned value should be null
      */
     @Test
@@ -360,8 +360,8 @@ public class SessionImplTests {
     }
 
     /**
-     * Get user
-     * "user()" function should return user
+     * "user"
+     * Calling function should return user
      * returned value should be not null
      */
     @Test
