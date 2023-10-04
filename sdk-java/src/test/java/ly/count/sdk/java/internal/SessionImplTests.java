@@ -11,12 +11,12 @@ import ly.count.sdk.java.Session;
 import ly.count.sdk.java.View;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -28,11 +28,13 @@ import static org.mockito.Mockito.verify;
 @RunWith(JUnit4.class)
 public class SessionImplTests {
 
-    CtxCore ctx;
-
     private void init(Config cc) {
         Countly.instance().init(cc);
-        ctx = TestUtils.getCtxCore();
+    }
+
+    @Before
+    public void beforeTest() {
+        TestUtils.createCleanTestState();
     }
 
     @After
@@ -41,36 +43,25 @@ public class SessionImplTests {
     }
 
     /**
-     * Constructor test
-     * Constructor should create new instance of SessionImpl
+     * "constructor"
+     * gets a valid long ID to create a session with
+     * returned session should have the input ID
      */
     @Test
     public void constructor() {
         init(TestUtils.getConfigSessions());
-        // Arrange
-        Long id = 12345L;
-
-        // Act
-        SessionImpl session = new SessionImpl(ctx, id);
-
-        // Assert
-        assertNotNull(session);
-        assertEquals(id, session.getId());
+        assertEquals(new Long(12345L), createSessionImpl(12345L).getId());
     }
 
     /**
-     * Constructor test
-     * Constructor should create new instance of SessionImpl with generated ID
+     * "constructor"
+     * gets a null ID to create a session with
+     * returned session should have ID > 0 that is generated automatically
      */
     @Test
     public void constructor_nullId() {
         init(TestUtils.getConfigSessions());
-        // Act
-        SessionImpl session = new SessionImpl(ctx, null);
-
-        // Assert
-        assertNotNull(session);
-        assertTrue(session.getId() > 0);// The ID should be generated and not null
+        assertTrue(createSessionImpl(null).getId() > 0);// The ID should be generated and not null
     }
 
     /**
@@ -545,8 +536,7 @@ public class SessionImplTests {
     @Test
     public void hashCode_id() {
         init(TestUtils.getConfigSessions());
-        SessionImpl session = new SessionImpl(ctx, 12345L);
-        Assert.assertEquals(new Long(12345L).hashCode(), session.hashCode());
+        assertEquals(new Long(12345L).hashCode(), createSessionImpl(12345L).hashCode());
     }
 
     /**
@@ -556,10 +546,10 @@ public class SessionImplTests {
     @Test
     public void equals() {
         init(TestUtils.getConfigSessions());
-        SessionImpl session = new SessionImpl(ctx, 12345L);
+        SessionImpl session = createSessionImpl(12345L);
         session.begin().update().end();
         session.addParam("test", "value");
-        SessionImpl session2 = new SessionImpl(ctx, 12345L);
+        SessionImpl session2 = createSessionImpl(12345L);
         session2.began = session.began;
         session2.updated = session.updated;
         session2.ended = session.ended;
@@ -574,8 +564,7 @@ public class SessionImplTests {
     @Test
     public void equals_notInstanceOf() {
         init(TestUtils.getConfigSessions());
-        SessionImpl session = new SessionImpl(ctx, 12345L);
-        Assert.assertFalse(session.equals(new Object()));
+        Assert.assertFalse(createSessionImpl(12345L).equals(new Object()));
     }
 
     /**
@@ -678,22 +667,22 @@ public class SessionImplTests {
 
     private void validateViewInEQ(ViewImpl view, int eqIdx, int eqSize) {
         List<EventImpl> eventList = TestUtils.getCurrentEventQueue();
-        Assert.assertEquals(eqSize, eventList.size());
+        assertEquals(eqSize, eventList.size());
         EventImpl event = eventList.get(eqIdx);
-        Assert.assertEquals(event.sum, view.start.sum);
-        Assert.assertEquals(event.count, view.start.count);
-        Assert.assertEquals(event.key, view.start.key);
-        Assert.assertEquals(event.segmentation, view.start.segmentation);
-        Assert.assertEquals(event.hour, view.start.hour);
-        Assert.assertEquals(event.dow, view.start.dow);
-        Assert.assertEquals(event.duration, view.start.duration);
+        assertEquals(event.sum, view.start.sum);
+        assertEquals(event.count, view.start.count);
+        assertEquals(event.key, view.start.key);
+        assertEquals(event.segmentation, view.start.segmentation);
+        assertEquals(event.hour, view.start.hour);
+        assertEquals(event.dow, view.start.dow);
+        assertEquals(event.duration, view.start.duration);
     }
 
     private void validateNotEquals(int idOffset, BiFunction<SessionImpl, SessionImpl, Consumer<Long>> setter) {
         init(TestUtils.getConfigSessions());
         long ts = TimeUtils.uniqueTimestampMs();
-        SessionImpl session = new SessionImpl(ctx, 12345L);
-        SessionImpl session2 = new SessionImpl(ctx, 12345L + idOffset);
+        SessionImpl session = createSessionImpl(12345L);
+        SessionImpl session2 = createSessionImpl(12345L + idOffset);
         setter.apply(session, session).accept(ts);
         Assert.assertFalse(session.equals(session2));
     }
@@ -705,7 +694,7 @@ public class SessionImplTests {
         } else {
             session.changeDeviceIdWithoutMerge(deviceId);
         }
-        Assert.assertEquals(expected, session.getDeviceId());
+        assertEquals(expected, session.getDeviceId());
     }
 
     private void validateBeganSession(SessionImpl session) {
@@ -733,5 +722,9 @@ public class SessionImplTests {
         Assert.assertNull(session.updated);
         Assert.assertNull(session.ended);
         Assert.assertFalse(session.isActive());
+    }
+
+    private SessionImpl createSessionImpl(Long id) {
+        return new SessionImpl(TestUtils.getCtxCore(), id);
     }
 }
