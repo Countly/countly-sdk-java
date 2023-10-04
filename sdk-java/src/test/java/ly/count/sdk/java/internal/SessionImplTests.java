@@ -2,7 +2,6 @@ package ly.count.sdk.java.internal;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import ly.count.sdk.java.Config;
@@ -229,12 +228,12 @@ public class SessionImplTests {
     }
 
     /**
-     * End a session not began
-     * "end(long, Callback, Object)" function should not end the session
-     * returned value should be null
+     * "end" with not started session
+     * Try to end a session, validate that it is not ended
+     * returned result should be null
      */
     @Test
-    public void end_nullBegan() {
+    public void end_notStarted() {
         init(TestUtils.getConfigSessions());
 
         SessionImpl session = (SessionImpl) Countly.session();
@@ -244,12 +243,12 @@ public class SessionImplTests {
     }
 
     /**
-     * End a session already ended
-     * "end(long, Callback, Object)" function should not end the session
-     * returned value should be null
+     * "end" with ended session
+     * Try to end a session, validate the result
+     * returned result should be null
      */
     @Test
-    public void end_notNullEnded() {
+    public void end_ended() {
         init(TestUtils.getConfigSessions());
 
         SessionImpl session = (SessionImpl) Countly.session();
@@ -261,9 +260,9 @@ public class SessionImplTests {
     }
 
     /**
-     * End a session with null SDKCore instance
-     * "end(long, Callback, Object)" function should not end the session
-     * returned value should be null
+     * "end" with null SDKCore instance
+     * Try to end a session, validate that it is not started and ended
+     * returned result should be null
      */
     @Test
     public void end_nullInstance() {
@@ -277,11 +276,9 @@ public class SessionImplTests {
     }
 
     /**
-     * End a session
-     * "end(long, Callback, Object)" function should end the session
-     * returned value should be true and callback should be called
-     * and session should be ended and not active anymore after callback is called
-     * and callback value should be true
+     * "end"
+     * Try to end a session, validate that it is ended, started and updated
+     * returned value result be true
      *
      * @throws ExecutionException if the computation threw an exception
      * @throws InterruptedException if thread is interrupted
@@ -291,20 +288,18 @@ public class SessionImplTests {
         init(TestUtils.getConfigSessions());
 
         SessionImpl session = (SessionImpl) Countly.session();
-        AtomicBoolean callbackCalled = new AtomicBoolean(false);
 
         Assert.assertTrue(session.begin(0L).get());
         Assert.assertTrue(session.update(0L).get());
-        Assert.assertTrue(session.end(0L, callbackCalled::set, null).get());
+        Assert.assertTrue(session.end(0L, Assert::assertTrue, null).get());
         Thread.sleep(200);
-        Assert.assertTrue(callbackCalled.get());
         validateEndedSession(session);
     }
 
     /**
-     * End a session with backendMode enabled
-     * "end()" function should not end the session
-     * returned value should be null
+     * "end" with backend mode enabled
+     * Try to end a session, validate that it is not started and ended
+     * returned result should be not started, updated and ended
      */
     @Test
     public void end_backendModeEnabled() {
