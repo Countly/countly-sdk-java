@@ -455,7 +455,7 @@ public class SessionImplTests {
     }
 
     /**
-     * "hashCode" function of SessionImpl
+     * "hashCode"
      * should return the same value as the ID
      */
     @Test
@@ -465,8 +465,9 @@ public class SessionImplTests {
     }
 
     /**
-     * "equals" function of SessionImpl
-     * should return true if the IDs are the same
+     * "equals"
+     * both mocked sessions are same
+     * should return true
      */
     @Test
     public void equals() {
@@ -483,8 +484,8 @@ public class SessionImplTests {
     }
 
     /**
-     * "equals" function of SessionImpl
-     * should return false if the object is from different class
+     * "equals" different class
+     * should return false
      */
     @Test
     public void equals_notInstanceOf() {
@@ -493,8 +494,8 @@ public class SessionImplTests {
     }
 
     /**
-     * "equals" function of SessionImpl
-     * should return false if the IDs are different
+     * "equals" different IDs
+     * should return false
      */
     @Test
     public void equals_differentId() {
@@ -503,8 +504,8 @@ public class SessionImplTests {
     }
 
     /**
-     * "equals" function of SessionImpl IDs are same
-     * should return false if the began values are different
+     * "equals" different began
+     * should return false
      */
     @Test
     public void equals_differentBegan() {
@@ -515,8 +516,8 @@ public class SessionImplTests {
     }
 
     /**
-     * "equals" function of SessionImpl IDs are same
-     * should return false if the updated values are different
+     * "equals" different updated
+     * should return false
      */
     @Test
     public void equals_differentUpdated() {
@@ -527,8 +528,8 @@ public class SessionImplTests {
     }
 
     /**
-     * "equals" function of SessionImpl IDs are same
-     * should return false if the ended values are different
+     * "equals" different ended
+     * should return false
      */
     @Test
     public void equals_differentEnded() {
@@ -539,8 +540,8 @@ public class SessionImplTests {
     }
 
     /**
-     * "equals" function of SessionImpl IDs are same
-     * should return false if the params values are different
+     * "equals" different params
+     * should return false
      */
     @Test
     public void equals_differentParams() {
@@ -548,9 +549,9 @@ public class SessionImplTests {
     }
 
     /**
-     * Create a view with no consent to views
-     * "view(String)" function should not create a view
-     * returned value should be null and desired log should be logged
+     * "view" with no consent to views
+     * mocked view name given to function and validating function calls
+     * expected log should be logged
      */
     @Test
     public void view_viewsNotEnabled() {
@@ -562,9 +563,9 @@ public class SessionImplTests {
     }
 
     /**
-     * Create a view
-     * "view(String)" function should create a view and save it to EQ
-     * event queue should contain it
+     * "view"
+     * mocked view name given to function and validating from EQ
+     * view should be recorded to EQ
      */
     @Test
     public void view() {
@@ -574,9 +575,9 @@ public class SessionImplTests {
     }
 
     /**
-     * Create a view and stop it with <code>session::view</code> call
-     * "view(String)" function should create a view and save it to EQ
-     * event queue should contain 3 events - start, stop, and next view
+     * "view"
+     * mocked view name given to function and validating EQ size and from EQ
+     * start, stop and next view should be recorded to EQ
      */
     @Test
     public void view_stopStartedAndNext() {
