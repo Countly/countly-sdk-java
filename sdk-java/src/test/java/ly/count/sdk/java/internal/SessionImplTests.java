@@ -93,7 +93,7 @@ public class SessionImplTests {
      */
     @Test
     public void begin_nullInstance() {
-        SessionImpl session = notStarted();
+        SessionImpl session = session();
         SDKCore.instance = null;
 
         Assert.assertNull(session.begin(0L));
@@ -110,7 +110,7 @@ public class SessionImplTests {
      */
     @Test
     public void begin() throws ExecutionException, InterruptedException {
-        SessionImpl session = notStarted();
+        SessionImpl session = session();
 
         Assert.assertTrue(session.begin(0L).get());
         validateBeganSession(session);
@@ -123,7 +123,7 @@ public class SessionImplTests {
      */
     @Test
     public void begin_backendModeEnabled() {
-        SessionImpl session = notStarted(TestUtils.getConfigSessions().enableBackendMode());
+        SessionImpl session = session(TestUtils.getConfigSessions().enableBackendMode());
 
         validateNotStarted((SessionImpl) session.begin());
     }
@@ -135,7 +135,7 @@ public class SessionImplTests {
      */
     @Test
     public void update_notStarted() {
-        SessionImpl session = notStarted();
+        SessionImpl session = session();
 
         Assert.assertNull(session.update(0L));
         validateNotStarted(session);
@@ -188,7 +188,7 @@ public class SessionImplTests {
      */
     @Test
     public void update_backendModeEnabled() {
-        validateNotStarted((SessionImpl) notStarted(TestUtils.getConfigSessions().enableBackendMode()).update());
+        validateNotStarted((SessionImpl) session(TestUtils.getConfigSessions().enableBackendMode()).update());
     }
 
     /**
@@ -198,7 +198,7 @@ public class SessionImplTests {
      */
     @Test
     public void end_notStarted() {
-        Assert.assertNull(notStarted().end(0L, null, null));
+        Assert.assertNull(session().end(0L, null, null));
     }
 
     /**
@@ -218,7 +218,7 @@ public class SessionImplTests {
      */
     @Test
     public void end_nullInstance() {
-        SessionImpl session = notStarted();
+        SessionImpl session = session();
         SDKCore.instance = null;
 
         validateNotStarted((SessionImpl) session.begin());
@@ -236,7 +236,7 @@ public class SessionImplTests {
      */
     @Test
     public void end() throws ExecutionException, InterruptedException {
-        SessionImpl session = notStarted();
+        SessionImpl session = session();
 
         Assert.assertTrue(session.begin(0L).get());
         Assert.assertTrue(session.update(0L).get());
@@ -252,7 +252,7 @@ public class SessionImplTests {
      */
     @Test
     public void end_backendModeEnabled() {
-        SessionImpl session = notStarted(TestUtils.getConfigSessions().enableBackendMode());
+        SessionImpl session = session(TestUtils.getConfigSessions().enableBackendMode());
         session.begin().end();
 
         validateNotStarted(session);
@@ -358,8 +358,7 @@ public class SessionImplTests {
      */
     @Test
     public void user() {
-        init(TestUtils.getConfigSessions());
-        Assert.assertNotNull(Countly.session().user());
+        Assert.assertNotNull(session().user());
     }
 
     /**
@@ -369,10 +368,9 @@ public class SessionImplTests {
      */
     @Test
     public void addParam_nullKeyValue() {
-        init(TestUtils.getConfigSessions());
-        SessionImpl session = (SessionImpl) Countly.session();
+        SessionImpl session = session();
         session.addParam(null, null);
-        Assert.assertTrue(session.params.get("null") == null);
+        Assert.assertNull(session.params.get("null"));
     }
 
     /**
@@ -382,10 +380,9 @@ public class SessionImplTests {
      */
     @Test
     public void addLocation_locationNotEnabled() {
-        init(TestUtils.getConfigSessions());
-        SessionImpl session = (SessionImpl) Countly.session();
+        SessionImpl session = session();
         session.addLocation(1.0, 2.0);
-        Assert.assertTrue(session.params.get("location") == null);
+        Assert.assertNull(session.params.get("location"));
     }
 
     /**
@@ -395,10 +392,9 @@ public class SessionImplTests {
      */
     @Test
     public void addLocation() {
-        init(TestUtils.getConfigSessions(Config.Feature.Location));
-        SessionImpl session = (SessionImpl) Countly.session();
+        SessionImpl session = session(TestUtils.getConfigSessions(Config.Feature.Location));
         session.addLocation(1.0, 2.0);
-        Assert.assertTrue(session.params.get("location").equals("1.0,2.0"));
+        assertEquals("1.0,2.0", session.params.get("location"));
     }
 
     /**
@@ -408,10 +404,9 @@ public class SessionImplTests {
      */
     @Test
     public void addLocation_backendModeEnabled() {
-        init(TestUtils.getConfigSessions().enableBackendMode());
-        SessionImpl session = (SessionImpl) Countly.session();
+        SessionImpl session = session(TestUtils.getConfigSessions().enableBackendMode());
         session.addLocation(1.0, 2.0);
-        Assert.assertTrue(session.params.get("location") == null);
+        Assert.assertNull(session.params.get("location"));
     }
 
     /**
@@ -421,8 +416,7 @@ public class SessionImplTests {
      */
     @Test
     public void addCrashReport_crashReportingNotEnabled() {
-        init(TestUtils.getConfigSessions());
-        SessionImpl session = (SessionImpl) Countly.session();
+        SessionImpl session = session();
         SDKCore.instance = spy(SDKCore.instance);
         session.addCrashReport(new Exception(), true);
 
@@ -436,8 +430,7 @@ public class SessionImplTests {
      */
     @Test
     public void addCrashReport() {
-        init(TestUtils.getConfigSessions(Config.Feature.CrashReporting));
-        SessionImpl session = (SessionImpl) Countly.session();
+        SessionImpl session = session();
         SDKCore.instance = spy(SDKCore.instance);
         session.addCrashReport(new Exception(), false);
 
@@ -451,8 +444,7 @@ public class SessionImplTests {
      */
     @Test
     public void addCrashReport_backendModeEnabled() {
-        init(TestUtils.getConfigSessions().enableBackendMode());
-        SessionImpl session = (SessionImpl) Countly.session();
+        SessionImpl session = session();
         SDKCore.instance = spy(SDKCore.instance);
         session.L = spy(session.L);
         session.addCrashReport(new Exception(), false);
@@ -561,8 +553,7 @@ public class SessionImplTests {
      */
     @Test
     public void view_viewsNotEnabled() {
-        init(TestUtils.getConfigSessions());
-        SessionImpl session = (SessionImpl) Countly.session();
+        SessionImpl session = session();
         session.L = spy(session.L);
         View view = session.view("view");
         verify(session.L, times(1)).i("[SessionImpl] view: Skipping view - feature is not enabled");
@@ -576,8 +567,7 @@ public class SessionImplTests {
      */
     @Test
     public void view() {
-        init(TestUtils.getConfigSessions(Config.Feature.Views, Config.Feature.Events).setEventQueueSizeToSend(4));
-        Session session = Countly.session();
+        Session session = session(TestUtils.getConfigSessions(Config.Feature.Views, Config.Feature.Events).setEventQueueSizeToSend(4));
         TestUtils.validateEventQueueSize(0);
         validateViewInEQ((ViewImpl) session.view("view"), 0, 1);
     }
@@ -589,8 +579,7 @@ public class SessionImplTests {
      */
     @Test
     public void view_stopStartedAndNext() {
-        init(TestUtils.getConfigSessions(Config.Feature.Views, Config.Feature.Events).setEventQueueSizeToSend(4));
-        Session session = Countly.session();
+        Session session = session(TestUtils.getConfigSessions(Config.Feature.Views, Config.Feature.Events).setEventQueueSizeToSend(4));
         TestUtils.validateEventQueueSize(0);
         session.view("start");
         TestUtils.validateEventQueueSize(1);
@@ -668,17 +657,17 @@ public class SessionImplTests {
         return new SessionImpl(TestUtils.getCtxCore(), id);
     }
 
-    SessionImpl notStarted() {
-        return notStarted(TestUtils.getConfigSessions());
+    SessionImpl session() {
+        return session(TestUtils.getConfigSessions());
     }
 
-    SessionImpl notStarted(Config config) {
+    SessionImpl session(Config config) {
         init(config);
         return (SessionImpl) Countly.session();
     }
 
     SessionImpl beganSession() {
-        return validateBeganSession((SessionImpl) notStarted().begin());
+        return validateBeganSession((SessionImpl) session().begin());
     }
 
     SessionImpl updatedSession() {
