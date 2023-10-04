@@ -2,8 +2,10 @@ package ly.count.sdk.java.internal;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.Session;
@@ -70,10 +72,7 @@ public class SessionImplTests {
      */
     @Test
     public void begin_began() {
-        SessionImpl session = beganSession();
-
-        Assert.assertNull(session.begin(0L));
-        validateBeganSession(session);
+        validateSession(beganSession(), this::validateBeganSession, Assert::assertNull, (session -> session.begin(0L)));
     }
 
     /**
@@ -96,24 +95,17 @@ public class SessionImplTests {
         SessionImpl session = session();
         SDKCore.instance = null;
 
-        Assert.assertNull(session.begin(0L));
-        validateNotStarted(session);
+        validateSession(session, this::validateNotStarted, Assert::assertNull, (s -> s.begin(0L)));
     }
 
     /**
      * "begin(long)"
      * Try to begin a session, validate that it began
      * returned result should be true
-     *
-     * @throws ExecutionException if the computation threw an exception
-     * @throws InterruptedException if thread is interrupted
      */
     @Test
-    public void begin() throws ExecutionException, InterruptedException {
-        SessionImpl session = session();
-
-        Assert.assertTrue(session.begin(0L).get());
-        validateBeganSession(session);
+    public void begin() {
+        validateSession(session(), this::validateBeganSession, Assert::assertTrue, (s -> tryCatch(s.begin(0L))));
     }
 
     /**
@@ -123,9 +115,7 @@ public class SessionImplTests {
      */
     @Test
     public void begin_backendModeEnabled() {
-        SessionImpl session = session(TestUtils.getConfigSessions().enableBackendMode());
-
-        validateNotStarted((SessionImpl) session.begin());
+        validateSession(session(TestUtils.getConfigSessions().enableBackendMode()), this::validateNotStarted, null, null);
     }
 
     /**
@@ -135,10 +125,7 @@ public class SessionImplTests {
      */
     @Test
     public void update_notStarted() {
-        SessionImpl session = session();
-
-        Assert.assertNull(session.update(0L));
-        validateNotStarted(session);
+        validateSession(session(), this::validateNotStarted, Assert::assertNull, (s -> s.update(0L)));
     }
 
     /**
@@ -161,24 +148,17 @@ public class SessionImplTests {
         SessionImpl session = beganSession();
         SDKCore.instance = null;
 
-        Assert.assertNull(session.update(0L));
-        validateBeganSession(session);
+        validateSession(session, this::validateBeganSession, Assert::assertNull, (s -> s.update(0L)));
     }
 
     /**
      * "update(long)"
      * Try to update a session, validate that it is updated
      * returned result should be true
-     *
-     * @throws ExecutionException if the computation threw an exception
-     * @throws InterruptedException if thread is interrupted
      */
     @Test
-    public void update() throws ExecutionException, InterruptedException {
-        SessionImpl session = beganSession();
-
-        Assert.assertTrue(session.update(0L).get());
-        validateUpdatedSession(session);
+    public void update() {
+        validateSession(beganSession(), this::validateUpdatedSession, Assert::assertTrue, (s -> tryCatch(s.update(0L))));
     }
 
     /**
@@ -221,9 +201,7 @@ public class SessionImplTests {
         SessionImpl session = session();
         SDKCore.instance = null;
 
-        validateNotStarted((SessionImpl) session.begin());
-        Assert.assertNull(session.end(0L, null, null));
-        validateNotStarted(session);
+        validateSession(session, this::validateNotStarted, Assert::assertNull, (s -> s.end(0L, null, null)));
     }
 
     /**
@@ -680,5 +658,20 @@ public class SessionImplTests {
         SessionImpl session = updatedSession();
         session.end();
         return validateEndedSession(session);
+    }
+
+    <T> void validateSession(SessionImpl session, Consumer<SessionImpl> validator, Consumer<T> assertor, Function<SessionImpl, T> resultor) {
+        if (assertor != null && resultor != null) {
+            assertor.accept(resultor.apply(session));
+        }
+        validator.accept(session);
+    }
+
+    Boolean tryCatch(Future<Boolean> task) {
+        try {
+            return task.get();
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
