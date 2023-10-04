@@ -152,10 +152,6 @@ public class TestUtils {
         return resultMapArray;
     }
 
-    protected static List<EventImpl> getCurrentEventQueue() {
-        return getCurrentEventQueue(getTestSDirectory(), mock(Log.class));
-    }
-
     /**
      * Get current event queue from target folder
      *
