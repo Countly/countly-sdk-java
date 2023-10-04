@@ -54,6 +54,9 @@ public class ModuleEvents extends ModuleBase {
         if (clear) {
             eventQueue.clear();
         }
+        if (executor != null) {
+            executor.shutdownNow();
+        }
     }
 
     private synchronized void addEventsToRequestQ() {

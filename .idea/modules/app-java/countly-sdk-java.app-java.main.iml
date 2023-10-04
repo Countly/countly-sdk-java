@@ -8,8 +8,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="Gradle: org.json:json:20230227" level="project" />
     <orderEntry type="module" module-name="countly-sdk-java.sdk-java.main" />
-    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.json:json:20230227" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Gradle: com.google.code.findbugs:jsr305:3.0.2" level="project" />
   </component>
 </module>

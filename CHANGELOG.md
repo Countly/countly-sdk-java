@@ -3,6 +3,8 @@
 * Deprecated call "resetDeviceId" is removed
 * Deprecated the init time configuration of 'setEventsBufferSize(eventsBufferSize)'. Introduced replacement 'setEventQueueSizeToSend(eventsQueueSize)'
 * Deprecated the init time configuration of 'setSendUpdateEachSeconds(sendUpdateEachSeconds)'. Introduced replacement 'setUpdateSessionTimerDelay(delay)'
+* Added the feedback widget feature. Added consent for it "Config.Feature.Feedback".
+* Feedback module is accessible through "Countly::instance()::feedback()" call.
 
 * !! Major breaking change !! The following methods and their functionality are deprecated from the "UserEditor" interface and will not function anymore:
   * "addToCohort(key)"
@@ -37,7 +39,7 @@
 
 22.09.0
 * The "resetDeviceId", "login", and "logout" have been deprecated.
-* ! Minor breaking change ! The following methods and their functionality are deprecated from the "Config" class and will not function anymore: 
+* ! Minor breaking change ! The following methods and their functionality are deprecated from the "Config" class and will not function anymore:
   * "enableTestMode"
   * "disableTestMode"
   * "isTestModeEnabled"

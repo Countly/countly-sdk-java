@@ -1,17 +1,19 @@
 plugins {
-    id 'java'
-    id 'application'
+  id 'java'
+  id 'application'
 }
 
 repositories {
-    //mavenLocal()
-    mavenCentral()
+  //mavenLocal()
+  mavenCentral()
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation project(path: ':sdk-java')
-    //implementation "ly.count.sdk:java:${CLY_VERSION}"
+  implementation 'org.json:json:20230227'
+
+  implementation fileTree(dir: 'libs', include: ['*.jar'])
+  implementation project(path: ':sdk-java')
+  //implementation "ly.count.sdk:java:${CLY_VERSION}"
 }
 
 mainClassName = 'ly.count.java.demo.Sample'
