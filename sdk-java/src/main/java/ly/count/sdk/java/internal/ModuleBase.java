@@ -1,9 +1,5 @@
 package ly.count.sdk.java.internal;
 
-import org.json.JSONObject;
-
-import java.util.Set;
-
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Session;
 
@@ -127,5 +123,8 @@ public abstract class ModuleBase {
      */
     public void onRequestCompleted(Request request, String response, int responseCode) {
 
+    }
+
+    protected void onTimer() {
     }
 }

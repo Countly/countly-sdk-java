@@ -1,14 +1,8 @@
 package ly.count.sdk.java.internal;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
 import ly.count.sdk.java.Config;
 
 public class ModuleSessions extends ModuleBase {
-    private ScheduledExecutorService executor = null;
-
     /**
      * Current Session instance
      */
@@ -44,16 +38,6 @@ public class ModuleSessions extends ModuleBase {
             if (timedEvents == null) {
                 timedEvents = new TimedEvents(L);
             }
-
-            if (ctx.getConfig().getSendUpdateEachSeconds() > 0 && executor == null) {
-                executor = Executors.newScheduledThreadPool(1);
-                executor.scheduleWithFixedDelay(() -> {
-                    if (!ctx.getConfig().isBackendModeEnabled() && isActive() && getSession() != null) {
-                        L.i("[ModuleSessions] updating session");
-                        getSession().update();
-                    }
-                }, ctx.getConfig().getSendUpdateEachSeconds(), ctx.getConfig().getSendUpdateEachSeconds(), TimeUnit.SECONDS);
-            }
         } catch (Throwable e) {
             L.e("[ModuleSessions] Cannot happen" + e);
             timedEvents = new TimedEvents(L);
@@ -61,8 +45,11 @@ public class ModuleSessions extends ModuleBase {
     }
 
     @Override
-    public boolean isActive() {
-        return super.isActive() || executor != null;
+    protected void onTimer() {
+        if (!internalConfig.isBackendModeEnabled() && isActive() && getSession() != null) {
+            L.i("[ModuleSessions] updating session");
+            getSession().update();
+        }
     }
 
     @Override
@@ -71,21 +58,6 @@ public class ModuleSessions extends ModuleBase {
             Storage.pushAsync(ctx, timedEvents);
         }
         timedEvents = null;
-
-        if (executor != null) {
-            try {
-                executor.shutdown();
-                if (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
-                    executor.shutdownNow();
-                    if (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
-                        L.e("[ModuleSessions] Sessions update thread must be locked");
-                    }
-                }
-            } catch (Throwable t) {
-                L.e("[ModuleSessions] Error while stopping session update thread " + t);
-            }
-            executor = null;
-        }
 
         if (clear) {
             ctx.getSDK().sdkStorage.storablePurge(ctx, SessionImpl.getStoragePrefix());
