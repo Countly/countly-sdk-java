@@ -65,9 +65,9 @@ public class SessionImplTests {
     }
 
     /**
-     * Begin a session already began
-     * "begin(long)" function should not begin the session
-     * returned value should be null
+     * "begin(long)" with already began session
+     * Try to begin already began session, validate that it is not changed
+     * returned result should be null
      */
     @Test
     public void begin_notNullBegan() {
@@ -82,9 +82,9 @@ public class SessionImplTests {
     }
 
     /**
-     * Begin a session already ended
-     * "begin(long)" function should not begin the session
-     * returned value should be null
+     * "begin(long)" with already ended session
+     * Try to begin already ended session, validate that it is not changed
+     * returned result should be null
      */
     @Test
     public void begin_notNullEnded() {
@@ -99,9 +99,9 @@ public class SessionImplTests {
     }
 
     /**
-     * Begin a session with null SDKCore instance
-     * "begin(long)" function should not begin the session
-     * returned value should be null
+     * "begin(long)" with null SDKCore instance
+     * Try to begin a session, validate that it is not started
+     * returned result should be null
      */
     @Test
     public void begin_nullInstance() {
@@ -114,9 +114,9 @@ public class SessionImplTests {
     }
 
     /**
-     * Begin a session
-     * "begin(long)" function should begin the session
-     * returned value should be true
+     * "begin(long)"
+     * Try to begin a session, validate that it began
+     * returned result should be true
      *
      * @throws ExecutionException if the computation threw an exception
      * @throws InterruptedException if thread is interrupted
@@ -128,14 +128,13 @@ public class SessionImplTests {
         SessionImpl session = (SessionImpl) Countly.session();
 
         Assert.assertTrue(session.begin(0L).get());
-        Assert.assertNotNull(session.began);
         validateBeganSession(session);
     }
 
     /**
-     * Begin a session with backendMode enabled
-     * "begin()" function should not begin the session
-     * returned value should be null
+     * "begin(long)" with backend mode enabled
+     * Try to begin a session, validate that it is not started
+     * returned result should be null
      */
     @Test
     public void begin_backendModeEnabled() {
@@ -144,7 +143,6 @@ public class SessionImplTests {
         SessionImpl session = (SessionImpl) Countly.session();
         session = (SessionImpl) session.begin();
 
-        Assert.assertNull(session.began);
         validateNotStarted(session);
     }
 
