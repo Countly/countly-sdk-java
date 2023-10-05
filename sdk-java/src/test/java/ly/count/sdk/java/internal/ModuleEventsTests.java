@@ -48,7 +48,7 @@ public class ModuleEventsTests {
         segmentation.put("bald", true);
 
         //record event with key segmentation and count
-        Countly.instance().events().recordEvent(eKeys[0], 1, 45.9, segmentation, 32.0);
+        Countly.instance().events().recordEvent(eKeys[0], segmentation, 1, 45.9, 32.0);
 
         //check if event was recorded correctly and size of event queue is equal to size of events in queue
         TestUtils.validateEventInEQ(eKeys[0], segmentation, 1, 45.9, 32.0, 0, 1);
@@ -66,11 +66,11 @@ public class ModuleEventsTests {
         TestUtils.validateEQSize(0, moduleEvents.eventQueue);
         Assert.assertEquals(0, TestUtils.getCurrentRQ().length);
 
-        Countly.instance().events().recordEvent(eKeys[0], 1, 45.9, null, 32.0);
+        Countly.instance().events().recordEvent(eKeys[0], null, 1, 45.9, 32.0);
         TestUtils.validateEQSize(1, moduleEvents.eventQueue);
         Assert.assertEquals(0, TestUtils.getCurrentRQ().length);
 
-        Countly.instance().events().recordEvent(eKeys[1], 1, 45.9, null, 32.0);
+        Countly.instance().events().recordEvent(eKeys[1], null, 1, 45.9, 32.0);
         TestUtils.validateEQSize(0, moduleEvents.eventQueue);
         Assert.assertEquals(1, TestUtils.getCurrentRQ().length);
 
@@ -91,7 +91,7 @@ public class ModuleEventsTests {
 
         Assert.assertEquals(0, TestUtils.getCurrentRQ().length);
         TestUtils.validateEQSize(2, moduleEvents.eventQueue);
-        Countly.instance().events().recordEvent(eKeys[0], 1, 45.9, null, 32.0);
+        Countly.instance().events().recordEvent(eKeys[0], null, 1, 45.9, 32.0);
         TestUtils.validateEQSize(0, moduleEvents.eventQueue);
         Assert.assertEquals(1, TestUtils.getCurrentRQ().length);
 

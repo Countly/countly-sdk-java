@@ -180,7 +180,7 @@ public class ModuleEvents extends ModuleBase {
          * @param dur set duration of event, can be null
          * @param segmentation additional segmentation data that you want to set, leave null if you don't want to add anything
          */
-        public void recordEvent(String key, int count, Double sum, Map<String, Object> segmentation, Double dur) {
+        public void recordEvent(String key, Map<String, Object> segmentation, int count, Double sum, Double dur) {
             L.i("[Events] recordEvent: key = " + key + ", count = " + count + ", sum = " + sum + ", segmentation = " + segmentation + ", dur = " + dur);
             recordEventInternal(key, count, sum, dur, segmentation);
         }
@@ -193,8 +193,8 @@ public class ModuleEvents extends ModuleBase {
          * @param sum set sum parameter of the event, can be null
          * @param segmentation additional segmentation data that you want to set, leave null if you don't want to add anything
          */
-        public void recordEvent(String key, int count, Double sum, Map<String, Object> segmentation) {
-            recordEvent(key, count, sum, segmentation, null);
+        public void recordEvent(String key, Map<String, Object> segmentation, int count, Double sum) {
+            recordEvent(key, segmentation, count, sum, null);
         }
 
         /**
@@ -205,8 +205,8 @@ public class ModuleEvents extends ModuleBase {
          * @param count how many of these events have occurred, default value is "1", must be greater than 0
          * @param segmentation additional segmentation data that you want to set, leave null if you don't want to add anything
          */
-        public void recordEvent(String key, int count, Map<String, Object> segmentation) {
-            recordEvent(key, count, null, segmentation);
+        public void recordEvent(String key, Map<String, Object> segmentation, int count) {
+            recordEvent(key, segmentation, count, null);
         }
 
         /**
@@ -217,7 +217,7 @@ public class ModuleEvents extends ModuleBase {
          * @param segmentation additional segmentation data that you want to set, leave null if you don't want to add anything
          */
         public void recordEvent(String key, Map<String, Object> segmentation) {
-            recordEvent(key, 1, null, segmentation);
+            recordEvent(key, segmentation, 1, null);
         }
 
         /**
@@ -228,7 +228,7 @@ public class ModuleEvents extends ModuleBase {
          * @param key key for this event, cannot be null or empty
          */
         public void recordEvent(String key) {
-            recordEvent(key, 1, null, null);
+            recordEvent(key, null, 1, null);
         }
 
         /**
@@ -239,7 +239,7 @@ public class ModuleEvents extends ModuleBase {
          * @param count how many of these events have occurred, default value is "1", must be greater than 0
          */
         public void recordEvent(String key, int count) {
-            recordEvent(key, count, null, null);
+            recordEvent(key, null, count, null);
         }
 
         /**
@@ -251,7 +251,7 @@ public class ModuleEvents extends ModuleBase {
          * @param sum set sum parameter of the event, can be null
          */
         public void recordEvent(String key, int count, Double sum) {
-            recordEvent(key, count, sum, null);
+            recordEvent(key, null, count, sum);
         }
 
         /**
