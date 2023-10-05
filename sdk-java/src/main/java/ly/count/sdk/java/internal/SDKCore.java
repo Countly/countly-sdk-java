@@ -23,6 +23,8 @@ public class SDKCore {
 
     protected final Object lockBRQStorage = new Object();
 
+    private CountlyTimer countlyTimer;
+
     public enum Signal {
         DID(1),
         Crash(2),
@@ -100,6 +102,12 @@ public class SDKCore {
             config.immediateRequestGenerator = ImmediateRequestMaker::new;
         }
         prepareMappings(ctx);
+        countlyTimer = new CountlyTimer(L);
+        countlyTimer.startTimer(config.getSendUpdateEachSeconds(), this::onTimer);
+    }
+
+    private void onTimer() {
+        modules.forEach((feature, module) -> module.onTimer());
     }
 
     /**
@@ -117,6 +125,8 @@ public class SDKCore {
         if (networking != null) {
             networking.stop(ctx);
         }
+
+        countlyTimer.stopTimer();
 
         L.i("[SDKCore] Stopping Countly SDK" + (clear ? " and clearing all data" : ""));
 

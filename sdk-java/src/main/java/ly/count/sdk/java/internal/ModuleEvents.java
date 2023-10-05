@@ -3,9 +3,6 @@ package ly.count.sdk.java.internal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import ly.count.sdk.java.Countly;
@@ -15,7 +12,6 @@ public class ModuleEvents extends ModuleBase {
     protected CtxCore ctx = null;
     protected EventQueue eventQueue = null;
     final Map<String, EventImpl> timedEvents = new HashMap<>();
-    private ScheduledExecutorService executor = null;
     protected Events eventsInterface = null;
 
     @Override
@@ -31,16 +27,11 @@ public class ModuleEvents extends ModuleBase {
     public void onContextAcquired(@Nonnull CtxCore ctx) {
         this.ctx = ctx;
         L.d("[ModuleEvents] onContextAcquired: " + ctx);
+    }
 
-        if (ctx.getConfig().getSendUpdateEachSeconds() > 0 && executor == null) {
-            executor = Executors.newScheduledThreadPool(1);
-            executor.scheduleWithFixedDelay(new Runnable() {
-                @Override
-                public void run() {
-                    addEventsToRequestQ();
-                }
-            }, ctx.getConfig().getSendUpdateEachSeconds(), ctx.getConfig().getSendUpdateEachSeconds(), TimeUnit.SECONDS);
-        }
+    @Override
+    protected void onTimer() {
+        addEventsToRequestQ();
     }
 
     @Override
@@ -54,9 +45,6 @@ public class ModuleEvents extends ModuleBase {
         if (clear) {
             eventQueue.clear();
             timedEvents.clear();
-        }
-        if (executor != null) {
-            executor.shutdownNow();
         }
     }
 
