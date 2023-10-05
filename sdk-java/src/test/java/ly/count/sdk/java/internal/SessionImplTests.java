@@ -29,11 +29,6 @@ import static org.mockito.Mockito.verify;
 
 @RunWith(JUnit4.class)
 public class SessionImplTests {
-
-    private void init(Config cc) {
-        Countly.instance().init(cc);
-    }
-
     @Before
     public void beforeTest() {
         TestUtils.createCleanTestState();
@@ -51,7 +46,7 @@ public class SessionImplTests {
      */
     @Test
     public void constructor() {
-        init(TestUtils.getConfigSessions());
+        Countly.instance().init(TestUtils.getConfigSessions());
         assertEquals(new Long(12345L), createSessionImpl(12345L).getId());
     }
 
@@ -62,7 +57,7 @@ public class SessionImplTests {
      */
     @Test
     public void constructor_nullId() {
-        init(TestUtils.getConfigSessions());
+        Countly.instance().init(TestUtils.getConfigSessions());
         assertTrue(createSessionImpl(null).getId() > 0);// The ID should be generated and not null
     }
 
@@ -93,7 +88,8 @@ public class SessionImplTests {
      */
     @Test
     public void begin_nullInstance() {
-        SessionImpl session = session();
+        Countly.instance().init(TestUtils.getConfigSessions());
+        SessionImpl session = (SessionImpl) Countly.session();
         SDKCore.instance = null;
 
         validateSession(session, this::validateNotStarted, Assert::assertNull, (s -> s.begin(0L)));
@@ -106,7 +102,10 @@ public class SessionImplTests {
      */
     @Test
     public void begin() {
-        validateSession(session(), this::validateBeganSession, Assert::assertTrue, (s -> tryCatch(s.begin(0L))));
+        Countly.instance().init(TestUtils.getConfigSessions());
+        SessionImpl session = (SessionImpl) Countly.session();
+
+        validateSession(session, this::validateBeganSession, Assert::assertTrue, (s -> tryCatch(s.begin(0L))));
     }
 
     /**
@@ -116,7 +115,10 @@ public class SessionImplTests {
      */
     @Test
     public void begin_backendModeEnabled() {
-        validateSession(session(TestUtils.getConfigSessions().enableBackendMode()), this::validateNotStarted, null, null);
+        Countly.instance().init(TestUtils.getConfigSessions().enableBackendMode());
+        SessionImpl session = (SessionImpl) Countly.session();
+
+        validateSession(session, this::validateNotStarted, null, null);
     }
 
     /**
@@ -126,7 +128,10 @@ public class SessionImplTests {
      */
     @Test
     public void update_notStarted() {
-        validateSession(session(), this::validateNotStarted, Assert::assertNull, (s -> s.update(0L)));
+        Countly.instance().init(TestUtils.getConfigSessions());
+        SessionImpl session = (SessionImpl) Countly.session();
+
+        validateSession(session, this::validateNotStarted, Assert::assertNull, (s -> s.update(0L)));
     }
 
     /**
@@ -169,7 +174,10 @@ public class SessionImplTests {
      */
     @Test
     public void update_backendModeEnabled() {
-        validateNotStarted((SessionImpl) session(TestUtils.getConfigSessions().enableBackendMode()).update());
+        Countly.instance().init(TestUtils.getConfigSessions().enableBackendMode());
+        SessionImpl session = (SessionImpl) Countly.session();
+
+        validateNotStarted((SessionImpl) session.update());
     }
 
     /**
@@ -179,7 +187,10 @@ public class SessionImplTests {
      */
     @Test
     public void end_notStarted() {
-        Assert.assertNull(session().end(0L, null, null));
+        Countly.instance().init(TestUtils.getConfigSessions());
+        SessionImpl session = (SessionImpl) Countly.session();
+
+        Assert.assertNull(session.end(0L, null, null));
     }
 
     /**
@@ -199,7 +210,8 @@ public class SessionImplTests {
      */
     @Test
     public void end_nullInstance() {
-        SessionImpl session = session();
+        Countly.instance().init(TestUtils.getConfigSessions());
+        SessionImpl session = (SessionImpl) Countly.session();
         SDKCore.instance = null;
 
         validateSession(session, this::validateNotStarted, Assert::assertNull, (s -> s.end(0L, null, null)));
@@ -215,7 +227,8 @@ public class SessionImplTests {
      */
     @Test
     public void end() throws ExecutionException, InterruptedException {
-        SessionImpl session = session();
+        Countly.instance().init(TestUtils.getConfigSessions());
+        SessionImpl session = (SessionImpl) Countly.session();
 
         Assert.assertTrue(session.begin(0L).get());
         Assert.assertTrue(session.update(0L).get());
@@ -231,7 +244,8 @@ public class SessionImplTests {
      */
     @Test
     public void end_backendModeEnabled() {
-        SessionImpl session = session(TestUtils.getConfigSessions().enableBackendMode());
+        Countly.instance().init(TestUtils.getConfigSessions().enableBackendMode());
+        SessionImpl session = (SessionImpl) Countly.session();
         session.begin().end();
 
         validateNotStarted(session);
@@ -324,7 +338,7 @@ public class SessionImplTests {
      */
     @Test
     public void user_instanceNull() {
-        init(TestUtils.getConfigSessions());
+        Countly.instance().init(TestUtils.getConfigSessions());
         SDKCore.instance = null;
 
         Assert.assertNull(Countly.session().user());
@@ -337,7 +351,10 @@ public class SessionImplTests {
      */
     @Test
     public void user() {
-        Assert.assertNotNull(session().user());
+        Countly.instance().init(TestUtils.getConfigSessions());
+        SessionImpl session = (SessionImpl) Countly.session();
+
+        Assert.assertNotNull(session.user());
     }
 
     /**
@@ -347,8 +364,10 @@ public class SessionImplTests {
      */
     @Test
     public void addParam_nullKeyValue() {
-        SessionImpl session = session();
+        Countly.instance().init(TestUtils.getConfigSessions());
+        SessionImpl session = (SessionImpl) Countly.session();
         session.addParam(null, null);
+
         Assert.assertNull(session.params.get("null"));
     }
 
@@ -383,8 +402,10 @@ public class SessionImplTests {
     }
 
     private void addLocation_base(Config config, Object expected) {
-        SessionImpl session = session(config);
+        Countly.instance().init(config);
+        SessionImpl session = (SessionImpl) Countly.session();
         session.addLocation(1.0, 2.0);
+
         Assert.assertEquals(expected, session.params.get("location"));
     }
 
@@ -420,7 +441,8 @@ public class SessionImplTests {
     }
 
     private SessionImpl addCrashReport_base(Config config, VerificationMode verificationMode) {
-        SessionImpl session = session(config);
+        Countly.instance().init(config);
+        SessionImpl session = (SessionImpl) Countly.session();
         SDKCore.instance = spy(SDKCore.instance);
         session.L = spy(session.L);
         session.addCrashReport(new Exception(), false);
@@ -435,7 +457,7 @@ public class SessionImplTests {
      */
     @Test
     public void hashCode_id() {
-        init(TestUtils.getConfigSessions());
+        Countly.instance().init(TestUtils.getConfigSessions());
         assertEquals(new Long(12345L).hashCode(), createSessionImpl(12345L).hashCode());
     }
 
@@ -446,7 +468,7 @@ public class SessionImplTests {
      */
     @Test
     public void equals() {
-        init(TestUtils.getConfigSessions());
+        Countly.instance().init(TestUtils.getConfigSessions());
         SessionImpl session = (SessionImpl) Countly.session().update();
         session.end();
         session.addParam("test", "value");
@@ -467,7 +489,7 @@ public class SessionImplTests {
      */
     @Test
     public void equals_notInstanceOf() {
-        init(TestUtils.getConfigSessions());
+        Countly.instance().init(TestUtils.getConfigSessions());
         Assert.assertFalse(createSessionImpl(12345L).equals(new Object()));
     }
 
@@ -533,7 +555,8 @@ public class SessionImplTests {
      */
     @Test
     public void view_viewsNotEnabled() {
-        SessionImpl session = session();
+        Countly.instance().init(TestUtils.getConfigSessions());
+        SessionImpl session = (SessionImpl) Countly.session();
         session.L = spy(session.L);
         View view = session.view("view");
         verify(session.L, times(1)).i("[SessionImpl] view: Skipping view - feature is not enabled");
@@ -547,7 +570,8 @@ public class SessionImplTests {
      */
     @Test
     public void view() {
-        Session session = session(TestUtils.getConfigSessions(Config.Feature.Views, Config.Feature.Events).setEventQueueSizeToSend(4));
+        Countly.instance().init(TestUtils.getConfigSessions(Config.Feature.Views, Config.Feature.Events).setEventQueueSizeToSend(4));
+        SessionImpl session = (SessionImpl) Countly.session();
         TestUtils.validateEQSize(0);
         validateViewInEQ((ViewImpl) session.view("view"), 0, 1);
     }
@@ -559,7 +583,8 @@ public class SessionImplTests {
      */
     @Test
     public void view_stopStartedAndNext() {
-        Session session = session(TestUtils.getConfigSessions(Config.Feature.Views, Config.Feature.Events).setEventQueueSizeToSend(4));
+        Countly.instance().init(TestUtils.getConfigSessions(Config.Feature.Views, Config.Feature.Events).setEventQueueSizeToSend(4));
+        SessionImpl session = (SessionImpl) Countly.session();
         TestUtils.validateEQSize(0);
         session.view("start");
         TestUtils.validateEQSize(1);
@@ -580,7 +605,7 @@ public class SessionImplTests {
     }
 
     private void validateNotEquals(int idOffset, BiFunction<SessionImpl, SessionImpl, Consumer<Long>> setter) {
-        init(TestUtils.getConfigSessions());
+        Countly.instance().init(TestUtils.getConfigSessions());
         long ts = TimeUtils.uniqueTimestampMs();
         SessionImpl session = createSessionImpl(12345L);
         SessionImpl session2 = createSessionImpl(12345L + idOffset);
@@ -593,7 +618,7 @@ public class SessionImplTests {
     }
 
     private void validateDeviceIdMerge(String deviceId, String expected, boolean merge, Config config) {
-        init(config);
+        Countly.instance().init(config);
         Session session = Countly.session();
         if (merge) {
             session.changeDeviceIdWithMerge(deviceId);
@@ -637,17 +662,10 @@ public class SessionImplTests {
         return new SessionImpl(TestUtils.getMockCtxCore(), id);
     }
 
-    SessionImpl session() {
-        return session(TestUtils.getConfigSessions());
-    }
-
-    SessionImpl session(Config config) {
-        init(config);
-        return (SessionImpl) Countly.session();
-    }
-
     SessionImpl beganSession() {
-        return validateBeganSession((SessionImpl) session().begin());
+        Countly.instance().init(TestUtils.getConfigSessions());
+        SessionImpl session = (SessionImpl) Countly.session();
+        return validateBeganSession((SessionImpl) session.begin());
     }
 
     SessionImpl updatedSession() {
