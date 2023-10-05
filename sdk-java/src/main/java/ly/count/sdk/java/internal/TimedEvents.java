@@ -8,9 +8,8 @@ import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
+import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.Event;
-import ly.count.sdk.java.Session;
 
 class TimedEvents implements Storable, EventImpl.EventRecorder {
 
@@ -23,20 +22,39 @@ class TimedEvents implements Storable, EventImpl.EventRecorder {
         events = new HashMap<>();
     }
 
+    /**
+     * @return key set
+     * @deprecated this will not function anymore
+     */
     Set<String> keys() {
         return events.keySet();
     }
 
+    /**
+     * @param key key of event to get
+     * @param ctx context
+     * @return event with given key
+     * @deprecated use {@link ModuleEvents.Events#startEvent(String)}} instead via <code>instance().events()</code> call
+     */
     EventImpl event(CtxCore ctx, String key) {
-        EventImpl event = events.get(key);
-        if (event == null) {
-            event = new EventImpl(this, key, L);
-            events.put(key, event);
-            Storage.pushAsync(ctx, this);
+        EventImpl event = null;
+        if (Countly.instance().events().startEvent(key)) {
+            event = ctx.getSDK().module(ModuleEvents.class).timedEvents.get(key);
+        } else {
+            if (events.containsKey(key)) {
+                event = events.remove(key);
+                SDKCore.instance.module(ModuleEvents.class).timedEvents.put(key, event);
+            }
         }
+
         return event;
     }
 
+    /**
+     * @param key key of event to check
+     * @return true if event with given key is currently timed
+     * @deprecated use {@link ModuleEvents.Events#startEvent(String)}} instead via <code>instance().events()</code> call
+     */
     boolean has(String key) {
         return events.containsKey(key);
     }
@@ -110,7 +128,12 @@ class TimedEvents implements Storable, EventImpl.EventRecorder {
             while (l-- > 0) {
                 String key = stream.readUTF();
                 EventImpl event = EventImpl.fromJSON(stream.readUTF(), this, L);
-                events.put(key, event);
+                ModuleEvents eventsModule = SDKCore.instance.module(ModuleEvents.class);
+                if (eventsModule != null) {
+                    eventsModule.timedEvents.put(key, event);
+                } else {
+                    events.put(key, event);
+                }
             }
 
             return true;
@@ -142,16 +165,20 @@ class TimedEvents implements Storable, EventImpl.EventRecorder {
         return false;
     }
 
+    /**
+     * Record event
+     *
+     * @param event event to record
+     * @deprecated use {@link ModuleEvents.Events#endEvent(String) instead via <code>instance().events()</code> call
+     */
     @Override
     public void recordEvent(Event event) {
-        if (events.containsKey(((EventImpl) event).getKey())) {
-            event.endAndRecord();
-            events.remove(((EventImpl) event).getKey());
-            Session session = SDKCore.instance.getSession();
-            if (session != null) {
-                ((SessionImpl) session).recordEvent(event);
-            }
+        EventImpl eventImpl = (EventImpl) event;
+        if (events.containsKey(eventImpl.key)) {
+            SDKCore.instance.module(ModuleEvents.class).timedEvents.put(eventImpl.key, eventImpl);
+            events.remove(eventImpl.key);
         }
+        Countly.instance().events().endEvent(eventImpl.key, eventImpl.segmentation, eventImpl.count, eventImpl.sum);
     }
 
     public int size() {

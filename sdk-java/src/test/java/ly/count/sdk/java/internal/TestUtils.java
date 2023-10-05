@@ -92,8 +92,8 @@ public class TestUtils {
         }
     }
 
-    protected static Map<String, String>[] getCurrentRequestQueue() {
-        return getCurrentRequestQueue(getTestSDirectory(), mock(Log.class));
+    protected static Map<String, String>[] getCurrentRQ() {
+        return getCurrentRQ(getTestSDirectory(), mock(Log.class));
     }
 
     /**
@@ -103,7 +103,7 @@ public class TestUtils {
      * @param logger logger
      * @return array of request params
      */
-    protected static Map<String, String>[] getCurrentRequestQueue(File targetFolder, Log logger) {
+    protected static Map<String, String>[] getCurrentRQ(File targetFolder, Log logger) {
         Storage.await(mock(Log.class)); // wait for request to be write to the disk
 
         //check whether target folder is a directory or not
@@ -132,8 +132,8 @@ public class TestUtils {
         return resultMapArray;
     }
 
-    protected static List<EventImpl> getCurrentEventQueue() {
-        return getCurrentEventQueue(getTestSDirectory(), mock(Log.class));
+    protected static List<EventImpl> getCurrentEQ() {
+        return getCurrentEQ(getTestSDirectory(), mock(Log.class));
     }
 
     /**
@@ -143,7 +143,7 @@ public class TestUtils {
      * @param logger logger
      * @return array of json events
      */
-    protected static List<EventImpl> getCurrentEventQueue(File targetFolder, Log logger) {
+    protected static List<EventImpl> getCurrentEQ(File targetFolder, Log logger) {
         List<EventImpl> events = new ArrayList<>();
 
         if (!targetFolder.isDirectory()) {
@@ -266,12 +266,18 @@ public class TestUtils {
         Assert.assertTrue(gonnaValidate.timestamp >= 0);
     }
 
+    static void validateEventInEQ(String key, Map<String, Object> segmentation, int count, Double sum, Double duration, int index, int size) {
+        List<EventImpl> events = getCurrentEQ();
+        validateEvent(events.get(index), key, segmentation, count, sum, duration);
+        validateEQSize(size);
+    }
+
     static List<EventImpl> readEventsFromRequest() {
         return readEventsFromRequest(0);
     }
 
     static List<EventImpl> readEventsFromRequest(int requestIndex) {
-        JSONArray array = new JSONArray(getCurrentRequestQueue()[requestIndex].get("events"));
+        JSONArray array = new JSONArray(getCurrentRQ()[requestIndex].get("events"));
         List<EventImpl> result = new ArrayList<>();
 
         array.forEach(value -> {
@@ -282,13 +288,17 @@ public class TestUtils {
         return result;
     }
 
-    static void validateEventQueueSize(int expectedSize, List<EventImpl> events, EventQueue eventQueue) {
+    static void validateEQSize(int expectedSize, List<EventImpl> events, EventQueue eventQueue) {
         Assert.assertEquals(expectedSize, events.size());
         Assert.assertEquals(expectedSize, eventQueue.eqSize());
     }
 
-    static void validateEventQueueSize(int expectedSize, EventQueue eventQueue) {
-        validateEventQueueSize(expectedSize, TestUtils.getCurrentEventQueue(getTestSDirectory(), mock(Log.class)), eventQueue);
+    static void validateEQSize(int expectedSize, EventQueue eventQueue) {
+        validateEQSize(expectedSize, TestUtils.getCurrentEQ(getTestSDirectory(), mock(Log.class)), eventQueue);
+    }
+
+    static void validateEQSize(int expectedSize) {
+        Assert.assertEquals(expectedSize, getCurrentEQ().size());
     }
 
     static String getOS() {

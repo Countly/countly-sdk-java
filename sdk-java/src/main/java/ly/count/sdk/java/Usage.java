@@ -1,7 +1,7 @@
 package ly.count.sdk.java;
 
-import ly.count.sdk.java.internal.ModuleEvents;
 import java.util.Map;
+import ly.count.sdk.java.internal.ModuleEvents;
 
 /**
  * This interface represents session concept, that is one indivisible usage occasion of your application.
@@ -32,6 +32,7 @@ public interface Usage {
      * @param key key for this event, cannot be null or empty
      * @return timed Event instance.
      * @see Event#endAndRecord() to end timed event
+     * @deprecated use {@link ModuleEvents.Events#startEvent(String)}} instead via <code>instance().events()</code> call
      */
     Event timedEvent(String key);
 
