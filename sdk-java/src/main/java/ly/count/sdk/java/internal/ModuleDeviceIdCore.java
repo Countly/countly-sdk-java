@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Future;
-
 import ly.count.sdk.java.Config;
 
 /**
@@ -31,7 +30,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
 
         @Override
         public String generate(CtxCore context) {
-            return UUID.randomUUID().toString();
+            return context.getConfig().DEVICE_ID_PREFIX + UUID.randomUUID();
         }
     }
 
