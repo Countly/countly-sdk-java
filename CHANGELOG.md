@@ -2,8 +2,10 @@
 * !! Major breaking change !! The following methods and their functionality are deprecated from the "UserEditor" interface and will not function anymore:
   * "addToCohort(key)"
   * "removeFromCohort(key)"
+    
 * Added the feedback widget feature. Added consent for it "Config.Feature.Feedback".
 * Feedback module is accessible through "Countly::instance()::feedback()" call.
+  
 * Deprecated call "Countly::getSession" is removed
 * Deprecated call "resetDeviceId" is removed
 * Deprecated the init time configuration of 'setEventsBufferSize(eventsBufferSize)'. Introduced replacement 'setEventQueueSizeToSend(eventsQueueSize)'
