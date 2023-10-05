@@ -473,7 +473,6 @@ public class SessionImplTests {
         Countly.instance().init(config);
         SessionImpl session = (SessionImpl) Countly.session();
         session.addCrashReport(new Exception(), false);
-        System.out.println(TestUtils.getCurrentRQ()[0]);
         Assert.assertEquals(rqSize, TestUtils.getCurrentRQ().length);
     }
 
