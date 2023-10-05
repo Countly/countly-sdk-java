@@ -18,6 +18,7 @@ import org.junit.Assert;
 import static ly.count.sdk.java.internal.SDKStorage.EVENT_QUEUE_FILE_NAME;
 import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_PREFIX;
 import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_SEPARATOR;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
 public class TestUtils {
@@ -56,10 +57,6 @@ public class TestUtils {
         config.enableFeatures(Config.Feature.Sessions);
 
         return config;
-    }
-
-    static CtxCore getCtxCore() {
-        return new CtxCore(SDKCore.instance, SDKCore.instance.config, SDKCore.instance.L, getTestSDirectory());
     }
 
     static Config getConfigSessions() {
@@ -349,5 +346,11 @@ public class TestUtils {
         for (File file : getTestSDirectory().listFiles()) {
             file.delete();
         }
+    }
+
+    public static CtxCore getMockCtxCore() {
+        CtxCore ctxCore = mock(CtxCore.class);
+        given(ctxCore.getLogger()).willReturn(mock(Log.class));
+        return ctxCore;
     }
 }

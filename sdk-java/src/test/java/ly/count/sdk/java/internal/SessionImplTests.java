@@ -447,14 +447,17 @@ public class SessionImplTests {
     @Test
     public void equals() {
         init(TestUtils.getConfigSessions());
-        SessionImpl session = createSessionImpl(12345L);
-        session.begin().update().end();
+        SessionImpl session = (SessionImpl) Countly.session().update();
+        session.end();
         session.addParam("test", "value");
-        SessionImpl session2 = createSessionImpl(12345L);
+        SessionImpl session2 = (SessionImpl) Countly.session().update();
+        session2.end();
         session2.began = session.began;
         session2.updated = session.updated;
         session2.ended = session.ended;
         session2.addParam("test", "value");
+        session.id = 12345L;
+        session2.id = 12345L;
         Assert.assertTrue(session.equals(session2));
     }
 
@@ -631,7 +634,7 @@ public class SessionImplTests {
     }
 
     private SessionImpl createSessionImpl(Long id) {
-        return new SessionImpl(TestUtils.getCtxCore(), id);
+        return new SessionImpl(TestUtils.getMockCtxCore(), id);
     }
 
     SessionImpl session() {
