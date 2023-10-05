@@ -314,7 +314,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
         ModuleEvents eventsModule = (ModuleEvents) SDKCore.instance.module(CoreFeature.Events.getIndex());
         EventImpl eventImpl = (EventImpl) event;
-        eventsModule.recordEventInternal(eventImpl.key, eventImpl.count, eventImpl.sum, eventImpl.segmentation, eventImpl.duration);
+        eventsModule.recordEventInternal(eventImpl.key, eventImpl.count, eventImpl.sum, eventImpl.duration, eventImpl.segmentation);
     }
 
     @Override

@@ -18,7 +18,7 @@ import static ly.count.sdk.java.internal.SDKStorage.EVENT_QUEUE_FILE_NAME;
 import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_PREFIX;
 import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_SEPARATOR;
 import static ly.count.sdk.java.internal.TestUtils.validateEvent;
-import static ly.count.sdk.java.internal.TestUtils.validateEventQueueSize;
+import static ly.count.sdk.java.internal.TestUtils.validateEQSize;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -52,10 +52,10 @@ public class EventQueueTests {
     public void addEvent() {
         init(TestUtils.getConfigEvents(2));
 
-        validateEventQueueSize(0, eventQueue);
+        TestUtils.validateEQSize(0, eventQueue);
         EventImpl event = createEvent("test-addEvent", null, 1, null, null);
         eventQueue.addEvent(event);
-        validateEventInQueue(event.key, null, 1, null, null, 1, 0);
+        validateEventInQueue(event.key, null, 1, null, null, 1, 0, eventQueue, L);
     }
 
     /**
@@ -67,9 +67,9 @@ public class EventQueueTests {
     public void addEvent_null() {
         init(TestUtils.getConfigEvents(2));
 
-        validateEventQueueSize(0, eventQueue);
+        TestUtils.validateEQSize(0, eventQueue);
         eventQueue.addEvent(null);
-        validateEventQueueSize(0, eventQueue);
+        TestUtils.validateEQSize(0, eventQueue);
     }
 
     /**
@@ -81,11 +81,11 @@ public class EventQueueTests {
     public void writeEventQueueToStorage() {
         init(TestUtils.getConfigEvents(2));
 
-        validateEventQueueSize(0, eventQueue);
+        TestUtils.validateEQSize(0, eventQueue);
         EventImpl event = createEvent("test-writeEventQueueToStorage", null, 1, null, null);
         eventQueue.eventQueueMemoryCache.add(event);
         eventQueue.writeEventQueueToStorage();
-        validateEventInQueue(event.key, null, 1, null, null, 1, 0);
+        validateEventInQueue(event.key, null, 1, null, null, 1, 0, eventQueue, L);
     }
 
     /**
@@ -158,13 +158,13 @@ public class EventQueueTests {
     public void clear() {
         init(TestUtils.getConfigEvents(2));
 
-        validateEventQueueSize(0, eventQueue);
+        TestUtils.validateEQSize(0, eventQueue);
         eventQueue.addEvent(createEvent("test-clear", null, 1, null, null));
-        validateEventQueueSize(1, eventQueue);
+        TestUtils.validateEQSize(1, eventQueue);
         eventQueue.addEvent(createEvent("test-clear", null, 1, null, null));
-        validateEventQueueSize(2, eventQueue);
+        TestUtils.validateEQSize(2, eventQueue);
         eventQueue.clear();
-        validateEventQueueSize(0, eventQueue);
+        TestUtils.validateEQSize(0, eventQueue);
     }
 
     /**
@@ -176,11 +176,11 @@ public class EventQueueTests {
     public void restoreFromDisk() throws IOException {
         init(TestUtils.getConfigEvents(2));
 
-        validateEventQueueSize(0, eventQueue);
+        TestUtils.validateEQSize(0, eventQueue);
         writeToEventQueue("{\"hour\":10,\"count\":1,\"dow\":4,\"key\":\"test-joinEvents-1\",\"timestamp\":1695887006647}:::{\"hour\":10,\"count\":1,\"dow\":4,\"key\":\"test-joinEvents-2\",\"timestamp\":1695887006657}", false);
 
         eventQueue.restoreFromDisk();
-        validateEventQueueSize(2, eventQueue);
+        TestUtils.validateEQSize(2, eventQueue);
         validateEvent(eventQueue.eventQueueMemoryCache.get(0), "test-joinEvents-1", null, 1, null, null);
         validateEvent(eventQueue.eventQueueMemoryCache.get(1), "test-joinEvents-2", null, 1, null, null);
     }
@@ -194,11 +194,11 @@ public class EventQueueTests {
     public void restoreFromDisk_notExist() throws IOException {
         init(TestUtils.getConfigEvents(2));
 
-        validateEventQueueSize(0, eventQueue);
+        TestUtils.validateEQSize(0, eventQueue);
         writeToEventQueue(null, true);
 
         eventQueue.restoreFromDisk();
-        validateEventQueueSize(0, eventQueue);
+        TestUtils.validateEQSize(0, eventQueue);
     }
 
     /**
@@ -210,11 +210,11 @@ public class EventQueueTests {
     public void restoreFromDisk_garbageFile() throws IOException {
         init(TestUtils.getConfigEvents(2));
 
-        validateEventQueueSize(0, eventQueue);
+        TestUtils.validateEQSize(0, eventQueue);
         writeToEventQueue("{\"hour\":10,\"asdasd\":\"askjdn\",\"timestamp\":1695887006647}::{\"hour\":10,\"count\":1,\"dow\":4,\"asda\":\"test-joinEvents-2\"}", false);
 
         eventQueue.restoreFromDisk();
-        validateEventQueueSize(0, eventQueue);
+        TestUtils.validateEQSize(0, eventQueue);
     }
 
     /**
@@ -226,11 +226,11 @@ public class EventQueueTests {
     public void restoreFromDisk_corruptedData() throws IOException {
         init(TestUtils.getConfigEvents(2));
 
-        validateEventQueueSize(0, eventQueue);
+        TestUtils.validateEQSize(0, eventQueue);
         writeToEventQueue("{\"hour\":10,\"count\":1,\"dow\":4,\"key\":\"test-joinEvents-1\",\"timestamp\":1695887006647}:::{\"hour\":10,\"count\":1,\"dow\":4,\"keya\":\"test-joinEvents-2\",\"timestamp\":1695887006657}", false);
 
         eventQueue.restoreFromDisk();
-        validateEventQueueSize(1, eventQueue);
+        TestUtils.validateEQSize(1, eventQueue);
         validateEvent(eventQueue.eventQueueMemoryCache.get(0), "test-joinEvents-1", null, 1, null, null);
     }
 
@@ -250,10 +250,10 @@ public class EventQueueTests {
         return new EventImpl(key, count, sum, dur, segmentation, L);
     }
 
-    void validateEventInQueue(String key, Map<String, Object> segmentation,
-        int count, Double sum, Double duration, int queueSize, int elementInQueue) {
-        List<EventImpl> events = TestUtils.getCurrentEventQueue(TestUtils.getTestSDirectory(), L);
-        validateEventQueueSize(queueSize, eventQueue);
+    public static void validateEventInQueue(String key, Map<String, Object> segmentation,
+        int count, Double sum, Double duration, int queueSize, int elementInQueue, EventQueue eventQueue, Log L) {
+        List<EventImpl> events = TestUtils.getCurrentEQ(TestUtils.getTestSDirectory(), L);
+        TestUtils.validateEQSize(queueSize, eventQueue);
         //check if event was recorded correctly
         EventImpl event = events.get(elementInQueue);
         EventImpl eventInMemory = eventQueue.eventQueueMemoryCache.get(0);

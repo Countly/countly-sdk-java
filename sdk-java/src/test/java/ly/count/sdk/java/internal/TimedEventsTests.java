@@ -1,12 +1,15 @@
 package ly.count.sdk.java.internal;
 
-import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
+import ly.count.sdk.java.Event;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.mockito.Mockito.mock;
 
@@ -14,17 +17,7 @@ import static org.mockito.Mockito.mock;
 
 public class TimedEventsTests {
 
-    private TimedEvents timedEvents;
-
-    private ModuleEvents moduleEvents;
-
     private final Log L = mock(Log.class);
-
-    private void init(Config cc) {
-        Countly.instance().init(cc);
-        timedEvents = new TimedEvents(L);
-        moduleEvents = SDKCore.instance.module(ModuleEvents.class);
-    }
 
     @After
     public void stop() {
@@ -42,24 +35,43 @@ public class TimedEventsTests {
      * event queue should be empty
      */
     @Test
-    public void recordEvent_notStarted() {
-        init(TestUtils.getConfigEvents(2));
-
-        timedEvents.recordEvent(new EventImpl("key", 1, 1.2, 3.4, null, L));
-        TestUtils.validateEventQueueSize(0, moduleEvents.eventQueue);
+    public void recordEventRegularFlow_record() throws InterruptedException {
+        recordEventRegularFlow_base(true);
     }
 
-    /**
-     * "recordEvent" with mocked event,
-     * event should be recorded because it is started
-     * event queue should exist it
-     */
     @Test
-    public void recordEvent() {
-        init(TestUtils.getConfigEvents(2));
-        EventImpl event = timedEvents.event(TestUtils.getCtxCore(), "key_test");
+    public void recordEventRegularFlow_endAndRecord() throws InterruptedException {
+        recordEventRegularFlow_base(false);
+    }
 
-        timedEvents.recordEvent(event);
-        TestUtils.validateEventQueueSize(1, moduleEvents.eventQueue);
+    public void recordEventRegularFlow_base(boolean regularRecord) throws InterruptedException {
+        Countly.instance().init(TestUtils.getConfigEvents(2));
+
+        Event tEvent = Countly.instance().timedEvent("key");
+        tEvent.setCount(5).setSum(133).setDuration(456);
+
+        Map<String, String> segm = new HashMap<>();
+        segm.put("1", "a");
+        segm.put("5", "b");
+
+        Map<String, Object> targetSegm = new HashMap<>();
+        targetSegm.put("1", "a");
+        targetSegm.put("5", "b");
+
+        tEvent.setSegmentation(segm);
+
+        TestUtils.validateEQSize(0);
+
+        Thread.sleep(1000);
+
+        double targetDuration;
+        if (regularRecord) {
+            targetDuration = 456;
+            tEvent.record();
+        } else {
+            targetDuration = 1;
+            tEvent.endAndRecord();
+        }
+        TestUtils.validateEventInEQ("key", targetSegm, 5, 133.0, targetDuration, 0, 1);
     }
 }

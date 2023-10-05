@@ -88,7 +88,7 @@ public class ModuleEvents extends ModuleBase {
         });
     }
 
-    protected void recordEventInternal(String key, int count, Double sum, Map<String, Object> segmentation, Double dur) {
+    protected void recordEventInternal(String key, int count, Double sum, Double dur, Map<String, Object> segmentation) {
         if (count <= 0) {
             L.w("[ModuleEvents] recordEventInternal: Count can't be less than 1, ignoring this event.");
             return;
@@ -130,13 +130,13 @@ public class ModuleEvents extends ModuleBase {
         timedEvents.put(key, new EventImpl(event -> {
             EventImpl eventImpl = (EventImpl) event;
             L.d("[ModuleEvents] Ending event: [" + key + "]");
-            endEventInternal(key, eventImpl.segmentation, eventImpl.count, eventImpl.sum);
+            recordEventInternal(eventImpl.key, eventImpl.count, eventImpl.sum, eventImpl.duration, eventImpl.segmentation);
         }, key, L));
-        
+
         return true;
     }
 
-    boolean endEventInternal(final String key, final Map<String, Object> segmentation, final int count, final Double sum) {
+    boolean endEventInternal(final String key, final Map<String, Object> segmentation, int count, final Double sum) {
         L.d("[ModuleEvents] Ending event: [" + key + "]");
 
         if (key == null || key.isEmpty()) {
@@ -146,20 +146,23 @@ public class ModuleEvents extends ModuleBase {
 
         EventImpl event = timedEvents.remove(key);
 
-        if (event != null) {
-            if (count < 1) {
-                throw new IllegalArgumentException("Countly event count should be greater than zero");
-            }
-            L.d("[ModuleEvents] Ending event: [" + key + "]");
-
-            long currentTimestamp = TimeUtils.uniqueTimestampMs();
-            double duration = (currentTimestamp - event.timestamp) / 1000.0;
-
-            recordEventInternal(key, count, sum, segmentation, duration);
-            return true;
-        } else {
+        if (event == null) {
+            L.w("endEventInternal, No timed event with the name [" + key + "] is started, nothing to end. Will ignore call.");
             return false;
         }
+
+        if (count < 1) {
+            L.e("endEventInternal, Countly event count should be greater than zero [" + count + "]. Changing value to 1");
+            count = 1;
+        }
+
+        L.d("[ModuleEvents] Ending event: [" + key + "]");
+
+        long currentTimestamp = TimeUtils.uniqueTimestampMs();
+        double duration = (currentTimestamp - event.timestamp) / 1000.0;
+
+        recordEventInternal(key, count, sum, duration, segmentation);
+        return true;
     }
 
     boolean cancelEventInternal(final String key) {
@@ -186,7 +189,7 @@ public class ModuleEvents extends ModuleBase {
          */
         public void recordEvent(String key, int count, Double sum, Map<String, Object> segmentation, Double dur) {
             L.i("[Events] recordEvent: key = " + key + ", count = " + count + ", sum = " + sum + ", segmentation = " + segmentation + ", dur = " + dur);
-            recordEventInternal(key, count, sum, segmentation, dur);
+            recordEventInternal(key, count, sum, dur, segmentation);
         }
 
         /**

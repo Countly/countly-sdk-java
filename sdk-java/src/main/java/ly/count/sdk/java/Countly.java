@@ -378,7 +378,7 @@ public class Countly implements Usage {
     }
 
     /**
-     * Get existing or create new timed event object, don't record it. Creates begin request if this session
+     * Get existing or create new timed event object, don't record it.
      *
      * @param key key for this event, cannot be null or empty
      * @return timed Event instance.
