@@ -68,7 +68,12 @@ public class SessionImplTests {
      */
     @Test
     public void begin_began() {
-        validateSession(beganSession(), this::validateBeganSession, Assert::assertNull, (session -> session.begin(0L)));
+        Countly.instance().init(TestUtils.getConfigSessions());
+        SessionImpl session = (SessionImpl) Countly.session();
+        validateBeganSession((SessionImpl) session.begin());
+
+        Assert.assertNull(session.begin(0L));
+        validateBeganSession(session);
     }
 
     /**
@@ -78,7 +83,13 @@ public class SessionImplTests {
      */
     @Test
     public void begin_ended() {
-        Assert.assertNull(endedSession().begin(0L));
+        Countly.instance().init(TestUtils.getConfigSessions());
+        SessionImpl session = (SessionImpl) Countly.session();
+        validateBeganSession((SessionImpl) session.begin());
+        validateUpdatedSession((SessionImpl) session.update());
+        session.end();
+        validateEndedSession(session);
+        Assert.assertNull(session.begin(0L));
     }
 
     /**
@@ -92,7 +103,8 @@ public class SessionImplTests {
         SessionImpl session = (SessionImpl) Countly.session();
         SDKCore.instance = null;
 
-        validateSession(session, this::validateNotStarted, Assert::assertNull, (s -> s.begin(0L)));
+        Assert.assertNull(session.begin(0L));
+        validateNotStarted(session);
     }
 
     /**
@@ -101,11 +113,12 @@ public class SessionImplTests {
      * returned result should be true
      */
     @Test
-    public void begin() {
+    public void begin() throws ExecutionException, InterruptedException {
         Countly.instance().init(TestUtils.getConfigSessions());
         SessionImpl session = (SessionImpl) Countly.session();
 
-        validateSession(session, this::validateBeganSession, Assert::assertTrue, (s -> tryCatch(s.begin(0L))));
+        Assert.assertTrue(session.begin(0L).get());
+        validateBeganSession(session);
     }
 
     /**
@@ -116,9 +129,7 @@ public class SessionImplTests {
     @Test
     public void begin_backendModeEnabled() {
         Countly.instance().init(TestUtils.getConfigSessions().enableBackendMode());
-        SessionImpl session = (SessionImpl) Countly.session();
-
-        validateSession(session, this::validateNotStarted, null, null);
+        validateNotStarted((SessionImpl) Countly.session());
     }
 
     /**
@@ -127,11 +138,12 @@ public class SessionImplTests {
      * returned result should be null
      */
     @Test
-    public void update_notStarted() {
+    public void update_notStarted() throws ExecutionException, InterruptedException {
         Countly.instance().init(TestUtils.getConfigSessions());
         SessionImpl session = (SessionImpl) Countly.session();
 
-        validateSession(session, this::validateNotStarted, Assert::assertNull, (s -> s.update(0L)));
+        Assert.assertNull(session.update(0L));
+        validateNotStarted(session);
     }
 
     /**
@@ -141,7 +153,13 @@ public class SessionImplTests {
      */
     @Test
     public void update_ended() {
-        Assert.assertNull(endedSession().update(0L));
+        Countly.instance().init(TestUtils.getConfigSessions());
+        SessionImpl session = (SessionImpl) Countly.session();
+        validateBeganSession((SessionImpl) session.begin());
+        validateUpdatedSession((SessionImpl) session.update());
+        session.end();
+        validateEndedSession(session);
+        Assert.assertNull(session.update(0L));
     }
 
     /**
@@ -150,11 +168,14 @@ public class SessionImplTests {
      * returned result should be null
      */
     @Test
-    public void update_nullInstance() {
-        SessionImpl session = beganSession();
+    public void update_nullInstance() throws ExecutionException, InterruptedException {
+        Countly.instance().init(TestUtils.getConfigSessions());
+        SessionImpl session = (SessionImpl) Countly.session();
+        validateBeganSession((SessionImpl) session.begin());
         SDKCore.instance = null;
 
-        validateSession(session, this::validateBeganSession, Assert::assertNull, (s -> s.update(0L)));
+        Assert.assertNull(session.update(0L));
+        validateBeganSession(session);
     }
 
     /**
@@ -163,8 +184,13 @@ public class SessionImplTests {
      * returned result should be true
      */
     @Test
-    public void update() {
-        validateSession(beganSession(), this::validateUpdatedSession, Assert::assertTrue, (s -> tryCatch(s.update(0L))));
+    public void update() throws ExecutionException, InterruptedException {
+        Countly.instance().init(TestUtils.getConfigSessions());
+        SessionImpl session = (SessionImpl) Countly.session();
+        validateBeganSession((SessionImpl) session.begin());
+
+        Assert.assertTrue(session.update(0L).get());
+        validateUpdatedSession(session);
     }
 
     /**
@@ -200,7 +226,14 @@ public class SessionImplTests {
      */
     @Test
     public void end_ended() {
-        Assert.assertNull(endedSession().end(0L, null, null));
+        Countly.instance().init(TestUtils.getConfigSessions());
+        SessionImpl session = (SessionImpl) Countly.session();
+
+        validateBeganSession((SessionImpl) session.begin());
+        validateUpdatedSession((SessionImpl) session.update());
+        session.end();
+        validateEndedSession(session);
+        Assert.assertNull(session.end(0L, null, null));
     }
 
     /**
@@ -214,7 +247,8 @@ public class SessionImplTests {
         SessionImpl session = (SessionImpl) Countly.session();
         SDKCore.instance = null;
 
-        validateSession(session, this::validateNotStarted, Assert::assertNull, (s -> s.end(0L, null, null)));
+        Assert.assertNull(session.end(0L, null, null));
+        validateNotStarted(session);
     }
 
     /**
@@ -660,36 +694,5 @@ public class SessionImplTests {
 
     private SessionImpl createSessionImpl(Long id) {
         return new SessionImpl(TestUtils.getMockCtxCore(), id);
-    }
-
-    SessionImpl beganSession() {
-        Countly.instance().init(TestUtils.getConfigSessions());
-        SessionImpl session = (SessionImpl) Countly.session();
-        return validateBeganSession((SessionImpl) session.begin());
-    }
-
-    SessionImpl updatedSession() {
-        return validateUpdatedSession((SessionImpl) beganSession().update());
-    }
-
-    SessionImpl endedSession() {
-        SessionImpl session = updatedSession();
-        session.end();
-        return validateEndedSession(session);
-    }
-
-    <T> void validateSession(SessionImpl session, Consumer<SessionImpl> validator, Consumer<T> assertor, Function<SessionImpl, T> resultor) {
-        if (assertor != null && resultor != null) {
-            assertor.accept(resultor.apply(session));
-        }
-        validator.accept(session);
-    }
-
-    Boolean tryCatch(Future<Boolean> task) {
-        try {
-            return task.get();
-        } catch (Exception e) {
-            return null;
-        }
     }
 }
