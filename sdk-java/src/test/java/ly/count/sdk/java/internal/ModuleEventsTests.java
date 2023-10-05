@@ -14,8 +14,6 @@ import org.junit.runners.JUnit4;
 
 import static ly.count.sdk.java.internal.TestUtils.eKeys;
 import static ly.count.sdk.java.internal.TestUtils.validateEvent;
-import static ly.count.sdk.java.internal.TestUtils.validateEQSize;
-import static org.mockito.Mockito.mock;
 
 @RunWith(JUnit4.class)
 public class ModuleEventsTests {
@@ -438,7 +436,7 @@ public class ModuleEventsTests {
     }
 
     private void validateTimedEventSize(int expectedQueueSize, int expectedTimedEventSize) {
-        TestUtils.validateEQSize(expectedQueueSize, TestUtils.getCurrentEQ(moduleEvents.ctx.getContext(), moduleEvents.L), moduleEvents.eventQueue);
+        TestUtils.validateEQSize(expectedQueueSize, TestUtils.getCurrentEQ(), moduleEvents.eventQueue);
         Assert.assertEquals(expectedTimedEventSize, moduleEvents.timedEvents.size());
     }
 
