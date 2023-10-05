@@ -127,7 +127,7 @@ public class SDKStorage {
     }
 
     private String createFileFullPath(ly.count.sdk.java.internal.CtxCore context, String filename) {
-        String directoryPath = ((File) context.getContext()).getAbsolutePath();
+        String directoryPath = ((File) context.getSdkStorageRootDirectory()).getAbsolutePath();
         return directoryPath + File.separator + filename;
     }
 
@@ -223,7 +223,7 @@ public class SDKStorage {
     }
 
     private String[] getFileList(ly.count.sdk.java.internal.CtxCore context) {
-        File[] files = ((File) context.getContext()).listFiles();
+        File[] files = ((File) context.getSdkStorageRootDirectory()).listFiles();
         if (files == null) {
             return new String[0];
         }
@@ -278,11 +278,11 @@ public class SDKStorage {
         L.d("[SDKStorage] Writing EQ to json file");
 
         //write eventQueue that is consist of json objects of events and separated by ":::" delimiter
-        //to the ctx.getContext() folder named Storage.name(this) + ".events"
+        //to the ctx.getSdkStorageRootDirectory() folder named Storage.name(this) + ".events"
         //if file already exists overwrite it
         //if file doesn't exist create it
         //if file can't be created or written, log the error
-        File sdkStorageDirectory = ctx.getContext();
+        File sdkStorageDirectory = ctx.getSdkStorageRootDirectory();
         File file = new File(sdkStorageDirectory, FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + EVENT_QUEUE_FILE_NAME);
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
@@ -297,7 +297,7 @@ public class SDKStorage {
 
     protected String readEventQueue() {
         L.d("[SDKStorage] Getting event queue");
-        File file = new File(ctx.getContext(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + EVENT_QUEUE_FILE_NAME);
+        File file = new File(ctx.getSdkStorageRootDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + EVENT_QUEUE_FILE_NAME);
 
         String eventQueue = "";
 

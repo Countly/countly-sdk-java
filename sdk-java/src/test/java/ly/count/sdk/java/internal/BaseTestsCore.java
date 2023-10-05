@@ -38,7 +38,7 @@ public class BaseTestsCore {
         }
 
         @Override
-        public File getContext() {
+        public File getSdkStorageRootDirectory() {
             return null;
         }
 
@@ -75,7 +75,7 @@ public class BaseTestsCore {
     @Before
     public void setUp() throws Exception {
         Log L = new Log(Config.LoggingLevel.VERBOSE, null);
-        ctx = new CtxImpl(this.sdk, this.config == null ? new InternalConfig(defaultConfig()) : this.config, getContext(), L);
+        ctx = new CtxImpl(this.sdk, this.config == null ? new InternalConfig(defaultConfig()) : this.config, getSdkStorageRootDirectory(), L);
     }
 
     protected void setUpApplication(Config config) throws Exception {
@@ -87,9 +87,9 @@ public class BaseTestsCore {
 
         this.dummy = mock(ModuleBase.class);
         this.sdk = mock(SDKCore.class);
-        this.sdk.init(new CtxImpl(this.sdk, new InternalConfig(defaultConfig()), getContext(), L));
+        this.sdk.init(new CtxImpl(this.sdk, new InternalConfig(defaultConfig()), getSdkStorageRootDirectory(), L));
         this.config = this.sdk.config();
-        this.ctx = new CtxImpl(this.sdk, this.config, getContext(), L);
+        this.ctx = new CtxImpl(this.sdk, this.config, getSdkStorageRootDirectory(), L);
     }
 
     protected <T extends ModuleBase> T module(Class<T> cls, boolean mock) {
@@ -109,7 +109,7 @@ public class BaseTestsCore {
         return module;
     }
 
-    private Object getContext() {
+    private Object getSdkStorageRootDirectory() {
         return new Object();
     }
 

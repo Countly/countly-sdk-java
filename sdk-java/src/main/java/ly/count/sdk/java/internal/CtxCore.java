@@ -18,7 +18,7 @@ public class CtxCore {
         this.directory = directory;
     }
 
-    public File getContext() {
+    public File getSdkStorageRootDirectory() {
         return directory;
     }
 

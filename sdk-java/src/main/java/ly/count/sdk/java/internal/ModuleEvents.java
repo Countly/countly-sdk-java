@@ -53,6 +53,7 @@ public class ModuleEvents extends ModuleBase {
         super.stop(ctx, clear);
         if (clear) {
             eventQueue.clear();
+            timedEvents.clear();
         }
         if (executor != null) {
             executor.shutdownNow();
