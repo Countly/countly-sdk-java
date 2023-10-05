@@ -18,6 +18,7 @@ import org.junit.Assert;
 import static ly.count.sdk.java.internal.SDKStorage.EVENT_QUEUE_FILE_NAME;
 import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_PREFIX;
 import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_SEPARATOR;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
 public class TestUtils {
@@ -44,6 +45,22 @@ public class TestUtils {
         config.setCustomDeviceId(DEVICE_ID);
 
         return config;
+    }
+
+    static Config getConfigSessions(Config.Feature... features) {
+        File sdkStorageRootDirectory = getTestSDirectory();
+        checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
+        Config config = new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
+        config.setCustomDeviceId(DEVICE_ID);
+        config.setEventQueueSizeToSend(2);
+        config.enableFeatures(features);
+        config.enableFeatures(Config.Feature.Sessions);
+
+        return config;
+    }
+
+    static Config getConfigSessions() {
+        return getConfigSessions((Config.Feature) null);
     }
 
     static Config getConfigEvents(Integer eventThreshold) {
@@ -327,8 +344,13 @@ public class TestUtils {
     public static void createCleanTestState() {
         Countly.instance().halt();
         for (File file : getTestSDirectory().listFiles()) {
-            System.out.println(file);
             file.delete();
         }
+    }
+
+    public static CtxCore getMockCtxCore() {
+        CtxCore ctxCore = mock(CtxCore.class);
+        given(ctxCore.getLogger()).willReturn(mock(Log.class));
+        return ctxCore;
     }
 }
