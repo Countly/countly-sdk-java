@@ -252,12 +252,10 @@ public class EventQueueTests {
 
     public static void validateEventInQueue(String key, Map<String, Object> segmentation,
         int count, Double sum, Double duration, int queueSize, int elementInQueue, EventQueue eventQueue, Log L) {
-        List<EventImpl> events = TestUtils.getCurrentEQ(TestUtils.getTestSDirectory(), L);
+        TestUtils.validateEventInEQ(key, segmentation, count, sum, duration, elementInQueue, queueSize);
+
         TestUtils.validateEQSize(queueSize, eventQueue);
-        //check if event was recorded correctly
-        EventImpl event = events.get(elementInQueue);
         EventImpl eventInMemory = eventQueue.eventQueueMemoryCache.get(0);
-        validateEvent(event, key, segmentation, count, sum, duration);
         validateEvent(eventInMemory, key, segmentation, count, sum, duration);
     }
 }
