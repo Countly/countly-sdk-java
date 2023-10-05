@@ -441,7 +441,7 @@ public class ModuleEventsTests {
     }
 
     private void validateTimedEventSize(int expectedQueueSize, int expectedTimedEventSize) {
-        validateEventQueueSize(expectedQueueSize, TestUtils.getCurrentEventQueue(moduleEvents.ctx.getContext(), moduleEvents.L), moduleEvents.eventQueue);
+        validateEventQueueSize(expectedQueueSize, TestUtils.getCurrentEventQueue(moduleEvents.ctx.getSdkStorageRootDirectory(), moduleEvents.L), moduleEvents.eventQueue);
         Assert.assertEquals(expectedTimedEventSize, moduleEvents.timedEvents.size());
     }
 
