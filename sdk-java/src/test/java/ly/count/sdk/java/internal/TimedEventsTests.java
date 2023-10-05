@@ -24,15 +24,20 @@ public class TimedEventsTests {
     }
 
     /**
-     * "recordEvent" with mocked and not started event,
-     * event should not be recorded because it is not started
-     * event queue should be empty
+     * "record" with mocked and not started event,
+     * event should be recorded because it is using directly record
+     * event queue should not be empty
      */
     @Test
     public void recordEventRegularFlow_record() throws InterruptedException {
         recordEventRegularFlow_base(true);
     }
 
+    /**
+     * "endAndRecord" with mocked and started event,
+     * event should be recorded because it is using endAndRecord
+     * event queue should not be empty
+     */
     @Test
     public void recordEventRegularFlow_endAndRecord() throws InterruptedException {
         recordEventRegularFlow_base(false);

@@ -129,8 +129,12 @@ public class ModuleEvents extends ModuleBase {
 
         L.d("[ModuleEvents] Starting event: [" + key + "]");
         timedEvents.put(key, new EventImpl(event -> {
-            EventImpl eventImpl = (EventImpl) event;
+            EventImpl eventImpl = timedEvents.remove(key);
             L.d("[ModuleEvents] Ending event: [" + key + "]");
+            if (eventImpl == null) {
+                L.w("startEventInternal, eventRecorder, No timed event with the name [" + key + "] is started, nothing to end. Will ignore call.");
+                return;
+            }
             recordEventInternal(eventImpl.key, eventImpl.count, eventImpl.sum, eventImpl.duration, eventImpl.segmentation);
         }, key, L));
 
