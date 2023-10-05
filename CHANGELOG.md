@@ -2,12 +2,13 @@
 * !! Major breaking change !! The following methods and their functionality are deprecated from the "UserEditor" interface and will not function anymore:
   * "addToCohort(key)"
   * "removeFromCohort(key)"
-    
+
 * Added the feedback widget feature. Added consent for it "Config.Feature.Feedback".
 * Feedback module is accessible through "Countly::instance()::feedback()" call.
-  
+
 * Deprecated call "Countly::getSession" is removed
 * Deprecated call "resetDeviceId" is removed
+
 * Deprecated the init time configuration of 'setEventsBufferSize(eventsBufferSize)'. Introduced replacement 'setEventQueueSizeToSend(eventsQueueSize)'
 * Deprecated the init time configuration of 'setSendUpdateEachSeconds(sendUpdateEachSeconds)'. Introduced replacement 'setUpdateSessionTimerDelay(delay)'
 * In Countly class, the old "init(directory,config)" method is deprecated, use "init(config)" instead via "instance()" call.
@@ -16,6 +17,7 @@
 * Deprecated "Usage::event" call, deprecated builder pattern. Use "Countly::events" instead.
 * Deprecated "Countly::stop(boolean)" call, use "Countly::halt" instead via "instance()" call.
 * Deprecated "Countly::timedEvent(String)" call, use "Countly::events::startEvent" instead via "instance()" call.
+* Deprecated "Config::setUsePOST" and "Config::enableUsePOST" calls, use "Config::enableForcedPost" instead.
 * The following methods are deprecated from the "Event" interface:
   * "record"
   * "endAndRecord"
