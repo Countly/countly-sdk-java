@@ -188,15 +188,6 @@ public class TestUtils {
     }
 
     /**
-     * Get current event queue from target folder
-     *
-     * @return array of json events
-     */
-    protected static List<EventImpl> getCurrentEventQueue() {
-        return getCurrentEventQueue(getTestSDirectory(), mock(Log.class));
-    }
-
-    /**
      * Get last item from list
      *
      * @param list

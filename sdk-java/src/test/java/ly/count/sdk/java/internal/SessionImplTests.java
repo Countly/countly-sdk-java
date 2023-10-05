@@ -548,7 +548,7 @@ public class SessionImplTests {
     @Test
     public void view() {
         Session session = session(TestUtils.getConfigSessions(Config.Feature.Views, Config.Feature.Events).setEventQueueSizeToSend(4));
-        TestUtils.validateEventQueueSize(0);
+        TestUtils.validateEQSize(0);
         validateViewInEQ((ViewImpl) session.view("view"), 0, 1);
     }
 
@@ -560,14 +560,14 @@ public class SessionImplTests {
     @Test
     public void view_stopStartedAndNext() {
         Session session = session(TestUtils.getConfigSessions(Config.Feature.Views, Config.Feature.Events).setEventQueueSizeToSend(4));
-        TestUtils.validateEventQueueSize(0);
+        TestUtils.validateEQSize(0);
         session.view("start");
-        TestUtils.validateEventQueueSize(1);
+        TestUtils.validateEQSize(1);
         validateViewInEQ((ViewImpl) session.view("next"), 2, 3);
     }
 
     private void validateViewInEQ(ViewImpl view, int eqIdx, int eqSize) {
-        List<EventImpl> eventList = TestUtils.getCurrentEventQueue();
+        List<EventImpl> eventList = TestUtils.getCurrentEQ();
         assertEquals(eqSize, eventList.size());
         EventImpl event = eventList.get(eqIdx);
         assertEquals(event.sum, view.start.sum);
