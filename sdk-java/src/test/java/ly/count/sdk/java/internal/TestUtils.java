@@ -321,4 +321,8 @@ public class TestUtils {
             file.delete();
         }
     }
+
+    static CtxCore getCtxCore() {
+        return new CtxCore(SDKCore.instance, SDKCore.instance.config, SDKCore.instance.L, getTestSDirectory());
+    }
 }
