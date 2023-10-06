@@ -125,6 +125,17 @@ public abstract class ModuleBase {
 
     }
 
+    /**
+     * Called when the sdk timer ticks.
+     */
     protected void onTimer() {
+    }
+
+    /**
+     * Called when the initialization is finished.
+     *
+     * @param config {@link InternalConfig} used for further initialization
+     */
+    protected void initFinished(InternalConfig config) {
     }
 }
