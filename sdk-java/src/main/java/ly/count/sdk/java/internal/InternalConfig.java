@@ -34,7 +34,7 @@ public final class InternalConfig extends Config implements Storable {
     private final List<DID> dids = new ArrayList<>();
 
     ImmediateRequestGenerator immediateRequestGenerator = null;
-    
+
     /**
      * Shouldn't be used!
      */
