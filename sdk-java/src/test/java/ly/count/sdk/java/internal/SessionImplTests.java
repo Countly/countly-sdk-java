@@ -1,11 +1,10 @@
 package ly.count.sdk.java.internal;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.Session;
@@ -16,13 +15,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mockito.verification.VerificationMode;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -443,48 +438,45 @@ public class SessionImplTests {
         Assert.assertEquals(expected, session.params.get("location"));
     }
 
-    //todo long spy issue
-    ///**
-    // * "addCrashReport" with no consent to crash reporting
-    // * mocked exception given to function and validating function calls
-    // * SDKCore.instance().onCrash() should not be called
-    // */
-    //@Test
-    //public void addCrashReport_crashReportingNotEnabled() {
-    //    addCrashReport_base(TestUtils.getConfigSessions(), never());
-    //}
-    //
-    ///**
-    // * "addCrashReport"
-    // * mocked exception given to function and validating function calls
-    // * SDKCore.instance().onCrash() should be called once
-    // */
-    //@Test
-    //public void addCrashReport() {
-    //    addCrashReport_base(TestUtils.getConfigSessions(Config.Feature.CrashReporting), times(1));
-    //}
-    //
-    ///**
-    // * "addCrashReport" with backend mode enabled
-    // * mocked exception given to function and validating function calls
-    // * SDKCore.instance().onCrash() should not be called and expected log should be logged
-    // */
-    //@Test
-    //public void addCrashReport_backendModeEnabled() {
-    //    SessionImpl session = addCrashReport_base(TestUtils.getConfigSessions().enableBackendMode(), never());
-    //    verify(session.L, times(1)).w("[SessionImpl] addCrashReport: Skipping crash, backend mode is enabled!");
-    //}
-    //
-    //private SessionImpl addCrashReport_base(Config config, VerificationMode verificationMode) {
-    //    Countly.instance().init(config);
-    //    SessionImpl session = (SessionImpl) Countly.session();
-    //    //SDKCore.instance = spy(SDKCore.instance);
-    //    //session.L = spy(session.L);
-    //    session.addCrashReport(new Exception(), false);
-    //
-    //    verify(SDKCore.instance, verificationMode).onCrash(any(), any(), anyBoolean(), any(), any(), any());
-    //    return session;
-    //}
+    /**
+     * "addCrashReport" with no consent to crash reporting
+     * mocked exception given to function and validating function calls
+     * SDKCore.instance().onCrash() should not be called
+     */
+    @Test
+    public void addCrashReport_crashReportingNotEnabled() {
+        addCrashReport_base(TestUtils.getConfigSessions(), 0);
+    }
+
+    /**
+     * "addCrashReport"
+     * mocked exception given to function and validating function calls
+     * SDKCore.instance().onCrash() should be called once
+     */
+    @Test
+    public void addCrashReport() {
+        addCrashReport_base(TestUtils.getConfigSessions(Config.Feature.CrashReporting), 1);
+        Map<String, String>[] requests = TestUtils.getCurrentRQ();
+        Assert.assertTrue(requests[0].containsKey("crash"));
+        Assert.assertTrue(!requests[0].get("crash").isEmpty());
+    }
+
+    /**
+     * "addCrashReport" with backend mode enabled
+     * mocked exception given to function and validating function calls
+     * SDKCore.instance().onCrash() should not be called and expected log should be logged
+     */
+    @Test
+    public void addCrashReport_backendModeEnabled() {
+        addCrashReport_base(TestUtils.getConfigSessions().enableBackendMode(), 0);
+    }
+
+    private void addCrashReport_base(Config config, int rqSize) {
+        Countly.instance().init(config);
+        SessionImpl session = (SessionImpl) Countly.session();
+        session.addCrashReport(new Exception(), false);
+        Assert.assertEquals(rqSize, TestUtils.getCurrentRQ().length);
+    }
 
     /**
      * "hashCode"
