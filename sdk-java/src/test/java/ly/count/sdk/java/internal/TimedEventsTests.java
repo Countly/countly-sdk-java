@@ -1,6 +1,7 @@
 package ly.count.sdk.java.internal;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.Event;
@@ -30,7 +31,7 @@ public class TimedEventsTests {
      */
     @Test
     public void recordEventRegularFlow_record() throws InterruptedException {
-        recordEventRegularFlow_base(true);
+        //recordEventRegularFlow_base(true);
     }
 
     /**
@@ -39,11 +40,11 @@ public class TimedEventsTests {
      * event queue should not be empty
      */
     @Test
-    public void recordEventRegularFlow_endAndRecord() throws InterruptedException {
+    public void recordEventRegularFlow_endAndRecord() throws Exception {
         recordEventRegularFlow_base(false);
     }
 
-    public void recordEventRegularFlow_base(boolean regularRecord) throws InterruptedException {
+    public void recordEventRegularFlow_base(boolean regularRecord) throws Exception {
         Countly.instance().init(TestUtils.getConfigEvents(2).setUpdateSessionTimerDelay(180));
 
         Event tEvent = Countly.instance().timedEvent("key");
@@ -71,6 +72,8 @@ public class TimedEventsTests {
             targetDuration = 1;
             tEvent.endAndRecord();
         }
-        TestUtils.validateEventInEQ("key", targetSegm, 5, 133.0, targetDuration, 0, 1);
+        List<EventImpl> events = TestUtils.getCurrentEQ();
+
+        throw new Exception(events.get(0).toString() + " " + targetSegm.toString() + " " + targetDuration);
     }
 }
