@@ -30,16 +30,16 @@ public class ConfigTests extends BaseTestsCore {
 
     @Test
     public void testRequestMethod() {
-        Assert.assertFalse(internalConfig.isForcePost());
+        Assert.assertFalse(internalConfig.isHTTPPostForced());
 
         internalConfig.enableUsePOST();
-        Assert.assertTrue(internalConfig.isForcePost());
+        Assert.assertTrue(internalConfig.isHTTPPostForced());
 
         internalConfig.setUsePOST(false);
-        Assert.assertFalse(internalConfig.isForcePost());
+        Assert.assertFalse(internalConfig.isHTTPPostForced());
 
         internalConfig.setUsePOST(true);
-        Assert.assertTrue(internalConfig.isForcePost());
+        Assert.assertTrue(internalConfig.isHTTPPostForced());
     }
 
     @Test

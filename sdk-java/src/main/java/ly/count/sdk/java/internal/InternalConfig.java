@@ -121,7 +121,7 @@ public final class InternalConfig extends Config implements Storable {
             stream.writeUTF(sdkVersion);
             stream.writeObject("name");
             stream.writeObject(applicationVersion);
-            stream.writeBoolean(forcePost);
+            stream.writeBoolean(forceHTTPPost);
             stream.writeObject(salt);
             stream.writeInt(networkConnectionTimeout);
             stream.writeInt(networkReadTimeout);
@@ -220,7 +220,7 @@ public final class InternalConfig extends Config implements Storable {
             sdkVersion = stream.readUTF();
             String throwawayApplicationName = (String) stream.readObject();//we are only reading this for backwards compatibility. Throw away in the future
             applicationVersion = (String) stream.readObject();
-            forcePost = stream.readBoolean();
+            forceHTTPPost = stream.readBoolean();
             salt = (String) stream.readObject();
             networkConnectionTimeout = stream.readInt();
             networkReadTimeout = stream.readInt();
