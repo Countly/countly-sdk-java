@@ -73,7 +73,6 @@ public class TimedEventsTests {
             targetDuration = 1;
             tEvent.endAndRecord();
         }
-
         TestUtils.validateEventInEQ("key", targetSegm, 5, 133.0, targetDuration, 0, 1);
     }
 }

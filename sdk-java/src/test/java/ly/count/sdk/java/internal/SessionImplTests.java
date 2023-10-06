@@ -436,9 +436,7 @@ public class SessionImplTests {
 
         Assert.assertEquals(expected, session.params.get("location"));
     }
-
-    //todo long spy issue
-
+    
     /**
      * "addCrashReport" with no consent to crash reporting
      * mocked exception given to function and validating function calls
