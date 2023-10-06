@@ -44,7 +44,7 @@ public class TimedEventsTests {
     }
 
     public void recordEventRegularFlow_base(boolean regularRecord) throws InterruptedException {
-        Countly.instance().init(TestUtils.getConfigEvents(2).setUpdateSessionTimerDelay(180));
+        Countly.instance().init(TestUtils.getConfigEvents(2));
 
         Event tEvent = Countly.instance().timedEvent("key");
         tEvent.setCount(5).setSum(133).setDuration(456);
@@ -61,7 +61,9 @@ public class TimedEventsTests {
 
         TestUtils.validateEQSize(0);
 
-        Thread.sleep(1000);
+        synchronized (tEvent) {
+            tEvent.wait(1000);
+        }
 
         double targetDuration;
         if (regularRecord) {
