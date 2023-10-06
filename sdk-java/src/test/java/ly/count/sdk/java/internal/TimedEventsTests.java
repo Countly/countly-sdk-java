@@ -61,7 +61,9 @@ public class TimedEventsTests {
 
         TestUtils.validateEQSize(0);
 
-        Thread.sleep(1000);
+        synchronized (tEvent) {
+            tEvent.wait(1000);
+        }
 
         double targetDuration;
         if (regularRecord) {
