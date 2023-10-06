@@ -30,7 +30,7 @@ public class TimedEventsTests {
      */
     @Test
     public void recordEventRegularFlow_record() throws InterruptedException {
-        //recordEventRegularFlow_base(true);
+        recordEventRegularFlow_base(true);
     }
 
     /**
