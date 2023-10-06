@@ -34,9 +34,7 @@ public final class InternalConfig extends Config implements Storable {
     private final List<DID> dids = new ArrayList<>();
 
     ImmediateRequestGenerator immediateRequestGenerator = null;
-
-    final String DEVICE_ID_PREFIX = "CLY_";
-
+    
     /**
      * Shouldn't be used!
      */

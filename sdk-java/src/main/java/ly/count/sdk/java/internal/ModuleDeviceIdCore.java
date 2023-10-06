@@ -23,6 +23,9 @@ public class ModuleDeviceIdCore extends ModuleBase {
     private Tasks tasks;
 
     private static final class UUIDGenerator implements DeviceIdGenerator {
+
+        private final static String DEVICE_ID_PREFIX = "CLY_";
+        
         @Override
         public boolean isAvailable() {
             return true;
@@ -30,7 +33,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
 
         @Override
         public String generate(CtxCore context) {
-            return context.getConfig().DEVICE_ID_PREFIX + UUID.randomUUID();
+            return DEVICE_ID_PREFIX + UUID.randomUUID();
         }
     }
 
