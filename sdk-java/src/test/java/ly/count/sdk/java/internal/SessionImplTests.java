@@ -1,6 +1,7 @@
 package ly.count.sdk.java.internal;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -436,7 +437,7 @@ public class SessionImplTests {
 
         Assert.assertEquals(expected, session.params.get("location"));
     }
-    
+
     /**
      * "addCrashReport" with no consent to crash reporting
      * mocked exception given to function and validating function calls
@@ -455,6 +456,9 @@ public class SessionImplTests {
     @Test
     public void addCrashReport() {
         addCrashReport_base(TestUtils.getConfigSessions(Config.Feature.CrashReporting), 1);
+        Map<String, String>[] requests = TestUtils.getCurrentRQ();
+        Assert.assertTrue(requests[0].containsKey("crash"));
+        Assert.assertTrue(!requests[0].get("crash").isEmpty());
     }
 
     /**
