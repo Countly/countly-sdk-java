@@ -189,8 +189,10 @@ class EventImpl implements Event, JSONable {
 
     @Override
     public Event setDuration(double duration) {
+        System.out.println(duration);
         L.d("[EventImpl] setDuration: duration = " + duration);
         if (Double.isInfinite(duration) || Double.isNaN(duration) || duration < 0) {
+            System.out.println("invalid");
             invalid = true;
             L.e("[EventImpl] NaN, infinite or negative value cannot be event '" + key + "' duration");
         } else {
