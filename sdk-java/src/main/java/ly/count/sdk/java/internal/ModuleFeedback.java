@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import ly.count.sdk.java.Countly;
 import org.json.JSONArray;
@@ -15,7 +14,6 @@ public class ModuleFeedback extends ModuleBase {
 
     String cachedAppVersion;
     Feedback feedbackInterface = null;
-    private CtxCore ctx;
 
     ModuleFeedback() {
     }
@@ -27,12 +25,6 @@ public class ModuleFeedback extends ModuleBase {
 
         cachedAppVersion = config.getApplicationVersion();
         feedbackInterface = new Feedback();
-    }
-
-    @Override
-    public void onContextAcquired(@Nonnull CtxCore ctx) {
-        this.ctx = ctx;
-        L.d("[ModuleFeedback] onContextAcquired: " + ctx);
     }
 
     @Override
@@ -61,7 +53,7 @@ public class ModuleFeedback extends ModuleBase {
             return;
         }
 
-        Transport transport = ctx.getSDK().networking.getTransport();
+        Transport transport = SDKCore.instance.networking.getTransport();
         final boolean networkingIsEnabled = internalConfig.getNetworkingEnabled();
 
         Request request = new Request();
@@ -301,7 +293,7 @@ public class ModuleFeedback extends ModuleBase {
         requestData.append("&app_version=");
         requestData.append(cachedAppVersion);
 
-        Transport cp = ctx.getSDK().networking.getTransport();
+        Transport cp = SDKCore.instance.networking.getTransport();
         final boolean networkingIsEnabled = internalConfig.getNetworkingEnabled();
         String requestDataStr = requestData.toString();
 

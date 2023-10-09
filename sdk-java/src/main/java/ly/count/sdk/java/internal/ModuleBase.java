@@ -84,6 +84,7 @@ public abstract class ModuleBase {
      * SDK got a first context. Called only in main mode (from {@code Application#onCreate()})
      *
      * @param ctx {@link CtxCore} with application instance
+     * @deprecated use {@link #initFinished(InternalConfig)} instead
      */
     public void onContextAcquired(CtxCore ctx) {
     }
