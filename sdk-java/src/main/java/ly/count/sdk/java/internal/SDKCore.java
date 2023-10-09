@@ -63,10 +63,6 @@ public class SDKCore {
         moduleMappings.put(CoreFeature.Events.getIndex(), ModuleEvents.class);
     }
 
-    public interface Modulator {
-        void run(int feature, ModuleBase module);
-    }
-
     /**
      * Currently enabled features with consents
      */
@@ -130,7 +126,7 @@ public class SDKCore {
 
         L.i("[SDKCore] Stopping Countly SDK" + (clear ? " and clearing all data" : ""));
 
-        eachModule((feature, module) -> {
+        modules.forEach((feature, module) -> {
             try {
                 module.stop(ctx, clear);
                 module.setActive(false);
@@ -138,6 +134,7 @@ public class SDKCore {
                 L.e("[SDKCore] Exception while stopping " + module.getClass() + " " + e);
             }
         });
+
         modules.clear();
         moduleMappings.clear();
         user = null;
@@ -353,12 +350,6 @@ public class SDKCore {
         return null;
     }
 
-    protected void eachModule(Modulator modulator) {
-        for (Integer feature : modules.keySet()) {
-            modulator.run(feature, modules.get(feature));
-        }
-    }
-
     /**
      * Notify all {@link ModuleBase} instances about new session has just been started
      *
@@ -455,7 +446,8 @@ public class SDKCore {
         buildModules(ctx, consents);
 
         final List<Integer> failed = new ArrayList<>();
-        eachModule((feature, module) -> {
+
+        modules.forEach((feature, module) -> {
             try {
                 module.init(config, logger);
                 module.setActive(true);
@@ -524,10 +516,15 @@ public class SDKCore {
         }
 
         onContextAcquired(ctx);
+        initFinished(config);
+    }
+
+    private void initFinished(InternalConfig config) {
+        modules.forEach((feature, module) -> module.initFinished(config));
     }
 
     protected void onContextAcquired(final CtxCore ctx) {
-        eachModule((feature, module) -> module.onContextAcquired(ctx));
+        modules.forEach((feature, module) -> module.onContextAcquired(ctx));
     }
 
     public UserImpl user() {
