@@ -527,11 +527,11 @@ public class SDKCore {
         }
 
         onContextAcquired(ctx);
-        applyMigrations();
+        applyMigrations(ctx);
     }
 
-    private void applyMigrations() {
-        migrationHelper.setupMigrations();
+    private void applyMigrations(CtxCore ctx) {
+        migrationHelper.setupMigrations(ctx);
         migrationHelper.applyMigrations();
     }
 

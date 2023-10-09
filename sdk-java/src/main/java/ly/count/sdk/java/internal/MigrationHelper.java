@@ -1,5 +1,9 @@
 package ly.count.sdk.java.internal;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Supplier;
@@ -15,8 +19,10 @@ import java.util.function.Supplier;
  * - migrations.add(this::migrationX_YZ);
  */
 public class MigrationHelper {
+    protected static final String MIGRATION_VERSION_FILE_NAME = "migration_version";
+    private CtxCore ctx;
     private final List<Supplier<Boolean>> migrations;
-    private int appliedMigrationVersion = -1;
+    protected int appliedMigrationVersion = -1;
     private final Log logger;
 
     protected MigrationHelper(Log logger) {
@@ -24,8 +30,9 @@ public class MigrationHelper {
         this.logger = logger;
     }
 
-    protected void setupMigrations() {
-        appliedMigrationVersion = readMigrationVersion();
+    protected void setupMigrations(CtxCore ctx) {
+        this.ctx = ctx;
+        readMigrationVersion();
         logger.i("[MigrationHelper] setupMigrations, Applied migration version: " + appliedMigrationVersion);
         // add migrations below
         migrations.add(this::migration_DeleteConfigFile_00);
@@ -43,25 +50,33 @@ public class MigrationHelper {
         });
     }
 
-    private int readMigrationVersion() {
+    private void readMigrationVersion() {
         logger.i("[MigrationHelper] readMigrationVersion, Reading migration version");
+        File file = new File(ctx.getSdkStorageRootDirectory(), SDKStorage.FILE_NAME_PREFIX + SDKStorage.FILE_NAME_SEPARATOR + MIGRATION_VERSION_FILE_NAME);
 
         try {
-            int version = Integer.parseInt(SDKCore.instance.sdkStorage.readMigrationVersion());
+            int version = Integer.parseInt(Utils.readFileContent(file, logger));
             if (version > -1) {
                 logger.i("[MigrationHelper] readMigrationVersion, Read migration version:[ " + version + " ]");
-                return version;
+                appliedMigrationVersion = version;
             }
         } catch (Exception e) {
             logger.e("[MigrationHelper] readMigrationVersion, Failed to read migration version, error:[ " + e + " ]");
         }
-
-        return -1;
     }
 
     private void updateMigrationVersion() {
         logger.i("[MigrationHelper] updateMigrationVersion, Updating migration version to version:[ " + appliedMigrationVersion + " ]");
-        SDKCore.instance.sdkStorage.storeMigrationVersion(appliedMigrationVersion);
+        File file = new File(ctx.getSdkStorageRootDirectory(), SDKStorage.FILE_NAME_PREFIX + SDKStorage.FILE_NAME_SEPARATOR + MIGRATION_VERSION_FILE_NAME);
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+            // Write the eventQueue to the file
+            writer.write(appliedMigrationVersion);
+            logger.v("[SDKStorage] writeFileContent, Wrote applied migration version to file");
+        } catch (IOException e) {
+            // Handle the error if writing fails
+            logger.e("[SDKStorage] writeFileContent, Failed to write applied migration version to file: " + e);
+        }
     }
 
     private boolean migration_DeleteConfigFile_00() {

@@ -22,7 +22,6 @@ public class SDKStorage {
     protected static final String FILE_NAME_PREFIX = "[CLY]";
     protected static final String FILE_NAME_SEPARATOR = "_";
     protected static final String EVENT_QUEUE_FILE_NAME = "event_queue";
-    protected static final String MIGRATION_VERSION_FILE_NAME = "migration_version";
 
     protected SDKStorage() {
 
@@ -310,44 +309,5 @@ public class SDKStorage {
         }
 
         return eventQueue;
-    }
-
-    protected String readMigrationVersion() {
-        return readFileContent(MIGRATION_VERSION_FILE_NAME);
-    }
-
-    protected void storeMigrationVersion(int migrationVersion) {
-        writeFileContent(MIGRATION_VERSION_FILE_NAME, migrationVersion);
-    }
-
-    private String readFileContent(String fileName) {
-        L.i("[SDKStorage] readFileContent, reading " + fileName);
-        File file = new File(ctx.getSdkStorageRootDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + fileName);
-
-        String fileContent = "";
-
-        try {
-            fileContent = Utils.readFileContent(file, L);
-            L.v("[SDKStorage] readFileContent, Read file content :[ " + fileContent + " ]");
-        } catch (IOException e) {
-            // Handle the error if reading fails
-            L.e("[SDKStorage] readFileContent, Failed to read " + fileName + " from file: " + e);
-        }
-
-        return fileContent;
-    }
-
-    private void writeFileContent(String fileName, Object fileBody) {
-        L.i("[SDKStorage] writeFileContent, Writing " + fileName + " to file");
-        File file = new File(ctx.getSdkStorageRootDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + fileName);
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-            // Write the eventQueue to the file
-            writer.write(fileBody.toString());
-            L.v("[SDKStorage] writeFileContent, Wrote " + fileName + " to file");
-        } catch (IOException e) {
-            // Handle the error if writing fails
-            L.e("[SDKStorage] writeFileContent, Failed to write " + fileName + " to file: " + e);
-        }
     }
 }
