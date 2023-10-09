@@ -566,10 +566,6 @@ public class SDKCore {
         }
     }
 
-    public Future<Config.DID> acquireId(final CtxCore ctx, final Config.DID holder, final boolean fallbackAllowed, final Tasks.Callback<Config.DID> callback) {
-        return ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).acquireId(ctx, holder, fallbackAllowed, callback);
-    }
-
     public void login(CtxCore ctx, String id) {
         ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).login(ctx, id);
     }
