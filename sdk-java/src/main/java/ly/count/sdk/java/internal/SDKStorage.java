@@ -223,7 +223,7 @@ public class SDKStorage {
     }
 
     private String[] getFileList(ly.count.sdk.java.internal.CtxCore context) {
-        File[] files = ((File) context.getSdkStorageRootDirectory()).listFiles();
+        File[] files = (context.getSdkStorageRootDirectory()).listFiles();
         if (files == null) {
             return new String[0];
         }
