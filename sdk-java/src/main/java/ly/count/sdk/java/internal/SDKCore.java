@@ -25,6 +25,8 @@ public class SDKCore {
 
     private CountlyTimer countlyTimer;
 
+    private MigrationHelper migrationHelper;
+
     public enum Signal {
         DID(1),
         Crash(2),
@@ -104,6 +106,7 @@ public class SDKCore {
         prepareMappings(ctx);
         countlyTimer = new CountlyTimer(L);
         countlyTimer.startTimer(config.getSendUpdateEachSeconds(), this::onTimer);
+        migrationHelper = new MigrationHelper(L);
     }
 
     private void onTimer() {
@@ -524,6 +527,12 @@ public class SDKCore {
         }
 
         onContextAcquired(ctx);
+        applyMigrations();
+    }
+
+    private void applyMigrations() {
+        migrationHelper.setupMigrations();
+        migrationHelper.applyMigrations();
     }
 
     protected void onContextAcquired(final CtxCore ctx) {
