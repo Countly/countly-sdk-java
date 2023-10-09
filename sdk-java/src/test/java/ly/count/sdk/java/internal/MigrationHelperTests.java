@@ -28,9 +28,9 @@ public class MigrationHelperTests {
     }
 
     /**
-     * "setupMigrations"
-     * receives a "null" response to parse
-     * returned feedback widget list should be empty
+     * "setupMigrations" with no migration done
+     * receives mock context to set up migrations
+     * migration version should be -1 because no migration was done
      */
     @Test
     public void setupMigrations() throws JSONException {
