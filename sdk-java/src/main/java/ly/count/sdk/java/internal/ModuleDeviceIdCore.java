@@ -293,14 +293,6 @@ public class ModuleDeviceIdCore extends ModuleBase {
      * @return {@link Config.DID} instance with an id
      */
     protected Config.DID acquireIdSync(final CtxCore ctx, final Config.DID holder, final boolean fallbackAllowed) {
-        if (testSleep > 0) {
-            try {
-                Thread.sleep(testSleep);
-            } catch (InterruptedException ie) {
-                L.e("[ModuleDeviceIdCore] Exception during tests " + ie);
-            }
-        }
-
         L.i("[ModuleDeviceIdCore] Generating " + holder.strategy + " / " + holder.realm);
 
         int index = holder.strategy;
@@ -346,6 +338,4 @@ public class ModuleDeviceIdCore extends ModuleBase {
             tasks = null;
         }
     }
-
-    private static final long testSleep = 0L;
 }
