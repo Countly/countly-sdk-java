@@ -516,6 +516,11 @@ public class SDKCore {
         }
 
         onContextAcquired(ctx);
+        initFinished(config);
+    }
+
+    private void initFinished(InternalConfig config) {
+        modules.forEach((feature, module) -> module.initFinished(config));
     }
 
     protected void onContextAcquired(final CtxCore ctx) {
