@@ -12,6 +12,8 @@ import org.junit.runners.JUnit4;
 
 import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_PREFIX;
 import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_SEPARATOR;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -85,10 +87,29 @@ public class MigrationHelperTests {
         verify(migrationHelper.logger, times(1)).d("[MigrationHelper] migration_DeleteConfigFile_00, Migration already applied");
     }
 
+    /**
+     * "updateMigrationVersion" with IO exception
+     * receives mock context and simulated function to throw IOException
+     * logger should log expected log
+     */
+    @Test
+    public void updateMigrationVersion_IOException() throws IOException {
+        //prepare mock object
+        migrationHelper = spy(migrationHelper);
+        migrationHelper.ctx = TestUtils.getMockCtxCore();
+        //simulate function to throw exception
+        doThrow(new IOException("Simulated IOException")).when(migrationHelper).writeVersionToFile(any(File.class));
+        // Call the method that you want to test
+        migrationHelper.updateMigrationVersion();
+
+        // Verify that the logger's error method was called with the expected message
+        verify(migrationHelper.logger).e("[MigrationHelper] writeFileContent, Failed to write applied migration version to file: Simulated IOException");
+    }
+
     private void writeToMvFile(Integer version) {
         File file = new File(TestUtils.getTestSDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + MigrationHelper.MIGRATION_VERSION_FILE_NAME);
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-            writer.write(String.valueOf(version));
+            writer.write(version + "\n");
         } catch (IOException ignored) {
             //do nothing
         }
