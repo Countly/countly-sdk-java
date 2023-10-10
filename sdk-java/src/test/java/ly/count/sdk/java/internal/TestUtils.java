@@ -363,14 +363,11 @@ public class TestUtils {
         return ctxCore;
     }
 
-    public static String getCurrentMV() {
+    public static String getCurrentMV() throws IOException {
         File file = new File(getTestSDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + MigrationHelper.MIGRATION_VERSION_FILE_NAME);
         String fileContent = "";
-        try {
-            fileContent = Utils.readFileContent(file, mock(Log.class));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        fileContent = Utils.readFileContent(file, mock(Log.class));
+
         return fileContent;
     }
 }

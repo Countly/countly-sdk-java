@@ -37,7 +37,7 @@ public class MigrationHelperTests {
      * migration version should be -1 because no migration was done
      */
     @Test
-    public void setupMigrations_migrationFileNotExist() {
+    public void setupMigrations_migrationFileNotExist() throws IOException {
         validateMigrationVersionAndSetup(-1, false);
     }
 
@@ -47,7 +47,7 @@ public class MigrationHelperTests {
      * migration version should be 0 because first migration done previously
      */
     @Test
-    public void setupMigrations() {
+    public void setupMigrations() throws IOException {
         validateMigrationVersionAndSetup(0, true);
     }
 
@@ -57,7 +57,7 @@ public class MigrationHelperTests {
      * migration version should be -1 first, after migrations applied it should be 0
      */
     @Test
-    public void applyMigrations_noMigrationApplied() {
+    public void applyMigrations_noMigrationApplied() throws IOException {
         //check migration version is -1 before and after read because no migration was applied
         validateMigrationVersionAndSetup(-1, false);
 
@@ -75,7 +75,7 @@ public class MigrationHelperTests {
      * and logger should log the expected log
      */
     @Test
-    public void applyMigrations_migrationAlreadyApplied() {
+    public void applyMigrations_migrationAlreadyApplied() throws IOException {
         validateMigrationVersionAndSetup(0, true);
 
         migrationHelper.logger = spy(migrationHelper.logger);
@@ -115,7 +115,7 @@ public class MigrationHelperTests {
         }
     }
 
-    private void validateMigrationVersionAndSetup(Integer version, boolean isApplied) {
+    private void validateMigrationVersionAndSetup(Integer version, boolean isApplied) throws IOException {
         Assert.assertEquals(-1, migrationHelper.appliedMigrationVersion);
         if (isApplied) {
             writeToMvFile(version);
