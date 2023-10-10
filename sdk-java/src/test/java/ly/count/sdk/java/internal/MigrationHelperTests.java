@@ -37,7 +37,7 @@ public class MigrationHelperTests {
      * migration version should be -1 because no migration was done
      */
     @Test
-    public void setupMigrations_migrationFileNotExist() throws IOException {
+    public void setupMigrations_migrationFileNotExist() {
         validateMigrationVersionAndSetup(-1, false);
     }
 
@@ -47,7 +47,7 @@ public class MigrationHelperTests {
      * migration version should be 0 because first migration done previously
      */
     @Test
-    public void setupMigrations() throws IOException {
+    public void setupMigrations() {
         validateMigrationVersionAndSetup(0, true);
     }
 
@@ -57,7 +57,7 @@ public class MigrationHelperTests {
      * migration version should be -1 first, after migrations applied it should be 0
      */
     @Test
-    public void applyMigrations_noMigrationApplied() throws IOException {
+    public void applyMigrations_noMigrationApplied() {
         //check migration version is -1 before and after read because no migration was applied
         validateMigrationVersionAndSetup(-1, false);
 
@@ -75,7 +75,7 @@ public class MigrationHelperTests {
      * and logger should log the expected log
      */
     @Test
-    public void applyMigrations_migrationAlreadyApplied() throws IOException {
+    public void applyMigrations_migrationAlreadyApplied() {
         validateMigrationVersionAndSetup(0, true);
 
         migrationHelper.logger = spy(migrationHelper.logger);
@@ -106,14 +106,17 @@ public class MigrationHelperTests {
         verify(migrationHelper.logger).e("[MigrationHelper] writeFileContent, Failed to write applied migration version to file: Simulated IOException");
     }
 
-    private void writeToMvFile(Integer version) throws IOException {
+    private void writeToMvFile(Integer version) {
         File file = new File(TestUtils.getTestSDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + MigrationHelper.MIGRATION_VERSION_FILE_NAME);
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+            file.createNewFile();
             writer.write(version + "\n");
+        } catch (IOException e) {
+            Assert.fail("Failed to write migration version to file: " + e.getMessage());
         }
     }
 
-    private void validateMigrationVersionAndSetup(Integer version, boolean isApplied) throws IOException {
+    private void validateMigrationVersionAndSetup(Integer version, boolean isApplied) {
         Assert.assertEquals(-1, migrationHelper.appliedMigrationVersion);
         if (isApplied) {
             writeToMvFile(version);

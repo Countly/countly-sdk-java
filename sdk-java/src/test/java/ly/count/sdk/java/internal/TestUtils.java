@@ -108,7 +108,7 @@ public class TestUtils {
     static void checkSdkStorageRootDirectoryExist(File directory) {
         if (!(directory.exists() && directory.isDirectory())) {
             if (!directory.mkdirs()) {
-                throw new RuntimeException("Directory creation failed");
+                Assert.fail("Failed to create directory: " + directory.getAbsolutePath());
             }
         }
     }
@@ -146,7 +146,7 @@ public class TestUtils {
                 Map<String, String> paramMap = parseRequestParams(file);
                 resultMapArray[i] = paramMap;
             } catch (IOException e) {
-                logger.e("[TestUtils] " + e.getMessage());
+                Assert.fail("Failed to read request params from file reason: " + e.getMessage());
             }
         }
 
@@ -177,7 +177,7 @@ public class TestUtils {
         try {
             fileContent = Utils.readFileContent(file, logger);
         } catch (IOException e) {
-            //do nothing
+            Assert.fail("Failed to read event queue from file reason: " + e.getMessage());
         }
 
         Arrays.stream(fileContent.split(EventQueue.DELIMITER)).forEach(s -> {
@@ -351,8 +351,8 @@ public class TestUtils {
             for (File file : getTestSDirectory().listFiles()) {
                 file.delete();
             }
-        } catch (Exception ignored) {
-            //do nothing
+        } catch (Exception e) {
+            Assert.fail("Failed to delete test files reason: " + e.getMessage());
         }
     }
 
@@ -369,7 +369,7 @@ public class TestUtils {
         try {
             fileContent = Utils.readFileContent(file, mock(Log.class));
         } catch (IOException ignored) {
-            //do nothing
+            Assert.fail("Failed to read migration version from file");
         }
 
         return fileContent;
