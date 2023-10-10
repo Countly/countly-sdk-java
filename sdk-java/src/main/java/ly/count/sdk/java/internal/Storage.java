@@ -55,7 +55,7 @@ public class Storage {
         return tasks.run(new Tasks.Task<Boolean>(storable.storageId()) {
             @Override
             public Boolean call() throws Exception {
-                return ctx.getSDK().sdkStorage.storableWrite(ctx, storable);
+                return ctx.getSDK().sdkStorage.storableWrite(ctx.getConfig(), storable);
             }
         }, callback);
     }
@@ -165,7 +165,7 @@ public class Storage {
                         if (data != null) {
                             byte transformed[] = transformer.doTheJob(id, data);
                             if (transformed != null) {
-                                if (!ctx.getSDK().sdkStorage.storableWrite(ctx, prefix, id, transformed)) {
+                                if (!ctx.getSDK().sdkStorage.storableWrite(ctx.getConfig(), prefix, id, transformed)) {
                                     success = false;
                                     ctx.getLogger().e("[Storage] Couldn't write transformed data for " + id);
                                 }

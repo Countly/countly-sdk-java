@@ -87,13 +87,13 @@ public class SDKStorage {
         return deleted;
     }
 
-    public Boolean storableWrite(ly.count.sdk.java.internal.CtxCore context, String prefix, Long id, byte[] data) {
+    public Boolean storableWrite(ly.count.sdk.java.internal.InternalConfig config, String prefix, Long id, byte[] data) {
         String filename = getName(prefix, id.toString());
 
         FileOutputStream stream = null;
         FileLock lock = null;
         try {
-            stream = openFileAsOutputStream(context.getConfig(), filename);
+            stream = openFileAsOutputStream(config, filename);
             lock = stream.getChannel().tryLock();
             if (lock == null) {
                 return false;
@@ -122,8 +122,8 @@ public class SDKStorage {
         return false;
     }
 
-    public <T extends Storable> Boolean storableWrite(ly.count.sdk.java.internal.CtxCore context, T storable) {
-        return storableWrite(context, storable.storagePrefix(), storable.storageId(), storable.store(L));
+    public <T extends Storable> Boolean storableWrite(ly.count.sdk.java.internal.InternalConfig config, T storable) {
+        return storableWrite(config, storable.storagePrefix(), storable.storageId(), storable.store(L));
     }
 
     private String createFileFullPath(ly.count.sdk.java.internal.InternalConfig config, String filename) {
