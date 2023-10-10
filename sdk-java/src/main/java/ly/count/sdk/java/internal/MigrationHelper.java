@@ -81,7 +81,7 @@ public class MigrationHelper {
 
     protected void writeVersionToFile(File file) throws IOException {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-            writer.write(String.valueOf(appliedMigrationVersion));
+            writer.write(appliedMigrationVersion + "\n");
         }
     }
 
