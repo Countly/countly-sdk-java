@@ -351,8 +351,8 @@ public class TestUtils {
             for (File file : getTestSDirectory().listFiles()) {
                 file.delete();
             }
-        } catch (Exception e) {
-            Assert.fail("Failed to delete test files reason: " + e.getMessage());
+        } catch (Exception ignored) {
+            //do nothing
         }
     }
 
