@@ -21,13 +21,17 @@ import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_SEPARATOR;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
+/**
+ * Glossary:
+ * RQ - request queue
+ * EQ - event queue
+ * MV - migration version
+ */
 public class TestUtils {
     static String SERVER_URL = "https://test.count.ly";
     static String SERVER_APP_KEY = "COUNTLY_APP_KEY";
     static String DEVICE_ID = "some_random_test_device_id";
-
     static String SDK_NAME = "java-native";
-
     static String SDK_VERSION = "23.8.0";
 
     public static final String[] eKeys = new String[] { "eventKey1", "eventKey2", "eventKey3", "eventKey4", "eventKey5", "eventKey6", "eventKey7" };
@@ -351,6 +355,18 @@ public class TestUtils {
     public static CtxCore getMockCtxCore() {
         CtxCore ctxCore = mock(CtxCore.class);
         given(ctxCore.getLogger()).willReturn(mock(Log.class));
+        given(ctxCore.getSdkStorageRootDirectory()).willReturn(getTestSDirectory());
         return ctxCore;
+    }
+
+    public static String getCurrentMV() {
+        File file = new File(getTestSDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + MigrationHelper.MIGRATION_VERSION_FILE_NAME);
+        String fileContent = "";
+        try {
+            fileContent = Utils.readFileContent(file, mock(Log.class));
+        } catch (IOException e) {
+            //do nothing
+        }
+        return fileContent;
     }
 }

@@ -17,13 +17,14 @@ import java.util.function.Supplier;
  * the method should return true if the migration was successful, false otherwise
  * 2. add it to the setupMigrations method:
  * - migrations.add(this::migrationX_YZ);
+ * 3. add test cases for the migration to MigrationHelperTests.java
  */
 public class MigrationHelper {
     protected static final String MIGRATION_VERSION_FILE_NAME = "migration_version";
-    private CtxCore ctx;
+    protected CtxCore ctx;
     private final List<Supplier<Boolean>> migrations;
     protected int appliedMigrationVersion = -1;
-    private final Log logger;
+    protected Log logger;
 
     protected MigrationHelper(Log logger) {
         migrations = new LinkedList<>();
@@ -61,25 +62,30 @@ public class MigrationHelper {
                 appliedMigrationVersion = version;
             }
         } catch (Exception e) {
-            logger.e("[MigrationHelper] readMigrationVersion, Failed to read migration version, error:[ " + e + " ]");
+            logger.e("[MigrationHelper] readMigrationVersion, Failed to read migration version, error:[ " + e.getMessage() + " ]");
         }
     }
 
-    private void updateMigrationVersion() {
+    protected void updateMigrationVersion() {
         logger.i("[MigrationHelper] updateMigrationVersion, Updating migration version to version:[ " + appliedMigrationVersion + " ]");
         File file = new File(ctx.getSdkStorageRootDirectory(), SDKStorage.FILE_NAME_PREFIX + SDKStorage.FILE_NAME_SEPARATOR + MIGRATION_VERSION_FILE_NAME);
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-            // Write the eventQueue to the file
-            writer.write(appliedMigrationVersion);
-            logger.v("[SDKStorage] writeFileContent, Wrote applied migration version to file");
+        try { // Write the version to the file
+            writeVersionToFile(file);
+            logger.v("[MigrationHelper] writeFileContent, Wrote applied migration version to file");
         } catch (IOException e) {
             // Handle the error if writing fails
-            logger.e("[SDKStorage] writeFileContent, Failed to write applied migration version to file: " + e);
+            logger.e("[MigrationHelper] writeFileContent, Failed to write applied migration version to file: " + e.getMessage());
         }
     }
 
-    private boolean migration_DeleteConfigFile_00() {
+    protected void writeVersionToFile(File file) throws IOException {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+            writer.write(String.valueOf(appliedMigrationVersion));
+        }
+    }
+
+    protected boolean migration_DeleteConfigFile_00() {
         if (appliedMigrationVersion >= 0) {
             logger.d("[MigrationHelper] migration_DeleteConfigFile_00, Migration already applied");
             return true;
