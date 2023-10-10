@@ -58,7 +58,7 @@ public class ModuleSessions extends ModuleBase {
         timedEvents = null;
 
         if (clear) {
-            ctx.getSDK().sdkStorage.storablePurge(ctx.getConfig(), SessionImpl.getStoragePrefix());
+            ctx.getSDK().sdkStorage.storablePurge(ctx, SessionImpl.getStoragePrefix());
         }
     }
 

@@ -33,10 +33,10 @@ public class SDKStorage {
         Storage.init();
     }
 
-    public void stop(ly.count.sdk.java.internal.InternalConfig config, boolean clear) {
+    public void stop(ly.count.sdk.java.internal.CtxCore ctx, boolean clear) {
         Storage.await(L);
         if (clear) {
-            storablePurge(config, null);
+            storablePurge(ctx, null);
         }
         Storage.stop();
     }
@@ -68,17 +68,17 @@ public class SDKStorage {
         }
     }
 
-    public int storablePurge(ly.count.sdk.java.internal.InternalConfig config, String prefix) {
+    public int storablePurge(ly.count.sdk.java.internal.CtxCore context, String prefix) {
         prefix = getName(prefix) + FILE_NAME_SEPARATOR;
 
         L.i("[SDKStorage] Purging storage for prefix " + prefix);
 
         int deleted = 0;
 
-        String[] files = getFileList(config);
+        String[] files = getFileList(context);
         for (String file : files) {
             if (file.startsWith(prefix)) {
-                if (deleteFile(config, file)) {
+                if (deleteFile(context, file)) {
                     deleted++;
                 }
             }
@@ -87,13 +87,13 @@ public class SDKStorage {
         return deleted;
     }
 
-    public Boolean storableWrite(ly.count.sdk.java.internal.InternalConfig config, String prefix, Long id, byte[] data) {
+    public Boolean storableWrite(ly.count.sdk.java.internal.CtxCore context, String prefix, Long id, byte[] data) {
         String filename = getName(prefix, id.toString());
 
         FileOutputStream stream = null;
         FileLock lock = null;
         try {
-            stream = openFileAsOutputStream(config, filename);
+            stream = openFileAsOutputStream(context, filename);
             lock = stream.getChannel().tryLock();
             if (lock == null) {
                 return false;
@@ -122,33 +122,33 @@ public class SDKStorage {
         return false;
     }
 
-    public <T extends Storable> Boolean storableWrite(ly.count.sdk.java.internal.InternalConfig config, T storable) {
-        return storableWrite(config, storable.storagePrefix(), storable.storageId(), storable.store(L));
+    public <T extends Storable> Boolean storableWrite(ly.count.sdk.java.internal.CtxCore context, T storable) {
+        return storableWrite(context, storable.storagePrefix(), storable.storageId(), storable.store(L));
     }
 
-    private String createFileFullPath(InternalConfig config, String filename) {
-        String directoryPath = config.getSdkStorageRootDirectory().getAbsolutePath();
+    private String createFileFullPath(ly.count.sdk.java.internal.CtxCore context, String filename) {
+        String directoryPath = ((File) context.getSdkStorageRootDirectory()).getAbsolutePath();
         return directoryPath + File.separator + filename;
     }
 
-    private FileInputStream openFileAsInputStream(ly.count.sdk.java.internal.InternalConfig config, String filename) throws FileNotFoundException {
-        File initialFile = new File(createFileFullPath(config, filename));
+    private FileInputStream openFileAsInputStream(ly.count.sdk.java.internal.CtxCore context, String filename) throws FileNotFoundException {
+        File initialFile = new File(createFileFullPath(context, filename));
         return new FileInputStream(initialFile);
     }
 
-    private FileOutputStream openFileAsOutputStream(ly.count.sdk.java.internal.InternalConfig config, String filename) throws FileNotFoundException {
-        File initialFile = new File(createFileFullPath(config, filename));
+    private FileOutputStream openFileAsOutputStream(ly.count.sdk.java.internal.CtxCore context, String filename) throws FileNotFoundException {
+        File initialFile = new File(createFileFullPath(context, filename));
         return new FileOutputStream(initialFile);
     }
 
-    public byte[] storableReadBytes(ly.count.sdk.java.internal.InternalConfig config, String filename) {
+    public byte[] storableReadBytes(ly.count.sdk.java.internal.CtxCore context, String filename) {
         ByteArrayOutputStream buffer = null;
         FileInputStream stream = null;
 
         try {
             buffer = new ByteArrayOutputStream();
 
-            stream = openFileAsInputStream(config, filename);
+            stream = openFileAsInputStream(context, filename);
 
             int read;
             byte[] data = new byte[4096];
@@ -182,12 +182,12 @@ public class SDKStorage {
         return null;
     }
 
-    public byte[] storableReadBytes(ly.count.sdk.java.internal.InternalConfig config, String prefix, Long id) {
-        return storableReadBytes(config, getName(prefix, id.toString()));
+    public byte[] storableReadBytes(ly.count.sdk.java.internal.CtxCore ctx, String prefix, Long id) {
+        return storableReadBytes(ctx, getName(prefix, id.toString()));
     }
 
-    public <T extends Storable> Boolean storableRead(ly.count.sdk.java.internal.InternalConfig config, T storable) {
-        byte[] data = storableReadBytes(config, getName(storable));
+    public <T extends Storable> Boolean storableRead(ly.count.sdk.java.internal.CtxCore context, T storable) {
+        byte[] data = storableReadBytes(context, getName(storable));
         if (data == null) {
             return null;
         } else {
@@ -195,35 +195,35 @@ public class SDKStorage {
         }
     }
 
-    public <T extends Storable> Map.Entry<Long, byte[]> storableReadBytesOneOf(ly.count.sdk.java.internal.InternalConfig config, T storable, boolean asc) {
-        List<Long> list = storableList(config, storable.storagePrefix(), asc ? 1 : -1);
-        if (!list.isEmpty()) {
-            return new AbstractMap.SimpleEntry<>(list.get(0), storableReadBytes(config, getName(storable.storagePrefix(), list.get(0).toString())));
+    public <T extends Storable> Map.Entry<Long, byte[]> storableReadBytesOneOf(ly.count.sdk.java.internal.CtxCore context, T storable, boolean asc) {
+        List<Long> list = storableList(context, storable.storagePrefix(), asc ? 1 : -1);
+        if (list.size() > 0) {
+            return new AbstractMap.SimpleEntry<>(list.get(0), storableReadBytes(context, getName(storable.storagePrefix(), list.get(0).toString())));
         }
         return null;
     }
 
-    private boolean deleteFile(ly.count.sdk.java.internal.InternalConfig config, String filename) {
-        File file = new File(createFileFullPath(config, filename));
+    private boolean deleteFile(ly.count.sdk.java.internal.CtxCore context, String filename) {
+        File file = new File(createFileFullPath(context, filename));
         return file.delete();
     }
 
-    public <T extends Storable> Boolean storableRemove(ly.count.sdk.java.internal.InternalConfig config, T storable) {
-        return deleteFile(config, getName(storable.storagePrefix(), storable.storageId().toString()));
+    public <T extends Storable> Boolean storableRemove(ly.count.sdk.java.internal.CtxCore context, T storable) {
+        return deleteFile(context, getName(storable.storagePrefix(), storable.storageId().toString()));
     }
 
-    public <T extends Storable> Boolean storablePop(ly.count.sdk.java.internal.InternalConfig config, T storable) {
-        Boolean read = storableRead(config, storable);
+    public <T extends Storable> Boolean storablePop(ly.count.sdk.java.internal.CtxCore ctx, T storable) {
+        Boolean read = storableRead(ctx, storable);
         if (read == null) {
             return null;
         } else if (read) {
-            return storableRemove(config, storable);
+            return storableRemove(ctx, storable);
         }
         return read;
     }
 
-    private String[] getFileList(ly.count.sdk.java.internal.InternalConfig config) {
-        File[] files = config.getSdkStorageRootDirectory().listFiles();
+    private String[] getFileList(ly.count.sdk.java.internal.CtxCore context) {
+        File[] files = (context.getSdkStorageRootDirectory()).listFiles();
         if (files == null) {
             return new String[0];
         }
@@ -240,7 +240,7 @@ public class SDKStorage {
         return fileNames.toArray(ret);
     }
 
-    public List<Long> storableList(ly.count.sdk.java.internal.InternalConfig config, String prefix, int slice) {
+    public List<Long> storableList(ly.count.sdk.java.internal.CtxCore context, String prefix, int slice) {
         if (Utils.isEmptyOrNull(prefix)) {
             L.e("[SDKStorage] Cannot get list of ids without prefix");
         }
@@ -250,7 +250,7 @@ public class SDKStorage {
 
         List<Long> list = new ArrayList<>();
 
-        String[] files = getFileList(config);
+        String[] files = getFileList(context);
         Arrays.sort(files);
 
         int max = slice == 0 ? Integer.MAX_VALUE : Math.abs(slice);

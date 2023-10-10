@@ -141,7 +141,7 @@ public class SDKCore {
         config = null;
         instance = null;
 
-        sdkStorage.stop(ctx.getConfig(), clear);//from original super class
+        sdkStorage.stop(ctx, clear);//from original super class
     }
 
     /**
