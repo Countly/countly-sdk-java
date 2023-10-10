@@ -48,12 +48,6 @@ public class Countly implements Usage {
     protected CtxCore ctx;
     protected Log L;
 
-    protected Countly(SDKCore sdk, CtxCore ctx, Log logger) {
-        L = logger;
-        this.sdk = sdk;
-        this.ctx = ctx;
-    }
-
     private Countly() {
     }
 

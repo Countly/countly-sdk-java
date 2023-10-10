@@ -29,7 +29,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
         }
 
         @Override
-        public String generate(CtxCore context) {
+        public String generate(InternalConfig config) {
             return UUID.randomUUID().toString();
         }
     }
@@ -41,10 +41,10 @@ public class ModuleDeviceIdCore extends ModuleBase {
         }
 
         @Override
-        public String generate(CtxCore context) {
-            String customId = context.getConfig().getCustomDeviceId();
+        public String generate(InternalConfig config) {
+            String customId = config.getCustomDeviceId();
             if (customId == null || customId.isEmpty()) {
-                context.getLogger().e("[ModuleDeviceIdCore] Device ID should never be empty or null for CustomIDGenerator");
+                config.getLogger().e("[ModuleDeviceIdCore] Device ID should never be empty or null for CustomIDGenerator");
             }
 
             return customId;
@@ -116,7 +116,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
             } else {
                 // regular flow - acquire id using specified strategy
                 Config.DID did = new Config.DID(Config.DID.REALM_DID, ctx.getConfig().getDeviceIdStrategy(), null);
-                acquireId(ctx, did, ctx.getConfig().isDeviceIdFallbackAllowed(), id -> {
+                acquireId(ctx.getConfig(), did, ctx.getConfig().isDeviceIdFallbackAllowed(), id -> {
                     if (id != null) {
                         if (id.strategy == Config.DID.STRATEGY_UUID) {
                             L.i("During init, custom device id was not provided. SDK has generated a random device id.");
@@ -267,7 +267,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
 
         SDKCore.instance.onDeviceId(ctx, null, old);
 
-        acquireId(ctx, new Config.DID(Config.DID.REALM_DID, ctx.getConfig().getDeviceIdStrategy(), null), ctx.getConfig().isDeviceIdFallbackAllowed(),
+        acquireId(ctx.getConfig(), new Config.DID(Config.DID.REALM_DID, ctx.getConfig().getDeviceIdStrategy(), null), ctx.getConfig().isDeviceIdFallbackAllowed(),
             id -> {
                 if (id != null) {
                     L.d("[ModuleDeviceIdCore] Got device id: " + id);
@@ -305,7 +305,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
         }
     }
 
-    protected Future<Config.DID> acquireId(final CtxCore ctx, final Config.DID holder, final boolean fallbackAllowed, final Tasks.Callback<Config.DID> callback) {
+    protected Future<Config.DID> acquireId(final InternalConfig config, final Config.DID holder, final boolean fallbackAllowed, final Tasks.Callback<Config.DID> callback) {
         L.d("[ModuleDeviceIdCore] d4");
         if (this.tasks == null) {
             this.tasks = new Tasks("deviceId", L);
@@ -314,7 +314,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
         return this.tasks.run(new Tasks.Task<Config.DID>(Tasks.ID_STRICT) {
             @Override
             public Config.DID call() throws Exception {
-                return acquireIdSync(ctx, holder, fallbackAllowed);
+                return acquireIdSync(config, holder, fallbackAllowed);
             }
         }, callback);
     }
@@ -323,12 +323,12 @@ public class ModuleDeviceIdCore extends ModuleBase {
      * Synchronously gets id of the strategy supplied. In case strategy is not available, returns a fallback strategy.
      * In case strategy is available but id cannot be acquired right now, returns null.
      *
-     * @param ctx Ctx to run in
+     * @param config InternalConfig to run in
      * @param holder DID object which holds strategy and possibly other info for id generation
      * @param fallbackAllowed whether to automatically fallback to any available alternative or not
      * @return {@link Config.DID} instance with an id
      */
-    protected Config.DID acquireIdSync(final CtxCore ctx, final Config.DID holder, final boolean fallbackAllowed) {
+    protected Config.DID acquireIdSync(final InternalConfig config, final Config.DID holder, final boolean fallbackAllowed) {
         if (testSleep > 0) {
             try {
                 Thread.sleep(testSleep);
@@ -353,7 +353,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
                     return null;
                 }
             } else {
-                String id = generator.generate(ctx);
+                String id = generator.generate(config);
                 if (Utils.isNotEmpty(id)) {
                     return new Config.DID(holder.realm, index, id);
                 } else if (fallbackAllowed) {
@@ -366,7 +366,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
             }
         }
 
-        L.e("[ModuleDeviceIdCore] No device id strategies to fallback from [" + ctx.getConfig().getDeviceIdStrategy() + "] is available. SDK won't function properly.");
+        L.e("[ModuleDeviceIdCore] No device id strategies to fallback from [" + config.getDeviceIdStrategy() + "] is available. SDK won't function properly.");
 
         return null;
     }
