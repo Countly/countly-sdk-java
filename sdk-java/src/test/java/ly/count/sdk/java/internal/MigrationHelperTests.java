@@ -106,16 +106,14 @@ public class MigrationHelperTests {
         verify(migrationHelper.logger).e("[MigrationHelper] writeFileContent, Failed to write applied migration version to file: Simulated IOException");
     }
 
-    private void writeToMvFile(Integer version) {
+    private void writeToMvFile(Integer version) throws IOException {
         File file = new File(TestUtils.getTestSDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + MigrationHelper.MIGRATION_VERSION_FILE_NAME);
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
             writer.write(version + "\n");
-        } catch (IOException ignored) {
-            //do nothing
         }
     }
 
-    private synchronized void validateMigrationVersionAndSetup(Integer version, boolean isApplied) {
+    private void validateMigrationVersionAndSetup(Integer version, boolean isApplied) throws IOException {
         Assert.assertEquals(-1, migrationHelper.appliedMigrationVersion);
         if (isApplied) {
             writeToMvFile(version);
