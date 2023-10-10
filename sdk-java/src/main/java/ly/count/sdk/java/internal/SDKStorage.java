@@ -93,7 +93,7 @@ public class SDKStorage {
         FileOutputStream stream = null;
         FileLock lock = null;
         try {
-            stream = openFileAsOutputStream(context, filename);
+            stream = openFileAsOutputStream(context.getConfig(), filename);
             lock = stream.getChannel().tryLock();
             if (lock == null) {
                 return false;
@@ -126,18 +126,18 @@ public class SDKStorage {
         return storableWrite(context, storable.storagePrefix(), storable.storageId(), storable.store(L));
     }
 
-    private String createFileFullPath(ly.count.sdk.java.internal.CtxCore context, String filename) {
-        String directoryPath = ((File) context.getSdkStorageRootDirectory()).getAbsolutePath();
+    private String createFileFullPath(ly.count.sdk.java.internal.InternalConfig config, String filename) {
+        String directoryPath = config.getSdkStorageRootDirectory().getAbsolutePath();
         return directoryPath + File.separator + filename;
     }
 
-    private FileInputStream openFileAsInputStream(ly.count.sdk.java.internal.CtxCore context, String filename) throws FileNotFoundException {
-        File initialFile = new File(createFileFullPath(context, filename));
+    private FileInputStream openFileAsInputStream(ly.count.sdk.java.internal.InternalConfig config, String filename) throws FileNotFoundException {
+        File initialFile = new File(createFileFullPath(config, filename));
         return new FileInputStream(initialFile);
     }
 
-    private FileOutputStream openFileAsOutputStream(ly.count.sdk.java.internal.CtxCore context, String filename) throws FileNotFoundException {
-        File initialFile = new File(createFileFullPath(context, filename));
+    private FileOutputStream openFileAsOutputStream(ly.count.sdk.java.internal.InternalConfig config, String filename) throws FileNotFoundException {
+        File initialFile = new File(createFileFullPath(config, filename));
         return new FileOutputStream(initialFile);
     }
 
@@ -148,7 +148,7 @@ public class SDKStorage {
         try {
             buffer = new ByteArrayOutputStream();
 
-            stream = openFileAsInputStream(context, filename);
+            stream = openFileAsInputStream(context.getConfig(), filename);
 
             int read;
             byte[] data = new byte[4096];
@@ -204,7 +204,7 @@ public class SDKStorage {
     }
 
     private boolean deleteFile(ly.count.sdk.java.internal.CtxCore context, String filename) {
-        File file = new File(createFileFullPath(context, filename));
+        File file = new File(createFileFullPath(context.getConfig(), filename));
         return file.delete();
     }
 
