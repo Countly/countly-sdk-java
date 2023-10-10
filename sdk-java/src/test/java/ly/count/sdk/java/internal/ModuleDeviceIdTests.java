@@ -39,8 +39,11 @@ public class ModuleDeviceIdTests {
      * and it should not start with "CLY_"
      */
     @Test
-    public void customDeviceId() {
+    public void customDeviceId() throws InterruptedException {
         Countly.instance().init(TestUtils.getBaseConfig());
-        Assert.assertFalse(Countly.instance().getDeviceId().startsWith("CLY_"));
+        synchronized (Countly.instance()) { // we should wait for device ID to be acquired
+            Countly.instance().wait(500);
+            Assert.assertFalse(Countly.instance().getDeviceId().startsWith("CLY_"));
+        }
     }
 }
