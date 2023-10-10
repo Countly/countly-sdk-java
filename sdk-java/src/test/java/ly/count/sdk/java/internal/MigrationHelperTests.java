@@ -4,8 +4,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import ly.count.sdk.java.Countly;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,11 +29,6 @@ public class MigrationHelperTests {
     public void beforeTest() {
         TestUtils.createCleanTestState();
         migrationHelper = new MigrationHelper(L);
-    }
-
-    @After
-    public void stop() {
-        Countly.instance().halt();
     }
 
     /**
