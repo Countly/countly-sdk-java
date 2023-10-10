@@ -66,9 +66,9 @@ public class TimedEventsTests {
         } else {
             synchronized (tEvent) {
                 tEvent.wait(1000);
+                targetDuration = 1;
+                tEvent.endAndRecord();
             }
-            targetDuration = 1;
-            tEvent.endAndRecord();
         }
         TestUtils.validateEventInEQ("key", targetSegm, 5, 133.0, targetDuration, 0, 1);
     }
