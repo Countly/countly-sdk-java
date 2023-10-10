@@ -29,7 +29,6 @@ public class ModuleDeviceIdTests {
     public void generatedDeviceId() throws InterruptedException {
         Countly.instance().init(TestUtils.getBaseConfigWithoutDeviceId());
         synchronized (Countly.instance()) { // we should wait for device ID to be acquired
-            Countly.instance().wait(500);
             Assert.assertTrue(Countly.instance().getDeviceId().startsWith("CLY_"));
         }
     }
@@ -42,7 +41,6 @@ public class ModuleDeviceIdTests {
     public void customDeviceId() throws InterruptedException {
         Countly.instance().init(TestUtils.getBaseConfig());
         synchronized (Countly.instance()) { // we should wait for device ID to be acquired
-            Countly.instance().wait(500);
             Assert.assertFalse(Countly.instance().getDeviceId().startsWith("CLY_"));
         }
     }
