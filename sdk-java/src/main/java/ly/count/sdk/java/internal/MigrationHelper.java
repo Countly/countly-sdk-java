@@ -21,7 +21,7 @@ import java.util.function.Supplier;
  */
 public class MigrationHelper {
     protected static final String MIGRATION_VERSION_FILE_NAME = "migration_version";
-    protected CtxCore ctx;
+    private CtxCore ctx;
     private final List<Supplier<Boolean>> migrations;
     protected int appliedMigrationVersion = -1;
     protected Log logger;
@@ -66,12 +66,12 @@ public class MigrationHelper {
         }
     }
 
-    protected void updateMigrationVersion() {
+    private void updateMigrationVersion() {
         logger.i("[MigrationHelper] updateMigrationVersion, Updating migration version to version:[ " + appliedMigrationVersion + " ]");
         File file = new File(ctx.getSdkStorageRootDirectory(), SDKStorage.FILE_NAME_PREFIX + SDKStorage.FILE_NAME_SEPARATOR + MIGRATION_VERSION_FILE_NAME);
 
-        try { // Write the version to the file
-            writeVersionToFile(file);
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+            writer.write(String.valueOf(appliedMigrationVersion));
             logger.v("[MigrationHelper] writeFileContent, Wrote applied migration version to file");
         } catch (IOException e) {
             // Handle the error if writing fails
@@ -79,13 +79,7 @@ public class MigrationHelper {
         }
     }
 
-    protected void writeVersionToFile(File file) throws IOException {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-            writer.write(String.valueOf(appliedMigrationVersion));
-        }
-    }
-
-    protected boolean migration_DeleteConfigFile_00() {
+    private boolean migration_DeleteConfigFile_00() {
         if (appliedMigrationVersion >= 0) {
             logger.d("[MigrationHelper] migration_DeleteConfigFile_00, Migration already applied");
             return true;
