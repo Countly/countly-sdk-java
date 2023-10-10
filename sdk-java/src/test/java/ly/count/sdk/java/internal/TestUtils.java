@@ -369,7 +369,7 @@ public class TestUtils {
         try {
             fileContent = Utils.readFileContent(file, mock(Log.class));
         } catch (IOException e) {
-            //do nothing
+            e.printStackTrace();
         }
         return fileContent;
     }
