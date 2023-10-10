@@ -24,7 +24,7 @@ public class ModuleEvents extends ModuleBase {
     }
 
     @Override
-    public void onContextAcquired(@Nonnull CtxCore ctx) {
+    public void initFinished(@Nonnull CtxCore ctx) {
         this.ctx = ctx;
         L.d("[ModuleEvents] onContextAcquired: " + ctx);
     }

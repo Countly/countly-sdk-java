@@ -193,7 +193,7 @@ public class SDKCore {
                     L.e("[SDKCore] Cannot instantiate module " + feature);
                 } else {
                     module.init(ctx.getConfig(), L);
-                    module.onContextAcquired(ctx);
+                    module.initFinished(ctx);
                     modules.put(feature, module);
                 }
             }
@@ -514,17 +514,11 @@ public class SDKCore {
             L.e("[SDKCore] Cannot happen" + e);
             user = new UserImpl(ctx);
         }
-
-        onContextAcquired(ctx);
-        initFinished(config);
+        initFinished(ctx);
     }
 
-    private void initFinished(InternalConfig config) {
-        modules.forEach((feature, module) -> module.initFinished(config));
-    }
-
-    protected void onContextAcquired(final CtxCore ctx) {
-        modules.forEach((feature, module) -> module.onContextAcquired(ctx));
+    private void initFinished(final CtxCore ctx) {
+        modules.forEach((feature, module) -> module.initFinished(ctx));
     }
 
     public UserImpl user() {

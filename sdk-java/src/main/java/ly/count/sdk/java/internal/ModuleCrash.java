@@ -1,7 +1,6 @@
 package ly.count.sdk.java.internal;
 
 import java.util.Map;
-
 import ly.count.sdk.java.Crash;
 import ly.count.sdk.java.CrashProcessor;
 
@@ -47,7 +46,7 @@ public class ModuleCrash extends ModuleBase {
     }
 
     @Override
-    public void onContextAcquired(final CtxCore ctx) {
+    public void initFinished(final CtxCore ctx) {
         previousHandler = Thread.getDefaultUncaughtExceptionHandler();
         final Thread.UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
         Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {

@@ -21,7 +21,7 @@ public class ModuleRequests extends ModuleBase {
     }
 
     @Override
-    public void initFinished(InternalConfig config) {
+    public void initFinished(CtxCore ctx) {
         ModuleRequests.metrics = Device.dev.buildMetrics();
     }
 

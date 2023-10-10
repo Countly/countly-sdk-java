@@ -1,13 +1,12 @@
 package ly.count.sdk.java.internal;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class ModuleRemoteConfig extends ModuleBase {
 
@@ -46,7 +45,7 @@ public class ModuleRemoteConfig extends ModuleBase {
     }
 
     @Override
-    public void onContextAcquired(CtxCore ctx) {
+    public void initFinished(CtxCore ctx) {
         this.ctx = ctx;
 
         InternalConfig cfg = ctx.getConfig();

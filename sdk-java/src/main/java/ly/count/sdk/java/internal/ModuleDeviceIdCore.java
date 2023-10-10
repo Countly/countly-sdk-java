@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Future;
-
 import ly.count.sdk.java.Config;
 
 /**
@@ -102,7 +101,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
      * @param ctx Ctx
      */
     @Override
-    public void onContextAcquired(final CtxCore ctx) {
+    public void initFinished(final CtxCore ctx) {
         L.i("[ModuleDeviceIdCore] [onContextAcquired] Starting device ID acquisition");
         if (ctx.getConfig().getDeviceId() == null) {
             // either fresh install, or migration from legacy SDK

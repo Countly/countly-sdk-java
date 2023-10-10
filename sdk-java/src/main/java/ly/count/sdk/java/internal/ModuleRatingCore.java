@@ -1,9 +1,8 @@
 package ly.count.sdk.java.internal;
 
+import java.io.UnsupportedEncodingException;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.io.UnsupportedEncodingException;
 
 public class ModuleRatingCore extends ModuleBase {
 
@@ -26,7 +25,7 @@ public class ModuleRatingCore extends ModuleBase {
     }
 
     @Override
-    public void onContextAcquired(CtxCore ctx) {
+    public void initFinished(CtxCore ctx) {
         this.ctx = ctx;
     }
 

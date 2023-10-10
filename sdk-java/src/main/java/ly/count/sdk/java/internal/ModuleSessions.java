@@ -30,9 +30,7 @@ public class ModuleSessions extends ModuleBase {
     }
 
     @Override
-    public void onContextAcquired(CtxCore ctx) {
-        super.onContextAcquired(ctx);
-
+    public void initFinished(CtxCore ctx) {
         try {
             timedEvents = Storage.read(ctx, new TimedEvents(L));
             if (timedEvents == null) {

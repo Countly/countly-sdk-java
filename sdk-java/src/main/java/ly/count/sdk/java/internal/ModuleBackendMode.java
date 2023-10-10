@@ -34,7 +34,7 @@ public class ModuleBackendMode extends ModuleBase {
     }
 
     @Override
-    public void onContextAcquired(CtxCore ctx) {
+    public void initFinished(CtxCore ctx) {
         this.ctx = ctx;
         L.d("[BackendMode] onContextAcquired: " + ctx.toString());
     }
