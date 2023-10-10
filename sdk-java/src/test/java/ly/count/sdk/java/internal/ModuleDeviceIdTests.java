@@ -26,15 +26,19 @@ public class ModuleDeviceIdTests {
      * and it should start with "CLY_"
      */
     @Test
-    public synchronized void generatedDeviceId() {
+    public void generatedDeviceId() {
         Countly.instance().init(TestUtils.getBaseConfigWithoutDeviceId());
         String deviceId = null;
-        while (deviceId == null) { //wait for device ID to be generated
+        int loopCount = 0;
+        while (deviceId == null && loopCount < 20) { //wait for device ID to be generated
             try {
                 deviceId = Countly.instance().getDeviceId();
             } catch (Exception ignored) {
-                //do nothing
+                loopCount++;
             }
+        }
+        if (loopCount >= 20) {
+            Assert.fail("Device ID was not generated in 20 try");
         }
         Assert.assertTrue(deviceId.startsWith("CLY_"));
     }
@@ -44,7 +48,7 @@ public class ModuleDeviceIdTests {
      * and it should not start with "CLY_"
      */
     @Test
-    public synchronized void customDeviceId() {
+    public void customDeviceId() {
         Countly.instance().init(TestUtils.getBaseConfig());
         Assert.assertFalse(Countly.instance().getDeviceId().startsWith("CLY_"));
     }
