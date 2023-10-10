@@ -55,7 +55,7 @@ public class Storage {
         return tasks.run(new Tasks.Task<Boolean>(storable.storageId()) {
             @Override
             public Boolean call() throws Exception {
-                return ctx.getSDK().sdkStorage.storableWrite(ctx, storable);
+                return ctx.getSDK().sdkStorage.storableWrite(ctx.getConfig(), storable);
             }
         }, callback);
     }
@@ -101,7 +101,7 @@ public class Storage {
         return tasks.run(new Tasks.Task<Boolean>(Tasks.ID_STRICT) {
             @Override
             public Boolean call() throws Exception {
-                return ctx.getSDK().sdkStorage.storableRemove(ctx, storable);
+                return ctx.getSDK().sdkStorage.storableRemove(ctx.getConfig(), storable);
             }
         }, callback);
     }
@@ -135,7 +135,7 @@ public class Storage {
         return tasks.run(new Tasks.Task<T>(-storable.storageId()) {
             @Override
             public T call() throws Exception {
-                Boolean result = ctx.getSDK().sdkStorage.storablePop(ctx, storable);
+                Boolean result = ctx.getSDK().sdkStorage.storablePop(ctx.getConfig(), storable);
                 if (result == null || !result) {
                     return null;
                 } else {
@@ -159,13 +159,13 @@ public class Storage {
                 @Override
                 public Boolean call() throws Exception {
                     boolean success = true;
-                    List<Long> ids = ctx.getSDK().sdkStorage.storableList(ctx, prefix, 0);
+                    List<Long> ids = ctx.getSDK().sdkStorage.storableList(ctx.getConfig(), prefix, 0);
                     for (Long id : ids) {
-                        byte data[] = ctx.getSDK().sdkStorage.storableReadBytes(ctx, prefix, id);
+                        byte data[] = ctx.getSDK().sdkStorage.storableReadBytes(ctx.getConfig(), prefix, id);
                         if (data != null) {
                             byte transformed[] = transformer.doTheJob(id, data);
                             if (transformed != null) {
-                                if (!ctx.getSDK().sdkStorage.storableWrite(ctx, prefix, id, transformed)) {
+                                if (!ctx.getSDK().sdkStorage.storableWrite(ctx.getConfig(), prefix, id, transformed)) {
                                     success = false;
                                     ctx.getLogger().e("[Storage] Couldn't write transformed data for " + id);
                                 }
@@ -226,7 +226,7 @@ public class Storage {
         return tasks.run(new Tasks.Task<T>(-storable.storageId()) {
             @Override
             public T call() throws Exception {
-                Boolean done = ctx.getSDK().sdkStorage.storableRead(ctx, storable);
+                Boolean done = ctx.getSDK().sdkStorage.storableRead(ctx.getConfig(), storable);
                 T ret = null;
                 if (done == null || !done) {
                     ctx.getLogger().e("[Storage] No data for file " + name(storable));
@@ -273,7 +273,7 @@ public class Storage {
         return tasks.run(new Tasks.Task<T>(-storable.storageId()) {
             @Override
             public T call() throws Exception {
-                Map.Entry<Long, byte[]> data = ctx.getSDK().sdkStorage.storableReadBytesOneOf(ctx, storable, asc);
+                Map.Entry<Long, byte[]> data = ctx.getSDK().sdkStorage.storableReadBytesOneOf(ctx.getConfig(), storable, asc);
                 if (data == null) {
                     return null;
                 }
@@ -335,7 +335,7 @@ public class Storage {
         return tasks.run(new Tasks.Task<List<Long>>(Tasks.ID_STRICT) {
             @Override
             public List<Long> call() throws Exception {
-                List<Long> list = ctx.getSDK().sdkStorage.storableList(ctx, prefix, slice);
+                List<Long> list = ctx.getSDK().sdkStorage.storableList(ctx.getConfig(), prefix, slice);
                 list.sort((o1, o2) -> slice >= 0 ? o1.compareTo(o2) : o2.compareTo(o1));
                 return list;
             }
