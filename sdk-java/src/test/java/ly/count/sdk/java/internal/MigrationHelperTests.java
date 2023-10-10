@@ -118,8 +118,8 @@ public class MigrationHelperTests {
     private void validateMigrationVersionAndSetup(Integer version, boolean isApplied) {
         Assert.assertEquals(-1, migrationHelper.appliedMigrationVersion);
         if (isApplied) {
-            writeToMvFile(0);
-            Assert.assertEquals("0", TestUtils.getCurrentMV());
+            writeToMvFile(version);
+            Assert.assertEquals(version.toString(), TestUtils.getCurrentMV());
         }
         migrationHelper.setupMigrations(TestUtils.getMockCtxCore());
         Assert.assertEquals(version, new Integer(migrationHelper.appliedMigrationVersion));
