@@ -39,12 +39,13 @@ public class TestUtils {
     }
 
     static Config getBaseConfig() {
+        return getBaseConfigWithoutDeviceId().setCustomDeviceId(DEVICE_ID);
+    }
+
+    static Config getBaseConfigWithoutDeviceId() {
         File sdkStorageRootDirectory = getTestSDirectory();
         checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
-        Config config = new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
-        config.setCustomDeviceId(DEVICE_ID);
-
-        return config;
+        return new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
     }
 
     static Config getConfigSessions(Config.Feature... features) {
