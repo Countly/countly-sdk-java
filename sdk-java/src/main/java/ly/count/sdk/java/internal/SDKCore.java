@@ -119,7 +119,7 @@ public class SDKCore {
         }
 
         if (networking != null) {
-            networking.stop(ctx);
+            networking.stop(ctx.getConfig());
         }
 
         countlyTimer.stopTimer();
