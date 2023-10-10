@@ -21,11 +21,11 @@ class ViewImpl implements View {
     static final String BOUNCE = "bounce";
     static final String BOUNCE_VALUE = "1";
 
-    private final String name;
-    private final Session session;
-    private EventImpl start;
-    private boolean firstView;
-    private boolean started, ended;
+    final String name;
+    final Session session;
+    EventImpl start;
+    boolean firstView;
+    boolean started, ended;
 
     ViewImpl(Session session, String name, Log logger) {
         this.L = logger;

@@ -1,14 +1,15 @@
 package ly.count.sdk.java.internal;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class ModuleBackendMode extends ModuleBase {
 
@@ -23,8 +24,6 @@ public class ModuleBackendMode extends ModuleBase {
     protected int eventQSize = 0;
     protected final Map<String, JSONArray> eventQueues = new HashMap<>();
 
-    private ScheduledExecutorService executor = null;
-
     final String[] userPredefinedKeys = { "name", "username", "email", "organization", "phone", "gender", "byear" };
 
     @Override
@@ -38,16 +37,11 @@ public class ModuleBackendMode extends ModuleBase {
     public void onContextAcquired(CtxCore ctx) {
         this.ctx = ctx;
         L.d("[BackendMode] onContextAcquired: " + ctx.toString());
+    }
 
-        if (ctx.getConfig().isBackendModeEnabled() && ctx.getConfig().getSendUpdateEachSeconds() > 0 && executor == null) {
-            executor = Executors.newScheduledThreadPool(1);
-            executor.scheduleWithFixedDelay(new Runnable() {
-                @Override
-                public void run() {
-                    addEventsToRequestQ();
-                }
-            }, ctx.getConfig().getSendUpdateEachSeconds(), ctx.getConfig().getSendUpdateEachSeconds(), TimeUnit.SECONDS);
-        }
+    @Override
+    protected void onTimer() {
+        addEventsToRequestQ();
     }
 
     @Override
@@ -63,9 +57,6 @@ public class ModuleBackendMode extends ModuleBase {
     @Override
     public void stop(CtxCore ctx, boolean clear) {
         super.stop(ctx, clear);
-        if (executor != null) {
-            executor.shutdownNow();
-        }
     }
 
     public void disableModule() {

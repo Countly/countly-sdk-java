@@ -19,7 +19,7 @@ import org.junit.runners.JUnit4;
 
 import static ly.count.sdk.java.internal.TestUtils.getOS;
 import static ly.count.sdk.java.internal.TestUtils.validateEvent;
-import static ly.count.sdk.java.internal.TestUtils.validateEventQueueSize;
+import static ly.count.sdk.java.internal.TestUtils.validateEQSize;
 import static org.mockito.Mockito.mock;
 
 @RunWith(JUnit4.class)
@@ -493,15 +493,15 @@ public class ModuleFeedbackTests {
     }
 
     void validateRecordingWidgetsManually(CountlyFeedbackWidget widgetInfo, JSONObject widgetData, Map<String, Object> widgetResult, int initialEQSize, boolean goodResult, Map<String, Object> expectedWidgetResult) {
-        validateEventQueueSize(initialEQSize, moduleEvents().eventQueue);
+        TestUtils.validateEQSize(initialEQSize, moduleEvents().eventQueue);
 
         Countly.instance().feedback().reportFeedbackWidgetManually(widgetInfo, widgetData, expectedWidgetResult == null ? widgetResult : expectedWidgetResult);
 
         if (goodResult) {
-            validateEventQueueSize(initialEQSize + 1, moduleEvents().eventQueue);
+            TestUtils.validateEQSize(initialEQSize + 1, moduleEvents().eventQueue);
             feedbackValidateManualResultEQ(widgetInfo.type.eventKey, widgetInfo.widgetId, expectedWidgetResult == null ? widgetResult : expectedWidgetResult, initialEQSize);
         } else {
-            validateEventQueueSize(initialEQSize, moduleEvents().eventQueue);
+            TestUtils.validateEQSize(initialEQSize, moduleEvents().eventQueue);
         }
     }
 
@@ -519,20 +519,20 @@ public class ModuleFeedbackTests {
         init(TestUtils.getConfigFeedback(Config.Feature.Events).setEventQueueSizeToSend(2));
 
         CountlyFeedbackWidget widgetInfoNps = createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "rt" });
-        validateEventQueueSize(0, moduleEvents().eventQueue);
-        Assert.assertEquals(0, TestUtils.getCurrentRequestQueue().length);
+        TestUtils.validateEQSize(0, moduleEvents().eventQueue);
+        Assert.assertEquals(0, TestUtils.getCurrentRQ().length);
 
         Countly.instance().feedback().reportFeedbackWidgetManually(widgetInfoNps, null, null);
-        validateEventQueueSize(1, moduleEvents().eventQueue);
-        Assert.assertEquals(0, TestUtils.getCurrentRequestQueue().length);
+        TestUtils.validateEQSize(1, moduleEvents().eventQueue);
+        Assert.assertEquals(0, TestUtils.getCurrentRQ().length);
 
         feedbackValidateManualResultEQ(FeedbackWidgetType.nps.eventKey, widgetInfoNps.widgetId, null, 0);
 
         CountlyFeedbackWidget widgetInfoRating = createFeedbackWidget(FeedbackWidgetType.rating, "rating1", "ratingID1", new String[] {});
         Countly.instance().feedback().reportFeedbackWidgetManually(widgetInfoRating, null, null);
-        validateEventQueueSize(0, moduleEvents().eventQueue);
+        TestUtils.validateEQSize(0, moduleEvents().eventQueue);
 
-        Assert.assertEquals(1, TestUtils.getCurrentRequestQueue().length);
+        Assert.assertEquals(1, TestUtils.getCurrentRQ().length);
 
         feedbackValidateManualResultRQ(FeedbackWidgetType.nps.eventKey, widgetInfoNps.widgetId, null, 0);
         feedbackValidateManualResultRQ(FeedbackWidgetType.rating.eventKey, widgetInfoRating.widgetId, null, 1);
@@ -604,7 +604,7 @@ public class ModuleFeedbackTests {
     }
 
     void feedbackValidateManualResultEQ(String eventKey, String widgetID, Map<String, Object> feedbackWidgetResult, int eqIndex) {
-        validateEvent(TestUtils.getCurrentEventQueue().get(eqIndex), eventKey, requiredWidgetSegmentation(widgetID, feedbackWidgetResult), 1, null, null);
+        validateEvent(TestUtils.getCurrentEQ().get(eqIndex), eventKey, requiredWidgetSegmentation(widgetID, feedbackWidgetResult), 1, null, null);
     }
 
     void feedbackValidateManualResultRQ(String eventKey, String widgetID, Map<String, Object> feedbackWidgetResult, int eqIndex) {

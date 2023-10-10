@@ -277,10 +277,19 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         return new EventImpl(this, key, L);
     }
 
+    /**
+     * @param key key for this event, cannot be null or empty
+     * @return timed Event instance.
+     * @deprecated use {@link ModuleEvents.Events#startEvent(String)}} instead via <code>instance().events()</code> call
+     */
     public Event timedEvent(String key) {
         return timedEvents().event(ctx, key);
     }
 
+    /**
+     * @return {@link TimedEvents} instance
+     * @deprecated use {@link ModuleEvents.Events} instead via <code>instance().events()</code> call
+     */
     protected TimedEvents timedEvents() {
         return SDKCore.instance.timedEvents();
     }
@@ -289,7 +298,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
      * Record event to session.
      *
      * @param event
-     * @deprecated use {@link ModuleEvents.Events#recordEvent(String, int, double, Map, double)} instead
+     * @deprecated use {@link ModuleEvents.Events#recordEvent(String, int, Double, Map, Double)} instead
      */
     @Override
     public void recordEvent(Event event) {
@@ -305,7 +314,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
         ModuleEvents eventsModule = (ModuleEvents) SDKCore.instance.module(CoreFeature.Events.getIndex());
         EventImpl eventImpl = (EventImpl) event;
-        eventsModule.recordEventInternal(eventImpl.key, eventImpl.count, eventImpl.sum, eventImpl.segmentation, eventImpl.duration);
+        eventsModule.recordEventInternal(eventImpl.key, eventImpl.count, eventImpl.sum, eventImpl.duration, eventImpl.segmentation);
     }
 
     @Override

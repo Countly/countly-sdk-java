@@ -1,15 +1,14 @@
 package ly.count.sdk.java.internal;
 
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import ly.count.sdk.java.Config;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
 
 @RunWith(JUnit4.class)
 public class ConfigTests extends BaseTestsCore {
@@ -31,16 +30,16 @@ public class ConfigTests extends BaseTestsCore {
 
     @Test
     public void testRequestMethod() {
-        Assert.assertFalse(internalConfig.isUsePOST());
+        Assert.assertFalse(internalConfig.isHTTPPostForced());
 
         internalConfig.enableUsePOST();
-        Assert.assertTrue(internalConfig.isUsePOST());
+        Assert.assertTrue(internalConfig.isHTTPPostForced());
 
         internalConfig.setUsePOST(false);
-        Assert.assertFalse(internalConfig.isUsePOST());
+        Assert.assertFalse(internalConfig.isHTTPPostForced());
 
         internalConfig.setUsePOST(true);
-        Assert.assertTrue(internalConfig.isUsePOST());
+        Assert.assertTrue(internalConfig.isHTTPPostForced());
     }
 
     @Test

@@ -81,7 +81,7 @@ public class ModuleCrash extends ModuleBase {
 
     public CrashImpl onCrash(CtxCore ctx, CrashImpl crash) {
         long running = started == 0 ? 0 : TimeUtils.nsToMs(System.nanoTime() - started);
-        crash.putMetrics(ctx, running);
+        crash.putMetrics(running);
 
         if (!crash.getData().has("_os")) {
             L.w("[ModuleCrash] onCrash, While recording an exception 'OS name' was either null or empty");

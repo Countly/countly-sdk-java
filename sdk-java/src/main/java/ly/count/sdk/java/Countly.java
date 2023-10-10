@@ -7,8 +7,8 @@ import ly.count.sdk.java.internal.Device;
 import ly.count.sdk.java.internal.InternalConfig;
 import ly.count.sdk.java.internal.Log;
 import ly.count.sdk.java.internal.ModuleBackendMode;
-import ly.count.sdk.java.internal.ModuleFeedback;
 import ly.count.sdk.java.internal.ModuleEvents;
+import ly.count.sdk.java.internal.ModuleFeedback;
 import ly.count.sdk.java.internal.SDKCore;
 
 /**
@@ -377,6 +377,13 @@ public class Countly implements Usage {
         return sdk.events();
     }
 
+    /**
+     * Get existing or create new timed event object, don't record it.
+     *
+     * @param key key for this event, cannot be null or empty
+     * @return timed Event instance.
+     * @deprecated use {@link ModuleEvents.Events#startEvent(String)}} instead via <code>instance().events()</code> call
+     */
     @Override
     public Event timedEvent(String key) {
         L.d("[Countly] timedEvent: key = " + key);

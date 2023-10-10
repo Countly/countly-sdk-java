@@ -299,7 +299,7 @@ public class Config {
     /**
      * Force usage of POST method for all requests
      */
-    protected boolean usePOST = false;
+    protected boolean forceHTTPPost = false;
 
     /**
      * This would be a special state where the majority of the SDK calls don't work anymore and only a few special calls work.
@@ -760,20 +760,31 @@ public class Config {
      * Force usage of POST method for all requests
      *
      * @return {@code this} instance for method chaining
+     * @deprecated use {@link #enableForcedHTTPPost()} instead
      */
     public Config enableUsePOST() {
-        this.usePOST = true;
+        return enableForcedHTTPPost();
+    }
+
+    /**
+     * Force usage of POST method for all requests
+     *
+     * @return {@code this} instance for method chaining
+     */
+    public Config enableForcedHTTPPost() {
+        this.forceHTTPPost = true;
         return this;
     }
 
     /**
      * Force usage of POST method for all requests.
      *
-     * @param usePOST whether to force using POST method for all requests or not
+     * @param forcePost whether to force using POST method for all requests or not
      * @return {@code this} instance for method chaining
+     * @deprecated please use {@link #enableForcedHTTPPost()} instead
      */
-    public Config setUsePOST(boolean usePOST) {
-        this.usePOST = usePOST;
+    public Config setUsePOST(boolean forcePost) {
+        this.forceHTTPPost = forcePost;
         return this;
     }
 
@@ -1297,12 +1308,12 @@ public class Config {
     }
 
     /**
-     * Getter for {@link #usePOST}
+     * Getter for {@link #forceHTTPPost}
      *
-     * @return {@link #usePOST} value
+     * @return {@link #forceHTTPPost} value
      */
-    public boolean isUsePOST() {
-        return usePOST;
+    public boolean isHTTPPostForced() {
+        return forceHTTPPost;
     }
 
     /**

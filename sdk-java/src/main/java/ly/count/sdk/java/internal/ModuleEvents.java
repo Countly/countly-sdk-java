@@ -3,9 +3,6 @@ package ly.count.sdk.java.internal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import ly.count.sdk.java.Countly;
@@ -15,7 +12,6 @@ public class ModuleEvents extends ModuleBase {
     protected CtxCore ctx = null;
     protected EventQueue eventQueue = null;
     final Map<String, EventImpl> timedEvents = new HashMap<>();
-    private ScheduledExecutorService executor = null;
     protected Events eventsInterface = null;
 
     @Override
@@ -31,16 +27,11 @@ public class ModuleEvents extends ModuleBase {
     public void onContextAcquired(@Nonnull CtxCore ctx) {
         this.ctx = ctx;
         L.d("[ModuleEvents] onContextAcquired: " + ctx);
+    }
 
-        if (ctx.getConfig().getSendUpdateEachSeconds() > 0 && executor == null) {
-            executor = Executors.newScheduledThreadPool(1);
-            executor.scheduleWithFixedDelay(new Runnable() {
-                @Override
-                public void run() {
-                    addEventsToRequestQ();
-                }
-            }, ctx.getConfig().getSendUpdateEachSeconds(), ctx.getConfig().getSendUpdateEachSeconds(), TimeUnit.SECONDS);
-        }
+    @Override
+    protected void onTimer() {
+        addEventsToRequestQ();
     }
 
     @Override
@@ -54,9 +45,6 @@ public class ModuleEvents extends ModuleBase {
         if (clear) {
             eventQueue.clear();
             timedEvents.clear();
-        }
-        if (executor != null) {
-            executor.shutdownNow();
         }
     }
 
@@ -89,7 +77,7 @@ public class ModuleEvents extends ModuleBase {
         });
     }
 
-    protected void recordEventInternal(String key, int count, Double sum, Map<String, Object> segmentation, Double dur) {
+    protected void recordEventInternal(String key, int count, Double sum, Double dur, Map<String, Object> segmentation) {
         if (count <= 0) {
             L.w("[ModuleEvents] recordEventInternal: Count can't be less than 1, ignoring this event.");
             return;
@@ -126,12 +114,22 @@ public class ModuleEvents extends ModuleBase {
         if (timedEvents.containsKey(key)) {
             return false;
         }
+
         L.d("[ModuleEvents] Starting event: [" + key + "]");
-        timedEvents.put(key, new EventImpl(null, key, L));
+        timedEvents.put(key, new EventImpl(event -> {
+            EventImpl eventImpl = timedEvents.remove(key);
+            L.d("[ModuleEvents] Ending event: [" + key + "]");
+            if (eventImpl == null) {
+                L.w("startEventInternal, eventRecorder, No timed event with the name [" + key + "] is started, nothing to end. Will ignore call.");
+                return;
+            }
+            recordEventInternal(eventImpl.key, eventImpl.count, eventImpl.sum, eventImpl.duration, eventImpl.segmentation);
+        }, key, L));
+
         return true;
     }
 
-    boolean endEventInternal(final String key, final Map<String, Object> segmentation, final int count, final Double sum) {
+    boolean endEventInternal(final String key, final Map<String, Object> segmentation, int count, final Double sum) {
         L.d("[ModuleEvents] Ending event: [" + key + "]");
 
         if (key == null || key.isEmpty()) {
@@ -141,20 +139,23 @@ public class ModuleEvents extends ModuleBase {
 
         EventImpl event = timedEvents.remove(key);
 
-        if (event != null) {
-            if (count < 1) {
-                throw new IllegalArgumentException("Countly event count should be greater than zero");
-            }
-            L.d("[ModuleEvents] Ending event: [" + key + "]");
-
-            long currentTimestamp = TimeUtils.uniqueTimestampMs();
-            double duration = (currentTimestamp - event.timestamp) / 1000.0;
-
-            recordEventInternal(key, count, sum, segmentation, duration);
-            return true;
-        } else {
+        if (event == null) {
+            L.w("endEventInternal, No timed event with the name [" + key + "] is started, nothing to end. Will ignore call.");
             return false;
         }
+
+        if (count < 1) {
+            L.e("endEventInternal, Countly event count should be greater than zero [" + count + "]. Changing value to 1");
+            count = 1;
+        }
+
+        L.d("[ModuleEvents] Ending event: [" + key + "]");
+
+        long currentTimestamp = TimeUtils.uniqueTimestampMs();
+        double duration = (currentTimestamp - event.timestamp) / 1000.0;
+
+        recordEventInternal(key, count, sum, duration, segmentation);
+        return true;
     }
 
     boolean cancelEventInternal(final String key) {
@@ -179,9 +180,9 @@ public class ModuleEvents extends ModuleBase {
          * @param dur set duration of event, can be null
          * @param segmentation additional segmentation data that you want to set, leave null if you don't want to add anything
          */
-        public void recordEvent(String key, int count, Double sum, Map<String, Object> segmentation, Double dur) {
+        public void recordEvent(String key, Map<String, Object> segmentation, int count, Double sum, Double dur) {
             L.i("[Events] recordEvent: key = " + key + ", count = " + count + ", sum = " + sum + ", segmentation = " + segmentation + ", dur = " + dur);
-            recordEventInternal(key, count, sum, segmentation, dur);
+            recordEventInternal(key, count, sum, dur, segmentation);
         }
 
         /**
@@ -192,8 +193,8 @@ public class ModuleEvents extends ModuleBase {
          * @param sum set sum parameter of the event, can be null
          * @param segmentation additional segmentation data that you want to set, leave null if you don't want to add anything
          */
-        public void recordEvent(String key, int count, Double sum, Map<String, Object> segmentation) {
-            recordEvent(key, count, sum, segmentation, null);
+        public void recordEvent(String key, Map<String, Object> segmentation, int count, Double sum) {
+            recordEvent(key, segmentation, count, sum, null);
         }
 
         /**
@@ -204,8 +205,8 @@ public class ModuleEvents extends ModuleBase {
          * @param count how many of these events have occurred, default value is "1", must be greater than 0
          * @param segmentation additional segmentation data that you want to set, leave null if you don't want to add anything
          */
-        public void recordEvent(String key, int count, Map<String, Object> segmentation) {
-            recordEvent(key, count, null, segmentation);
+        public void recordEvent(String key, Map<String, Object> segmentation, int count) {
+            recordEvent(key, segmentation, count, null);
         }
 
         /**
@@ -216,7 +217,7 @@ public class ModuleEvents extends ModuleBase {
          * @param segmentation additional segmentation data that you want to set, leave null if you don't want to add anything
          */
         public void recordEvent(String key, Map<String, Object> segmentation) {
-            recordEvent(key, 1, null, segmentation);
+            recordEvent(key, segmentation, 1, null);
         }
 
         /**
@@ -227,7 +228,7 @@ public class ModuleEvents extends ModuleBase {
          * @param key key for this event, cannot be null or empty
          */
         public void recordEvent(String key) {
-            recordEvent(key, 1, null, null);
+            recordEvent(key, null, 1, null);
         }
 
         /**
@@ -238,7 +239,7 @@ public class ModuleEvents extends ModuleBase {
          * @param count how many of these events have occurred, default value is "1", must be greater than 0
          */
         public void recordEvent(String key, int count) {
-            recordEvent(key, count, null, null);
+            recordEvent(key, null, count, null);
         }
 
         /**
@@ -250,7 +251,7 @@ public class ModuleEvents extends ModuleBase {
          * @param sum set sum parameter of the event, can be null
          */
         public void recordEvent(String key, int count, Double sum) {
-            recordEvent(key, count, sum, null);
+            recordEvent(key, null, count, sum);
         }
 
         /**
