@@ -2,6 +2,7 @@ package ly.count.sdk.java.internal;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -34,6 +35,7 @@ public final class InternalConfig extends Config implements Storable {
     private final List<DID> dids = new ArrayList<>();
 
     ImmediateRequestGenerator immediateRequestGenerator = null;
+    SDKCore sdk;
 
     /**
      * Shouldn't be used!
@@ -415,5 +417,21 @@ public final class InternalConfig extends Config implements Storable {
 
     public Map<String, String> getMetricOverride() {
         return metricOverride;
+    }
+
+    public void setSdk(SDKCore sdk) {
+        this.sdk = sdk;
+    }
+
+    public void setLogger(Log logger) {
+        this.configLog = logger;
+    }
+
+    File getSdkStorageRootDirectory() {
+        return sdkStorageRootDirectory;
+    }
+
+    Log getLogger() {
+        return configLog;
     }
 }

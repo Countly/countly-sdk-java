@@ -467,7 +467,7 @@ public class Config {
     /**
      * Storage path for storing requests and events queues
      */
-    File sdkStorageRootDirectory = null;
+    protected File sdkStorageRootDirectory = null;
 
     /**
      * If sdk used across multiple platforms
