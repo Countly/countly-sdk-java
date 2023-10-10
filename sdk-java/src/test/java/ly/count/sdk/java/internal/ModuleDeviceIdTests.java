@@ -28,8 +28,6 @@ public class ModuleDeviceIdTests {
     @Test
     public void generatedDeviceId() {
         Countly.instance().init(TestUtils.getBaseConfigWithoutDeviceId());
-        // we should wait for device ID to be acquired
-        Thread.yield();
         Assert.assertTrue(Countly.instance().getDeviceId().startsWith("CLY_"));
     }
 
@@ -40,8 +38,6 @@ public class ModuleDeviceIdTests {
     @Test
     public void customDeviceId() {
         Countly.instance().init(TestUtils.getBaseConfig());
-        // we should wait for device ID to be acquired
-        Thread.yield();
         Assert.assertFalse(Countly.instance().getDeviceId().startsWith("CLY_"));
     }
 }
