@@ -51,7 +51,7 @@ public class MigrationHelper {
         });
     }
 
-    private void readMigrationVersion() {
+    private synchronized void readMigrationVersion() {
         logger.i("[MigrationHelper] readMigrationVersion, Reading migration version");
         File file = new File(ctx.getSdkStorageRootDirectory(), SDKStorage.FILE_NAME_PREFIX + SDKStorage.FILE_NAME_SEPARATOR + MIGRATION_VERSION_FILE_NAME);
 
@@ -79,7 +79,7 @@ public class MigrationHelper {
         }
     }
 
-    protected void writeVersionToFile(File file) throws IOException {
+    protected synchronized void writeVersionToFile(File file) throws IOException {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
             writer.write(appliedMigrationVersion + "\n");
         }

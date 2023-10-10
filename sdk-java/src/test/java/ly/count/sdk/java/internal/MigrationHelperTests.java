@@ -115,7 +115,7 @@ public class MigrationHelperTests {
         }
     }
 
-    private void validateMigrationVersionAndSetup(Integer version, boolean isApplied) throws IOException {
+    private synchronized void validateMigrationVersionAndSetup(Integer version, boolean isApplied) {
         Assert.assertEquals(-1, migrationHelper.appliedMigrationVersion);
         if (isApplied) {
             writeToMvFile(version);
