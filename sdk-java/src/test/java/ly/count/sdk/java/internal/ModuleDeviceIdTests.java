@@ -26,12 +26,11 @@ public class ModuleDeviceIdTests {
      * and it should start with "CLY_"
      */
     @Test
-    public void generatedDeviceId() throws InterruptedException {
+    public void generatedDeviceId() {
         Countly.instance().init(TestUtils.getBaseConfigWithoutDeviceId());
-        synchronized (Countly.instance()) { // we should wait for device ID to be acquired
-            Countly.instance().wait(1000);
-            Assert.assertTrue(Countly.instance().getDeviceId().startsWith("CLY_"));
-        }
+        // we should wait for device ID to be acquired
+        Thread.yield();
+        Assert.assertTrue(Countly.instance().getDeviceId().startsWith("CLY_"));
     }
 
     /**
@@ -39,11 +38,10 @@ public class ModuleDeviceIdTests {
      * and it should not start with "CLY_"
      */
     @Test
-    public void customDeviceId() throws InterruptedException {
+    public void customDeviceId() {
         Countly.instance().init(TestUtils.getBaseConfig());
-        synchronized (Countly.instance()) { // we should wait for device ID to be acquired
-            Countly.instance().wait(1000);
-            Assert.assertFalse(Countly.instance().getDeviceId().startsWith("CLY_"));
-        }
+        // we should wait for device ID to be acquired
+        Thread.yield();
+        Assert.assertFalse(Countly.instance().getDeviceId().startsWith("CLY_"));
     }
 }
