@@ -107,6 +107,7 @@ public class MigrationHelperTests {
     }
 
     private void writeToMvFile(Integer version) {
+        TestUtils.checkSdkStorageRootDirectoryExist(TestUtils.getTestSDirectory());
         File file = new File(TestUtils.getTestSDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + MigrationHelper.MIGRATION_VERSION_FILE_NAME);
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
             file.createNewFile();
