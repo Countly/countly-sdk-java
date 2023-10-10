@@ -238,7 +238,7 @@ public class CrashImpl implements Crash, Storable {
         return "crash";
     }
 
-    public CrashImpl putMetrics(CtxCore ctx, Long runningTime) {
+    public CrashImpl putMetrics(Long runningTime) {
         add("_device", Device.dev.getDevice());
         add("_os", Device.dev.getOS());
         add("_os_version", Device.dev.getOSVersion());

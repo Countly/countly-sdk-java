@@ -84,6 +84,7 @@ public abstract class ModuleBase {
      * SDK got a first context. Called only in main mode (from {@code Application#onCreate()})
      *
      * @param ctx {@link CtxCore} with application instance
+     * @deprecated use {@link #initFinished(InternalConfig)} instead
      */
     public void onContextAcquired(CtxCore ctx) {
     }
@@ -125,6 +126,17 @@ public abstract class ModuleBase {
 
     }
 
+    /**
+     * Called when the sdk timer ticks.
+     */
     protected void onTimer() {
+    }
+
+    /**
+     * Called when the initialization is finished.
+     *
+     * @param config {@link InternalConfig} used for further initialization
+     */
+    protected void initFinished(InternalConfig config) {
     }
 }
