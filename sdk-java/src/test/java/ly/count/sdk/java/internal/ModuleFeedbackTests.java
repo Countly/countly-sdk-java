@@ -19,7 +19,6 @@ import org.junit.runners.JUnit4;
 
 import static ly.count.sdk.java.internal.TestUtils.getOS;
 import static ly.count.sdk.java.internal.TestUtils.validateEvent;
-import static ly.count.sdk.java.internal.TestUtils.validateEQSize;
 import static org.mockito.Mockito.mock;
 
 @RunWith(JUnit4.class)
@@ -50,7 +49,8 @@ public class ModuleFeedbackTests {
     public void parseFeedbackList_null() throws JSONException {
         init(TestUtils.getConfigFeedback());
 
-        List<CountlyFeedbackWidget> result = ModuleFeedback.parseFeedbackList(null);
+        List<CountlyFeedbackWidget> result = new ArrayList<>();
+        String error = ModuleFeedback.parseFeedbackList(null, result);
         Assert.assertNotNull(result);
         Assert.assertEquals(0, result.size());
     }
@@ -69,7 +69,8 @@ public class ModuleFeedbackTests {
 
         JSONObject jObj = new JSONObject(requestJson);
 
-        List<CountlyFeedbackWidget> ret = ModuleFeedback.parseFeedbackList(jObj);
+        List<CountlyFeedbackWidget> ret = new ArrayList<>();
+        String error = ModuleFeedback.parseFeedbackList(jObj, ret);
         Assert.assertNotNull(ret);
         Assert.assertEquals(4, ret.size());
 
@@ -94,7 +95,8 @@ public class ModuleFeedbackTests {
 
         JSONObject jObj = new JSONObject(requestJson);
 
-        List<CountlyFeedbackWidget> ret = ModuleFeedback.parseFeedbackList(jObj);
+        List<CountlyFeedbackWidget> ret = new ArrayList<>();
+        String error = ModuleFeedback.parseFeedbackList(jObj, ret);
         Assert.assertNotNull(ret);
         Assert.assertEquals(1, ret.size());
         ValidateReturnedFeedbackWidget(FeedbackWidgetType.nps, "fsdfsdf", "5f97284635935cc338e78200", new String[] { "/" }, ret.get(0));
@@ -127,7 +129,8 @@ public class ModuleFeedbackTests {
 
         JSONObject jObj = new JSONObject(requestJson);
 
-        List<CountlyFeedbackWidget> ret = ModuleFeedback.parseFeedbackList(jObj);
+        List<CountlyFeedbackWidget> ret = new ArrayList<>();
+        String error = ModuleFeedback.parseFeedbackList(jObj, ret);
         Assert.assertNotNull(ret);
         Assert.assertEquals(6, ret.size());
 
@@ -189,8 +192,9 @@ public class ModuleFeedbackTests {
         garbageArray.put(createGarbageJson());
         JSONObject responseJson = new JSONObject();
         responseJson.put("xxxx", garbageArray);
+        String expectedErrorMsg = "Response does not have a valid 'result' entry. No widgets retrieved.";
 
-        getAvailableFeedbackWidgets_base(new ArrayList<>(), responseJson);
+        getAvailableFeedbackWidgets_base(null, responseJson, expectedErrorMsg);
     }
 
     /**
@@ -204,6 +208,10 @@ public class ModuleFeedbackTests {
     }
 
     public void getAvailableFeedbackWidgets_base(List<CountlyFeedbackWidget> expectedWidgets, JSONObject returnedResponse) {
+        getAvailableFeedbackWidgets_base(expectedWidgets, returnedResponse, null);
+    }
+
+    public void getAvailableFeedbackWidgets_base(List<CountlyFeedbackWidget> expectedWidgets, JSONObject returnedResponse, String expectedErrorMsg) {
         init(TestUtils.getConfigFeedback());
 
         ImmediateRequestI requestMaker = (requestData, customEndpoint, cp, requestShouldBeDelayed, networkingIsEnabled, callback, log) -> {
@@ -226,7 +234,11 @@ public class ModuleFeedbackTests {
                 Assert.assertEquals(widgetResponse, expectedWidgets);
             } else {
                 Assert.assertNull(response);
-                Assert.assertEquals("Not possible to retrieve widget list. Probably due to lack of connection to the server", error);
+                if (expectedErrorMsg != null) {
+                    Assert.assertEquals(expectedErrorMsg, error);
+                } else {
+                    Assert.assertEquals("Not possible to retrieve widget list. Probably due to lack of connection to the server", error);
+                }
             }
         });
     }
