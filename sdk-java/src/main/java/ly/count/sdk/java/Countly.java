@@ -73,6 +73,7 @@ public class Countly implements Usage {
 
         InternalConfig internalConfig = new InternalConfig(config);
         Log L = new Log(internalConfig.loggingLevel, internalConfig.logListener);
+        internalConfig.setLogger(L);
 
         if (directory == null) {
             L.e("[Countly] File cannot be null");
@@ -108,11 +109,11 @@ public class Countly implements Usage {
         }
 
         SDKCore sdk = new SDKCore();
-        sdk.init(new CtxCore(sdk, internalConfig, L, directory), L);
+        sdk.init(internalConfig, L);
 
         // config has been changed, thus recreating ctx
         this.sdk = sdk;
-        this.ctx = new CtxCore(sdk, sdk.config(), L, directory);
+        this.ctx = new CtxCore(sdk.config());
         this.L = L;
     }
 
@@ -250,7 +251,7 @@ public class Countly implements Usage {
         if (L != null) {
             L.d("[Countly] login");
         }
-        sdk.login(ctx, id);
+        sdk.login(ctx.getConfig(), id);
         return this;
     }
 
@@ -259,7 +260,7 @@ public class Countly implements Usage {
         if (L != null) {
             L.d("[Countly] logout");
         }
-        sdk.logout(ctx);
+        sdk.logout(ctx.getConfig());
         return this;
     }
 
@@ -273,7 +274,7 @@ public class Countly implements Usage {
         if (L != null) {
             L.d("[Countly] changeDeviceIdWithoutMerge: id = " + id);
         }
-        sdk.changeDeviceIdWithMerge(ctx, id);
+        sdk.changeDeviceIdWithMerge(ctx.getConfig(), id);
         return this;
     }
 
@@ -282,7 +283,7 @@ public class Countly implements Usage {
         if (L != null) {
             L.d("[Countly] changeDeviceIdWithoutMerge: id = " + id);
         }
-        sdk.changeDeviceIdWithoutMerge(ctx, id);
+        sdk.changeDeviceIdWithoutMerge(ctx.getConfig(), id);
         return this;
     }
 

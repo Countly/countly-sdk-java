@@ -1,9 +1,8 @@
 package ly.count.sdk.java.internal;
 
+import java.io.UnsupportedEncodingException;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.io.UnsupportedEncodingException;
 
 public class ModuleRatingCore extends ModuleBase {
 
@@ -17,7 +16,6 @@ public class ModuleRatingCore extends ModuleBase {
     public final static String storableStoragePrefix = "rating";
 
     protected InternalConfig internalConfig = null;
-    protected CtxCore ctx = null;
 
     @Override
     public void init(InternalConfig config, Log logger) {
@@ -26,8 +24,7 @@ public class ModuleRatingCore extends ModuleBase {
     }
 
     @Override
-    public void onContextAcquired(CtxCore ctx) {
-        this.ctx = ctx;
+    public void initFinished(InternalConfig config) {
     }
 
     @Override
@@ -49,7 +46,7 @@ public class ModuleRatingCore extends ModuleBase {
     }
 
     public void PurgeRatingInfo() {
-        ctx.getSDK().sdkStorage.storablePurge(ctx, storableStoragePrefix);
+        internalConfig.sdk.sdkStorage.storablePurge(internalConfig, storableStoragePrefix);
     }
 
     /**
@@ -59,7 +56,7 @@ public class ModuleRatingCore extends ModuleBase {
      */
     protected StarRatingPreferences loadStarRatingPreferences() {
         StarRatingPreferences srp = new StarRatingPreferences();
-        Storage.read(ctx, srp);
+        Storage.read(internalConfig, srp);
         return srp;
     }
 
@@ -69,7 +66,7 @@ public class ModuleRatingCore extends ModuleBase {
      * @param srp
      */
     protected void saveStarRatingPreferences(StarRatingPreferences srp) {
-        Storage.push(ctx, srp);
+        Storage.push(internalConfig, srp);
     }
 
     /**

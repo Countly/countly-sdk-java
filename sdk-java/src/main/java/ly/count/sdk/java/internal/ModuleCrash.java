@@ -1,7 +1,6 @@
 package ly.count.sdk.java.internal;
 
 import java.util.Map;
-
 import ly.count.sdk.java.Crash;
 import ly.count.sdk.java.CrashProcessor;
 
@@ -39,7 +38,7 @@ public class ModuleCrash extends ModuleBase {
                 Thread.setDefaultUncaughtExceptionHandler(previousHandler);
             }
             if (clear) {
-                ctx.getSDK().sdkStorage.storablePurge(ctx, CrashImpl.getStoragePrefix());
+                ctx.getSDK().sdkStorage.storablePurge(ctx.getConfig(), CrashImpl.getStoragePrefix());
             }
         } catch (Throwable t) {
             L.e("[ModuleCrash] Exception while stopping crash reporting" + t);
@@ -47,7 +46,7 @@ public class ModuleCrash extends ModuleBase {
     }
 
     @Override
-    public void onContextAcquired(final CtxCore ctx) {
+    public void initFinished(final InternalConfig config) {
         previousHandler = Thread.getDefaultUncaughtExceptionHandler();
         final Thread.UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
         Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
@@ -55,7 +54,7 @@ public class ModuleCrash extends ModuleBase {
             crashed = true;
 
             if (isActive()) {
-                onCrash(ctx, throwable, true, null, null);
+                onCrash(config, throwable, true, null, null);
             }
 
             if (handler != null) {
@@ -65,9 +64,9 @@ public class ModuleCrash extends ModuleBase {
         started = System.nanoTime();
     }
 
-    public CrashImpl onCrash(CtxCore ctx, Throwable t, boolean fatal, String name, Map<String, String> segments, String... logs) {
+    public CrashImpl onCrash(InternalConfig config, Throwable t, boolean fatal, String name, Map<String, String> segments, String... logs) {
 
-        if (ctx.getConfig().isBackendModeEnabled()) {
+        if (config.isBackendModeEnabled()) {
             L.w("[ModuleCrash] onCrash: Skipping crash, backend mode is enabled!");
             return null;
         }
@@ -76,10 +75,10 @@ public class ModuleCrash extends ModuleBase {
             L.e("[ModuleCrash] Throwable cannot be null");
             return null;
         }
-        return onCrash(ctx, new CrashImpl(L).addThrowable(t).setFatal(fatal).setName(name).setSegments(segments).setLogs(logs));
+        return onCrash(config, new CrashImpl(L).addThrowable(t).setFatal(fatal).setName(name).setSegments(segments).setLogs(logs));
     }
 
-    public CrashImpl onCrash(CtxCore ctx, CrashImpl crash) {
+    public CrashImpl onCrash(InternalConfig config, CrashImpl crash) {
         long running = started == 0 ? 0 : TimeUtils.nsToMs(System.nanoTime() - started);
         crash.putMetrics(running);
 
@@ -99,17 +98,17 @@ public class ModuleCrash extends ModuleBase {
 
                 if (result == null) {
                     L.i("[ModuleCrash] Crash is set to be ignored by CrashProcessor#process(Crash) " + crashProcessor);
-                    Storage.remove(ctx, crash);
+                    Storage.remove(config, crash);
                     return null;
                 }
             } catch (Throwable t) {
                 L.e("[ModuleCrash] Error when calling CrashProcessor#process(Crash)" + t);
             }
         }
-        if (!Storage.push(ctx, crash)) {
+        if (!Storage.push(config, crash)) {
             L.e("[ModuleCrash] Couldn't persist a crash, so dumping it here: " + crash.getJSON());
         } else {
-            SDKCore.instance.onSignal(ctx, SDKCore.Signal.Crash.getIndex(), crash.storageId().toString());
+            SDKCore.instance.onSignal(config, SDKCore.Signal.Crash.getIndex(), crash.storageId().toString());
         }
         return crash;
     }

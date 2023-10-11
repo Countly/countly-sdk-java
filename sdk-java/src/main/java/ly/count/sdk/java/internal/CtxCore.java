@@ -6,20 +6,14 @@ import java.io.File;
  * {@link CtxCore} implementation
  */
 public class CtxCore {
-    Log L;
-    private final SDKCore sdk;
-    private final File directory;
     private InternalConfig config;
 
-    public CtxCore(SDKCore sdk, InternalConfig config, Log logger, File directory) {
-        this.sdk = sdk;
+    public CtxCore(InternalConfig config) {
         this.config = config;
-        this.L = logger;
-        this.directory = directory;
     }
 
     public File getSdkStorageRootDirectory() {
-        return directory;
+        return config.getSdkStorageRootDirectory();
     }
 
     public InternalConfig getConfig() {
@@ -31,10 +25,10 @@ public class CtxCore {
     }
 
     public SDKCore getSDK() {
-        return sdk;
+        return config.sdk;
     }
 
     public Log getLogger() {
-        return L;
+        return config.getLogger();
     }
 }

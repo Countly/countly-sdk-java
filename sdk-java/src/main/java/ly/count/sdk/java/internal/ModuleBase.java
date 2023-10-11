@@ -42,7 +42,7 @@ public abstract class ModuleBase {
      * @param deviceId deviceId valid from now on
      * @param oldDeviceId deviceId valid previously if any
      */
-    public void onDeviceId(CtxCore ctx, Config.DID deviceId, Config.DID oldDeviceId) {
+    public void onDeviceId(InternalConfig config, Config.DID deviceId, Config.DID oldDeviceId) {
     }
 
     /**
@@ -84,7 +84,7 @@ public abstract class ModuleBase {
      * SDK got a first context. Called only in main mode (from {@code Application#onCreate()})
      *
      * @param ctx {@link CtxCore} with application instance
-     * @deprecated use {@link #initFinished(InternalConfig)} instead
+     * @deprecated use {@link #initFinished(CtxCore)} instead
      */
     public void onContextAcquired(CtxCore ctx) {
     }
@@ -134,8 +134,6 @@ public abstract class ModuleBase {
 
     /**
      * Called when the initialization is finished.
-     *
-     * @param config {@link InternalConfig} used for further initialization
      */
     protected void initFinished(InternalConfig config) {
     }

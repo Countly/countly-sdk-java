@@ -8,8 +8,6 @@ import javax.annotation.Nonnull;
 import ly.count.sdk.java.Countly;
 
 public class ModuleEvents extends ModuleBase {
-
-    protected CtxCore ctx = null;
     protected EventQueue eventQueue = null;
     final Map<String, EventImpl> timedEvents = new HashMap<>();
     protected Events eventsInterface = null;
@@ -24,9 +22,8 @@ public class ModuleEvents extends ModuleBase {
     }
 
     @Override
-    public void onContextAcquired(@Nonnull CtxCore ctx) {
-        this.ctx = ctx;
-        L.d("[ModuleEvents] onContextAcquired: " + ctx);
+    public void initFinished(@Nonnull InternalConfig config) {
+        L.d("[ModuleEvents] initFinished");
     }
 
     @Override
@@ -57,7 +54,7 @@ public class ModuleEvents extends ModuleBase {
         request.own(ModuleEvents.class);
 
         eventQueue.clear();
-        ModuleRequests.pushAsync(ctx, request);
+        ModuleRequests.pushAsync(internalConfig, request);
     }
 
     protected void removeInvalidDataFromSegments(Map<String, Object> segments) {

@@ -35,6 +35,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     protected final CtxCore ctx;
 
+    InternalConfig config;
     /**
      * {@link System#nanoTime()} of {@link #begin()}, {@link #update()} and {@link #end()} calls respectively.
      */
@@ -121,7 +122,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         this.consents = SDKCore.instance.consents;
 
         if (pushOnChange) {
-            Storage.pushAsync(ctx, this);
+            Storage.pushAsync(ctx.getConfig(), this);
         }
 
         Future<Boolean> ret = ModuleRequests.sessionBegin(ctx, this);
@@ -160,7 +161,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         Long duration = updateDuration(now);
 
         if (pushOnChange) {
-            Storage.pushAsync(ctx, this);
+            Storage.pushAsync(ctx.getConfig(), this);
         }
 
         return ModuleRequests.sessionUpdate(ctx, this, duration);
@@ -200,7 +201,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         if (currentView != null) {
             currentView.stop(true);
         } else {
-            Storage.pushAsync(ctx, this);
+            Storage.pushAsync(ctx.getConfig(), this);
         }
 
         Long duration = updateDuration(now);
@@ -209,7 +210,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             if (!removed) {
                 L.i("[SessionImpl] No data in session end request");
             }
-            Storage.removeAsync(ctx, SessionImpl.this, callback);
+            Storage.removeAsync(ctx.getConfig(), SessionImpl.this, callback);
         });
 
         SDKCore.instance.onSessionEnded(ctx, this);
@@ -217,20 +218,20 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         return ret;
     }
 
-    Boolean recover(Config config, Log L) {
+    Boolean recover(InternalConfig config, Log L) {
         if ((System.currentTimeMillis() - id) < 0) {
             return null;
         } else {
             Future<Boolean> future = null;
             if (began == null) {
-                return Storage.remove(ctx, this);
+                return Storage.remove(config, this);
             } else if (ended == null && updated == null) {
                 future = end(began, null, null);
             } else if (ended == null) {
                 future = end(updated, null, null);
             } else {
                 // began != null && ended != null
-                return Storage.remove(ctx, this);
+                return Storage.remove(config, this);
             }
 
             if (future == null) {
@@ -283,7 +284,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
      * @deprecated use {@link ModuleEvents.Events#startEvent(String)}} instead via <code>instance().events()</code> call
      */
     public Event timedEvent(String key) {
-        return timedEvents().event(ctx, key);
+        return timedEvents().event(ctx.getConfig(), key);
     }
 
     /**
@@ -387,13 +388,13 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     @Override
     public Usage login(String id) {
-        SDKCore.instance.login(ctx, id);
+        SDKCore.instance.login(ctx.getConfig(), id);
         return this;
     }
 
     @Override
     public Usage logout() {
-        SDKCore.instance.logout(ctx);
+        SDKCore.instance.logout(ctx.getConfig());
         return this;
     }
 
@@ -410,7 +411,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         }
 
         L.d("[SessionImpl] changeDeviceIdWithoutMerge: id = " + id);
-        SDKCore.instance.changeDeviceIdWithMerge(ctx, id);
+        SDKCore.instance.changeDeviceIdWithMerge(ctx.getConfig(), id);
         return this;
     }
 
@@ -422,14 +423,14 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         }
 
         L.d("[SessionImpl] changeDeviceIdWithoutMerge: id = " + id);
-        SDKCore.instance.changeDeviceIdWithoutMerge(ctx, id);
+        SDKCore.instance.changeDeviceIdWithoutMerge(ctx.getConfig(), id);
         return this;
     }
 
     public Session addParam(String key, Object value) {
         params.add(key, value);
         if (pushOnChange) {
-            Storage.pushAsync(ctx, this);
+            Storage.pushAsync(ctx.getConfig(), this);
         }
         return this;
     }
@@ -586,7 +587,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     void setConsents(CtxCore ctx, int features) {
         consents = features;
-        Storage.pushAsync(ctx, this);
+        Storage.pushAsync(ctx.getConfig(), this);
     }
 
     @Override

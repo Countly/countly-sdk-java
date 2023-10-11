@@ -2,6 +2,7 @@ package ly.count.sdk.java.internal;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -19,7 +20,7 @@ import ly.count.sdk.java.Config;
  * Internal to Countly SDK configuration class. Can and should contain options hidden from outside.
  * Only members of {@link InternalConfig} can be changed, members of {@link Config} are non-modifiable.
  */
-public final class InternalConfig extends Config implements Storable {
+public class InternalConfig extends Config implements Storable {
     // private static final Log.Module L = Log.module("InternalConfig");
 
     /**
@@ -34,6 +35,7 @@ public final class InternalConfig extends Config implements Storable {
     private final List<DID> dids = new ArrayList<>();
 
     ImmediateRequestGenerator immediateRequestGenerator = null;
+    public SDKCore sdk;
 
     /**
      * Shouldn't be used!
@@ -415,5 +417,17 @@ public final class InternalConfig extends Config implements Storable {
 
     public Map<String, String> getMetricOverride() {
         return metricOverride;
+    }
+
+    public void setLogger(Log logger) {
+        this.configLog = logger;
+    }
+
+    File getSdkStorageRootDirectory() {
+        return sdkStorageRootDirectory;
+    }
+
+    Log getLogger() {
+        return configLog;
     }
 }

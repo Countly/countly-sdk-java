@@ -11,7 +11,7 @@ import ly.count.sdk.java.internal.Device;
 public class BackendModePerformanceTests {
     final static String DEVICE_ID = "device-id";
     final static String COUNTLY_APP_KEY = "COUNTLY_APP_KEY";
-    final static String COUNTLY_SERVER_URL = "https://try.count.ly/";
+    final static String COUNTLY_SERVER_URL = "https://xxx.server.ly/";
 
     private static void initSDK(int eventQueueSize, int requestQueueSize) {
         Config config = new Config(COUNTLY_SERVER_URL, COUNTLY_APP_KEY)

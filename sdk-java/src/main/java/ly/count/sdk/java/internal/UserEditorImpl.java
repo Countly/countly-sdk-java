@@ -523,9 +523,9 @@ public class UserEditorImpl implements UserEditor {
 
             perform(changes);
 
-            Storage.push(user.ctx, user);
+            Storage.push(SDKCore.instance.config, user);
 
-            ModuleRequests.injectParams(user.ctx, params -> {
+            ModuleRequests.injectParams(SDKCore.instance.config, params -> {
                 params.add("user_details", changes.toString());
                 if (changes.has(PICTURE_PATH)) {
                     try {

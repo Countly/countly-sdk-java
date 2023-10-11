@@ -9,11 +9,11 @@ public class DefaultNetworking implements Networking {
     IStorageForRequestQueue storageForRequestQueue;
 
     @Override
-    public void init(CtxCore ctx, IStorageForRequestQueue storageForRequestQueue) {
-        L = ctx.getLogger();
+    public void init(InternalConfig config, IStorageForRequestQueue storageForRequestQueue) {
+        L = config.getLogger();
         shutdown = false;
         transport = new Transport();
-        transport.init(ctx.getConfig(), ctx.getLogger());
+        transport.init(config, config.getLogger());
         tasks = new Tasks("network", L);
         this.storageForRequestQueue = storageForRequestQueue;
     }
@@ -24,15 +24,15 @@ public class DefaultNetworking implements Networking {
     }
 
     @Override
-    public boolean check(CtxCore ctx) {
-        L.d("[Networking] [check] state: shutdown [" + shutdown + "], tasks running [" + tasks.isRunning() + "], net running [" + tasks.isRunning() + "], device id [" + ctx.getConfig().getDeviceId() + "]");
-        if (!shutdown && !tasks.isRunning() && ctx.getConfig().getDeviceId() != null) {
-            tasks.run(submit(ctx));
+    public boolean check(InternalConfig config) {
+        L.d("[Networking] [check] state: shutdown [" + shutdown + "], tasks running [" + tasks.isRunning() + "], net running [" + tasks.isRunning() + "], device id [" + config.getDeviceId() + "]");
+        if (!shutdown && !tasks.isRunning() && config.getDeviceId() != null) {
+            tasks.run(submit(config));
         }
         return tasks.isRunning();
     }
 
-    protected Tasks.Task<Boolean> submit(final CtxCore ctx) {
+    protected Tasks.Task<Boolean> submit(final InternalConfig config) {
         return new Tasks.Task<Boolean>(Tasks.ID_STRICT) {
             @Override
             public Boolean call() throws Exception {
@@ -47,14 +47,14 @@ public class DefaultNetworking implements Networking {
                         return false;
                     } else if (check.equals(Boolean.FALSE)) {
                         L.d("[Networking] Request won't be ready, removing: " + request);
-                        Storage.remove(ctx, request);
+                        Storage.remove(config, request);
                         return true;
                     } else {
                         tasks.run(transport.send(request), result -> {
                             L.d("[Networking] Request " + request.storageId() + " sent?: " + result);
                             if (result) {
                                 storageForRequestQueue.removeRequest(request);
-                                check(ctx);
+                                check(config);
                             }
                         });
                         return true;
@@ -65,7 +65,7 @@ public class DefaultNetworking implements Networking {
     }
 
     @Override
-    public void stop(CtxCore ctx) {
+    public void stop(InternalConfig config) {
         shutdown = true;
         tasks.shutdown();
     }

@@ -32,14 +32,14 @@ class TimedEvents implements Storable, EventImpl.EventRecorder {
 
     /**
      * @param key key of event to get
-     * @param ctx context
+     * @param config config to use
      * @return event with given key
      * @deprecated use {@link ModuleEvents.Events#startEvent(String)}} instead via <code>instance().events()</code> call
      */
-    EventImpl event(CtxCore ctx, String key) {
+    EventImpl event(InternalConfig config, String key) {
         EventImpl event = null;
         if (Countly.instance().events().startEvent(key)) {
-            event = ctx.getSDK().module(ModuleEvents.class).timedEvents.get(key);
+            event = config.sdk.module(ModuleEvents.class).timedEvents.get(key);
         } else {
             if (events.containsKey(key)) {
                 event = events.remove(key);

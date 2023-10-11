@@ -29,12 +29,9 @@ public class BaseTestsCore {
 
         private Log L = null;
 
-        public CtxImpl(SDKCore sdk, InternalConfig config, Object ctx, Log logger) {
-            super(sdk, config, logger, null);
-            this.sdk = sdk;
+        public CtxImpl(InternalConfig config) {
+            super(config);
             this.config = config;
-            this.ctx = ctx;
-            this.L = logger;
         }
 
         @Override
@@ -59,7 +56,7 @@ public class BaseTestsCore {
     }
 
     public Config config() {
-        return new Config(SERVER, APP_KEY).setLoggingLevel(Config.LoggingLevel.DEBUG);
+        return new Config(SERVER, APP_KEY, TestUtils.getTestSDirectory()).setLoggingLevel(Config.LoggingLevel.DEBUG);
     }
 
     protected Config defaultConfig() throws Exception {
@@ -75,7 +72,8 @@ public class BaseTestsCore {
     @Before
     public void setUp() throws Exception {
         Log L = new Log(Config.LoggingLevel.VERBOSE, null);
-        ctx = new CtxImpl(this.sdk, this.config == null ? new InternalConfig(defaultConfig()) : this.config, getSdkStorageRootDirectory(), L);
+
+        //ctx = new CtxImpl(this.sdk, this.config == null ? new InternalConfig(defaultConfig()) : this.config, getSdkStorageRootDirectory(), L);
     }
 
     protected void setUpApplication(Config config) throws Exception {
@@ -87,9 +85,9 @@ public class BaseTestsCore {
 
         this.dummy = mock(ModuleBase.class);
         this.sdk = mock(SDKCore.class);
-        this.sdk.init(new CtxImpl(this.sdk, new InternalConfig(defaultConfig()), getSdkStorageRootDirectory(), L));
+        this.sdk.init(new InternalConfig(defaultConfig()));
         this.config = this.sdk.config();
-        this.ctx = new CtxImpl(this.sdk, this.config, getSdkStorageRootDirectory(), L);
+        this.ctx = new CtxImpl(this.sdk.config);
     }
 
     protected <T extends ModuleBase> T module(Class<T> cls, boolean mock) {

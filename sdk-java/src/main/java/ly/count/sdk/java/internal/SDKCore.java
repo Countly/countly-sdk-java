@@ -91,12 +91,11 @@ public class SDKCore {
         return modules != null && modules.containsKey(feat);
     }
 
-    public void init(CtxCore ctx) {
-        InternalConfig config = ctx.getConfig();
+    public void init(InternalConfig config) {
         if (config.immediateRequestGenerator == null) {
             config.immediateRequestGenerator = ImmediateRequestMaker::new;
         }
-        prepareMappings(ctx);
+        prepareMappings(config);
         countlyTimer = new CountlyTimer(L);
         countlyTimer.startTimer(config.getSendUpdateEachSeconds(), this::onTimer);
     }
@@ -118,7 +117,7 @@ public class SDKCore {
         }
 
         if (networking != null) {
-            networking.stop(ctx);
+            networking.stop(ctx.getConfig());
         }
 
         countlyTimer.stopTimer();
@@ -136,11 +135,11 @@ public class SDKCore {
 
         modules.clear();
         moduleMappings.clear();
+        sdkStorage.stop(config, clear);//from original super class
+
         user = null;
         config = null;
         instance = null;
-
-        sdkStorage.stop(ctx, clear);//from original super class
     }
 
     /**
@@ -192,7 +191,7 @@ public class SDKCore {
                     L.e("[SDKCore] Cannot instantiate module " + feature);
                 } else {
                     module.init(ctx.getConfig(), L);
-                    module.onContextAcquired(ctx);
+                    module.initFinished(ctx.getConfig());
                     modules.put(feature, module);
                 }
             }
@@ -241,7 +240,7 @@ public class SDKCore {
      * @throws IllegalArgumentException in case some {@link ModuleBase} finds {@link #config} inconsistent.
      * @throws IllegalStateException when this module is run second time on the same {@code Core} instance.
      */
-    protected void prepareMappings(CtxCore ctx) throws IllegalStateException {
+    protected void prepareMappings(InternalConfig config) throws IllegalStateException {
         if (!modules.isEmpty()) {
             throw new IllegalStateException("Modules can only be built once");
         }
@@ -249,8 +248,8 @@ public class SDKCore {
         moduleMappings.clear();
         registerDefaultModuleMappings();
 
-        for (int feature : ctx.getConfig().getModuleOverrides()) {
-            registerModuleMapping(feature, ctx.getConfig().getModuleOverride(feature));
+        for (int feature : config.getModuleOverrides()) {
+            registerModuleMapping(feature, config.getModuleOverride(feature));
         }
     }
 
@@ -264,7 +263,7 @@ public class SDKCore {
      * @throws IllegalArgumentException in case some {@link ModuleBase} finds {@link #config} inconsistent.
      * @throws IllegalStateException when this module is run second time on the same {@code Core} instance.
      */
-    protected void buildModules(CtxCore ctx, int features) throws IllegalArgumentException, IllegalStateException {
+    protected void buildModules(InternalConfig config, int features) throws IllegalArgumentException, IllegalStateException {
         // override module mappings in native/Android parts, overriding by Config ones if necessary
 
         if (!modules.isEmpty()) {
@@ -280,13 +279,13 @@ public class SDKCore {
         modules.put(-2, new ModuleRequests());
         modules.put(CoreFeature.Sessions.getIndex(), new ModuleSessions());
 
-        if (ctx.getConfig().requiresConsent()) {
+        if (config.requiresConsent()) {
             consents = 0;
         } else {
-            consents = ctx.getConfig().getFeatures1();
+            consents = config.getFeatures1();
         }
 
-        if (!ctx.getConfig().requiresConsent()) {
+        if (!config.requiresConsent()) {
             for (int feature : moduleMappings.keySet()) {
                 Class<? extends ModuleBase> cls = moduleMappings.get(feature);
                 if (cls == null) {
@@ -412,37 +411,36 @@ public class SDKCore {
         return null;
     }
 
-    protected InternalConfig prepareConfig(CtxCore ctx) {
+    protected InternalConfig prepareConfig(InternalConfig config) {
         InternalConfig loaded = null;
         try {
-            loaded = Storage.read(ctx, new InternalConfig());
+            loaded = Storage.read(config, new InternalConfig());
         } catch (IllegalArgumentException e) {
             L.e("[SDKCore] Cannot happen" + e);
         }
 
         if (loaded == null) {
-            return ctx.getConfig();
+            return config;
         } else {
-            loaded.setFrom(ctx.getConfig());
+            loaded.setFrom(config);
             return loaded;
         }
     }
 
-    public void init(final CtxCore ctx, Log logger) {
+    public void init(final InternalConfig givenConfig, Log logger) {
         L = logger;
         L.i("[SDKCore] Initializing Countly");
 
-        sdkStorage.init(ctx, logger);
-        config = prepareConfig(ctx);
-        ctx.setConfig(config);
+        sdkStorage.init(givenConfig, logger);
+        config = prepareConfig(givenConfig);
 
-        this.init(ctx);
+        this.init(givenConfig);
 
         requestQueueMemory = new ArrayDeque<>(config.getRequestQueueMaxSize());
         // ModuleSessions is always enabled, even without consent
-        int consents = ctx.getConfig().getFeatures1() | CoreFeature.Sessions.getIndex();
+        int consents = givenConfig.getFeatures1() | CoreFeature.Sessions.getIndex();
         // build modules
-        buildModules(ctx, consents);
+        buildModules(givenConfig, consents);
 
         final List<Integer> failed = new ArrayList<>();
 
@@ -465,7 +463,7 @@ public class SDKCore {
 
             if (config.isBackendModeEnabled()) {
                 //Backend mode is enabled, we will use memory only request queue.
-                networking.init(ctx, new IStorageForRequestQueue() {
+                networking.init(givenConfig, new IStorageForRequestQueue() {
                     @Override
                     public Request getNextRequest() {
                         synchronized (SDKCore.instance.lockBRQStorage) {
@@ -486,44 +484,39 @@ public class SDKCore {
                 });
             } else {
                 // Backend mode isn't enabled, we use persistent file storage.
-                networking.init(ctx, new IStorageForRequestQueue() {
+                networking.init(givenConfig, new IStorageForRequestQueue() {
                     @Override
                     public Request getNextRequest() {
-                        return Storage.readOne(ctx, new Request(0L), true, L);
+                        return Storage.readOne(givenConfig, new Request(0L), true, L);
                     }
 
                     @Override
                     public Boolean removeRequest(Request request) {
-                        return Storage.remove(ctx, request);
+                        return Storage.remove(givenConfig, request);
                     }
                 });
             }
 
-            networking.check(ctx);
+            networking.check(givenConfig);
         }
 
-        recover(ctx);
+        givenConfig.sdk = this;
+        recover(givenConfig);
 
         try {
-            user = Storage.read(ctx, new UserImpl(ctx));
+            user = Storage.read(givenConfig, new UserImpl(givenConfig));
             if (user == null) {
-                user = new UserImpl(ctx);
+                user = new UserImpl(givenConfig);
             }
         } catch (Throwable e) {
             L.e("[SDKCore] Cannot happen" + e);
-            user = new UserImpl(ctx);
+            user = new UserImpl(givenConfig);
         }
-
-        onContextAcquired(ctx);
         initFinished(config);
     }
 
-    private void initFinished(InternalConfig config) {
+    private void initFinished(final InternalConfig config) {
         modules.forEach((feature, module) -> module.initFinished(config));
-    }
-
-    protected void onContextAcquired(final CtxCore ctx) {
-        modules.forEach((feature, module) -> module.onContextAcquired(ctx));
     }
 
     public UserImpl user() {
@@ -550,23 +543,23 @@ public class SDKCore {
         L.i("[SDKCore] onCrash: t: " + t.toString() + " fatal: " + fatal + " name: " + name + " segments: " + segments);
         ModuleCrash module = (ModuleCrash) module(CoreFeature.CrashReporting.getIndex());
         if (module != null) {
-            module.onCrash(ctx, t, fatal, name, segments, logs);
+            module.onCrash(ctx.getConfig(), t, fatal, name, segments, logs);
         }
     }
 
-    public void onDeviceId(CtxCore ctx, Config.DID id, Config.DID old) {
+    public void onDeviceId(InternalConfig config, Config.DID id, Config.DID old) {
         L.d("onDeviceId " + id + ", old " + old);
         if (id != null && (!id.equals(old) || !id.equals(config.getDeviceId(id.realm)))) {
             config.setDeviceId(id);
-            Storage.push(ctx, instance.config);
+            Storage.push(config, instance.config);
         } else if (id == null && old != null) {
             if (config.removeDeviceId(old)) {
-                Storage.push(ctx, config);
+                Storage.push(config, config);
             }
         }
 
         for (ModuleBase module : modules.values()) {
-            module.onDeviceId(ctx, id, old);
+            module.onDeviceId(config, id, old);
         }
 
         if (id != null && id.realm == Config.DID.REALM_DID) {
@@ -574,21 +567,25 @@ public class SDKCore {
             L.d("[SDKCore] 5");
         }
     }
-
-    public void login(CtxCore ctx, String id) {
-        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).login(ctx, id);
+    
+    public Future<Config.DID> acquireId(final InternalConfig config, final Config.DID holder, final boolean fallbackAllowed, final Tasks.Callback<Config.DID> callback) {
+        return ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).acquireId(config, holder, fallbackAllowed, callback);
     }
 
-    public void logout(CtxCore ctx) {
-        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).logout(ctx);
+    public void login(InternalConfig config, String id) {
+        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).login(config, id);
     }
 
-    public void changeDeviceIdWithoutMerge(CtxCore ctx, String id) {
-        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).changeDeviceId(ctx, id, false);
+    public void logout(InternalConfig config) {
+        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).logout(config);
     }
 
-    public void changeDeviceIdWithMerge(CtxCore ctx, String id) {
-        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).changeDeviceId(ctx, id, true);
+    public void changeDeviceIdWithoutMerge(InternalConfig config, String id) {
+        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).changeDeviceId(config, id, false);
+    }
+
+    public void changeDeviceIdWithMerge(InternalConfig config, String id) {
+        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).changeDeviceId(config, id, true);
     }
 
     public static boolean enabled(int feature) {
@@ -641,18 +638,18 @@ public class SDKCore {
         }
     }
 
-    protected void recover(CtxCore ctx) {
-        List<Long> crashes = Storage.list(ctx, CrashImpl.getStoragePrefix());
+    protected void recover(InternalConfig config) {
+        List<Long> crashes = Storage.list(config, CrashImpl.getStoragePrefix());
 
         for (Long id : crashes) {
             L.i("[SDKCore] Found unprocessed crash " + id);
-            onSignal(ctx, Signal.Crash.getIndex(), id.toString());
+            onSignal(config, Signal.Crash.getIndex(), id.toString());
         }
 
-        List<Long> sessions = Storage.list(ctx, SessionImpl.getStoragePrefix());
+        List<Long> sessions = Storage.list(config, SessionImpl.getStoragePrefix());
         for (Long id : sessions) {
             L.d("[SDKCore] recovering session " + id);
-            SessionImpl session = Storage.read(ctx, new SessionImpl(ctx, id));
+            SessionImpl session = Storage.read(config, new SessionImpl(new CtxCore(config), id));
             if (session == null) {
                 L.e("[SDKCore] no session with id " + id + " found while recovering");
             } else {
@@ -666,35 +663,35 @@ public class SDKCore {
      * Core instance config
      */
 
-    public void onSignal(CtxCore ctx, int id, Byteable param1, Byteable param2) {
+    public void onSignal(InternalConfig config, int id, Byteable param1, Byteable param2) {
         if (id == Signal.DID.getIndex()) {
-            networking.check(ctx);
+            networking.check(config);
         }
     }
 
-    public void onSignal(CtxCore ctx, int id, String param) {
+    public void onSignal(InternalConfig config, int id, String param) {
         if (id == Signal.Ping.getIndex()) {
-            networking.check(ctx);
+            networking.check(config);
         } else if (id == Signal.Crash.getIndex()) {
-            processCrash(ctx, Long.parseLong(param));
+            processCrash(config, Long.parseLong(param));
         }
     }
 
-    private boolean processCrash(CtxCore ctx, Long id) {
+    private boolean processCrash(InternalConfig config, Long id) {
         CrashImpl crash = new CrashImpl(id, L);
-        crash = Storage.read(ctx, crash);
+        crash = Storage.read(config, crash);
 
         if (crash == null) {
             L.e("Cannot read crash from storage, skipping");
             return false;
         }
 
-        Request request = ModuleRequests.nonSessionRequest(ctx);
+        Request request = ModuleRequests.nonSessionRequest(config);
         ModuleCrash.putCrashIntoParams(crash, request.params);
-        if (Storage.push(ctx, request)) {
+        if (Storage.push(config, request)) {
             L.i("[SDKCore] Added request " + request.storageId() + " instead of crash " + crash.storageId());
-            networking.check(ctx);
-            Boolean success = Storage.remove(ctx, crash);
+            networking.check(config);
+            Boolean success = Storage.remove(config, crash);
             return (success != null) && success;
         } else {
             L.e("[SDKCore] Couldn't write request " + request.storageId() + " instead of crash " + crash.storageId());
@@ -703,7 +700,7 @@ public class SDKCore {
     }
 
     //transferred from original subclass
-    public void onRequest(ly.count.sdk.java.internal.CtxCore ctx, Request request) {
-        onSignal(ctx, SDKCore.Signal.Ping.getIndex(), null);
+    public void onRequest(InternalConfig config, Request request) {
+        onSignal(config, SDKCore.Signal.Ping.getIndex(), null);
     }
 }
