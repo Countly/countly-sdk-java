@@ -503,7 +503,7 @@ public class SDKCore {
             networking.check(ctx);
         }
 
-        ctx.getConfig().setSdk(this);
+        ctx.getConfig().sdk = this;
         recover(ctx);
 
         try {

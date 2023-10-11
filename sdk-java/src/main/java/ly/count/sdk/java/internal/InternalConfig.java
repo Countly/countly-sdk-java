@@ -35,7 +35,7 @@ public final class InternalConfig extends Config implements Storable {
     private final List<DID> dids = new ArrayList<>();
 
     ImmediateRequestGenerator immediateRequestGenerator = null;
-    SDKCore sdk;
+    public SDKCore sdk;
 
     /**
      * Shouldn't be used!
@@ -417,10 +417,6 @@ public final class InternalConfig extends Config implements Storable {
 
     public Map<String, String> getMetricOverride() {
         return metricOverride;
-    }
-
-    public void setSdk(SDKCore sdk) {
-        this.sdk = sdk;
     }
 
     public void setLogger(Log logger) {
