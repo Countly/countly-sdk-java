@@ -42,7 +42,7 @@ public abstract class ModuleBase {
      * @param deviceId deviceId valid from now on
      * @param oldDeviceId deviceId valid previously if any
      */
-    public void onDeviceId(CtxCore ctx, Config.DID deviceId, Config.DID oldDeviceId) {
+    public void onDeviceId(InternalConfig config, Config.DID deviceId, Config.DID oldDeviceId) {
     }
 
     /**
@@ -134,9 +134,7 @@ public abstract class ModuleBase {
 
     /**
      * Called when the initialization is finished.
-     *
-     * @param ctx {@link CtxCore} used for further initialization
      */
-    protected void initFinished(CtxCore ctx) {
+    protected void initFinished(InternalConfig config) {
     }
 }

@@ -30,9 +30,9 @@ public class ModuleSessions extends ModuleBase {
     }
 
     @Override
-    public void initFinished(CtxCore ctx) {
+    public void initFinished(final InternalConfig config) {
         try {
-            timedEvents = Storage.read(ctx, new TimedEvents(L));
+            timedEvents = Storage.read(config, new TimedEvents(L));
             if (timedEvents == null) {
                 timedEvents = new TimedEvents(L);
             }
@@ -53,12 +53,12 @@ public class ModuleSessions extends ModuleBase {
     @Override
     public void stop(CtxCore ctx, boolean clear) {
         if (!clear) {
-            Storage.pushAsync(ctx, timedEvents);
+            Storage.pushAsync(ctx.getConfig(), timedEvents);
         }
         timedEvents = null;
 
         if (clear) {
-            ctx.getSDK().sdkStorage.storablePurge(ctx, SessionImpl.getStoragePrefix());
+            ctx.getSDK().sdkStorage.storablePurge(ctx.getConfig(), SessionImpl.getStoragePrefix());
         }
     }
 

@@ -20,7 +20,7 @@ import ly.count.sdk.java.Config;
  * Internal to Countly SDK configuration class. Can and should contain options hidden from outside.
  * Only members of {@link InternalConfig} can be changed, members of {@link Config} are non-modifiable.
  */
-public final class InternalConfig extends Config implements Storable {
+public class InternalConfig extends Config implements Storable {
     // private static final Log.Module L = Log.module("InternalConfig");
 
     /**

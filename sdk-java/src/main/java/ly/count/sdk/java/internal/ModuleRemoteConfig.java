@@ -45,17 +45,13 @@ public class ModuleRemoteConfig extends ModuleBase {
     }
 
     @Override
-    public void initFinished(CtxCore ctx) {
-        this.ctx = ctx;
-
-        InternalConfig cfg = ctx.getConfig();
-
-        Long timeoutVal = cfg.getRemoteConfigUpdateTimeoutLength();
+    public void initFinished(InternalConfig config) {
+        Long timeoutVal = config.getRemoteConfigUpdateTimeoutLength();
         if (timeoutVal != null) {
             this.rcRequestTimeout = timeoutVal;
         }
 
-        Boolean automEnabled = cfg.getRemoteConfigAutomaticUpdateEnabled();
+        Boolean automEnabled = config.getRemoteConfigAutomaticUpdateEnabled();
         if (automEnabled != null) {
             automaticUpdateEnabled = automEnabled;
         }
@@ -149,7 +145,7 @@ public class ModuleRemoteConfig extends ModuleBase {
 
         Request req = ModuleRequests.remoteConfigUpdate(ctx, sKOnly, sKExcept, ModuleRemoteConfig.class);
         requestCallbacks.put(req.storageId(), callback);
-        ModuleRequests.pushAsync(ctx, req);
+        ModuleRequests.pushAsync(internalConfig, req);
     }
 
     protected Object getRemoteConfigValue(String key) {
@@ -159,12 +155,12 @@ public class ModuleRemoteConfig extends ModuleBase {
 
     public RemoteConfigValueStore getStoredValues() {
         RemoteConfigValueStore rcvs = new RemoteConfigValueStore();
-        Storage.read(ctx, rcvs);
+        Storage.read(internalConfig, rcvs);
         return rcvs;
     }
 
     public void saveStoredValues(RemoteConfigValueStore values) {
-        Storage.push(ctx, values);
+        Storage.push(internalConfig, values);
     }
 
     public static class RemoteConfigValueStore implements Storable {
