@@ -484,6 +484,13 @@ public class SDKCore {
                             return requestQueueMemory.remove(request);
                         }
                     }
+
+                    @Override
+                    public Integer remaningRequests() {
+                        synchronized (SDKCore.instance.lockBRQStorage) {
+                            return requestQueueMemory.size() - 1;
+                        }
+                    }
                 });
             } else {
                 // Backend mode isn't enabled, we use persistent file storage.
@@ -496,6 +503,11 @@ public class SDKCore {
                     @Override
                     public Boolean removeRequest(Request request) {
                         return Storage.remove(ctx, request);
+                    }
+
+                    @Override
+                    public Integer remaningRequests() {
+                        return Storage.list(ctx, Request.getStoragePrefix()).size() - 1;
                     }
                 });
             }
