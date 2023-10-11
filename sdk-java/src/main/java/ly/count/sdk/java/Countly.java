@@ -78,6 +78,7 @@ public class Countly implements Usage {
             L.e("[Countly] File cannot be null");
             return;
         }
+        
         if (!directory.isDirectory()) {
             L.e("[Countly] File must be a directory");
             return;

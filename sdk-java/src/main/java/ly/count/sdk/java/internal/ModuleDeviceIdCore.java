@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Future;
-
 import ly.count.sdk.java.Config;
 
 /**
@@ -24,23 +23,16 @@ public class ModuleDeviceIdCore extends ModuleBase {
     private Tasks tasks;
 
     private static final class UUIDGenerator implements DeviceIdGenerator {
-        @Override
-        public boolean isAvailable() {
-            return true;
-        }
+
+        private final static String DEVICE_ID_PREFIX = "CLY_";
 
         @Override
         public String generate(CtxCore context) {
-            return UUID.randomUUID().toString();
+            return DEVICE_ID_PREFIX + UUID.randomUUID();
         }
     }
 
     private static final class CustomIDGenerator implements DeviceIdGenerator {
-        @Override
-        public boolean isAvailable() {
-            return true;
-        }
-
         @Override
         public String generate(CtxCore context) {
             String customId = context.getConfig().getCustomDeviceId();
@@ -54,45 +46,16 @@ public class ModuleDeviceIdCore extends ModuleBase {
 
     private static final Map<Integer, DeviceIdGenerator> generators = new HashMap<>();
 
-    static {
-
-        registerGenerator(Config.DID.STRATEGY_UUID, new UUIDGenerator());
-        registerGenerator(Config.DID.STRATEGY_CUSTOM, new CustomIDGenerator());
-    }
-
-    public static void registerGenerator(int index, DeviceIdGenerator generator) {
-        generators.put(index, generator);
-    }
-
     @Override
     public void init(InternalConfig config, Log logger) throws IllegalArgumentException {
         super.init(config, logger);
 
+        generators.put(Config.DID.STRATEGY_UUID, new UUIDGenerator());
+        generators.put(Config.DID.STRATEGY_CUSTOM, new CustomIDGenerator());
+
         DeviceIdGenerator generator = generators.get(config.getDeviceIdStrategy());
         if (generator == null) {
             L.e("[ModuleDeviceIdCore] Device id strategy [" + config.getDeviceIdStrategy() + "] is not supported by SDK.");
-        } else if (!generator.isAvailable()) {
-            String str = "Device id strategy [" + config.getDeviceIdStrategy() + "] is not available. Make sure corresponding classes are in class path.";
-            if (config.isDeviceIdFallbackAllowed()) {
-                L.w(str);
-            } else {
-                L.e(str);
-                return;
-            }
-
-            int index = config.getDeviceIdStrategy();
-            boolean found = false;
-            while (--index > 0) {
-                generator = generators.get(index);
-                if (generator.isAvailable()) {
-                    L.w("[ModuleDeviceIdCore] Will fall back to strategy [" + index + "]");
-                    found = true;
-                }
-            }
-            // UUID is always available though
-            if (!found) {
-                L.e("[ModuleDeviceIdCore] No fallback device id generation strategy available, SDK won't function properly");
-            }
         }
     }
 
@@ -330,21 +293,13 @@ public class ModuleDeviceIdCore extends ModuleBase {
      * @return {@link Config.DID} instance with an id
      */
     protected Config.DID acquireIdSync(final CtxCore ctx, final Config.DID holder, final boolean fallbackAllowed) {
-        if (testSleep > 0) {
-            try {
-                Thread.sleep(testSleep);
-            } catch (InterruptedException ie) {
-                L.e("[ModuleDeviceIdCore] Exception during tests " + ie);
-            }
-        }
-
         L.i("[ModuleDeviceIdCore] Generating " + holder.strategy + " / " + holder.realm);
 
         int index = holder.strategy;
 
         while (index >= 0) {
             DeviceIdGenerator generator = generators.get(index);
-            if (generator == null || !generator.isAvailable()) {
+            if (generator == null) {
                 if (fallbackAllowed) {
                     L.w("[ModuleDeviceIdCore] Device id strategy [" + index + "] is not available. Falling back to next one.");
                     index--;
@@ -383,6 +338,4 @@ public class ModuleDeviceIdCore extends ModuleBase {
             tasks = null;
         }
     }
-
-    private static final long testSleep = 0L;
 }

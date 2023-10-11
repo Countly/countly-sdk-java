@@ -8,8 +8,8 @@ import java.io.File;
 public class CtxCore {
     Log L;
     private final SDKCore sdk;
-    private InternalConfig config;
     private final File directory;
+    private InternalConfig config;
 
     public CtxCore(SDKCore sdk, InternalConfig config, Log logger, File directory) {
         this.sdk = sdk;
