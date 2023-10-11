@@ -41,10 +41,7 @@ public class TestUtils {
     static Config getBaseConfig() {
         File sdkStorageRootDirectory = getTestSDirectory();
         checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
-        Config config = new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
-        config.setCustomDeviceId(DEVICE_ID);
-
-        return config;
+        return new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory).setCustomDeviceId(DEVICE_ID);
     }
 
     static Config getConfigSessions(Config.Feature... features) {
@@ -343,8 +340,12 @@ public class TestUtils {
 
     public static void createCleanTestState() {
         Countly.instance().halt();
-        for (File file : getTestSDirectory().listFiles()) {
-            file.delete();
+        try {
+            for (File file : getTestSDirectory().listFiles()) {
+                file.delete();
+            }
+        } catch (Exception ignored) {
+            //do nothing
         }
     }
 

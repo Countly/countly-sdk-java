@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.TreeMap;
-import java.util.concurrent.Future;
 import ly.count.sdk.java.Config;
 
 public class SDKCore {
@@ -550,7 +549,6 @@ public class SDKCore {
 
     public void onDeviceId(InternalConfig config, Config.DID id, Config.DID old) {
         L.d("onDeviceId " + id + ", old " + old);
-
         if (id != null && (!id.equals(old) || !id.equals(config.getDeviceId(id.realm)))) {
             config.setDeviceId(id);
             Storage.push(config, instance.config);
@@ -569,7 +567,7 @@ public class SDKCore {
             L.d("[SDKCore] 5");
         }
     }
-
+    
     public Future<Config.DID> acquireId(final InternalConfig config, final Config.DID holder, final boolean fallbackAllowed, final Tasks.Callback<Config.DID> callback) {
         return ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).acquireId(config, holder, fallbackAllowed, callback);
     }

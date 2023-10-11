@@ -740,6 +740,9 @@ public class Config {
             if (configLog != null) {
                 configLog.e("[Config] DeviceIdStrategy.CUSTOM_ID strategy cannot be used without device id specified");
             }
+
+            this.customDeviceId = null;
+            this.deviceIdStrategy = 0;
         } else {
             this.customDeviceId = customDeviceId;
             this.deviceIdStrategy = DeviceIdStrategy.CUSTOM_ID.index;
