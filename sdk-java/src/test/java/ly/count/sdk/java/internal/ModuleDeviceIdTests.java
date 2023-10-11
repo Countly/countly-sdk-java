@@ -22,13 +22,15 @@ public class ModuleDeviceIdTests {
     }
 
     /**
-     * SDK should generate device ID if it is not provided,
-     * and it should start with "CLY_"
+     * Device ID acquisition process
+     * Initializing the SDK with no custom ID, that should trigger ID generation
+     * The acquired device ID should start with "CLY_"
      */
     @Test
     public void generatedDeviceId() {
-        Countly.instance().init(TestUtils.getBaseConfigWithoutDeviceId());
+        Countly.instance().init(TestUtils.getBaseConfig().setCustomDeviceId(null));
         String deviceId = null;
+        //todo remove this "while loop" mess after refactoring the SDK
         while (deviceId == null) { //wait for device ID to be generated
             try {
                 deviceId = Countly.instance().getDeviceId();
@@ -40,12 +42,13 @@ public class ModuleDeviceIdTests {
     }
 
     /**
-     * SDK should not generate device ID if it is provided,
-     * and it should not start with "CLY_"
+     * Device ID acquisition process
+     * Initializing the SDK with a custom ID, that should not trigger ID generation
+     * The acquired device ID should not contain any "CLY_"
      */
     @Test
     public void customDeviceId() {
         Countly.instance().init(TestUtils.getBaseConfig());
-        Assert.assertFalse(Countly.instance().getDeviceId().startsWith("CLY_"));
+        Assert.assertFalse(Countly.instance().getDeviceId().contains("CLY_"));
     }
 }
