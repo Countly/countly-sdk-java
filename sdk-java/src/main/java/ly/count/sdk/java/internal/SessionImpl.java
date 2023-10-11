@@ -283,7 +283,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
      * @deprecated use {@link ModuleEvents.Events#startEvent(String)}} instead via <code>instance().events()</code> call
      */
     public Event timedEvent(String key) {
-        return timedEvents().event(ctx, key);
+        return timedEvents().event(ctx.getConfig(), key);
     }
 
     /**

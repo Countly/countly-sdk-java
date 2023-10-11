@@ -7,7 +7,7 @@ public interface Networking {
 
     boolean check(CtxCore ctx);
 
-    void stop(CtxCore ctx);
+    void stop(InternalConfig config);
 
     Transport getTransport();
 }

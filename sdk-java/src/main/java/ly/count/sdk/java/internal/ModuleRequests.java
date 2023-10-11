@@ -25,7 +25,7 @@ public class ModuleRequests extends ModuleBase {
         ModuleRequests.metrics = Device.dev.buildMetrics();
     }
 
-    private static Request sessionRequest(CtxCore ctx, SessionImpl session, String type, Long value) {
+    private static Request sessionRequest(InternalConfig config, SessionImpl session, String type, Long value) {
         Request request = Request.build();
 
         if (session != null && session.hasConsent(CoreFeature.Sessions)) {
@@ -56,8 +56,8 @@ public class ModuleRequests extends ModuleBase {
             }
         }
 
-        if (ctx.getConfig().getDeviceId() != null) {
-            request.params.add(Params.PARAM_DEVICE_ID, ctx.getConfig().getDeviceId().id);
+        if (config.getDeviceId() != null) {
+            request.params.add(Params.PARAM_DEVICE_ID, config.getDeviceId().id);
         }
 
         if (((session != null && session.hasConsent(CoreFeature.Location)) || (session == null && SDKCore.enabled(CoreFeature.Location)))
@@ -78,17 +78,17 @@ public class ModuleRequests extends ModuleBase {
     }
 
     public static Future<Boolean> sessionBegin(CtxCore ctx, SessionImpl session) {
-        Request request = sessionRequest(ctx, session, "begin_session", 1L);
+        Request request = sessionRequest(ctx.getConfig(), session, "begin_session", 1L);
         return request.isEmpty() ? null : pushAsync(ctx, request);
     }
 
     public static Future<Boolean> sessionUpdate(CtxCore ctx, SessionImpl session, Long seconds) {
-        Request request = sessionRequest(ctx, session, "session_duration", seconds);
+        Request request = sessionRequest(ctx.getConfig(), session, "session_duration", seconds);
         return request.isEmpty() ? null : pushAsync(ctx, request);
     }
 
     public static Future<Boolean> sessionEnd(CtxCore ctx, SessionImpl session, Long seconds, String did, Tasks.Callback<Boolean> callback) {
-        Request request = sessionRequest(ctx, session, "end_session", 1L);
+        Request request = sessionRequest(ctx.getConfig(), session, "end_session", 1L);
 
         if (did != null && Utils.isNotEqual(did, request.params.get(Params.PARAM_DEVICE_ID))) {
             request.params.remove(Params.PARAM_DEVICE_ID);
@@ -118,7 +118,7 @@ public class ModuleRequests extends ModuleBase {
             return null;
         }
 
-        Request request = sessionRequest(ctx, null, null, null);
+        Request request = sessionRequest(ctx.getConfig(), null, null, null);
         request.params.add("location", latitude + "," + longitude);
         return pushAsync(ctx, request);
     }
@@ -129,7 +129,7 @@ public class ModuleRequests extends ModuleBase {
     }
 
     public static Request nonSessionRequest(CtxCore ctx) {
-        return sessionRequest(ctx, null, null, null);
+        return sessionRequest(ctx.getConfig(), null, null, null);
     }
 
     public static Request nonSessionRequest(CtxCore ctx, Long timestamp) {

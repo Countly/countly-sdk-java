@@ -65,7 +65,7 @@ public class DefaultNetworking implements Networking {
     }
 
     @Override
-    public void stop(CtxCore ctx) {
+    public void stop(InternalConfig config) {
         shutdown = true;
         tasks.shutdown();
     }

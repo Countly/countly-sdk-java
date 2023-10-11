@@ -30,7 +30,7 @@ public class BaseTestsCore {
         private Log L = null;
 
         public CtxImpl(SDKCore sdk, InternalConfig config, Object ctx, Log logger) {
-            super(sdk, config, logger, null);
+            super(config);
             this.sdk = sdk;
             this.config = config;
             this.ctx = ctx;

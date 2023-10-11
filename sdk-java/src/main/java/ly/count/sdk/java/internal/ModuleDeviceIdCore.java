@@ -29,7 +29,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
         }
 
         @Override
-        public String generate(CtxCore context) {
+        public String generate(InternalConfig config) {
             return UUID.randomUUID().toString();
         }
     }
@@ -41,10 +41,10 @@ public class ModuleDeviceIdCore extends ModuleBase {
         }
 
         @Override
-        public String generate(CtxCore context) {
-            String customId = context.getConfig().getCustomDeviceId();
+        public String generate(InternalConfig config) {
+            String customId = config.getCustomDeviceId();
             if (customId == null || customId.isEmpty()) {
-                context.getLogger().e("[ModuleDeviceIdCore] Device ID should never be empty or null for CustomIDGenerator");
+                config.getLogger().e("[ModuleDeviceIdCore] Device ID should never be empty or null for CustomIDGenerator");
             }
 
             return customId;
@@ -353,7 +353,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
                     return null;
                 }
             } else {
-                String id = generator.generate(ctx);
+                String id = generator.generate(ctx.getConfig());
                 if (Utils.isNotEmpty(id)) {
                     return new Config.DID(holder.realm, index, id);
                 } else if (fallbackAllowed) {

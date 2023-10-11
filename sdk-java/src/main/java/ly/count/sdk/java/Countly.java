@@ -73,6 +73,7 @@ public class Countly implements Usage {
 
         InternalConfig internalConfig = new InternalConfig(config);
         Log L = new Log(internalConfig.loggingLevel, internalConfig.logListener);
+        internalConfig.setLogger(L);
 
         if (directory == null) {
             L.e("[Countly] File cannot be null");
@@ -107,11 +108,11 @@ public class Countly implements Usage {
         }
 
         SDKCore sdk = new SDKCore();
-        sdk.init(new CtxCore(sdk, internalConfig, L, directory), L);
+        sdk.init(new CtxCore(internalConfig), L);
 
         // config has been changed, thus recreating ctx
         this.sdk = sdk;
-        this.ctx = new CtxCore(sdk, sdk.config(), L, directory);
+        this.ctx = new CtxCore(sdk.config());
         this.L = L;
     }
 
