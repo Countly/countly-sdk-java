@@ -4,4 +4,6 @@ public interface IStorageForRequestQueue {
     Request getNextRequest();
 
     Boolean removeRequest(Request request);
+
+    Integer remaningRequests();
 }

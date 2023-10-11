@@ -50,6 +50,7 @@ public class DefaultNetworking implements Networking {
                         Storage.remove(config, request);
                         return true;
                     } else {
+                        request.params.add("rr", storageForRequestQueue.remaningRequests());
                         tasks.run(transport.send(request), result -> {
                             L.d("[Networking] Request " + request.storageId() + " sent?: " + result);
                             if (result) {
