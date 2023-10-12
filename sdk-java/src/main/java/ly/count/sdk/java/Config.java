@@ -374,7 +374,7 @@ public class Config {
      *
      * Set to 0 to disable update requests based on time.
      */
-    protected int sendUpdateEachSeconds = 30;
+    protected int sendUpdateEachSeconds = 60;
 
     /**
      * Maximum number of events to hold until request is to be sent to the server
