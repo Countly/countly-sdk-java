@@ -1,5 +1,7 @@
 package ly.count.sdk.java.internal;
 
+import javax.annotation.Nonnull;
+
 public interface IKeyValueStorage<T, R> {
 
     /**
@@ -8,7 +10,7 @@ public interface IKeyValueStorage<T, R> {
      * @param key to set
      * @param value to add
      */
-    void add(T key, R value);
+    void add(@Nonnull T key, @Nonnull R value);
 
     /**
      * Saves changes to the disk/db/memory
@@ -20,7 +22,7 @@ public interface IKeyValueStorage<T, R> {
      *
      * @param key to remove
      */
-    void delete(T key);
+    void delete(@Nonnull T key);
 
     /**
      * Adds key-value pair and saves changes to the disk/db/memory
@@ -28,14 +30,14 @@ public interface IKeyValueStorage<T, R> {
      * @param key to set
      * @param value to add
      */
-    void addAndSave(T key, R value);
+    void addAndSave(@Nonnull T key, @Nonnull R value);
 
     /**
      * Removes key-value pair and saves changes to the disk/db/memory
      *
      * @param key to remove
      */
-    void deleteAndSave(T key);
+    void deleteAndSave(@Nonnull T key);
 
     /**
      * Returns value for the key
@@ -43,5 +45,5 @@ public interface IKeyValueStorage<T, R> {
      * @param key to get
      * @return value
      */
-    R get(T key);
+    R get(@Nonnull T key);
 }

@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import javax.annotation.Nonnull;
 import org.json.JSONObject;
 
 public class JsonFileStorage implements IKeyValueStorage<String, Object> {
@@ -11,14 +12,14 @@ public class JsonFileStorage implements IKeyValueStorage<String, Object> {
     private final File file;
     private final Log logger;
 
-    public JsonFileStorage(File file, Log logger) {
+    public JsonFileStorage(@Nonnull File file, @Nonnull Log logger) {
         this.logger = logger;
         this.file = file;
         this.json = readJsonFile(file);
     }
 
     @Override
-    public void add(String key, Object value) {
+    public void add(@Nonnull String key, @Nonnull Object value) {
         logger.i("[JsonFileStorage] add, Adding key: [" + key + "], value: [" + value + "]");
         json.put(key, value);
     }
@@ -34,29 +35,29 @@ public class JsonFileStorage implements IKeyValueStorage<String, Object> {
     }
 
     @Override
-    public void delete(String key) {
+    public void delete(@Nonnull String key) {
         logger.i("[JsonFileStorage] delete, Deleting key: [" + key + "]");
         json.remove(key);
     }
 
     @Override
-    public void addAndSave(String key, Object value) {
+    public void addAndSave(@Nonnull String key, @Nonnull Object value) {
         add(key, value);
         save();
     }
 
     @Override
-    public void deleteAndSave(String key) {
+    public void deleteAndSave(@Nonnull String key) {
         delete(key);
         save();
     }
 
     @Override
-    public Object get(String key) {
+    public Object get(@Nonnull String key) {
         return json.get(key);
     }
 
-    private JSONObject readJsonFile(File file) {
+    private JSONObject readJsonFile(@Nonnull File file) {
         logger.i("[JsonFileStorage] readJsonFile, Reading json file: [" + file.getAbsolutePath() + "]");
         try {
             return new JSONObject(Utils.readFileContent(file, logger));
