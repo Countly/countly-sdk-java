@@ -57,6 +57,17 @@ public class JsonFileStorage implements IKeyValueStorage<String, Object> {
         return json.get(key);
     }
 
+    @Override
+    public void clear() {
+        json.clear();
+    }
+
+    @Override
+    public void clearAndSave() {
+        clear();
+        save();
+    }
+
     private JSONObject readJsonFile(@Nonnull File file) {
         logger.i("[JsonFileStorage] readJsonFile, Reading json file: [" + file.getAbsolutePath() + "]");
         try {

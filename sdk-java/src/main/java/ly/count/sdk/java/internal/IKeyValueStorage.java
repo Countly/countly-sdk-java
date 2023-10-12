@@ -46,4 +46,14 @@ public interface IKeyValueStorage<T, R> {
      * @return value
      */
     R get(@Nonnull T key);
+
+    /**
+     * Clears all data
+     */
+    void clear();
+
+    /**
+     * Clears all data and saves changes to the disk/db/memory
+     */
+    void clearAndSave();
 }
