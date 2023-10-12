@@ -1,3 +1,7 @@
+23.10.0
+
+* ! Minor breaking change ! Calling "init" twice will now not reinitialize the SDK. The call will be ignored
+
 23.8.0
 
 * !! Major breaking change !! The following methods and their functionality are deprecated from the "UserEditor" interface and will not function anymore:

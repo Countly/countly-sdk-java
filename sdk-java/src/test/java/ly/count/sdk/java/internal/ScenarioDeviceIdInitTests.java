@@ -14,6 +14,7 @@ import static org.mockito.Mockito.mock;
 @RunWith(JUnit4.class)
 public class ScenarioDeviceIdInitTests {
 
+    final static String alternativeDeviceID = TestUtils.DEVICE_ID + "1";
     Log L = mock(Log.class);
 
     @Before
@@ -83,18 +84,12 @@ public class ScenarioDeviceIdInitTests {
         cc.setLogListener((l, e) -> System.out.println(l));
         Countly.instance().init(cc);
 
-        String initialDId = null;
-        while (initialDId == null) {
-            try {
-                initialDId = Countly.instance().getDeviceId();
-            } catch (Exception ignored) {
-                //do nothing
-            }
-        }
+        String initialDId = waitForNoNullDeviceID(Countly.instance());
         Assert.assertNotNull(initialDId);
         Assert.assertEquals(Config.DeviceIdStrategy.UUID.getIndex(), SDKCore.instance.config.getDeviceIdStrategy());
 
         //setup followup state
+        Countly.instance().stop();
         Config cc1 = new Config("https://xxx.yyy.ly", "aaa", TestUtils.getTestSDirectory());
         cc1.setLogListener((l, e) -> System.out.println("2: " + l));
         Countly.instance().init(cc1);
@@ -113,21 +108,32 @@ public class ScenarioDeviceIdInitTests {
      */
     @Test
     public void followupInitPrevNothingProvidedCustomId() {
-        Config cc = new Config("https://xxx.yyy.ly", "aaa", TestUtils.getTestSDirectory());
-        Countly.instance().init(cc);
+        Countly.instance().init(TestUtils.getBaseConfig(null));
 
-        String initialDId = Countly.instance().getDeviceId();
+        String initialDId = waitForNoNullDeviceID(Countly.instance());
 
         Assert.assertNotNull(initialDId);
         Assert.assertEquals(Config.DeviceIdStrategy.UUID.getIndex(), SDKCore.instance.config.getDeviceIdStrategy());
 
         //setup followup state
-        Config cc1 = new Config("https://xxx.yyy.ly", "aaa", TestUtils.getTestSDirectory());
-        cc1.setCustomDeviceId("test-device-id-1");
-        Countly.instance().init(cc1);
+        Countly.instance().stop();
+        Countly.instance().init(TestUtils.getBaseConfig(alternativeDeviceID));
 
         Assert.assertEquals(initialDId, Countly.instance().getDeviceId());
         Assert.assertEquals(Config.DeviceIdStrategy.UUID.getIndex(), SDKCore.instance.config.getDeviceIdStrategy());
+    }
+
+    String waitForNoNullDeviceID(Countly instance) {
+        String initialDId = null;
+        while (initialDId == null) {
+            try {
+                initialDId = instance.getDeviceId();
+            } catch (Exception ignored) {
+                //do nothing
+            }
+        }
+
+        return initialDId;
     }
 
     /**
@@ -140,21 +146,16 @@ public class ScenarioDeviceIdInitTests {
      */
     @Test
     public void followupInitPrevCustomProvidedCustomId() {
-        Config cc = new Config("https://xxx.yyy.ly", "aaa", TestUtils.getTestSDirectory());
-        cc.setCustomDeviceId("test-device-id");
-        Countly.instance().init(cc);
+        Countly.instance().init(TestUtils.getBaseConfig(TestUtils.DEVICE_ID));
 
-        String initialDId = Countly.instance().getDeviceId();
-
-        Assert.assertEquals("test-device-id", initialDId);
+        Assert.assertEquals(TestUtils.DEVICE_ID, Countly.instance().getDeviceId());
         Assert.assertEquals(Config.DeviceIdStrategy.CUSTOM_ID.getIndex(), SDKCore.instance.config.getDeviceIdStrategy());
 
         //setup followup state
-        Config cc1 = new Config("https://xxx.yyy.ly", "aaa", TestUtils.getTestSDirectory());
-        cc1.setCustomDeviceId("test-device-id-1");
-        Countly.instance().init(cc1);
+        Countly.instance().stop();
+        Countly.instance().init(TestUtils.getBaseConfig(alternativeDeviceID));
 
-        Assert.assertEquals(initialDId, Countly.instance().getDeviceId());
+        Assert.assertEquals(TestUtils.DEVICE_ID, Countly.instance().getDeviceId());
         Assert.assertEquals(Config.DeviceIdStrategy.CUSTOM_ID.getIndex(), SDKCore.instance.config.getDeviceIdStrategy());
     }
 }
