@@ -1,7 +1,7 @@
 23.8.1
 
 * Session update time duration increased to 60 seconds from 30 seconds.
-* A 'rr' parameter is added to every request to indicate how many requests remain in the request queue.
+* Adding remaining request queue size information to every request.
 
 23.8.0
 
