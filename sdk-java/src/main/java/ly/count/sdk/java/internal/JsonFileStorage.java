@@ -27,6 +27,7 @@ public class JsonFileStorage implements IKeyValueStorage<String, Object> {
     @Override
     public void save() {
         logger.i("[JsonFileStorage] save, Saving json file: [" + file.getAbsolutePath() + "]");
+        
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
             writer.write(json.toString());
         } catch (IOException e) {
@@ -36,7 +37,9 @@ public class JsonFileStorage implements IKeyValueStorage<String, Object> {
 
     @Override
     public void delete(@Nonnull String key) {
-        logger.i("[JsonFileStorage] delete, Deleting key: [" + key + "]");
+        if (!json.has(key)) {
+            logger.v("[JsonFileStorage] delete, Nothing to delete");
+        }
         json.remove(key);
     }
 
@@ -54,7 +57,12 @@ public class JsonFileStorage implements IKeyValueStorage<String, Object> {
 
     @Override
     public Object get(@Nonnull String key) {
-        return json.get(key);
+        try {
+            return json.get(key);
+        } catch (Exception e) {
+            logger.e("[JsonFileStorage] get, Failed to get value for key: [" + key + "], reason: [" + e.getMessage() + "]");
+            return null;
+        }
     }
 
     @Override
@@ -68,10 +76,25 @@ public class JsonFileStorage implements IKeyValueStorage<String, Object> {
         save();
     }
 
+    @Override
+    public int size() {
+        return json.length();
+    }
+
     private JSONObject readJsonFile(@Nonnull File file) {
         logger.i("[JsonFileStorage] readJsonFile, Reading json file: [" + file.getAbsolutePath() + "]");
         try {
-            return new JSONObject(Utils.readFileContent(file, logger));
+            if (!file.exists()) {
+                boolean result = file.createNewFile();
+                logger.v("[JsonFileStorage] readJsonFile, Creating new json file: [" + file.getAbsolutePath() + "], result: [" + result + "]");
+                return new JSONObject();
+            }
+            String fileContent = Utils.readFileContent(file, logger);
+            if (Utils.isEmptyOrNull(fileContent)) {
+                logger.v("[JsonFileStorage] readJsonFile, Json file is empty: [" + file.getAbsolutePath() + "]");
+                return new JSONObject();
+            }
+            return new JSONObject(fileContent);
         } catch (IOException e) {
             logger.e("[JsonFileStorage] readJsonFile, Failed to read json file, reason: [" + e.getMessage() + "]");
             return new JSONObject();
