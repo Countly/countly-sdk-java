@@ -54,7 +54,7 @@ public class Countly implements Usage {
         this.ctx = ctx;
     }
 
-    private Countly() {
+    public Countly() {
     }
 
     /**
@@ -79,7 +79,7 @@ public class Countly implements Usage {
             L.e("[Countly] File cannot be null");
             return;
         }
-        
+
         if (!directory.isDirectory()) {
             L.e("[Countly] File must be a directory");
             return;
@@ -90,8 +90,8 @@ public class Countly implements Usage {
         }
 
         if (isInitialized()) {
-            L.e("[Countly] Countly shouldn't be initialized twice. Please either use Countly.isInitialized() to check status or call Countly.stop() before second Countly.init().");
-            stop(false);
+            L.e("[Countly] Countly shouldn't be initialized twice. Please either use Countly.isInitialized() to check status or call Countly.stop() before second Countly.init(). Calling 'init' the second time will now do nothing");
+            return;
         }
 
         if (internalConfig.enableBackendMode) {
