@@ -431,6 +431,7 @@ public class SDKCore {
         L = logger;
         L.i("[SDKCore] Initializing Countly");
 
+        givenConfig.sdk = this;
         sdkStorage.init(givenConfig, logger);
         config = prepareConfig(givenConfig);
 
@@ -504,7 +505,7 @@ public class SDKCore {
 
                     @Override
                     public Integer remaningRequests() {
-                        return Storage.list(ctx, Request.getStoragePrefix()).size() - 1;
+                        return Storage.list(givenConfig, Request.getStoragePrefix()).size() - 1;
                     }
                 });
             }
@@ -512,7 +513,6 @@ public class SDKCore {
             networking.check(givenConfig);
         }
 
-        givenConfig.sdk = this;
         recover(givenConfig);
 
         try {
