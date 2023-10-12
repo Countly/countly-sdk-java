@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import org.json.JSONArray;
+import org.json.JSONObject;
 import org.junit.Assert;
 
 import static ly.count.sdk.java.internal.SDKStorage.EVENT_QUEUE_FILE_NAME;
@@ -365,5 +366,15 @@ public class TestUtils {
         given(ic.getLogger()).willReturn(mock(Log.class));
         given(ctxCore.getConfig()).willReturn(ic);
         return ctxCore;
+    }
+
+    static JSONObject readJsonFile(File file) {
+        String fileContent = "";
+        try {
+            fileContent = Utils.readFileContent(file, mock(Log.class));
+            return new JSONObject(fileContent);
+        } catch (Exception e) {
+            return new JSONObject();
+        }
     }
 }
