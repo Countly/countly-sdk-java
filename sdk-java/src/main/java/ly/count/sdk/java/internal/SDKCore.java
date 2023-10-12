@@ -431,6 +431,7 @@ public class SDKCore {
         L = logger;
         L.i("[SDKCore] Initializing Countly");
 
+        givenConfig.sdk = this;
         sdkStorage.init(givenConfig, logger);
         config = prepareConfig(givenConfig);
 
@@ -512,7 +513,6 @@ public class SDKCore {
             networking.check(givenConfig);
         }
 
-        givenConfig.sdk = this;
         recover(givenConfig);
 
         try {

@@ -1,4 +1,6 @@
-23.8.1
+23.10.0
+
+* ! Minor breaking change ! Calling "init" twice will now not reinitialize the SDK. The call will be ignored
 
 * Session update time duration increased to 60 seconds from 30 seconds.
 * Adding remaining request queue size information to every request.
