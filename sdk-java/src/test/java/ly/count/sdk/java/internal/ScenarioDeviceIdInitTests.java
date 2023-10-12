@@ -27,62 +27,44 @@ public class ScenarioDeviceIdInitTests {
         Countly.instance().halt();
     }
 
-    //first init
+    //first init where:
 
     /**
-     * First init where:
-     * Device ID is not provided,
-     * Temporary ID mode is not provided
-     *
-     * SDK should generate OPEN_UDID device ID
+     * Device id generation scenario
+     * Custom Device ID is not provided,
+     * SDK should generate UUID device ID
      */
     @Test
-    public void firstInitProvidedNothing() {
-        Config cc = new Config("https://xxx.yyy.ly", "aaa", TestUtils.getTestSDirectory());
-        Countly.instance().init(cc);
+    public void firstInit_ProvidedNothing() {
+        Countly.instance().init(TestUtils.getBaseConfig(null));
 
-        String deviceId = null;
-        while (deviceId == null) {
-            try {
-                deviceId = Countly.instance().getDeviceId();
-            } catch (Exception ignored) {
-                //do nothing
-            }
-        }
-        Assert.assertNotNull(Countly.instance().getDeviceId());
+        Assert.assertNotNull(waitForNoNullDeviceID(Countly.instance()));
         Assert.assertEquals(Config.DeviceIdStrategy.UUID.getIndex(), SDKCore.instance.config.getDeviceIdStrategy());
     }
 
     /**
-     * First init where:
+     * Device id generation scenario
      * Custom Device ID is provided,
-     * Temporary ID mode is not provided
-     *
-     * SDK should use provided device ID
+     * SDK should not generate UUID device ID
      */
     @Test
-    public void firstInitProvidedCustomId() {
-        Config cc = new Config("https://xxx.yyy.ly", "aaa", TestUtils.getTestSDirectory());
-        cc.setCustomDeviceId("test-device-id");
-        Countly.instance().init(cc);
+    public void firstInit_ProvidedCustomId() {
+        Countly.instance().init(TestUtils.getBaseConfig(TestUtils.DEVICE_ID));
 
-        Assert.assertEquals("test-device-id", Countly.instance().getDeviceId());
+        Assert.assertEquals(TestUtils.DEVICE_ID, Countly.instance().getDeviceId());
         Assert.assertEquals(Config.DeviceIdStrategy.CUSTOM_ID.getIndex(), SDKCore.instance.config.getDeviceIdStrategy());
     }
 
+    //followup init where:
+
     /**
-     * Followup init where previously:
-     * Nothing was provided - OPEN_UDID Devices ID was generated
-     *
-     * now:
-     * Device ID is not provided,
-     * Temporary ID mode is not provided
+     * Device id generation scenario
+     * Custom Device ID is not provided in both first and second init
+     * SDK should generate UUID device ID in first init and read and use it in second init
      */
     @Test
-    public void followupInitPrevNothingProvidedNothing() {
-        Config cc = new Config("https://xxx.yyy.ly", "aaa", TestUtils.getTestSDirectory());
-        cc.setLogListener((l, e) -> System.out.println(l));
-        Countly.instance().init(cc);
+    public void followupInit_FirstNothingProvidedNothing() {
+        Countly.instance().init(TestUtils.getBaseConfig(null));
 
         String initialDId = waitForNoNullDeviceID(Countly.instance());
         Assert.assertNotNull(initialDId);
@@ -90,24 +72,19 @@ public class ScenarioDeviceIdInitTests {
 
         //setup followup state
         Countly.instance().stop();
-        Config cc1 = new Config("https://xxx.yyy.ly", "aaa", TestUtils.getTestSDirectory());
-        cc1.setLogListener((l, e) -> System.out.println("2: " + l));
-        Countly.instance().init(cc1);
+        Countly.instance().init(TestUtils.getBaseConfig(null));
 
         Assert.assertEquals(initialDId, Countly.instance().getDeviceId());
         Assert.assertEquals(Config.DeviceIdStrategy.UUID.getIndex(), SDKCore.instance.config.getDeviceIdStrategy());
     }
 
     /**
-     * Followup init where previously:
-     * Nothing was provided - OPEN_UDID Devices ID was generated
-     *
-     * now:
-     * Device ID is provided,
-     * Temporary ID mode is not provided
+     * Device id generation scenario
+     * Custom Device ID is not provided in first init and provided in second init
+     * SDK should generate UUID device ID in first init and read and use it in second init
      */
     @Test
-    public void followupInitPrevNothingProvidedCustomId() {
+    public void followupInit_FirstNothingProvidedCustomId() {
         Countly.instance().init(TestUtils.getBaseConfig(null));
 
         String initialDId = waitForNoNullDeviceID(Countly.instance());
@@ -123,29 +100,14 @@ public class ScenarioDeviceIdInitTests {
         Assert.assertEquals(Config.DeviceIdStrategy.UUID.getIndex(), SDKCore.instance.config.getDeviceIdStrategy());
     }
 
-    String waitForNoNullDeviceID(Countly instance) {
-        String initialDId = null;
-        while (initialDId == null) {
-            try {
-                initialDId = instance.getDeviceId();
-            } catch (Exception ignored) {
-                //do nothing
-            }
-        }
-
-        return initialDId;
-    }
-
     /**
-     * Followup init where previously:
-     * Custom devices ID was set
-     *
-     * now:
-     * Device ID is provided,
-     * Temporary ID mode is not provided
+     * Device id generation scenario
+     * Custom Device ID is provided in both first and second init
+     * SDK must not generate UUID device ID in first init, must store custom device
+     * ID and restore and use it in second init
      */
     @Test
-    public void followupInitPrevCustomProvidedCustomId() {
+    public void followupInit_FirstCustomProvidedCustomId() {
         Countly.instance().init(TestUtils.getBaseConfig(TestUtils.DEVICE_ID));
 
         Assert.assertEquals(TestUtils.DEVICE_ID, Countly.instance().getDeviceId());
@@ -157,5 +119,18 @@ public class ScenarioDeviceIdInitTests {
 
         Assert.assertEquals(TestUtils.DEVICE_ID, Countly.instance().getDeviceId());
         Assert.assertEquals(Config.DeviceIdStrategy.CUSTOM_ID.getIndex(), SDKCore.instance.config.getDeviceIdStrategy());
+    }
+
+    String waitForNoNullDeviceID(Countly instance) {
+        String initialDId = null;
+        while (initialDId == null) {
+            try {
+                initialDId = instance.getDeviceId();
+            } catch (Exception ignored) {
+                //do nothing
+            }
+        }
+
+        return initialDId;
     }
 }
