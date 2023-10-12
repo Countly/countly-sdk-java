@@ -37,8 +37,8 @@ public class ModuleEvents extends ModuleBase {
     }
 
     @Override
-    public void stop(CtxCore ctx, boolean clear) {
-        super.stop(ctx, clear);
+    public void stop(InternalConfig config, boolean clear) {
+        super.stop(config, clear);
         if (clear) {
             eventQueue.clear();
             timedEvents.clear();

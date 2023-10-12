@@ -53,8 +53,8 @@ public class ModuleBackendMode extends ModuleBase {
     }
 
     @Override
-    public void stop(CtxCore ctx, boolean clear) {
-        super.stop(ctx, clear);
+    public void stop(InternalConfig config, boolean clear) {
+        super.stop(config, clear);
     }
 
     public void disableModule() {

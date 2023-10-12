@@ -2,7 +2,6 @@ package ly.count.sdk.java;
 
 import java.io.File;
 import java.util.Map;
-import ly.count.sdk.java.internal.CtxCore;
 import ly.count.sdk.java.internal.Device;
 import ly.count.sdk.java.internal.InternalConfig;
 import ly.count.sdk.java.internal.Log;
@@ -34,24 +33,21 @@ public class Countly implements Usage {
         private static final Countly INSTANCE = new Countly();
 
         private static boolean isNull() {
-            return INSTANCE.sdk == null && INSTANCE.ctx == null;
+            return INSTANCE.sdk == null;
         }
 
         private static void empty() {
             INSTANCE.L = null;
             INSTANCE.sdk = null;
-            INSTANCE.ctx = null;
         }
     }
 
     protected SDKCore sdk;
-    protected CtxCore ctx;
     protected Log L;
 
-    protected Countly(SDKCore sdk, CtxCore ctx, Log logger) {
+    protected Countly(SDKCore sdk, Log logger) {
         L = logger;
         this.sdk = sdk;
-        this.ctx = ctx;
     }
 
     public Countly() {
@@ -113,7 +109,6 @@ public class Countly implements Usage {
 
         // config has been changed, thus recreating ctx
         this.sdk = sdk;
-        this.ctx = new CtxCore(sdk.config());
         this.L = L;
     }
 
@@ -144,7 +139,7 @@ public class Countly implements Usage {
             if (cly.L != null) {
                 cly.L.i("[Countly] Stopping SDK");
             }
-            cly.sdk.stop(cly.ctx, clearData);
+            cly.sdk.stop(clearData);
             SingletonHolder.empty();
         } else {
             //todo fix in the future
@@ -204,7 +199,7 @@ public class Countly implements Usage {
 
             return null;
         }
-        return cly.sdk.session(cly.ctx, null);
+        return cly.sdk.session(null);
     }
 
     public static ModuleBackendMode.BackendMode backendMode() {
@@ -215,7 +210,7 @@ public class Countly implements Usage {
             return null;
         } else {
             ModuleBackendMode mbm = cly.sdk.module(ModuleBackendMode.class);
-            if (cly.ctx.getConfig().enableBackendMode && mbm != null) {
+            if (cly.sdk.config.enableBackendMode && mbm != null) {
                 return mbm.new BackendMode();
             }
             //if it is null, feature was not enabled, return mock
@@ -251,7 +246,7 @@ public class Countly implements Usage {
         if (L != null) {
             L.d("[Countly] login");
         }
-        sdk.login(ctx.getConfig(), id);
+        sdk.login(id);
         return this;
     }
 
@@ -260,13 +255,13 @@ public class Countly implements Usage {
         if (L != null) {
             L.d("[Countly] logout");
         }
-        sdk.logout(ctx.getConfig());
+        sdk.logout();
         return this;
     }
 
     @Override
     public String getDeviceId() {
-        return ctx.getConfig().getDeviceId().id;
+        return sdk.config.getDeviceId().id;
     }
 
     @Override
@@ -274,7 +269,7 @@ public class Countly implements Usage {
         if (L != null) {
             L.d("[Countly] changeDeviceIdWithoutMerge: id = " + id);
         }
-        sdk.changeDeviceIdWithMerge(ctx.getConfig(), id);
+        sdk.changeDeviceIdWithMerge(sdk.config, id);
         return this;
     }
 
@@ -283,7 +278,7 @@ public class Countly implements Usage {
         if (L != null) {
             L.d("[Countly] changeDeviceIdWithoutMerge: id = " + id);
         }
-        sdk.changeDeviceIdWithoutMerge(ctx.getConfig(), id);
+        sdk.changeDeviceIdWithoutMerge(sdk.config, id);
         return this;
     }
 
@@ -307,7 +302,7 @@ public class Countly implements Usage {
             for (Config.Feature f : features) {
                 ftrs = ftrs | f.getIndex();
             }
-            cly.sdk.onConsent(cly.ctx, ftrs);
+            cly.sdk.onConsent(ftrs);
         }
     }
 
@@ -331,7 +326,7 @@ public class Countly implements Usage {
             for (Config.Feature f : features) {
                 ftrs = ftrs | f.getIndex();
             }
-            cly.sdk.onConsentRemoval(cly.ctx, ftrs);
+            cly.sdk.onConsentRemoval(cly.sdk.config, ftrs);
         }
     }
 
@@ -361,7 +356,7 @@ public class Countly implements Usage {
     @Override
     public Event event(String key) {
         L.d("[Countly] event: key = " + key);
-        return ((Session) sdk.session(ctx, null)).event(key);
+        return ((Session) sdk.session(null)).event(key);
     }
 
     /**
@@ -389,7 +384,7 @@ public class Countly implements Usage {
     @Override
     public Event timedEvent(String key) {
         L.d("[Countly] timedEvent: key = " + key);
-        return ((Session) sdk.session(ctx, null)).timedEvent(key);
+        return ((Session) sdk.session(null)).timedEvent(key);
     }
 
     /**
@@ -402,42 +397,42 @@ public class Countly implements Usage {
     @Override
     public User user() {
         L.d("[Countly] user");
-        return ((Session) sdk.session(ctx, null)).user();
+        return ((Session) sdk.session(null)).user();
     }
 
     @Override
     public Usage addParam(String key, Object value) {
         L.d("[Countly] addParam: key = " + key + " value = " + value);
-        return ((Session) sdk.session(ctx, null)).addParam(key, value);
+        return ((Session) sdk.session(null)).addParam(key, value);
     }
 
     @Override
     public Usage addCrashReport(Throwable t, boolean fatal) {
         L.d("[Countly] addCrashReport: t = " + t + " fatal = " + fatal);
-        return ((Session) sdk.session(ctx, null)).addCrashReport(t, fatal);
+        return ((Session) sdk.session(null)).addCrashReport(t, fatal);
     }
 
     @Override
     public Usage addCrashReport(Throwable t, boolean fatal, String name, Map<String, String> segments, String... logs) {
         L.d("[Countly] addCrashReport: t = " + t + " fatal = " + fatal + " name = " + name + " segments = " + segments + " logs = " + logs);
-        return ((Session) sdk.session(ctx, null)).addCrashReport(t, fatal, name, segments, logs);
+        return ((Session) sdk.session(null)).addCrashReport(t, fatal, name, segments, logs);
     }
 
     @Override
     public Usage addLocation(double latitude, double longitude) {
         L.d("[Countly] addLocation: latitude = " + latitude + " longitude = " + longitude);
-        return ((Session) sdk.session(ctx, null)).addLocation(latitude, longitude);
+        return ((Session) sdk.session(null)).addLocation(latitude, longitude);
     }
 
     @Override
     public View view(String name, boolean start) {
         L.d("[Countly] view: name = " + name + " start = " + start);
-        return ((Session) sdk.session(ctx, null)).view(name, start);
+        return ((Session) sdk.session(null)).view(name, start);
     }
 
     @Override
     public View view(String name) {
         L.d("[Countly] view: name = " + name);
-        return ((Session) sdk.session(ctx, null)).view(name);
+        return ((Session) sdk.session(null)).view(name);
     }
 }

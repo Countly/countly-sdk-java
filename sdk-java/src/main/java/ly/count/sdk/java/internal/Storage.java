@@ -27,7 +27,7 @@ public class Storage {
      * Stores data in device internal memory. When a storable with the same id already exists,
      * replaces it with new data.
      *
-     * @param ctx context to run in
+     * @param config to configure
      * @param storable Object to store
      * @return true when storing succeeded, false otherwise
      */
@@ -45,7 +45,7 @@ public class Storage {
      * Stores data in device internal memory. When a storable with the same id already exists,
      * replaces it with new data. Runs in a storage thread provided by {@link Tasks}
      *
-     * @param ctx context to run in
+     * @param config to configure
      * @param storable Object to store
      * @param callback nullable callback to call when done
      * @return Future<Boolean> object which resolves as true when storing succeeded, false otherwise
@@ -61,9 +61,9 @@ public class Storage {
     }
 
     /**
-     * Shorthand for {@link #pushAsync(CtxCore, Storable, Tasks.Callback)}
+     * Shorthand for {@link #pushAsync(InternalConfig, Storable, Tasks.Callback)}
      *
-     * @param ctx context to run in
+     * @param config to configure
      * @param storable Object to store
      * @return Future<Boolean> object which resolves as true when storing succeeded, false otherwise
      */
@@ -75,7 +75,7 @@ public class Storage {
     /**
      * Removes storable from storage.
      *
-     * @param ctx context to run in
+     * @param config to configure
      * @param storable Object to remove
      * @return true if removed, false otherwise
      */
@@ -93,7 +93,7 @@ public class Storage {
      * Removes storable from storage.
      * Runs in a storage thread provided by {@link Tasks}
      *
-     * @param ctx context to run in
+     * @param config to configure
      * @param storable Object to remove
      * @return Future<Boolean> object which resolves to true if storable is removed, false otherwise
      */
@@ -109,16 +109,16 @@ public class Storage {
     /**
      * Reinitializes storable with data stored previously in device internal memory and deletes corresponding file.
      *
-     * @param ctx context to run in
+     * @param config to configure
      * @param storable Object to reinitialize
      * @return storable object passed as param when restoring succeeded, null otherwise
      */
-    public static <T extends Storable> T pop(CtxCore ctx, T storable) {
-        ctx.getLogger().d("[Storage] pop: " + name(storable) + " " + storable.toString());
+    public static <T extends Storable> T pop(InternalConfig config, T storable) {
+        config.getLogger().d("[Storage] pop: " + name(storable) + " " + storable.toString());
         try {
-            return popAsync(ctx, storable).get();
+            return popAsync(config, storable).get();
         } catch (InterruptedException | ExecutionException e) {
-            ctx.getLogger().e("[Storage] Interrupted while removing " + name(storable) + " " + e);
+            config.getLogger().e("[Storage] Interrupted while removing " + name(storable) + " " + e);
         }
         return null;
     }
@@ -127,15 +127,15 @@ public class Storage {
      * Reinitializes storable with data stored previously in device internal memory.
      * Runs in a storage thread provided by {@link Tasks}
      *
-     * @param ctx context to run in
+     * @param config to configure
      * @param storable Object to reinitialize
      * @return Future<Storable> object which resolves as object passed as param when restoring succeeded, null otherwise
      */
-    public static <T extends Storable> Future<T> popAsync(final CtxCore ctx, final T storable) {
+    public static <T extends Storable> Future<T> popAsync(final InternalConfig config, final T storable) {
         return tasks.run(new Tasks.Task<T>(-storable.storageId()) {
             @Override
             public T call() throws Exception {
-                Boolean result = ctx.getSDK().sdkStorage.storablePop(ctx.getConfig(), storable);
+                Boolean result = config.sdk.sdkStorage.storablePop(config, storable);
                 if (result == null || !result) {
                     return null;
                 } else {
@@ -148,7 +148,7 @@ public class Storage {
     /**
      * Transform existing {@link Storable}s one-by-one replacing data if needed
      *
-     * @param ctx context to run in
+     * @param config to configure
      * @param prefix Object to reinitialize
      * @return storable object passed as param when reading succeeded, null otherwise
      */
@@ -187,7 +187,7 @@ public class Storage {
     /**
      * Reinitializes storable with data stored previously in device internal memory.
      *
-     * @param ctx context to run in
+     * @param config to configure
      * @param storable Object to reinitialize
      * @return storable object passed as param when reading succeeded, null otherwise
      */
@@ -205,7 +205,7 @@ public class Storage {
      * Reinitializes storable with data stored previously in device internal memory.
      * Runs in a storage thread provided by {@link Tasks}
      *
-     * @param ctx context to run in
+     * @param config to configure
      * @param storable Object to reinitialize
      * @return Future<Storable> object which resolves as object passed as param when reading succeeded, null otherwise
      */
@@ -217,7 +217,7 @@ public class Storage {
      * Reinitializes storable with data stored previously in device internal memory.
      * Runs in a storage thread provided by {@link Tasks}
      *
-     * @param ctx context to run in
+     * @param config to configure
      * @param storable Object to reinitialize
      * @param callback Callback to call with read result
      * @return Future<Storable> object which resolves as object passed as param when reading succeeded, null otherwise
@@ -244,7 +244,7 @@ public class Storage {
     /**
      * Reinitializes first (or last if asc is false) storable with prefix from storable supplied as parameter.
      *
-     * @param ctx context to run in
+     * @param config to configure
      * @param storable Object to get prefix from
      * @param asc true if reading first storable, false if reading last one
      * @return storable object passed as param when reading succeeded, null otherwise
@@ -264,7 +264,7 @@ public class Storage {
      * Reinitializes first (or last if asc is false) storable with prefix from storable supplied as parameter.
      * Runs in a storage thread provided by {@link Tasks}
      *
-     * @param ctx Ctx to run in
+     * @param config InternalConfig to run in
      * @param storable Object to get prefix from
      * @param asc true if reading first storable, false if reading last one
      * @return Future<Storable> object which resolves as object passed as param when reading succeeded, null otherwise

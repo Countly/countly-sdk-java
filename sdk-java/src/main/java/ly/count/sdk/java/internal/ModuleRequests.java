@@ -77,18 +77,18 @@ public class ModuleRequests extends ModuleBase {
         return request;
     }
 
-    public static Future<Boolean> sessionBegin(CtxCore ctx, SessionImpl session) {
-        Request request = sessionRequest(ctx.getConfig(), session, "begin_session", 1L);
-        return request.isEmpty() ? null : pushAsync(ctx.getConfig(), request);
+    public static Future<Boolean> sessionBegin(InternalConfig config, SessionImpl session) {
+        Request request = sessionRequest(config, session, "begin_session", 1L);
+        return request.isEmpty() ? null : pushAsync(config, request);
     }
 
-    public static Future<Boolean> sessionUpdate(CtxCore ctx, SessionImpl session, Long seconds) {
-        Request request = sessionRequest(ctx.getConfig(), session, "session_duration", seconds);
-        return request.isEmpty() ? null : pushAsync(ctx.getConfig(), request);
+    public static Future<Boolean> sessionUpdate(InternalConfig config, SessionImpl session, Long seconds) {
+        Request request = sessionRequest(config, session, "session_duration", seconds);
+        return request.isEmpty() ? null : pushAsync(config, request);
     }
 
-    public static Future<Boolean> sessionEnd(CtxCore ctx, SessionImpl session, Long seconds, String did, Tasks.Callback<Boolean> callback) {
-        Request request = sessionRequest(ctx.getConfig(), session, "end_session", 1L);
+    public static Future<Boolean> sessionEnd(InternalConfig config, SessionImpl session, Long seconds, String did, Tasks.Callback<Boolean> callback) {
+        Request request = sessionRequest(config, session, "end_session", 1L);
 
         if (did != null && Utils.isNotEqual(did, request.params.get(Params.PARAM_DEVICE_ID))) {
             request.params.remove(Params.PARAM_DEVICE_ID);
@@ -104,12 +104,12 @@ public class ModuleRequests extends ModuleBase {
                 try {
                     callback.call(false);
                 } catch (Throwable t) {
-                    ctx.getLogger().e("Shouldn't happen " + t);
+                    config.getLogger().e("Shouldn't happen " + t);
                 }
             }
             return null;
         } else {
-            return pushAsync(ctx.getConfig(), request, callback);
+            return pushAsync(config, request, callback);
         }
     }
 
@@ -222,7 +222,7 @@ public class ModuleRequests extends ModuleBase {
     /**
      * Common store-request logic: store & send a ping to the service.
      *
-     * @param ctx Ctx to run in
+     * @param config InternalConfig to run in
      * @param request Request to store
      * @return {@link Future} which resolves to {@code} true if stored successfully, false otherwise
      */
@@ -233,7 +233,7 @@ public class ModuleRequests extends ModuleBase {
     /**
      * Common store-request logic: store & send a ping to the service.
      *
-     * @param ctx Ctx to run in
+     * @param config InternalConfig to run in
      * @param request Request to store
      * @param callback Callback (nullable) to call when storing is done, called in {@link Storage} {@link Thread}
      * @return {@link Future} which resolves to {@code} true if stored successfully, false otherwise

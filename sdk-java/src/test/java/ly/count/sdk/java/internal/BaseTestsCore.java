@@ -1,14 +1,12 @@
 package ly.count.sdk.java.internal;
 
+import java.io.File;
+import java.util.List;
+import ly.count.sdk.java.Config;
 import org.junit.After;
 import org.junit.Before;
 import org.mockito.Mockito;
 import org.powermock.reflect.Whitebox;
-
-import java.io.File;
-import java.util.List;
-
-import ly.count.sdk.java.Config;
 
 import static org.mockito.Mockito.mock;
 
@@ -114,7 +112,7 @@ public class BaseTestsCore {
     @After
     public void tearDown() throws Exception {
         if (this.sdk != null && ctx != null) {
-            this.sdk.stop(ctx, true);
+            this.sdk.stop(true);
             this.sdk = null;
         }
     }

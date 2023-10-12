@@ -13,9 +13,9 @@ public class ModuleSessions extends ModuleBase {
         return session;
     }
 
-    public synchronized SessionImpl session(CtxCore ctx, Long id) {
+    public synchronized SessionImpl session(InternalConfig config, Long id) {
         if (session == null) {
-            session = new SessionImpl(ctx, id);
+            session = new SessionImpl(config, id);
         }
         return session;
     }
@@ -51,26 +51,26 @@ public class ModuleSessions extends ModuleBase {
     }
 
     @Override
-    public void stop(CtxCore ctx, boolean clear) {
+    public void stop(InternalConfig config, boolean clear) {
         if (!clear) {
-            Storage.pushAsync(ctx.getConfig(), timedEvents);
+            Storage.pushAsync(config, timedEvents);
         }
         timedEvents = null;
 
         if (clear) {
-            ctx.getSDK().sdkStorage.storablePurge(ctx.getConfig(), SessionImpl.getStoragePrefix());
+            config.sdk.sdkStorage.storablePurge(config, SessionImpl.getStoragePrefix());
         }
     }
 
     /**
      * Handles one single case of device id change with auto sessions handling, see first {@code if} here:
      *
-     * @see ModuleDeviceIdCore#onDeviceId(CtxCore, Config.DID, Config.DID)
+     * @see ModuleDeviceIdCore#onDeviceId(InternalConfig, Config.DID, Config.DID)
      */
-    public void onDeviceId(final CtxCore ctx, final Config.DID deviceId, final Config.DID oldDeviceId) {
+    public void onDeviceId(final InternalConfig config, final Config.DID deviceId, final Config.DID oldDeviceId) {
         L.d("[ModuleSessions] onDeviceId " + deviceId + ", old " + oldDeviceId);
         if (deviceId != null && oldDeviceId != null && deviceId.realm == Config.DID.REALM_DID && !deviceId.equals(oldDeviceId) && getSession() == null) {
-            session(ctx, null).begin();
+            session(config, null).begin();
         }
     }
 

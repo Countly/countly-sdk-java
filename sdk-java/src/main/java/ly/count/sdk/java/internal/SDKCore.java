@@ -107,17 +107,16 @@ public class SDKCore {
     /**
      * Stop sdk core
      *
-     * @param ctx {@link CtxCore} object
      * @param clear if true, clear all data
      * @deprecated use {@link #halt(CtxCore)} instead
      */
-    public void stop(final CtxCore ctx, final boolean clear) {
+    public void stop(final boolean clear) {
         if (instance == null) {
             return;
         }
 
         if (networking != null) {
-            networking.stop(ctx.getConfig());
+            networking.stop(config);
         }
 
         countlyTimer.stopTimer();
@@ -126,7 +125,7 @@ public class SDKCore {
 
         modules.forEach((feature, module) -> {
             try {
-                module.stop(ctx, clear);
+                module.stop(config, clear);
                 module.setActive(false);
             } catch (Throwable e) {
                 L.e("[SDKCore] Exception while stopping " + module.getClass() + " " + e);
@@ -144,11 +143,9 @@ public class SDKCore {
 
     /**
      * Stop sdk core
-     *
-     * @param ctxCore {@link CtxCore} object
      */
-    public void halt(CtxCore ctxCore) {
-        stop(ctxCore, true);
+    public void halt() {
+        stop(true);
     }
 
     private boolean addingConsent(int adding, CoreFeature feature) {
@@ -164,7 +161,7 @@ public class SDKCore {
      *
      * @param consent consents to add
      */
-    public void onConsent(CtxCore ctx, int consent) {
+    public void onConsent(int consent) {
         if (!config().requiresConsent()) {
             L.e("[SDKModules] onConsent() shouldn't be called when Config.requiresConsent() is false");
             return;
@@ -176,12 +173,12 @@ public class SDKCore {
                 session.end();
             }
 
-            consents = consents | (consent & ctx.getConfig().getFeatures1());
+            consents = consents | (consent & config.getFeatures1());
 
-            module(ModuleSessions.class).session(ctx, null).begin();
+            module(ModuleSessions.class).session(config, null).begin();
         }
 
-        consents = consents | (consent & ctx.getConfig().getFeatures1());
+        consents = consents | (consent & config.getFeatures1());
 
         for (Integer feature : moduleMappings.keySet()) {
             ModuleBase existing = module(moduleMappings.get(feature));
@@ -190,8 +187,8 @@ public class SDKCore {
                 if (module == null) {
                     L.e("[SDKCore] Cannot instantiate module " + feature);
                 } else {
-                    module.init(ctx.getConfig(), L);
-                    module.initFinished(ctx.getConfig());
+                    module.init(config, L);
+                    module.initFinished(config);
                     modules.put(feature, module);
                 }
             }
@@ -203,7 +200,7 @@ public class SDKCore {
      *
      * @param noConsent consents to remove
      */
-    public void onConsentRemoval(CtxCore ctx, int noConsent) {
+    public void onConsentRemoval(InternalConfig config, int noConsent) {
         if (!config().requiresConsent()) {
             L.e("[SDKModules] onConsentRemoval() shouldn't be called when Config.requiresConsent() is false");
             return;
@@ -225,7 +222,7 @@ public class SDKCore {
         for (Integer feature : moduleMappings.keySet()) {
             ModuleBase existing = module(moduleMappings.get(feature));
             if (feature != CoreFeature.Sessions.getIndex() && existing != null) {
-                existing.stop(ctx, true);
+                existing.stop(config, true);
                 modules.remove(feature);
             }
         }
@@ -236,7 +233,7 @@ public class SDKCore {
      * Uses {@link #moduleMappings} for {@code Config.Feature} / {@link CoreFeature}
      * - Class&lt;ModuleBase&gt; mapping to enable overriding by app developer.
      *
-     * @param ctx {@link CtxCore} object containing config with mapping overrides
+     * @param config {@link InternalConfig} object containing config with mapping overrides
      * @throws IllegalArgumentException in case some {@link ModuleBase} finds {@link #config} inconsistent.
      * @throws IllegalStateException when this module is run second time on the same {@code Core} instance.
      */
@@ -258,7 +255,7 @@ public class SDKCore {
      * Uses {@link #moduleMappings} for {@code Config.Feature} / {@link CoreFeature}
      * - Class&lt;ModuleBase&gt; mapping to enable overriding by app developer.
      *
-     * @param ctx {@link CtxCore} object
+     * @param config {@link InternalConfig} object
      * @param features consents bitmask to check against
      * @throws IllegalArgumentException in case some {@link ModuleBase} finds {@link #config} inconsistent.
      * @throws IllegalStateException when this module is run second time on the same {@code Core} instance.
@@ -354,9 +351,9 @@ public class SDKCore {
      * @param session session to begin
      * @return supplied session for method chaining
      */
-    public SessionImpl onSessionBegan(CtxCore ctx, SessionImpl session) {
+    public SessionImpl onSessionBegan(InternalConfig config, SessionImpl session) {
         for (ModuleBase m : modules.values()) {
-            m.onSessionBegan(session, ctx);
+            m.onSessionBegan(session, config);
         }
         return session;
     }
@@ -367,9 +364,9 @@ public class SDKCore {
      * @param session session to end
      * @return supplied session for method chaining
      */
-    public SessionImpl onSessionEnded(CtxCore ctx, SessionImpl session) {
+    public SessionImpl onSessionEnded(InternalConfig config, SessionImpl session) {
         for (ModuleBase m : modules.values()) {
-            m.onSessionEnded(session, ctx);
+            m.onSessionEnded(session, config);
         }
         ModuleSessions sessions = (ModuleSessions) module(CoreFeature.Sessions.getIndex());
         if (sessions != null) {
@@ -399,14 +396,13 @@ public class SDKCore {
     /**
      * Get current {@link SessionImpl} or create new one if current is {@code null}.
      *
-     * @param ctx Ctx to create new {@link SessionImpl} in
      * @param id ID of new {@link SessionImpl} if needed
      * @return current {@link SessionImpl} instance
      */
-    public SessionImpl session(CtxCore ctx, Long id) {
+    public SessionImpl session(Long id) {
         ModuleSessions sessions = (ModuleSessions) module(CoreFeature.Sessions.getIndex());
         if (sessions != null) {
-            return sessions.session(ctx, id);
+            return sessions.session(config, id);
         }
         return null;
     }
@@ -551,11 +547,11 @@ public class SDKCore {
         return config;
     }
 
-    public void onCrash(CtxCore ctx, Throwable t, boolean fatal, String name, Map<String, String> segments, String[] logs) {
+    public void onCrash(InternalConfig config, Throwable t, boolean fatal, String name, Map<String, String> segments, String[] logs) {
         L.i("[SDKCore] onCrash: t: " + t.toString() + " fatal: " + fatal + " name: " + name + " segments: " + segments);
         ModuleCrash module = (ModuleCrash) module(CoreFeature.CrashReporting.getIndex());
         if (module != null) {
-            module.onCrash(ctx.getConfig(), t, fatal, name, segments, logs);
+            module.onCrash(config, t, fatal, name, segments, logs);
         }
     }
 
@@ -580,11 +576,11 @@ public class SDKCore {
         }
     }
 
-    public void login(InternalConfig config, String id) {
+    public void login(String id) {
         ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).login(config, id);
     }
 
-    public void logout(InternalConfig config) {
+    public void logout() {
         ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).logout(config);
     }
 
@@ -657,7 +653,7 @@ public class SDKCore {
         List<Long> sessions = Storage.list(config, SessionImpl.getStoragePrefix());
         for (Long id : sessions) {
             L.d("[SDKCore] recovering session " + id);
-            SessionImpl session = Storage.read(config, new SessionImpl(new CtxCore(config), id));
+            SessionImpl session = Storage.read(config, new SessionImpl(config, id));
             if (session == null) {
                 L.e("[SDKCore] no session with id " + id + " found while recovering");
             } else {

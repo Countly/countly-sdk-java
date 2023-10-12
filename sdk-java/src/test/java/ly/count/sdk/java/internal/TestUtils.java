@@ -356,14 +356,11 @@ public class TestUtils {
         }
     }
 
-    public static CtxCore getMockCtxCore() {
-        CtxCore ctxCore = mock(CtxCore.class);
+    public static InternalConfig getMockInternalConfig() {
+        InternalConfig ic = mock(InternalConfig.class);
 
         //todo too hacky, burn it
-        given(ctxCore.getLogger()).willReturn(mock(Log.class));
-        InternalConfig ic = mock(InternalConfig.class);
         given(ic.getLogger()).willReturn(mock(Log.class));
-        given(ctxCore.getConfig()).willReturn(ic);
-        return ctxCore;
+        return ic;
     }
 }

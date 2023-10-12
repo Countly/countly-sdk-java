@@ -62,7 +62,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
     /**
      * Regular logic of acquiring id of specified strategy and migration from legacy SDK.
      *
-     * @param ctx Ctx
+     * @param config InternalConfig
      */
     @Override
     public void initFinished(final InternalConfig config) {
@@ -169,7 +169,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
     /**
      * Puts {@code "device_id"} parameter into all requests which don't have it yet
      *
-     * @param ctx Ctx to run in
+     * @param config InternalConfig to run in
      * @param deviceId deviceId string
      * @return {@code true} if {@link Request}s changed successfully, {@code false} otherwise
      */
@@ -187,7 +187,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
     /**
      * Just a wrapper around {@link SDKCore#onSignal(CtxCore, int, Byteable, Byteable)}} for {@link SDKCore.Signal#DID} case
      *
-     * @param ctx Ctx to run in
+     * @param config InternalConfig to run in
      * @param id new {@link Config.DID} if any
      * @param old old {@link Config.DID} if any
      */
@@ -201,7 +201,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
      * - reset device id and notify modules;
      * - send corresponding request to server.
      *
-     * @param ctx ctx to run in
+     * @param config InternalConfig to run in
      * @param id device id to change to
      */
     public void login(InternalConfig config, String id) {
@@ -287,7 +287,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
      * Synchronously gets id of the strategy supplied. In case strategy is not available, returns a fallback strategy.
      * In case strategy is available but id cannot be acquired right now, returns null.
      *
-     * @param ctx Ctx to run in
+     * @param config InternalConfig to run in
      * @param holder DID object which holds strategy and possibly other info for id generation
      * @param fallbackAllowed whether to automatically fallback to any available alternative or not
      * @return {@link Config.DID} instance with an id
@@ -332,7 +332,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
     }
 
     @Override
-    public void stop(CtxCore ctx, boolean clear) {
+    public void stop(InternalConfig config, boolean clear) {
         if (tasks != null) {
             tasks.shutdown();
             tasks = null;
