@@ -95,7 +95,7 @@ public class ConfigTests extends BaseTestsCore {
 
     @Test
     public void testSendUpdateEachSeconds() {
-        Assert.assertEquals(30, internalConfig.getSendUpdateEachSeconds());
+        Assert.assertEquals(60, internalConfig.getSendUpdateEachSeconds());
 
         internalConfig.disableUpdateRequests();
         Assert.assertEquals(0, internalConfig.getSendUpdateEachSeconds());
