@@ -2,6 +2,9 @@
 
 * ! Minor breaking change ! Calling "init" twice will now not reinitialize the SDK. The call will be ignored
 
+* Session update time duration increased to 60 seconds from 30 seconds.
+* Adding remaining request queue size information to every request.
+
 23.8.0
 
 * !! Major breaking change !! The following methods and their functionality are deprecated from the "UserEditor" interface and will not function anymore:
