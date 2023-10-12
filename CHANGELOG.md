@@ -1,3 +1,8 @@
+23.8.1
+
+* Session update time duration increased to 60 seconds from 30 seconds.
+* A 'rr' parameter is added to every request to indicate how many requests remain in the request queue.
+
 23.8.0
 
 * !! Major breaking change !! The following methods and their functionality are deprecated from the "UserEditor" interface and will not function anymore:
