@@ -504,7 +504,7 @@ public class SDKCore {
 
                     @Override
                     public Integer remaningRequests() {
-                        return Storage.list(ctx, Request.getStoragePrefix()).size() - 1;
+                        return Storage.list(givenConfig, Request.getStoragePrefix()).size() - 1;
                     }
                 });
             }
