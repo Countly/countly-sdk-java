@@ -6,6 +6,8 @@ public interface IKeyValueStorage<T, R> {
 
     /**
      * If key exists changes its value, otherwise adds new key-value pair
+     * Null key or value is not allowed
+     * Do not forget to call save to save changes to the disk/db/memory
      *
      * @param key to set
      * @param value to add
@@ -19,6 +21,8 @@ public interface IKeyValueStorage<T, R> {
 
     /**
      * Removes key-value pair
+     * Null key is not allowed
+     * Do not forget to call save to save changes to the disk/db/memory
      *
      * @param key to remove
      */
@@ -26,6 +30,7 @@ public interface IKeyValueStorage<T, R> {
 
     /**
      * Adds key-value pair and saves changes to the disk/db/memory
+     * Null key or value is not allowed
      *
      * @param key to set
      * @param value to add
@@ -34,6 +39,7 @@ public interface IKeyValueStorage<T, R> {
 
     /**
      * Removes key-value pair and saves changes to the disk/db/memory
+     * Null key is not allowed
      *
      * @param key to remove
      */
@@ -41,6 +47,7 @@ public interface IKeyValueStorage<T, R> {
 
     /**
      * Returns value for the key
+     * Null key is not allowed
      *
      * @param key to get
      * @return value
@@ -56,4 +63,11 @@ public interface IKeyValueStorage<T, R> {
      * Clears all data and saves changes to the disk/db/memory
      */
     void clearAndSave();
+
+    /**
+     * Returns number of key-value pairs
+     *
+     * @return number of key-value pairs
+     */
+    int size();
 }
