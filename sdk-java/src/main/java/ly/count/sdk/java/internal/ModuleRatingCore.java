@@ -24,10 +24,6 @@ public class ModuleRatingCore extends ModuleBase {
     }
 
     @Override
-    public void initFinished(InternalConfig config) {
-    }
-
-    @Override
     public Boolean onRequest(Request request) {
         return true;
     }

@@ -37,7 +37,7 @@ public class ModuleSessions extends ModuleBase {
                 timedEvents = new TimedEvents(L);
             }
         } catch (Throwable e) {
-            L.e("[ModuleSessions] Cannot happen" + e);
+            L.e("[ModuleSessions] initFinished,  Cannot happen" + e);
             timedEvents = new TimedEvents(L);
         }
     }
@@ -45,7 +45,7 @@ public class ModuleSessions extends ModuleBase {
     @Override
     protected void onTimer() {
         if (!internalConfig.isBackendModeEnabled() && isActive() && getSession() != null) {
-            L.i("[ModuleSessions] updating session");
+            L.i("[ModuleSessions] onTimer, updating session");
             getSession().update();
         }
     }

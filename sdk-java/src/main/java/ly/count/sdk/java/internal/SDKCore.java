@@ -455,6 +455,8 @@ public class SDKCore {
             modules.remove(feature);
         }
 
+        recover(givenConfig);
+
         if (config.isDefaultNetworking()) {
             networking = new DefaultNetworking();
 
@@ -505,11 +507,7 @@ public class SDKCore {
                     }
                 });
             }
-
-            networking.check(givenConfig);
         }
-
-        recover(givenConfig);
 
         try {
             user = Storage.read(givenConfig, new UserImpl(givenConfig));
@@ -520,11 +518,16 @@ public class SDKCore {
             L.e("[SDKCore] Cannot happen" + e);
             user = new UserImpl(givenConfig);
         }
+
+        config.sdk = this;
         initFinished(config);
     }
 
     private void initFinished(final InternalConfig config) {
         modules.forEach((feature, module) -> module.initFinished(config));
+        if (config.isDefaultNetworking()) {
+            networking.check(config);
+        }
     }
 
     public UserImpl user() {

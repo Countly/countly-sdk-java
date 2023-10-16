@@ -66,16 +66,16 @@ public class ModuleDeviceIdCore extends ModuleBase {
      */
     @Override
     public void initFinished(final InternalConfig config) {
-        L.i("[ModuleDeviceIdCore] [onContextAcquired] Starting device ID acquisition");
+        L.i("[ModuleDeviceIdCore] initFinished, Starting device ID acquisition");
         if (config.getDeviceId() == null) {
             // either fresh install, or migration from legacy SDK
 
-            L.i("[ModuleDeviceIdCore] Acquiring device id");
+            L.i("[ModuleDeviceIdCore] initFinished, Acquiring device id");
 
             if (Utils.isNotEmpty(config.getCustomDeviceId())) {
                 // developer specified id on SDK init
                 Config.DID did = new Config.DID(Config.DID.REALM_DID, Config.DID.STRATEGY_CUSTOM, config.getCustomDeviceId());
-                L.d("[ModuleDeviceIdCore] Got developer id [" + did + "]");
+                L.d("[ModuleDeviceIdCore] initFinished, Got developer id [" + did + "]");
                 SDKCore.instance.onDeviceId(config, did, null);
             } else {
                 // regular flow - acquire id using specified strategy
@@ -83,19 +83,19 @@ public class ModuleDeviceIdCore extends ModuleBase {
                 acquireId(config, did, config.isDeviceIdFallbackAllowed(), id -> {
                     if (id != null) {
                         if (id.strategy == Config.DID.STRATEGY_UUID) {
-                            L.i("During init, custom device id was not provided. SDK has generated a random device id.");
+                            L.i("[ModuleDeviceIdCore] initFinished, During init, custom device id was not provided. SDK has generated a random device id.");
                         }
-                        L.d("[ModuleDeviceIdCore] Got device id: " + id);
+                        L.d("[ModuleDeviceIdCore] initFinished, Got device id: " + id);
                         SDKCore.instance.onDeviceId(config, id, null);
                     } else {
-                        L.i("[ModuleDeviceIdCore] No device id of strategy [" + config.getDeviceIdStrategy() + "] is available yet");
+                        L.i("[ModuleDeviceIdCore] initFinished, No device id of strategy [" + config.getDeviceIdStrategy() + "] is available yet");
                     }
                 });
             }
         } else {
             // second or next app launch, notify id is available
             Config.DID loadedDid = config.getDeviceId();
-            L.d("[ModuleDeviceIdCore] [onContextAcquired] Loading previously saved device id:[" + loadedDid.id + "] realm:[" + loadedDid.realm + "] strategy:[" + loadedDid.strategy + "]");
+            L.d("[ModuleDeviceIdCore] initFinished, Loading previously saved device id:[" + loadedDid.id + "] realm:[" + loadedDid.realm + "] strategy:[" + loadedDid.strategy + "]");
             SDKCore.instance.onDeviceId(config, loadedDid, loadedDid);
         }
     }

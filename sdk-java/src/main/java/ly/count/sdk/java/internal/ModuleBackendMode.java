@@ -33,11 +33,6 @@ public class ModuleBackendMode extends ModuleBase {
     }
 
     @Override
-    public void initFinished(final InternalConfig config) {
-        L.d("[BackendMode] initFinished");
-    }
-
-    @Override
     protected void onTimer() {
         addEventsToRequestQ();
     }

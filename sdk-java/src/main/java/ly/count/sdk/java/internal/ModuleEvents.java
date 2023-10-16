@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
 import ly.count.sdk.java.Countly;
 
 public class ModuleEvents extends ModuleBase {
@@ -19,11 +18,6 @@ public class ModuleEvents extends ModuleBase {
         eventQueue = new EventQueue(L, config.getEventsBufferSize());
         eventQueue.restoreFromDisk();
         eventsInterface = new Events();
-    }
-
-    @Override
-    public void initFinished(@Nonnull InternalConfig config) {
-        L.d("[ModuleEvents] initFinished");
     }
 
     @Override
