@@ -113,17 +113,17 @@ public class ModuleRequests extends ModuleBase {
         }
     }
 
-    public static Future<Boolean> location(CtxCore ctx, double latitude, double longitude) {
+    public static Future<Boolean> location(InternalConfig config, double latitude, double longitude) {
         if (!SDKCore.enabled(CoreFeature.Location)) {
             return null;
         }
 
-        Request request = sessionRequest(ctx.getConfig(), null, null, null);
+        Request request = sessionRequest(config, null, null, null);
         request.params.add("location", latitude + "," + longitude);
-        return pushAsync(ctx.getConfig(), request);
+        return pushAsync(config, request);
     }
 
-    public static Future<Boolean> changeId(CtxCore ctx, InternalConfig config, CtxCore context, String oldId) {
+    public static Future<Boolean> changeId(InternalConfig config, String oldId) {
         // TODO
         return null;
     }
@@ -132,7 +132,7 @@ public class ModuleRequests extends ModuleBase {
         return sessionRequest(config, null, null, null);
     }
 
-    public static Request nonSessionRequest(CtxCore ctx, Long timestamp) {
+    public static Request nonSessionRequest(InternalConfig config, Long timestamp) {
         return new Request(timestamp);
     }
 
@@ -141,20 +141,20 @@ public class ModuleRequests extends ModuleBase {
      * Expected format
      * https://the.server.com/o/feedback/widget?app_key=d899c0f6adb2e9&widget_id=5c48ehdgee96c
      *
-     * @param ctx {@link CtxCore} instannce
+     * @param config {@link InternalConfig} instannce
      * @param widgetId widget id
      * @return request instance
      */
-    public static Request ratingWidgetAvailabilityCheck(CtxCore ctx, String widgetId, Class<? extends ModuleBase> module) {
-        Request req = Request.build("widget_id", widgetId, "app_key", ctx.getConfig().getServerAppKey());
+    public static Request ratingWidgetAvailabilityCheck(InternalConfig config, String widgetId, Class<? extends ModuleBase> module) {
+        Request req = Request.build("widget_id", widgetId, "app_key", config.getServerAppKey());
         req.own(module);
         req.endpoint("/o/feedback/widget?");
 
         return req;
     }
 
-    public static Request remoteConfigUpdate(CtxCore ctx, String keysInclude, String keysExclude, Class<? extends ModuleBase> module) {
-        Request req = Request.build("method", "fetch_remote_config", "app_key", ctx.getConfig().getServerAppKey());
+    public static Request remoteConfigUpdate(InternalConfig config, String keysInclude, String keysExclude, Class<? extends ModuleBase> module) {
+        Request req = Request.build("method", "fetch_remote_config", "app_key", config.getServerAppKey());
 
         if (keysInclude != null) {
             req.params.add("keys", keysInclude);

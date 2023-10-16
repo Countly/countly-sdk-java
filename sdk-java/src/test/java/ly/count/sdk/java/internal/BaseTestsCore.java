@@ -11,10 +11,9 @@ import org.powermock.reflect.Whitebox;
 import static org.mockito.Mockito.mock;
 
 public class BaseTestsCore {
-    protected static String SERVER = "http://www.serverurl.com";
+    protected static String SERVER = "https://www.serverurl.com";
     protected static String APP_KEY = "1234";
 
-    protected CtxCore ctx;
     protected InternalConfig config = null;
     protected ModuleBase dummy = null;
 
@@ -85,7 +84,6 @@ public class BaseTestsCore {
         this.sdk = mock(SDKCore.class);
         this.sdk.init(new InternalConfig(defaultConfig()));
         this.config = this.sdk.config();
-        this.ctx = new CtxImpl(this.sdk.config);
     }
 
     protected <T extends ModuleBase> T module(Class<T> cls, boolean mock) {
@@ -105,14 +103,10 @@ public class BaseTestsCore {
         return module;
     }
 
-    private Object getSdkStorageRootDirectory() {
-        return new Object();
-    }
-
     @After
     public void tearDown() throws Exception {
-        if (this.sdk != null && ctx != null) {
-            this.sdk.stop(true);
+        if (this.sdk != null) {
+            this.sdk.halt();
             this.sdk = null;
         }
     }

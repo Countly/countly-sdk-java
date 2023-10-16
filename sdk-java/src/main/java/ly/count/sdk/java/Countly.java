@@ -107,7 +107,6 @@ public class Countly implements Usage {
         SDKCore sdk = new SDKCore();
         sdk.init(internalConfig, L);
 
-        // config has been changed, thus recreating ctx
         this.sdk = sdk;
         this.L = L;
     }

@@ -185,7 +185,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
     }
 
     /**
-     * Just a wrapper around {@link SDKCore#onSignal(CtxCore, int, Byteable, Byteable)}} for {@link SDKCore.Signal#DID} case
+     * Just a wrapper around {@link SDKCore#onSignal(InternalConfig, int, Byteable, Byteable)}} for {@link SDKCore.Signal#DID} case
      *
      * @param config InternalConfig to run in
      * @param id new {@link Config.DID} if any
@@ -222,7 +222,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
      * - nullify device id and notify modules;
      * - send corresponding request to server.
      *
-     * @param ctx context to run in
+     * @param config context to run in
      */
     public void logout(final InternalConfig config) {
         final Config.DID old = config.getDeviceId();
@@ -249,7 +249,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
      *     <li>Begin new session with new id if previously ended a session</li>
      * </ul>
      *
-     * @param ctx context to run in
+     * @param config context to run in
      * @param id new user id
      */
     public void changeDeviceId(InternalConfig config, String id, boolean withMerge) {

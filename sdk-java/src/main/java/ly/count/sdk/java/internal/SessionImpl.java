@@ -581,9 +581,9 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         return (consents & feature) > 0;
     }
 
-    void setConsents(CtxCore ctx, int features) {
+    void setConsents(InternalConfig config, int features) {
         consents = features;
-        Storage.pushAsync(ctx.getConfig(), this);
+        Storage.pushAsync(config, this);
     }
 
     @Override

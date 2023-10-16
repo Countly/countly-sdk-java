@@ -20,7 +20,6 @@ public class ModuleRemoteConfig extends ModuleBase {
     public final static String storableStoragePrefix = "remote_config";
 
     protected InternalConfig internalConfig = null;
-    protected CtxCore ctx = null;
 
     protected Map<Long, RemoteConfigCallback> requestCallbacks;
 
@@ -143,7 +142,7 @@ public class ModuleRemoteConfig extends ModuleBase {
             sKExcept = excludeArray.toString();
         }
 
-        Request req = ModuleRequests.remoteConfigUpdate(ctx, sKOnly, sKExcept, ModuleRemoteConfig.class);
+        Request req = ModuleRequests.remoteConfigUpdate(internalConfig, sKOnly, sKExcept, ModuleRemoteConfig.class);
         requestCallbacks.put(req.storageId(), callback);
         ModuleRequests.pushAsync(internalConfig, req);
     }

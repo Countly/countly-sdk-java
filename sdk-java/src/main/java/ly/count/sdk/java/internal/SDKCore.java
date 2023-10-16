@@ -108,7 +108,7 @@ public class SDKCore {
      * Stop sdk core
      *
      * @param clear if true, clear all data
-     * @deprecated use {@link #halt(CtxCore)} instead
+     * @deprecated use {@link #halt()} instead
      */
     public void stop(final boolean clear) {
         if (instance == null) {
@@ -267,7 +267,7 @@ public class SDKCore {
             throw new IllegalStateException("Modules can only be built once");
         }
 
-        //        if (ctx.getConfig().getLoggingLevel() != Config.LoggingLevel.OFF) {
+        //        if (config.getLoggingLevel() != Config.LoggingLevel.OFF) {
         //            modules.put(-10, instantiateModule(moduleMappings.get(CoreFeature.Logs.getIndex()), L));
         //        }
 
