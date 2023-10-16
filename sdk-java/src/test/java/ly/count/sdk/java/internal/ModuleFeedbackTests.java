@@ -82,35 +82,13 @@ public class ModuleFeedbackTests {
 
     /**
      * "parseFeedbackList"
-     * Response with a correct entry and bad entries is given
-     * The correct entry should be correctly parsed and the bad ones should be ignored
-     */
-    //todo: can this test be combined with the next one?
-    @Test
-    public void parseFeedbackList_oneGoodWithGarbage() throws JSONException {
-        init(TestUtils.getConfigFeedback());
-
-        String requestJson =
-            "{\"result\":[{\"_id\":\"asd\",\"type\":\"qwe\",\"name\":\"zxc\",\"tg\":[]},{\"_id\":\"5f97284635935cc338e78200\",\"type\":\"nps\",\"name\":\"fsdfsdf\",\"tg\":[\"/\"]},{\"g4id\":\"asd1\",\"t4type\":\"432\",\"nagdfgme\":\"zxct\",\"tgm\":[\"/\"]}]}";
-
-        JSONObject jObj = new JSONObject(requestJson);
-
-        List<CountlyFeedbackWidget> ret = new ArrayList<>();
-        String error = ModuleFeedback.parseFeedbackList(jObj, ret);
-        Assert.assertNotNull(ret);
-        Assert.assertEquals(1, ret.size());
-        ValidateReturnedFeedbackWidget(FeedbackWidgetType.nps, "fsdfsdf", "5f97284635935cc338e78200", new String[] { "/" }, ret.get(0));
-    }
-
-    /**
-     * "parseFeedbackList"
      * Response with partial entries given
      * Only the entries with all important fields given should be returned
      */
     @Test
     public void parseFeedbackList_faulty() throws JSONException {
         init(TestUtils.getConfigFeedback());
-        // 9 widgets (3 from each)
+        // 9 widgets (3 from each) and 2 garbage entries
         // First variation => no 'tg' key
         // Second variation => no 'name' key
         // First variation => no '_id' key
@@ -124,7 +102,9 @@ public class ModuleFeedbackTests {
                 + "{\"type\":\"nps\",\"name\":\"nps3\",\"tg\":[]},"
                 + "{\"_id\":\"ratingID1\",\"type\":\"rating\",\"appearance\":{\"position\":\"mleft\",\"bg_color\":\"#fff\",\"text_color\":\"#ddd\",\"text\":\"Feedback\"},\"name\":\"rating1\"},"
                 + "{\"_id\":\"ratingID2\",\"type\":\"rating\",\"appearance\":{\"position\":\"mleft\",\"bg_color\":\"#fff\",\"text_color\":\"#ddd\",\"text\":\"Feedback\"},\"tg\":[\"\\/\"]},"
-                + "{\"type\":\"rating\",\"appearance\":{\"position\":\"mleft\",\"bg_color\":\"#fff\",\"text_color\":\"#ddd\",\"text\":\"Feedback\"},\"tg\":[\"\\/\"],\"name\":\"rating3\"}"
+                + "{\"type\":\"rating\",\"appearance\":{\"position\":\"mleft\",\"bg_color\":\"#fff\",\"text_color\":\"#ddd\",\"text\":\"Feedback\"},\"tg\":[\"\\/\"],\"name\":\"rating3\"},"
+                + "{\"_id\":\"asd\",\"type\":\"qwe\",\"name\":\"zxc\",\"tg\":[]},"
+                + "{\"g4id\":\"asd1\",\"t4type\":\"432\",\"nagdfgme\":\"zxct\",\"tgm\":[\"/\"]}"
                 + "]}";
 
         JSONObject jObj = new JSONObject(requestJson);
