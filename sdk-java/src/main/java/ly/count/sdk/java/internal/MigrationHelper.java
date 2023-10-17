@@ -1,8 +1,9 @@
 package ly.count.sdk.java.internal;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
+import java.util.Map;
+import java.util.function.Function;
 
 /**
  * Migration helper class that handles migration of Countly SDK from one version to another
@@ -17,12 +18,12 @@ import java.util.function.Supplier;
  */
 public class MigrationHelper {
     InternalConfig internalConfig;
-    private final List<Supplier<Boolean>> migrations;
+    private final List<Function<Map<String, Object>, Boolean>> migrations;
     protected int appliedMigrationVersion = -1;
     protected Log logger;
 
     protected MigrationHelper(Log logger) {
-        migrations = new LinkedList<>();
+        migrations = new ArrayList<>();
         this.logger = logger;
     }
 
@@ -41,18 +42,20 @@ public class MigrationHelper {
 
     /**
      * Applies all migrations one by one
+     *
+     * @param migrationParams parameters to pass to migrations
      */
-    protected void applyMigrations() {
+    protected void applyMigrations(Map<String, Object> migrationParams) {
         logger.i("[MigrationHelper] applyMigrations, Applying migrations");
         migrations.forEach((migration) -> {
-            if (!migration.get()) {
+            if (!migration.apply(migrationParams)) {
                 logger.e("[MigrationHelper] applyMigrations, Failed to apply migration version:[ " + (appliedMigrationVersion + 1) + " ]");
             }
         });
         internalConfig.storageProvider.setMigrationVersion(appliedMigrationVersion);
     }
 
-    protected boolean migration_DeleteConfigFile_00() {
+    protected boolean migration_DeleteConfigFile_00(Map<String, Object> migrationParams) {
         if (appliedMigrationVersion >= 0) {
             logger.d("[MigrationHelper] migration_DeleteConfigFile_00, Migration already applied");
             return true;

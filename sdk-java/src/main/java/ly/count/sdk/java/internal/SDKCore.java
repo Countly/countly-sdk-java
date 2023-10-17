@@ -440,7 +440,7 @@ public class SDKCore {
         //setup and perform migrations
         migrationHelper = new MigrationHelper(L);
         migrationHelper.setupMigrations(config);
-        migrationHelper.applyMigrations();
+        migrationHelper.applyMigrations(new HashMap<>());
 
         requestQueueMemory = new ArrayDeque<>(config.getRequestQueueMaxSize());
         // ModuleSessions is always enabled, even without consent

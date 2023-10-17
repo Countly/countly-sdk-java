@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashMap;
 import ly.count.sdk.java.Config;
 import org.junit.Assert;
 import org.junit.Before;
@@ -63,7 +64,7 @@ public class MigrationHelperTests {
         validateMigrationVersionAndSetup(-1, false);
 
         //run migration helper apply
-        migrationHelper.applyMigrations();
+        migrationHelper.applyMigrations(new HashMap<>());
         //check migration version is 0 after apply both from class and file
         Assert.assertEquals(0, migrationHelper.appliedMigrationVersion);
         Assert.assertEquals(0, TestUtils.getJsonStorageProperty(migration_version_key));
@@ -81,7 +82,7 @@ public class MigrationHelperTests {
 
         migrationHelper.logger = spy(migrationHelper.logger);
         //run migration helper apply
-        migrationHelper.applyMigrations();
+        migrationHelper.applyMigrations(new HashMap<>());
         //check migration version is 0 after apply both from class and file
         Assert.assertEquals(0, migrationHelper.appliedMigrationVersion);
         Assert.assertEquals(0, TestUtils.getJsonStorageProperty(migration_version_key));
