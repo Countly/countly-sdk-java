@@ -11,7 +11,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-
 public class TimedEventsTests {
     @After
     public void stop() {
@@ -44,8 +43,7 @@ public class TimedEventsTests {
     }
 
     public void recordEventRegularFlow_base(boolean regularRecord) throws InterruptedException {
-        Countly.instance().init(TestUtils.getConfigEvents(2).setUpdateSessionTimerDelay(300));
-
+        Countly.instance().init(TestUtils.getConfigEvents(2).setUpdateSessionTimerDelay(3000));
         Event tEvent = Countly.instance().timedEvent("key");
         tEvent.setCount(5).setSum(133).setDuration(456);
 
@@ -61,6 +59,8 @@ public class TimedEventsTests {
 
         TestUtils.validateEQSize(0);
 
+        Thread.sleep(1000);
+      
         double targetDuration;
         if (regularRecord) {
             targetDuration = 456;
@@ -72,6 +72,7 @@ public class TimedEventsTests {
             targetDuration = 1;
             tEvent.endAndRecord();
         }
+
         TestUtils.validateEventInEQ("key", targetSegm, 5, 133.0, targetDuration, 0, 1);
     }
 }

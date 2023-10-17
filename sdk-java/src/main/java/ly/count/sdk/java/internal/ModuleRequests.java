@@ -21,11 +21,11 @@ public class ModuleRequests extends ModuleBase {
     }
 
     @Override
-    public void initFinished(InternalConfig config) {
+    public void initFinished(final InternalConfig config) {
         ModuleRequests.metrics = Device.dev.buildMetrics();
     }
 
-    private static Request sessionRequest(CtxCore ctx, SessionImpl session, String type, Long value) {
+    private static Request sessionRequest(InternalConfig config, SessionImpl session, String type, Long value) {
         Request request = Request.build();
 
         if (session != null && session.hasConsent(CoreFeature.Sessions)) {
@@ -56,8 +56,8 @@ public class ModuleRequests extends ModuleBase {
             }
         }
 
-        if (ctx.getConfig().getDeviceId() != null) {
-            request.params.add(Params.PARAM_DEVICE_ID, ctx.getConfig().getDeviceId().id);
+        if (config.getDeviceId() != null) {
+            request.params.add(Params.PARAM_DEVICE_ID, config.getDeviceId().id);
         }
 
         if (((session != null && session.hasConsent(CoreFeature.Location)) || (session == null && SDKCore.enabled(CoreFeature.Location)))
@@ -77,18 +77,18 @@ public class ModuleRequests extends ModuleBase {
         return request;
     }
 
-    public static Future<Boolean> sessionBegin(CtxCore ctx, SessionImpl session) {
-        Request request = sessionRequest(ctx, session, "begin_session", 1L);
-        return request.isEmpty() ? null : pushAsync(ctx, request);
+    public static Future<Boolean> sessionBegin(InternalConfig config, SessionImpl session) {
+        Request request = sessionRequest(config, session, "begin_session", 1L);
+        return request.isEmpty() ? null : pushAsync(config, request);
     }
 
-    public static Future<Boolean> sessionUpdate(CtxCore ctx, SessionImpl session, Long seconds) {
-        Request request = sessionRequest(ctx, session, "session_duration", seconds);
-        return request.isEmpty() ? null : pushAsync(ctx, request);
+    public static Future<Boolean> sessionUpdate(InternalConfig config, SessionImpl session, Long seconds) {
+        Request request = sessionRequest(config, session, "session_duration", seconds);
+        return request.isEmpty() ? null : pushAsync(config, request);
     }
 
-    public static Future<Boolean> sessionEnd(CtxCore ctx, SessionImpl session, Long seconds, String did, Tasks.Callback<Boolean> callback) {
-        Request request = sessionRequest(ctx, session, "end_session", 1L);
+    public static Future<Boolean> sessionEnd(InternalConfig config, SessionImpl session, Long seconds, String did, Tasks.Callback<Boolean> callback) {
+        Request request = sessionRequest(config, session, "end_session", 1L);
 
         if (did != null && Utils.isNotEqual(did, request.params.get(Params.PARAM_DEVICE_ID))) {
             request.params.remove(Params.PARAM_DEVICE_ID);
@@ -104,35 +104,35 @@ public class ModuleRequests extends ModuleBase {
                 try {
                     callback.call(false);
                 } catch (Throwable t) {
-                    ctx.getLogger().e("Shouldn't happen " + t);
+                    config.getLogger().e("Shouldn't happen " + t);
                 }
             }
             return null;
         } else {
-            return pushAsync(ctx, request, callback);
+            return pushAsync(config, request, callback);
         }
     }
 
-    public static Future<Boolean> location(CtxCore ctx, double latitude, double longitude) {
+    public static Future<Boolean> location(InternalConfig config, double latitude, double longitude) {
         if (!SDKCore.enabled(CoreFeature.Location)) {
             return null;
         }
 
-        Request request = sessionRequest(ctx, null, null, null);
+        Request request = sessionRequest(config, null, null, null);
         request.params.add("location", latitude + "," + longitude);
-        return pushAsync(ctx, request);
+        return pushAsync(config, request);
     }
 
-    public static Future<Boolean> changeId(CtxCore ctx, InternalConfig config, CtxCore context, String oldId) {
+    public static Future<Boolean> changeId(InternalConfig config, String oldId) {
         // TODO
         return null;
     }
 
-    public static Request nonSessionRequest(CtxCore ctx) {
-        return sessionRequest(ctx, null, null, null);
+    public static Request nonSessionRequest(InternalConfig config) {
+        return sessionRequest(config, null, null, null);
     }
 
-    public static Request nonSessionRequest(CtxCore ctx, Long timestamp) {
+    public static Request nonSessionRequest(InternalConfig config, Long timestamp) {
         return new Request(timestamp);
     }
 
@@ -141,20 +141,20 @@ public class ModuleRequests extends ModuleBase {
      * Expected format
      * https://the.server.com/o/feedback/widget?app_key=d899c0f6adb2e9&widget_id=5c48ehdgee96c
      *
-     * @param ctx {@link CtxCore} instannce
+     * @param config {@link InternalConfig} instannce
      * @param widgetId widget id
      * @return request instance
      */
-    public static Request ratingWidgetAvailabilityCheck(CtxCore ctx, String widgetId, Class<? extends ModuleBase> module) {
-        Request req = Request.build("widget_id", widgetId, "app_key", ctx.getConfig().getServerAppKey());
+    public static Request ratingWidgetAvailabilityCheck(InternalConfig config, String widgetId, Class<? extends ModuleBase> module) {
+        Request req = Request.build("widget_id", widgetId, "app_key", config.getServerAppKey());
         req.own(module);
         req.endpoint("/o/feedback/widget?");
 
         return req;
     }
 
-    public static Request remoteConfigUpdate(CtxCore ctx, String keysInclude, String keysExclude, Class<? extends ModuleBase> module) {
-        Request req = Request.build("method", "fetch_remote_config", "app_key", ctx.getConfig().getServerAppKey());
+    public static Request remoteConfigUpdate(InternalConfig config, String keysInclude, String keysExclude, Class<? extends ModuleBase> module) {
+        Request req = Request.build("method", "fetch_remote_config", "app_key", config.getServerAppKey());
 
         if (keysInclude != null) {
             req.params.add("keys", keysInclude);
@@ -168,12 +168,12 @@ public class ModuleRequests extends ModuleBase {
         return req;
     }
 
-    public static void injectParams(CtxCore ctx, ParamsInjector injector) {
+    public static void injectParams(InternalConfig config, ParamsInjector injector) {
         SessionImpl session = SDKCore.instance.getSession();
         if (session == null) {
-            Request request = nonSessionRequest(ctx);
+            Request request = nonSessionRequest(config);
             injector.call(request.params);
-            pushAsync(ctx, request);
+            pushAsync(config, request);
         } else {
             injector.call(session.params);
         }
@@ -222,31 +222,31 @@ public class ModuleRequests extends ModuleBase {
     /**
      * Common store-request logic: store & send a ping to the service.
      *
-     * @param ctx Ctx to run in
+     * @param config InternalConfig to run in
      * @param request Request to store
      * @return {@link Future} which resolves to {@code} true if stored successfully, false otherwise
      */
-    public static Future<Boolean> pushAsync(CtxCore ctx, Request request) {
-        return pushAsync(ctx, request, null);
+    public static Future<Boolean> pushAsync(InternalConfig config, Request request) {
+        return pushAsync(config, request, null);
     }
 
     /**
      * Common store-request logic: store & send a ping to the service.
      *
-     * @param ctx Ctx to run in
+     * @param config InternalConfig to run in
      * @param request Request to store
      * @param callback Callback (nullable) to call when storing is done, called in {@link Storage} {@link Thread}
      * @return {@link Future} which resolves to {@code} true if stored successfully, false otherwise
      */
-    public static Future<Boolean> pushAsync(final CtxCore ctx, final Request request, final Tasks.Callback<Boolean> callback) {
-        ctx.getLogger().d("New request " + request.storageId() + ": " + request);
+    public static Future<Boolean> pushAsync(final InternalConfig config, final Request request, final Tasks.Callback<Boolean> callback) {
+        config.getLogger().d("New request " + request.storageId() + ": " + request);
 
         if (request.isEmpty()) {
             if (callback != null) {
                 try {
                     callback.call(null);
                 } catch (Exception e) {
-                    ctx.getLogger().e("[ModuleRequests] Exception in a callback " + e);
+                    config.getLogger().e("[ModuleRequests] Exception in a callback " + e);
                 }
             }
             return null;
@@ -254,8 +254,8 @@ public class ModuleRequests extends ModuleBase {
 
         addRequiredTimeParams(request);
 
-        return Storage.pushAsync(ctx, request, param -> {
-            SDKCore.instance.onRequest(ctx, request);
+        return Storage.pushAsync(config, request, param -> {
+            SDKCore.instance.onRequest(config, request);
             if (callback != null) {
                 callback.call(param);
             }

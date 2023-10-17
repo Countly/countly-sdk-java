@@ -38,11 +38,11 @@ public abstract class ModuleBase {
      * Can be invoked multiple times throughout the ModuleBase lifecycle.
      * Parameters can be instance equal (==), meaning that id haven't changed.
      *
-     * @param ctx Ctx to run in
+     * @param config InternalConfig to run in
      * @param deviceId deviceId valid from now on
      * @param oldDeviceId deviceId valid previously if any
      */
-    public void onDeviceId(CtxCore ctx, Config.DID deviceId, Config.DID oldDeviceId) {
+    public void onDeviceId(InternalConfig config, Config.DID deviceId, Config.DID oldDeviceId) {
     }
 
     /**
@@ -55,15 +55,15 @@ public abstract class ModuleBase {
      *     <li>Remove all module-related {@link Storable} files if {@code clear} is {@code true}</li>
      * </ul>
      *
-     * @param ctx {@link CtxCore} to run in
+     * @param config {@link InternalConfig} to run in
      * @param clear {@code true} if module must clear its data files, {@code false} otherwise
      */
-    public void stop(CtxCore ctx, boolean clear) {
+    public void stop(InternalConfig config, boolean clear) {
     }
 
     /**
      * A method to be used by the module itself to determine if {@link #init(InternalConfig, Log)} initialized it
-     * and haven't been stopped yet by {@link #stop(CtxCore, boolean)}.
+     * and haven't been stopped yet by {@link #stop(InternalConfig, boolean)}.
      *
      * @return {@code true} if module is allowed to continue to run, {@code false} otherwise
      */
@@ -94,7 +94,7 @@ public abstract class ModuleBase {
      *
      * @param session session which began
      */
-    public void onSessionBegan(Session session, CtxCore ctx) {
+    public void onSessionBegan(Session session, InternalConfig config) {
     }
 
     /**
@@ -102,7 +102,7 @@ public abstract class ModuleBase {
      *
      * @param session session which ended
      */
-    public void onSessionEnded(Session session, CtxCore ctx) {
+    public void onSessionEnded(Session session, InternalConfig config) {
     }
 
     /**
@@ -134,8 +134,6 @@ public abstract class ModuleBase {
 
     /**
      * Called when the initialization is finished.
-     *
-     * @param config {@link InternalConfig} used for further initialization
      */
     protected void initFinished(InternalConfig config) {
     }

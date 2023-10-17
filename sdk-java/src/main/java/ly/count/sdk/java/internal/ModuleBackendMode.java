@@ -14,7 +14,6 @@ import org.json.JSONObject;
 public class ModuleBackendMode extends ModuleBase {
 
     protected InternalConfig internalConfig = null;
-    protected CtxCore ctx = null;
 
     //disabled is set when a empty module is created
     //in instances when the rating feature was not enabled
@@ -34,12 +33,6 @@ public class ModuleBackendMode extends ModuleBase {
     }
 
     @Override
-    public void onContextAcquired(CtxCore ctx) {
-        this.ctx = ctx;
-        L.d("[BackendMode] onContextAcquired: " + ctx.toString());
-    }
-
-    @Override
     protected void onTimer() {
         addEventsToRequestQ();
     }
@@ -55,8 +48,8 @@ public class ModuleBackendMode extends ModuleBase {
     }
 
     @Override
-    public void stop(CtxCore ctx, boolean clear) {
-        super.stop(ctx, clear);
+    public void stop(InternalConfig config, final boolean clear) {
+        super.stop(config, clear);
     }
 
     public void disableModule() {
@@ -317,7 +310,7 @@ public class ModuleBackendMode extends ModuleBase {
             }
 
             SDKCore.instance.requestQueueMemory.add(request);
-            SDKCore.instance.networking.check(ctx);
+            SDKCore.instance.networking.check(internalConfig);
         }
     }
 

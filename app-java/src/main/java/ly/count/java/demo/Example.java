@@ -195,7 +195,7 @@ public class Example {
 
         Scanner scanner = new Scanner(System.in);
 
-        String COUNTLY_SERVER_URL = "https://try.count.ly/";
+        String COUNTLY_SERVER_URL = "https://xxx.server.ly/";
         String COUNTLY_APP_KEY = "COUNTLY_APP_KEY";
 
         Map<String, String> metricOverride = new HashMap<>();

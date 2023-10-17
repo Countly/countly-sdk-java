@@ -1,13 +1,12 @@
 package ly.count.sdk.java.internal;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class ModuleRemoteConfig extends ModuleBase {
 
@@ -21,7 +20,6 @@ public class ModuleRemoteConfig extends ModuleBase {
     public final static String storableStoragePrefix = "remote_config";
 
     protected InternalConfig internalConfig = null;
-    protected CtxCore ctx = null;
 
     protected Map<Long, RemoteConfigCallback> requestCallbacks;
 
@@ -46,17 +44,13 @@ public class ModuleRemoteConfig extends ModuleBase {
     }
 
     @Override
-    public void onContextAcquired(CtxCore ctx) {
-        this.ctx = ctx;
-
-        InternalConfig cfg = ctx.getConfig();
-
-        Long timeoutVal = cfg.getRemoteConfigUpdateTimeoutLength();
+    public void initFinished(InternalConfig config) {
+        Long timeoutVal = config.getRemoteConfigUpdateTimeoutLength();
         if (timeoutVal != null) {
             this.rcRequestTimeout = timeoutVal;
         }
 
-        Boolean automEnabled = cfg.getRemoteConfigAutomaticUpdateEnabled();
+        Boolean automEnabled = config.getRemoteConfigAutomaticUpdateEnabled();
         if (automEnabled != null) {
             automaticUpdateEnabled = automEnabled;
         }
@@ -148,9 +142,9 @@ public class ModuleRemoteConfig extends ModuleBase {
             sKExcept = excludeArray.toString();
         }
 
-        Request req = ModuleRequests.remoteConfigUpdate(ctx, sKOnly, sKExcept, ModuleRemoteConfig.class);
+        Request req = ModuleRequests.remoteConfigUpdate(internalConfig, sKOnly, sKExcept, ModuleRemoteConfig.class);
         requestCallbacks.put(req.storageId(), callback);
-        ModuleRequests.pushAsync(ctx, req);
+        ModuleRequests.pushAsync(internalConfig, req);
     }
 
     protected Object getRemoteConfigValue(String key) {
@@ -160,12 +154,12 @@ public class ModuleRemoteConfig extends ModuleBase {
 
     public RemoteConfigValueStore getStoredValues() {
         RemoteConfigValueStore rcvs = new RemoteConfigValueStore();
-        Storage.read(ctx, rcvs);
+        Storage.read(internalConfig, rcvs);
         return rcvs;
     }
 
     public void saveStoredValues(RemoteConfigValueStore values) {
-        Storage.push(ctx, values);
+        Storage.push(internalConfig, values);
     }
 
     public static class RemoteConfigValueStore implements Storable {

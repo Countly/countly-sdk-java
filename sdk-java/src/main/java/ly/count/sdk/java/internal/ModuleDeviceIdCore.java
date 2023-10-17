@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Future;
-
 import ly.count.sdk.java.Config;
 
 /**
@@ -24,28 +23,21 @@ public class ModuleDeviceIdCore extends ModuleBase {
     private Tasks tasks;
 
     private static final class UUIDGenerator implements DeviceIdGenerator {
-        @Override
-        public boolean isAvailable() {
-            return true;
-        }
+
+        private final static String DEVICE_ID_PREFIX = "CLY_";
 
         @Override
-        public String generate(CtxCore context) {
-            return UUID.randomUUID().toString();
+        public String generate(InternalConfig config) {
+            return DEVICE_ID_PREFIX + UUID.randomUUID();
         }
     }
 
     private static final class CustomIDGenerator implements DeviceIdGenerator {
         @Override
-        public boolean isAvailable() {
-            return true;
-        }
-
-        @Override
-        public String generate(CtxCore context) {
-            String customId = context.getConfig().getCustomDeviceId();
+        public String generate(InternalConfig config) {
+            String customId = config.getCustomDeviceId();
             if (customId == null || customId.isEmpty()) {
-                context.getLogger().e("[ModuleDeviceIdCore] Device ID should never be empty or null for CustomIDGenerator");
+                config.getLogger().e("[ModuleDeviceIdCore] Device ID should never be empty or null for CustomIDGenerator");
             }
 
             return customId;
@@ -54,91 +46,62 @@ public class ModuleDeviceIdCore extends ModuleBase {
 
     private static final Map<Integer, DeviceIdGenerator> generators = new HashMap<>();
 
-    static {
-
-        registerGenerator(Config.DID.STRATEGY_UUID, new UUIDGenerator());
-        registerGenerator(Config.DID.STRATEGY_CUSTOM, new CustomIDGenerator());
-    }
-
-    public static void registerGenerator(int index, DeviceIdGenerator generator) {
-        generators.put(index, generator);
-    }
-
     @Override
     public void init(InternalConfig config, Log logger) throws IllegalArgumentException {
         super.init(config, logger);
 
+        generators.put(Config.DID.STRATEGY_UUID, new UUIDGenerator());
+        generators.put(Config.DID.STRATEGY_CUSTOM, new CustomIDGenerator());
+
         DeviceIdGenerator generator = generators.get(config.getDeviceIdStrategy());
         if (generator == null) {
             L.e("[ModuleDeviceIdCore] Device id strategy [" + config.getDeviceIdStrategy() + "] is not supported by SDK.");
-        } else if (!generator.isAvailable()) {
-            String str = "Device id strategy [" + config.getDeviceIdStrategy() + "] is not available. Make sure corresponding classes are in class path.";
-            if (config.isDeviceIdFallbackAllowed()) {
-                L.w(str);
-            } else {
-                L.e(str);
-                return;
-            }
-
-            int index = config.getDeviceIdStrategy();
-            boolean found = false;
-            while (--index > 0) {
-                generator = generators.get(index);
-                if (generator.isAvailable()) {
-                    L.w("[ModuleDeviceIdCore] Will fall back to strategy [" + index + "]");
-                    found = true;
-                }
-            }
-            // UUID is always available though
-            if (!found) {
-                L.e("[ModuleDeviceIdCore] No fallback device id generation strategy available, SDK won't function properly");
-            }
         }
     }
 
     /**
      * Regular logic of acquiring id of specified strategy and migration from legacy SDK.
      *
-     * @param ctx Ctx
+     * @param config InternalConfig
      */
     @Override
-    public void onContextAcquired(final CtxCore ctx) {
-        L.i("[ModuleDeviceIdCore] [onContextAcquired] Starting device ID acquisition");
-        if (ctx.getConfig().getDeviceId() == null) {
+    public void initFinished(final InternalConfig config) {
+        L.i("[ModuleDeviceIdCore] initFinished, Starting device ID acquisition");
+        if (config.getDeviceId() == null) {
             // either fresh install, or migration from legacy SDK
 
-            L.i("[ModuleDeviceIdCore] Acquiring device id");
+            L.i("[ModuleDeviceIdCore] initFinished, Acquiring device id");
 
-            if (Utils.isNotEmpty(ctx.getConfig().getCustomDeviceId())) {
+            if (Utils.isNotEmpty(config.getCustomDeviceId())) {
                 // developer specified id on SDK init
-                Config.DID did = new Config.DID(Config.DID.REALM_DID, Config.DID.STRATEGY_CUSTOM, ctx.getConfig().getCustomDeviceId());
-                L.d("[ModuleDeviceIdCore] Got developer id [" + did + "]");
-                SDKCore.instance.onDeviceId(ctx, did, null);
+                Config.DID did = new Config.DID(Config.DID.REALM_DID, Config.DID.STRATEGY_CUSTOM, config.getCustomDeviceId());
+                L.d("[ModuleDeviceIdCore] initFinished, Got developer id [" + did + "]");
+                SDKCore.instance.onDeviceId(config, did, null);
             } else {
                 // regular flow - acquire id using specified strategy
-                Config.DID did = new Config.DID(Config.DID.REALM_DID, ctx.getConfig().getDeviceIdStrategy(), null);
-                acquireId(ctx, did, ctx.getConfig().isDeviceIdFallbackAllowed(), id -> {
+                Config.DID did = new Config.DID(Config.DID.REALM_DID, config.getDeviceIdStrategy(), null);
+                acquireId(config, did, config.isDeviceIdFallbackAllowed(), id -> {
                     if (id != null) {
                         if (id.strategy == Config.DID.STRATEGY_UUID) {
-                            L.i("During init, custom device id was not provided. SDK has generated a random device id.");
+                            L.i("[ModuleDeviceIdCore] initFinished, During init, custom device id was not provided. SDK has generated a random device id.");
                         }
-                        L.d("[ModuleDeviceIdCore] Got device id: " + id);
-                        SDKCore.instance.onDeviceId(ctx, id, null);
+                        L.d("[ModuleDeviceIdCore] initFinished, Got device id: " + id);
+                        SDKCore.instance.onDeviceId(config, id, null);
                     } else {
-                        L.i("[ModuleDeviceIdCore] No device id of strategy [" + ctx.getConfig().getDeviceIdStrategy() + "] is available yet");
+                        L.i("[ModuleDeviceIdCore] initFinished, No device id of strategy [" + config.getDeviceIdStrategy() + "] is available yet");
                     }
                 });
             }
         } else {
             // second or next app launch, notify id is available
-            Config.DID loadedDid = ctx.getConfig().getDeviceId();
-            L.d("[ModuleDeviceIdCore] [onContextAcquired] Loading previously saved device id:[" + loadedDid.id + "] realm:[" + loadedDid.realm + "] strategy:[" + loadedDid.strategy + "]");
-            SDKCore.instance.onDeviceId(ctx, loadedDid, loadedDid);
+            Config.DID loadedDid = config.getDeviceId();
+            L.d("[ModuleDeviceIdCore] initFinished, Loading previously saved device id:[" + loadedDid.id + "] realm:[" + loadedDid.realm + "] strategy:[" + loadedDid.strategy + "]");
+            SDKCore.instance.onDeviceId(config, loadedDid, loadedDid);
         }
     }
 
     @Override
-    public void onDeviceId(final CtxCore ctx, final Config.DID deviceId, final Config.DID oldDeviceId) {
+    public void onDeviceId(InternalConfig config, final Config.DID deviceId, final Config.DID oldDeviceId) {
         L.d("[ModuleDeviceIdCore] onDeviceId [" + deviceId + "]");
 
         SessionImpl session = SDKCore.instance.getSession();
@@ -152,7 +115,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
             }
 
             // add device id change request
-            Request request = ModuleRequests.nonSessionRequest(ctx);
+            Request request = ModuleRequests.nonSessionRequest(config);
 
             //if we are missing the device ID, add it
             if (!request.params.has(Params.PARAM_DEVICE_ID)) {
@@ -161,9 +124,9 @@ public class ModuleDeviceIdCore extends ModuleBase {
             //add the old device ID every time
             request.params.add(Params.PARAM_OLD_DEVICE_ID, oldDeviceId.id);
 
-            ModuleRequests.pushAsync(ctx, request);
+            ModuleRequests.pushAsync(config, request);
 
-            sendDIDSignal(ctx, deviceId, oldDeviceId);
+            sendDIDSignal(config, deviceId, oldDeviceId);
         } else if (deviceId == null && oldDeviceId != null && oldDeviceId.realm == Config.DID.REALM_DID) {
             // device id is unset
             if (session != null) {
@@ -171,7 +134,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
                 session.end(null, null, oldDeviceId.id);
             }
 
-            sendDIDSignal(ctx, null, oldDeviceId);
+            sendDIDSignal(config, null, oldDeviceId);
         } else if (deviceId != null && oldDeviceId == null && deviceId.realm == Config.DID.REALM_DID) {
             // device id just acquired
             if (this.tasks == null) {
@@ -182,7 +145,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
                 public Object call() throws Exception {
                     // put device_id parameter into existing requests
                     L.i("[ModuleDeviceIdCore] Adding device_id to previous requests");
-                    boolean success = transformRequests(ctx, deviceId.id);
+                    boolean success = transformRequests(config, deviceId.id);
                     if (success) {
                         L.i("[ModuleDeviceIdCore] First transform: success");
                     } else {
@@ -190,13 +153,13 @@ public class ModuleDeviceIdCore extends ModuleBase {
                     }
 
                     // do it second time in case new requests were added during first attempt
-                    success = transformRequests(ctx, deviceId.id);
+                    success = transformRequests(config, deviceId.id);
                     if (!success) {
                         L.e("[ModuleDeviceIdCore] Failed to put device_id into existing requests, following behaviour for unhandled requests is undefined.");
                     } else {
                         L.i("[ModuleDeviceIdCore] Second transform: success");
                     }
-                    sendDIDSignal(ctx, deviceId, null);
+                    sendDIDSignal(config, deviceId, null);
                     return null;
                 }
             });
@@ -206,12 +169,12 @@ public class ModuleDeviceIdCore extends ModuleBase {
     /**
      * Puts {@code "device_id"} parameter into all requests which don't have it yet
      *
-     * @param ctx Ctx to run in
+     * @param config InternalConfig to run in
      * @param deviceId deviceId string
      * @return {@code true} if {@link Request}s changed successfully, {@code false} otherwise
      */
-    private boolean transformRequests(final CtxCore ctx, final String deviceId) {
-        return Storage.transform(ctx, Request.getStoragePrefix(), (id, data) -> {
+    private boolean transformRequests(final InternalConfig config, final String deviceId) {
+        return Storage.transform(config, Request.getStoragePrefix(), (id, data) -> {
             Request request = new Request(id);
             if (request.restore(data, L) && !request.params.has(Params.PARAM_DEVICE_ID)) {
                 request.params.add(Params.PARAM_DEVICE_ID, deviceId);
@@ -222,15 +185,15 @@ public class ModuleDeviceIdCore extends ModuleBase {
     }
 
     /**
-     * Just a wrapper around {@link SDKCore#onSignal(CtxCore, int, Byteable, Byteable)}} for {@link SDKCore.Signal#DID} case
+     * Just a wrapper around {@link SDKCore#onSignal(InternalConfig, int, Byteable, Byteable)}} for {@link SDKCore.Signal#DID} case
      *
-     * @param ctx Ctx to run in
+     * @param config InternalConfig to run in
      * @param id new {@link Config.DID} if any
      * @param old old {@link Config.DID} if any
      */
-    private void sendDIDSignal(CtxCore ctx, Config.DID id, Config.DID old) {
+    private void sendDIDSignal(InternalConfig config, Config.DID id, Config.DID old) {
         L.d("[ModuleDeviceIdCore] Sending device id signal: [" + id + "], was [" + old + "]");
-        SDKCore.instance.onSignal(ctx, SDKCore.Signal.DID.getIndex(), id, old);
+        SDKCore.instance.onSignal(config, SDKCore.Signal.DID.getIndex(), id, old);
     }
 
     /**
@@ -238,19 +201,19 @@ public class ModuleDeviceIdCore extends ModuleBase {
      * - reset device id and notify modules;
      * - send corresponding request to server.
      *
-     * @param ctx ctx to run in
+     * @param config InternalConfig to run in
      * @param id device id to change to
      */
-    public void login(CtxCore ctx, String id) {
+    public void login(InternalConfig config, String id) {
         if (Utils.isEmptyOrNull(id)) {
             L.e("[ModuleDeviceIdCore] Empty id passed to login method");
         } else {
-            final Config.DID old = ctx.getConfig().getDeviceId();
-            ctx.getConfig().setDeviceId(new Config.DID(Config.DID.REALM_DID, Config.DID.STRATEGY_CUSTOM, id));
-            Storage.push(ctx, ctx.getConfig());
+            final Config.DID old = config.getDeviceId();
+            config.setDeviceId(new Config.DID(Config.DID.REALM_DID, Config.DID.STRATEGY_CUSTOM, id));
+            Storage.push(config, config);
 
             // old session end & new session begin requests are supposed to happen here
-            SDKCore.instance.onDeviceId(ctx, ctx.getConfig().getDeviceId(), old);
+            SDKCore.instance.onDeviceId(config, config.getDeviceId(), old);
         }
     }
 
@@ -259,22 +222,22 @@ public class ModuleDeviceIdCore extends ModuleBase {
      * - nullify device id and notify modules;
      * - send corresponding request to server.
      *
-     * @param ctx context to run in
+     * @param config context to run in
      */
-    public void logout(final CtxCore ctx) {
-        final Config.DID old = ctx.getConfig().getDeviceId();
-        ctx.getConfig().removeDeviceId(old);
-        Storage.push(ctx, ctx.getConfig());
+    public void logout(final InternalConfig config) {
+        final Config.DID old = config.getDeviceId();
+        config.removeDeviceId(old);
+        Storage.push(config, config);
 
-        SDKCore.instance.onDeviceId(ctx, null, old);
+        SDKCore.instance.onDeviceId(config, null, old);
 
-        acquireId(ctx, new Config.DID(Config.DID.REALM_DID, ctx.getConfig().getDeviceIdStrategy(), null), ctx.getConfig().isDeviceIdFallbackAllowed(),
+        acquireId(config, new Config.DID(Config.DID.REALM_DID, config.getDeviceIdStrategy(), null), config.isDeviceIdFallbackAllowed(),
             id -> {
                 if (id != null) {
                     L.d("[ModuleDeviceIdCore] Got device id: " + id);
-                    SDKCore.instance.onDeviceId(ctx, id, null);
+                    SDKCore.instance.onDeviceId(config, id, null);
                 } else {
-                    L.i("[ModuleDeviceIdCore] No device id of strategy [" + ctx.getConfig().getDeviceIdStrategy() + "] is available yet");
+                    L.i("[ModuleDeviceIdCore] No device id of strategy [" + config.getDeviceIdStrategy() + "] is available yet");
                 }
             });
     }
@@ -286,27 +249,27 @@ public class ModuleDeviceIdCore extends ModuleBase {
      *     <li>Begin new session with new id if previously ended a session</li>
      * </ul>
      *
-     * @param ctx context to run in
+     * @param config context to run in
      * @param id new user id
      */
-    public void changeDeviceId(CtxCore ctx, String id, boolean withMerge) {
+    public void changeDeviceId(InternalConfig config, String id, boolean withMerge) {
         if (Utils.isEmptyOrNull(id)) {
             L.e("[ModuleDeviceIdCore] Empty id passed to resetId method");
         } else {
-            final Config.DID old = ctx.getConfig().getDeviceId();
-            ctx.getConfig().setDeviceId(new Config.DID(Config.DID.REALM_DID, Config.DID.STRATEGY_CUSTOM, id));
-            Storage.push(ctx, ctx.getConfig());
+            final Config.DID old = config.getDeviceId();
+            config.setDeviceId(new Config.DID(Config.DID.REALM_DID, Config.DID.STRATEGY_CUSTOM, id));
+            Storage.push(config, config);
 
             if (withMerge) {
-                SDKCore.instance.onDeviceId(ctx, ctx.getConfig().getDeviceId(), old);
+                SDKCore.instance.onDeviceId(config, config.getDeviceId(), old);
             } else {
-                SDKCore.instance.onDeviceId(ctx, null, old);
-                SDKCore.instance.onDeviceId(ctx, ctx.getConfig().getDeviceId(), null);
+                SDKCore.instance.onDeviceId(config, null, old);
+                SDKCore.instance.onDeviceId(config, config.getDeviceId(), null);
             }
         }
     }
 
-    protected Future<Config.DID> acquireId(final CtxCore ctx, final Config.DID holder, final boolean fallbackAllowed, final Tasks.Callback<Config.DID> callback) {
+    protected Future<Config.DID> acquireId(final InternalConfig config, final Config.DID holder, final boolean fallbackAllowed, final Tasks.Callback<Config.DID> callback) {
         L.d("[ModuleDeviceIdCore] d4");
         if (this.tasks == null) {
             this.tasks = new Tasks("deviceId", L);
@@ -315,7 +278,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
         return this.tasks.run(new Tasks.Task<Config.DID>(Tasks.ID_STRICT) {
             @Override
             public Config.DID call() throws Exception {
-                return acquireIdSync(ctx, holder, fallbackAllowed);
+                return acquireIdSync(config, holder, fallbackAllowed);
             }
         }, callback);
     }
@@ -324,27 +287,19 @@ public class ModuleDeviceIdCore extends ModuleBase {
      * Synchronously gets id of the strategy supplied. In case strategy is not available, returns a fallback strategy.
      * In case strategy is available but id cannot be acquired right now, returns null.
      *
-     * @param ctx Ctx to run in
+     * @param config InternalConfig to run in
      * @param holder DID object which holds strategy and possibly other info for id generation
      * @param fallbackAllowed whether to automatically fallback to any available alternative or not
      * @return {@link Config.DID} instance with an id
      */
-    protected Config.DID acquireIdSync(final CtxCore ctx, final Config.DID holder, final boolean fallbackAllowed) {
-        if (testSleep > 0) {
-            try {
-                Thread.sleep(testSleep);
-            } catch (InterruptedException ie) {
-                L.e("[ModuleDeviceIdCore] Exception during tests " + ie);
-            }
-        }
-
+    protected Config.DID acquireIdSync(final InternalConfig config, final Config.DID holder, final boolean fallbackAllowed) {
         L.i("[ModuleDeviceIdCore] Generating " + holder.strategy + " / " + holder.realm);
 
         int index = holder.strategy;
 
         while (index >= 0) {
             DeviceIdGenerator generator = generators.get(index);
-            if (generator == null || !generator.isAvailable()) {
+            if (generator == null) {
                 if (fallbackAllowed) {
                     L.w("[ModuleDeviceIdCore] Device id strategy [" + index + "] is not available. Falling back to next one.");
                     index--;
@@ -354,7 +309,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
                     return null;
                 }
             } else {
-                String id = generator.generate(ctx);
+                String id = generator.generate(config);
                 if (Utils.isNotEmpty(id)) {
                     return new Config.DID(holder.realm, index, id);
                 } else if (fallbackAllowed) {
@@ -367,22 +322,20 @@ public class ModuleDeviceIdCore extends ModuleBase {
             }
         }
 
-        L.e("[ModuleDeviceIdCore] No device id strategies to fallback from [" + ctx.getConfig().getDeviceIdStrategy() + "] is available. SDK won't function properly.");
+        L.e("[ModuleDeviceIdCore] No device id strategies to fallback from [" + config.getDeviceIdStrategy() + "] is available. SDK won't function properly.");
 
         return null;
     }
 
-    protected void callOnDeviceId(CtxCore ctx, Config.DID id, Config.DID old) {
-        SDKCore.instance.onDeviceId(ctx, id, old);
+    protected void callOnDeviceId(InternalConfig config, Config.DID id, Config.DID old) {
+        SDKCore.instance.onDeviceId(config, id, old);
     }
 
     @Override
-    public void stop(CtxCore ctx, boolean clear) {
+    public void stop(InternalConfig config, boolean clear) {
         if (tasks != null) {
             tasks.shutdown();
             tasks = null;
         }
     }
-
-    private static final long testSleep = 0L;
 }

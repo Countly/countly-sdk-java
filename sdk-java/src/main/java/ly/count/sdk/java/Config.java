@@ -374,7 +374,7 @@ public class Config {
      *
      * Set to 0 to disable update requests based on time.
      */
-    protected int sendUpdateEachSeconds = 30;
+    protected int sendUpdateEachSeconds = 60;
 
     /**
      * Maximum number of events to hold until request is to be sent to the server
@@ -467,7 +467,7 @@ public class Config {
     /**
      * Storage path for storing requests and events queues
      */
-    File sdkStorageRootDirectory = null;
+    protected File sdkStorageRootDirectory = null;
 
     /**
      * If sdk used across multiple platforms
@@ -740,6 +740,9 @@ public class Config {
             if (configLog != null) {
                 configLog.e("[Config] DeviceIdStrategy.CUSTOM_ID strategy cannot be used without device id specified");
             }
+
+            this.customDeviceId = null;
+            this.deviceIdStrategy = 0;
         } else {
             this.customDeviceId = customDeviceId;
             this.deviceIdStrategy = DeviceIdStrategy.CUSTOM_ID.index;

@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Event;
 import ly.count.sdk.java.Session;
 import ly.count.sdk.java.Usage;
@@ -32,9 +31,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
      * {@link System#nanoTime()} of time when {@link Session} object is created.
      */
     protected Long id;
-
-    protected final CtxCore ctx;
-
+    InternalConfig config;
     /**
      * {@link System#nanoTime()} of {@link #begin()}, {@link #update()} and {@link #end()} calls respectively.
      */
@@ -74,18 +71,18 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     /**
      * Create session with current time as id.
      */
-    protected SessionImpl(CtxCore ctx) {
-        L = ctx.getLogger();
+    protected SessionImpl(final InternalConfig config) {
+        L = config.getLogger();
         this.id = TimeUtils.uniqueTimestampMs();
-        this.ctx = ctx;
+        this.config = config;
     }
 
     /**
      * Deserialization constructor (use existing id).
      */
-    public SessionImpl(CtxCore ctx, Long id) {
-        L = ctx.getLogger();
-        this.ctx = ctx;
+    public SessionImpl(final InternalConfig config, Long id) {
+        L = config.getLogger();
+        this.config = config;
         this.id = id == null ? TimeUtils.uniqueTimestampMs() : id;
         if (SDKCore.instance != null) {
             this.consents = SDKCore.instance.consents;
@@ -94,7 +91,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     @Override
     public Session begin() {
-        if (ctx.getConfig().isBackendModeEnabled()) {
+        if (config.isBackendModeEnabled()) {
             L.w("[SessionImpl] begin: Skipping session begin, backend mode is enabled!");
             return this;
         }
@@ -121,19 +118,19 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         this.consents = SDKCore.instance.consents;
 
         if (pushOnChange) {
-            Storage.pushAsync(ctx, this);
+            Storage.pushAsync(config, this);
         }
 
-        Future<Boolean> ret = ModuleRequests.sessionBegin(ctx, this);
+        Future<Boolean> ret = ModuleRequests.sessionBegin(config, this);
 
-        SDKCore.instance.onSessionBegan(ctx, this);
+        SDKCore.instance.onSessionBegan(config, this);
 
         return ret;
     }
 
     @Override
     public Session update() {
-        if (ctx.getConfig().isBackendModeEnabled()) {
+        if (config.isBackendModeEnabled()) {
             L.w("[SessionImpl] update: Skipping session update, backend mode is enabled!");
             return this;
         }
@@ -160,15 +157,15 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         Long duration = updateDuration(now);
 
         if (pushOnChange) {
-            Storage.pushAsync(ctx, this);
+            Storage.pushAsync(config, this);
         }
 
-        return ModuleRequests.sessionUpdate(ctx, this, duration);
+        return ModuleRequests.sessionUpdate(config, this, duration);
     }
 
     @Override
     public void end() {
-        if (ctx.getConfig().isBackendModeEnabled()) {
+        if (config.isBackendModeEnabled()) {
             L.w("end: Skipping session end, backend mode is enabled!");
             return;
         }
@@ -200,37 +197,37 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         if (currentView != null) {
             currentView.stop(true);
         } else {
-            Storage.pushAsync(ctx, this);
+            Storage.pushAsync(config, this);
         }
 
         Long duration = updateDuration(now);
 
-        Future<Boolean> ret = ModuleRequests.sessionEnd(ctx, this, duration, did, removed -> {
+        Future<Boolean> ret = ModuleRequests.sessionEnd(config, this, duration, did, removed -> {
             if (!removed) {
                 L.i("[SessionImpl] No data in session end request");
             }
-            Storage.removeAsync(ctx, SessionImpl.this, callback);
+            Storage.removeAsync(config, this, callback);
         });
 
-        SDKCore.instance.onSessionEnded(ctx, this);
+        SDKCore.instance.onSessionEnded(config, this);
 
         return ret;
     }
 
-    Boolean recover(Config config, Log L) {
+    Boolean recover(InternalConfig config, Log L) {
         if ((System.currentTimeMillis() - id) < 0) {
             return null;
         } else {
             Future<Boolean> future = null;
             if (began == null) {
-                return Storage.remove(ctx, this);
+                return Storage.remove(config, this);
             } else if (ended == null && updated == null) {
                 future = end(began, null, null);
             } else if (ended == null) {
                 future = end(updated, null, null);
             } else {
                 // began != null && ended != null
-                return Storage.remove(ctx, this);
+                return Storage.remove(config, this);
             }
 
             if (future == null) {
@@ -283,7 +280,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
      * @deprecated use {@link ModuleEvents.Events#startEvent(String)}} instead via <code>instance().events()</code> call
      */
     public Event timedEvent(String key) {
-        return timedEvents().event(ctx, key);
+        return timedEvents().event(config, key);
     }
 
     /**
@@ -298,7 +295,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
      * Record event to session.
      *
      * @param event
-     * @deprecated use {@link ModuleEvents.Events#recordEvent(String, int, Double, Map, Double)} instead
+     * @deprecated use {@link ModuleEvents.Events#recordEvent(String, Map, int, Double, Double)} instead
      */
     @Override
     public void recordEvent(Event event) {
@@ -334,7 +331,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     @Override
     public Session addCrashReport(Throwable t, boolean fatal, String name, Map<String, String> segments, String... logs) {
-        if (ctx.getConfig().isBackendModeEnabled()) {
+        if (config.isBackendModeEnabled()) {
             L.w("[SessionImpl] addCrashReport: Skipping crash, backend mode is enabled!");
             return this;
         }
@@ -344,14 +341,14 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             return this;
         }
 
-        SDKCore.instance.onCrash(ctx, t, fatal, name, segments, logs);
+        SDKCore.instance.onCrash(config, t, fatal, name, segments, logs);
         return this;
     }
 
     @Override
     public Session addLocation(double latitude, double longitude) {
 
-        if (ctx.getConfig().isBackendModeEnabled()) {
+        if (config.isBackendModeEnabled()) {
             L.w("[SessionImpl] addLocation: Skipping location, backend mode is enabled!");
             return this;
         }
@@ -387,49 +384,49 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     @Override
     public Usage login(String id) {
-        SDKCore.instance.login(ctx, id);
+        SDKCore.instance.login(id);
         return this;
     }
 
     @Override
     public Usage logout() {
-        SDKCore.instance.logout(ctx);
+        SDKCore.instance.logout();
         return this;
     }
 
     @Override
     public String getDeviceId() {
-        return ctx.getConfig().getDeviceId().id;
+        return config.getDeviceId().id;
     }
 
     @Override
     public Usage changeDeviceIdWithMerge(String id) {
-        if (ctx.getConfig().isBackendModeEnabled()) {
+        if (config.isBackendModeEnabled()) {
             L.w("[SessionImpl] changeDeviceIdWithMerge: Skipping change device id with merge, backend mode is enabled!");
             return this;
         }
 
         L.d("[SessionImpl] changeDeviceIdWithoutMerge: id = " + id);
-        SDKCore.instance.changeDeviceIdWithMerge(ctx, id);
+        SDKCore.instance.changeDeviceIdWithMerge(config, id);
         return this;
     }
 
     @Override
     public Usage changeDeviceIdWithoutMerge(String id) {
-        if (ctx.getConfig().isBackendModeEnabled()) {
+        if (config.isBackendModeEnabled()) {
             L.w("[SessionImpl] changeDeviceIdWithoutMerge: Skipping change device id without merge, backend mode is enabled!");
             return this;
         }
 
         L.d("[SessionImpl] changeDeviceIdWithoutMerge: id = " + id);
-        SDKCore.instance.changeDeviceIdWithoutMerge(ctx, id);
+        SDKCore.instance.changeDeviceIdWithoutMerge(config, id);
         return this;
     }
 
     public Session addParam(String key, Object value) {
         params.add(key, value);
         if (pushOnChange) {
-            Storage.pushAsync(ctx, this);
+            Storage.pushAsync(config, this);
         }
         return this;
     }
@@ -584,9 +581,9 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         return (consents & feature) > 0;
     }
 
-    void setConsents(CtxCore ctx, int features) {
+    void setConsents(final InternalConfig config, int features) {
         consents = features;
-        Storage.pushAsync(ctx, this);
+        Storage.pushAsync(config, this);
     }
 
     @Override

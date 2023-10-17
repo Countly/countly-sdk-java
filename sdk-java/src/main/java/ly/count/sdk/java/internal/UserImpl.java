@@ -24,11 +24,9 @@ public class UserImpl extends User implements Storable {
     Gender gender;
     Integer birthyear;
     Map<String, Object> custom;
-    final CtxCore ctx;
 
-    public UserImpl(CtxCore ctx) {
-        this.L = ctx.getLogger();
-        this.ctx = ctx;
+    public UserImpl(InternalConfig config) {
+        this.L = config.getLogger();
         this.custom = new HashMap<>();
     }
 
@@ -239,7 +237,6 @@ public class UserImpl extends User implements Storable {
             ", gender=" + gender +
             ", birthyear=" + birthyear +
             ", custom=" + custom +
-            ", ctx=" + ctx +
             '}';
     }
 

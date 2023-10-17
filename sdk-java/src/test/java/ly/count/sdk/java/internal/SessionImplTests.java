@@ -686,6 +686,6 @@ public class SessionImplTests {
     }
 
     private SessionImpl createSessionImpl(Long id) {
-        return new SessionImpl(TestUtils.getMockCtxCore(), id);
+        return new SessionImpl(TestUtils.getMockInternalConfig(), id);
     }
 }

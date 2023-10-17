@@ -13,7 +13,7 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class ConfigTests extends BaseTestsCore {
     private InternalConfig internalConfig;
-    private String serverUrl = "http://www.serverurl.com";
+    private String serverUrl = "https://www.serverurl.com";
     private String serverAppKey = "1234";
 
     @Before
@@ -95,7 +95,7 @@ public class ConfigTests extends BaseTestsCore {
 
     @Test
     public void testSendUpdateEachSeconds() {
-        Assert.assertEquals(30, internalConfig.getSendUpdateEachSeconds());
+        Assert.assertEquals(60, internalConfig.getSendUpdateEachSeconds());
 
         internalConfig.disableUpdateRequests();
         Assert.assertEquals(0, internalConfig.getSendUpdateEachSeconds());

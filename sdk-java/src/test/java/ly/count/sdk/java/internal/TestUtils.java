@@ -43,11 +43,15 @@ public class TestUtils {
     }
 
     static Config getBaseConfig() {
+        return getBaseConfig(DEVICE_ID);
+    }
+
+    static Config getBaseConfig(String deviceID) {
         File sdkStorageRootDirectory = getTestSDirectory();
         checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
         Config config = new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
-        config.setCustomDeviceId(DEVICE_ID);
 
+        config.setCustomDeviceId(deviceID);
         return config;
     }
 
@@ -356,11 +360,12 @@ public class TestUtils {
         }
     }
 
-    public static CtxCore getMockCtxCore() {
-        CtxCore ctxCore = mock(CtxCore.class);
-        given(ctxCore.getLogger()).willReturn(mock(Log.class));
-        given(ctxCore.getSdkStorageRootDirectory()).willReturn(getTestSDirectory());
-        return ctxCore;
+    public static InternalConfig getMockInternalConfig() {
+        InternalConfig ic = mock(InternalConfig.class);
+
+        //todo too hacky, burn it
+        given(ic.getLogger()).willReturn(mock(Log.class));
+        return ic;
     }
 
     public static String getCurrentMV() {

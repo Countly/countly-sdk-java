@@ -33,8 +33,8 @@ public class ModuleFeedback extends ModuleBase {
     }
 
     @Override
-    public void stop(CtxCore ctx, boolean clear) {
-        super.stop(ctx, clear);
+    public void stop(InternalConfig config, boolean clear) {
+        super.stop(config, clear);
         feedbackInterface = null;
     }
 
@@ -73,24 +73,27 @@ public class ModuleFeedback extends ModuleBase {
 
             L.d("[ModuleFeedback] Retrieved request: [" + checkResponse + "]");
 
-            List<CountlyFeedbackWidget> feedbackEntries = parseFeedbackList(checkResponse);
+            List<CountlyFeedbackWidget> feedbackEntries = new ArrayList<>();
+            String error = parseFeedbackList(checkResponse, feedbackEntries);
+            if (error != null) {
+                feedbackEntries = null;
+            }
 
-            callback.onFinished(feedbackEntries, null);
+            callback.onFinished(feedbackEntries, error);
         }, L);
     }
 
-    static List<CountlyFeedbackWidget> parseFeedbackList(JSONObject requestResponse) {
+    static String parseFeedbackList(JSONObject requestResponse, List<CountlyFeedbackWidget> parsedRes) {
         Log L = SDKCore.instance.L;
         L.d("[ModuleFeedback] parseFeedbackList, calling");
 
-        List<CountlyFeedbackWidget> parsedRes = new ArrayList<>();
         try {
             if (requestResponse != null) {
                 JSONArray jArray = requestResponse.optJSONArray("result");
 
                 if (jArray == null) {
                     L.w("[ModuleFeedback] parseFeedbackList, response does not have a valid 'result' entry. No widgets retrieved.");
-                    return parsedRes;
+                    return "Response does not have a valid 'result' entry. No widgets retrieved.";
                 }
 
                 for (int a = 0; a < jArray.length(); a++) {
@@ -100,7 +103,7 @@ public class ModuleFeedback extends ModuleBase {
                         String valId = jObj.optString("_id", "");
                         String valType = jObj.optString("type", "");
                         String valName = jObj.optString("name", "");
-                        List<String> valTagsArr = new ArrayList<String>();
+                        List<String> valTagsArr = new ArrayList<>();
 
                         JSONArray jTagArr = jObj.optJSONArray("tg");
                         if (jTagArr == null) {
@@ -138,15 +141,16 @@ public class ModuleFeedback extends ModuleBase {
 
                         parsedRes.add(se);
                     } catch (Exception ex) {
-                        L.e("[ModuleFeedback] parseFeedbackList, failed to parse json, [" + ex.toString() + "]");
+                        L.w("[ModuleFeedback] parseFeedbackList, failed to parse json, [" + ex + "]");
                     }
                 }
             }
         } catch (Exception ex) {
-            L.e("[ModuleFeedback] parseFeedbackList, Encountered exception while parsing feedback list, [" + ex.toString() + "]");
+            L.e("[ModuleFeedback] parseFeedbackList, Encountered exception while parsing feedback list, [" + ex + "]");
+            return "Encountered exception while parsing feedback list, [" + ex + "]";
         }
 
-        return parsedRes;
+        return null;
     }
 
     private void reportFeedbackWidgetManuallyInternal(CountlyFeedbackWidget widgetInfo, JSONObject widgetData, Map<String, Object> widgetResult) {

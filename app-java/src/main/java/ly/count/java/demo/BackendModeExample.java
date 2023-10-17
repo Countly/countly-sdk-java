@@ -11,7 +11,7 @@ import ly.count.sdk.java.Countly;
 public class BackendModeExample {
     final static String DEVICE_ID = "device-id";
     final static String COUNTLY_APP_KEY = "COUNTLY_APP_KEY";
-    final static String COUNTLY_SERVER_URL = "https://try.count.ly/";
+    final static String COUNTLY_SERVER_URL = "https://xxx.server.ly/";
 
     private static void recordUserDetailAndProperties() {
         Map<String, Object> userDetail = new HashMap<>();
