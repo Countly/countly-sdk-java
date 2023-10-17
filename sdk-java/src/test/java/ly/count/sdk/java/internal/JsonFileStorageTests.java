@@ -11,6 +11,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
 
+import static ly.count.sdk.java.internal.TestUtils.checkSdkStorageRootDirectoryExist;
 import static ly.count.sdk.java.internal.TestUtils.keysValues;
 
 @RunWith(JUnit4.class)
@@ -45,7 +46,7 @@ public class JsonFileStorageTests {
 
     /**
      * "readJsonFile"
-     * Existing mock json file is given to constructor
+     * Existing json file is given to constructor
      * Storage size should be 1 and key-value pair should be same
      */
     @Test
@@ -59,7 +60,7 @@ public class JsonFileStorageTests {
 
     /**
      * "readJsonFile" with empty json file
-     * Existing empty mock json file is given to constructor
+     * Existing empty json file is given to constructor
      * Storage size should be 0
      */
     @Test
@@ -84,11 +85,12 @@ public class JsonFileStorageTests {
 
         Mockito.verify(L).e("[JsonFileStorage] readJsonFile, Failed to read json file, reason: [Simulated IOException]");
         Assert.assertEquals(0, storage.size());
+        //todo add other storage calls to verify that nothing is throwing exceptions
     }
 
     /**
      * "addAndSave"
-     * Mock key-value pair is given to add method
+     * key-value pair is given to add method
      * Key-value pair must be same with the storage k-v and disk k-v
      */
     @Test
@@ -96,7 +98,8 @@ public class JsonFileStorageTests {
         storage = new JsonFileStorage(jsonFile(), L);
         storage.addAndSave(keysValues[0], 67.2);
         Assert.assertEquals(67.2, storage.get(keysValues[0]));
-        Assert.assertEquals(67.2, ((BigDecimal) TestUtils.readJsonFile(jsonFile()).opt(keysValues[0])).doubleValue(), 0);
+        double valueInFile = ((BigDecimal) TestUtils.readJsonFile(jsonFile()).opt(keysValues[0])).doubleValue();
+        Assert.assertEquals(67.2, valueInFile, 0);
         validateStorageSize(1, 1);
     }
 
@@ -141,8 +144,8 @@ public class JsonFileStorageTests {
 
     /**
      * "clear"
-     * Mock key-value pair is given to "addAndSave" method
-     * Storage size should be 0 after clear, disk size should be 1 because "save" method not called
+     * key-value pair is given to "addAndSave" method and the "clear" without "save' is called
+     * Storage size should be 0 after "clear", disk size should be 1 because "save" method not called
      */
     @Test
     public void clear() {
@@ -155,7 +158,7 @@ public class JsonFileStorageTests {
 
     /**
      * "clearAndSave"
-     * Mock key-value pair is given to "addAndSave" method
+     * key-value pair is given to "addAndSave" method then we "clear and save"
      * Storage size should be 0 after clear, disk size should be 0 after "clearAndSave" method called
      */
     @Test
@@ -169,7 +172,7 @@ public class JsonFileStorageTests {
 
     /**
      * "delete"
-     * Mock key-value pair is given to "addAndSave" method
+     * key-value pair is given to "addAndSave" method then we "delete and save" a specific value
      * Storage size and disk size should be 0 after delete
      */
     @Test
@@ -217,7 +220,7 @@ public class JsonFileStorageTests {
 
     /**
      * "deleteAndSave"
-     * Mock key-value pair is given to "addAndSave" method
+     * key-value pair is given to "addAndSave" method
      * Storage size should be same as expected size in steps
      */
     @Test
