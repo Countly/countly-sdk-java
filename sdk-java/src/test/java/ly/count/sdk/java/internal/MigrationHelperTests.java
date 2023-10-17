@@ -60,6 +60,7 @@ public class MigrationHelperTests {
      */
     @Test
     public void applyMigrations_noMigrationApplied() {
+        TestUtils.createFile("test"); //mock old config file, to simulate migration needed
         //check migration version is -1 before and after read because no migration was applied
         validateMigrationVersionAndSetup(-1, false);
 

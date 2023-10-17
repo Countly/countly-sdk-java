@@ -384,4 +384,13 @@ public class TestUtils {
             return new JSONObject();
         }
     }
+
+    public static void createFile(String fileName) {
+        File file = new File(getTestSDirectory(), FILE_NAME_PREFIX + fileName);
+        try {
+            file.createNewFile();
+        } catch (IOException e) {
+            Assert.fail("Failed to create file: " + e.getMessage());
+        }
+    }
 }

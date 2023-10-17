@@ -34,7 +34,14 @@ public class MigrationHelper {
      */
     protected void setupMigrations(InternalConfig internalConfig) {
         this.internalConfig = internalConfig;
+
         appliedMigrationVersion = internalConfig.storageProvider.getMigrationVersion();
+        if (appliedMigrationVersion < 0) {
+            if (internalConfig.storageProvider.isCountlyStorageEmpty()) {
+                logger.i("[MigrationHelper] setupMigrations, Countly storage is empty, no need to migrate");
+                return;
+            }
+        }
         logger.i("[MigrationHelper] setupMigrations, Applied migration version: " + appliedMigrationVersion);
         // add migrations below
         migrations.add(this::migration_DeleteConfigFile_00);

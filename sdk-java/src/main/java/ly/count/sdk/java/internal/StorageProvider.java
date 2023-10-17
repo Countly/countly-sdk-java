@@ -46,4 +46,11 @@ public interface StorageProvider {
      * @param migrationVersion migration version
      */
     void setMigrationVersion(Integer migrationVersion);
+
+    /**
+     * Check countly storage is empty or not
+     *
+     * @return true if empty, false otherwise
+     */
+    boolean isCountlyStorageEmpty();
 }

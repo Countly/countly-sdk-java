@@ -360,4 +360,14 @@ public class SDKStorage implements StorageProvider {
     public void setMigrationVersion(Integer migrationVersion) {
         jsonFileStorage.addAndSave(migration_version_key, migrationVersion);
     }
+
+    @Override
+    public boolean isCountlyStorageEmpty() {
+        String[] files = getFileList(config);
+        int size = files.length;
+        if (size == 1 && files[0].contains(JSON_FILE_NAME)) { // json file is created automatically
+            return true;
+        }
+        return size == 0;
+    }
 }
