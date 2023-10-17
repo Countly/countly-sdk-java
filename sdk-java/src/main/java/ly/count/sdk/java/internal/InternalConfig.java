@@ -36,6 +36,7 @@ public class InternalConfig extends Config implements Storable {
 
     ImmediateRequestGenerator immediateRequestGenerator = null;
     public SDKCore sdk;
+    public StorageProvider storageProvider;
 
     /**
      * Shouldn't be used!
