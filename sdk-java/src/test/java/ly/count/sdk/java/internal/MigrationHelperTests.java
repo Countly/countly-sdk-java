@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import ly.count.sdk.java.Config;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -12,8 +13,8 @@ import org.junit.runners.JUnit4;
 
 import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_PREFIX;
 import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_SEPARATOR;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
+import static ly.count.sdk.java.internal.SDKStorage.JSON_FILE_NAME;
+import static ly.count.sdk.java.internal.SDKStorage.migration_version_key;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -65,7 +66,7 @@ public class MigrationHelperTests {
         migrationHelper.applyMigrations();
         //check migration version is 0 after apply both from class and file
         Assert.assertEquals(0, migrationHelper.appliedMigrationVersion);
-        Assert.assertEquals("0", TestUtils.getCurrentMV());
+        Assert.assertEquals(0, TestUtils.getJsonStorageProperty(migration_version_key));
     }
 
     /**
@@ -83,35 +84,17 @@ public class MigrationHelperTests {
         migrationHelper.applyMigrations();
         //check migration version is 0 after apply both from class and file
         Assert.assertEquals(0, migrationHelper.appliedMigrationVersion);
-        Assert.assertEquals("0", TestUtils.getCurrentMV());
+        Assert.assertEquals(0, TestUtils.getJsonStorageProperty(migration_version_key));
         verify(migrationHelper.logger, times(1)).d("[MigrationHelper] migration_DeleteConfigFile_00, Migration already applied");
-    }
-
-    /**
-     * "updateMigrationVersion" with IO exception
-     * receives mock context and simulated function to throw IOException
-     * logger should log expected log
-     */
-    @Test
-    public void updateMigrationVersion_IOException() throws IOException {
-        //prepare mock object
-        migrationHelper = spy(migrationHelper);
-        migrationHelper.internalConfig = TestUtils.getMockInternalConfig();
-        //simulate function to throw exception
-        doThrow(new IOException("Simulated IOException")).when(migrationHelper).writeVersionToFile(any(File.class));
-        // Call the method that you want to test
-        migrationHelper.updateMigrationVersion();
-
-        // Verify that the logger's error method was called with the expected message
-        verify(migrationHelper.logger).e("[MigrationHelper] writeFileContent, Failed to write applied migration version to file: Simulated IOException");
     }
 
     private void writeToMvFile(Integer version) {
         TestUtils.checkSdkStorageRootDirectoryExist(TestUtils.getTestSDirectory());
-        File file = new File(TestUtils.getTestSDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + MigrationHelper.MIGRATION_VERSION_FILE_NAME);
+        File file = new File(TestUtils.getTestSDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + JSON_FILE_NAME);
+
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
             file.createNewFile();
-            writer.write(version + "\n");
+            writer.write(TestUtils.readJsonFile(file).put("mv", version).toString());
         } catch (IOException e) {
             Assert.fail("Failed to write migration version to file: " + e.getMessage());
         }
@@ -121,9 +104,20 @@ public class MigrationHelperTests {
         Assert.assertEquals(-1, migrationHelper.appliedMigrationVersion);
         if (isApplied) {
             writeToMvFile(version);
-            Assert.assertEquals(version.toString(), TestUtils.getCurrentMV());
+            Assert.assertEquals(version, TestUtils.getJsonStorageProperty(migration_version_key));
         }
-        migrationHelper.setupMigrations(TestUtils.getMockInternalConfig());
+
+        initMigrationHelper();
         Assert.assertEquals(version, new Integer(migrationHelper.appliedMigrationVersion));
+    }
+
+    private void initMigrationHelper() {
+        InternalConfig config = new InternalConfig(TestUtils.getBaseConfig());
+        config.setLogger(new Log(Config.LoggingLevel.OFF, null));
+        SDKStorage sdkStorage = new SDKStorage();
+        sdkStorage.init(config, config.getLogger());
+        config.storageProvider = sdkStorage;
+
+        migrationHelper.setupMigrations(config);
     }
 }

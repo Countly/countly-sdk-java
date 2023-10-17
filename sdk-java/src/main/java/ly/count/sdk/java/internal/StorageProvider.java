@@ -32,4 +32,18 @@ public interface StorageProvider {
      * @param deviceIdStrategy device ID strategy
      */
     void setDeviceIdStrategy(DeviceIdStrategy deviceIdStrategy);
+
+    /**
+     * Get migration version
+     *
+     * @return migration version
+     */
+    Integer getMigrationVersion();
+
+    /**
+     * Set migration version
+     *
+     * @param migrationVersion migration version
+     */
+    void setMigrationVersion(Integer migrationVersion);
 }

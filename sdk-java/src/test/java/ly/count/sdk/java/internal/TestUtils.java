@@ -19,6 +19,7 @@ import org.junit.Assert;
 import static ly.count.sdk.java.internal.SDKStorage.EVENT_QUEUE_FILE_NAME;
 import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_PREFIX;
 import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_SEPARATOR;
+import static ly.count.sdk.java.internal.SDKStorage.JSON_FILE_NAME;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
@@ -371,18 +372,11 @@ public class TestUtils {
         return ic;
     }
 
-    public static String getCurrentMV() {
-        File file = new File(getTestSDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + MigrationHelper.MIGRATION_VERSION_FILE_NAME);
-        String fileContent = "";
-        try {
-            fileContent = Utils.readFileContent(file, mock(Log.class));
-        } catch (IOException ignored) {
-            Assert.fail("Failed to read migration version from file");
-        }
-
-        return fileContent;
+    public static Object getJsonStorageProperty(String key) {
+        File file = new File(getTestSDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + JSON_FILE_NAME);
+        return readJsonFile(file).get(key);
     }
-  
+
     static JSONObject readJsonFile(final File file) {
         try {
             return new JSONObject(Utils.readFileContent(file, mock(Log.class)));
