@@ -21,7 +21,7 @@ import java.util.function.Supplier;
  */
 public class MigrationHelper {
     protected static final String MIGRATION_VERSION_FILE_NAME = "migration_version";
-    protected CtxCore ctx;
+    InternalConfig internalConfig;
     private final List<Supplier<Boolean>> migrations;
     protected int appliedMigrationVersion = -1;
     protected Log logger;
@@ -31,8 +31,8 @@ public class MigrationHelper {
         this.logger = logger;
     }
 
-    protected void setupMigrations(CtxCore ctx) {
-        this.ctx = ctx;
+    protected void setupMigrations(InternalConfig internalConfig) {
+        this.internalConfig = internalConfig;
         readMigrationVersion();
         logger.i("[MigrationHelper] setupMigrations, Applied migration version: " + appliedMigrationVersion);
         // add migrations below
@@ -53,7 +53,7 @@ public class MigrationHelper {
 
     private void readMigrationVersion() {
         logger.i("[MigrationHelper] readMigrationVersion, Reading migration version");
-        File file = new File(ctx.getSdkStorageRootDirectory(), SDKStorage.FILE_NAME_PREFIX + SDKStorage.FILE_NAME_SEPARATOR + MIGRATION_VERSION_FILE_NAME);
+        File file = new File(internalConfig.getSdkStorageRootDirectory(), SDKStorage.FILE_NAME_PREFIX + SDKStorage.FILE_NAME_SEPARATOR + MIGRATION_VERSION_FILE_NAME);
 
         try {
             int version = Integer.parseInt(Utils.readFileContent(file, logger));
@@ -68,7 +68,7 @@ public class MigrationHelper {
 
     protected void updateMigrationVersion() {
         logger.i("[MigrationHelper] updateMigrationVersion, Updating migration version to version:[ " + appliedMigrationVersion + " ]");
-        File file = new File(ctx.getSdkStorageRootDirectory(), SDKStorage.FILE_NAME_PREFIX + SDKStorage.FILE_NAME_SEPARATOR + MIGRATION_VERSION_FILE_NAME);
+        File file = new File(internalConfig.getSdkStorageRootDirectory(), SDKStorage.FILE_NAME_PREFIX + SDKStorage.FILE_NAME_SEPARATOR + MIGRATION_VERSION_FILE_NAME);
 
         try { // Write the version to the file
             writeVersionToFile(file);

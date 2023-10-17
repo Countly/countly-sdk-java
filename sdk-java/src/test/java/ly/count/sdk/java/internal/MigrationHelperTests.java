@@ -96,7 +96,7 @@ public class MigrationHelperTests {
     public void updateMigrationVersion_IOException() throws IOException {
         //prepare mock object
         migrationHelper = spy(migrationHelper);
-        migrationHelper.ctx = TestUtils.getMockCtxCore();
+        migrationHelper.internalConfig = TestUtils.getMockInternalConfig();
         //simulate function to throw exception
         doThrow(new IOException("Simulated IOException")).when(migrationHelper).writeVersionToFile(any(File.class));
         // Call the method that you want to test
@@ -123,7 +123,7 @@ public class MigrationHelperTests {
             writeToMvFile(version);
             Assert.assertEquals(version.toString(), TestUtils.getCurrentMV());
         }
-        migrationHelper.setupMigrations(TestUtils.getMockCtxCore());
+        migrationHelper.setupMigrations(TestUtils.getMockInternalConfig());
         Assert.assertEquals(version, new Integer(migrationHelper.appliedMigrationVersion));
     }
 }

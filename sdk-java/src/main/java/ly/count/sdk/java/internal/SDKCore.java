@@ -524,11 +524,11 @@ public class SDKCore {
 
         config.sdk = this;
         initFinished(config);
-        applyMigrations(ctx);
+        applyMigrations(config);
     }
 
-    private void applyMigrations(CtxCore ctx) {
-        migrationHelper.setupMigrations(ctx);
+    private void applyMigrations(InternalConfig internalConfig) {
+        migrationHelper.setupMigrations(internalConfig);
         migrationHelper.applyMigrations();
     }
 
