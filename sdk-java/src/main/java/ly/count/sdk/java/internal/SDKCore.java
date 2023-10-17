@@ -429,6 +429,7 @@ public class SDKCore {
 
         givenConfig.sdk = this;
         sdkStorage.init(givenConfig, logger);
+        givenConfig.storageProvider = sdkStorage;
         config = prepareConfig(givenConfig);
 
         this.init(givenConfig);
@@ -520,6 +521,7 @@ public class SDKCore {
         }
 
         config.sdk = this;
+        config.storageProvider = this.sdkStorage;
         initFinished(config);
     }
 
