@@ -19,10 +19,16 @@ public class SDKStorage implements StorageProvider {
 
     private Log L;
     InternalConfig config;
+
+    //file and prefix names
     protected static final String FILE_NAME_PREFIX = "[CLY]";
     protected static final String FILE_NAME_SEPARATOR = "_";
     protected static final String EVENT_QUEUE_FILE_NAME = "event_queue";
-    protected static final String JSON_FILE_NAME = "countly_storage.json";
+    protected static final String JSON_FILE_NAME = "countly_store.json";
+
+    //key names
+    protected static final String device_id_key = "did";
+    protected static final String device_id_strategy_key = "did_s";
 
     private JsonFileStorage jsonFileStorage;
 
@@ -322,21 +328,21 @@ public class SDKStorage implements StorageProvider {
 
     @Override
     public String getDeviceID() {
-        return null;
+        return (String) jsonFileStorage.get(device_id_key);
     }
 
     @Override
     public void setDeviceID(String deviceID) {
-
+        jsonFileStorage.addAndSave(device_id_key, deviceID);
     }
 
     @Override
     public DeviceIdStrategy getDeviceIdStrategy() {
-        return null;
+        return DeviceIdStrategy.valueOf((String) jsonFileStorage.get(device_id_strategy_key));
     }
 
     @Override
     public void setDeviceIdStrategy(DeviceIdStrategy deviceIdStrategy) {
-
+        jsonFileStorage.addAndSave(device_id_strategy_key, deviceIdStrategy.toString());
     }
 }
