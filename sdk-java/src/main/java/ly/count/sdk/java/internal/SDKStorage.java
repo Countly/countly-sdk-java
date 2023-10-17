@@ -278,7 +278,7 @@ public class SDKStorage {
         L.d("[SDKStorage] Writing EQ to json file");
 
         //write eventQueue that is consist of json objects of events and separated by ":::" delimiter
-        //to the ctx.getSdkStorageRootDirectory() folder named Storage.name(this) + ".events"
+        //to the config.getSdkStorageRootDirectory() folder named Storage.name(this) + ".events"
         //if file already exists overwrite it
         //if file doesn't exist create it
         //if file can't be created or written, log the error

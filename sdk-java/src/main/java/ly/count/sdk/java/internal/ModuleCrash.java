@@ -32,13 +32,13 @@ public class ModuleCrash extends ModuleBase {
     }
 
     @Override
-    public void stop(CtxCore ctx, boolean clear) {
+    public void stop(InternalConfig config, boolean clear) {
         try {
             if (previousHandler != null) {
                 Thread.setDefaultUncaughtExceptionHandler(previousHandler);
             }
             if (clear) {
-                ctx.getSDK().sdkStorage.storablePurge(ctx.getConfig(), CrashImpl.getStoragePrefix());
+                config.sdk.sdkStorage.storablePurge(config, CrashImpl.getStoragePrefix());
             }
         } catch (Throwable t) {
             L.e("[ModuleCrash] Exception while stopping crash reporting" + t);
