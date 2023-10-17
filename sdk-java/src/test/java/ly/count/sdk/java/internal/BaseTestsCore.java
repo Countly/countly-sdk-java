@@ -19,39 +19,6 @@ public class BaseTestsCore {
 
     protected SDKCore sdk = null;
 
-    public class CtxImpl extends CtxCore {
-        private SDKCore sdk;
-        private Object ctx;
-        private InternalConfig config;
-
-        private Log L = null;
-
-        public CtxImpl(InternalConfig config) {
-            super(config);
-            this.config = config;
-        }
-
-        @Override
-        public File getSdkStorageRootDirectory() {
-            return null;
-        }
-
-        @Override
-        public InternalConfig getConfig() {
-            return config;
-        }
-
-        @Override
-        public SDKCore getSDK() {
-            return sdk;
-        }
-
-        @Override
-        public Log getLogger() {
-            return null;
-        }
-    }
-
     public Config config() {
         return new Config(SERVER, APP_KEY, TestUtils.getTestSDirectory()).setLoggingLevel(Config.LoggingLevel.DEBUG);
     }
