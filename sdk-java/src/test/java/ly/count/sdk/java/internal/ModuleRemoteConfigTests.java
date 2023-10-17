@@ -25,10 +25,6 @@ public class ModuleRemoteConfigTests {
         jsonArray.put("765");
     }
 
-    @After
-    public void cleanupEveryTests() {
-    }
-
     @Test
     public void remoteConfigValueStoreAddRemoveValues() {
         ModuleRemoteConfig.RemoteConfigValueStore rcvs = createValueStore();
