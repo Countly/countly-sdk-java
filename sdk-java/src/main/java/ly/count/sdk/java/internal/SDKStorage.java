@@ -29,6 +29,7 @@ public class SDKStorage implements StorageProvider {
     //key names
     protected static final String device_id_key = "did";
     protected static final String device_id_strategy_key = "did_s";
+    protected static final String migration_version_key = "mv";
 
     private JsonFileStorage jsonFileStorage;
 
@@ -344,5 +345,19 @@ public class SDKStorage implements StorageProvider {
     @Override
     public void setDeviceIdStrategy(DeviceIdStrategy deviceIdStrategy) {
         jsonFileStorage.addAndSave(device_id_strategy_key, deviceIdStrategy.toString());
+    }
+
+    @Override
+    public Integer getMigrationVersion() {
+        Object value = jsonFileStorage.get(migration_version_key);
+        if (value == null) {
+            return -1;
+        }
+        return (Integer) value;
+    }
+
+    @Override
+    public void setMigrationVersion(Integer migrationVersion) {
+        jsonFileStorage.addAndSave(migration_version_key, migrationVersion);
     }
 }
