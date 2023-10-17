@@ -424,6 +424,7 @@ public class SDKCore {
         sdkStorage.init(givenConfig, logger);
         givenConfig.storageProvider = sdkStorage;
         config = prepareConfig(givenConfig);
+        config.storageProvider = sdkStorage;
 
         if (config.immediateRequestGenerator == null) {
             config.immediateRequestGenerator = ImmediateRequestMaker::new;
