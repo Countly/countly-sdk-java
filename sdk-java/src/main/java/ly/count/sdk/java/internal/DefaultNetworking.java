@@ -51,6 +51,9 @@ public class DefaultNetworking implements Networking {
                         return true;
                     } else {
                         request.params.add("rr", storageForRequestQueue.remaningRequests());
+                        if (Utils.isEmptyOrNull(config.getApplicationVersion())) {
+                            request.params.add("av", Utils.urlencode(config.getApplicationVersion(), L));
+                        }
                         tasks.run(transport.send(request), result -> {
                             L.d("[Networking] Request " + request.storageId() + " sent?: " + result);
                             if (result) {
