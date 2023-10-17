@@ -161,7 +161,7 @@ public class SDKCore {
      *
      * @param consent consents to add
      */
-    public void onConsent(int consent) {
+    public void onConsent(final int consent) {
         if (!config().requiresConsent()) {
             L.e("[SDKModules] onConsent() shouldn't be called when Config.requiresConsent() is false");
             return;
@@ -200,7 +200,7 @@ public class SDKCore {
      *
      * @param noConsent consents to remove
      */
-    public void onConsentRemoval(InternalConfig config, int noConsent) {
+    public void onConsentRemoval(final InternalConfig config, int noConsent) {
         if (!config().requiresConsent()) {
             L.e("[SDKModules] onConsentRemoval() shouldn't be called when Config.requiresConsent() is false");
             return;
@@ -351,7 +351,7 @@ public class SDKCore {
      * @param session session to begin
      * @return supplied session for method chaining
      */
-    public SessionImpl onSessionBegan(InternalConfig config, SessionImpl session) {
+    public SessionImpl onSessionBegan(final InternalConfig config, SessionImpl session) {
         for (ModuleBase m : modules.values()) {
             m.onSessionBegan(session, config);
         }
@@ -364,7 +364,7 @@ public class SDKCore {
      * @param session session to end
      * @return supplied session for method chaining
      */
-    public SessionImpl onSessionEnded(InternalConfig config, SessionImpl session) {
+    public SessionImpl onSessionEnded(final InternalConfig config, SessionImpl session) {
         for (ModuleBase m : modules.values()) {
             m.onSessionEnded(session, config);
         }
@@ -399,7 +399,7 @@ public class SDKCore {
      * @param id ID of new {@link SessionImpl} if needed
      * @return current {@link SessionImpl} instance
      */
-    public SessionImpl session(Long id) {
+    public SessionImpl session(final Long id) {
         ModuleSessions sessions = (ModuleSessions) module(CoreFeature.Sessions.getIndex());
         if (sessions != null) {
             return sessions.session(config, id);
@@ -550,7 +550,17 @@ public class SDKCore {
         return config;
     }
 
-    public void onCrash(InternalConfig config, Throwable t, boolean fatal, String name, Map<String, String> segments, String[] logs) {
+    /**
+     * Report a crash
+     *
+     * @param config to configure
+     * @param t throwable
+     * @param fatal is fatal
+     * @param name of crash
+     * @param segments data
+     * @param logs of crash
+     */
+    public void onCrash(final InternalConfig config, Throwable t, boolean fatal, String name, Map<String, String> segments, String[] logs) {
         L.i("[SDKCore] onCrash: t: " + t.toString() + " fatal: " + fatal + " name: " + name + " segments: " + segments);
         ModuleCrash module = (ModuleCrash) module(CoreFeature.CrashReporting.getIndex());
         if (module != null) {

@@ -31,7 +31,7 @@ public class ModuleEvents extends ModuleBase {
     }
 
     @Override
-    public void stop(InternalConfig config, boolean clear) {
+    public void stop(InternalConfig config, final boolean clear) {
         super.stop(config, clear);
         if (clear) {
             eventQueue.clear();

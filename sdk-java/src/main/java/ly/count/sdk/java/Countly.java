@@ -45,7 +45,7 @@ public class Countly implements Usage {
     protected SDKCore sdk;
     protected Log L;
 
-    protected Countly(SDKCore sdk, Log logger) {
+    protected Countly(SDKCore sdk, final Log logger) {
         L = logger;
         this.sdk = sdk;
     }

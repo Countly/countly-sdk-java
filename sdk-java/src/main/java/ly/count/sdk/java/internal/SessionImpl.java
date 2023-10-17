@@ -71,7 +71,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     /**
      * Create session with current time as id.
      */
-    protected SessionImpl(InternalConfig config) {
+    protected SessionImpl(final InternalConfig config) {
         L = config.getLogger();
         this.id = TimeUtils.uniqueTimestampMs();
         this.config = config;
@@ -80,7 +80,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     /**
      * Deserialization constructor (use existing id).
      */
-    public SessionImpl(InternalConfig config, Long id) {
+    public SessionImpl(final InternalConfig config, Long id) {
         L = config.getLogger();
         this.config = config;
         this.id = id == null ? TimeUtils.uniqueTimestampMs() : id;
@@ -206,7 +206,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             if (!removed) {
                 L.i("[SessionImpl] No data in session end request");
             }
-            Storage.removeAsync(config, SessionImpl.this, callback);
+            Storage.removeAsync(config, this, callback);
         });
 
         SDKCore.instance.onSessionEnded(config, this);
@@ -581,7 +581,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         return (consents & feature) > 0;
     }
 
-    void setConsents(InternalConfig config, int features) {
+    void setConsents(final InternalConfig config, int features) {
         consents = features;
         Storage.pushAsync(config, this);
     }
