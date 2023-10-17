@@ -2,8 +2,8 @@ package ly.count.sdk.java.internal;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import javax.annotation.Nonnull;
 import org.json.JSONObject;
 
@@ -12,14 +12,20 @@ public class JsonFileStorage implements IKeyValueStorage<String, Object> {
     private final File file;
     private final Log logger;
 
-    public JsonFileStorage(@Nonnull File file, @Nonnull Log logger) {
+    /**
+     * Create new instance of {@link JsonFileStorage} with given file.
+     *
+     * @param file to store data in
+     * @param logger to use
+     */
+    public JsonFileStorage(@Nonnull final File file, @Nonnull Log logger) {
         this.logger = logger;
         this.file = file;
         this.json = readJsonFile(file);
     }
 
     @Override
-    public void add(@Nonnull String key, @Nonnull Object value) {
+    public void add(@Nonnull final String key, @Nonnull Object value) {
         logger.i("[JsonFileStorage] add, Adding key: [" + key + "], value: [" + value + "]");
         json.put(key, value);
     }
@@ -27,8 +33,8 @@ public class JsonFileStorage implements IKeyValueStorage<String, Object> {
     @Override
     public void save() {
         logger.i("[JsonFileStorage] save, Saving json file: [" + file.getAbsolutePath() + "]");
-        
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+
+        try (BufferedWriter writer = Files.newBufferedWriter(file.toPath())) {
             writer.write(json.toString());
         } catch (IOException e) {
             logger.e("[JsonFileStorage] save, Failed to save json file, reason: [" + e.getMessage() + "]");
@@ -36,7 +42,7 @@ public class JsonFileStorage implements IKeyValueStorage<String, Object> {
     }
 
     @Override
-    public void delete(@Nonnull String key) {
+    public void delete(@Nonnull final String key) {
         if (!json.has(key)) {
             logger.v("[JsonFileStorage] delete, Nothing to delete");
         }
@@ -44,19 +50,19 @@ public class JsonFileStorage implements IKeyValueStorage<String, Object> {
     }
 
     @Override
-    public void addAndSave(@Nonnull String key, @Nonnull Object value) {
+    public void addAndSave(@Nonnull final String key, @Nonnull Object value) {
         add(key, value);
         save();
     }
 
     @Override
-    public void deleteAndSave(@Nonnull String key) {
+    public void deleteAndSave(@Nonnull final String key) {
         delete(key);
         save();
     }
 
     @Override
-    public Object get(@Nonnull String key) {
+    public Object get(@Nonnull final String key) {
         try {
             return json.get(key);
         } catch (Exception e) {
@@ -81,7 +87,7 @@ public class JsonFileStorage implements IKeyValueStorage<String, Object> {
         return json.length();
     }
 
-    private JSONObject readJsonFile(@Nonnull File file) {
+    private JSONObject readJsonFile(@Nonnull final File file) {
         logger.i("[JsonFileStorage] readJsonFile, Reading json file: [" + file.getAbsolutePath() + "]");
         try {
             if (!file.exists()) {

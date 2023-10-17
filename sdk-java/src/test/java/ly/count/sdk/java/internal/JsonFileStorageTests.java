@@ -9,22 +9,22 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mockito;
 
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static ly.count.sdk.java.internal.TestUtils.keysValues;
 
 @RunWith(JUnit4.class)
 public class JsonFileStorageTests {
 
-    Log L = mock(Log.class);
+    private static final Log L = Mockito.mock(Log.class);
     IKeyValueStorage<String, Object> storage;
-
     static final String JSON_FILE_NAME = "test.json";
 
+    /**
+     * Delete test.json file if exists
+     */
     @After
     public void tearDown() {
-        L = mock(Log.class);
         try {
             Files.delete(jsonFile().toPath());
         } catch (IOException ignored) {
@@ -54,7 +54,7 @@ public class JsonFileStorageTests {
         storage = new JsonFileStorage(jsonFile(), L);
 
         Assert.assertEquals(1, storage.size());
-        Assert.assertEquals("value", storage.get("key"));
+        Assert.assertEquals(keysValues[1], storage.get(keysValues[0]));
     }
 
     /**
@@ -77,12 +77,12 @@ public class JsonFileStorageTests {
      */
     @Test
     public void readJsonFile_IOException() throws IOException {
-        File file = mock(File.class);
-        doThrow(new IOException("Simulated IOException")).when(file).createNewFile();
+        File file = Mockito.mock(File.class);
+        Mockito.doThrow(new IOException("Simulated IOException")).when(file).createNewFile();
 
         storage = new JsonFileStorage(file, L);
 
-        verify(L).e("[JsonFileStorage] readJsonFile, Failed to read json file, reason: [Simulated IOException]");
+        Mockito.verify(L).e("[JsonFileStorage] readJsonFile, Failed to read json file, reason: [Simulated IOException]");
         Assert.assertEquals(0, storage.size());
     }
 
@@ -94,9 +94,9 @@ public class JsonFileStorageTests {
     @Test
     public void addAndSave() {
         storage = new JsonFileStorage(jsonFile(), L);
-        storage.addAndSave("key", 67.2);
-        Assert.assertEquals(67.2, storage.get("key"));
-        Assert.assertEquals(67.2, ((BigDecimal) TestUtils.readJsonFile(jsonFile()).opt("key")).doubleValue(), 0);
+        storage.addAndSave(keysValues[0], 67.2);
+        Assert.assertEquals(67.2, storage.get(keysValues[0]));
+        Assert.assertEquals(67.2, ((BigDecimal) TestUtils.readJsonFile(jsonFile()).opt(keysValues[0])).doubleValue(), 0);
         validateStorageSize(1, 1);
     }
 
@@ -108,7 +108,7 @@ public class JsonFileStorageTests {
     @Test(expected = NullPointerException.class)
     public void add_nullKey() {
         storage = new JsonFileStorage(jsonFile(), L);
-        storage.add(null, "value");
+        storage.add(null, keysValues[1]);
         Assert.assertNull(storage.get(null));
         validateStorageSize(0, 0);
     }
@@ -134,8 +134,8 @@ public class JsonFileStorageTests {
     @Test
     public void add_nullValue() {
         storage = new JsonFileStorage(jsonFile(), L);
-        storage.add("key", null);
-        Assert.assertNull(storage.get("key"));
+        storage.add(keysValues[0], null);
+        Assert.assertNull(storage.get(keysValues[0]));
         validateStorageSize(0, 0);
     }
 
@@ -147,7 +147,7 @@ public class JsonFileStorageTests {
     @Test
     public void clear() {
         storage = new JsonFileStorage(jsonFile(), L);
-        storage.addAndSave("key", "??--//");
+        storage.addAndSave(keysValues[0], "??--//");
         validateStorageSize(1, 1);
         storage.clear();
         validateStorageSize(0, 1);
@@ -161,7 +161,7 @@ public class JsonFileStorageTests {
     @Test
     public void clearAndSave() {
         storage = new JsonFileStorage(jsonFile(), L);
-        storage.addAndSave("key", new String[] { "value" });
+        storage.addAndSave(keysValues[0], new String[] { keysValues[1] });
         validateStorageSize(1, 1);
         storage.clearAndSave();
         validateStorageSize(0, 0);
@@ -175,10 +175,10 @@ public class JsonFileStorageTests {
     @Test
     public void delete() {
         storage = new JsonFileStorage(jsonFile(), L);
-        storage.addAndSave("key", 56.34);
+        storage.addAndSave(keysValues[0], 56.34);
         validateStorageSize(1, 1);
 
-        storage.deleteAndSave("key");
+        storage.deleteAndSave(keysValues[0]);
         validateStorageSize(0, 0);
     }
 
@@ -190,8 +190,8 @@ public class JsonFileStorageTests {
     @Test
     public void delete_nullKey() {
         storage = new JsonFileStorage(jsonFile(), L);
-        storage.addAndSave("key", 56L);
-        storage.add("key1", "value");
+        storage.addAndSave(keysValues[0], 56L);
+        storage.add(keysValues[2], keysValues[1]);
         validateStorageSize(2, 1);
 
         storage.delete(null);
@@ -206,7 +206,7 @@ public class JsonFileStorageTests {
     @Test
     public void delete_emptyKey() {
         storage = new JsonFileStorage(jsonFile(), L);
-        storage.add("key", 35);
+        storage.add(keysValues[0], 35);
         storage.add("", "test");
         validateStorageSize(2, 0);
 
@@ -224,15 +224,15 @@ public class JsonFileStorageTests {
     public void deleteAndSave() {
         storage = new JsonFileStorage(jsonFile(), L);
 
-        storage.add("key", 4214);
-        storage.add("key2", 5135);
+        storage.add(keysValues[0], 4214);
+        storage.add(keysValues[2], 5135);
         storage.save();
         validateStorageSize(2, 2);
 
-        storage.deleteAndSave("key");
+        storage.deleteAndSave(keysValues[0]);
         validateStorageSize(1, 1);
 
-        storage.delete("key2");
+        storage.delete(keysValues[2]);
         validateStorageSize(0, 1);
     }
 
@@ -240,12 +240,12 @@ public class JsonFileStorageTests {
         return new File(TestUtils.getTestSDirectory(), JSON_FILE_NAME);
     }
 
-    private void validateStorageSize(int expectedStorageSize, int expectedJsonFileSize) {
+    private void validateStorageSize(final int expectedStorageSize, final int expectedJsonFileSize) {
         Assert.assertEquals(expectedStorageSize, storage.size());
         Assert.assertEquals(expectedJsonFileSize, TestUtils.readJsonFile(jsonFile()).length());
     }
 
-    private void setupJsonFile(String content) {
+    private void setupJsonFile(final String content) {
         try {
             Files.write(jsonFile().toPath(), content.getBytes());
         } catch (IOException e) {
