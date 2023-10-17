@@ -7,7 +7,7 @@ import java.nio.file.Files;
 import javax.annotation.Nonnull;
 import org.json.JSONObject;
 
-public class JsonFileStorage implements IKeyValueStorage<String, Object> {
+public class JsonFileStorage {
     private final JSONObject json;
     private final File file;
     private final Log logger;
@@ -24,13 +24,22 @@ public class JsonFileStorage implements IKeyValueStorage<String, Object> {
         this.json = readJsonFile(file);
     }
 
-    @Override
+    /**
+     * If key exists changes its value, otherwise adds new key-value pair
+     * Null key or value is not allowed
+     * Do not forget to call save to save changes to the disk/db/memory
+     *
+     * @param key to set
+     * @param value to add
+     */
     public void add(@Nonnull final String key, @Nonnull Object value) {
         logger.i("[JsonFileStorage] add, Adding key: [" + key + "], value: [" + value + "]");
         json.put(key, value);
     }
 
-    @Override
+    /**
+     * Saves changes to the disk/db/memory
+     */
     public void save() {
         logger.i("[JsonFileStorage] save, Saving json file: [" + file.getAbsolutePath() + "]");
 
@@ -41,7 +50,13 @@ public class JsonFileStorage implements IKeyValueStorage<String, Object> {
         }
     }
 
-    @Override
+    /**
+     * Removes key-value pair
+     * Null key is not allowed
+     * Do not forget to call save to save changes to the disk/db/memory
+     *
+     * @param key to remove
+     */
     public void delete(@Nonnull final String key) {
         if (!json.has(key)) {
             logger.v("[JsonFileStorage] delete, Nothing to delete");
@@ -49,19 +64,36 @@ public class JsonFileStorage implements IKeyValueStorage<String, Object> {
         json.remove(key);
     }
 
-    @Override
+    /**
+     * Adds key-value pair and saves changes to the disk/db/memory
+     * Null key or value is not allowed
+     *
+     * @param key to set
+     * @param value to add
+     */
     public void addAndSave(@Nonnull final String key, @Nonnull Object value) {
         add(key, value);
         save();
     }
 
-    @Override
+    /**
+     * Removes key-value pair and saves changes to the disk/db/memory
+     * Null key is not allowed
+     *
+     * @param key to remove
+     */
     public void deleteAndSave(@Nonnull final String key) {
         delete(key);
         save();
     }
 
-    @Override
+    /**
+     * Returns value for the key
+     * Null key is not allowed
+     *
+     * @param key to get
+     * @return value
+     */
     public Object get(@Nonnull final String key) {
         try {
             return json.get(key);
@@ -71,18 +103,26 @@ public class JsonFileStorage implements IKeyValueStorage<String, Object> {
         }
     }
 
-    @Override
+    /**
+     * Clears all data
+     */
     public void clear() {
         json.clear();
     }
 
-    @Override
+    /**
+     * Clears all data and saves changes to the disk/db/memory
+     */
     public void clearAndSave() {
         clear();
         save();
     }
 
-    @Override
+    /**
+     * Returns number of key-value pairs
+     *
+     * @return number of key-value pairs
+     */
     public int size() {
         return json.length();
     }
