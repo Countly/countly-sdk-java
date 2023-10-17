@@ -5,31 +5,27 @@ import java.util.HashMap;
 import java.util.Map;
 import ly.count.sdk.java.Config;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class ConfigTests extends BaseTestsCore {
+public class ConfigTests {
     private InternalConfig internalConfig;
-    private String serverUrl = "https://www.serverurl.com";
-    private String serverAppKey = "1234";
-
-    @Before
-    public void setUp() throws Exception {
-        internalConfig = (InternalConfig) defaultConfigWithLogsForConfigTests();
-    }
 
     @Test
     public void testServerUrlAndAppKey() throws Exception {
-        URL url = new URL(serverUrl);
-        Assert.assertEquals(serverAppKey, internalConfig.getServerAppKey());
+        internalConfig = new InternalConfig(TestUtils.getBaseConfig());
+
+        URL url = new URL(TestUtils.SERVER_URL);
+        Assert.assertEquals(TestUtils.SERVER_APP_KEY, internalConfig.getServerAppKey());
         Assert.assertEquals(url, internalConfig.getServerURL());
     }
 
     @Test
     public void testRequestMethod() {
+        internalConfig = new InternalConfig(TestUtils.getBaseConfig());
+
         Assert.assertFalse(internalConfig.isHTTPPostForced());
 
         internalConfig.enableUsePOST();
@@ -44,6 +40,8 @@ public class ConfigTests extends BaseTestsCore {
 
     @Test
     public void testLoggingTag() {
+        internalConfig = new InternalConfig(TestUtils.getBaseConfig());
+
         Assert.assertEquals("Countly", internalConfig.getLoggingTag());
 
         internalConfig.setLoggingTag("");
@@ -58,6 +56,8 @@ public class ConfigTests extends BaseTestsCore {
 
     @Test
     public void testLoggingLevel() {
+        internalConfig = new InternalConfig(TestUtils.getBaseConfig().setLoggingLevel(Config.LoggingLevel.DEBUG));
+
         Assert.assertEquals(Config.LoggingLevel.DEBUG, internalConfig.getLoggingLevel());
 
         internalConfig.setLoggingLevel(Config.LoggingLevel.INFO);
@@ -66,6 +66,8 @@ public class ConfigTests extends BaseTestsCore {
 
     @Test
     public void testSDKName() {
+        internalConfig = new InternalConfig(TestUtils.getBaseConfig());
+
         Assert.assertEquals("java-native", internalConfig.getSdkName());
 
         internalConfig.setSdkName(null);
@@ -80,21 +82,24 @@ public class ConfigTests extends BaseTestsCore {
 
     @Test
     public void testSDKVersion() {
-        String versionName = "23.8.0";
-        Assert.assertEquals(versionName, internalConfig.getSdkVersion());
+        internalConfig = new InternalConfig(TestUtils.getBaseConfig());
+
+        Assert.assertEquals(TestUtils.SDK_VERSION, internalConfig.getSdkVersion());
 
         internalConfig.setSdkVersion(null);
-        Assert.assertEquals(versionName, internalConfig.getSdkVersion());
+        Assert.assertEquals(TestUtils.SDK_VERSION, internalConfig.getSdkVersion());
 
         internalConfig.setSdkVersion("");
-        Assert.assertEquals(versionName, internalConfig.getSdkVersion());
+        Assert.assertEquals(TestUtils.SDK_VERSION, internalConfig.getSdkVersion());
 
         internalConfig.setSdkVersion("new-version");
-        Assert.assertEquals(versionName, internalConfig.getSdkVersion());
+        Assert.assertEquals(TestUtils.SDK_VERSION, internalConfig.getSdkVersion());
     }
 
     @Test
     public void testSendUpdateEachSeconds() {
+        internalConfig = new InternalConfig(TestUtils.getBaseConfig());
+
         Assert.assertEquals(60, internalConfig.getSendUpdateEachSeconds());
 
         internalConfig.disableUpdateRequests();
@@ -106,6 +111,8 @@ public class ConfigTests extends BaseTestsCore {
 
     @Test
     public void testEventBufferSize() {
+        internalConfig = new InternalConfig(TestUtils.getBaseConfig());
+
         Assert.assertEquals(10, internalConfig.getEventsBufferSize());
 
         internalConfig.setEventQueueSizeToSend(60);
@@ -114,6 +121,8 @@ public class ConfigTests extends BaseTestsCore {
 
     @Test
     public void metricOverride() {
+        internalConfig = new InternalConfig(TestUtils.getBaseConfig());
+
         Map<String, String> initialVals = internalConfig.getMetricOverride();
         Assert.assertEquals(0, initialVals.size());
 

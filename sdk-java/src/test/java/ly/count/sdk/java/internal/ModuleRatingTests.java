@@ -7,10 +7,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import ly.count.sdk.java.internal.ModuleRatingCore;
-
 @RunWith(JUnit4.class)
-public class ModuleRatingTests extends BaseTestsCore {
+public class ModuleRatingTests {
     @Before
     public void setupEveryTest() {
     }

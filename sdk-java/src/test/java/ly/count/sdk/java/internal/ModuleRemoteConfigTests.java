@@ -1,5 +1,8 @@
 package ly.count.sdk.java.internal;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Map;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.After;
@@ -9,14 +12,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Map;
-
-import ly.count.sdk.java.internal.ModuleRemoteConfig;
-
 @RunWith(JUnit4.class)
-public class ModuleRemoteConfigTests extends BaseTestsCore {
+public class ModuleRemoteConfigTests {
     final String[] keys = new String[] { "qwe", "123", "asd", "zxc", "wer", "sdf", "xcv" };
     final JSONArray jsonArray = new JSONArray();
 
