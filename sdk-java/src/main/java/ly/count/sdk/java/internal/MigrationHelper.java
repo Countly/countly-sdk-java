@@ -1,9 +1,5 @@
 package ly.count.sdk.java.internal;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Supplier;
@@ -20,7 +16,6 @@ import java.util.function.Supplier;
  * 3. add test cases for the migration to MigrationHelperTests.java
  */
 public class MigrationHelper {
-    protected static final String MIGRATION_VERSION_FILE_NAME = "migration_version";
     InternalConfig internalConfig;
     private final List<Supplier<Boolean>> migrations;
     protected int appliedMigrationVersion = -1;
@@ -31,58 +26,30 @@ public class MigrationHelper {
         this.logger = logger;
     }
 
+    /**
+     * Set up migration version, register migrations
+     *
+     * @param internalConfig to configure
+     */
     protected void setupMigrations(InternalConfig internalConfig) {
         this.internalConfig = internalConfig;
-        readMigrationVersion();
+        appliedMigrationVersion = internalConfig.storageProvider.getMigrationVersion();
         logger.i("[MigrationHelper] setupMigrations, Applied migration version: " + appliedMigrationVersion);
         // add migrations below
         migrations.add(this::migration_DeleteConfigFile_00);
     }
 
-    protected void applyMigrations() throws IllegalStateException {
+    /**
+     * Applies all migrations one by one
+     */
+    protected void applyMigrations() {
         logger.i("[MigrationHelper] applyMigrations, Applying migrations");
         migrations.forEach((migration) -> {
-            if (migration.get()) {
-                updateMigrationVersion();
-            } else {
+            if (!migration.get()) {
                 logger.e("[MigrationHelper] applyMigrations, Failed to apply migration version:[ " + (appliedMigrationVersion + 1) + " ]");
-                throw new IllegalStateException("[MigrationHelper] applyMigrations, Failed to apply migration version:[ " + (appliedMigrationVersion + 1) + " ]");
             }
         });
-    }
-
-    private void readMigrationVersion() {
-        logger.i("[MigrationHelper] readMigrationVersion, Reading migration version");
-        File file = new File(internalConfig.getSdkStorageRootDirectory(), SDKStorage.FILE_NAME_PREFIX + SDKStorage.FILE_NAME_SEPARATOR + MIGRATION_VERSION_FILE_NAME);
-
-        try {
-            int version = Integer.parseInt(Utils.readFileContent(file, logger));
-            if (version > -1) {
-                logger.i("[MigrationHelper] readMigrationVersion, Read migration version:[ " + version + " ]");
-                appliedMigrationVersion = version;
-            }
-        } catch (Exception e) {
-            logger.e("[MigrationHelper] readMigrationVersion, Failed to read migration version, error:[ " + e.getMessage() + " ]");
-        }
-    }
-
-    protected void updateMigrationVersion() {
-        logger.i("[MigrationHelper] updateMigrationVersion, Updating migration version to version:[ " + appliedMigrationVersion + " ]");
-        File file = new File(internalConfig.getSdkStorageRootDirectory(), SDKStorage.FILE_NAME_PREFIX + SDKStorage.FILE_NAME_SEPARATOR + MIGRATION_VERSION_FILE_NAME);
-
-        try { // Write the version to the file
-            writeVersionToFile(file);
-            logger.v("[MigrationHelper] writeFileContent, Wrote applied migration version to file");
-        } catch (IOException e) {
-            // Handle the error if writing fails
-            logger.e("[MigrationHelper] writeFileContent, Failed to write applied migration version to file: " + e.getMessage());
-        }
-    }
-
-    protected void writeVersionToFile(File file) throws IOException {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-            writer.write(appliedMigrationVersion + "\n");
-        }
+        internalConfig.storageProvider.setMigrationVersion(appliedMigrationVersion);
     }
 
     protected boolean migration_DeleteConfigFile_00() {
