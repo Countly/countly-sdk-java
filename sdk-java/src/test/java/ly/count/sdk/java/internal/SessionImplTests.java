@@ -686,6 +686,9 @@ public class SessionImplTests {
     }
 
     private SessionImpl createSessionImpl(Long id) {
-        return new SessionImpl(TestUtils.getMockInternalConfig(), id);
+        InternalConfig ic = new InternalConfig(TestUtils.getBaseConfig());
+        ic.setLogger(new Log(Config.LoggingLevel.OFF, null));
+
+        return new SessionImpl(ic, id);
     }
 }
