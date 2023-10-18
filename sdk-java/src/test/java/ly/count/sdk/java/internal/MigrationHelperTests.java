@@ -2,35 +2,32 @@ package ly.count.sdk.java.internal;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.HashMap;
 import ly.count.sdk.java.Config;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_PREFIX;
-import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_SEPARATOR;
-import static ly.count.sdk.java.internal.SDKStorage.JSON_FILE_NAME;
-import static ly.count.sdk.java.internal.SDKStorage.migration_version_key;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import org.mockito.Mockito;
 
 @RunWith(JUnit4.class)
 public class MigrationHelperTests {
 
-    Log L = mock(Log.class);
     MigrationHelper migrationHelper;
 
     @Before
     public void beforeTest() {
         TestUtils.createCleanTestState();
-        migrationHelper = new MigrationHelper(L);
+        migrationHelper = new MigrationHelper(Mockito.mock(Log.class));
+    }
+
+    @After
+    public void afterTest() {
+        TestUtils.createCleanTestState();
     }
 
     /**
@@ -68,7 +65,7 @@ public class MigrationHelperTests {
         migrationHelper.applyMigrations(new HashMap<>());
         //check migration version is 0 after apply both from class and file
         Assert.assertEquals(0, migrationHelper.appliedMigrationVersion);
-        Assert.assertEquals(0, TestUtils.getJsonStorageProperty(migration_version_key));
+        Assert.assertEquals(0, TestUtils.getJsonStorageProperty(SDKStorage.migration_version_key));
     }
 
     /**
@@ -81,36 +78,38 @@ public class MigrationHelperTests {
     public void applyMigrations_migrationAlreadyApplied() {
         validateMigrationVersionAndSetup(0, true);
 
-        migrationHelper.logger = spy(migrationHelper.logger);
+        migrationHelper.logger = Mockito.spy(migrationHelper.logger);
         //run migration helper apply
         migrationHelper.applyMigrations(new HashMap<>());
         //check migration version is 0 after apply both from class and file
         Assert.assertEquals(0, migrationHelper.appliedMigrationVersion);
-        Assert.assertEquals(0, TestUtils.getJsonStorageProperty(migration_version_key));
-        verify(migrationHelper.logger, times(1)).d("[MigrationHelper] migration_DeleteConfigFile_00, Migration already applied");
+        Assert.assertEquals(0, TestUtils.getJsonStorageProperty(SDKStorage.migration_version_key));
+        Mockito.verify(migrationHelper.logger, Mockito.times(1)).d("[MigrationHelper] migration_DeleteConfigFile_00, Migration already applied");
     }
 
-    private void writeToMvFile(Integer version) {
+    private void writeToMvFile(final Integer version) {
         TestUtils.checkSdkStorageRootDirectoryExist(TestUtils.getTestSDirectory());
-        File file = new File(TestUtils.getTestSDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + JSON_FILE_NAME);
+        File file = TestUtils.createFile(SDKStorage.JSON_FILE_NAME);
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-            file.createNewFile();
-            writer.write(TestUtils.readJsonFile(file).put("mv", version).toString());
+        try {
+            Assert.assertNotNull(file);
+            try (BufferedWriter writer = Files.newBufferedWriter(file.toPath())) {
+                writer.write(TestUtils.readJsonFile(file).put("mv", version).toString());
+            }
         } catch (IOException e) {
             Assert.fail("Failed to write migration version to file: " + e.getMessage());
         }
     }
 
-    private void validateMigrationVersionAndSetup(Integer version, boolean isApplied) {
+    private void validateMigrationVersionAndSetup(Integer version, final boolean isApplied) {
         Assert.assertEquals(-1, migrationHelper.appliedMigrationVersion);
         if (isApplied) {
             writeToMvFile(version);
-            Assert.assertEquals(version, TestUtils.getJsonStorageProperty(migration_version_key));
+            Assert.assertEquals(version, TestUtils.getJsonStorageProperty(SDKStorage.migration_version_key));
         }
 
         initMigrationHelper();
-        Assert.assertEquals(version, new Integer(migrationHelper.appliedMigrationVersion));
+        Assert.assertEquals(version, Integer.valueOf(migrationHelper.appliedMigrationVersion));
     }
 
     private void initMigrationHelper() {

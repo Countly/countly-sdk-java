@@ -385,12 +385,16 @@ public class TestUtils {
         }
     }
 
-    public static void createFile(String fileName) {
-        File file = new File(getTestSDirectory(), FILE_NAME_PREFIX + fileName);
+    public static File createFile(String fileName) {
+        File file = new File(getTestSDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + fileName);
         try {
-            file.createNewFile();
+            if (file.createNewFile()) {
+                return file;
+            }
         } catch (IOException e) {
             Assert.fail("Failed to create file: " + e.getMessage());
         }
+
+        return null;
     }
 }

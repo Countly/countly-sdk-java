@@ -22,7 +22,7 @@ public class MigrationHelper {
     protected int appliedMigrationVersion = -1;
     protected Log logger;
 
-    protected MigrationHelper(Log logger) {
+    protected MigrationHelper(final Log logger) {
         migrations = new ArrayList<>();
         this.logger = logger;
     }
@@ -32,15 +32,13 @@ public class MigrationHelper {
      *
      * @param internalConfig to configure
      */
-    protected void setupMigrations(InternalConfig internalConfig) {
+    protected void setupMigrations(final InternalConfig internalConfig) {
         this.internalConfig = internalConfig;
 
         appliedMigrationVersion = internalConfig.storageProvider.getMigrationVersion();
-        if (appliedMigrationVersion < 0) {
-            if (internalConfig.storageProvider.isCountlyStorageEmpty()) {
-                logger.i("[MigrationHelper] setupMigrations, Countly storage is empty, no need to migrate");
-                return;
-            }
+        if (appliedMigrationVersion < 0 && internalConfig.storageProvider.isCountlyStorageEmpty()) {
+            logger.i("[MigrationHelper] setupMigrations, Countly storage is empty, no need to migrate");
+            return;
         }
         logger.i("[MigrationHelper] setupMigrations, Applied migration version: " + appliedMigrationVersion);
         // add migrations below
@@ -52,7 +50,7 @@ public class MigrationHelper {
      *
      * @param migrationParams parameters to pass to migrations
      */
-    protected void applyMigrations(Map<String, Object> migrationParams) {
+    protected void applyMigrations(final Map<String, Object> migrationParams) {
         logger.i("[MigrationHelper] applyMigrations, Applying migrations");
         migrations.forEach((migration) -> {
             if (!migration.apply(migrationParams)) {
@@ -62,7 +60,7 @@ public class MigrationHelper {
         internalConfig.storageProvider.setMigrationVersion(appliedMigrationVersion);
     }
 
-    protected boolean migration_DeleteConfigFile_00(Map<String, Object> migrationParams) {
+    protected boolean migration_DeleteConfigFile_00(final Map<String, Object> migrationParams) {
         if (appliedMigrationVersion >= 0) {
             logger.d("[MigrationHelper] migration_DeleteConfigFile_00, Migration already applied");
             return true;

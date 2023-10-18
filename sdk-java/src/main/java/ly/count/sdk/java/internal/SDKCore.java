@@ -24,8 +24,6 @@ public class SDKCore {
 
     private CountlyTimer countlyTimer;
 
-    private MigrationHelper migrationHelper;
-
     public enum Signal {
         DID(1),
         Crash(2),
@@ -438,7 +436,7 @@ public class SDKCore {
         countlyTimer.startTimer(config.getSendUpdateEachSeconds(), this::onTimer);
 
         //setup and perform migrations
-        migrationHelper = new MigrationHelper(L);
+        MigrationHelper migrationHelper = new MigrationHelper(L);
         migrationHelper.setupMigrations(config);
         migrationHelper.applyMigrations(new HashMap<>());
 
