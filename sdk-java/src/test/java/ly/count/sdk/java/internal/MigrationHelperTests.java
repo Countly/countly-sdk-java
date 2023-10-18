@@ -19,12 +19,18 @@ public class MigrationHelperTests {
 
     MigrationHelper migrationHelper;
 
+    /**
+     * Before the tests, clean the test state
+     */
     @Before
     public void beforeTest() {
         TestUtils.createCleanTestState();
         migrationHelper = new MigrationHelper(Mockito.mock(Log.class));
     }
 
+    /**
+     * After each test, clean state
+     */
     @After
     public void afterTest() {
         TestUtils.createCleanTestState();
@@ -101,7 +107,7 @@ public class MigrationHelperTests {
         }
     }
 
-    private void validateMigrationVersionAndSetup(Integer version, final boolean isApplied) {
+    private void validateMigrationVersionAndSetup(final Integer version, final boolean isApplied) {
         Assert.assertEquals(-1, migrationHelper.appliedMigrationVersion);
         if (isApplied) {
             writeToMvFile(version);

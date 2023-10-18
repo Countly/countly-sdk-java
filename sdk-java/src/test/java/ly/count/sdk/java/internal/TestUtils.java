@@ -384,7 +384,7 @@ public class TestUtils {
      * @param key property key
      * @return property value
      */
-    public static Object getJsonStorageProperty(String key) {
+    public static Object getJsonStorageProperty(final String key) {
         File file = new File(getTestSDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + JSON_FILE_NAME);
         return readJsonFile(file).get(key);
     }
