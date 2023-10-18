@@ -45,6 +45,7 @@ public class TimedEventsTests {
     public void recordEventRegularFlow_base(boolean regularRecord) throws InterruptedException {
         Countly.instance().init(TestUtils.getConfigEvents(2).setUpdateSessionTimerDelay(3000));
         Event tEvent = Countly.instance().timedEvent("key");
+        long start = TimeUtils.uniqueTimestampMs();
         tEvent.setCount(5).setSum(133).setDuration(456);
 
         Map<String, String> segm = new HashMap<>();
@@ -66,8 +67,9 @@ public class TimedEventsTests {
             targetDuration = 456;
             tEvent.record();
         } else {
-            targetDuration = 1;
             tEvent.endAndRecord();
+            long end = TimeUtils.uniqueTimestampMs();
+            targetDuration = (end - start) / 1000.0;
         }
 
         TestUtils.validateEventInEQ("key", targetSegm, 5, 133.0, targetDuration, 0, 1);
