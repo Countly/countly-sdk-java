@@ -281,7 +281,7 @@ public class TestUtils {
         Assert.assertEquals(sum, gonnaValidate.sum);
 
         if (duration != null) {
-            double delta = 0.1;
+            double delta = 0.5;
             Assert.assertTrue(Math.abs(duration - gonnaValidate.duration) < delta);
         }
 

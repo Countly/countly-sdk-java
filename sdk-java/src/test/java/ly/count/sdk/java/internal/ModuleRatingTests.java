@@ -1,23 +1,12 @@
 package ly.count.sdk.java.internal;
 
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import ly.count.sdk.java.internal.ModuleRatingCore;
-
 @RunWith(JUnit4.class)
-public class ModuleRatingTests extends BaseTestsCore {
-    @Before
-    public void setupEveryTest() {
-    }
-
-    @After
-    public void cleanupEveryTests() {
-    }
+public class ModuleRatingTests {
 
     public ModuleRatingCore.StarRatingPreferences CreatePreferences() {
         ModuleRatingCore.StarRatingPreferences srp = new ModuleRatingCore.StarRatingPreferences();

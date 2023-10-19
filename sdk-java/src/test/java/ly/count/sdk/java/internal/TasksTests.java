@@ -1,5 +1,7 @@
 package ly.count.sdk.java.internal;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -8,28 +10,17 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.powermock.reflect.Whitebox;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-
 @RunWith(JUnit4.class)
-public class TasksTests extends BaseTestsCore {
+public class TasksTests {
     private Tasks tasks;
-
-    @Test
-    public void filler() {
-
-    }
 
     @Before
     public void setUp() throws Exception {
-        super.setUp();
         tasks = new Tasks("test", null);
-        defaultConfigWithLogsForConfigTests();
     }
 
     @After
     public void tearDown() throws Exception {
-        super.tearDown();
         tasks.shutdown();
     }
 
