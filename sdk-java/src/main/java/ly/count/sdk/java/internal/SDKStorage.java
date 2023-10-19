@@ -328,7 +328,7 @@ public class SDKStorage implements StorageProvider {
 
     @Override
     public String getDeviceID() {
-        return (String) jsonFileStorage.get(key_device_id);
+        return jsonFileStorage.getString(key_device_id);
     }
 
     @Override
@@ -337,12 +337,12 @@ public class SDKStorage implements StorageProvider {
     }
 
     @Override
-    public DeviceIdType getDeviceIdStrategy() {
-        return DeviceIdType.valueOf((String) jsonFileStorage.get(key_device_id_type));
+    public String getDeviceIdType() {
+        return jsonFileStorage.getString(key_device_id_type);
     }
 
     @Override
-    public void setDeviceIdStrategy(DeviceIdType deviceIdType) {
-        jsonFileStorage.addAndSave(key_device_id_type, deviceIdType.toString());
+    public void setDeviceIdType(String deviceIdTypeString) {
+        jsonFileStorage.addAndSave(key_device_id_type, deviceIdTypeString);
     }
 }
