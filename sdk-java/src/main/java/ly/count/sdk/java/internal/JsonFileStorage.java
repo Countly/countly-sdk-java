@@ -106,6 +106,10 @@ public class JsonFileStorage {
         return json.optString(key, defaultValue);
     }
 
+    public int getInt(@Nonnull final String key, final int defaultValue) {
+        return json.optInt(key, defaultValue);
+    }
+
     /**
      * Clears all data
      */

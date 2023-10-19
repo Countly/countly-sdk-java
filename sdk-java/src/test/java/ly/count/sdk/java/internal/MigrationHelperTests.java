@@ -71,7 +71,7 @@ public class MigrationHelperTests {
         migrationHelper.applyMigrations(new HashMap<>());
         //check migration version is 0 after apply both from class and file
         Assert.assertEquals(0, migrationHelper.appliedMigrationVersion);
-        Assert.assertEquals(0, TestUtils.getJsonStorageProperty(SDKStorage.migration_version_key));
+        Assert.assertEquals(0, TestUtils.getJsonStorageProperty(SDKStorage.key_migration_version));
     }
 
     /**
@@ -89,7 +89,7 @@ public class MigrationHelperTests {
         migrationHelper.applyMigrations(new HashMap<>());
         //check migration version is 0 after apply both from class and file
         Assert.assertEquals(0, migrationHelper.appliedMigrationVersion);
-        Assert.assertEquals(0, TestUtils.getJsonStorageProperty(SDKStorage.migration_version_key));
+        Assert.assertEquals(0, TestUtils.getJsonStorageProperty(SDKStorage.key_migration_version));
         Mockito.verify(migrationHelper.logger, Mockito.times(1)).d("[MigrationHelper] migration_DeleteConfigFile_00, Migration already applied");
     }
 
@@ -111,7 +111,7 @@ public class MigrationHelperTests {
         Assert.assertEquals(-1, migrationHelper.appliedMigrationVersion);
         if (isApplied) {
             writeToMvFile(version);
-            Assert.assertEquals(version, TestUtils.getJsonStorageProperty(SDKStorage.migration_version_key));
+            Assert.assertEquals(version, TestUtils.getJsonStorageProperty(SDKStorage.key_migration_version));
         }
 
         initMigrationHelper();

@@ -29,7 +29,7 @@ public class SDKStorage implements StorageProvider {
     //key names
     protected static final String key_device_id = "did";
     protected static final String key_device_id_type = "did_t";
-    protected static final String migration_version_key = "mv";
+    protected static final String key_migration_version = "mv";
 
     private JsonFileStorage jsonFileStorage;
 
@@ -349,16 +349,12 @@ public class SDKStorage implements StorageProvider {
 
     @Override
     public Integer getMigrationVersion() {
-        Object value = jsonFileStorage.get(migration_version_key);
-        if (value == null) {
-            return -1;
-        }
-        return (Integer) value;
+        return jsonFileStorage.getInt(key_migration_version, -1);
     }
 
     @Override
     public void setMigrationVersion(Integer migrationVersion) {
-        jsonFileStorage.addAndSave(migration_version_key, migrationVersion);
+        jsonFileStorage.addAndSave(key_migration_version, migrationVersion);
     }
 
     @Override
