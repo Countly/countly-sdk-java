@@ -27,8 +27,8 @@ public class SDKStorage implements StorageProvider {
     protected static final String JSON_FILE_NAME = "countly_store.json";
 
     //key names
-    protected static final String device_id_key = "did";
-    protected static final String device_id_strategy_key = "did_s";
+    protected static final String key_device_id = "did";
+    protected static final String key_device_id_type = "did_t";
     protected static final String migration_version_key = "mv";
 
     private JsonFileStorage jsonFileStorage;
@@ -329,22 +329,22 @@ public class SDKStorage implements StorageProvider {
 
     @Override
     public String getDeviceID() {
-        return (String) jsonFileStorage.get(device_id_key);
+        return jsonFileStorage.getString(key_device_id);
     }
 
     @Override
     public void setDeviceID(String deviceID) {
-        jsonFileStorage.addAndSave(device_id_key, deviceID);
+        jsonFileStorage.addAndSave(key_device_id, deviceID);
     }
 
     @Override
-    public DeviceIdStrategy getDeviceIdStrategy() {
-        return DeviceIdStrategy.valueOf((String) jsonFileStorage.get(device_id_strategy_key));
+    public String getDeviceIdType() {
+        return jsonFileStorage.getString(key_device_id_type);
     }
 
     @Override
-    public void setDeviceIdStrategy(DeviceIdStrategy deviceIdStrategy) {
-        jsonFileStorage.addAndSave(device_id_strategy_key, deviceIdStrategy.toString());
+    public void setDeviceIdType(String deviceIdTypeString) {
+        jsonFileStorage.addAndSave(key_device_id_type, deviceIdTypeString);
     }
 
     @Override

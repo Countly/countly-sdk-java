@@ -1,8 +1,8 @@
 package ly.count.sdk.java.internal;
 
 /**
- * Device ID strategy.
+ * Device ID Type
  */
-public enum DeviceIdStrategy {
+public enum DeviceIdType {
     DEVELOPER_SUPPLIED, SDK_GENERATED
 }

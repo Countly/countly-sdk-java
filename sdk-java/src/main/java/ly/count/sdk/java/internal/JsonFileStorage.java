@@ -95,12 +95,15 @@ public class JsonFileStorage {
      * @return value
      */
     public Object get(@Nonnull final String key) {
-        try {
-            return json.get(key);
-        } catch (Exception e) {
-            logger.e("[JsonFileStorage] get, Failed to get value for key: [" + key + "], reason: [" + e.getMessage() + "]");
-            return null;
-        }
+        return json.opt(key);
+    }
+
+    public String getString(@Nonnull final String key) {
+        return getString(key, null);
+    }
+
+    public String getString(@Nonnull final String key, final String defaultValue) {
+        return json.optString(key, defaultValue);
     }
 
     /**
