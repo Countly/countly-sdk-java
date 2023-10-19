@@ -1,7 +1,9 @@
 package ly.count.sdk.java.internal;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -329,6 +331,15 @@ public class TestUtils {
         return System.getProperty("os.name");
     }
 
+    static void writeToFile(String fileName, String data) {
+        File file = new File(getTestSDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + fileName);
+        try (BufferedWriter writer = Files.newBufferedWriter(file.toPath())) {
+            writer.write(data);
+        } catch (IOException e) {
+            //do nothing
+        }
+    }
+
     public static void validateRequiredParams(Map<String, String> params) {
         int hour = Integer.parseInt(params.get("hour"));
         int dow = Integer.parseInt(params.get("dow"));
@@ -365,6 +376,10 @@ public class TestUtils {
         //todo too hacky, burn it
         given(ic.getLogger()).willReturn(mock(Log.class));
         return ic;
+    }
+
+    static JSONObject readJsonFile(String name) {
+        return readJsonFile(new File(getTestSDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + name));
     }
 
     static JSONObject readJsonFile(final File file) {
