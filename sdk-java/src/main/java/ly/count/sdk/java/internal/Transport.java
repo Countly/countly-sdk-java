@@ -311,7 +311,6 @@ public class Transport implements X509TrustManager {
 
                 HttpURLConnection connection = null;
                 try {
-                    ModuleRequests.addRequired(config, request);
                     Class requestOwner = request.owner();
                     request.params.remove(Request.MODULE);
 

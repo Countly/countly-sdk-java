@@ -26,10 +26,9 @@ public class TestUtils {
     static String SERVER_URL = "https://test.count.ly";
     static String SERVER_APP_KEY = "COUNTLY_APP_KEY";
     static String DEVICE_ID = "some_random_test_device_id";
-
     static String SDK_NAME = "java-native";
-
     static String SDK_VERSION = "23.8.0";
+    static String APPLICATION_VERSION = "1.0";
 
     public static final String[] eKeys = new String[] { "eventKey1", "eventKey2", "eventKey3", "eventKey4", "eventKey5", "eventKey6", "eventKey7" };
 
@@ -75,6 +74,7 @@ public class TestUtils {
         checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
         Config config = new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
         config.setCustomDeviceId(DEVICE_ID);
+        config.setApplicationVersion(APPLICATION_VERSION);
 
         config.enableFeatures(Config.Feature.Events);
 
@@ -94,7 +94,7 @@ public class TestUtils {
         checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
         Config config = new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
         config.setCustomDeviceId(DEVICE_ID);
-        config.setApplicationVersion("1.0");
+        config.setApplicationVersion(APPLICATION_VERSION);
 
         config.enableFeatures(features);
         config.enableFeatures(Config.Feature.Feedback);
@@ -301,7 +301,9 @@ public class TestUtils {
     }
 
     static List<EventImpl> readEventsFromRequest(int requestIndex) {
-        JSONArray array = new JSONArray(getCurrentRQ()[requestIndex].get("events"));
+        Map<String, String> request = getCurrentRQ()[requestIndex];
+        validateRequiredParams(request);
+        JSONArray array = new JSONArray(request.get("events"));
         List<EventImpl> result = new ArrayList<>();
 
         array.forEach(value -> {
@@ -336,8 +338,9 @@ public class TestUtils {
 
         validateSdkIdentityParams(params);
         Assert.assertEquals(SDKCore.instance.config.getDeviceId().id, params.get("device_id"));
-        Assert.assertEquals(SDKCore.instance.config.getServerAppKey(), params.get("app_key"));
-        Assert.assertTrue(Long.valueOf(params.get("timestamp")) > 0);
+        Assert.assertEquals(SERVER_APP_KEY, params.get("app_key"));
+        Assert.assertEquals(APPLICATION_VERSION, params.get("av"));
+        Assert.assertTrue(Long.parseLong(params.get("timestamp")) > 0);
         Assert.assertTrue(hour > 0 && hour < 24);
         Assert.assertTrue(dow >= 0 && dow < 7);
         Assert.assertTrue(tz >= -720 && tz <= 840);
