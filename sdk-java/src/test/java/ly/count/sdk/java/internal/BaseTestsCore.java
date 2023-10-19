@@ -1,6 +1,5 @@
 package ly.count.sdk.java.internal;
 
-import java.io.File;
 import java.util.List;
 import ly.count.sdk.java.Config;
 import org.junit.After;
@@ -49,7 +48,7 @@ public class BaseTestsCore {
 
         this.dummy = mock(ModuleBase.class);
         this.sdk = mock(SDKCore.class);
-        this.sdk.init(new InternalConfig(defaultConfig()));
+        this.sdk.init(new InternalConfig(defaultConfig()), L);
         this.config = this.sdk.config();
     }
 

@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -21,16 +22,20 @@ import org.junit.Assert;
 import static ly.count.sdk.java.internal.SDKStorage.EVENT_QUEUE_FILE_NAME;
 import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_PREFIX;
 import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_SEPARATOR;
-import static org.mockito.BDDMockito.given;
+import static ly.count.sdk.java.internal.SDKStorage.JSON_FILE_NAME;
 import static org.mockito.Mockito.mock;
 
+/**
+ * Glossary:
+ * RQ - request queue
+ * EQ - event queue
+ * MV - migration version
+ */
 public class TestUtils {
     static String SERVER_URL = "https://test.count.ly";
     static String SERVER_APP_KEY = "COUNTLY_APP_KEY";
     static String DEVICE_ID = "some_random_test_device_id";
-
     static String SDK_NAME = "java-native";
-
     static String SDK_VERSION = "23.8.0";
 
     public static final String[] eKeys = new String[] { "eventKey1", "eventKey2", "eventKey3", "eventKey4", "eventKey5", "eventKey6", "eventKey7" };
@@ -113,7 +118,7 @@ public class TestUtils {
     static void checkSdkStorageRootDirectoryExist(File directory) {
         if (!(directory.exists() && directory.isDirectory())) {
             if (!directory.mkdirs()) {
-                throw new RuntimeException("Directory creation failed");
+                Assert.fail("Failed to create directory: " + directory.getAbsolutePath());
             }
         }
     }
@@ -151,7 +156,7 @@ public class TestUtils {
                 Map<String, String> paramMap = parseRequestParams(file);
                 resultMapArray[i] = paramMap;
             } catch (IOException e) {
-                logger.e("[TestUtils] " + e.getMessage());
+                Assert.fail("Failed to read request params from file reason: " + e.getMessage());
             }
         }
 
@@ -182,7 +187,7 @@ public class TestUtils {
         try {
             fileContent = Utils.readFileContent(file, logger);
         } catch (IOException e) {
-            //do nothing
+            Assert.fail("Failed to read event queue from file reason: " + e.getMessage());
         }
 
         Arrays.stream(fileContent.split(EventQueue.DELIMITER)).forEach(s -> {
@@ -348,45 +353,88 @@ public class TestUtils {
         validateSdkIdentityParams(params);
         Assert.assertEquals(SDKCore.instance.config.getDeviceId().id, params.get("device_id"));
         Assert.assertEquals(SDKCore.instance.config.getServerAppKey(), params.get("app_key"));
-        Assert.assertTrue(Long.valueOf(params.get("timestamp")) > 0);
+        Assert.assertTrue(Long.parseLong(params.get("timestamp")) > 0);
         Assert.assertTrue(hour > 0 && hour < 24);
         Assert.assertTrue(dow >= 0 && dow < 7);
         Assert.assertTrue(tz >= -720 && tz <= 840);
     }
 
+    /**
+     * Validate sdk identity params which are sdk version and name
+     *
+     * @param params params to validate
+     */
     public static void validateSdkIdentityParams(Map<String, String> params) {
         Assert.assertEquals(SDKCore.instance.config.getSdkVersion(), params.get("sdk_version"));
         Assert.assertEquals(SDKCore.instance.config.getSdkName(), params.get("sdk_name"));
     }
 
+    /**
+     * Create a clean test state by deleting all files from test directory
+     */
     public static void createCleanTestState() {
         Countly.instance().halt();
-        try {
-            for (File file : getTestSDirectory().listFiles()) {
-                file.delete();
-            }
-        } catch (Exception ignored) {
+
+        try (Stream<Path> files = Files.list(getTestSDirectory().toPath())) {
+            files.forEach(path -> {
+                try {
+                    Assert.assertTrue(Files.deleteIfExists(path));
+                } catch (IOException ignored) {
+                    //do nothing
+                }
+            });
+        } catch (IOException ignored) {
             //do nothing
         }
     }
 
-    public static InternalConfig getMockInternalConfig() {
-        InternalConfig ic = mock(InternalConfig.class);
-
-        //todo too hacky, burn it
-        given(ic.getLogger()).willReturn(mock(Log.class));
-        return ic;
+    /**
+     * Get property from json file for test purposes
+     *
+     * @param key property key
+     * @return property value
+     */
+    public static Object getJsonStorageProperty(final String key) {
+        File file = new File(getTestSDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + JSON_FILE_NAME);
+        return readJsonFile(file).get(key);
     }
 
     static JSONObject readJsonFile(String name) {
         return readJsonFile(new File(getTestSDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + name));
     }
 
+    /**
+     * Read json file for test purposes
+     * If file cannot be read, return empty json object
+     *
+     * @param file file to read
+     * @return json object
+     */
     static JSONObject readJsonFile(final File file) {
         try {
             return new JSONObject(Utils.readFileContent(file, mock(Log.class)));
         } catch (Exception e) {
             return new JSONObject();
         }
+    }
+
+    /**
+     * Create a file for test purposes
+     * If file cannot be created, return null and assert fail
+     *
+     * @param fileName name of the file to create
+     * @return created file
+     */
+    public static File createFile(final String fileName) {
+        File file = new File(getTestSDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + fileName);
+        try {
+            if (file.createNewFile()) {
+                return file;
+            }
+        } catch (IOException e) {
+            Assert.fail("Failed to create file: " + e.getMessage());
+        }
+
+        return null;
     }
 }

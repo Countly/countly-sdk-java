@@ -32,4 +32,25 @@ public interface StorageProvider {
      * @param deviceIdTypeString device ID strategy
      */
     void setDeviceIdType(String deviceIdTypeString);
+
+    /**
+     * Get migration version
+     *
+     * @return migration version
+     */
+    Integer getMigrationVersion();
+
+    /**
+     * Set migration version
+     *
+     * @param migrationVersion migration version
+     */
+    void setMigrationVersion(Integer migrationVersion);
+
+    /**
+     * Check countly storage is empty or not
+     *
+     * @return true if empty, false otherwise
+     */
+    boolean isCountlyStorageEmpty();
 }

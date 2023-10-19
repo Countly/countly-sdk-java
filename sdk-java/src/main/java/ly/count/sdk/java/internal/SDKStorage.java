@@ -29,6 +29,7 @@ public class SDKStorage implements StorageProvider {
     //key names
     protected static final String key_device_id = "did";
     protected static final String key_device_id_type = "did_t";
+    protected static final String migration_version_key = "mv";
 
     private JsonFileStorage jsonFileStorage;
 
@@ -344,5 +345,29 @@ public class SDKStorage implements StorageProvider {
     @Override
     public void setDeviceIdType(String deviceIdTypeString) {
         jsonFileStorage.addAndSave(key_device_id_type, deviceIdTypeString);
+    }
+
+    @Override
+    public Integer getMigrationVersion() {
+        Object value = jsonFileStorage.get(migration_version_key);
+        if (value == null) {
+            return -1;
+        }
+        return (Integer) value;
+    }
+
+    @Override
+    public void setMigrationVersion(Integer migrationVersion) {
+        jsonFileStorage.addAndSave(migration_version_key, migrationVersion);
+    }
+
+    @Override
+    public boolean isCountlyStorageEmpty() {
+        String[] files = getFileList(config);
+        int size = files.length;
+        if (size == 1 && files[0].contains(JSON_FILE_NAME)) { // json file is created automatically
+            return true;
+        }
+        return size == 0;
     }
 }

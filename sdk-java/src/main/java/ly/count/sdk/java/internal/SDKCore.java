@@ -91,15 +91,6 @@ public class SDKCore {
         return modules != null && modules.containsKey(feat);
     }
 
-    public void init(InternalConfig config) {
-        if (config.immediateRequestGenerator == null) {
-            config.immediateRequestGenerator = ImmediateRequestMaker::new;
-        }
-        prepareMappings(config);
-        countlyTimer = new CountlyTimer(L);
-        countlyTimer.startTimer(config.getSendUpdateEachSeconds(), this::onTimer);
-    }
-
     private void onTimer() {
         modules.forEach((feature, module) -> module.onTimer());
     }
@@ -431,8 +422,23 @@ public class SDKCore {
         sdkStorage.init(givenConfig, logger);
         givenConfig.storageProvider = sdkStorage;
         config = prepareConfig(givenConfig);
+        config.storageProvider = sdkStorage;
 
-        this.init(givenConfig);
+        if (config.immediateRequestGenerator == null) {
+            config.immediateRequestGenerator = ImmediateRequestMaker::new;
+        }
+
+        //setup module mapping
+        prepareMappings(config);
+
+        //create internal timer
+        countlyTimer = new CountlyTimer(L);
+        countlyTimer.startTimer(config.getSendUpdateEachSeconds(), this::onTimer);
+
+        //setup and perform migrations
+        MigrationHelper migrationHelper = new MigrationHelper(L);
+        migrationHelper.setupMigrations(config);
+        migrationHelper.applyMigrations(new HashMap<>());
 
         requestQueueMemory = new ArrayDeque<>(config.getRequestQueueMaxSize());
         // ModuleSessions is always enabled, even without consent
