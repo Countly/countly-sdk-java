@@ -24,12 +24,12 @@ public interface StorageProvider {
      *
      * @return device ID strategy
      */
-    DeviceIdStrategy getDeviceIdStrategy();
+    DeviceIdType getDeviceIdStrategy();
 
     /**
      * Set device ID strategy
      *
-     * @param deviceIdStrategy device ID strategy
+     * @param deviceIdType device ID strategy
      */
-    void setDeviceIdStrategy(DeviceIdStrategy deviceIdStrategy);
+    void setDeviceIdStrategy(DeviceIdType deviceIdType);
 }
