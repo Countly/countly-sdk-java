@@ -13,8 +13,6 @@ import org.mockito.Mockito;
 @RunWith(JUnit4.class)
 public class SdkStorageTests {
 
-    SDKStorage storageProvider;
-
     static final String JSON_STORAGE = "countly_store.json";
 
     /**
@@ -25,17 +23,16 @@ public class SdkStorageTests {
         TestUtils.createCleanTestState();
     }
 
-    private void init() {
-        storageProvider = new SDKStorage();
-        storageProvider.init(new InternalConfig(TestUtils.getBaseConfig()), Mockito.mock(Log.class));
-    }
-
     /**
      * Stop SDKStorage after each test
      */
     @After
     public void stop() {
-        storageProvider.stop(new InternalConfig(TestUtils.getBaseConfig()), true);
+        //doing all of this just to stop the Task
+        //todo eliminate this
+        InternalConfig config = new InternalConfig(TestUtils.getBaseConfig());
+        SDKStorage storageProvider = (new SDKStorage()).init(config, Mockito.mock(Log.class));
+        storageProvider.stop(config, true);
     }
 
     /**
@@ -45,7 +42,7 @@ public class SdkStorageTests {
      */
     @Test
     public void getDeviceID() {
-        init();
+        SDKStorage storageProvider = (new SDKStorage()).init(new InternalConfig(TestUtils.getBaseConfig()), Mockito.mock(Log.class));
         Assert.assertNull(storageProvider.getDeviceID());
     }
 
@@ -57,7 +54,7 @@ public class SdkStorageTests {
     @Test
     public void getDeviceID_existed() {
         TestUtils.writeToFile(JSON_STORAGE, "{\"did\":\"" + TestUtils.DEVICE_ID + "\"}");
-        init();
+        SDKStorage storageProvider = (new SDKStorage()).init(new InternalConfig(TestUtils.getBaseConfig()), Mockito.mock(Log.class));
         Assert.assertEquals(TestUtils.DEVICE_ID, storageProvider.getDeviceID());
     }
 
@@ -68,7 +65,7 @@ public class SdkStorageTests {
      */
     @Test
     public void getDeviceIdType() {
-        init();
+        SDKStorage storageProvider = (new SDKStorage()).init(new InternalConfig(TestUtils.getBaseConfig()), Mockito.mock(Log.class));
         Assert.assertNull(storageProvider.getDeviceIdType());
     }
 
@@ -80,7 +77,7 @@ public class SdkStorageTests {
     @Test
     public void getDeviceIdType_existed() {
         TestUtils.writeToFile(JSON_STORAGE, "{\"did_t\":\"DEVELOPER_SUPPLIED\"}");
-        init();
+        SDKStorage storageProvider = (new SDKStorage()).init(new InternalConfig(TestUtils.getBaseConfig()), Mockito.mock(Log.class));
         Assert.assertEquals(DeviceIdType.DEVELOPER_SUPPLIED, DeviceIdType.valueOf(storageProvider.getDeviceIdType()));
     }
 
@@ -92,7 +89,7 @@ public class SdkStorageTests {
     @Test
     public void getDeviceIdType_garbage() {
         TestUtils.writeToFile(JSON_STORAGE, "{\"did_t\":\"DEVELOPER_CREATED\"}");
-        init();
+        SDKStorage storageProvider = (new SDKStorage()).init(new InternalConfig(TestUtils.getBaseConfig()), Mockito.mock(Log.class));
         Stream<String> deviceIdTypeStream = Arrays.stream(DeviceIdType.values()).map(Enum::toString);
         Assert.assertTrue(deviceIdTypeStream.noneMatch(deviceIdType -> deviceIdType.equals(storageProvider.getDeviceIdType())));
     }
@@ -104,7 +101,7 @@ public class SdkStorageTests {
      */
     @Test
     public void setDeviceID() {
-        init();
+        SDKStorage storageProvider = (new SDKStorage()).init(new InternalConfig(TestUtils.getBaseConfig()), Mockito.mock(Log.class));
         Assert.assertNull(storageProvider.getDeviceID());
         storageProvider.setDeviceID(TestUtils.DEVICE_ID);
         Assert.assertEquals(TestUtils.DEVICE_ID, storageProvider.getDeviceID());
@@ -118,7 +115,7 @@ public class SdkStorageTests {
      */
     @Test
     public void setDeviceIdType() {
-        init();
+        SDKStorage storageProvider = (new SDKStorage()).init(new InternalConfig(TestUtils.getBaseConfig()), Mockito.mock(Log.class));
         Assert.assertNull(storageProvider.getDeviceIdType());
         storageProvider.setDeviceIdType(DeviceIdType.DEVELOPER_SUPPLIED.toString());
         Assert.assertEquals("DEVELOPER_SUPPLIED", storageProvider.getDeviceIdType());
