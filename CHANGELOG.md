@@ -4,6 +4,7 @@
 
 * Session update time duration increased to 60 seconds from 30 seconds.
 * Adding remaining request queue size information to every request.
+* Adding application version information to every request.
 
 23.8.0
 

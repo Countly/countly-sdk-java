@@ -287,8 +287,7 @@ public class ModuleFeedback extends ModuleBase {
 
         requestData.append("?widget_id=");
         requestData.append(Utils.urlencode(widgetInfo.widgetId, L));
-        requestData.append("&shown=1");
-        requestData.append("&sdk_version=");
+        requestData.append("&shown=1&sdk_version=");
         requestData.append(Utils.urlencode(internalConfig.getSdkVersion(), L));
         requestData.append("&sdk_name=");
         requestData.append(Utils.urlencode(internalConfig.getSdkName(), L));
@@ -296,6 +295,8 @@ public class ModuleFeedback extends ModuleBase {
         requestData.append(Utils.urlencode(internalConfig.getSdkPlatform(), L));
         requestData.append("&app_version=");
         requestData.append(cachedAppVersion);
+        requestData.append("&av=");
+        requestData.append(Utils.urlencode(internalConfig.getApplicationVersion(), L));
 
         Transport cp = SDKCore.instance.networking.getTransport();
         final boolean networkingIsEnabled = internalConfig.getNetworkingEnabled();

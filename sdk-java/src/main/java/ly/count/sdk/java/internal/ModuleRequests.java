@@ -216,6 +216,10 @@ public class ModuleRequests extends ModuleBase {
                 .add("sdk_version", config.getSdkVersion());
         }
 
+        if (!Utils.isEmptyOrNull(config.getApplicationVersion())) {
+            request.params.add("av", Utils.urlencode(config.getApplicationVersion(), config.getLogger()));
+        }
+
         return request;
     }
 
@@ -253,6 +257,7 @@ public class ModuleRequests extends ModuleBase {
         }
 
         addRequiredTimeParams(request);
+        addRequired(config, request);
 
         return Storage.pushAsync(config, request, param -> {
             SDKCore.instance.onRequest(config, request);
