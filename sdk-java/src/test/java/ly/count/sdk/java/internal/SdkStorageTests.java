@@ -3,15 +3,12 @@ package ly.count.sdk.java.internal;
 import java.util.Arrays;
 import java.util.stream.Stream;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 @RunWith(JUnit4.class)
 public class SdkStorageTests {
@@ -20,6 +17,9 @@ public class SdkStorageTests {
 
     static final String JSON_STORAGE = "countly_store.json";
 
+    /**
+     * Clean up before each test
+     */
     @Before
     public void beforeTest() {
         TestUtils.createCleanTestState();
@@ -30,6 +30,9 @@ public class SdkStorageTests {
         storageProvider.init(new InternalConfig(TestUtils.getBaseConfig()), Mockito.mock(Log.class));
     }
 
+    /**
+     * Stop SDKStorage after each test
+     */
     @After
     public void stop() {
         storageProvider.stop(new InternalConfig(TestUtils.getBaseConfig()), true);
@@ -43,7 +46,7 @@ public class SdkStorageTests {
     @Test
     public void getDeviceID() {
         init();
-        assertNull(storageProvider.getDeviceID());
+        Assert.assertNull(storageProvider.getDeviceID());
     }
 
     /**
@@ -53,9 +56,9 @@ public class SdkStorageTests {
      */
     @Test
     public void getDeviceID_existed() {
-        TestUtils.writeToFile(JSON_STORAGE, "{\"did\":\"test\"}");
+        TestUtils.writeToFile(JSON_STORAGE, "{\"did\":\"" + TestUtils.DEVICE_ID + "\"}");
         init();
-        assertEquals("test", storageProvider.getDeviceID());
+        Assert.assertEquals(TestUtils.DEVICE_ID, storageProvider.getDeviceID());
     }
 
     /**
@@ -66,7 +69,7 @@ public class SdkStorageTests {
     @Test
     public void getDeviceIdType() {
         init();
-        assertNull(storageProvider.getDeviceIdType());
+        Assert.assertNull(storageProvider.getDeviceIdType());
     }
 
     /**
@@ -78,7 +81,7 @@ public class SdkStorageTests {
     public void getDeviceIdType_existed() {
         TestUtils.writeToFile(JSON_STORAGE, "{\"did_t\":\"DEVELOPER_SUPPLIED\"}");
         init();
-        assertEquals(DeviceIdType.DEVELOPER_SUPPLIED, DeviceIdType.valueOf(storageProvider.getDeviceIdType()));
+        Assert.assertEquals(DeviceIdType.DEVELOPER_SUPPLIED, DeviceIdType.valueOf(storageProvider.getDeviceIdType()));
     }
 
     /**
@@ -91,7 +94,7 @@ public class SdkStorageTests {
         TestUtils.writeToFile(JSON_STORAGE, "{\"did_t\":\"DEVELOPER_CREATED\"}");
         init();
         Stream<String> deviceIdTypeStream = Arrays.stream(DeviceIdType.values()).map(Enum::toString);
-        assertTrue(deviceIdTypeStream.noneMatch(deviceIdType -> deviceIdType.equals(storageProvider.getDeviceIdType())));
+        Assert.assertTrue(deviceIdTypeStream.noneMatch(deviceIdType -> deviceIdType.equals(storageProvider.getDeviceIdType())));
     }
 
     /**
@@ -102,10 +105,10 @@ public class SdkStorageTests {
     @Test
     public void setDeviceID() {
         init();
-        assertNull(storageProvider.getDeviceID());
-        storageProvider.setDeviceID("test");
-        assertEquals("test", storageProvider.getDeviceID());
-        assertEquals("test", TestUtils.readJsonFile(JSON_STORAGE).get("did"));
+        Assert.assertNull(storageProvider.getDeviceID());
+        storageProvider.setDeviceID(TestUtils.DEVICE_ID);
+        Assert.assertEquals(TestUtils.DEVICE_ID, storageProvider.getDeviceID());
+        Assert.assertEquals(TestUtils.DEVICE_ID, TestUtils.readJsonFile(JSON_STORAGE).get("did"));
     }
 
     /**
@@ -116,9 +119,9 @@ public class SdkStorageTests {
     @Test
     public void setDeviceIdType() {
         init();
-        assertNull(storageProvider.getDeviceIdType());
+        Assert.assertNull(storageProvider.getDeviceIdType());
         storageProvider.setDeviceIdType(DeviceIdType.DEVELOPER_SUPPLIED.toString());
-        assertEquals("DEVELOPER_SUPPLIED", storageProvider.getDeviceIdType());
-        assertEquals("DEVELOPER_SUPPLIED", TestUtils.readJsonFile(JSON_STORAGE).get("did_t"));
+        Assert.assertEquals("DEVELOPER_SUPPLIED", storageProvider.getDeviceIdType());
+        Assert.assertEquals("DEVELOPER_SUPPLIED", TestUtils.readJsonFile(JSON_STORAGE).get("did_t"));
     }
 }

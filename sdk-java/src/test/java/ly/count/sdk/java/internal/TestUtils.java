@@ -331,7 +331,13 @@ public class TestUtils {
         return System.getProperty("os.name");
     }
 
-    static void writeToFile(String fileName, String data) {
+    /**
+     * Write data to file
+     *
+     * @param fileName of file
+     * @param data to write
+     */
+    static void writeToFile(final String fileName, final String data) {
         File file = new File(getTestSDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + fileName);
         try (BufferedWriter writer = Files.newBufferedWriter(file.toPath())) {
             writer.write(data);
@@ -378,10 +384,23 @@ public class TestUtils {
         return ic;
     }
 
-    static JSONObject readJsonFile(String name) {
+    /**
+     * Read json file from test resources with
+     * desired prefix and separator
+     *
+     * @param name of file
+     * @return json object
+     */
+    static JSONObject readJsonFile(final String name) {
         return readJsonFile(new File(getTestSDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + name));
     }
 
+    /**
+     * Read json file
+     *
+     * @param file to read
+     * @return json object
+     */
     static JSONObject readJsonFile(final File file) {
         try {
             return new JSONObject(Utils.readFileContent(file, mock(Log.class)));
