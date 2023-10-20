@@ -429,6 +429,7 @@ public class SDKCore {
 
         givenConfig.sdk = this;
         sdkStorage.init(givenConfig, logger);
+        givenConfig.storageProvider = sdkStorage;
         config = prepareConfig(givenConfig);
 
         this.init(givenConfig);
@@ -520,6 +521,7 @@ public class SDKCore {
         }
 
         config.sdk = this;
+        config.storageProvider = this.sdkStorage;
         initFinished(config);
     }
 
@@ -601,6 +603,12 @@ public class SDKCore {
         ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).changeDeviceId(config, id, false);
     }
 
+    /**
+     * Change device ID
+     *
+     * @param config to configure
+     * @param id to change to
+     */
     public void changeDeviceIdWithMerge(InternalConfig config, String id) {
         ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).changeDeviceId(config, id, true);
     }

@@ -15,29 +15,42 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public class SDKStorage {
+public class SDKStorage implements StorageProvider {
 
     private Log L;
     InternalConfig config;
+
+    //file and prefix names
     protected static final String FILE_NAME_PREFIX = "[CLY]";
     protected static final String FILE_NAME_SEPARATOR = "_";
     protected static final String EVENT_QUEUE_FILE_NAME = "event_queue";
+    protected static final String JSON_FILE_NAME = "countly_store.json";
+
+    //key names
+    protected static final String key_device_id = "did";
+    protected static final String key_device_id_type = "did_t";
+
+    private JsonFileStorage jsonFileStorage;
 
     protected SDKStorage() {
 
     }
 
-    public void init(InternalConfig config, Log logger) {
+    public SDKStorage init(InternalConfig config, Log logger) {
         this.L = logger;
         this.config = config;
+        jsonFileStorage = new JsonFileStorage(createFileFullPathWithPrefix(config, JSON_FILE_NAME), L);
         Storage.init();
+        return this;
     }
 
     public void stop(InternalConfig config, boolean clear) {
         Storage.await(L);
         if (clear) {
             storablePurge(config, null);
+            jsonFileStorage.clearAndSave();
         }
+        jsonFileStorage = null;
         Storage.stop();
     }
 
@@ -129,6 +142,10 @@ public class SDKStorage {
     private String createFileFullPath(ly.count.sdk.java.internal.InternalConfig config, String filename) {
         String directoryPath = config.getSdkStorageRootDirectory().getAbsolutePath();
         return directoryPath + File.separator + filename;
+    }
+
+    private File createFileFullPathWithPrefix(ly.count.sdk.java.internal.InternalConfig config, String filename) {
+        return new File(config.getSdkStorageRootDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + filename);
     }
 
     private FileInputStream openFileAsInputStream(ly.count.sdk.java.internal.InternalConfig config, String filename) throws FileNotFoundException {
@@ -282,8 +299,7 @@ public class SDKStorage {
         //if file already exists overwrite it
         //if file doesn't exist create it
         //if file can't be created or written, log the error
-        File sdkStorageDirectory = config.getSdkStorageRootDirectory();
-        File file = new File(sdkStorageDirectory, FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + EVENT_QUEUE_FILE_NAME);
+        File file = createFileFullPathWithPrefix(config, EVENT_QUEUE_FILE_NAME);
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
             // Write the eventQueue to the file
@@ -297,7 +313,7 @@ public class SDKStorage {
 
     protected String readEventQueue() {
         L.d("[SDKStorage] Getting event queue");
-        File file = new File(config.getSdkStorageRootDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + EVENT_QUEUE_FILE_NAME);
+        File file = createFileFullPathWithPrefix(config, EVENT_QUEUE_FILE_NAME);
 
         String eventQueue = "";
 
@@ -309,5 +325,25 @@ public class SDKStorage {
         }
 
         return eventQueue;
+    }
+
+    @Override
+    public String getDeviceID() {
+        return jsonFileStorage.getString(key_device_id);
+    }
+
+    @Override
+    public void setDeviceID(String deviceID) {
+        jsonFileStorage.addAndSave(key_device_id, deviceID);
+    }
+
+    @Override
+    public String getDeviceIdType() {
+        return jsonFileStorage.getString(key_device_id_type);
+    }
+
+    @Override
+    public void setDeviceIdType(String deviceIdTypeString) {
+        jsonFileStorage.addAndSave(key_device_id_type, deviceIdTypeString);
     }
 }

@@ -1,7 +1,9 @@
 package ly.count.sdk.java.internal;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -331,6 +333,21 @@ public class TestUtils {
         return System.getProperty("os.name");
     }
 
+    /**
+     * Write data to file
+     *
+     * @param fileName of file
+     * @param data to write
+     */
+    static void writeToFile(final String fileName, final String data) {
+        File file = new File(getTestSDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + fileName);
+        try (BufferedWriter writer = Files.newBufferedWriter(file.toPath())) {
+            writer.write(data);
+        } catch (IOException e) {
+            //do nothing
+        }
+    }
+
     public static void validateRequiredParams(Map<String, String> params) {
         int hour = Integer.parseInt(params.get("hour"));
         int dow = Integer.parseInt(params.get("dow"));
@@ -370,6 +387,23 @@ public class TestUtils {
         return ic;
     }
 
+    /**
+     * Read json file from test resources with
+     * desired prefix and separator
+     *
+     * @param name of file
+     * @return json object
+     */
+    static JSONObject readJsonFile(final String name) {
+        return readJsonFile(new File(getTestSDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + name));
+    }
+
+    /**
+     * Read json file
+     *
+     * @param file to read
+     * @return json object
+     */
     static JSONObject readJsonFile(final File file) {
         try {
             return new JSONObject(Utils.readFileContent(file, mock(Log.class)));
