@@ -29,7 +29,7 @@ public class SDKStorage implements StorageProvider {
     //key names
     protected static final String key_device_id = "did";
     protected static final String key_device_id_type = "did_t";
-    protected static final String key_migration_version = "mv";
+    protected static final String key_migration_version = "dv";
 
     private JsonFileStorage jsonFileStorage;
 

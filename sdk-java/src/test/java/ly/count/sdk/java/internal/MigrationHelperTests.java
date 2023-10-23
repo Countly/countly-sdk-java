@@ -14,10 +14,11 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
 
+import static org.mockito.Mockito.mock;
+
 @RunWith(JUnit4.class)
 public class MigrationHelperTests {
-
-    MigrationHelper migrationHelper;
+    SDKStorage storageProvider;
 
     /**
      * Before the tests, clean the test state
@@ -25,7 +26,11 @@ public class MigrationHelperTests {
     @Before
     public void beforeTest() {
         TestUtils.createCleanTestState();
-        migrationHelper = new MigrationHelper(Mockito.mock(Log.class));
+
+        //setup the wider config
+        InternalConfig config = (new InternalConfig(TestUtils.getBaseConfig()));
+        config.setLogger(mock(Log.class));
+        storageProvider = (new SDKStorage()).init(config, config.getLogger());
     }
 
     /**
@@ -36,24 +41,52 @@ public class MigrationHelperTests {
         TestUtils.createCleanTestState();
     }
 
+    @Test
+    public void MigrationHelper_defaults() {
+        MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
+        Assert.assertEquals(-1, migrationHelper.currentDataModelVersion);//validate the default version value
+        Assert.assertNotNull(migrationHelper.logger);
+        Assert.assertNull(migrationHelper.storageProvider);
+        Assert.assertEquals(1, migrationHelper.latestMigrationVersion);
+    }
+
+    //let's do 3 tests where we verify the initial version acquisition:
+    // fresh install
+    // legacy data model
+    // latest version
+
+    //then apply migration in 2 scenarios and verify the final version
+    // going from legacy to the latest one
+    // being at the latest one and still remaining at the latest one
+
+    //if we are at the latest version, no migrations should run
+    //rework the file checking heuristic
+
+    //then we need tests for the specific migration transition from 0 -> 1
+    //we wanna setup a couple of scenarios that would represent version 0 and then verify that all required steps are done
+
     /**
-     * "setupMigrations" with no migration done
-     * receives mock context to set up migrations
-     * migration version should be -1 because no migration was done
+     * "setupMigrations"
+     * Fresh install. That means nothing in storage
+     * Migration version should be 1 (latest version) before applying any migrations because the SDK is already at the latest data schema version
      */
     @Test
-    public void setupMigrations_migrationFileNotExist() {
-        validateMigrationVersionAndSetup(-1, false);
+    public void setupMigrations_migrationFileNotExist() throws IOException {
+        MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
+        migrationHelper.setupMigrations(storageProvider);
+        Assert.assertEquals(-1, migrationHelper.currentDataModelVersion);
     }
 
     /**
      * "setupMigrations"
-     * receives mock context to set up migrations
-     * migration version should be 0 because first migration done previously
+     * Upgrading from the "pre migration" version. No new config object, just old type of data.
+     * Migration version should be 0 before applying any migrations. After applying migrations we get to 1
      */
     @Test
-    public void setupMigrations() {
-        validateMigrationVersionAndSetup(0, true);
+    public void setupMigrations() throws IOException {
+        MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
+        migrationHelper.setupMigrations(storageProvider);
+        Assert.assertEquals(0, migrationHelper.currentDataModelVersion);
     }
 
     /**
@@ -62,15 +95,17 @@ public class MigrationHelperTests {
      * migration version should be -1 first, after migrations applied it should be 0
      */
     @Test
-    public void applyMigrations_noMigrationApplied() {
+    public void applyMigrations_noMigrationApplied() throws IOException {
         TestUtils.createFile("test"); //mock old config file, to simulate migration needed
         //check migration version is -1 before and after read because no migration was applied
-        validateMigrationVersionAndSetup(-1, false);
+        MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
+        migrationHelper.setupMigrations(storageProvider);
+        Assert.assertEquals(-1, migrationHelper.currentDataModelVersion);
 
         //run migration helper apply
         migrationHelper.applyMigrations(new HashMap<>());
         //check migration version is 0 after apply both from class and file
-        Assert.assertEquals(0, migrationHelper.appliedMigrationVersion);
+        Assert.assertEquals(0, migrationHelper.currentDataModelVersion);
         Assert.assertEquals(0, TestUtils.getJsonStorageProperty(SDKStorage.key_migration_version));
     }
 
@@ -81,50 +116,31 @@ public class MigrationHelperTests {
      * and logger should log the expected log
      */
     @Test
-    public void applyMigrations_migrationAlreadyApplied() {
-        validateMigrationVersionAndSetup(0, true);
+    public void applyMigrations_migrationAlreadyApplied() throws IOException {
+        SetDataVersionInConfigFile(0);
+
+        MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
+        migrationHelper.setupMigrations(storageProvider);
+        Assert.assertEquals(0, migrationHelper.currentDataModelVersion);
 
         migrationHelper.logger = Mockito.spy(migrationHelper.logger);
         //run migration helper apply
         migrationHelper.applyMigrations(new HashMap<>());
         //check migration version is 0 after apply both from class and file
-        Assert.assertEquals(0, migrationHelper.appliedMigrationVersion);
+        Assert.assertEquals(0, migrationHelper.currentDataModelVersion);
         Assert.assertEquals(0, TestUtils.getJsonStorageProperty(SDKStorage.key_migration_version));
         Mockito.verify(migrationHelper.logger, Mockito.times(1)).d("[MigrationHelper] migration_DeleteConfigFile_00, Migration already applied");
     }
 
-    private void writeToMvFile(final Integer version) {
+    void SetDataVersionInConfigFile(final int targetDataVersion) throws IOException {
+        //prepare storage in case we need to
         TestUtils.checkSdkStorageRootDirectoryExist(TestUtils.getTestSDirectory());
         File file = TestUtils.createFile(SDKStorage.JSON_FILE_NAME);
 
-        try {
-            Assert.assertNotNull(file);
-            try (BufferedWriter writer = Files.newBufferedWriter(file.toPath())) {
-                writer.write(TestUtils.readJsonFile(file).put("mv", version).toString());
-            }
-        } catch (IOException e) {
-            Assert.fail("Failed to write migration version to file: " + e.getMessage());
-        }
-    }
-
-    private void validateMigrationVersionAndSetup(final Integer version, final boolean isApplied) {
-        Assert.assertEquals(-1, migrationHelper.appliedMigrationVersion);
-        if (isApplied) {
-            writeToMvFile(version);
-            Assert.assertEquals(version, TestUtils.getJsonStorageProperty(SDKStorage.key_migration_version));
+        try (BufferedWriter writer = Files.newBufferedWriter(file.toPath())) {
+            writer.write(TestUtils.readJsonFile(file).put("dv", targetDataVersion).toString());
         }
 
-        initMigrationHelper();
-        Assert.assertEquals(version, Integer.valueOf(migrationHelper.appliedMigrationVersion));
-    }
-
-    private void initMigrationHelper() {
-        InternalConfig config = new InternalConfig(TestUtils.getBaseConfig());
-        config.setLogger(new Log(Config.LoggingLevel.OFF, null));
-        SDKStorage sdkStorage = new SDKStorage();
-        sdkStorage.init(config, config.getLogger());
-        config.storageProvider = sdkStorage;
-
-        migrationHelper.setupMigrations(config);
+        Assert.assertEquals(targetDataVersion, TestUtils.getJsonStorageProperty(SDKStorage.key_migration_version));
     }
 }

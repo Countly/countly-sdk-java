@@ -17,32 +17,40 @@ import java.util.function.Function;
  * 3. add test cases for the migration to MigrationHelperTests.java
  */
 public class MigrationHelper {
-    InternalConfig internalConfig;
+    StorageProvider storageProvider;
     private final List<Function<Map<String, Object>, Boolean>> migrations;
-    protected int appliedMigrationVersion = -1;
+
+    //-1 - fresh install
+    // 0 - the old/legacy/initial data model
+    // 1 - the first migration applied
+    protected int currentDataModelVersion = -1;
+
+    //fresh installs and fully migrated setups should have the latest version at the end
+    int latestMigrationVersion;
     protected Log logger;
 
     protected MigrationHelper(final Log logger) {
         migrations = new ArrayList<>();
         this.logger = logger;
+
+        // add migrations below
+        migrations.add(this::migration_DeleteConfigFile_00);
+        latestMigrationVersion = migrations.size();
     }
 
     /**
      * Set up migration version, register migrations
-     *
-     * @param internalConfig to configure
      */
-    protected void setupMigrations(final InternalConfig internalConfig) {
-        this.internalConfig = internalConfig;
+    protected void setupMigrations(final StorageProvider storageProvider) {
+        this.storageProvider = storageProvider;
 
-        appliedMigrationVersion = internalConfig.storageProvider.getMigrationVersion();
-        if (appliedMigrationVersion < 0 && internalConfig.storageProvider.isCountlyStorageEmpty()) {
+        currentDataModelVersion = storageProvider.getMigrationVersion();
+        if (currentDataModelVersion < 0 && storageProvider.isCountlyStorageEmpty()) {
             logger.i("[MigrationHelper] setupMigrations, Countly storage is empty, no need to migrate");
+            currentDataModelVersion = latestMigrationVersion;
             return;
         }
-        logger.i("[MigrationHelper] setupMigrations, Applied migration version: " + appliedMigrationVersion);
-        // add migrations below
-        migrations.add(this::migration_DeleteConfigFile_00);
+        logger.i("[MigrationHelper] setupMigrations, Applied migration version: " + currentDataModelVersion);
     }
 
     /**
@@ -54,19 +62,19 @@ public class MigrationHelper {
         logger.i("[MigrationHelper] applyMigrations, Applying migrations");
         migrations.forEach((migration) -> {
             if (!migration.apply(migrationParams)) {
-                logger.e("[MigrationHelper] applyMigrations, Failed to apply migration version:[ " + (appliedMigrationVersion + 1) + " ]");
+                logger.e("[MigrationHelper] applyMigrations, Failed to apply migration version:[ " + (currentDataModelVersion + 1) + " ]");
             }
         });
-        internalConfig.storageProvider.setMigrationVersion(appliedMigrationVersion);
+        storageProvider.setMigrationVersion(currentDataModelVersion);
     }
 
     protected boolean migration_DeleteConfigFile_00(final Map<String, Object> migrationParams) {
-        if (appliedMigrationVersion >= 0) {
+        if (currentDataModelVersion >= 0) {
             logger.d("[MigrationHelper] migration_DeleteConfigFile_00, Migration already applied");
             return true;
         }
         logger.i("[MigrationHelper] migration_DeleteConfigFile_00, Deleting config file migrating from 00 to 01");
-        appliedMigrationVersion += 1;
+        currentDataModelVersion += 1;
         return true;
     }
 }

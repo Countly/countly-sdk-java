@@ -437,7 +437,7 @@ public class SDKCore {
 
         //setup and perform migrations
         MigrationHelper migrationHelper = new MigrationHelper(L);
-        migrationHelper.setupMigrations(config);
+        migrationHelper.setupMigrations(config.storageProvider);
         migrationHelper.applyMigrations(new HashMap<>());
 
         requestQueueMemory = new ArrayDeque<>(config.getRequestQueueMaxSize());
