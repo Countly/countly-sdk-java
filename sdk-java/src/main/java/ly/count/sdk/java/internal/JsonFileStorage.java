@@ -98,14 +98,34 @@ public class JsonFileStorage {
         return json.opt(key);
     }
 
+    /**
+     * Returns String value for the key
+     *
+     * @param key to get
+     * @return value, if key not found returns null
+     */
     public String getString(@Nonnull final String key) {
         return getString(key, null);
     }
 
+    /**
+     * Returns String value for the key
+     *
+     * @param key to get
+     * @param defaultValue to return if key not found
+     * @return value, if key not found returns defaultValue
+     */
     public String getString(@Nonnull final String key, final String defaultValue) {
         return json.optString(key, defaultValue);
     }
 
+    /**
+     * Returns integer value for the key
+     *
+     * @param key to get
+     * @param defaultValue to return if key not found
+     * @return value, if key not found returns defaultValue
+     */
     public int getInt(@Nonnull final String key, final int defaultValue) {
         return json.optInt(key, defaultValue);
     }
