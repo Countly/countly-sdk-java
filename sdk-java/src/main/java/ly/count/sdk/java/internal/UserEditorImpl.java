@@ -1,20 +1,13 @@
 package ly.count.sdk.java.internal;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
 import ly.count.sdk.java.User;
 import ly.count.sdk.java.UserEditor;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class UserEditorImpl implements UserEditor {
     private Log L = null;
@@ -186,11 +179,10 @@ public class UserEditorImpl implements UserEditor {
                         user.picturePath = null;
                         changes.put(PICTURE_PATH, JSONObject.NULL);
                     } else if (value instanceof String) {
-                        try {
-                            user.picturePath = new URI((String) value).toString();
-                            changes.put(PICTURE_PATH, user.picturePath);
-                        } catch (URISyntaxException e) {
-                            L.e("[UserEditorImpl] Supplied picturePath is not parsable to java.net.URI");
+                        if (Utils.isValidURL((String) value)) {
+                            changes.put(PICTURE, value);
+                        } else { //windows path names are not a valid URI so URI check is removed
+                            changes.put(PICTURE_PATH, value);
                         }
                     } else {
                         L.e("[UserEditorImpl] Won't set user picturePath (must be String or null)");

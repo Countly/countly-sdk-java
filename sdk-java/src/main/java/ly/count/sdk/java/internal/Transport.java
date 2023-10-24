@@ -235,25 +235,17 @@ public class Transport implements X509TrustManager {
                 }
             }
             if (protocol != null) {
-                switch (protocol) {
-                    case "file": {
-                        File file = new File(picture);
-                        if (!file.exists()) {
-                            return null;
-                        }
-                        try (FileInputStream input = new FileInputStream(file)) {
-                            data = Utils.readStream(input, L);
-                        }
-                        break;
+                if (protocol.equals("file")) {
+                    File file = new File(picture);
+                    if (!file.exists()) {
+                        return null;
                     }
-                    case "https": {
-                        data = Utils.readStream(new URL(picture).openStream(), L);
-                        break;
+                    try (FileInputStream input = new FileInputStream(file)) {
+                        data = Utils.readStream(input, L);
                     }
-                    default: {
-                        L.w("[Transport] Unsupported protocol " + protocol);
-                        data = null;
-                    }
+                } else {
+                    L.w("[Transport] Unsupported protocol " + protocol);
+                    data = null;
                 }
             } else {
                 return null;

@@ -1,9 +1,7 @@
 package ly.count.sdk.java;
 
-import ly.count.sdk.java.internal.Device;
-
 import java.util.Map;
-import java.util.Set;
+import ly.count.sdk.java.internal.Device;
 
 //import ly.count.sdk.android.internal.Device;
 
