@@ -168,6 +168,7 @@ public class UserEditorImpl implements UserEditor {
                     changes.put(PHONE, value == null ? JSONObject.NULL : user.phone);
                     break;
                 case PICTURE:
+                    //if we get here, that means that the dev gave us byts for the picture
                     if (value == null) {
                         user.picture = null;
                         user.picturePath = null;

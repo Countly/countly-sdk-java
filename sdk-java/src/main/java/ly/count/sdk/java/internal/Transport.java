@@ -122,8 +122,8 @@ public class Transport implements X509TrustManager {
         }
 
         String path = config.getServerURL().toString() + endpoint;
-        String picture = request.params.remove(UserEditorImpl.PICTURE_PATH);
-        boolean usingGET = !config.isHTTPPostForced() && request.isGettable(config.getServerURL()) && Utils.isEmptyOrNull(picture);
+        String picturePathValue = request.params.remove(UserEditorImpl.PICTURE_PATH);
+        boolean usingGET = !config.isHTTPPostForced() && request.isGettable(config.getServerURL()) && Utils.isEmptyOrNull(picturePathValue);
 
         if (usingGET && config.getParameterTamperingProtectionSalt() != null) {
             request.params.add(CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, request.params.toString() + config.getParameterTamperingProtectionSalt(), L));
@@ -142,10 +142,10 @@ public class Transport implements X509TrustManager {
             OutputStream output = null;
             PrintWriter writer = null;
             try {
-                L.d("[network] Picture " + picture);
-                byte[] data = picture == null ? null : pictureData(user, picture);
+                L.d("[network] Picture path value " + picturePathValue);
+                byte[] pictureByteData = picturePathValue == null ? null : getPictureDataFromGivenValue(user, picturePathValue);
 
-                if (data != null) {
+                if (pictureByteData != null) {
                     String boundary = Long.toHexString(System.currentTimeMillis());
 
                     connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
@@ -153,7 +153,7 @@ public class Transport implements X509TrustManager {
                     output = connection.getOutputStream();
                     writer = new PrintWriter(new OutputStreamWriter(output, Utils.UTF8), true);
 
-                    addMultipart(output, writer, boundary, "image/jpeg", "profilePicture", "image", data);
+                    addMultipart(output, writer, boundary, "image/jpeg", "profilePicture", "image", pictureByteData);
 
                     StringBuilder salting = new StringBuilder();
                     Map<String, String> map = request.params.map();
@@ -169,6 +169,8 @@ public class Transport implements X509TrustManager {
 
                     writer.append(Utils.CRLF).append("--").append(boundary).append("--").append(Utils.CRLF).flush();
                 } else {
+                    //picture data is "null". If it was sent, we send "null" to server to clear the image there
+                    //we send a normal request in HTTP POST
                     if (config.getParameterTamperingProtectionSalt() != null) {
                         request.params.add(CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, request.params.toString() + config.getParameterTamperingProtectionSalt(), L));
                     }
@@ -216,12 +218,29 @@ public class Transport implements X509TrustManager {
         }
     }
 
-    byte[] pictureData(User user, String picture) throws IOException {
-        if (user == null) return null;
+    /**
+     * Returns valid picture information
+     * If we have the bytes, give them
+     * Otherwise load them from disk
+     *
+     * @param user
+     * @param picture
+     * @return
+     * @throws IOException
+     */
+    byte[] getPictureDataFromGivenValue(User user, String picture) throws IOException {
+        if (user == null) {
+            return null;
+        }
+
         byte[] data;
         if (UserEditorImpl.PICTURE_IN_USER_PROFILE.equals(picture)) {
+            //if the value is this special value then we know that we will send over bytes that are already provided by the integrator
+            //those stored bytes are already in a internal data structure, use them
             data = user.picture();
         } else {
+            //otherwise we assume it is a local path, and we try to read it from disk
+            //todo simplify for local file reading
             String protocol = null;
             try {
                 URI uri = new URI(picture);
