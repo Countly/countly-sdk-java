@@ -14,6 +14,7 @@ import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 
 @RunWith(JUnit4.class)
 public class MigrationHelperTests {
@@ -25,8 +26,14 @@ public class MigrationHelperTests {
     @Before
     public void beforeTest() {
         TestUtils.createCleanTestState();
+    }
 
-        //setup the wider config
+    /**
+     * This should be called manually before writing to json store,
+     * because json store is read when storage is initialized
+     * and it is read once
+     */
+    private void initStorage() {
         InternalConfig config = (new InternalConfig(TestUtils.getBaseConfig()));
         config.setLogger(mock(Log.class));
         storageProvider = (new SDKStorage()).init(config, config.getLogger());
@@ -41,7 +48,7 @@ public class MigrationHelperTests {
     }
 
     @Test
-    public void MigrationHelper_defaults() {
+    public void migrationHelper_defaults() {
         MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
         Assert.assertEquals(-1, migrationHelper.currentDataModelVersion);//validate the default version value
         Assert.assertNotNull(migrationHelper.logger);
@@ -49,28 +56,14 @@ public class MigrationHelperTests {
         Assert.assertEquals(1, migrationHelper.latestMigrationVersion);
     }
 
-    //let's do 3 tests where we verify the initial version acquisition:
-    // fresh install
-    // legacy data model
-    // latest version
-
-    //then apply migration in 2 scenarios and verify the final version
-    // going from legacy to the latest one
-    // being at the latest one and still remaining at the latest one
-
-    //if we are at the latest version, no migrations should run
-    //rework the file checking heuristic
-
-    //then we need tests for the specific migration transition from 0 -> 1
-    //we wanna setup a couple of scenarios that would represent version 0 and then verify that all required steps are done
-
     /**
      * "setupMigrations"
-     * Fresh install. That means nothing in storage
+     * Fresh-install. That means nothing in storage
      * Migration version should be 1 (latest version) before applying any migrations because the SDK is already at the latest data schema version
      */
     @Test
-    public void setupMigrations_migrationFileNotExist() {
+    public void setupMigrations_freshInstall() {
+        initStorage(); // to initialize json storage
         MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
         migrationHelper.setupMigrations(storageProvider);
         Assert.assertEquals(1, migrationHelper.currentDataModelVersion);
@@ -79,56 +72,101 @@ public class MigrationHelperTests {
     /**
      * "setupMigrations"
      * Upgrading from the "pre-migration" version. No new config object, just old type of data.
-     * Migration version should be 0 before applying any migrations. After applying migrations we get to 1
+     * Migration version should be 0 before applying any migrations.
      */
     @Test
-    public void setupMigrations() {
-        MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
-        migrationHelper.setupMigrations(storageProvider);
-        Assert.assertEquals(1, migrationHelper.currentDataModelVersion);
-    }
+    public void setupMigrations_legacyState() {
+        TestUtils.createFile("test"); //mock a sdk file, to simulate storage is not empty
+        initStorage(); // to initialize json storage after mock sdk file is created
 
-    /**
-     * "applyMigrations" with no migration applied
-     * receives mock context to set up migrations and no migration is applied
-     * migration version should be -1 first, after migrations applied it should be 0
-     */
-    @Test
-    public void applyMigrations_noMigrationApplied() throws IOException {
-        TestUtils.createFile("test"); //mock old config file, to simulate migration needed
-        //check migration version is -1 before and after read because no migration was applied
         MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
         migrationHelper.setupMigrations(storageProvider);
         Assert.assertEquals(0, migrationHelper.currentDataModelVersion);
+    }
 
-        //run migration helper apply
+    /**
+     * "setupMigrations"
+     * Already in the latest version.
+     * Migration version should be at the latest version before applying any migrations.
+     */
+    @Test
+    public void setupMigrations_latestVersion() throws IOException {
+        setDataVersionInConfigFile(1);
+        initStorage(); // to initialize json storage after data version is set to 1
+
+        MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
+        migrationHelper.logger = spy(migrationHelper.logger);
+        migrationHelper.setupMigrations(storageProvider);
+        Assert.assertEquals(1, migrationHelper.currentDataModelVersion);
+
+        Mockito.verify(migrationHelper.logger, Mockito.never()).i("[MigrationHelper] setupMigrations, Countly storage is empty, no need to migrate");
+    }
+
+    /**
+     * "applyMigrations" in a legacy state
+     * Upgrading from legacy state to latest version, no new config object, just old type of data.
+     * Migration version should be 0 before applying migrations, and 1 after applying migrations.
+     */
+    @Test
+    public void applyMigrations_legacyToLatest() {
+        TestUtils.createFile("test"); //mock a sdk file, to simulate storage is not empty
+        initStorage(); // to initialize json storage after mock sdk file is created
+
+        MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
+        migrationHelper.setupMigrations(storageProvider);
+        Assert.assertEquals(0, migrationHelper.currentDataModelVersion); //legacy state
+
+        //apply migrations
         migrationHelper.applyMigrations(new HashMap<>());
-        //check migration version is 0 after apply both from class and file
+        //check migration version is 1 after apply both from class and file
         Assert.assertEquals(1, migrationHelper.currentDataModelVersion);
         Assert.assertEquals(1, TestUtils.getJsonStorageProperty(SDKStorage.key_migration_version));
     }
 
     /**
-     * "applyMigrations" with already applied migration
-     * receives mock context to set up migrations and migration file applied version is 0
-     * migration version should be 0 first, after migrations applied it should not be change
-     * and logger should log the expected log
+     * "applyMigrations" with already at the latest version
+     * All migrations are already applied, setting data version to latest
+     * Migration version should be 1 before applying migrations, and 1 after applying migrations and expected log must be logged.
      */
     @Test
-    public void applyMigrations_migrationAlreadyApplied() throws IOException {
-        setDataVersionInConfigFile(1);
+    public void applyMigrations_latestToLatest() throws IOException {
+        setDataVersionInConfigFile(1); //set data version to latest
+        initStorage(); // to initialize json storage after data version is set to 1
 
         MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
         migrationHelper.setupMigrations(storageProvider);
-        Assert.assertEquals(1, migrationHelper.currentDataModelVersion);
+        Assert.assertEquals(1, migrationHelper.currentDataModelVersion); //latest state
 
         migrationHelper.logger = Mockito.spy(migrationHelper.logger);
         //run migration helper apply
         migrationHelper.applyMigrations(new HashMap<>());
-        //check migration version is 0 after apply both from class and file
+        //check migration version is at the latest after apply both from class and file
         Assert.assertEquals(1, migrationHelper.currentDataModelVersion);
         Assert.assertEquals(1, TestUtils.getJsonStorageProperty(SDKStorage.key_migration_version));
         Mockito.verify(migrationHelper.logger, Mockito.times(1)).d("[MigrationHelper] migration_DeleteConfigFile_01, Migration already applied");
+    }
+
+    /**
+     * "applyMigrations" from 0 to 1
+     * Upgrading from legacy state to latest version, mock config file, just old type of data.
+     * Data version must be 1 after applying migrations and expected log must be logged.
+     */
+    @Test
+    public void applyMigrations_0to1() {
+        TestUtils.createFile("config"); //mock a sdk file, to simulate storage is not empty
+        initStorage(); // to initialize json storage after mock sdk file is created
+
+        MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
+        migrationHelper.setupMigrations(storageProvider);
+        Assert.assertEquals(0, migrationHelper.currentDataModelVersion); //legacy state
+
+        migrationHelper.logger = Mockito.spy(migrationHelper.logger);
+        //run migration helper apply
+        migrationHelper.applyMigrations(new HashMap<>());
+        //check migration version is at the latest after apply both from class and file
+        Assert.assertEquals(1, migrationHelper.currentDataModelVersion);
+        Assert.assertEquals(1, TestUtils.getJsonStorageProperty(SDKStorage.key_migration_version));
+        Mockito.verify(migrationHelper.logger, Mockito.times(1)).i("[MigrationHelper] migration_DeleteConfigFile_01, Deleting config file migrating from 00 to 01");
     }
 
     void setDataVersionInConfigFile(final int targetDataVersion) throws IOException {

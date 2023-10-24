@@ -53,7 +53,7 @@ public class MigrationHelper {
                 currentDataModelVersion = 0;
             }
         }
-        logger.i("[MigrationHelper] setupMigrations, Applied migration version: " + currentDataModelVersion);
+        logger.i("[MigrationHelper] setupMigrations, current data model version: " + currentDataModelVersion);
     }
 
     /**
