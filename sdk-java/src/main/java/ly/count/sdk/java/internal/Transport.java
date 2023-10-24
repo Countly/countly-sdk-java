@@ -2,7 +2,6 @@ package ly.count.sdk.java.internal;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -95,12 +94,7 @@ public class Transport implements X509TrustManager {
      * For testing purposes
      */
     public HttpURLConnection openConnection(String url, String params, boolean usingGET) throws IOException {
-        URL u;
-        if (usingGET) {
-            u = new URL(url + params);
-        } else {
-            u = new URL(url);
-        }
+        URL u = new URL(url + params);
 
         HttpURLConnection connection = (HttpURLConnection) u.openConnection();
 
@@ -159,7 +153,7 @@ public class Transport implements X509TrustManager {
                     output = connection.getOutputStream();
                     writer = new PrintWriter(new OutputStreamWriter(output, Utils.UTF8), true);
 
-                    addMultipart(output, writer, boundary, "", "profilePicture", "image", data);
+                    addMultipart(output, writer, boundary, "image/jpeg", "profilePicture", "image", data);
 
                     StringBuilder salting = new StringBuilder();
                     Map<String, String> map = request.params.map();
@@ -237,26 +231,30 @@ public class Transport implements X509TrustManager {
                     File f = new File(picture);
                     protocol = f.toURI().toURL().getProtocol();
                 } catch (Throwable tt) {
-                    L.w("[network] Couldn't determine picturePath protocol " + tt);
+                    L.w("[Transport] Couldn't determine picturePath protocol " + tt);
                 }
             }
-            if (protocol != null && protocol.equals("file")) {
-                File file = new File(picture);
-                if (!file.exists()) {
-                    return null;
+            if (protocol != null) {
+                switch (protocol) {
+                    case "file": {
+                        File file = new File(picture);
+                        if (!file.exists()) {
+                            return null;
+                        }
+                        try (FileInputStream input = new FileInputStream(file)) {
+                            data = Utils.readStream(input, L);
+                        }
+                        break;
+                    }
+                    case "https": {
+                        data = Utils.readStream(new URL(picture).openStream(), L);
+                        break;
+                    }
+                    default: {
+                        L.w("[Transport] Unsupported protocol " + protocol);
+                        data = null;
+                    }
                 }
-                FileInputStream input = new FileInputStream(file);
-                ByteArrayOutputStream output = new ByteArrayOutputStream();
-
-                byte[] buffer = new byte[1024];
-                int len;
-                while ((len = input.read(buffer)) != -1) {
-                    output.write(buffer, 0, len);
-                }
-
-                input.close();
-                data = output.toByteArray();
-                output.close();
             } else {
                 return null;
             }
