@@ -112,6 +112,12 @@ public class UserEditorImpl implements UserEditor {
         this.ops = new ArrayList<>();
     }
 
+    /**
+     * Transforming changes in "sets" into a json contained in "changes"
+     *
+     * @param changes
+     * @throws JSONException
+     */
     void perform(JSONObject changes) throws JSONException {
         for (String key : sets.keySet()) {
             Object value = sets.get(key);
@@ -180,8 +186,10 @@ public class UserEditorImpl implements UserEditor {
                         changes.put(PICTURE_PATH, JSONObject.NULL);
                     } else if (value instanceof String) {
                         if (Utils.isValidURL((String) value)) {
+                            //if it is a valid URL that means the picture is online, and we want to send the link to the server
                             changes.put(PICTURE, value);
-                        } else { //windows path names are not a valid URI so URI check is removed
+                        } else {
+                            //if we get here then that means it is a local file path which we would send over as bytes to the server
                             changes.put(PICTURE_PATH, value);
                         }
                     } else {
@@ -323,12 +331,14 @@ public class UserEditorImpl implements UserEditor {
         return set(PHONE, value);
     }
 
+    //we set the bytes for the local picture
     @Override
     public UserEditor setPicture(byte[] picture) {
         L.d("setPicture: picture = " + picture);
         return set(PICTURE, picture);
     }
 
+    //we set the url for either the online picture or a local path picture
     @Override
     public UserEditor setPicturePath(String picturePath) {
         L.d("setPicturePath: picturePath = " + picturePath);
