@@ -34,21 +34,24 @@ public class MigrationHelper {
         this.logger = logger;
 
         // add migrations below
-        migrations.add(this::migration_DeleteConfigFile_00);
+        migrations.add(this::migration_DeleteConfigFile_01);
         latestMigrationVersion = migrations.size();
     }
 
     /**
-     * Set up migration version, register migrations
+     * Set up migration version
      */
     protected void setupMigrations(final StorageProvider storageProvider) {
         this.storageProvider = storageProvider;
 
         currentDataModelVersion = storageProvider.getMigrationVersion();
-        if (currentDataModelVersion < 0 && storageProvider.isCountlyStorageEmpty()) {
-            logger.i("[MigrationHelper] setupMigrations, Countly storage is empty, no need to migrate");
-            currentDataModelVersion = latestMigrationVersion;
-            return;
+        if (currentDataModelVersion < 0) {
+            if (storageProvider.isCountlyStorageEmpty()) { // fresh install
+                logger.i("[MigrationHelper] setupMigrations, Countly storage is empty, no need to migrate");
+                currentDataModelVersion = latestMigrationVersion;
+            } else { // legacy data model
+                currentDataModelVersion = 0;
+            }
         }
         logger.i("[MigrationHelper] setupMigrations, Applied migration version: " + currentDataModelVersion);
     }
@@ -68,12 +71,12 @@ public class MigrationHelper {
         storageProvider.setMigrationVersion(currentDataModelVersion);
     }
 
-    protected boolean migration_DeleteConfigFile_00(final Map<String, Object> migrationParams) {
-        if (currentDataModelVersion >= 0) {
-            logger.d("[MigrationHelper] migration_DeleteConfigFile_00, Migration already applied");
+    protected boolean migration_DeleteConfigFile_01(final Map<String, Object> migrationParams) {
+        if (currentDataModelVersion >= 1) {
+            logger.d("[MigrationHelper] migration_DeleteConfigFile_01, Migration already applied");
             return true;
         }
-        logger.i("[MigrationHelper] migration_DeleteConfigFile_00, Deleting config file migrating from 00 to 01");
+        logger.i("[MigrationHelper] migration_DeleteConfigFile_01, Deleting config file migrating from 00 to 01");
         currentDataModelVersion += 1;
         return true;
     }

@@ -453,6 +453,6 @@ public class TestUtils {
             Assert.fail("Failed to create file: " + e.getMessage());
         }
 
-        return null;
+        return file;
     }
 }

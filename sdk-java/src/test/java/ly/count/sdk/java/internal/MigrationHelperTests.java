@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.HashMap;
-import ly.count.sdk.java.Config;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -71,22 +70,22 @@ public class MigrationHelperTests {
      * Migration version should be 1 (latest version) before applying any migrations because the SDK is already at the latest data schema version
      */
     @Test
-    public void setupMigrations_migrationFileNotExist() throws IOException {
+    public void setupMigrations_migrationFileNotExist() {
         MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
         migrationHelper.setupMigrations(storageProvider);
-        Assert.assertEquals(-1, migrationHelper.currentDataModelVersion);
+        Assert.assertEquals(1, migrationHelper.currentDataModelVersion);
     }
 
     /**
      * "setupMigrations"
-     * Upgrading from the "pre migration" version. No new config object, just old type of data.
+     * Upgrading from the "pre-migration" version. No new config object, just old type of data.
      * Migration version should be 0 before applying any migrations. After applying migrations we get to 1
      */
     @Test
-    public void setupMigrations() throws IOException {
+    public void setupMigrations() {
         MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
         migrationHelper.setupMigrations(storageProvider);
-        Assert.assertEquals(0, migrationHelper.currentDataModelVersion);
+        Assert.assertEquals(1, migrationHelper.currentDataModelVersion);
     }
 
     /**
@@ -100,13 +99,13 @@ public class MigrationHelperTests {
         //check migration version is -1 before and after read because no migration was applied
         MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
         migrationHelper.setupMigrations(storageProvider);
-        Assert.assertEquals(-1, migrationHelper.currentDataModelVersion);
+        Assert.assertEquals(0, migrationHelper.currentDataModelVersion);
 
         //run migration helper apply
         migrationHelper.applyMigrations(new HashMap<>());
         //check migration version is 0 after apply both from class and file
-        Assert.assertEquals(0, migrationHelper.currentDataModelVersion);
-        Assert.assertEquals(0, TestUtils.getJsonStorageProperty(SDKStorage.key_migration_version));
+        Assert.assertEquals(1, migrationHelper.currentDataModelVersion);
+        Assert.assertEquals(1, TestUtils.getJsonStorageProperty(SDKStorage.key_migration_version));
     }
 
     /**
@@ -117,22 +116,22 @@ public class MigrationHelperTests {
      */
     @Test
     public void applyMigrations_migrationAlreadyApplied() throws IOException {
-        SetDataVersionInConfigFile(0);
+        setDataVersionInConfigFile(1);
 
         MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
         migrationHelper.setupMigrations(storageProvider);
-        Assert.assertEquals(0, migrationHelper.currentDataModelVersion);
+        Assert.assertEquals(1, migrationHelper.currentDataModelVersion);
 
         migrationHelper.logger = Mockito.spy(migrationHelper.logger);
         //run migration helper apply
         migrationHelper.applyMigrations(new HashMap<>());
         //check migration version is 0 after apply both from class and file
-        Assert.assertEquals(0, migrationHelper.currentDataModelVersion);
-        Assert.assertEquals(0, TestUtils.getJsonStorageProperty(SDKStorage.key_migration_version));
-        Mockito.verify(migrationHelper.logger, Mockito.times(1)).d("[MigrationHelper] migration_DeleteConfigFile_00, Migration already applied");
+        Assert.assertEquals(1, migrationHelper.currentDataModelVersion);
+        Assert.assertEquals(1, TestUtils.getJsonStorageProperty(SDKStorage.key_migration_version));
+        Mockito.verify(migrationHelper.logger, Mockito.times(1)).d("[MigrationHelper] migration_DeleteConfigFile_01, Migration already applied");
     }
 
-    void SetDataVersionInConfigFile(final int targetDataVersion) throws IOException {
+    void setDataVersionInConfigFile(final int targetDataVersion) throws IOException {
         //prepare storage in case we need to
         TestUtils.checkSdkStorageRootDirectoryExist(TestUtils.getTestSDirectory());
         File file = TestUtils.createFile(SDKStorage.JSON_FILE_NAME);
