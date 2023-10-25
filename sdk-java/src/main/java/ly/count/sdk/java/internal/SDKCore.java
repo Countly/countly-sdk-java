@@ -91,15 +91,6 @@ public class SDKCore {
         return modules != null && modules.containsKey(feat);
     }
 
-    public void init(InternalConfig config) {
-        if (config.immediateRequestGenerator == null) {
-            config.immediateRequestGenerator = ImmediateRequestMaker::new;
-        }
-        prepareMappings(config);
-        countlyTimer = new CountlyTimer(L);
-        countlyTimer.startTimer(config.getSendUpdateEachSeconds(), this::onTimer);
-    }
-
     private void onTimer() {
         modules.forEach((feature, module) -> module.onTimer());
     }
@@ -423,16 +414,21 @@ public class SDKCore {
         }
     }
 
-    public void init(final InternalConfig givenConfig, Log logger) {
-        L = logger;
+    public void init(final InternalConfig givenConfig) {
+        L = givenConfig.getLogger();
         L.i("[SDKCore] Initializing Countly");
 
         givenConfig.sdk = this;
-        sdkStorage.init(givenConfig, logger);
+        sdkStorage.init(givenConfig);
         givenConfig.storageProvider = sdkStorage;
         config = prepareConfig(givenConfig);
 
-        this.init(givenConfig);
+        if (config.immediateRequestGenerator == null) {
+            config.immediateRequestGenerator = ImmediateRequestMaker::new;
+        }
+        prepareMappings(config);
+        countlyTimer = new CountlyTimer(L);
+        countlyTimer.startTimer(config.getSendUpdateEachSeconds(), this::onTimer);
 
         requestQueueMemory = new ArrayDeque<>(config.getRequestQueueMaxSize());
         // ModuleSessions is always enabled, even without consent
@@ -444,7 +440,7 @@ public class SDKCore {
 
         modules.forEach((feature, module) -> {
             try {
-                module.init(config, logger);
+                module.init(config, L);
                 module.setActive(true);
             } catch (IllegalArgumentException | IllegalStateException e) {
                 L.e("[SDKCore] Error during module initialization" + e);
@@ -715,7 +711,7 @@ public class SDKCore {
         ModuleCrash.putCrashIntoParams(crash, request.params);
         ModuleRequests.addRequired(config, request);
         ModuleRequests.addRequiredTimeParams(request);
-        
+
         if (Storage.push(config, request)) {
             L.i("[SDKCore] Added request " + request.storageId() + " instead of crash " + crash.storageId());
             networking.check(config);
