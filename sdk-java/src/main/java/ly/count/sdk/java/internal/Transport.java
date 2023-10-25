@@ -130,8 +130,13 @@ public class Transport implements X509TrustManager {
         String picturePathValue = request.params.remove(UserEditorImpl.PICTURE_PATH);
         boolean usingGET = !config.isHTTPPostForced() && request.isGettable(config.getServerURL()) && Utils.isEmptyOrNull(picturePathValue);
 
+        if (!usingGET && !Utils.isEmptyOrNull(picturePathValue)) {
+            path = path + Params.PARAM_DEVICE_ID + "=" + request.params.get(Params.PARAM_DEVICE_ID) + "&" +
+                "app_key=" + request.params.get("app_key") + "&user_details";
+        }
+
         if (usingGET && config.getParameterTamperingProtectionSalt() != null) {
-            request.params.add(CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, request.params.toString() + config.getParameterTamperingProtectionSalt(), L));
+            request.params.add(CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, request.params + config.getParameterTamperingProtectionSalt(), L));
         }
 
         HttpURLConnection connection = openConnection(path, request.params.toString(), usingGET);
