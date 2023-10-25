@@ -1,5 +1,6 @@
 package ly.count.sdk.java.internal;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -343,9 +344,12 @@ public class UserEditorImpl implements UserEditor {
     //we set the url for either the online picture or a local path picture
     @Override
     public UserEditor setPicturePath(String picturePath) {
-        L.d("setPicturePath: picturePath = " + picturePath);
-
-        return set(PICTURE_PATH, picturePath);
+        L.d("[UserEditorImpl] setPicturePath, picturePath = " + picturePath);
+        if (picturePath == null || new File(picturePath).isFile() || Utils.isValidURL(picturePath)) {
+            return set(PICTURE_PATH, picturePath);
+        }
+        L.w("[UserEditorImpl] setPicturePath, picturePath is not a valid file path or url");
+        return this;
     }
 
     @Override

@@ -17,7 +17,6 @@ public class UserEditorTests {
 
     private final static String imgFileName = "test.jpeg";
     private final static String imgFileWebUrl = TestUtils.SERVER_URL + "/" + imgFileName;
-    private final static String garbageFile = "garbage_thing/.txt";
 
     @Before
     public void beforeTest() {
@@ -86,19 +85,19 @@ public class UserEditorTests {
     /**
      * "setPicturePath" with garbage local path/web url,
      * garbage value is given to the method, session manually began and end to create a request
-     * 'picturePath' in user should be set, 'picturePath' parameter in request should exist
-     * and 'picturePath' parameter in the 'user_details' should be same with garbage value
+     * 'picturePath' in user should not be set, 'picturePath' parameter in request should not exist
+     * and 'picturePath' parameter in the 'user_details' should not exist
      */
     @Test
     public void setPicturePath_garbage() {
         Countly.instance().init(TestUtils.getBaseConfig());
         Countly.session().begin();
         //set profile picture url and commit it
-        Countly.instance().user().edit().setPicturePath(garbageFile).commit();
-        validatePictureAndPath(garbageFile, null);
+        Countly.instance().user().edit().setPicturePath("garbage_thing/.txt").commit();
+        validatePictureAndPath(null, null);
 
         Countly.session().end();
-        validatePictureInRQ("{\"picturePath\":\"" + garbageFile + "\"}", garbageFile);
+        validatePictureInRQ("{}", null);
     }
 
     /**
