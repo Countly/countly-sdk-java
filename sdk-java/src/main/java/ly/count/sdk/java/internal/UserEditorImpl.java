@@ -193,6 +193,7 @@ public class UserEditorImpl implements UserEditor {
                             //if we get here then that means it is a local file path which we would send over as bytes to the server
                             changes.put(PICTURE_PATH, value);
                         }
+                        user.picturePath = value.toString();
                     } else {
                         L.e("[UserEditorImpl] Won't set user picturePath (must be String or null)");
                     }
