@@ -94,7 +94,12 @@ public class Transport implements X509TrustManager {
      * For testing purposes
      */
     public HttpURLConnection openConnection(String url, String params, boolean usingGET) throws IOException {
-        URL u = new URL(url + params);
+        URL u;
+        if (usingGET) {
+            u = new URL(url + params);
+        } else {
+            u = new URL(url);
+        }
 
         HttpURLConnection connection = (HttpURLConnection) u.openConnection();
 
