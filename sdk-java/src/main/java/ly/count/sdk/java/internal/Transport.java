@@ -3,7 +3,6 @@ package ly.count.sdk.java.internal;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -11,8 +10,8 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
-import java.net.URI;
 import java.net.URL;
+import java.nio.file.Files;
 import java.security.KeyFactory;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
@@ -236,48 +235,27 @@ public class Transport implements X509TrustManager {
      * @param user
      * @param picture
      * @return
-     * @throws IOException
      */
-    byte[] getPictureDataFromGivenValue(User user, String picture) throws IOException {
+    byte[] getPictureDataFromGivenValue(User user, String picture) {
         if (user == null) {
             return null;
         }
 
-        byte[] data;
+        byte[] data = null;
         if (UserEditorImpl.PICTURE_IN_USER_PROFILE.equals(picture)) {
             //if the value is this special value then we know that we will send over bytes that are already provided by the integrator
             //those stored bytes are already in a internal data structure, use them
             data = user.picture();
         } else {
             //otherwise we assume it is a local path, and we try to read it from disk
-            //todo simplify for local file reading
-            String protocol = null;
             try {
-                URI uri = new URI(picture);
-                protocol = uri.isAbsolute() ? uri.getScheme() : new URL(picture).getProtocol();
+                File file = new File(picture);
+                if (!file.exists()) {
+                    return null;
+                }
+                data = Files.readAllBytes(file.toPath());
             } catch (Throwable t) {
-                try {
-                    File f = new File(picture);
-                    protocol = f.toURI().toURL().getProtocol();
-                } catch (Throwable tt) {
-                    L.w("[Transport] Couldn't determine picturePath protocol " + tt);
-                }
-            }
-            if (protocol != null) {
-                if (protocol.equals("file")) {
-                    File file = new File(picture);
-                    if (!file.exists()) {
-                        return null;
-                    }
-                    try (FileInputStream input = new FileInputStream(file)) {
-                        data = Utils.readStream(input, L);
-                    }
-                } else {
-                    L.w("[Transport] Unsupported protocol " + protocol);
-                    data = null;
-                }
-            } else {
-                return null;
+                L.w("[Transport] getPictureDataFromGivenValue, Error while reading picture from disk " + t);
             }
         }
 

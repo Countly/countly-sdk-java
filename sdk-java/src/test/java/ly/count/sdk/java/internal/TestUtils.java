@@ -411,4 +411,24 @@ public class TestUtils {
             return new JSONObject();
         }
     }
+
+    /**
+     * Create a file for test purposes
+     * If file cannot be created, return null and assert fail
+     *
+     * @param fileName name of the file to create
+     * @return created file
+     */
+    public static File createFile(final String fileName) {
+        File file = new File(getTestSDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + fileName);
+        try {
+            if (file.createNewFile()) {
+                return file;
+            }
+        } catch (IOException e) {
+            Assert.fail("Failed to create file: " + e.getMessage());
+        }
+
+        return file;
+    }
 }
