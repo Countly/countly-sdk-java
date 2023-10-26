@@ -214,11 +214,12 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         return ret;
     }
 
-    Boolean recover(InternalConfig config, Log L) {
+    Boolean recover(InternalConfig config) {
+        Log L = config.getLogger();
         if ((System.currentTimeMillis() - id) < 0) {
             return null;
         } else {
-            Future<Boolean> future = null;
+            Future<Boolean> future;
             if (began == null) {
                 return Storage.remove(config, this);
             } else if (ended == null && updated == null) {

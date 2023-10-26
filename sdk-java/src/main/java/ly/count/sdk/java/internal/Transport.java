@@ -68,9 +68,9 @@ public class Transport implements X509TrustManager {
     /**
      * @param config configuration to use
      * @throws IllegalArgumentException if certificate exception happens
-     * @see ModuleBase#init(InternalConfig, Log)
+     * @see ModuleBase#init(InternalConfig)
      */
-    public void init(InternalConfig config, Log logger) throws IllegalArgumentException {
+    public void init(InternalConfig config) throws IllegalArgumentException {
         // ssl config (cert & public key pinning)
         // sha1 signing
         // 301/302 handling, probably configurable (like allowFollowingRedirects) and with response
@@ -80,7 +80,7 @@ public class Transport implements X509TrustManager {
         // network status callbacks - may be
         // APM stuff - later
 
-        L = logger;
+        L = config.getLogger();
         L.i("[network] Server: " + config.getServerURL());
         this.config = config;
 

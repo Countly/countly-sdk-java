@@ -249,11 +249,11 @@ public class Storage {
      * @param asc true if reading first storable, false if reading last one
      * @return storable object passed as param when reading succeeded, null otherwise
      */
-    public static <T extends Storable> T readOne(InternalConfig config, T storable, boolean asc, Log L) {
-        config.getLogger().d("[Storage] readOne: " + name(storable) + " " + storable.toString());
+    public static <T extends Storable> T readOne(InternalConfig config, T storable, boolean asc) {
+        config.getLogger().d("[Storage] readOne: " + name(storable) + " " + storable);
 
         try {
-            return readOneAsync(config, storable, asc, L).get();
+            return readOneAsync(config, storable, asc).get();
         } catch (InterruptedException | ExecutionException e) {
             config.getLogger().e("[Storage] Interrupted while popping " + name(storable) + " " + e);
         }
@@ -269,7 +269,7 @@ public class Storage {
      * @param asc true if reading first storable, false if reading last one
      * @return Future<Storable> object which resolves as object passed as param when reading succeeded, null otherwise
      */
-    public static <T extends Storable> Future<T> readOneAsync(final InternalConfig config, final T storable, final boolean asc, final Log L) {
+    public static <T extends Storable> Future<T> readOneAsync(final InternalConfig config, final T storable, final boolean asc) {
         return tasks.run(new Tasks.Task<T>(-storable.storageId()) {
             @Override
             public T call() throws Exception {
@@ -278,7 +278,7 @@ public class Storage {
                     return null;
                 }
                 storable.setId(data.getKey());
-                if (storable.restore(data.getValue(), L)) {
+                if (storable.restore(data.getValue(), config.getLogger())) {
                     return storable;
                 } else {
                     return null;

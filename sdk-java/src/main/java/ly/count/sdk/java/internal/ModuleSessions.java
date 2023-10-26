@@ -25,11 +25,6 @@ public class ModuleSessions extends ModuleBase {
     }
 
     @Override
-    public void init(InternalConfig config, Log logger) throws IllegalStateException {
-        super.init(config, logger);
-    }
-
-    @Override
     public void initFinished(final InternalConfig config) {
         try {
             timedEvents = Storage.read(config, new TimedEvents(L));

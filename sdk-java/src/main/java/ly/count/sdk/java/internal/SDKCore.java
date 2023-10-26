@@ -178,7 +178,7 @@ public class SDKCore {
                 if (module == null) {
                     L.e("[SDKCore] Cannot instantiate module " + feature);
                 } else {
-                    module.init(config, L);
+                    module.init(config);
                     module.initFinished(config);
                     modules.put(feature, module);
                 }
@@ -414,12 +414,12 @@ public class SDKCore {
         }
     }
 
-    public void init(final InternalConfig givenConfig, Log logger) {
-        L = logger;
+    public void init(final InternalConfig givenConfig) {
+        L = givenConfig.getLogger();
         L.i("[SDKCore] Initializing Countly");
 
         givenConfig.sdk = this;
-        sdkStorage.init(givenConfig, logger);
+        sdkStorage.init(givenConfig);
         givenConfig.storageProvider = sdkStorage;
         config = prepareConfig(givenConfig);
         config.storageProvider = sdkStorage;
@@ -440,6 +440,15 @@ public class SDKCore {
         migrationHelper.setupMigrations(config.storageProvider);
         migrationHelper.applyMigrations(new HashMap<>());
 
+        config.setLogger(L);
+
+        if (config.immediateRequestGenerator == null) {
+            config.immediateRequestGenerator = ImmediateRequestMaker::new;
+        }
+        prepareMappings(config);
+        countlyTimer = new CountlyTimer(L);
+        countlyTimer.startTimer(config.getSendUpdateEachSeconds(), this::onTimer);
+
         requestQueueMemory = new ArrayDeque<>(config.getRequestQueueMaxSize());
         // ModuleSessions is always enabled, even without consent
         int consents = givenConfig.getFeatures1() | CoreFeature.Sessions.getIndex();
@@ -450,7 +459,7 @@ public class SDKCore {
 
         modules.forEach((feature, module) -> {
             try {
-                module.init(config, logger);
+                module.init(config);
                 module.setActive(true);
             } catch (IllegalArgumentException | IllegalStateException e) {
                 L.e("[SDKCore] Error during module initialization" + e);
@@ -500,7 +509,7 @@ public class SDKCore {
                 networking.init(givenConfig, new IStorageForRequestQueue() {
                     @Override
                     public Request getNextRequest() {
-                        return Storage.readOne(givenConfig, new Request(0L), true, L);
+                        return Storage.readOne(givenConfig, new Request(0L), true);
                     }
 
                     @Override
@@ -684,7 +693,7 @@ public class SDKCore {
             if (session == null) {
                 L.e("[SDKCore] no session with id " + id + " found while recovering");
             } else {
-                Boolean success = session.recover(config, L);
+                Boolean success = session.recover(config);
                 L.d("[SDKCore] session " + id + " recovery " + (success == null ? "won't recover" : success ? "success" : "failure"));
             }
         }
@@ -719,6 +728,9 @@ public class SDKCore {
 
         Request request = ModuleRequests.nonSessionRequest(config);
         ModuleCrash.putCrashIntoParams(crash, request.params);
+        ModuleRequests.addRequired(config, request);
+        ModuleRequests.addRequiredTimeParams(request);
+
         if (Storage.push(config, request)) {
             L.i("[SDKCore] Added request " + request.storageId() + " instead of crash " + crash.storageId());
             networking.check(config);

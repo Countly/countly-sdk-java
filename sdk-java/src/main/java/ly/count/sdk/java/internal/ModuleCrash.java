@@ -18,8 +18,8 @@ public class ModuleCrash extends ModuleBase {
     protected CrashProcessor crashProcessor = null;
 
     @Override
-    public void init(InternalConfig config, Log logger) {
-        super.init(config, logger);
+    public void init(InternalConfig config) {
+        super.init(config);
         this.config = config;
         if (config.getCrashProcessorClass() != null) {
             try {

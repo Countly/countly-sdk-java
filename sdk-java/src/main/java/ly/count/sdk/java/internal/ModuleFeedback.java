@@ -19,8 +19,8 @@ public class ModuleFeedback extends ModuleBase {
     }
 
     @Override
-    public void init(InternalConfig config, Log logger) {
-        super.init(config, logger);
+    public void init(InternalConfig config) {
+        super.init(config);
         L.v("[ModuleFeedback] Initializing");
 
         cachedAppVersion = config.getApplicationVersion();

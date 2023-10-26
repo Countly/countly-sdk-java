@@ -455,4 +455,10 @@ public class TestUtils {
 
         return file;
     }
+  
+    static InternalConfig getInternalConfigWithLogger(Config config) {
+        InternalConfig ic = new InternalConfig(config);
+        ic.setLogger(mock(Log.class));
+        return ic;
+    }
 }

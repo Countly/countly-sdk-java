@@ -47,8 +47,8 @@ public class ModuleDeviceIdCore extends ModuleBase {
     private static final Map<Integer, DeviceIdGenerator> generators = new HashMap<>();
 
     @Override
-    public void init(InternalConfig config, Log logger) throws IllegalArgumentException {
-        super.init(config, logger);
+    public void init(InternalConfig config) throws IllegalArgumentException {
+        super.init(config);
 
         generators.put(Config.DID.STRATEGY_UUID, new UUIDGenerator());
         generators.put(Config.DID.STRATEGY_CUSTOM, new CustomIDGenerator());

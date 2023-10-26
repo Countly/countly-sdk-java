@@ -1,19 +1,13 @@
 package ly.count.sdk.java.internal;
 
+import com.sun.management.OperatingSystemMXBean;
 import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
+import java.lang.management.ManagementFactory;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Class encapsulating most of device-specific logic: metrics, info, etc.
@@ -132,52 +126,23 @@ public class Device {
     /**
      * Get total RAM in Mb
      *
-     * @return total RAM in Mb or null if cannot determine
+     * @return total RAM in Mb
      */
     public Long getRAMTotal() {
-        RandomAccessFile reader = null;
-        try {
-            reader = new RandomAccessFile("/proc/meminfo", "r");
-            String load = reader.readLine();
-
-            // Get the Number value from the string
-            Pattern p = Pattern.compile("(\\d+)");
-            Matcher m = p.matcher(load);
-            String value = "";
-            while (m.find()) {
-                value = m.group(1);
-            }
-            return Long.parseLong(value) / 1024;
-        } catch (NumberFormatException e) {
-            if (L != null) {
-                L.e("[DeviceCore] Cannot parse meminfo " + e.toString());
-            }
-
-            return null;
-        } catch (IOException e) {
-            if (L != null) {
-                L.e("[DeviceCore] Cannot read meminfo " + e.toString());
-            }
-            return null;
-        } finally {
-            try {
-                if (reader != null) {
-                    reader.close();
-                }
-            } catch (IOException ignored) {
-            }
-        }
+        OperatingSystemMXBean osMxBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+        long totalPhysicalMemorySize = osMxBean.getTotalPhysicalMemorySize();
+        return totalPhysicalMemorySize / BYTES_IN_MB; // Convert bytes to megabytes
     }
 
     /**
      * Get current device RAM amount.
      *
-     * @return currently available RAM in Mb or {@code null} if couldn't determine
+     * @return currently available RAM in Mb
      */
     public Long getRAMAvailable() {
-        Long total = Runtime.getRuntime().totalMemory();
-        Long availMem = Runtime.getRuntime().freeMemory();
-        return (total - availMem) / BYTES_IN_MB;
+        OperatingSystemMXBean osMxBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+        long freePhysicalMemorySize = osMxBean.getFreePhysicalMemorySize();
+        return freePhysicalMemorySize / BYTES_IN_MB; // Convert bytes to megabytes
     }
 
     /**
