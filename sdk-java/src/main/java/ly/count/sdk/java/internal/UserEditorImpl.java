@@ -174,7 +174,7 @@ public class UserEditorImpl implements UserEditor {
                         //there is an indication that the picture should be erased server side
                         user.picture = null;
                         user.picturePath = null;
-                        changes.put(PICTURE_PATH, JSONObject.NULL);
+                        changes.put(PICTURE, JSONObject.NULL);
                     } else if (value instanceof byte[]) {
                         user.picture = (byte[]) value;
                         //set a special value to indicate that the picture information is already stored in memory
@@ -188,7 +188,7 @@ public class UserEditorImpl implements UserEditor {
                         //there is an indication that the picture should be erased server side
                         user.picture = null;
                         user.picturePath = null;
-                        changes.put(PICTURE_PATH, JSONObject.NULL);
+                        changes.put(PICTURE, JSONObject.NULL);
                     } else if (value instanceof String) {
                         if (Utils.isValidURL((String) value)) {
                             //if it is a valid URL that means the picture is online, and we want to send the link to the server
