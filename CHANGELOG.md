@@ -6,7 +6,7 @@
 * Session update time duration increased to 60 seconds from 30 seconds.
 * Adding remaining request queue size information to every request.
 * Adding application version information to every request.
-* User profile picture can be set with URL now
+* Added the ability to set the user profile picture with an URL
 
 ## 23.8.0
 
