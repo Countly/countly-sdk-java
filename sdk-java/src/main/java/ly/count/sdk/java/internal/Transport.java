@@ -162,7 +162,7 @@ public class Transport implements X509TrustManager {
                     output = connection.getOutputStream();
                     writer = new PrintWriter(new OutputStreamWriter(output, Utils.UTF8), true);
 
-                    addMultipart(output, writer, boundary, "image/jpeg", "profilePicture", "image", pictureByteData);
+                    addMultipart(output, writer, boundary, "image/jpeg", "binaryFile", "image", pictureByteData);
 
                     StringBuilder salting = new StringBuilder();
                     Map<String, String> map = request.params.map();
