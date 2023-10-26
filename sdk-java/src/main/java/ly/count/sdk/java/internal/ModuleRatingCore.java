@@ -18,8 +18,8 @@ public class ModuleRatingCore extends ModuleBase {
     protected InternalConfig internalConfig = null;
 
     @Override
-    public void init(InternalConfig config, Log logger) {
-        super.init(config, logger);
+    public void init(InternalConfig config) {
+        super.init(config);
         internalConfig = config;
     }
 

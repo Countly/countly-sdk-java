@@ -411,4 +411,10 @@ public class TestUtils {
             return new JSONObject();
         }
     }
+
+    static InternalConfig getInternalConfigWithLogger(Config config) {
+        InternalConfig ic = new InternalConfig(config);
+        ic.setLogger(mock(Log.class));
+        return ic;
+    }
 }

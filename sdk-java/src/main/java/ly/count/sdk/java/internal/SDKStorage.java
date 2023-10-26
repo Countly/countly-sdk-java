@@ -36,8 +36,8 @@ public class SDKStorage implements StorageProvider {
 
     }
 
-    public SDKStorage init(InternalConfig config, Log logger) {
-        this.L = logger;
+    public SDKStorage init(InternalConfig config) {
+        this.L = config.getLogger();
         this.config = config;
         jsonFileStorage = new JsonFileStorage(createFileFullPathWithPrefix(config, JSON_FILE_NAME), L);
         Storage.init();

@@ -28,8 +28,8 @@ public abstract class ModuleBase {
      * @throws IllegalArgumentException in case supplied {@link InternalConfig} is not consistent.
      * @throws IllegalStateException if some required for this module platform feature is not available on this platform.
      */
-    public void init(InternalConfig config, Log logger) {
-        L = logger;
+    public void init(InternalConfig config) {
+        L = config.getLogger();
         internalConfig = config;
     }
 
@@ -62,7 +62,7 @@ public abstract class ModuleBase {
     }
 
     /**
-     * A method to be used by the module itself to determine if {@link #init(InternalConfig, Log)} initialized it
+     * A method to be used by the module itself to determine if {@link #init(InternalConfig)} initialized it
      * and haven't been stopped yet by {@link #stop(InternalConfig, boolean)}.
      *
      * @return {@code true} if module is allowed to continue to run, {@code false} otherwise
