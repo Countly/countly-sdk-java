@@ -12,8 +12,8 @@ public class ModuleEvents extends ModuleBase {
     protected Events eventsInterface = null;
 
     @Override
-    public void init(InternalConfig config, Log logger) {
-        super.init(config, logger);
+    public void init(InternalConfig config) {
+        super.init(config);
         L.d("[ModuleEvents] init: config = " + config);
         eventQueue = new EventQueue(L, config.getEventsBufferSize());
         eventQueue.restoreFromDisk();

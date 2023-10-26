@@ -16,15 +16,10 @@ class ViewImpl implements View {
     static final String SEGMENT = "segment";
     static final String START = "start";
     static final String START_VALUE = "1";
-    static final String EXIT = "exit";
-    static final String EXIT_VALUE = "1";
-    static final String BOUNCE = "bounce";
-    static final String BOUNCE_VALUE = "1";
 
     final String name;
     final Session session;
     EventImpl start;
-    boolean firstView;
     boolean started, ended;
 
     ViewImpl(Session session, String name, Log logger) {
@@ -45,7 +40,6 @@ class ViewImpl implements View {
             return;
         }
         this.started = true;
-        this.firstView = firstView;
 
         start = (EventImpl) session.event(EVENT).addSegments(NAME, this.name, VISIT, VISIT_VALUE, SEGMENT, SDKCore.instance.config.getSdkPlatform());
 
@@ -83,14 +77,6 @@ class ViewImpl implements View {
 
         event.setDuration(viewDurationSeconds);
 
-        if (lastView) {
-            event.addSegment(EXIT, EXIT_VALUE);
-        }
-
-        if (lastView && firstView) {
-            event.addSegment(BOUNCE, BOUNCE_VALUE);
-        }
-
         event.record();
     }
 
@@ -100,7 +86,6 @@ class ViewImpl implements View {
             "name='" + name + '\'' +
             ", session=" + session +
             ", start=" + start +
-            ", firstView=" + firstView +
             ", started=" + started +
             ", ended=" + ended +
             '}';

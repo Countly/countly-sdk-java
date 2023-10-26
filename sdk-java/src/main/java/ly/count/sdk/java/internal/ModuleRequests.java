@@ -16,11 +16,6 @@ public class ModuleRequests extends ModuleBase {
     }
 
     @Override
-    public void init(InternalConfig config, Log logger) {
-        super.init(config, logger);
-    }
-
-    @Override
     public void initFinished(final InternalConfig config) {
         ModuleRequests.metrics = Device.dev.buildMetrics();
     }

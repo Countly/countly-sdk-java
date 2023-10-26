@@ -13,7 +13,7 @@ public class DefaultNetworking implements Networking {
         L = config.getLogger();
         shutdown = false;
         transport = new Transport();
-        transport.init(config, config.getLogger());
+        transport.init(config);
         tasks = new Tasks("network", L);
         this.storageForRequestQueue = storageForRequestQueue;
     }
