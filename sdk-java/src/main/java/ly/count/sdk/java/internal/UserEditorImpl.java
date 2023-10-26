@@ -171,18 +171,21 @@ public class UserEditorImpl implements UserEditor {
                 case PICTURE:
                     //if we get here, that means that the dev gave us bytes for the picture
                     if (value == null) {
+                        //there is an indication that the picture should be erased server side
                         user.picture = null;
                         user.picturePath = null;
                         changes.put(PICTURE_PATH, JSONObject.NULL);
                     } else if (value instanceof byte[]) {
                         user.picture = (byte[]) value;
+                        //set a special value to indicate that the picture information is already stored in memory
                         changes.put(PICTURE_PATH, PICTURE_IN_USER_PROFILE);
                     } else {
                         L.e("[UserEditorImpl] Won't set user picture (must be of type byte[])");
                     }
                     break;
                 case PICTURE_PATH:
-                    if (value == null) {
+                    if (value == null || (value instanceof String && ((String) value).isEmpty())) {
+                        //there is an indication that the picture should be erased server side
                         user.picture = null;
                         user.picturePath = null;
                         changes.put(PICTURE_PATH, JSONObject.NULL);
@@ -345,7 +348,8 @@ public class UserEditorImpl implements UserEditor {
     @Override
     public UserEditor setPicturePath(String picturePath) {
         L.d("[UserEditorImpl] setPicturePath, picturePath = " + picturePath);
-        if (picturePath == null || new File(picturePath).isFile() || Utils.isValidURL(picturePath)) {
+        if (picturePath == null || Utils.isValidURL(picturePath) || (new File(picturePath)).isFile()) {
+            //if it is a thing we can use, continue
             return set(PICTURE_PATH, picturePath);
         }
         L.w("[UserEditorImpl] setPicturePath, picturePath is not a valid file path or url");
