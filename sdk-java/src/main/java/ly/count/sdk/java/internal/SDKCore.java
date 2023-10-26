@@ -491,7 +491,7 @@ public class SDKCore {
                 networking.init(givenConfig, new IStorageForRequestQueue() {
                     @Override
                     public Request getNextRequest() {
-                        return Storage.readOne(givenConfig, new Request(0L), true, L);
+                        return Storage.readOne(givenConfig, new Request(0L), true);
                     }
 
                     @Override
@@ -675,7 +675,7 @@ public class SDKCore {
             if (session == null) {
                 L.e("[SDKCore] no session with id " + id + " found while recovering");
             } else {
-                Boolean success = session.recover(config, L);
+                Boolean success = session.recover(config);
                 L.d("[SDKCore] session " + id + " recovery " + (success == null ? "won't recover" : success ? "success" : "failure"));
             }
         }
