@@ -26,8 +26,8 @@ public class ModuleBackendMode extends ModuleBase {
     final String[] userPredefinedKeys = { "name", "username", "email", "organization", "phone", "gender", "byear" };
 
     @Override
-    public void init(InternalConfig config, Log logger) {
-        super.init(config, logger);
+    public void init(InternalConfig config) {
+        super.init(config);
         internalConfig = config;
         L.d("[BackendMode] init: config = " + config);
     }

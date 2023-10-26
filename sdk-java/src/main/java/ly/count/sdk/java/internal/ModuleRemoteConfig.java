@@ -38,9 +38,9 @@ public class ModuleRemoteConfig extends ModuleBase {
     }
 
     @Override
-    public void init(InternalConfig config, Log logger) {
-        super.init(config, logger);
-        requestCallbacks = new HashMap<Long, RemoteConfigCallback>();
+    public void init(InternalConfig config) {
+        super.init(config);
+        requestCallbacks = new HashMap<>();
     }
 
     @Override

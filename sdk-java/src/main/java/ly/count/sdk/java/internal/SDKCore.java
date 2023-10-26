@@ -178,7 +178,7 @@ public class SDKCore {
                 if (module == null) {
                     L.e("[SDKCore] Cannot instantiate module " + feature);
                 } else {
-                    module.init(config, L);
+                    module.init(config);
                     module.initFinished(config);
                     modules.put(feature, module);
                 }
@@ -422,6 +422,7 @@ public class SDKCore {
         sdkStorage.init(givenConfig);
         givenConfig.storageProvider = sdkStorage;
         config = prepareConfig(givenConfig);
+        config.setLogger(L);
 
         if (config.immediateRequestGenerator == null) {
             config.immediateRequestGenerator = ImmediateRequestMaker::new;
@@ -440,7 +441,7 @@ public class SDKCore {
 
         modules.forEach((feature, module) -> {
             try {
-                module.init(config, L);
+                module.init(config);
                 module.setActive(true);
             } catch (IllegalArgumentException | IllegalStateException e) {
                 L.e("[SDKCore] Error during module initialization" + e);
