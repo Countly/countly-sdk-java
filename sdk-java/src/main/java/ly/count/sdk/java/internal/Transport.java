@@ -506,7 +506,6 @@ public class Transport implements X509TrustManager {
     private String setProfilePicturePathRequestParams(String path, Params params) {
         Params tempParams = new Params();
 
-        tempParams.add("user_details", "{}");
         tempParams.add("device_id", params.get("device_id"));
         tempParams.add("app_key", params.get("app_key"));
         tempParams.add("timestamp", params.get("timestamp"));
@@ -519,6 +518,10 @@ public class Transport implements X509TrustManager {
 
         if (params.has("av")) {
             tempParams.add("av", params.get("av"));
+        }
+        //if no user details, add empty user details to indicate that we are sending a picture
+        if (!params.has("user_details")) {
+            tempParams.add("user_details", "{}");
         }
 
         return path + tempParams;
