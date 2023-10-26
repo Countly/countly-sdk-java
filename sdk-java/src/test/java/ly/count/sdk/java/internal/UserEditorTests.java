@@ -49,7 +49,8 @@ public class UserEditorTests {
     /**
      * "setPicturePath" with local path
      * A test local path is given to the method, session manually began and end to create a request
-     * 'picturePath' in user should be set and, 'picturePath' parameter in the user_details and the request should be same
+     * 'picturePath' in user should be set and, 'picturePath' parameter in the user_details should be null,
+     * and the request should be equal to file name
      */
     @Test
     public void setPicturePath_localPath() {
@@ -61,14 +62,14 @@ public class UserEditorTests {
         validatePictureAndPath(imgFile.getAbsolutePath(), null);
 
         Countly.session().end();
-        validatePictureInRQ("{\"picturePath\":\"" + imgFile.getAbsolutePath() + "\"}", imgFile.getAbsolutePath());
+        validatePictureInRQ("{}", imgFile.getAbsolutePath());
     }
 
     /**
      * "setPicturePath" with null,
      * null value is given to the method, session manually began and end to create a request
      * 'picturePath' in user should be set to null, 'picturePath' parameter in request should not exist
-     * and 'picturePath' parameter in the 'user_details' should be null
+     * and 'picture' parameter in the 'user_details' should be null
      */
     @Test
     public void setPicturePath_null() {
@@ -79,7 +80,7 @@ public class UserEditorTests {
         validatePictureAndPath(null, null);
 
         Countly.session().end();
-        validatePictureInRQ("{\"picturePath\":null}", null);
+        validatePictureInRQ("{\"picture\":null}", null);
     }
 
     /**
@@ -104,8 +105,8 @@ public class UserEditorTests {
      * "setPicture" with binary data,
      * Binary data is given to the method, session manually began and end to create a request
      * 'picturePath' in user should be null and picture should be defined binary data,
-     * 'picturePath' parameter in the user_details and the request should be same and
-     * equal to '[CLY]_USER_PROFILE_PICTURE'
+     * 'picturePath' parameter in the user_details should be null and the request 'picturePath'
+     * parameter should equal to '[CLY]_USER_PROFILE_PICTURE'
      */
     @Test
     public void setPicture_binaryData() throws IOException {
@@ -118,7 +119,7 @@ public class UserEditorTests {
         validatePictureAndPath(null, imgData);
 
         Countly.session().end();
-        validatePictureInRQ("{\"picturePath\":\"" + UserEditorImpl.PICTURE_IN_USER_PROFILE + "\"}", UserEditorImpl.PICTURE_IN_USER_PROFILE);
+        validatePictureInRQ("{}", UserEditorImpl.PICTURE_IN_USER_PROFILE);
     }
 
     /**
@@ -136,7 +137,7 @@ public class UserEditorTests {
         validatePictureAndPath(null, null);
 
         Countly.session().end();
-        validatePictureInRQ("{\"picturePath\":null}", null);
+        validatePictureInRQ("{\"picture\":null}", null);
     }
 
     private void validatePictureAndPath(String picturePath, byte[] picture) {

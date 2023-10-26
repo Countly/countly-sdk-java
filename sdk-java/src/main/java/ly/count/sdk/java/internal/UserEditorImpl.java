@@ -538,10 +538,10 @@ public class UserEditorImpl implements UserEditor {
             Storage.push(SDKCore.instance.config, user);
 
             ModuleRequests.injectParams(SDKCore.instance.config, params -> {
-                params.add("user_details", changes.toString());
                 if (changes.has(PICTURE_PATH)) {
                     try {
                         params.add(PICTURE_PATH, changes.getString(PICTURE_PATH));
+                        changes.remove(PICTURE_PATH);
                     } catch (JSONException e) {
                         L.w("Won't send picturePath" + e);
                     }
@@ -558,6 +558,7 @@ public class UserEditorImpl implements UserEditor {
                 if (changes.has(LOCATION) && user.location != null) {
                     params.add("location", user.location);
                 }
+                params.add("user_details", changes.toString());
             });
         } catch (JSONException e) {
             L.e("[UserEditorImpl] Exception while committing changes to User profile" + e);
