@@ -1,8 +1,6 @@
 package ly.count.sdk.java.internal;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.Map;
 import ly.count.sdk.java.Countly;
 import org.junit.After;
@@ -109,12 +107,11 @@ public class UserEditorTests {
      * parameter should equal to '[CLY]_USER_PROFILE_PICTURE'
      */
     @Test
-    public void setPicture_binaryData() throws IOException {
+    public void setPicture_binaryData() {
         Countly.instance().init(TestUtils.getBaseConfig());
         Countly.session().begin();
-        File imgFile = TestUtils.createFile(imgFileName);
         //set profile picture url and commit it
-        byte[] imgData = Files.readAllBytes(imgFile.toPath());
+        byte[] imgData = new byte[] { 10, 13, 34, 12 };
         Countly.instance().user().edit().setPicture(imgData).commit();
         validatePictureAndPath(null, imgData);
 
