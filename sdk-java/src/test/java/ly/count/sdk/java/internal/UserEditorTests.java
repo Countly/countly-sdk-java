@@ -148,6 +148,7 @@ public class UserEditorTests {
         if (expectedPicturePath == null) {
             Assert.assertFalse(requestsInQ[0].containsKey("picturePath"));
         }
+        TestUtils.validateRequiredParams(requestsInQ[0]);
         Assert.assertEquals(expectedPicturePath, requestsInQ[0].get("picturePath"));
         Assert.assertEquals(expectedUserDetails, requestsInQ[0].get("user_details"));
     }

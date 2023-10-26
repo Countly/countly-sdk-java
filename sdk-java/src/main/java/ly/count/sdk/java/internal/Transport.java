@@ -130,8 +130,7 @@ public class Transport implements X509TrustManager {
         boolean usingGET = !config.isHTTPPostForced() && request.isGettable(config.getServerURL()) && Utils.isEmptyOrNull(picturePathValue);
 
         if (!usingGET && !Utils.isEmptyOrNull(picturePathValue)) {
-            path = path + Params.PARAM_DEVICE_ID + "=" + request.params.get(Params.PARAM_DEVICE_ID)
-                + "&app_key=" + request.params.get("app_key") + "&user_details={}";
+            path = setProfilePicturePathRequestParams(path, request.params);
         }
 
         if (usingGET && config.getParameterTamperingProtectionSalt() != null) {
@@ -502,5 +501,26 @@ public class Transport implements X509TrustManager {
     @Override
     public X509Certificate[] getAcceptedIssuers() {
         return new X509Certificate[0];
+    }
+
+    private String setProfilePicturePathRequestParams(String path, Params params) {
+        Params tempParams = new Params();
+
+        tempParams.add("user_details", "{}");
+        tempParams.add("device_id", params.get("device_id"));
+        tempParams.add("app_key", params.get("app_key"));
+        tempParams.add("timestamp", params.get("timestamp"));
+        tempParams.add("sdk_name", params.get("sdk_name"));
+        tempParams.add("sdk_version", params.get("sdk_version"));
+        tempParams.add("tz", params.get("tz"));
+        tempParams.add("hour", params.get("hour"));
+        tempParams.add("dow", params.get("dow"));
+        tempParams.add("rr", params.get("rr"));
+
+        if (params.has("av")) {
+            tempParams.add("av", params.get("av"));
+        }
+
+        return path + tempParams;
     }
 }
