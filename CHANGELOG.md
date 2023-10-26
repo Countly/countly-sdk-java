@@ -1,7 +1,7 @@
 ## 23.10.0
 
 * ! Minor breaking change ! Calling "init" twice will now not reinitialize the SDK. The call will be ignored
-* ! Minor breaking change ! 'bounce' and 'exit' segmentations are removed from the 'view' tracking.
+* ! Minor breaking change ! 'bounce' and 'exit' segmentation values are now not sent from the SDK. They will be automatically applied on the server.
 
 * Session update time duration increased to 60 seconds from 30 seconds.
 * Adding remaining request queue size information to every request.
