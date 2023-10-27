@@ -1574,32 +1574,43 @@ public class Config {
 
     /**
      * Enable automatic download of remote config values
+     *
+     * @return {@code this} instance for method chaining
      */
-    public void enableRemoteConfigAutomaticTriggers() {
+    public Config enableRemoteConfigAutomaticTriggers() {
         this.enableRemoteConfigAutomaticDownloadTriggers = true;
+        return this;
     }
 
     /**
      * Enable caching of remote config values
+     *
+     * @return {@code this} instance for method chaining
      */
-    public void enableRemoteConfigValueCaching() {
+    public Config enableRemoteConfigValueCaching() {
         this.enableRemoteConfigValueCaching = true;
+        return this;
     }
 
     /**
      * Enable automatic enroll for AB
+     *
+     * @return {@code this} instance for method chaining
      */
-    public void enrollABOnRCDownload() {
+    public Config enrollABOnRCDownload() {
         this.enableAutoEnrollFlag = true;
+        return this;
     }
 
     /**
      * Register a callback to be called when remote config is downloaded
      *
      * @param callback to be called see {@link RCDownloadCallback}
+     * @return {@code this} instance for method chaining
      */
-    public void remoteConfigRegisterGlobalCallback(RCDownloadCallback callback) {
+    public Config remoteConfigRegisterGlobalCallback(RCDownloadCallback callback) {
         remoteConfigGlobalCallbacks.add(callback);
+        return this;
     }
 }
 
