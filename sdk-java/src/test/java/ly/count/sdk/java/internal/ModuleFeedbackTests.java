@@ -349,7 +349,7 @@ public class ModuleFeedbackTests {
 
         if (widgetInfo != null) {
             ImmediateRequestI requestMaker = (requestData, customEndpoint, cp, requestShouldBeDelayed, networkingIsEnabled, callback, log) -> {
-                validateWidgetRequiredParams("/o/surveys/" + widgetInfo.type.name() + "/widget", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
+                validateWidgetRequiredParams("/o/surveys/" + widgetInfo.type.name() + "/widget?", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
                 validateWidgetDataParams(TestUtils.parseQueryParams(requestData), widgetInfo);
                 callback.callback(responseJson);
             };

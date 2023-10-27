@@ -203,7 +203,12 @@ public class ModuleRemoteConfig extends ModuleBase {
             }
 
             // prepare request data
-            String requestData = "";// TODO shouldFetchExperimentInfo ? requestQueueProvider.prepareFetchAllExperiments() : requestQueueProvider.prepareFetchAllVariants();
+            String method = "ab_fetch_variants";
+            if (shouldFetchExperimentInfo) {
+                method = "ab_fetch_experiments";
+            }
+
+            String requestData = ModuleRequests.prepareRequiredParamsAsString(internalConfig, "method", method);
 
             L.d("[ModuleRemoteConfig] Fetching all A/B test variants/info requestData:[" + requestData + "]");
 

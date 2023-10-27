@@ -56,7 +56,7 @@ public class ModuleFeedback extends ModuleBase {
         Transport transport = SDKCore.instance.networking.getTransport();
         final boolean networkingIsEnabled = internalConfig.getNetworkingEnabled();
 
-        Params params = ModuleRequests.prepareRequiredParams(internalConfig).add("method", "feedback");
+        String params = ModuleRequests.prepareRequiredParamsAsString(internalConfig, "method", "feedback");
         ImmediateRequestGenerator iRGenerator = internalConfig.immediateRequestGenerator;
 
         iRGenerator.createImmediateRequestMaker().doWork("?" + params, "/o/sdk", transport, false, networkingIsEnabled, checkResponse -> {
@@ -277,7 +277,6 @@ public class ModuleFeedback extends ModuleBase {
             return;
         }
 
-        StringBuilder requestData = new StringBuilder();
         String widgetDataEndpoint = "/o/surveys/" + widgetInfo.type.name() + "/widget?";
 
         Params params = new Params()
@@ -289,17 +288,14 @@ public class ModuleFeedback extends ModuleBase {
             .add("app_version", cachedAppVersion)
             .add("av", internalConfig.getApplicationVersion());
 
-        widgetDataEndpoint += params.toString();
-
         Transport cp = SDKCore.instance.networking.getTransport();
         final boolean networkingIsEnabled = internalConfig.getNetworkingEnabled();
-        String requestDataStr = requestData.toString();
 
-        L.d("[ModuleFeedback] getFeedbackWidgetDataInternal, Using following request params for retrieving widget data:[" + requestDataStr + "]");
+        L.d("[ModuleFeedback] getFeedbackWidgetDataInternal, Using following request params for retrieving widget data:[" + params + "]");
 
         ImmediateRequestGenerator iRGenerator = internalConfig.immediateRequestGenerator;
 
-        iRGenerator.createImmediateRequestMaker().doWork(requestDataStr, widgetDataEndpoint, cp, false, networkingIsEnabled, checkResponse -> {
+        iRGenerator.createImmediateRequestMaker().doWork(params.toString(), widgetDataEndpoint, cp, false, networkingIsEnabled, checkResponse -> {
             if (checkResponse == null) {
                 L.d("[ModuleFeedback] getFeedbackWidgetDataInternal, Not possible to retrieve widget data. Probably due to lack of connection to the server");
                 callback.onFinished(null, "Not possible to retrieve widget data. Probably due to lack of connection to the server");

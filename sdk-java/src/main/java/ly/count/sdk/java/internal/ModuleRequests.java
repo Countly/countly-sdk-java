@@ -194,6 +194,10 @@ public class ModuleRequests extends ModuleBase {
         return params;
     }
 
+    public static String prepareRequiredParamsAsString(InternalConfig config, Object... paramsObj) {
+        return prepareRequiredParams(config).add(paramsObj).toString();
+    }
+
     /**
      * Common store-request logic: store & send a ping to the service.
      *
