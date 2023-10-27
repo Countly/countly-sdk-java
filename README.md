@@ -1,4 +1,4 @@
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/3655dbdf8cc34b98a00e9b7ff77f1811)](https://www.codacy.com/gh/Countly/countly-sdk-java/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Countly/countly-sdk-java&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/3655dbdf8cc34b98a00e9b7ff77f1811)](https://app.codacy.com/gh/Countly/countly-sdk-java/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
 # Countly Java SDK
 
