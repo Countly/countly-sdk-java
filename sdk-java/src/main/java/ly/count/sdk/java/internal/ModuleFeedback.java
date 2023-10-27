@@ -278,20 +278,18 @@ public class ModuleFeedback extends ModuleBase {
         }
 
         StringBuilder requestData = new StringBuilder();
-        String widgetDataEndpoint = "/o/surveys/" + widgetInfo.type.name() + "/widget";
+        String widgetDataEndpoint = "/o/surveys/" + widgetInfo.type.name() + "/widget?";
 
-        requestData.append("?widget_id=");
-        requestData.append(Utils.urlencode(widgetInfo.widgetId, L));
-        requestData.append("&shown=1&sdk_version=");
-        requestData.append(Utils.urlencode(internalConfig.getSdkVersion(), L));
-        requestData.append("&sdk_name=");
-        requestData.append(Utils.urlencode(internalConfig.getSdkName(), L));
-        requestData.append("&platform=");
-        requestData.append(Utils.urlencode(internalConfig.getSdkPlatform(), L));
-        requestData.append("&app_version=");
-        requestData.append(cachedAppVersion);
-        requestData.append("&av=");
-        requestData.append(Utils.urlencode(internalConfig.getApplicationVersion(), L));
+        Params params = new Params()
+            .add("widget_id", widgetInfo.widgetId)
+            .add("shown", "1")
+            .add("sdk_version", internalConfig.getSdkVersion())
+            .add("sdk_name", internalConfig.getSdkName())
+            .add("platform", internalConfig.getSdkPlatform())
+            .add("app_version", cachedAppVersion)
+            .add("av", internalConfig.getApplicationVersion());
+
+        widgetDataEndpoint += params.toString();
 
         Transport cp = SDKCore.instance.networking.getTransport();
         final boolean networkingIsEnabled = internalConfig.getNetworkingEnabled();
@@ -353,19 +351,16 @@ public class ModuleFeedback extends ModuleBase {
         widgetListUrl.append(internalConfig.getServerURL());
         widgetListUrl.append("/feedback/");
         widgetListUrl.append(widgetInfo.type.name());
-        widgetListUrl.append("?widget_id=");
-        widgetListUrl.append(Utils.urlencode(widgetInfo.widgetId, L));
-        widgetListUrl.append("&device_id=");
-        widgetListUrl.append(Utils.urlencode(internalConfig.getDeviceId().id, L));
-        widgetListUrl.append("&app_key=");
-        widgetListUrl.append(Utils.urlencode(internalConfig.getServerAppKey(), L));
-        widgetListUrl.append("&sdk_version=");
-        widgetListUrl.append(internalConfig.getSdkVersion());
-        widgetListUrl.append("&sdk_name=");
-        widgetListUrl.append(internalConfig.getSdkName());
-        widgetListUrl.append("&platform=");
-        widgetListUrl.append(Utils.urlencode(internalConfig.getSdkPlatform(), L));
+        widgetListUrl.append("?");
+        Params params = new Params()
+            .add("widget_id", widgetInfo.widgetId)
+            .add("device_id", internalConfig.getDeviceId().id)
+            .add("app_key", internalConfig.getServerAppKey())
+            .add("sdk_version", internalConfig.getSdkVersion())
+            .add("sdk_name", internalConfig.getSdkName())
+            .add("platform", internalConfig.getSdkPlatform());
 
+        widgetListUrl.append(params.toString());
         final String preparedWidgetUrl = widgetListUrl.toString();
 
         L.d("[ModuleFeedback] constructFeedbackWidgetUrlInternal, Using following url for widget:[" + widgetListUrl + "]");

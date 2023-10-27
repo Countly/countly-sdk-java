@@ -182,7 +182,7 @@ public class ModuleRequests extends ModuleBase {
         }
 
         if (!Utils.isEmptyOrNull(config.getApplicationVersion())) {
-            params.add("av", Utils.urlencode(config.getApplicationVersion(), config.getLogger()));
+            params.add("av", config.getApplicationVersion());
         }
     }
 

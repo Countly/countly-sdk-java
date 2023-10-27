@@ -126,9 +126,9 @@ public class ModuleRemoteConfig extends ModuleBase {
 
         //add key filters
         if (keysInclude != null) {
-            params.add("keys", Utils.urlencode(keysInclude, L));
+            params.add("keys", keysInclude);
         } else if (keysExclude != null) {
-            params.add("omit_keys", Utils.urlencode(keysExclude, L));
+            params.add("omit_keys", keysExclude);
         }
 
         // if auto enroll was enabled add oi=1 to the request
@@ -153,7 +153,7 @@ public class ModuleRemoteConfig extends ModuleBase {
         }
         Params params = new Params();
         params.add("method", "ab");
-        params.add("new_end_point", Utils.urlencode("/o/sdk", L));
+        params.add("new_end_point", "/o/sdk");
 
         if (keys.length > 0) { // exits all otherwise
             params.arr("keys").put(Arrays.asList(keys)).add();
@@ -286,8 +286,8 @@ public class ModuleRemoteConfig extends ModuleBase {
     public String prepareEnrollVariant(String key, String variant) {
         return ModuleRequests.prepareRequiredParams(internalConfig)
             .add("method", "ab_enroll_variant")
-            .add("key", Utils.urlencode(key, L))
-            .add("variant", Utils.urlencode(variant, L))
+            .add("key", key)
+            .add("variant", variant)
             .toString();
     }
 
