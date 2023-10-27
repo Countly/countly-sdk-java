@@ -8,8 +8,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import ly.count.sdk.java.internal.Byteable;
@@ -17,6 +19,7 @@ import ly.count.sdk.java.internal.CoreFeature;
 import ly.count.sdk.java.internal.Log;
 import ly.count.sdk.java.internal.LogCallback;
 import ly.count.sdk.java.internal.ModuleBase;
+import ly.count.sdk.java.internal.RCDownloadCallback;
 import ly.count.sdk.java.internal.Utils;
 
 /**
@@ -81,9 +84,9 @@ public class Config {
         CrashReporting(CoreFeature.CrashReporting.getIndex()),
         Location(CoreFeature.Location.getIndex()),
         UserProfiles(CoreFeature.UserProfiles.getIndex()),
-        Feedback(CoreFeature.Feedback.getIndex());
+        Feedback(CoreFeature.Feedback.getIndex()),
+        RemoteConfig(CoreFeature.RemoteConfig.getIndex());
         //        StarRating(1 << 12),
-        //        RemoteConfig(1 << 13),
         //        PerformanceMonitoring(1 << 14);
 
         private final int index;
@@ -109,12 +112,8 @@ public class Config {
                 return Location;
             } else if (index == UserProfiles.index) {
                 return UserProfiles;
-                //            } else if (index == StarRating.index) {
-                //                return StarRating;
-                //            } else if (index == RemoteConfig.index) {
-                //                return RemoteConfig;
-                //            } else if (index == PerformanceMonitoring.index) {
-                //                return PerformanceMonitoring;
+            } else if (index == RemoteConfig.index) {
+                return RemoteConfig;
             } else if (index == Feedback.index) {
                 return Feedback;
             } else {
@@ -447,17 +446,26 @@ public class Config {
 
     //endregion
 
-    //region Remote Config Module fields
+    //Begin Remote Config Module Fields
 
     /**
      * If remote config automatic fetching should be enabled
      */
-    protected Boolean enableAutomaticRemoteConfig = null;
+    protected boolean enableRemoteConfigAutomaticDownloadTriggers = false;
 
     /**
-     * After how much time the request is canceled and timeout error returned
+     * If remote config value caching should be enabled
      */
-    protected Long remoteConfigUpdateRequestTimeout = null;
+    protected boolean enableRemoteConfigValueCaching = false;
+
+    /**
+     * If automatic remote config enrollment should be enabled
+     */
+    protected boolean enableAutoEnrollFlag = false;
+
+    protected List<RCDownloadCallback> remoteConfigGlobalCallbacks = new ArrayList<>();
+
+    //End Remote Config Module Fields
 
     /**
      * Maximum in memory request queue size.
@@ -1562,6 +1570,36 @@ public class Config {
      */
     public String getSdkPlatform() {
         return sdkPlatform;
+    }
+
+    /**
+     * Enable automatic download of remote config values
+     */
+    public void enableRemoteConfigAutomaticTriggers() {
+        this.enableRemoteConfigAutomaticDownloadTriggers = true;
+    }
+
+    /**
+     * Enable caching of remote config values
+     */
+    public void enableRemoteConfigValueCaching() {
+        this.enableRemoteConfigValueCaching = true;
+    }
+
+    /**
+     * Enable automatic enroll for AB
+     */
+    public void enrollABOnRCDownload() {
+        this.enableAutoEnrollFlag = true;
+    }
+
+    /**
+     * Register a callback to be called when remote config is downloaded
+     *
+     * @param callback to be called see {@link RCDownloadCallback}
+     */
+    public void remoteConfigRegisterGlobalCallback(RCDownloadCallback callback) {
+        remoteConfigGlobalCallbacks.add(callback);
     }
 }
 

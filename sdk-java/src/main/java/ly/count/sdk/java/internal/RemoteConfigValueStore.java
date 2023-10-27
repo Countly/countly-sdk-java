@@ -10,6 +10,7 @@ import org.json.JSONObject;
 
 public class RemoteConfigValueStore {
     public JSONObject values;
+    private final Log L;
     public boolean valuesCanBeCached;
     public static final String keyValue = "v";
     public static final String keyCacheFlag = "c";
@@ -41,7 +42,7 @@ public class RemoteConfigValueStore {
 
             if (value == null) {
                 Object badVal = values.opt(key);
-                //todo Countly.sharedInstance().L.w("[RemoteConfigValueStore] cacheClearValues, stored entry was not a JSON object, key:[" + key + "] value:[" + badVal + "]");
+                L.w("[RemoteConfigValueStore] cacheClearValues, stored entry was not a JSON object, key:[" + key + "] value:[" + badVal + "]");
                 continue;
             }
 
@@ -49,7 +50,7 @@ public class RemoteConfigValueStore {
                 value.put(keyCacheFlag, cacheValCached);
                 values.put(key, value);
             } catch (Exception e) {
-                //todo Countly.sharedInstance().L.e("[RemoteConfigValueStore] cacheClearValues, Failed caching remote config values, " + e);
+                L.e("[RemoteConfigValueStore] cacheClearValues, Failed caching remote config values, " + e);
             }
         }
     }
@@ -63,8 +64,7 @@ public class RemoteConfigValueStore {
     //========================================
 
     public void mergeValues(@Nonnull Map<String, RCData> newValues, boolean fullUpdate) {
-        //Countly.sharedInstance().L.i("[RemoteConfigValueStore] mergeValues, stored values:" + values.toString() + "provided values:" + newValues);
-        //todo Countly.sharedInstance().L.v("[RemoteConfigValueStore] mergeValues, stored values C:" + values.length() + "provided values C:" + newValues.size());
+        L.v("[RemoteConfigValueStore] mergeValues, stored values C:" + values.length() + "provided values C:" + newValues.size());
 
         if (fullUpdate) {
             clearValues();
@@ -79,19 +79,20 @@ public class RemoteConfigValueStore {
                 newObj.put(keyCacheFlag, cacheValFresh);
                 values.put(key, newObj);
             } catch (Exception e) {
-                //todo Countly.sharedInstance().L.e("[RemoteConfigValueStore] Failed merging remote config values");
+                L.e("[RemoteConfigValueStore] Failed merging remote config values");
             }
         }
-        //todo Countly.sharedInstance().L.v("[RemoteConfigValueStore] merging done:" + values.toString());
+        L.v("[RemoteConfigValueStore] merging done:" + values.toString());
     }
 
     //========================================
     // CONSTRUCTION
     //========================================
 
-    private RemoteConfigValueStore(@Nonnull JSONObject values, boolean valuesShouldBeCached) {
+    private RemoteConfigValueStore(@Nonnull JSONObject values, boolean valuesShouldBeCached, @Nonnull Log L) {
         this.values = values;
         this.valuesCanBeCached = valuesShouldBeCached;
+        this.L = L;
     }
 
     //========================================
@@ -109,7 +110,7 @@ public class RemoteConfigValueStore {
             res.isCurrentUsersData = rcObj.getInt(keyCacheFlag) != cacheValCached;
             return res;
         } catch (Exception ex) {
-            //todo Countly.sharedInstance().L.e("[RemoteConfigValueStore] Got JSON exception while calling 'getValue': " + ex.toString());
+            L.e("[RemoteConfigValueStore] Got JSON exception while calling 'getValue': " + ex);
         }
         return res;
     }
@@ -129,7 +130,7 @@ public class RemoteConfigValueStore {
                 int rcObjCache = rcObj.getInt(keyCacheFlag);
                 ret.put(key, new RCData(rcObjVal, (rcObjCache != cacheValCached)));
             } catch (Exception ex) {
-                //todo Countly.sharedInstance().L.e("[RemoteConfigValueStore] Got JSON exception while calling 'getAllValues': " + ex.toString());
+                L.e("[RemoteConfigValueStore] Got JSON exception while calling 'getAllValues': " + ex);
             }
         }
 
@@ -140,24 +141,19 @@ public class RemoteConfigValueStore {
     // SERIALIZATION, DESERIALIZATION
     //========================================
 
-    public static RemoteConfigValueStore dataFromString(@Nullable String storageString, boolean valuesShouldBeCached) {
+    public static RemoteConfigValueStore dataFromString(@Nullable String storageString, boolean valuesShouldBeCached, @Nonnull Log L) {
         if (storageString == null || storageString.isEmpty()) {
-            return new RemoteConfigValueStore(new JSONObject(), valuesShouldBeCached);
+            return new RemoteConfigValueStore(new JSONObject(), valuesShouldBeCached, L);
         }
 
         JSONObject values;
         try {
             values = new JSONObject(storageString);
         } catch (JSONException e) {
-            //todo add logger
-            //("[RemoteConfigValueStore] Couldn't decode RemoteConfigValueStore successfully: " + e.toString());
+            L.e("[RemoteConfigValueStore] Couldn't decode RemoteConfigValueStore successfully: " + e);
             values = new JSONObject();
         }
-        //Countly.sharedInstance().L.i("[RemoteConfigValueStore] serialization done, dataFromString:" + values.toString());
-        return new RemoteConfigValueStore(values, valuesShouldBeCached);
-    }
-
-    public String dataToString() {
-        return values.toString();
+        L.i("[RemoteConfigValueStore] serialization done, dataFromString:" + values);
+        return new RemoteConfigValueStore(values, valuesShouldBeCached, L);
     }
 }

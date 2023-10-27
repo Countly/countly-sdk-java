@@ -33,7 +33,17 @@ public interface StorageProvider {
      */
     void setDeviceIdType(String deviceIdTypeString);
 
-    void setRemoteConfigValues(String s);
+    /**
+     * Set remote config values
+     *
+     * @param remoteConfigValues set of remote config values
+     */
+    void setRemoteConfigValues(String remoteConfigValues);
 
+    /**
+     * Get remote config values
+     *
+     * @return set of remote config values
+     */
     String getRemoteConfigValues();
 }

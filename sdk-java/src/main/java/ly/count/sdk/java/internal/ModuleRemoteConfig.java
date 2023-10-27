@@ -30,9 +30,6 @@ public class ModuleRemoteConfig extends ModuleBase {
 
     public static String variantObjectNameKey = "name";
 
-    @Nullable
-    Map<String, String> metricOverride = null;
-
     ModuleRemoteConfig() {
     }
 
@@ -41,14 +38,12 @@ public class ModuleRemoteConfig extends ModuleBase {
         super.init(config);
         L.v("[ModuleRemoteConfig] Initialising");
 
-        metricOverride = config.getMetricOverride();
-        //TODO add params to config
-        //TODO L.d("[ModuleRemoteConfig] Setting if remote config Automatic triggers enabled, " + config.enableRemoteConfigAutomaticDownloadTriggers + ", caching enabled: " + config.enableRemoteConfigValueCaching + ", auto enroll enabled: " + config.enableAutoEnrollFlag);
-        automaticDownloadTriggersEnabled = true;//config.enableRemoteConfigAutomaticDownloadTriggers;
-        remoteConfigValuesShouldBeCached = true;//config.enableRemoteConfigValueCaching;
-        autoEnrollEnabled = true;//config.enableAutoEnrollFlag;
+        L.d("[ModuleRemoteConfig] Setting if remote config Automatic triggers enabled, " + config.isRemoteConfigAutomaticDownloadTriggersEnabled() + ", caching enabled: " + config.isRemoteConfigValueCachingEnabled() + ", auto enroll enabled: " + config.isAutoEnrollFlagEnabled());
+        automaticDownloadTriggersEnabled = config.isRemoteConfigAutomaticDownloadTriggersEnabled();
+        remoteConfigValuesShouldBeCached = config.isRemoteConfigValueCachingEnabled();
+        autoEnrollEnabled = config.isAutoEnrollFlagEnabled();
 
-        //downloadCallbacks.addAll(config.remoteConfigGlobalCallbackList);
+        downloadCallbacks.addAll(config.getRemoteConfigGlobalCallbackList());
 
         remoteConfigInterface = new RemoteConfig();
     }
@@ -70,19 +65,20 @@ public class ModuleRemoteConfig extends ModuleBase {
             if (internalConfig.getDeviceId() == null) {
                 //device ID is null, abort
                 L.d("[ModuleRemoteConfig] RemoteConfig value update was aborted, deviceID is null");
-                NotifyDownloadCallbacks(devProvidedCallback, RequestResult.Error, "Can't complete call, device ID is null", fullUpdate, null);
+                notifyDownloadCallbacks(devProvidedCallback, RequestResult.Error, "Can't complete call, device ID is null", fullUpdate, null);
                 return;
             }
 
             if (internalConfig.isTemporaryIdEnabled()) {
                 //temporary id mode enabled, abort
                 L.d("[ModuleRemoteConfig] RemoteConfig value update was aborted, temporary device ID mode is set");
-                NotifyDownloadCallbacks(devProvidedCallback, RequestResult.Error, "Can't complete call, temporary device ID is set", fullUpdate, null);
+                notifyDownloadCallbacks(devProvidedCallback, RequestResult.Error, "Can't complete call, temporary device ID is set", fullUpdate, null);
                 return;
             }
 
             //prepare metrics and request data
-            String preparedMetrics = "";//TODO metrics deviceInfo.getMetrics(_cly.context_, metricOverride);
+            String preparedMetrics = Device.dev.buildMetrics().toString();
+
             String requestData;
 
             requestData = ""; //TODO requestQueueProvider.prepareRemoteConfigRequest(preparedKeys[0], preparedKeys[1], preparedMetrics, autoEnrollEnabled);
@@ -95,12 +91,12 @@ public class ModuleRemoteConfig extends ModuleBase {
             internalConfig.immediateRequestGenerator.createImmediateRequestMaker().doWork(requestData, "/o/sdk", transport, false, networkingIsEnabled, checkResponse -> {
                 L.d("[ModuleRemoteConfig] Processing remote config received response, received response is null:[" + (checkResponse == null) + "]");
                 if (checkResponse == null) {
-                    NotifyDownloadCallbacks(devProvidedCallback, RequestResult.Error, "Encountered problem while trying to reach the server, possibly no internet connection", fullUpdate, null);
+                    notifyDownloadCallbacks(devProvidedCallback, RequestResult.Error, "Encountered problem while trying to reach the server, possibly no internet connection", fullUpdate, null);
                     return;
                 }
 
                 String error = null;
-                Map<String, RCData> newRC = RemoteConfigHelper.DownloadedValuesIntoMap(checkResponse, L);
+                Map<String, RCData> newRC = RemoteConfigHelper.downloadedValuesIntoMap(checkResponse, L);
 
                 try {
                     boolean clearOldValues = keysExcept == null && keysOnly == null;
@@ -110,11 +106,11 @@ public class ModuleRemoteConfig extends ModuleBase {
                     error = "Encountered internal issue while trying to download remote config information from the server, [" + ex.toString() + "]";
                 }
 
-                NotifyDownloadCallbacks(devProvidedCallback, error == null ? RequestResult.Success : RequestResult.Error, error, fullUpdate, newRC);
+                notifyDownloadCallbacks(devProvidedCallback, error == null ? RequestResult.Success : RequestResult.Error, error, fullUpdate, newRC);
             }, L);
         } catch (Exception ex) {
             L.e("[ModuleRemoteConfig] Encountered internal error while trying to perform a remote config update. " + ex.toString());
-            NotifyDownloadCallbacks(devProvidedCallback, RequestResult.Error, "Encountered internal error while trying to perform a remote config update", fullUpdate, null);
+            notifyDownloadCallbacks(devProvidedCallback, RequestResult.Error, "Encountered internal error while trying to perform a remote config update", fullUpdate, null);
         }
     }
 
@@ -234,7 +230,7 @@ public class ModuleRemoteConfig extends ModuleBase {
                         return;
                     }
 
-                    RCAutomaticDownloadTrigger(true);//todo afterwards cache only that one key
+                    rcAutomaticDownloadTrigger(true);
 
                     callback.callback(RequestResult.Success, null);
                 } catch (Exception ex) {
@@ -251,28 +247,24 @@ public class ModuleRemoteConfig extends ModuleBase {
     /**
      * Merge the values acquired from the server into the current values.
      * Clear if needed.
-     *
-     * @throws Exception it throws an exception so that it is escalated upwards
      */
     void mergeCheckResponseIntoCurrentValues(boolean clearOldValues, @Nonnull Map<String, RCData> newRC) {
-        //todo iterate over all response values and print a summary of the returned keys + ideally a summary of their payload.
-
         //merge the new values into the current ones
-        RemoteConfigValueStore rcvs = loadConfig();
+        RemoteConfigValueStore rcvs = loadRCValuesFromStorage();
         rcvs.mergeValues(newRC, clearOldValues);
 
-        L.d("[ModuleRemoteConfig] Finished remote config processing, starting saving");
+        L.d("[ModuleRemoteConfig] mergeCheckResponseIntoCurrentValues, Finished remote config processing, starting saving");
 
-        saveConfig(rcvs);
+        saveRCValues(rcvs);
 
-        L.d("[ModuleRemoteConfig] Finished remote config saving");
+        L.d("[ModuleRemoteConfig] mergeCheckResponseIntoCurrentValues, Finished remote config saving");
     }
 
     /**
      * Checks and evaluates the response from the server
      *
      * @param responseJson - JSONObject response
-     * @return
+     * @return true if the response is valid
      */
     boolean isResponseValid(@Nonnull JSONObject responseJson) {
         boolean result = false;
@@ -291,7 +283,7 @@ public class ModuleRemoteConfig extends ModuleBase {
 
     RCData getRCValue(@Nonnull String key) {
         try {
-            RemoteConfigValueStore rcvs = loadConfig();
+            RemoteConfigValueStore rcvs = loadRCValuesFromStorage();
             return rcvs.getValue(key);
         } catch (Exception ex) {
             L.e("[ModuleRemoteConfig] getValue, Call failed:[" + ex.toString() + "]");
@@ -299,19 +291,18 @@ public class ModuleRemoteConfig extends ModuleBase {
         }
     }
 
-    void saveConfig(@Nonnull RemoteConfigValueStore rcvs) {
-        internalConfig.storageProvider.setRemoteConfigValues(rcvs.dataToString());
+    void saveRCValues(@Nonnull RemoteConfigValueStore rcvs) {
+        internalConfig.storageProvider.setRemoteConfigValues(rcvs.values.toString());
     }
 
     /**
-     * @return
-     * @throws Exception For some reason this might be throwing an exception
+     * Loads the remote config values from the storage
+     *
+     * @return see {@link RemoteConfigValueStore}
      */
-    @Nonnull RemoteConfigValueStore loadConfig() {
+    @Nonnull RemoteConfigValueStore loadRCValuesFromStorage() {
         String rcvsString = internalConfig.storageProvider.getRemoteConfigValues();
-        //noinspection UnnecessaryLocalVariable
-        RemoteConfigValueStore rcvs = RemoteConfigValueStore.dataFromString(rcvsString, remoteConfigValuesShouldBeCached);
-        return rcvs;
+        return RemoteConfigValueStore.dataFromString(rcvsString, remoteConfigValuesShouldBeCached, L);
     }
 
     void clearValueStoreInternal() {
@@ -320,10 +311,10 @@ public class ModuleRemoteConfig extends ModuleBase {
 
     @Nonnull Map<String, RCData> getAllRemoteConfigValuesInternal() {
         try {
-            RemoteConfigValueStore rcvs = loadConfig();
+            RemoteConfigValueStore rcvs = loadRCValuesFromStorage();
             return rcvs.getAllValues();
         } catch (Exception ex) {
-            L.e("[ModuleRemoteConfig] getAllRemoteConfigValuesInternal, Call failed:[" + ex.toString() + "]");
+            L.e("[ModuleRemoteConfig] getAllRemoteConfigValuesInternal, Call failed:[" + ex + "]");
             return new HashMap<>();
         }
     }
@@ -356,22 +347,22 @@ public class ModuleRemoteConfig extends ModuleBase {
         L.v("[RemoteConfig] Clearing remote config values and preparing to download after ID update, " + valuesShouldBeCacheCleared);
 
         if (valuesShouldBeCacheCleared) {
-            CacheOrClearRCValuesIfNeeded();
+            cacheOrClearRCValuesIfNeeded();
         }
         if (automaticDownloadTriggersEnabled) {
             updateRemoteConfigAfterIdChange = true;
         }
     }
 
-    void CacheOrClearRCValuesIfNeeded() {
+    void cacheOrClearRCValuesIfNeeded() {
         L.v("[RemoteConfig] CacheOrClearRCValuesIfNeeded, cacheclearing values");
 
-        RemoteConfigValueStore rc = loadConfig();
-        rc.cacheClearValues();
-        saveConfig(rc);
+        RemoteConfigValueStore rcvs = loadRCValuesFromStorage();
+        rcvs.cacheClearValues();
+        saveRCValues(rcvs);
     }
 
-    void NotifyDownloadCallbacks(RCDownloadCallback devProvidedCallback, RequestResult requestResult, String message, boolean fullUpdate, Map<String, RCData> downloadedValues) {
+    void notifyDownloadCallbacks(RCDownloadCallback devProvidedCallback, RequestResult requestResult, String message, boolean fullUpdate, Map<String, RCData> downloadedValues) {
         for (RCDownloadCallback callback : downloadCallbacks) {
             callback.callback(requestResult, message, fullUpdate, downloadedValues);
         }
@@ -381,9 +372,9 @@ public class ModuleRemoteConfig extends ModuleBase {
         }
     }
 
-    void RCAutomaticDownloadTrigger(boolean cacheClearOldValues) {
+    void rcAutomaticDownloadTrigger(boolean cacheClearOldValues) {
         if (cacheClearOldValues) {
-            CacheOrClearRCValuesIfNeeded();
+            cacheOrClearRCValuesIfNeeded();
         }
 
         if (automaticDownloadTriggersEnabled) {
@@ -400,14 +391,14 @@ public class ModuleRemoteConfig extends ModuleBase {
 
         if (updateRemoteConfigAfterIdChange) {
             updateRemoteConfigAfterIdChange = false;
-            RCAutomaticDownloadTrigger(true);
+            rcAutomaticDownloadTrigger(true);
         }
     }
 
     @Override
     public void initFinished(@Nonnull InternalConfig config) {
         //update remote config_ values if automatic update is enabled and we are not in temporary id mode
-        RCAutomaticDownloadTrigger(false);
+        rcAutomaticDownloadTrigger(false);
     }
 
     @Override

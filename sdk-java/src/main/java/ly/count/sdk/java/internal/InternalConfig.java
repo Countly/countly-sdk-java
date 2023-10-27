@@ -407,12 +407,20 @@ public class InternalConfig extends Config implements Storable {
     //endregion
 
     //region remote config
-    public Boolean getRemoteConfigAutomaticUpdateEnabled() {
-        return enableAutomaticRemoteConfig;
+    public boolean isRemoteConfigAutomaticDownloadTriggersEnabled() {
+        return enableRemoteConfigAutomaticDownloadTriggers;
     }
 
-    public Long getRemoteConfigUpdateTimeoutLength() {
-        return remoteConfigUpdateRequestTimeout;
+    public boolean isRemoteConfigValueCachingEnabled() {
+        return enableRemoteConfigValueCaching;
+    }
+
+    public boolean isAutoEnrollFlagEnabled() {
+        return enableAutoEnrollFlag;
+    }
+
+    public List<RCDownloadCallback> getRemoteConfigGlobalCallbackList() {
+        return remoteConfigGlobalCallbacks;
     }
     //endregion
 
