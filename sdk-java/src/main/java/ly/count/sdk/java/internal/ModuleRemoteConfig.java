@@ -1,6 +1,7 @@
 package ly.count.sdk.java.internal;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,7 +82,7 @@ public class ModuleRemoteConfig extends ModuleBase {
 
             String requestData;
 
-            requestData = ""; //TODO requestQueueProvider.prepareRemoteConfigRequest(preparedKeys[0], preparedKeys[1], preparedMetrics, autoEnrollEnabled);
+            requestData = prepareRemoteConfigRequest(preparedKeys[0], preparedKeys[1], preparedMetrics, autoEnrollEnabled);
 
             L.d("[ModuleRemoteConfig] RemoteConfig requestData:[" + requestData + "]");
 
@@ -102,48 +103,86 @@ public class ModuleRemoteConfig extends ModuleBase {
                     boolean clearOldValues = keysExcept == null && keysOnly == null;
                     mergeCheckResponseIntoCurrentValues(clearOldValues, newRC);
                 } catch (Exception ex) {
-                    L.e("[ModuleRemoteConfig] updateRemoteConfigValues - execute, Encountered internal issue while trying to download remote config information from the server, [" + ex.toString() + "]");
-                    error = "Encountered internal issue while trying to download remote config information from the server, [" + ex.toString() + "]";
+                    L.e("[ModuleRemoteConfig] updateRemoteConfigValues - execute, Encountered internal issue while trying to download remote config information from the server, [" + ex + "]");
+                    error = "Encountered internal issue while trying to download remote config information from the server, [" + ex + "]";
                 }
 
                 notifyDownloadCallbacks(devProvidedCallback, error == null ? RequestResult.Success : RequestResult.Error, error, fullUpdate, newRC);
             }, L);
         } catch (Exception ex) {
-            L.e("[ModuleRemoteConfig] Encountered internal error while trying to perform a remote config update. " + ex.toString());
+            L.e("[ModuleRemoteConfig] Encountered internal error while trying to perform a remote config update. " + ex);
             notifyDownloadCallbacks(devProvidedCallback, RequestResult.Error, "Encountered internal error while trying to perform a remote config update", fullUpdate, null);
         }
+    }
+
+    private String prepareRemoteConfigRequest(@Nullable String keysInclude, @Nullable String keysExclude, @Nonnull String preparedMetrics, boolean autoEnroll) {
+
+        Params params = ModuleRequests.prepareRequiredParams(internalConfig).add("method", "rc");
+
+        if (Countly.session() != null) {
+            //add session data if consent given
+            params.add("metrics", preparedMetrics);
+        }
+
+        //add key filters
+        if (keysInclude != null) {
+            params.add("keys", Utils.urlencode(keysInclude, L));
+        } else if (keysExclude != null) {
+            params.add("omit_keys", Utils.urlencode(keysExclude, L));
+        }
+
+        // if auto enroll was enabled add oi=1 to the request
+        if (autoEnroll) {
+            params.add("oi", "1");
+        }
+
+        return params.toString();
     }
 
     /**
      * Internal function to form and send a request to enroll user for given keys
      *
-     * @param keys
+     * @param keys - keys for which the user should be enrolled
      */
     void enrollIntoABTestsForKeysInternal(@Nonnull String[] keys) {
-        L.d("[ModuleRemoteConfig] Enrolling user for the given keys:" + keys);
+        L.d("[ModuleRemoteConfig] Enrolling user for the given keys:" + Arrays.toString(keys));
 
         if (internalConfig.isTemporaryIdEnabled() || internalConfig.getDeviceId() == null) {
             L.d("[ModuleRemoteConfig] Enrolling user was aborted, temporary device ID mode is set or device ID is null.");
             return;
         }
+        Params params = new Params();
+        params.add("method", "ab");
+        params.add("new_end_point", Utils.urlencode("/o/sdk", L));
 
-        //TODO enroll requestQueueProvider.enrollToKeys(keys);
+        if (keys.length > 0) { // exits all otherwise
+            params.arr("keys").put(Arrays.asList(keys)).add();
+        }
+
+        ModuleRequests.pushAsync(internalConfig, new Request(params));
     }
 
     /**
      * Internal function to form and send the request to remove user from A/B testes for given keys
      *
-     * @param keys
+     * @param keys - keys for which the user should be removed from keys
      */
     void exitABTestsForKeysInternal(@Nonnull String[] keys) {
-        L.d("[ModuleRemoteConfig] Removing user for the tests with given keys:" + keys);
+        L.d("[ModuleRemoteConfig] Removing user for the tests with given keys:" + Arrays.toString(keys));
 
         if (internalConfig.isTemporaryIdEnabled() || internalConfig.getDeviceId() == null) {
             L.d("[ModuleRemoteConfig] Removing user from tests was aborted, temporary device ID mode is set or device ID is null.");
             return;
         }
 
-        //TODO exit requestQueueProvider.exitForKeys(keys);
+        Params params = new Params();
+
+        params.add("method", "ab_opt_out");
+        if (keys.length > 0) { // exits all otherwise
+            params.arr("keys").put(Arrays.asList(keys)).add();
+        }
+
+        ModuleRequests.pushAsync(internalConfig, new Request(params));
     }
 
     /**
@@ -153,7 +192,7 @@ public class ModuleRemoteConfig extends ModuleBase {
      * @param callback called after the fetch is done
      * @param shouldFetchExperimentInfo if true this call would fetch experiment information including the variants
      */
-    void testingFetchVariantInformationInternal(@Nonnull final RCVariantCallback callback, @Nonnull final boolean shouldFetchExperimentInfo) {
+    void testingFetchVariantInformationInternal(@Nonnull final RCVariantCallback callback, final boolean shouldFetchExperimentInfo) {
         try {
             L.d("[ModuleRemoteConfig] Fetching all A/B test variants/info");
 
@@ -187,7 +226,7 @@ public class ModuleRemoteConfig extends ModuleBase {
                 callback.callback(RequestResult.Success, null);
             }, L);
         } catch (Exception ex) {
-            L.e("[ModuleRemoteConfig] Encountered internal error while trying to fetch all A/B test variants/info. " + ex.toString());
+            L.e("[ModuleRemoteConfig] Encountered internal error while trying to fetch all A/B test variants/info. " + ex);
             callback.callback(RequestResult.Error, "Encountered internal error while trying to fetch all A/B test variants/info.");
         }
     }
@@ -210,7 +249,7 @@ public class ModuleRemoteConfig extends ModuleBase {
             }
 
             // prepare request data
-            String requestData = ""; //todo prep req requestQueueProvider.prepareEnrollVariant(key, variant);
+            String requestData = prepareEnrollVariant(key, variant);
 
             L.d("[ModuleRemoteConfig] Enrolling A/B test variants requestData:[" + requestData + "]");
 
@@ -226,7 +265,7 @@ public class ModuleRemoteConfig extends ModuleBase {
 
                 try {
                     if (!isResponseValid(checkResponse)) {
-                        callback.callback(RequestResult.NetworkIssue, "Bad response from the server:" + checkResponse.toString());
+                        callback.callback(RequestResult.NetworkIssue, "Bad response from the server:" + checkResponse);
                         return;
                     }
 
@@ -234,14 +273,22 @@ public class ModuleRemoteConfig extends ModuleBase {
 
                     callback.callback(RequestResult.Success, null);
                 } catch (Exception ex) {
-                    L.e("[ModuleRemoteConfig] testingEnrollIntoVariantInternal - execute, Encountered internal issue while trying to enroll to the variant, [" + ex.toString() + "]");
+                    L.e("[ModuleRemoteConfig] testingEnrollIntoVariantInternal - execute, Encountered internal issue while trying to enroll to the variant, [" + ex + "]");
                     callback.callback(RequestResult.Error, "Encountered internal error while trying to take care of the A/B test variant enrolment.");
                 }
             }, L);
         } catch (Exception ex) {
-            L.e("[ModuleRemoteConfig] Encountered internal error while trying to enroll A/B test variants. " + ex.toString());
+            L.e("[ModuleRemoteConfig] Encountered internal error while trying to enroll A/B test variants. " + ex);
             callback.callback(RequestResult.Error, "Encountered internal error while trying to enroll A/B test variants.");
         }
+    }
+
+    public String prepareEnrollVariant(String key, String variant) {
+        return ModuleRequests.prepareRequiredParams(internalConfig)
+            .add("method", "ab_enroll_variant")
+            .add("key", Utils.urlencode(key, L))
+            .add("variant", Utils.urlencode(variant, L))
+            .toString();
     }
 
     /**
@@ -286,7 +333,7 @@ public class ModuleRemoteConfig extends ModuleBase {
             RemoteConfigValueStore rcvs = loadRCValuesFromStorage();
             return rcvs.getValue(key);
         } catch (Exception ex) {
-            L.e("[ModuleRemoteConfig] getValue, Call failed:[" + ex.toString() + "]");
+            L.e("[ModuleRemoteConfig] getValue, Call failed:[" + ex + "]");
             return new RCData(null, true);
         }
     }
@@ -322,7 +369,7 @@ public class ModuleRemoteConfig extends ModuleBase {
     /**
      * Gets all AB testing variants stored in the memory
      *
-     * @return
+     * @return Map of all AB testing variants
      */
     @Nonnull Map<String, String[]> testingGetAllVariantsInternal() {
         return variantContainer;
@@ -331,8 +378,8 @@ public class ModuleRemoteConfig extends ModuleBase {
     /**
      * Get all variants for a given key if exists. Else returns an empty array.
      *
-     * @param key
-     * @return
+     * @param key - key for which the variants are needed
+     * @return array of variants
      */
     @Nullable String[] testingGetVariantsForKeyInternal(@Nonnull String key) {
         String[] variantResponse = null;
@@ -397,7 +444,7 @@ public class ModuleRemoteConfig extends ModuleBase {
 
     @Override
     public void initFinished(@Nonnull InternalConfig config) {
-        //update remote config_ values if automatic update is enabled and we are not in temporary id mode
+        //update remote config_ values if automatic update is enabled, and we are not in temporary id mode
         rcAutomaticDownloadTrigger(false);
     }
 
@@ -562,7 +609,7 @@ public class ModuleRemoteConfig extends ModuleBase {
             synchronized (Countly.instance()) {
                 L.i("[RemoteConfig] getValueAndEnroll, key:[" + key + "]");
 
-                if (key == null || key.equals("")) {
+                if (Utils.isEmptyOrNull(key)) {
                     L.i("[RemoteConfig] getValueAndEnroll, A valid key should be provided to get its value.");
                     return new RCData(null, true);
                 }
@@ -652,7 +699,6 @@ public class ModuleRemoteConfig extends ModuleBase {
 
         /**
          * Returns all variant information as a Map<String, String[]>
-         *
          * This call is not meant for production. It should only be used to facilitate testing of A/B test experiments.
          *
          * @return Return the information of all available variants
@@ -667,7 +713,6 @@ public class ModuleRemoteConfig extends ModuleBase {
 
         /**
          * Returns all experiment information as a Map<String, ExperimentInformation>
-         *
          * This call is not meant for production. It should only be used to facilitate testing of A/B test experiments.
          *
          * @return Return the information of all available variants
@@ -682,7 +727,6 @@ public class ModuleRemoteConfig extends ModuleBase {
 
         /**
          * Returns variant information for a key as a String[]
-         *
          * This call is not meant for production. It should only be used to facilitate testing of A/B test experiments.
          *
          * @param key - key value to get variant information for
@@ -703,7 +747,6 @@ public class ModuleRemoteConfig extends ModuleBase {
 
         /**
          * Download all variants of A/B testing experiments
-         *
          * This call is not meant for production. It should only be used to facilitate testing of A/B test experiments.
          *
          * @param completionCallback this callback will be called when the network request finished
@@ -723,7 +766,6 @@ public class ModuleRemoteConfig extends ModuleBase {
 
         /**
          * Download all A/B testing experiments information
-         *
          * This call is not meant for production. It should only be used to facilitate testing of A/B test experiments.
          *
          * @param completionCallback this callback will be called when the network request finished
@@ -743,12 +785,11 @@ public class ModuleRemoteConfig extends ModuleBase {
 
         /**
          * Enrolls user for a specific variant of A/B testing experiment
-         *
          * This call is not meant for production. It should only be used to facilitate testing of A/B test experiments.
          *
          * @param keyName - key value retrieved from the fetched variants
          * @param variantName - name of the variant for the key to enroll
-         * @param completionCallback
+         * @param completionCallback this callback will be called when the network request finished
          */
         public void testingEnrollIntoVariant(@Nullable String keyName, String variantName, @Nullable RCVariantCallback completionCallback) {
             synchronized (Countly.instance()) {

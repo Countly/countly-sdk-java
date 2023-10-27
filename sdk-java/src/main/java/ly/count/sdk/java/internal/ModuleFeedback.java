@@ -56,15 +56,10 @@ public class ModuleFeedback extends ModuleBase {
         Transport transport = SDKCore.instance.networking.getTransport();
         final boolean networkingIsEnabled = internalConfig.getNetworkingEnabled();
 
-        Request request = new Request();
-        ModuleRequests.addRequiredTimeParams(request);
-        ModuleRequests.addRequired(internalConfig, request);
-        request.params.add("method", "feedback");
-        String requestData = "?" + request.params.toString();
-
+        Params params = ModuleRequests.prepareRequiredParams(internalConfig).add("method", "feedback");
         ImmediateRequestGenerator iRGenerator = internalConfig.immediateRequestGenerator;
 
-        iRGenerator.createImmediateRequestMaker().doWork(requestData, "/o/sdk", transport, false, networkingIsEnabled, checkResponse -> {
+        iRGenerator.createImmediateRequestMaker().doWork("?" + params, "/o/sdk", transport, false, networkingIsEnabled, checkResponse -> {
             if (checkResponse == null) {
                 L.d("[ModuleFeedback] getAvailableFeedbackWidgetsInternal, Not possible to retrieve widget list. Probably due to lack of connection to the server");
                 callback.onFinished(null, "Not possible to retrieve widget list. Probably due to lack of connection to the server");
