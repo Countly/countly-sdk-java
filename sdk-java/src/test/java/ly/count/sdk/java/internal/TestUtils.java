@@ -416,4 +416,9 @@ public class TestUtils {
         Assert.assertFalse(requestShouldBeDelayed);
         Assert.assertTrue(networkingIsEnabled);
     }
+
+    static void validateMetrics(String metrics) {
+        Params params = Device.dev.buildMetrics();
+        Assert.assertEquals(params.get("metrics"), metrics);
+    }
 }

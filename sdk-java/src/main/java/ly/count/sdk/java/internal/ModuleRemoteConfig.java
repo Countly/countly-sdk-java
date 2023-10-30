@@ -72,7 +72,7 @@ public class ModuleRemoteConfig extends ModuleBase {
             }
 
             //prepare metrics and request data
-            String preparedMetrics = Device.dev.buildMetrics().toString();
+            Params preparedMetrics = Device.dev.buildMetrics();
 
             String requestData = prepareRemoteConfigRequest(preparedKeys[0], preparedKeys[1], preparedMetrics, autoEnrollEnabled);
 
@@ -132,7 +132,7 @@ public class ModuleRemoteConfig extends ModuleBase {
     }
 
     private void clearValueStoreInternal() {
-        internalConfig.storageProvider.setRemoteConfigValues("");
+        internalConfig.storageProvider.setRemoteConfigValues(null);
     }
 
     private @Nonnull Map<String, RCData> getAllRemoteConfigValuesInternal() {
@@ -163,13 +163,13 @@ public class ModuleRemoteConfig extends ModuleBase {
         return res;
     }
 
-    private String prepareRemoteConfigRequest(@Nullable String keysInclude, @Nullable String keysExclude, @Nonnull String preparedMetrics, boolean autoEnroll) {
+    private String prepareRemoteConfigRequest(@Nullable String keysInclude, @Nullable String keysExclude, @Nonnull Params preparedMetrics, boolean autoEnroll) {
 
         Params params = ModuleRequests.prepareRequiredParams(internalConfig).add("method", "rc");
 
         if (Countly.session() != null) {
             //add session data if consent given
-            params.add("metrics", preparedMetrics);
+            params.add(preparedMetrics);
         }
 
         //add key filters
