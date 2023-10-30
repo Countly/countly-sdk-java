@@ -197,7 +197,7 @@ public class ModuleFeedbackTests {
         ImmediateRequestI requestMaker = (requestData, customEndpoint, cp, requestShouldBeDelayed, networkingIsEnabled, callback, log) -> {
             Map<String, String> params = TestUtils.parseQueryParams(requestData);
             Assert.assertEquals("feedback", params.get("method"));
-            validateWidgetRequiredParams("/o/sdk", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
+            TestUtils.validateRequestMakerRequiredParams("/o/sdk", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
             TestUtils.validateRequiredParams(params);
             callback.callback(returnedResponse);
         };
@@ -349,7 +349,7 @@ public class ModuleFeedbackTests {
 
         if (widgetInfo != null) {
             ImmediateRequestI requestMaker = (requestData, customEndpoint, cp, requestShouldBeDelayed, networkingIsEnabled, callback, log) -> {
-                validateWidgetRequiredParams("/o/surveys/" + widgetInfo.type.name() + "/widget?", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
+                TestUtils.validateRequestMakerRequiredParams("/o/surveys/" + widgetInfo.type.name() + "/widget?", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
                 validateWidgetDataParams(TestUtils.parseQueryParams(requestData), widgetInfo);
                 callback.callback(responseJson);
             };
@@ -536,12 +536,6 @@ public class ModuleFeedbackTests {
         Assert.assertEquals("1", params.get("shown"));
         Assert.assertEquals(String.valueOf(SDKCore.instance.config.getApplicationVersion()), params.get("app_version"));
         TestUtils.validateSdkIdentityParams(params);
-    }
-
-    private void validateWidgetRequiredParams(String expectedEndpoint, String customEndpoint, Boolean requestShouldBeDelayed, Boolean networkingIsEnabled) {
-        Assert.assertEquals(expectedEndpoint, customEndpoint);
-        Assert.assertFalse(requestShouldBeDelayed);
-        Assert.assertTrue(networkingIsEnabled);
     }
 
     private CountlyFeedbackWidget createFeedbackWidget(FeedbackWidgetType type, String name, String id, String[] tags) {
