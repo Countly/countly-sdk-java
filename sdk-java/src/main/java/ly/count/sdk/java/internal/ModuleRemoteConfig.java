@@ -112,7 +112,7 @@ public class ModuleRemoteConfig extends ModuleBase {
             RemoteConfigValueStore rcvs = loadRCValuesFromStorage();
             return rcvs.getValue(key);
         } catch (Exception ex) {
-            L.e("[ModuleRemoteConfig] getValue, Call failed:[" + ex + "]");
+            L.e("[ModuleRemoteConfig] getRCValue, Call failed:[" + ex + "]");
             return new RCData(null, true);
         }
     }

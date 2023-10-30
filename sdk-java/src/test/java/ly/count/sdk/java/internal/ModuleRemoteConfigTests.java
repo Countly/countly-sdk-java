@@ -9,10 +9,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mockito;
 
 @RunWith(JUnit4.class)
 public class ModuleRemoteConfigTests {
-    
+
     @Before
     public void beforeTest() {
         TestUtils.createCleanTestState();
@@ -72,13 +73,59 @@ public class ModuleRemoteConfigTests {
         Assert.assertEquals(0, Countly.instance().remoteConfig().getValues().size());
     }
 
+    /**
+     * "getValue" with values in countly store
+     * Validating that the value is loaded from countly store correctly and exists
+     * The returned RCData should match with the expected key-value pair 'testKey'-'testValue".
+     */
+    @Test
+    public void getValue() {
+        loadCountlyStoreWithRCValues("{\"rc\":{\"testKey\":{\"v\":\"testValue\",\"c\":0}}}");
+        //enabled rc automatic triggers to load from countly store
+        Countly.instance().init(TestUtils.getConfigRemoteConfigs().enableRemoteConfigAutomaticTriggers());
+        Assert.assertEquals(1, Countly.instance().remoteConfig().getValues().size());
+
+        validateRCData(Countly.instance().remoteConfig().getValue("testKey"), "testValue", false);
+    }
+
+    /**
+     * "getValue" with none existing key
+     * Nothing to restore from countly store. Validating that store is empty
+     * The returned RCData should be null.
+     */
+    @Test
+    public void getValue_noneExisting() {
+        Countly.instance().init(TestUtils.getConfigRemoteConfigs().enableRemoteConfigAutomaticTriggers());
+        Assert.assertEquals(0, Countly.instance().remoteConfig().getValues().size());
+
+        validateRCData(Countly.instance().remoteConfig().getValue(TestUtils.keysValues[0]), null, true);
+    }
+
+    /**
+     * "getValue"
+     * Nothing to restore from countly store. Validating that store is empty
+     * The returned RCData should be null and expected log should be logged.
+     */
+    @Test
+    public void getValue_nullKey() {
+        Countly.instance().init(TestUtils.getConfigRemoteConfigs().enableRemoteConfigAutomaticTriggers());
+        Assert.assertEquals(0, Countly.instance().remoteConfig().getValues().size());
+        ModuleBase rcModule = SDKCore.instance.module(ModuleRemoteConfig.class);
+
+        rcModule.L = Mockito.spy(rcModule.L);
+
+        validateRCData(Countly.instance().remoteConfig().getValue(null), null, true);
+        Mockito.verify(rcModule.L).i("[RemoteConfig] getValue, A valid key should be provided to get its value.");
+    }
+
     private void validateRemoteConfigValues(Map<String, RCData> rcValuesStore, JSONObject rcValuesServer, boolean isCurrentUsersData) {
         Assert.assertEquals(rcValuesServer.keySet().size(), rcValuesStore.size());
-        rcValuesServer.keySet().forEach(key -> {
-            RCData rcData = rcValuesStore.get(key);
-            Assert.assertEquals(rcData.value, rcValuesServer.get(key));
-            Assert.assertEquals(rcData.isCurrentUsersData, isCurrentUsersData);
-        });
+        rcValuesServer.keySet().forEach(key -> validateRCData(rcValuesStore.get(key), rcValuesServer.get(key), isCurrentUsersData));
+    }
+
+    private void validateRCData(RCData rcData, Object value, boolean isCurrentUsersData) {
+        Assert.assertEquals(rcData.value, value);
+        Assert.assertEquals(rcData.isCurrentUsersData, isCurrentUsersData);
     }
 
     private void loadCountlyStoreWithRCValues(String values) {
