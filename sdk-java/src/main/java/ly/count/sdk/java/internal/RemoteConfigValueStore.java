@@ -4,8 +4,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 public class RemoteConfigValueStore {
@@ -89,7 +87,7 @@ public class RemoteConfigValueStore {
     // CONSTRUCTION
     //========================================
 
-    private RemoteConfigValueStore(@Nonnull JSONObject values, boolean valuesShouldBeCached, @Nonnull Log L) {
+    protected RemoteConfigValueStore(@Nonnull JSONObject values, boolean valuesShouldBeCached, @Nonnull Log L) {
         this.values = values;
         this.valuesCanBeCached = valuesShouldBeCached;
         this.L = L;
@@ -135,25 +133,5 @@ public class RemoteConfigValueStore {
         }
 
         return ret;
-    }
-
-    //========================================
-    // SERIALIZATION, DESERIALIZATION
-    //========================================
-
-    public static RemoteConfigValueStore dataFromString(@Nullable String storageString, boolean valuesShouldBeCached, @Nonnull Log L) {
-        if (storageString == null || storageString.isEmpty()) {
-            return new RemoteConfigValueStore(new JSONObject(), valuesShouldBeCached, L);
-        }
-
-        JSONObject values;
-        try {
-            values = new JSONObject(storageString);
-        } catch (JSONException e) {
-            L.e("[RemoteConfigValueStore] Couldn't decode RemoteConfigValueStore successfully: " + e);
-            values = new JSONObject();
-        }
-        L.i("[RemoteConfigValueStore] serialization done, dataFromString:" + values);
-        return new RemoteConfigValueStore(values, valuesShouldBeCached, L);
     }
 }

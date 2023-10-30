@@ -349,12 +349,12 @@ public class SDKStorage implements StorageProvider {
     }
 
     @Override
-    public void setRemoteConfigValues(String s) {
+    public void setRemoteConfigValues(Object s) {
         jsonFileStorage.addAndSave(key_remote_config, s);
     }
 
     @Override
-    public String getRemoteConfigValues() {
-        return jsonFileStorage.getString(key_remote_config, "");
+    public Object getRemoteConfigValues() {
+        return jsonFileStorage.get(key_remote_config);
     }
 }
