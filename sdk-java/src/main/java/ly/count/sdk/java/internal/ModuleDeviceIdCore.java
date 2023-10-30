@@ -261,11 +261,20 @@ public class ModuleDeviceIdCore extends ModuleBase {
             Storage.push(config, config);
 
             if (withMerge) {
+                clearAndDownloadRCValuesAfterIdChange(false);
                 SDKCore.instance.onDeviceId(config, config.getDeviceId(), old);
             } else {
+                clearAndDownloadRCValuesAfterIdChange(true);
                 SDKCore.instance.onDeviceId(config, null, old);
                 SDKCore.instance.onDeviceId(config, config.getDeviceId(), null);
             }
+        }
+    }
+
+    private void clearAndDownloadRCValuesAfterIdChange(boolean valuesShouldBeCacheCleared) {
+        ModuleRemoteConfig moduleRC = SDKCore.instance.module(ModuleRemoteConfig.class);
+        if (moduleRC != null) {
+            moduleRC.clearAndDownloadAfterIdChange(valuesShouldBeCacheCleared);
         }
     }
 

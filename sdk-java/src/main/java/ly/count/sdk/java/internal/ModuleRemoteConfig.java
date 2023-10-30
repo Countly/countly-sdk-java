@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import ly.count.sdk.java.Config;
@@ -37,9 +36,8 @@ public class ModuleRemoteConfig extends ModuleBase {
     @Override
     public void init(final InternalConfig config) {
         super.init(config);
-        L.v("[ModuleRemoteConfig] Initialising");
-
-        L.d("[ModuleRemoteConfig] Setting if remote config Automatic triggers enabled, " + config.isRemoteConfigAutomaticDownloadTriggersEnabled() + ", caching enabled: " + config.isRemoteConfigValueCachingEnabled() + ", auto enroll enabled: " + config.isAutoEnrollFlagEnabled());
+        L.v("[ModuleRemoteConfig] init, Initialising");
+        L.d("[ModuleRemoteConfig] init, Setting if remote config Automatic triggers enabled, " + config.isRemoteConfigAutomaticDownloadTriggersEnabled() + ", caching enabled: " + config.isRemoteConfigValueCachingEnabled() + ", auto enroll enabled: " + config.isAutoEnrollFlagEnabled());
         automaticDownloadTriggersEnabled = config.isRemoteConfigAutomaticDownloadTriggersEnabled();
         remoteConfigValuesShouldBeCached = config.isRemoteConfigValueCachingEnabled();
         autoEnrollEnabled = config.isAutoEnrollFlagEnabled();
@@ -65,14 +63,14 @@ public class ModuleRemoteConfig extends ModuleBase {
             // checks
             if (internalConfig.getDeviceId() == null) {
                 //device ID is null, abort
-                L.d("[ModuleRemoteConfig] RemoteConfig value update was aborted, deviceID is null");
+                L.d("[ModuleRemoteConfig] updateRemoteConfigValues, RemoteConfig value update was aborted, deviceID is null");
                 notifyDownloadCallbacks(devProvidedCallback, RequestResult.Error, "Can't complete call, device ID is null", fullUpdate, null);
                 return;
             }
 
             if (internalConfig.isTemporaryIdEnabled()) {
                 //temporary id mode enabled, abort
-                L.d("[ModuleRemoteConfig] RemoteConfig value update was aborted, temporary device ID mode is set");
+                L.d("[ModuleRemoteConfig] updateRemoteConfigValues, RemoteConfig value update was aborted, temporary device ID mode is set");
                 notifyDownloadCallbacks(devProvidedCallback, RequestResult.Error, "Can't complete call, temporary device ID is set", fullUpdate, null);
                 return;
             }
@@ -80,17 +78,15 @@ public class ModuleRemoteConfig extends ModuleBase {
             //prepare metrics and request data
             String preparedMetrics = Device.dev.buildMetrics().toString();
 
-            String requestData;
+            String requestData = prepareRemoteConfigRequest(preparedKeys[0], preparedKeys[1], preparedMetrics, autoEnrollEnabled);
 
-            requestData = prepareRemoteConfigRequest(preparedKeys[0], preparedKeys[1], preparedMetrics, autoEnrollEnabled);
-
-            L.d("[ModuleRemoteConfig] RemoteConfig requestData:[" + requestData + "]");
+            L.d("[ModuleRemoteConfig] updateRemoteConfigValues, RemoteConfig requestData:[" + requestData + "]");
 
             Transport transport = internalConfig.sdk.networking.getTransport();
             final boolean networkingIsEnabled = internalConfig.getNetworkingEnabled();
 
             internalConfig.immediateRequestGenerator.createImmediateRequestMaker().doWork(requestData, "/o/sdk", transport, false, networkingIsEnabled, checkResponse -> {
-                L.d("[ModuleRemoteConfig] Processing remote config received response, received response is null:[" + (checkResponse == null) + "]");
+                L.d("[ModuleRemoteConfig] updateRemoteConfigValues, Processing remote config received response, received response is null:[" + (checkResponse == null) + "]");
                 if (checkResponse == null) {
                     notifyDownloadCallbacks(devProvidedCallback, RequestResult.Error, "Encountered problem while trying to reach the server, possibly no internet connection", fullUpdate, null);
                     return;
@@ -103,14 +99,14 @@ public class ModuleRemoteConfig extends ModuleBase {
                     boolean clearOldValues = keysExcept == null && keysOnly == null;
                     mergeCheckResponseIntoCurrentValues(clearOldValues, newRC);
                 } catch (Exception ex) {
-                    L.e("[ModuleRemoteConfig] updateRemoteConfigValues - execute, Encountered internal issue while trying to download remote config information from the server, [" + ex + "]");
+                    L.e("[ModuleRemoteConfig] updateRemoteConfigValues, Encountered internal issue while trying to download remote config information from the server, [" + ex + "]");
                     error = "Encountered internal issue while trying to download remote config information from the server, [" + ex + "]";
                 }
 
                 notifyDownloadCallbacks(devProvidedCallback, error == null ? RequestResult.Success : RequestResult.Error, error, fullUpdate, newRC);
             }, L);
         } catch (Exception ex) {
-            L.e("[ModuleRemoteConfig] Encountered internal error while trying to perform a remote config update. " + ex);
+            L.e("[ModuleRemoteConfig] updateRemoteConfigValues, Encountered internal error while trying to perform a remote config update. " + ex);
             notifyDownloadCallbacks(devProvidedCallback, RequestResult.Error, "Encountered internal error while trying to perform a remote config update", fullUpdate, null);
         }
     }
@@ -145,10 +141,10 @@ public class ModuleRemoteConfig extends ModuleBase {
      * @param keys - keys for which the user should be enrolled
      */
     void enrollIntoABTestsForKeysInternal(@Nonnull String[] keys) {
-        L.d("[ModuleRemoteConfig] Enrolling user for the given keys:" + Arrays.toString(keys));
+        L.d("[ModuleRemoteConfig] enrollIntoABTestsForKeysInternal, Enrolling user for the given keys:" + Arrays.toString(keys));
 
         if (internalConfig.isTemporaryIdEnabled() || internalConfig.getDeviceId() == null) {
-            L.d("[ModuleRemoteConfig] Enrolling user was aborted, temporary device ID mode is set or device ID is null.");
+            L.d("[ModuleRemoteConfig] enrollIntoABTestsForKeysInternal, Enrolling user was aborted, temporary device ID mode is set or device ID is null.");
             return;
         }
         Params params = new Params();
@@ -163,15 +159,15 @@ public class ModuleRemoteConfig extends ModuleBase {
     }
 
     /**
-     * Internal function to form and send the request to remove user from A/B testes for given keys
+     * Internal function to form and send the request to remove user from A/B tests for given keys
      *
      * @param keys - keys for which the user should be removed from keys
      */
     void exitABTestsForKeysInternal(@Nonnull String[] keys) {
-        L.d("[ModuleRemoteConfig] Removing user for the tests with given keys:" + Arrays.toString(keys));
+        L.d("[ModuleRemoteConfig] exitABTestsForKeysInternal, Removing user for the tests with given keys:" + Arrays.toString(keys));
 
         if (internalConfig.isTemporaryIdEnabled() || internalConfig.getDeviceId() == null) {
-            L.d("[ModuleRemoteConfig] Removing user from tests was aborted, temporary device ID mode is set or device ID is null.");
+            L.d("[ModuleRemoteConfig] exitABTestsForKeysInternal, Removing user from tests was aborted, temporary device ID mode is set or device ID is null.");
             return;
         }
 
@@ -194,10 +190,10 @@ public class ModuleRemoteConfig extends ModuleBase {
      */
     void testingFetchVariantInformationInternal(@Nonnull final RCVariantCallback callback, final boolean shouldFetchExperimentInfo) {
         try {
-            L.d("[ModuleRemoteConfig] Fetching all A/B test variants/info");
+            L.d("[ModuleRemoteConfig] testingFetchVariantInformationInternal, Fetching all A/B test variants/info");
 
             if (internalConfig.isTemporaryIdEnabled() || internalConfig.getDeviceId() == null) {
-                L.d("[ModuleRemoteConfig] Fetching all A/B test variants was aborted, temporary device ID mode is set or device ID is null.");
+                L.d("[ModuleRemoteConfig] testingFetchVariantInformationInternal, Fetching all A/B test variants was aborted, temporary device ID mode is set or device ID is null.");
                 callback.callback(RequestResult.Error, "Temporary device ID mode is set or device ID is null.");
                 return;
             }
@@ -210,13 +206,13 @@ public class ModuleRemoteConfig extends ModuleBase {
 
             String requestData = ModuleRequests.prepareRequiredParamsAsString(internalConfig, "method", method);
 
-            L.d("[ModuleRemoteConfig] Fetching all A/B test variants/info requestData:[" + requestData + "]");
+            L.d("[ModuleRemoteConfig] testingFetchVariantInformationInternal, Fetching all A/B test variants/info requestData:[" + requestData + "]");
 
             Transport transport = internalConfig.sdk.networking.getTransport();
             final boolean networkingIsEnabled = internalConfig.getNetworkingEnabled();
 
             internalConfig.immediateRequestGenerator.createImmediateRequestMaker().doWork(requestData, "/o/sdk", transport, false, networkingIsEnabled, checkResponse -> {
-                L.d("[ModuleRemoteConfig] Processing Fetching all A/B test variants/info received response, received response is null:[" + (checkResponse == null) + "]");
+                L.d("[ModuleRemoteConfig] testingFetchVariantInformationInternal, Processing Fetching all A/B test variants/info received response, received response is null:[" + (checkResponse == null) + "]");
                 if (checkResponse == null) {
                     callback.callback(RequestResult.NetworkIssue, "Encountered problem while trying to reach the server, possibly no internet connection");
                     return;
@@ -231,24 +227,24 @@ public class ModuleRemoteConfig extends ModuleBase {
                 callback.callback(RequestResult.Success, null);
             }, L);
         } catch (Exception ex) {
-            L.e("[ModuleRemoteConfig] Encountered internal error while trying to fetch all A/B test variants/info. " + ex);
+            L.e("[ModuleRemoteConfig] testingFetchVariantInformationInternal, Encountered internal error while trying to fetch all A/B test variants/info. " + ex);
             callback.callback(RequestResult.Error, "Encountered internal error while trying to fetch all A/B test variants/info.");
         }
     }
 
     void testingEnrollIntoVariantInternal(@Nonnull final String key, @Nonnull final String variant, @Nonnull final RCVariantCallback callback) {
         try {
-            L.d("[ModuleRemoteConfig] Enrolling A/B test variants, Key/Variant pairs:[" + key + "][" + variant + "]");
+            L.d("[ModuleRemoteConfig] testingEnrollIntoVariantInternal, Enrolling A/B test variants, Key/Variant pairs:[" + key + "][" + variant + "]");
 
             if (internalConfig.isTemporaryIdEnabled() || internalConfig.getDeviceId() == null) {
-                L.d("[ModuleRemoteConfig] Enrolling A/B test variants was aborted, temporary device ID mode is set or device ID is null.");
+                L.d("[ModuleRemoteConfig] testingEnrollIntoVariantInternal, Enrolling A/B test variants was aborted, temporary device ID mode is set or device ID is null.");
                 callback.callback(RequestResult.Error, "Temporary device ID mode is set or device ID is null.");
                 return;
             }
 
             // check Key and Variant
             if (Utils.isEmptyOrNull(key) || Utils.isEmptyOrNull(variant)) {
-                L.w("[ModuleRemoteConfig] Enrolling A/B test variants, Key/Variant pair is invalid. Aborting.");
+                L.w("[ModuleRemoteConfig] testingEnrollIntoVariantInternal, Enrolling A/B test variants, Key/Variant pair is invalid. Aborting.");
                 callback.callback(RequestResult.Error, "Provided key/variant pair is invalid.");
                 return;
             }
@@ -256,13 +252,13 @@ public class ModuleRemoteConfig extends ModuleBase {
             // prepare request data
             String requestData = prepareEnrollVariant(key, variant);
 
-            L.d("[ModuleRemoteConfig] Enrolling A/B test variants requestData:[" + requestData + "]");
+            L.d("[ModuleRemoteConfig] testingEnrollIntoVariantInternal, Enrolling A/B test variants requestData:[" + requestData + "]");
 
             Transport transport = internalConfig.sdk.networking.getTransport();
             final boolean networkingIsEnabled = internalConfig.getNetworkingEnabled();
 
             internalConfig.immediateRequestGenerator.createImmediateRequestMaker().doWork(requestData, "/i", transport, false, networkingIsEnabled, checkResponse -> {
-                L.d("[ModuleRemoteConfig] Processing Fetching all A/B test variants received response, received response is null:[" + (checkResponse == null) + "]");
+                L.d("[ModuleRemoteConfig] testingEnrollIntoVariantInternal, Processing Fetching all A/B test variants received response, received response is null:[" + (checkResponse == null) + "]");
                 if (checkResponse == null) {
                     callback.callback(RequestResult.NetworkIssue, "Encountered problem while trying to reach the server, possibly no internet connection");
                     return;
@@ -278,12 +274,12 @@ public class ModuleRemoteConfig extends ModuleBase {
 
                     callback.callback(RequestResult.Success, null);
                 } catch (Exception ex) {
-                    L.e("[ModuleRemoteConfig] testingEnrollIntoVariantInternal - execute, Encountered internal issue while trying to enroll to the variant, [" + ex + "]");
+                    L.e("[ModuleRemoteConfig] testingEnrollIntoVariantInternal, Encountered internal issue while trying to enroll to the variant, [" + ex + "]");
                     callback.callback(RequestResult.Error, "Encountered internal error while trying to take care of the A/B test variant enrolment.");
                 }
             }, L);
         } catch (Exception ex) {
-            L.e("[ModuleRemoteConfig] Encountered internal error while trying to enroll A/B test variants. " + ex);
+            L.e("[ModuleRemoteConfig] testingEnrollIntoVariantInternal, Encountered internal error while trying to enroll A/B test variants. " + ex);
             callback.callback(RequestResult.Error, "Encountered internal error while trying to enroll A/B test variants.");
         }
     }
@@ -407,7 +403,7 @@ public class ModuleRemoteConfig extends ModuleBase {
     }
 
     void cacheOrClearRCValuesIfNeeded() {
-        L.v("[RemoteConfig] CacheOrClearRCValuesIfNeeded, cacheclearing values");
+        L.v("[ModuleRemoteConfig] cacheOrClearRCValuesIfNeeded, cache-clearing values");
 
         RemoteConfigValueStore rcvs = loadRCValuesFromStorage();
         rcvs.cacheClearValues();
@@ -415,9 +411,7 @@ public class ModuleRemoteConfig extends ModuleBase {
     }
 
     void notifyDownloadCallbacks(RCDownloadCallback devProvidedCallback, RequestResult requestResult, String message, boolean fullUpdate, Map<String, RCData> downloadedValues) {
-        for (RCDownloadCallback callback : downloadCallbacks) {
-            callback.callback(requestResult, message, fullUpdate, downloadedValues);
-        }
+        downloadCallbacks.forEach(callback -> callback.callback(requestResult, message, fullUpdate, downloadedValues));
 
         if (devProvidedCallback != null) {
             devProvidedCallback.callback(requestResult, message, fullUpdate, downloadedValues);
@@ -430,16 +424,16 @@ public class ModuleRemoteConfig extends ModuleBase {
         }
 
         if (automaticDownloadTriggersEnabled) {
-            L.d("[RemoteConfig] Automatically updating remote config values");
+            L.d("[ModuleRemoteConfig] rcAutomaticDownloadTrigger, Automatically updating remote config values");
             updateRemoteConfigValues(null, null, null);
         } else {
-            L.v("[RemoteConfig] Automatic RC update trigger skipped");
+            L.v("[ModuleRemoteConfig] rcAutomaticDownloadTrigger, Automatic RC update trigger skipped");
         }
     }
 
     @Override
     public void onDeviceId(InternalConfig config, Config.DID deviceId, Config.DID oldDeviceId) {
-        L.v("[RemoteConfig] Device ID changed will update values: [" + updateRemoteConfigAfterIdChange + "]");
+        L.v("[ModuleRemoteConfig] onDeviceId, Device ID changed will update values: [" + updateRemoteConfigAfterIdChange + "]");
 
         if (updateRemoteConfigAfterIdChange) {
             updateRemoteConfigAfterIdChange = false;
@@ -449,7 +443,7 @@ public class ModuleRemoteConfig extends ModuleBase {
 
     @Override
     public void initFinished(@Nonnull InternalConfig config) {
-        //update remote config_ values if automatic update is enabled, and we are not in temporary id mode
+        //update remote config values if automatic update is enabled, and we are not in temporary id mode
         rcAutomaticDownloadTrigger(false);
     }
 
@@ -487,12 +481,7 @@ public class ModuleRemoteConfig extends ModuleBase {
                 L.i("[RemoteConfig] downloadOmittingKeys");
 
                 if (keysToOmit == null) {
-                    L.w("[RemoteConfig] downloadOmittingKeys passed 'keys to ignore' array is null");
-                }
-
-                if (callback == null) {
-                    callback = (downloadResult, error, fullValueUpdate, downloadedValues) -> {
-                    };
+                    L.w("[RemoteConfig] downloadOmittingKeys, passed 'keys to ignore' array is null");
                 }
 
                 updateRemoteConfigValues(null, keysToOmit, callback);
@@ -511,12 +500,7 @@ public class ModuleRemoteConfig extends ModuleBase {
                 L.i("[RemoteConfig] downloadSpecificKeys");
 
                 if (keysToInclude == null) {
-                    L.w("[RemoteConfig] downloadSpecificKeys passed 'keys to include' array is null");
-                }
-
-                if (callback == null) {
-                    callback = (downloadResult, error, fullValueUpdate, downloadedValues) -> {
-                    };
+                    L.w("[RemoteConfig] downloadSpecificKeys, passed 'keys to include' array is null");
                 }
 
                 updateRemoteConfigValues(keysToInclude, null, callback);
@@ -531,12 +515,6 @@ public class ModuleRemoteConfig extends ModuleBase {
         public void downloadAllKeys(@Nullable RCDownloadCallback callback) {
             synchronized (Countly.instance()) {
                 L.i("[RemoteConfig] downloadAllKeys");
-
-                if (callback == null) {
-                    callback = (downloadResult, error, fullValueUpdate, downloadedValues) -> {
-                    };
-                }
-
                 updateRemoteConfigValues(null, null, callback);
             }
         }
@@ -549,7 +527,6 @@ public class ModuleRemoteConfig extends ModuleBase {
         public @Nonnull Map<String, RCData> getValues() {
             synchronized (Countly.instance()) {
                 L.i("[RemoteConfig] getValues");
-
                 return getAllRemoteConfigValuesInternal();
             }
         }
@@ -568,17 +545,7 @@ public class ModuleRemoteConfig extends ModuleBase {
                     L.i("[RemoteConfig] getAllValuesAndEnroll, No value to enroll");
                 } else {
                     // assuming the values is not empty enroll for the keys
-                    Set<String> setOfKeys = values.keySet();
-                    String[] arrayOfKeys = new String[setOfKeys.size()];
-
-                    // set to array
-                    int i = 0;
-                    for (String key : setOfKeys) {
-                        arrayOfKeys[i++] = key;
-                    }
-
-                    // enroll
-                    enrollIntoABTestsForKeys(arrayOfKeys);
+                    enrollIntoABTestsForKeys(values.keySet().toArray(new String[0]));// enroll
                 }
 
                 return values;
@@ -625,8 +592,7 @@ public class ModuleRemoteConfig extends ModuleBase {
                     L.i("[RemoteConfig] getValueAndEnroll, No value to enroll");
                 } else {
                     // assuming value is not null enroll to key
-                    String[] arrayOfKeys = { key };
-                    enrollIntoABTestsForKeys(arrayOfKeys);
+                    enrollIntoABTestsForKeys(new String[] { key });
                 }
 
                 return data;
@@ -711,7 +677,6 @@ public class ModuleRemoteConfig extends ModuleBase {
         public @Nonnull Map<String, String[]> testingGetAllVariants() {
             synchronized (Countly.instance()) {
                 L.i("[RemoteConfig] testingGetAllVariants");
-
                 return testingGetAllVariantsInternal();
             }
         }
@@ -725,7 +690,6 @@ public class ModuleRemoteConfig extends ModuleBase {
         public @Nonnull Map<String, ExperimentInformation> testingGetAllExperimentInfo() {
             synchronized (Countly.instance()) {
                 L.i("[RemoteConfig] testingGetAllExperimentInfo");
-
                 return experimentContainer;
             }
         }
@@ -801,7 +765,7 @@ public class ModuleRemoteConfig extends ModuleBase {
                 L.i("[RemoteConfig] testingEnrollIntoVariant");
 
                 if (keyName == null || variantName == null) {
-                    L.w("[RemoteConfig] testEnrollIntoVariant, passed key or variant is null. Aborting.");
+                    L.w("[RemoteConfig] testingEnrollIntoVariant, passed key or variant is null. Aborting.");
                     return;
                 }
 

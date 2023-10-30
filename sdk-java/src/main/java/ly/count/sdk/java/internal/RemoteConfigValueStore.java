@@ -56,7 +56,7 @@ public class RemoteConfigValueStore {
     }
 
     public void clearValues() {
-        values = new JSONObject();
+        values.clear();
     }
 
     //========================================
