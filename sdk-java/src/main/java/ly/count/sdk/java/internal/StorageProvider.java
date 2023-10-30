@@ -38,12 +38,12 @@ public interface StorageProvider {
      *
      * @param remoteConfigValues set of remote config values
      */
-    void setRemoteConfigValues(String remoteConfigValues);
+    void setRemoteConfigValues(Object remoteConfigValues);
 
     /**
      * Get remote config values
      *
      * @return set of remote config values
      */
-    String getRemoteConfigValues();
+    Object getRemoteConfigValues();
 }

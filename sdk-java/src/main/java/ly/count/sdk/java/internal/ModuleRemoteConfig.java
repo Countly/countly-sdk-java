@@ -119,8 +119,12 @@ public class ModuleRemoteConfig extends ModuleBase {
      * @return see {@link RemoteConfigValueStore}
      */
     private @Nonnull RemoteConfigValueStore loadRCValuesFromStorage() {
-        String rcvsString = internalConfig.storageProvider.getRemoteConfigValues();
-        return RemoteConfigValueStore.dataFromString(rcvsString, remoteConfigValuesShouldBeCached, L);
+        Object rcvs = internalConfig.storageProvider.getRemoteConfigValues();
+        if (rcvs instanceof JSONObject) {
+            return new RemoteConfigValueStore((JSONObject) rcvs, remoteConfigValuesShouldBeCached, L);
+        }
+
+        return new RemoteConfigValueStore(new JSONObject(), remoteConfigValuesShouldBeCached, L);
     }
 
     private void clearValueStoreInternal() {
@@ -259,7 +263,7 @@ public class ModuleRemoteConfig extends ModuleBase {
     }
 
     private void saveRCValues(@Nonnull RemoteConfigValueStore rcvs) {
-        internalConfig.storageProvider.setRemoteConfigValues(rcvs.values.toString());
+        internalConfig.storageProvider.setRemoteConfigValues(rcvs.values);
     }
 
     void clearAndDownloadAfterIdChange(boolean valuesShouldBeCacheCleared) {
