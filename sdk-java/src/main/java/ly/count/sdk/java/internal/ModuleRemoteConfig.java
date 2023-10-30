@@ -1,7 +1,6 @@
 package ly.count.sdk.java.internal;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,13 +8,9 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 public class ModuleRemoteConfig extends ModuleBase {
     boolean updateRemoteConfigAfterIdChange = false;
-    Map<String, String[]> variantContainer = new HashMap<>(); // Stores the fetched A/B test variants
-    Map<String, ExperimentInformation> experimentContainer = new HashMap<>(); // Stores the fetched A/B test information (includes exp ID, description etc.)
     RemoteConfig remoteConfigInterface = null;
 
     //if set to true, it will automatically download remote configs on module startup
@@ -136,163 +131,6 @@ public class ModuleRemoteConfig extends ModuleBase {
     }
 
     /**
-     * Internal function to form and send a request to enroll user for given keys
-     *
-     * @param keys - keys for which the user should be enrolled
-     */
-    void enrollIntoABTestsForKeysInternal(@Nonnull String[] keys) {
-        L.d("[ModuleRemoteConfig] enrollIntoABTestsForKeysInternal, Enrolling user for the given keys:" + Arrays.toString(keys));
-
-        if (internalConfig.isTemporaryIdEnabled() || internalConfig.getDeviceId() == null) {
-            L.d("[ModuleRemoteConfig] enrollIntoABTestsForKeysInternal, Enrolling user was aborted, temporary device ID mode is set or device ID is null.");
-            return;
-        }
-        Params params = new Params();
-        params.add("method", "ab");
-        params.add("new_end_point", "/o/sdk");
-
-        if (keys.length > 0) { // exits all otherwise
-            params.arr("keys").put(Arrays.asList(keys)).add();
-        }
-
-        ModuleRequests.pushAsync(internalConfig, new Request(params));
-    }
-
-    /**
-     * Internal function to form and send the request to remove user from A/B tests for given keys
-     *
-     * @param keys - keys for which the user should be removed from keys
-     */
-    void exitABTestsForKeysInternal(@Nonnull String[] keys) {
-        L.d("[ModuleRemoteConfig] exitABTestsForKeysInternal, Removing user for the tests with given keys:" + Arrays.toString(keys));
-
-        if (internalConfig.isTemporaryIdEnabled() || internalConfig.getDeviceId() == null) {
-            L.d("[ModuleRemoteConfig] exitABTestsForKeysInternal, Removing user from tests was aborted, temporary device ID mode is set or device ID is null.");
-            return;
-        }
-
-        Params params = new Params();
-
-        params.add("method", "ab_opt_out");
-        if (keys.length > 0) { // exits all otherwise
-            params.arr("keys").put(Arrays.asList(keys)).add();
-        }
-
-        ModuleRequests.pushAsync(internalConfig, new Request(params));
-    }
-
-    /**
-     * Internal call for fetching all variants of A/B test experiments
-     * There are 2 endpoints that can be used:
-     *
-     * @param callback called after the fetch is done
-     * @param shouldFetchExperimentInfo if true this call would fetch experiment information including the variants
-     */
-    void testingFetchVariantInformationInternal(@Nonnull final RCVariantCallback callback, final boolean shouldFetchExperimentInfo) {
-        try {
-            L.d("[ModuleRemoteConfig] testingFetchVariantInformationInternal, Fetching all A/B test variants/info");
-
-            if (internalConfig.isTemporaryIdEnabled() || internalConfig.getDeviceId() == null) {
-                L.d("[ModuleRemoteConfig] testingFetchVariantInformationInternal, Fetching all A/B test variants was aborted, temporary device ID mode is set or device ID is null.");
-                callback.callback(RequestResult.Error, "Temporary device ID mode is set or device ID is null.");
-                return;
-            }
-
-            // prepare request data
-            String method = "ab_fetch_variants";
-            if (shouldFetchExperimentInfo) {
-                method = "ab_fetch_experiments";
-            }
-
-            String requestData = ModuleRequests.prepareRequiredParamsAsString(internalConfig, "method", method);
-
-            L.d("[ModuleRemoteConfig] testingFetchVariantInformationInternal, Fetching all A/B test variants/info requestData:[" + requestData + "]");
-
-            Transport transport = internalConfig.sdk.networking.getTransport();
-            final boolean networkingIsEnabled = internalConfig.getNetworkingEnabled();
-
-            internalConfig.immediateRequestGenerator.createImmediateRequestMaker().doWork(requestData, "/o/sdk", transport, false, networkingIsEnabled, checkResponse -> {
-                L.d("[ModuleRemoteConfig] testingFetchVariantInformationInternal, Processing Fetching all A/B test variants/info received response, received response is null:[" + (checkResponse == null) + "]");
-                if (checkResponse == null) {
-                    callback.callback(RequestResult.NetworkIssue, "Encountered problem while trying to reach the server, possibly no internet connection");
-                    return;
-                }
-
-                if (shouldFetchExperimentInfo) {
-                    experimentContainer = RemoteConfigHelper.convertExperimentInfoJsonToMap(checkResponse, L);
-                } else {
-                    variantContainer = RemoteConfigHelper.convertVariantsJsonToMap(checkResponse, L);
-                }
-
-                callback.callback(RequestResult.Success, null);
-            }, L);
-        } catch (Exception ex) {
-            L.e("[ModuleRemoteConfig] testingFetchVariantInformationInternal, Encountered internal error while trying to fetch all A/B test variants/info. " + ex);
-            callback.callback(RequestResult.Error, "Encountered internal error while trying to fetch all A/B test variants/info.");
-        }
-    }
-
-    void testingEnrollIntoVariantInternal(@Nonnull final String key, @Nonnull final String variant, @Nonnull final RCVariantCallback callback) {
-        try {
-            L.d("[ModuleRemoteConfig] testingEnrollIntoVariantInternal, Enrolling A/B test variants, Key/Variant pairs:[" + key + "][" + variant + "]");
-
-            if (internalConfig.isTemporaryIdEnabled() || internalConfig.getDeviceId() == null) {
-                L.d("[ModuleRemoteConfig] testingEnrollIntoVariantInternal, Enrolling A/B test variants was aborted, temporary device ID mode is set or device ID is null.");
-                callback.callback(RequestResult.Error, "Temporary device ID mode is set or device ID is null.");
-                return;
-            }
-
-            // check Key and Variant
-            if (Utils.isEmptyOrNull(key) || Utils.isEmptyOrNull(variant)) {
-                L.w("[ModuleRemoteConfig] testingEnrollIntoVariantInternal, Enrolling A/B test variants, Key/Variant pair is invalid. Aborting.");
-                callback.callback(RequestResult.Error, "Provided key/variant pair is invalid.");
-                return;
-            }
-
-            // prepare request data
-            String requestData = prepareEnrollVariant(key, variant);
-
-            L.d("[ModuleRemoteConfig] testingEnrollIntoVariantInternal, Enrolling A/B test variants requestData:[" + requestData + "]");
-
-            Transport transport = internalConfig.sdk.networking.getTransport();
-            final boolean networkingIsEnabled = internalConfig.getNetworkingEnabled();
-
-            internalConfig.immediateRequestGenerator.createImmediateRequestMaker().doWork(requestData, "/i", transport, false, networkingIsEnabled, checkResponse -> {
-                L.d("[ModuleRemoteConfig] testingEnrollIntoVariantInternal, Processing Fetching all A/B test variants received response, received response is null:[" + (checkResponse == null) + "]");
-                if (checkResponse == null) {
-                    callback.callback(RequestResult.NetworkIssue, "Encountered problem while trying to reach the server, possibly no internet connection");
-                    return;
-                }
-
-                try {
-                    if (!isResponseValid(checkResponse)) {
-                        callback.callback(RequestResult.NetworkIssue, "Bad response from the server:" + checkResponse);
-                        return;
-                    }
-
-                    rcAutomaticDownloadTrigger(true);
-
-                    callback.callback(RequestResult.Success, null);
-                } catch (Exception ex) {
-                    L.e("[ModuleRemoteConfig] testingEnrollIntoVariantInternal, Encountered internal issue while trying to enroll to the variant, [" + ex + "]");
-                    callback.callback(RequestResult.Error, "Encountered internal error while trying to take care of the A/B test variant enrolment.");
-                }
-            }, L);
-        } catch (Exception ex) {
-            L.e("[ModuleRemoteConfig] testingEnrollIntoVariantInternal, Encountered internal error while trying to enroll A/B test variants. " + ex);
-            callback.callback(RequestResult.Error, "Encountered internal error while trying to enroll A/B test variants.");
-        }
-    }
-
-    public String prepareEnrollVariant(String key, String variant) {
-        return ModuleRequests.prepareRequiredParams(internalConfig)
-            .add("method", "ab_enroll_variant")
-            .add("key", key)
-            .add("variant", variant)
-            .toString();
-    }
-
-    /**
      * Merge the values acquired from the server into the current values.
      * Clear if needed.
      */
@@ -306,27 +144,6 @@ public class ModuleRemoteConfig extends ModuleBase {
         saveRCValues(rcvs);
 
         L.d("[ModuleRemoteConfig] mergeCheckResponseIntoCurrentValues, Finished remote config saving");
-    }
-
-    /**
-     * Checks and evaluates the response from the server
-     *
-     * @param responseJson - JSONObject response
-     * @return true if the response is valid
-     */
-    boolean isResponseValid(@Nonnull JSONObject responseJson) {
-        boolean result = false;
-
-        try {
-            if (responseJson.get("result").equals("Success")) {
-                result = true;
-            }
-        } catch (JSONException e) {
-            L.e("[ModuleRemoteConfig] isResponseValid, encountered issue, " + e);
-            return false;
-        }
-
-        return result;
     }
 
     RCData getRCValue(@Nonnull String key) {
@@ -365,30 +182,6 @@ public class ModuleRemoteConfig extends ModuleBase {
             L.e("[ModuleRemoteConfig] getAllRemoteConfigValuesInternal, Call failed:[" + ex + "]");
             return new HashMap<>();
         }
-    }
-
-    /**
-     * Gets all AB testing variants stored in the memory
-     *
-     * @return Map of all AB testing variants
-     */
-    @Nonnull Map<String, String[]> testingGetAllVariantsInternal() {
-        return variantContainer;
-    }
-
-    /**
-     * Get all variants for a given key if exists. Else returns an empty array.
-     *
-     * @param key - key for which the variants are needed
-     * @return array of variants
-     */
-    @Nullable String[] testingGetVariantsForKeyInternal(@Nonnull String key) {
-        String[] variantResponse = null;
-        if (variantContainer.containsKey(key)) {
-            variantResponse = variantContainer.get(key);
-        }
-
-        return variantResponse;
     }
 
     void clearAndDownloadAfterIdChange(boolean valuesShouldBeCacheCleared) {
@@ -532,27 +325,6 @@ public class ModuleRemoteConfig extends ModuleBase {
         }
 
         /**
-         * Returns all available remote config values and enrolls to A/B tests for those values
-         *
-         * @return The available RC values
-         */
-        public @Nonnull Map<String, RCData> getAllValuesAndEnroll() {
-            synchronized (Countly.instance()) {
-                L.i("[RemoteConfig] getAllValuesAndEnroll");
-                Map<String, RCData> values = getAllRemoteConfigValuesInternal();
-
-                if (values.isEmpty()) {
-                    L.i("[RemoteConfig] getAllValuesAndEnroll, No value to enroll");
-                } else {
-                    // assuming the values is not empty enroll for the keys
-                    enrollIntoABTestsForKeys(values.keySet().toArray(new String[0]));// enroll
-                }
-
-                return values;
-            }
-        }
-
-        /**
          * Return the remote config value for a specific key
          *
          * @param key Key for which the remote config value needs to be returned
@@ -568,69 +340,6 @@ public class ModuleRemoteConfig extends ModuleBase {
                 }
 
                 return getRCValue(key);
-            }
-        }
-
-        /**
-         * Returns the remote config value for a specific key and enrolls to A/B tests for it
-         *
-         * @param key Key for which the remote config value needs to be returned
-         * @return The returned value. If no value existed for the key then the inner object will be returned as "null"
-         */
-        public @Nonnull RCData getValueAndEnroll(@Nullable String key) {
-            synchronized (Countly.instance()) {
-                L.i("[RemoteConfig] getValueAndEnroll, key:[" + key + "]");
-
-                if (Utils.isEmptyOrNull(key)) {
-                    L.i("[RemoteConfig] getValueAndEnroll, A valid key should be provided to get its value.");
-                    return new RCData(null, true);
-                }
-
-                RCData data = getRCValue(key);
-
-                if (data.value == null) {
-                    L.i("[RemoteConfig] getValueAndEnroll, No value to enroll");
-                } else {
-                    // assuming value is not null enroll to key
-                    enrollIntoABTestsForKeys(new String[] { key });
-                }
-
-                return data;
-            }
-        }
-
-        /**
-         * Enrolls user to AB tests of the given keys.
-         *
-         * @param keys - String array of keys (parameters)
-         */
-        public void enrollIntoABTestsForKeys(@Nullable String[] keys) {
-            synchronized (Countly.instance()) {
-                L.i("[RemoteConfig] enrollIntoABTestsForKeys");
-
-                if (keys == null || keys.length == 0) {
-                    L.w("[RemoteConfig] enrollIntoABTestsForKeys, A key should be provided to enroll the user.");
-                    return;
-                }
-
-                enrollIntoABTestsForKeysInternal(keys);
-            }
-        }
-
-        /**
-         * Removes user from A/B tests for the given keys. If no key provided would remove the user from all tests.
-         *
-         * @param keys - String array of keys (parameters)
-         */
-        public void exitABTestsForKeys(@Nullable String[] keys) {
-            synchronized (Countly.instance()) {
-                L.i("[RemoteConfig] exitABTestsForKeys");
-
-                if (keys == null) {
-                    keys = new String[0];
-                }
-
-                exitABTestsForKeysInternal(keys);
             }
         }
 
@@ -665,116 +374,6 @@ public class ModuleRemoteConfig extends ModuleBase {
             synchronized (Countly.instance()) {
                 L.i("[RemoteConfig] clearAll");
                 clearValueStoreInternal();
-            }
-        }
-
-        /**
-         * Returns all variant information as a Map<String, String[]>
-         * This call is not meant for production. It should only be used to facilitate testing of A/B test experiments.
-         *
-         * @return Return the information of all available variants
-         */
-        public @Nonnull Map<String, String[]> testingGetAllVariants() {
-            synchronized (Countly.instance()) {
-                L.i("[RemoteConfig] testingGetAllVariants");
-                return testingGetAllVariantsInternal();
-            }
-        }
-
-        /**
-         * Returns all experiment information as a Map<String, ExperimentInformation>
-         * This call is not meant for production. It should only be used to facilitate testing of A/B test experiments.
-         *
-         * @return Return the information of all available variants
-         */
-        public @Nonnull Map<String, ExperimentInformation> testingGetAllExperimentInfo() {
-            synchronized (Countly.instance()) {
-                L.i("[RemoteConfig] testingGetAllExperimentInfo");
-                return experimentContainer;
-            }
-        }
-
-        /**
-         * Returns variant information for a key as a String[]
-         * This call is not meant for production. It should only be used to facilitate testing of A/B test experiments.
-         *
-         * @param key - key value to get variant information for
-         * @return If returns the stored variants for the given key. Returns "null" if there are no variants for that key.
-         */
-        public @Nullable String[] testingGetVariantsForKey(@Nullable String key) {
-            synchronized (Countly.instance()) {
-                L.i("[RemoteConfig] testingGetVariantsForKey");
-
-                if (key == null) {
-                    L.i("[RemoteConfig] testingGetVariantsForKey, provided variant key can not be null");
-                    return null;
-                }
-
-                return testingGetVariantsForKeyInternal(key);
-            }
-        }
-
-        /**
-         * Download all variants of A/B testing experiments
-         * This call is not meant for production. It should only be used to facilitate testing of A/B test experiments.
-         *
-         * @param completionCallback this callback will be called when the network request finished
-         */
-        public void testingDownloadVariantInformation(@Nullable RCVariantCallback completionCallback) {
-            synchronized (Countly.instance()) {
-                L.i("[RemoteConfig] testingFetchVariantInformation");
-
-                if (completionCallback == null) {
-                    completionCallback = (result, error) -> {
-                    };
-                }
-
-                testingFetchVariantInformationInternal(completionCallback, false);
-            }
-        }
-
-        /**
-         * Download all A/B testing experiments information
-         * This call is not meant for production. It should only be used to facilitate testing of A/B test experiments.
-         *
-         * @param completionCallback this callback will be called when the network request finished
-         */
-        public void testingDownloadExperimentInformation(@Nullable RCVariantCallback completionCallback) {
-            synchronized (Countly.instance()) {
-                L.i("[RemoteConfig] testingDownloadExperimentInformation");
-
-                if (completionCallback == null) {
-                    completionCallback = (result, error) -> {
-                    };
-                }
-
-                testingFetchVariantInformationInternal(completionCallback, true);
-            }
-        }
-
-        /**
-         * Enrolls user for a specific variant of A/B testing experiment
-         * This call is not meant for production. It should only be used to facilitate testing of A/B test experiments.
-         *
-         * @param keyName - key value retrieved from the fetched variants
-         * @param variantName - name of the variant for the key to enroll
-         * @param completionCallback this callback will be called when the network request finished
-         */
-        public void testingEnrollIntoVariant(@Nullable String keyName, String variantName, @Nullable RCVariantCallback completionCallback) {
-            synchronized (Countly.instance()) {
-                L.i("[RemoteConfig] testingEnrollIntoVariant");
-
-                if (keyName == null || variantName == null) {
-                    L.w("[RemoteConfig] testingEnrollIntoVariant, passed key or variant is null. Aborting.");
-                    return;
-                }
-
-                if (completionCallback == null) {
-                    completionCallback = (result, error) -> {
-                    };
-                }
-
-                testingEnrollIntoVariantInternal(keyName, variantName, completionCallback);
             }
         }
     }
