@@ -8,6 +8,7 @@
 * Adding application version information to every request.
 * Added the remote config feature. Added consent for it "Config.Feature.RemoteConfig".
 * Remote Config module is accessible through "Countly::instance()::remoteConfig()" call.
+* A/B testing is added and also accessible through "Countly::instance()::remoteConfig()" call. 'testing' calls are not added.
 * Added configuration functions to configure Remote Config module on init:
   * 'enableRemoteConfigValueCaching' to enable caching of remote config values
   * 'enrollABOnRCDownload' to enroll A/B tests when remote config values downloaded
