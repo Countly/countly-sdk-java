@@ -385,6 +385,10 @@ public class ModuleRemoteConfig extends ModuleBase {
         public void registerDownloadCallback(@Nullable RCDownloadCallback callback) {
             synchronized (Countly.instance()) {
                 L.i("[RemoteConfig] registerDownloadCallback");
+                if (callback == null) {
+                    L.w("[RemoteConfig] registerDownloadCallback, passed callback is null");
+                    return;
+                }
                 downloadCallbacks.add(callback);
             }
         }
@@ -397,6 +401,10 @@ public class ModuleRemoteConfig extends ModuleBase {
         public void removeDownloadCallback(@Nullable RCDownloadCallback callback) {
             synchronized (Countly.instance()) {
                 L.i("[RemoteConfig] removeDownloadCallback");
+                if (callback == null) {
+                    L.w("[RemoteConfig] removeDownloadCallback, passed callback is null");
+                    return;
+                }
                 downloadCallbacks.remove(callback);
             }
         }

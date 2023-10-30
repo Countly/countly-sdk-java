@@ -118,6 +118,70 @@ public class ModuleRemoteConfigTests {
         Mockito.verify(rcModule.L).i("[RemoteConfig] getValue, A valid key should be provided to get its value.");
     }
 
+    /**
+     * "registerDownloadCallback"
+     * Validating that the null callback is not registered
+     * Download callbacks size should not be change.
+     */
+    @Test
+    public void registerDownloadCallback_null() {
+        Countly.instance().init(TestUtils.getConfigRemoteConfigs());
+        ModuleRemoteConfig rcModule = SDKCore.instance.module(ModuleRemoteConfig.class);
+
+        Assert.assertEquals(0, rcModule.downloadCallbacks.size());
+        Countly.instance().remoteConfig().registerDownloadCallback(null);
+        Assert.assertEquals(0, rcModule.downloadCallbacks.size());
+    }
+
+    /**
+     * "registerDownloadCallback"
+     * Validating that the callback is registered
+     * Download callbacks size should be 1 at the end.
+     */
+    @Test
+    public void registerDownloadCallback() {
+        Countly.instance().init(TestUtils.getConfigRemoteConfigs());
+        ModuleRemoteConfig rcModule = SDKCore.instance.module(ModuleRemoteConfig.class);
+
+        Assert.assertEquals(0, rcModule.downloadCallbacks.size());
+        Countly.instance().remoteConfig().registerDownloadCallback((rResult, error, fullValueUpdate, downloadedValues) -> {
+        });
+        Assert.assertEquals(1, rcModule.downloadCallbacks.size());
+    }
+
+    /**
+     * "removeDownloadCallback"
+     * Validating that the download callbacks size
+     * Download callbacks size should be 0 at the end and not change.
+     */
+    @Test
+    public void removeDownloadCallback_null() {
+        Countly.instance().init(TestUtils.getConfigRemoteConfigs());
+        ModuleRemoteConfig rcModule = SDKCore.instance.module(ModuleRemoteConfig.class);
+
+        Assert.assertEquals(0, rcModule.downloadCallbacks.size());
+        Countly.instance().remoteConfig().removeDownloadCallback(null);
+        Assert.assertEquals(0, rcModule.downloadCallbacks.size());
+    }
+
+    /**
+     * "removeDownloadCallback" with callback is registered at init
+     * Validating that the download callbacks size changes
+     * Download callbacks size should be 0 at the end.
+     */
+    @Test
+    public void removeDownloadCallback() {
+        RCDownloadCallback callback = (rResult, error, fullValueUpdate, downloadedValues) -> {
+            Assert.assertEquals(RequestResult.Success, rResult);
+        };
+        Countly.instance().init(TestUtils.getConfigRemoteConfigs().remoteConfigRegisterGlobalCallback(callback));
+        ModuleRemoteConfig rcModule = SDKCore.instance.module(ModuleRemoteConfig.class);
+
+        Assert.assertEquals(1, rcModule.downloadCallbacks.size());
+        Countly.instance().remoteConfig().removeDownloadCallback(callback);
+        Assert.assertEquals(0, rcModule.downloadCallbacks.size());
+    }
+
     private void validateRemoteConfigValues(Map<String, RCData> rcValuesStore, JSONObject rcValuesServer, boolean isCurrentUsersData) {
         Assert.assertEquals(rcValuesServer.keySet().size(), rcValuesStore.size());
         rcValuesServer.keySet().forEach(key -> validateRCData(rcValuesStore.get(key), rcValuesServer.get(key), isCurrentUsersData));
