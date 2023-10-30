@@ -1,7 +1,9 @@
 package ly.count.sdk.java.internal;
 
+import java.util.Arrays;
 import java.util.Map;
 import ly.count.sdk.java.Countly;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Assert;
@@ -57,7 +59,7 @@ public class ModuleRemoteConfigTests {
 
     private void clearAll_base(JSONObject mockData, int countlyStoreRCSize) {
         Assert.assertEquals(countlyStoreRCSize, Countly.instance().remoteConfig().getValues().size());
-        SDKCore.instance.config.immediateRequestGenerator = () -> remoteConfigRequestMaker(mockData);
+        SDKCore.instance.config.immediateRequestGenerator = () -> remoteConfigRequestMaker(mockData, null, null);
         //load values from request maker which provides mockData
         Countly.instance().remoteConfig().downloadAllKeys((rResult, error, fullValueUpdate, downloadedValues) -> {
             Assert.assertEquals(rResult, RequestResult.Success);
@@ -182,6 +184,25 @@ public class ModuleRemoteConfigTests {
         Assert.assertEquals(0, rcModule.downloadCallbacks.size());
     }
 
+    @Test
+    public void downloadSpecificKeys() {
+        RCDownloadCallback callback = (rResult, error, fullValueUpdate, downloadedValues) -> {
+            Assert.assertEquals(RequestResult.Success, rResult);
+            Assert.assertNull(error);
+            Assert.assertEquals(3, downloadedValues.size());
+        };
+        JSONObject serverResponse = new JSONObject();
+        serverResponse.put(TestUtils.keysValues[0], TestUtils.keysValues[1]);
+        serverResponse.put(TestUtils.keysValues[2], 89.9);
+        serverResponse.put(TestUtils.keysValues[3], true);
+
+        Countly.instance().init(TestUtils.getConfigRemoteConfigs().remoteConfigRegisterGlobalCallback(callback));
+        SDKCore.instance.config.immediateRequestGenerator = () -> remoteConfigRequestMaker(serverResponse, new String[] { TestUtils.keysValues[0] }, null);
+
+        Countly.instance().remoteConfig().downloadSpecificKeys(new String[] { TestUtils.keysValues[0] }, null);
+        validateRemoteConfigValues(Countly.instance().remoteConfig().getValues(), serverResponse, true);
+    }
+
     private void validateRemoteConfigValues(Map<String, RCData> rcValuesStore, JSONObject rcValuesServer, boolean isCurrentUsersData) {
         Assert.assertEquals(rcValuesServer.keySet().size(), rcValuesStore.size());
         rcValuesServer.keySet().forEach(key -> validateRCData(rcValuesStore.get(key), rcValuesServer.get(key), isCurrentUsersData));
@@ -202,12 +223,17 @@ public class ModuleRemoteConfigTests {
      * @param remoteConfigMockData mock data to return
      * @return request maker
      */
-    private ImmediateRequestI remoteConfigRequestMaker(JSONObject remoteConfigMockData) {
+    private ImmediateRequestI remoteConfigRequestMaker(JSONObject remoteConfigMockData, String[] keysInclude, String[] keysExclude) {
 
         return (requestData, customEndpoint, cp, requestShouldBeDelayed, networkingIsEnabled, callback, log) -> {
             Map<String, String> params = TestUtils.parseQueryParams(requestData);
             Assert.assertEquals("rc", params.get("method"));
-
+            if (keysInclude != null) {
+                Assert.assertEquals(new JSONArray(Arrays.asList(keysInclude)).toString(), Utils.urldecode(params.get("keys")));
+            }
+            if (keysExclude != null) {
+                Assert.assertEquals(new JSONArray(Arrays.asList(keysExclude)).toString(), Utils.urldecode(params.get("omit_keys")));
+            }
             TestUtils.validateMetrics(Utils.urldecode(params.get("metrics")));
             TestUtils.validateRequestMakerRequiredParams("/o/sdk", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
             TestUtils.validateRequiredParams(params);
