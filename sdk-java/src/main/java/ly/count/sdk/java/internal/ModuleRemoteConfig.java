@@ -1,6 +1,7 @@
 package ly.count.sdk.java.internal;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,6 +9,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class ModuleRemoteConfig extends ModuleBase {
     boolean updateRemoteConfigAfterIdChange = false;
@@ -22,8 +25,6 @@ public class ModuleRemoteConfig extends ModuleBase {
     boolean remoteConfigValuesShouldBeCached = false;
 
     List<RCDownloadCallback> downloadCallbacks = new ArrayList<>(2);
-
-    public static String variantObjectNameKey = "name";
 
     ModuleRemoteConfig() {
     }
@@ -51,7 +52,7 @@ public class ModuleRemoteConfig extends ModuleBase {
      */
     void updateRemoteConfigValues(@Nullable final String[] keysOnly, @Nullable final String[] keysExcept, @Nullable final RCDownloadCallback devProvidedCallback) {
 
-        String[] preparedKeys = RemoteConfigHelper.prepareKeysIncludeExclude(keysOnly, keysExcept, L);
+        String[] preparedKeys = prepareKeysIncludeExclude(keysOnly, keysExcept);
         boolean fullUpdate = (preparedKeys[0] == null || preparedKeys[0].isEmpty()) && (preparedKeys[1] == null || preparedKeys[1].isEmpty());
 
         try {
@@ -88,7 +89,7 @@ public class ModuleRemoteConfig extends ModuleBase {
                 }
 
                 String error = null;
-                Map<String, RCData> newRC = RemoteConfigHelper.downloadedValuesIntoMap(checkResponse, L);
+                Map<String, RCData> newRC = downloadedValuesIntoMap(checkResponse);
 
                 try {
                     boolean clearOldValues = keysExcept == null && keysOnly == null;
@@ -104,6 +105,58 @@ public class ModuleRemoteConfig extends ModuleBase {
             L.e("[ModuleRemoteConfig] updateRemoteConfigValues, Encountered internal error while trying to perform a remote config update. " + ex);
             notifyDownloadCallbacks(devProvidedCallback, RequestResult.Error, "Encountered internal error while trying to perform a remote config update", fullUpdate, null);
         }
+    }
+
+    private RCData getRCValue(@Nonnull String key) {
+        try {
+            RemoteConfigValueStore rcvs = loadRCValuesFromStorage();
+            return rcvs.getValue(key);
+        } catch (Exception ex) {
+            L.e("[ModuleRemoteConfig] getValue, Call failed:[" + ex + "]");
+            return new RCData(null, true);
+        }
+    }
+
+    /**
+     * Loads the remote config values from the storage
+     *
+     * @return see {@link RemoteConfigValueStore}
+     */
+    private @Nonnull RemoteConfigValueStore loadRCValuesFromStorage() {
+        String rcvsString = internalConfig.storageProvider.getRemoteConfigValues();
+        return RemoteConfigValueStore.dataFromString(rcvsString, remoteConfigValuesShouldBeCached, L);
+    }
+
+    private void clearValueStoreInternal() {
+        internalConfig.storageProvider.setRemoteConfigValues("");
+    }
+
+    private @Nonnull Map<String, RCData> getAllRemoteConfigValuesInternal() {
+        try {
+            RemoteConfigValueStore rcvs = loadRCValuesFromStorage();
+            return rcvs.getAllValues();
+        } catch (Exception ex) {
+            L.e("[ModuleRemoteConfig] getAllRemoteConfigValuesInternal, Call failed:[" + ex + "]");
+            return new HashMap<>();
+        }
+    }
+
+    private @Nonnull String[] prepareKeysIncludeExclude(@Nullable final String[] keysOnly, @Nullable final String[] keysExcept) {
+        String[] res = new String[2]; // 0 - include, 1 - exclude
+
+        try {
+            if (keysOnly != null && keysOnly.length > 0) {
+                // Include list takes precedence
+                res[0] = new JSONArray(Arrays.asList(keysOnly)).toString();
+            } else if (keysExcept != null && keysExcept.length > 0) {
+                // Include list was not used, use the exclude list
+                res[1] = new JSONArray(Arrays.asList(keysExcept)).toString();
+            }
+        } catch (Exception ex) {
+            L.e("[ModuleRemoteConfig] prepareKeysIncludeExclude, Failed at preparing keys, [" + ex + "]");
+        }
+
+        return res;
     }
 
     private String prepareRemoteConfigRequest(@Nullable String keysInclude, @Nullable String keysExclude, @Nonnull String preparedMetrics, boolean autoEnroll) {
@@ -130,11 +183,28 @@ public class ModuleRemoteConfig extends ModuleBase {
         return params.toString();
     }
 
+    private @Nonnull Map<String, RCData> downloadedValuesIntoMap(@Nullable JSONObject jsonObject) {
+        Map<String, RCData> result = new HashMap<>();
+
+        if (jsonObject == null) {
+            return result;
+        }
+
+        for (String key : jsonObject.keySet()) {
+            Object value = jsonObject.opt(key);
+            if (value != null) {
+                result.put(key, new RCData(value, true));
+            }
+        }
+
+        return result;
+    }
+
     /**
      * Merge the values acquired from the server into the current values.
      * Clear if needed.
      */
-    void mergeCheckResponseIntoCurrentValues(boolean clearOldValues, @Nonnull Map<String, RCData> newRC) {
+    private void mergeCheckResponseIntoCurrentValues(boolean clearOldValues, @Nonnull Map<String, RCData> newRC) {
         //merge the new values into the current ones
         RemoteConfigValueStore rcvs = loadRCValuesFromStorage();
         rcvs.mergeValues(newRC, clearOldValues);
@@ -146,42 +216,8 @@ public class ModuleRemoteConfig extends ModuleBase {
         L.d("[ModuleRemoteConfig] mergeCheckResponseIntoCurrentValues, Finished remote config saving");
     }
 
-    RCData getRCValue(@Nonnull String key) {
-        try {
-            RemoteConfigValueStore rcvs = loadRCValuesFromStorage();
-            return rcvs.getValue(key);
-        } catch (Exception ex) {
-            L.e("[ModuleRemoteConfig] getValue, Call failed:[" + ex + "]");
-            return new RCData(null, true);
-        }
-    }
-
-    void saveRCValues(@Nonnull RemoteConfigValueStore rcvs) {
+    private void saveRCValues(@Nonnull RemoteConfigValueStore rcvs) {
         internalConfig.storageProvider.setRemoteConfigValues(rcvs.values.toString());
-    }
-
-    /**
-     * Loads the remote config values from the storage
-     *
-     * @return see {@link RemoteConfigValueStore}
-     */
-    @Nonnull RemoteConfigValueStore loadRCValuesFromStorage() {
-        String rcvsString = internalConfig.storageProvider.getRemoteConfigValues();
-        return RemoteConfigValueStore.dataFromString(rcvsString, remoteConfigValuesShouldBeCached, L);
-    }
-
-    void clearValueStoreInternal() {
-        internalConfig.storageProvider.setRemoteConfigValues("");
-    }
-
-    @Nonnull Map<String, RCData> getAllRemoteConfigValuesInternal() {
-        try {
-            RemoteConfigValueStore rcvs = loadRCValuesFromStorage();
-            return rcvs.getAllValues();
-        } catch (Exception ex) {
-            L.e("[ModuleRemoteConfig] getAllRemoteConfigValuesInternal, Call failed:[" + ex + "]");
-            return new HashMap<>();
-        }
     }
 
     void clearAndDownloadAfterIdChange(boolean valuesShouldBeCacheCleared) {
@@ -195,7 +231,7 @@ public class ModuleRemoteConfig extends ModuleBase {
         }
     }
 
-    void cacheOrClearRCValuesIfNeeded() {
+    private void cacheOrClearRCValuesIfNeeded() {
         L.v("[ModuleRemoteConfig] cacheOrClearRCValuesIfNeeded, cache-clearing values");
 
         RemoteConfigValueStore rcvs = loadRCValuesFromStorage();
@@ -203,7 +239,7 @@ public class ModuleRemoteConfig extends ModuleBase {
         saveRCValues(rcvs);
     }
 
-    void notifyDownloadCallbacks(RCDownloadCallback devProvidedCallback, RequestResult requestResult, String message, boolean fullUpdate, Map<String, RCData> downloadedValues) {
+    private void notifyDownloadCallbacks(RCDownloadCallback devProvidedCallback, RequestResult requestResult, String message, boolean fullUpdate, Map<String, RCData> downloadedValues) {
         downloadCallbacks.forEach(callback -> callback.callback(requestResult, message, fullUpdate, downloadedValues));
 
         if (devProvidedCallback != null) {
@@ -211,7 +247,7 @@ public class ModuleRemoteConfig extends ModuleBase {
         }
     }
 
-    void rcAutomaticDownloadTrigger(boolean cacheClearOldValues) {
+    private void rcAutomaticDownloadTrigger(boolean cacheClearOldValues) {
         if (cacheClearOldValues) {
             cacheOrClearRCValuesIfNeeded();
         }
@@ -253,12 +289,6 @@ public class ModuleRemoteConfig extends ModuleBase {
             clearValueStoreInternal();
         }
     }
-
-    // ==================================================================
-    // ==================================================================
-    // INTERFACE
-    // ==================================================================
-    // ==================================================================
 
     public class RemoteConfig {
 
