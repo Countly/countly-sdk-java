@@ -9,6 +9,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class ModuleRemoteConfig extends ModuleBase {
