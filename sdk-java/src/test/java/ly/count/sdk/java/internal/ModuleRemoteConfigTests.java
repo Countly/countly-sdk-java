@@ -430,7 +430,7 @@ public class ModuleRemoteConfigTests {
             }
             Assert.assertEquals(oi, params.get("oi"));
             TestUtils.validateMetrics(Utils.urldecode(params.get("metrics")));
-            TestUtils.validateRequestMakerRequiredParams("/o/sdk", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
+            TestUtils.validateRequestMakerRequiredParams("/o/sdk?", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
             TestUtils.validateRequiredParams(params);
             callback.callback(remoteConfigMockData);
         };

@@ -77,7 +77,7 @@ public class ModuleRemoteConfig extends ModuleBase {
             Transport transport = internalConfig.sdk.networking.getTransport();
             final boolean networkingIsEnabled = internalConfig.getNetworkingEnabled();
 
-            internalConfig.immediateRequestGenerator.createImmediateRequestMaker().doWork(requestData, "/o/sdk", transport, false, networkingIsEnabled, checkResponse -> {
+            internalConfig.immediateRequestGenerator.createImmediateRequestMaker().doWork(requestData, "/o/sdk?", transport, false, networkingIsEnabled, checkResponse -> {
                 L.d("[ModuleRemoteConfig] updateRemoteConfigValues, Processing remote config received response, received response is null:[" + (checkResponse == null) + "]");
                 if (checkResponse == null) {
                     notifyDownloadCallbacks(devProvidedCallback, RequestResult.Error, "Encountered problem while trying to reach the server, possibly no internet connection", fullUpdate, null);
