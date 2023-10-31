@@ -2,9 +2,7 @@ package ly.count.sdk.java.internal;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -12,8 +10,8 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
-import java.net.URI;
 import java.net.URL;
+import java.nio.file.Files;
 import java.security.KeyFactory;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
@@ -128,11 +126,15 @@ public class Transport implements X509TrustManager {
         }
 
         String path = config.getServerURL().toString() + endpoint;
-        String picture = request.params.remove(UserEditorImpl.PICTURE_PATH);
-        boolean usingGET = !config.isHTTPPostForced() && request.isGettable(config.getServerURL()) && Utils.isEmptyOrNull(picture);
+        String picturePathValue = request.params.remove(UserEditorImpl.PICTURE_PATH);
+        boolean usingGET = !config.isHTTPPostForced() && request.isGettable(config.getServerURL()) && Utils.isEmptyOrNull(picturePathValue);
+
+        if (!usingGET && !Utils.isEmptyOrNull(picturePathValue)) {
+            path = setProfilePicturePathRequestParams(path, request.params);
+        }
 
         if (usingGET && config.getParameterTamperingProtectionSalt() != null) {
-            request.params.add(CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, request.params.toString() + config.getParameterTamperingProtectionSalt(), L));
+            request.params.add(CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, request.params + config.getParameterTamperingProtectionSalt(), L));
         }
 
         HttpURLConnection connection = openConnection(path, request.params.toString(), usingGET);
@@ -148,10 +150,10 @@ public class Transport implements X509TrustManager {
             OutputStream output = null;
             PrintWriter writer = null;
             try {
-                L.d("[network] Picture " + picture);
-                byte[] data = picture == null ? null : pictureData(user, picture);
+                L.d("[network] Picture path value " + picturePathValue);
+                byte[] pictureByteData = picturePathValue == null ? null : getPictureDataFromGivenValue(user, picturePathValue);
 
-                if (data != null) {
+                if (pictureByteData != null) {
                     String boundary = Long.toHexString(System.currentTimeMillis());
 
                     connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
@@ -159,7 +161,7 @@ public class Transport implements X509TrustManager {
                     output = connection.getOutputStream();
                     writer = new PrintWriter(new OutputStreamWriter(output, Utils.UTF8), true);
 
-                    addMultipart(output, writer, boundary, "", "profilePicture", "image", data);
+                    addMultipart(output, writer, boundary, "image/jpeg", "binaryFile", "image", pictureByteData);
 
                     StringBuilder salting = new StringBuilder();
                     Map<String, String> map = request.params.map();
@@ -175,6 +177,8 @@ public class Transport implements X509TrustManager {
 
                     writer.append(Utils.CRLF).append("--").append(boundary).append("--").append(Utils.CRLF).flush();
                 } else {
+                    //picture data is "null". If it was sent, we send "null" to server to clear the image there
+                    //we send a normal request in HTTP POST
                     if (config.getParameterTamperingProtectionSalt() != null) {
                         request.params.add(CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, request.params.toString() + config.getParameterTamperingProtectionSalt(), L));
                     }
@@ -222,43 +226,35 @@ public class Transport implements X509TrustManager {
         }
     }
 
-    byte[] pictureData(User user, String picture) throws IOException {
-        if (user == null) return null;
-        byte[] data;
+    /**
+     * Returns valid picture information
+     * If we have the bytes, give them
+     * Otherwise load them from disk
+     *
+     * @param user
+     * @param picture
+     * @return
+     */
+    byte[] getPictureDataFromGivenValue(User user, String picture) {
+        if (user == null) {
+            return null;
+        }
+
+        byte[] data = null;
         if (UserEditorImpl.PICTURE_IN_USER_PROFILE.equals(picture)) {
+            //if the value is this special value then we know that we will send over bytes that are already provided by the integrator
+            //those stored bytes are already in a internal data structure, use them
             data = user.picture();
         } else {
-            String protocol = null;
+            //otherwise we assume it is a local path, and we try to read it from disk
             try {
-                URI uri = new URI(picture);
-                protocol = uri.isAbsolute() ? uri.getScheme() : new URL(picture).getProtocol();
-            } catch (Throwable t) {
-                try {
-                    File f = new File(picture);
-                    protocol = f.toURI().toURL().getProtocol();
-                } catch (Throwable tt) {
-                    L.w("[network] Couldn't determine picturePath protocol " + tt);
-                }
-            }
-            if (protocol != null && protocol.equals("file")) {
                 File file = new File(picture);
                 if (!file.exists()) {
                     return null;
                 }
-                FileInputStream input = new FileInputStream(file);
-                ByteArrayOutputStream output = new ByteArrayOutputStream();
-
-                byte[] buffer = new byte[1024];
-                int len;
-                while ((len = input.read(buffer)) != -1) {
-                    output.write(buffer, 0, len);
-                }
-
-                input.close();
-                data = output.toByteArray();
-                output.close();
-            } else {
-                return null;
+                data = Files.readAllBytes(file.toPath());
+            } catch (Throwable t) {
+                L.w("[Transport] getPictureDataFromGivenValue, Error while reading picture from disk " + t);
             }
         }
 
@@ -505,5 +501,29 @@ public class Transport implements X509TrustManager {
     @Override
     public X509Certificate[] getAcceptedIssuers() {
         return new X509Certificate[0];
+    }
+
+    private String setProfilePicturePathRequestParams(String path, Params params) {
+        Params tempParams = new Params();
+
+        tempParams.add("device_id", params.get("device_id"));
+        tempParams.add("app_key", params.get("app_key"));
+        tempParams.add("timestamp", params.get("timestamp"));
+        tempParams.add("sdk_name", params.get("sdk_name"));
+        tempParams.add("sdk_version", params.get("sdk_version"));
+        tempParams.add("tz", params.get("tz"));
+        tempParams.add("hour", params.get("hour"));
+        tempParams.add("dow", params.get("dow"));
+        tempParams.add("rr", params.get("rr"));
+
+        if (params.has("av")) {
+            tempParams.add("av", params.get("av"));
+        }
+        //if no user details, add empty user details to indicate that we are sending a picture
+        if (!params.has("user_details")) {
+            tempParams.add("user_details", "{}");
+        }
+
+        return path + tempParams;
     }
 }

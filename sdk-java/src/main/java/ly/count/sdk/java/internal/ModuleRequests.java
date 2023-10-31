@@ -143,7 +143,7 @@ public class ModuleRequests extends ModuleBase {
         }
     }
 
-    static void addRequiredTimeParams(Params params) {
+    static void addRequiredTimeParametersToParams(Params params) {
         TimeUtils.Instant instant = TimeUtils.getCurrentInstant();
         params.add("timestamp", instant.timestamp)
             .add("tz", instant.tz)
@@ -151,8 +151,7 @@ public class ModuleRequests extends ModuleBase {
             .add("dow", instant.dow);
     }
 
-    static void addRequiredParams(InternalConfig config, Params params) {
-
+    static void addRequiredParametersToParams(InternalConfig config, Params params) {
         Map<String, String> map = params.map();
         if (map.isEmpty() || (map.size() == 1 && map.containsKey(Params.PARAM_DEVICE_ID))) {
             //if nothing was in the request, no need to add these mandatory fields
@@ -188,8 +187,9 @@ public class ModuleRequests extends ModuleBase {
 
     public static Params prepareRequiredParams(InternalConfig config) {
         Params params = new Params();
-        addRequiredTimeParams(params);
-        addRequiredParams(config, params);
+
+        addRequiredTimeParametersToParams(params);
+        addRequiredParametersToParams(config, params);
 
         return params;
     }
@@ -231,8 +231,8 @@ public class ModuleRequests extends ModuleBase {
             return null;
         }
 
-        addRequiredTimeParams(request.params);
-        addRequiredParams(config, request.params);
+        addRequiredTimeParametersToParams(request.params);
+        addRequiredParametersToParams(config, request.params);
 
         return Storage.pushAsync(config, request, param -> {
             SDKCore.instance.onRequest(config, request);

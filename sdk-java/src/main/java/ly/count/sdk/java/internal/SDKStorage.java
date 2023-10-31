@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 public class SDKStorage implements StorageProvider {
 
@@ -30,6 +31,8 @@ public class SDKStorage implements StorageProvider {
     protected static final String key_device_id = "did";
     protected static final String key_device_id_type = "did_t";
     protected static final String key_remote_config = "rc";
+    protected static final String key_migration_version = "dv";
+
 
     private JsonFileStorage jsonFileStorage;
 
@@ -241,6 +244,14 @@ public class SDKStorage implements StorageProvider {
     }
 
     private String[] getFileList(InternalConfig config) {
+        return getFileList(config, File::isFile);
+    }
+
+    private String[] getCountlyFileList(InternalConfig config) {
+        return getFileList(config, file -> file.isFile() && file.getName().startsWith(FILE_NAME_PREFIX + FILE_NAME_SEPARATOR));
+    }
+
+    private String[] getFileList(InternalConfig config, Predicate<File> fileValidation) {
         File[] files = (config.getSdkStorageRootDirectory()).listFiles();
         if (files == null) {
             return new String[0];
@@ -249,7 +260,7 @@ public class SDKStorage implements StorageProvider {
         ArrayList<String> fileNames = new ArrayList<>();
 
         for (File file : files) {
-            if (file.isFile()) {
+            if (fileValidation.test(file)) {
                 fileNames.add(file.getName());
             }
         }
@@ -356,5 +367,25 @@ public class SDKStorage implements StorageProvider {
     @Override
     public Object getRemoteConfigValues() {
         return jsonFileStorage.get(key_remote_config);
+    }
+  
+    @Override
+    public Integer getMigrationVersion() {
+        return jsonFileStorage.getInt(key_migration_version, -1);
+    }
+
+    @Override
+    public void setMigrationVersion(Integer migrationVersion) {
+        jsonFileStorage.addAndSave(key_migration_version, migrationVersion);
+    }
+
+    @Override
+    public boolean isCountlyStorageEmpty() {
+        String[] files = getCountlyFileList(config);
+        int size = files.length;
+        if (size == 1 && files[0].contains(JSON_FILE_NAME)) { // json file is created automatically
+            return true;
+        }
+        return size == 0;
     }
 }

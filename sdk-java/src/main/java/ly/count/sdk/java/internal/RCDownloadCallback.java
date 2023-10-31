@@ -13,4 +13,3 @@ public interface RCDownloadCallback {
      */
     void callback(RequestResult rResult, String error, boolean fullValueUpdate, Map<String, RCData> downloadedValues);
 }
-
