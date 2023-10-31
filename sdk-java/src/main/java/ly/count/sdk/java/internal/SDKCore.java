@@ -422,6 +422,24 @@ public class SDKCore {
         sdkStorage.init(givenConfig);
         givenConfig.storageProvider = sdkStorage;
         config = prepareConfig(givenConfig);
+        config.storageProvider = sdkStorage;
+
+        if (config.immediateRequestGenerator == null) {
+            config.immediateRequestGenerator = ImmediateRequestMaker::new;
+        }
+
+        //setup module mapping
+        prepareMappings(config);
+
+        //create internal timer
+        countlyTimer = new CountlyTimer(L);
+        countlyTimer.startTimer(config.getSendUpdateEachSeconds(), this::onTimer);
+
+        //setup and perform migrations
+        MigrationHelper migrationHelper = new MigrationHelper(L);
+        migrationHelper.setupMigrations(config.storageProvider);
+        migrationHelper.applyMigrations(new HashMap<>());
+
         config.setLogger(L);
 
         if (config.immediateRequestGenerator == null) {
