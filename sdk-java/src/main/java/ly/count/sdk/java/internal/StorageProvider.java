@@ -32,4 +32,18 @@ public interface StorageProvider {
      * @param deviceIdTypeString device ID strategy
      */
     void setDeviceIdType(String deviceIdTypeString);
+
+    /**
+     * Set remote config values
+     *
+     * @param remoteConfigValues set of remote config values
+     */
+    void setRemoteConfigValues(Object remoteConfigValues);
+
+    /**
+     * Get remote config values
+     *
+     * @return set of remote config values
+     */
+    Object getRemoteConfigValues();
 }

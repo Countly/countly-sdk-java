@@ -74,6 +74,8 @@ public class Params {
             for (Object value : collection)
                 if (value instanceof JSONable) {
                     json.add(((JSONable) value).toJSON(L));
+                } else if (value instanceof String) {
+                    json.add((String) value);
                 }
             return this;
         }

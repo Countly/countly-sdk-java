@@ -60,6 +60,7 @@ public class SDKCore {
         moduleMappings.put(CoreFeature.BackendMode.getIndex(), ModuleBackendMode.class);
         moduleMappings.put(CoreFeature.Feedback.getIndex(), ModuleFeedback.class);
         moduleMappings.put(CoreFeature.Events.getIndex(), ModuleEvents.class);
+        moduleMappings.put(CoreFeature.RemoteConfig.getIndex(), ModuleRemoteConfig.class);
     }
 
     /**
@@ -377,11 +378,21 @@ public class SDKCore {
     public ModuleFeedback.Feedback feedback() {
 
         if (!hasConsentForFeature(CoreFeature.Feedback)) {
-            L.v("[SDKCore] feedback: Feedback feature has no consent, returning null");
+            L.v("[SDKCore] feedback, Feedback feature has no consent, returning null");
             return null;
         }
 
         return module(ModuleFeedback.class).feedbackInterface;
+    }
+
+    public ModuleRemoteConfig.RemoteConfig remoteConfig() {
+
+        if (!hasConsentForFeature(CoreFeature.RemoteConfig)) {
+            L.v("[SDKCore] remoteConfig, RemoteConfig feature has no consent, returning null");
+            return null;
+        }
+
+        return module(ModuleRemoteConfig.class).remoteConfigInterface;
     }
 
     /**
@@ -710,8 +721,8 @@ public class SDKCore {
 
         Request request = ModuleRequests.nonSessionRequest(config);
         ModuleCrash.putCrashIntoParams(crash, request.params);
-        ModuleRequests.addRequired(config, request);
-        ModuleRequests.addRequiredTimeParams(request);
+        ModuleRequests.addRequiredParams(config, request.params);
+        ModuleRequests.addRequiredTimeParams(request.params);
 
         if (Storage.push(config, request)) {
             L.i("[SDKCore] Added request " + request.storageId() + " instead of crash " + crash.storageId());

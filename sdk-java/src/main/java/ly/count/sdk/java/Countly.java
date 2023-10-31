@@ -8,6 +8,7 @@ import ly.count.sdk.java.internal.Log;
 import ly.count.sdk.java.internal.ModuleBackendMode;
 import ly.count.sdk.java.internal.ModuleEvents;
 import ly.count.sdk.java.internal.ModuleFeedback;
+import ly.count.sdk.java.internal.ModuleRemoteConfig;
 import ly.count.sdk.java.internal.SDKCore;
 
 /**
@@ -343,6 +344,21 @@ public class Countly implements Usage {
             return null;
         }
         return sdk.feedback();
+    }
+
+    /**
+     * <code>RemoteConfig</code> interface to use remote config feature.
+     *
+     * @return {@link ModuleRemoteConfig.RemoteConfig} instance.
+     */
+    public ModuleRemoteConfig.RemoteConfig remoteConfig() {
+        if (!isInitialized()) {
+            if (L != null) {
+                L.e("[Countly] remoteConfig, SDK is not initialized yet.");
+            }
+            return null;
+        }
+        return sdk.remoteConfig();
     }
 
     /**
