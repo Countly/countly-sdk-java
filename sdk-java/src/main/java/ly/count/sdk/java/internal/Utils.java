@@ -362,4 +362,18 @@ public class Utils {
             }
         }
     }
+
+    /**
+     * Check whether given string is a valid URL or not
+     * @param url
+     * @return
+     */
+    public static boolean isValidURL(String url) {
+        try {
+            new java.net.URL(url).toURI();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

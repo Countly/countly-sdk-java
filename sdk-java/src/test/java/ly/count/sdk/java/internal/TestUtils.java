@@ -58,6 +58,7 @@ public class TestUtils {
         checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
         Config config = new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
 
+        config.setApplicationVersion(APPLICATION_VERSION);
         config.setCustomDeviceId(deviceID);
         return config;
     }
@@ -455,7 +456,7 @@ public class TestUtils {
 
         return file;
     }
-  
+
     static InternalConfig getInternalConfigWithLogger(Config config) {
         InternalConfig ic = new InternalConfig(config);
         ic.setLogger(mock(Log.class));

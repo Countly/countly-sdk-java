@@ -307,4 +307,17 @@ public class UtilsTests {
             }
         }
     }
+
+    /**
+     * "isValidURL"
+     * Check out different strings to that they are a valid URL
+     */
+    @Test
+    public void isValidURL() {
+        Assert.assertTrue(Utils.isValidURL("https://xxx.server.ly"));
+        Assert.assertFalse(Utils.isValidURL(""));
+        Assert.assertFalse(Utils.isValidURL(null));
+        Assert.assertFalse(Utils.isValidURL("test"));
+        Assert.assertFalse(Utils.isValidURL("/Users/Countly/test.txt"));
+    }
 }
