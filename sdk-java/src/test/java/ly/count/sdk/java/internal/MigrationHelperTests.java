@@ -18,7 +18,7 @@ import static org.mockito.Mockito.spy;
 
 @RunWith(JUnit4.class)
 public class MigrationHelperTests {
-    final int expectedLatestSchemaVersion = 1;
+    final int expectedLatestSchemaVersion = 0;//1;
 
     SDKStorage storageProvider;
 

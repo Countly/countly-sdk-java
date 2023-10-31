@@ -34,7 +34,7 @@ public class MigrationHelper {
         this.logger = logger;
 
         // add migrations below
-        migrations.add(this::migration_DeleteConfigFile_01);
+        //migrations.add(this::migration_DeleteConfigFile_01);
         latestMigrationVersion = migrations.size();
     }
 
