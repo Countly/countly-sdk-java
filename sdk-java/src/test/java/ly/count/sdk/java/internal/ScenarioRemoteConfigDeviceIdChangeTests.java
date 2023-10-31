@@ -37,7 +37,7 @@ public class ScenarioRemoteConfigDeviceIdChangeTests {
 
         //initialization
         Countly.instance().init(TestUtils.getConfigRemoteConfigs().enableRemoteConfigAutomaticTriggers().enableRemoteConfigValueCaching());
-        SDKCore.instance.config.immediateRequestGenerator = () -> ModuleRemoteConfigTests.remoteConfigRequestMaker(remoteConfigMockData, null, null);
+        SDKCore.instance.config.immediateRequestGenerator = () -> ModuleRemoteConfigTests.remoteConfigRequestMaker(remoteConfigMockData, null, null, null);
         Assert.assertEquals(1, Countly.instance().remoteConfig().getValues().size());
 
         //change device id
@@ -63,7 +63,7 @@ public class ScenarioRemoteConfigDeviceIdChangeTests {
 
         //initialization
         Countly.instance().init(TestUtils.getConfigRemoteConfigs().enableRemoteConfigAutomaticTriggers().enableRemoteConfigValueCaching());
-        SDKCore.instance.config.immediateRequestGenerator = () -> ModuleRemoteConfigTests.remoteConfigRequestMaker(remoteConfigMockData, null, null);
+        SDKCore.instance.config.immediateRequestGenerator = () -> ModuleRemoteConfigTests.remoteConfigRequestMaker(remoteConfigMockData, null, null, null);
         Assert.assertEquals(1, Countly.instance().remoteConfig().getValues().size());
 
         //change device id

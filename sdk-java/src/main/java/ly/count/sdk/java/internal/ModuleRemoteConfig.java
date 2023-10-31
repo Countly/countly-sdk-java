@@ -113,7 +113,6 @@ public class ModuleRemoteConfig extends ModuleBase {
         if (rcvs instanceof JSONObject) {
             return new RemoteConfigValueStore((JSONObject) rcvs, remoteConfigValuesShouldBeCached, L);
         }
-
         return new RemoteConfigValueStore(new JSONObject(), remoteConfigValuesShouldBeCached, L);
     }
 
@@ -197,7 +196,7 @@ public class ModuleRemoteConfig extends ModuleBase {
         params.add("new_end_point", "/o/sdk");
 
         if (keys.length > 0) { // exits all otherwise
-            params.arr("keys").put(Arrays.asList(keys)).add();
+            params.add("keys", new JSONArray(Arrays.asList(keys)).toString());
         }
 
         ModuleRequests.pushAsync(internalConfig, new Request(params));
@@ -220,7 +219,7 @@ public class ModuleRemoteConfig extends ModuleBase {
 
         params.add("method", "ab_opt_out");
         if (keys.length > 0) { // exits all otherwise
-            params.arr("keys").put(Arrays.asList(keys)).add();
+            params.add("keys", new JSONArray(Arrays.asList(keys)).toString());
         }
 
         ModuleRequests.pushAsync(internalConfig, new Request(params));
@@ -438,14 +437,12 @@ public class ModuleRemoteConfig extends ModuleBase {
                 }
 
                 RCData data = getRemoteConfigValueStoreInternal().getValue(key);
-
                 if (data.value == null) {
                     L.i("[RemoteConfig] getValueAndEnroll, No value to enroll");
                 } else {
                     // assuming value is not null enroll to key
                     enrollIntoABTestsForKeys(new String[] { key });
                 }
-
                 return data;
             }
         }
@@ -458,12 +455,10 @@ public class ModuleRemoteConfig extends ModuleBase {
         public void enrollIntoABTestsForKeys(@Nullable String[] keys) {
             synchronized (Countly.instance()) {
                 L.i("[RemoteConfig] enrollIntoABTestsForKeys");
-
                 if (keys == null || keys.length == 0) {
                     L.w("[RemoteConfig] enrollIntoABTestsForKeys, A key should be provided to enroll the user.");
                     return;
                 }
-
                 enrollIntoABTestsForKeysInternal(keys);
             }
         }
@@ -476,11 +471,9 @@ public class ModuleRemoteConfig extends ModuleBase {
         public void exitABTestsForKeys(@Nullable String[] keys) {
             synchronized (Countly.instance()) {
                 L.i("[RemoteConfig] exitABTestsForKeys");
-
                 if (keys == null) {
                     keys = new String[0];
                 }
-
                 exitABTestsForKeysInternal(keys);
             }
         }
