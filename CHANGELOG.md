@@ -8,6 +8,8 @@
 * Adding application version information to every request.
 * Added the ability to set the user profile picture with an URL
 
+* Fixed a bug where it was not possible to send a profile picture with binary data
+
 ## 23.8.0
 
 * !! Major breaking change !! The following methods and their functionality are deprecated from the "UserEditor" interface and will not function anymore:
