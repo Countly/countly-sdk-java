@@ -51,6 +51,7 @@ public class TestUtils {
         checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
         Config config = new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
 
+        config.setApplicationVersion(APPLICATION_VERSION);
         config.setCustomDeviceId(deviceID);
         return config;
     }
@@ -410,6 +411,26 @@ public class TestUtils {
         } catch (Exception e) {
             return new JSONObject();
         }
+    }
+
+    /**
+     * Create a file for test purposes
+     * If file cannot be created, return null and assert fail
+     *
+     * @param fileName name of the file to create
+     * @return created file
+     */
+    public static File createFile(final String fileName) {
+        File file = new File(getTestSDirectory(), FILE_NAME_PREFIX + FILE_NAME_SEPARATOR + fileName);
+        try {
+            if (file.createNewFile()) {
+                return file;
+            }
+        } catch (IOException e) {
+            Assert.fail("Failed to create file: " + e.getMessage());
+        }
+
+        return file;
     }
 
     static InternalConfig getInternalConfigWithLogger(Config config) {
