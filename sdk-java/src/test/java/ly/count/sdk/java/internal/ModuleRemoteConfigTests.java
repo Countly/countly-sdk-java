@@ -184,22 +184,71 @@ public class ModuleRemoteConfigTests {
         Assert.assertEquals(0, rcModule.downloadCallbacks.size());
     }
 
+    /**
+     * "downloadAllKeys"
+     * Returning a mock json response, validating that included keys at the created request
+     * The response should be parsed correctly and match with mock json data and included keys should be at the request
+     */
     @Test
     public void downloadSpecificKeys() {
+        downloadSpecificKeys_base(new String[] { TestUtils.keysValues[0] });
+    }
+
+    /**
+     * "downloadAllKeys"
+     * Returning a mock json response, validating that included keys param not exist at the request
+     * The response should be parsed correctly and match with mock json data and included keys param should not exist at the request
+     */
+    @Test
+    public void downloadSpecificKeys_nullInput() {
+        downloadSpecificKeys_base(null);
+    }
+
+    /**
+     * "downloadOmittingKeys"
+     * Returning a mock json response, validating that excluded keys at the created request
+     * The response should be parsed correctly and match with mock json data and excluded keys should be at the request
+     */
+    @Test
+    public void downloadOmittingKeys() {
+        downloadOmittingKeys_base(new String[] { TestUtils.keysValues[0] });
+    }
+
+    /**
+     * "downloadOmittingKeys"
+     * Returning a mock json response, validating that excluded keys param not exist at the request
+     * The response should be parsed correctly and match with mock json data and excluded keys param must not exist
+     */
+    @Test
+    public void downloadOmittingKeys_nullInput() {
+        downloadOmittingKeys_base(null);
+    }
+
+    private void downloadSpecificKeys_base(String[] included) {
+        downloadKeys_base(null, included, () -> Countly.instance().remoteConfig().downloadSpecificKeys(included,
+            (rResult, error, fullValueUpdate, downloadedValues) -> {
+                Assert.assertEquals(RequestResult.Success, rResult);
+                Assert.assertNull(error);
+            }));
+    }
+
+    private void downloadOmittingKeys_base(String[] omitted) {
+        downloadKeys_base(omitted, null, () -> Countly.instance().remoteConfig().downloadOmittingKeys(omitted, null));
+    }
+
+    private void downloadKeys_base(String[] omitted, String[] included, Runnable downloadKeys) {
         RCDownloadCallback callback = (rResult, error, fullValueUpdate, downloadedValues) -> {
             Assert.assertEquals(RequestResult.Success, rResult);
             Assert.assertNull(error);
-            Assert.assertEquals(3, downloadedValues.size());
+            Assert.assertEquals(1, downloadedValues.size());
         };
         JSONObject serverResponse = new JSONObject();
         serverResponse.put(TestUtils.keysValues[0], TestUtils.keysValues[1]);
-        serverResponse.put(TestUtils.keysValues[2], 89.9);
-        serverResponse.put(TestUtils.keysValues[3], true);
 
         Countly.instance().init(TestUtils.getConfigRemoteConfigs().remoteConfigRegisterGlobalCallback(callback));
-        SDKCore.instance.config.immediateRequestGenerator = () -> remoteConfigRequestMaker(serverResponse, new String[] { TestUtils.keysValues[0] }, null);
+        SDKCore.instance.config.immediateRequestGenerator = () -> remoteConfigRequestMaker(serverResponse, included, omitted);
 
-        Countly.instance().remoteConfig().downloadSpecificKeys(new String[] { TestUtils.keysValues[0] }, null);
+        downloadKeys.run();
         validateRemoteConfigValues(Countly.instance().remoteConfig().getValues(), serverResponse, true);
     }
 
