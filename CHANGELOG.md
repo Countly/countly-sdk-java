@@ -13,6 +13,9 @@
   * 'enrollABOnRCDownload' to enroll A/B tests when remote config values downloaded
   * 'enableRemoteConfigAutomaticTriggers' to automatically download remote config values on init
   * 'remoteConfigRegisterGlobalCallback(RCDownloadCallback callback)' to register a remote config callback
+* Added the ability to set the user profile picture with an URL
+
+* Fixed a bug where it was not possible to send a profile picture with binary data
 
 ## 23.8.0
 

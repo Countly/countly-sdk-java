@@ -46,4 +46,25 @@ public interface StorageProvider {
      * @return set of remote config values
      */
     Object getRemoteConfigValues();
+  
+    /**
+     * Get migration version
+     *
+     * @return migration version
+     */
+    Integer getMigrationVersion();
+
+    /**
+     * Set migration version
+     *
+     * @param migrationVersion migration version
+     */
+    void setMigrationVersion(Integer migrationVersion);
+
+    /**
+     * Check countly storage is empty or not
+     *
+     * @return true if empty, false otherwise
+     */
+    boolean isCountlyStorageEmpty();
 }

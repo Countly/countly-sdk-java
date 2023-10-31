@@ -360,6 +360,7 @@ public class Device {
         return this;
     }
 
+    //todo null handling
     public Device setMetricOverride(Map<String, String> givenMetricOverride) {
         metricOverride.putAll(givenMetricOverride);
         return this;

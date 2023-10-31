@@ -120,6 +120,17 @@ public class JsonFileStorage {
     }
 
     /**
+     * Returns integer value for the key
+     *
+     * @param key to get
+     * @param defaultValue to return if key not found
+     * @return value, if key not found returns defaultValue
+     */
+    public int getInt(@Nonnull final String key, final int defaultValue) {
+        return json.optInt(key, defaultValue);
+    }
+
+    /**
      * Clears all data
      */
     public void clear() {

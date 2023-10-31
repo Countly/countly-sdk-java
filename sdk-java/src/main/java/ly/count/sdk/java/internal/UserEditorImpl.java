@@ -1,20 +1,14 @@
 package ly.count.sdk.java.internal;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
 import ly.count.sdk.java.User;
 import ly.count.sdk.java.UserEditor;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class UserEditorImpl implements UserEditor {
     private Log L = null;
@@ -119,6 +113,12 @@ public class UserEditorImpl implements UserEditor {
         this.ops = new ArrayList<>();
     }
 
+    /**
+     * Transforming changes in "sets" into a json contained in "changes"
+     *
+     * @param changes
+     * @throws JSONException
+     */
     void perform(JSONObject changes) throws JSONException {
         for (String key : sets.keySet()) {
             Object value = sets.get(key);
@@ -169,29 +169,35 @@ public class UserEditorImpl implements UserEditor {
                     changes.put(PHONE, value == null ? JSONObject.NULL : user.phone);
                     break;
                 case PICTURE:
+                    //if we get here, that means that the dev gave us bytes for the picture
                     if (value == null) {
+                        //there is an indication that the picture should be erased server side
                         user.picture = null;
                         user.picturePath = null;
-                        changes.put(PICTURE_PATH, JSONObject.NULL);
+                        changes.put(PICTURE, JSONObject.NULL);
                     } else if (value instanceof byte[]) {
                         user.picture = (byte[]) value;
+                        //set a special value to indicate that the picture information is already stored in memory
                         changes.put(PICTURE_PATH, PICTURE_IN_USER_PROFILE);
                     } else {
                         L.e("[UserEditorImpl] Won't set user picture (must be of type byte[])");
                     }
                     break;
                 case PICTURE_PATH:
-                    if (value == null) {
+                    if (value == null || (value instanceof String && ((String) value).isEmpty())) {
+                        //there is an indication that the picture should be erased server side
                         user.picture = null;
                         user.picturePath = null;
-                        changes.put(PICTURE_PATH, JSONObject.NULL);
+                        changes.put(PICTURE, JSONObject.NULL);
                     } else if (value instanceof String) {
-                        try {
-                            user.picturePath = new URI((String) value).toString();
-                            changes.put(PICTURE_PATH, user.picturePath);
-                        } catch (URISyntaxException e) {
-                            L.e("[UserEditorImpl] Supplied picturePath is not parsable to java.net.URI");
+                        if (Utils.isValidURL((String) value)) {
+                            //if it is a valid URL that means the picture is online, and we want to send the link to the server
+                            changes.put(PICTURE, value);
+                        } else {
+                            //if we get here then that means it is a local file path which we would send over as bytes to the server
+                            changes.put(PICTURE_PATH, value);
                         }
+                        user.picturePath = value.toString();
                     } else {
                         L.e("[UserEditorImpl] Won't set user picturePath (must be String or null)");
                     }
@@ -331,17 +337,23 @@ public class UserEditorImpl implements UserEditor {
         return set(PHONE, value);
     }
 
+    //we set the bytes for the local picture
     @Override
     public UserEditor setPicture(byte[] picture) {
         L.d("setPicture: picture = " + picture);
         return set(PICTURE, picture);
     }
 
+    //we set the url for either the online picture or a local path picture
     @Override
     public UserEditor setPicturePath(String picturePath) {
-        L.d("setPicturePath: picturePath = " + picturePath);
-
-        return set(PICTURE_PATH, picturePath);
+        L.d("[UserEditorImpl] setPicturePath, picturePath = " + picturePath);
+        if (picturePath == null || Utils.isValidURL(picturePath) || (new File(picturePath)).isFile()) {
+            //if it is a thing we can use, continue
+            return set(PICTURE_PATH, picturePath);
+        }
+        L.w("[UserEditorImpl] setPicturePath, picturePath is not a valid file path or url");
+        return this;
     }
 
     @Override
@@ -526,10 +538,10 @@ public class UserEditorImpl implements UserEditor {
             Storage.push(SDKCore.instance.config, user);
 
             ModuleRequests.injectParams(SDKCore.instance.config, params -> {
-                params.add("user_details", changes.toString());
                 if (changes.has(PICTURE_PATH)) {
                     try {
                         params.add(PICTURE_PATH, changes.getString(PICTURE_PATH));
+                        changes.remove(PICTURE_PATH);
                     } catch (JSONException e) {
                         L.w("Won't send picturePath" + e);
                     }
@@ -546,6 +558,7 @@ public class UserEditorImpl implements UserEditor {
                 if (changes.has(LOCATION) && user.location != null) {
                     params.add("location", user.location);
                 }
+                params.add("user_details", changes.toString());
             });
         } catch (JSONException e) {
             L.e("[UserEditorImpl] Exception while committing changes to User profile" + e);
