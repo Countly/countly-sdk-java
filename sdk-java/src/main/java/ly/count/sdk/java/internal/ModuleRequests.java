@@ -1,5 +1,6 @@
 package ly.count.sdk.java.internal;
 
+import java.util.Map;
 import java.util.concurrent.Future;
 import ly.count.sdk.java.User;
 
@@ -131,6 +132,25 @@ public class ModuleRequests extends ModuleBase {
         return new Request(timestamp);
     }
 
+    public static void injectParams(InternalConfig config, ParamsInjector injector) {
+        SessionImpl session = SDKCore.instance.getSession();
+        if (session == null) {
+            Request request = nonSessionRequest(config);
+            injector.call(request.params);
+            pushAsync(config, request);
+        } else {
+            injector.call(session.params);
+        }
+    }
+
+    static void addRequiredTimeParams(Params params) {
+        TimeUtils.Instant instant = TimeUtils.getCurrentInstant();
+        params.add("timestamp", instant.timestamp)
+            .add("tz", instant.tz)
+            .add("hour", instant.hour)
+            .add("dow", instant.dow);
+    }
+
     /**
      * Request to see if rating widget is available
      * Expected format
@@ -163,59 +183,51 @@ public class ModuleRequests extends ModuleBase {
         return req;
     }
 
-    public static void injectParams(InternalConfig config, ParamsInjector injector) {
-        SessionImpl session = SDKCore.instance.getSession();
-        if (session == null) {
-            Request request = nonSessionRequest(config);
-            injector.call(request.params);
-            pushAsync(config, request);
-        } else {
-            injector.call(session.params);
-        }
-    }
+    static void addRequiredParams(InternalConfig config, Params params) {
 
-    static void addRequiredTimeParams(Request request) {
-        TimeUtils.Instant instant = TimeUtils.getCurrentInstant();
-        request.params.add("timestamp", instant.timestamp)
-            .add("tz", instant.tz)
-            .add("hour", instant.hour)
-            .add("dow", instant.dow);
-    }
-
-    static Request addRequired(InternalConfig config, Request request) {
-
-        if (request.isEmpty()) {
+        Map<String, String> map = params.map();
+        if (map.isEmpty() || (map.size() == 1 && map.containsKey(Params.PARAM_DEVICE_ID))) {
             //if nothing was in the request, no need to add these mandatory fields
-            return request;
+            return;
         }
 
         //check if it has the device ID
-        if (!request.params.has(Params.PARAM_DEVICE_ID)) {
+        if (!params.has(Params.PARAM_DEVICE_ID)) {
             if (config.getDeviceId() == null) {
                 //no ID possible, no reason to send a request that is not tied to a user, return null
-                return null;
+                return;
             } else {
                 //ID possible, add it to the request
-                request.params.add(Params.PARAM_DEVICE_ID, config.getDeviceId().id);
+                params.add(Params.PARAM_DEVICE_ID, config.getDeviceId().id);
             }
         }
 
         //add app key if needed
-        if (!request.params.has("app_key")) {
-            request.params.add("app_key", config.getServerAppKey());
+        if (!params.has("app_key")) {
+            params.add("app_key", config.getServerAppKey());
         }
 
         //add other missing fields
-        if (!request.params.has("sdk_name")) {
-            request.params.add("sdk_name", config.getSdkName())
+        if (!params.has("sdk_name")) {
+            params.add("sdk_name", config.getSdkName())
                 .add("sdk_version", config.getSdkVersion());
         }
 
         if (!Utils.isEmptyOrNull(config.getApplicationVersion())) {
-            request.params.add("av", Utils.urlencode(config.getApplicationVersion(), config.getLogger()));
+            params.add("av", config.getApplicationVersion());
         }
+    }
 
-        return request;
+    public static Params prepareRequiredParams(InternalConfig config) {
+        Params params = new Params();
+        addRequiredTimeParams(params);
+        addRequiredParams(config, params);
+
+        return params;
+    }
+
+    public static String prepareRequiredParamsAsString(InternalConfig config, Object... paramsObj) {
+        return prepareRequiredParams(config).add(paramsObj).toString();
     }
 
     /**
@@ -251,8 +263,8 @@ public class ModuleRequests extends ModuleBase {
             return null;
         }
 
-        addRequiredTimeParams(request);
-        addRequired(config, request);
+        addRequiredTimeParams(request.params);
+        addRequiredParams(config, request.params);
 
         return Storage.pushAsync(config, request, param -> {
             SDKCore.instance.onRequest(config, request);

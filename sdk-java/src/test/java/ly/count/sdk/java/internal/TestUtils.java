@@ -50,16 +50,14 @@ public class TestUtils {
         File sdkStorageRootDirectory = getTestSDirectory();
         checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
         Config config = new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
+        config.setApplicationVersion(APPLICATION_VERSION);
 
         config.setCustomDeviceId(deviceID);
         return config;
     }
 
     static Config getConfigSessions(Config.Feature... features) {
-        File sdkStorageRootDirectory = getTestSDirectory();
-        checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
-        Config config = new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
-        config.setCustomDeviceId(DEVICE_ID);
+        Config config = getBaseConfig();
         config.setEventQueueSizeToSend(2);
         config.enableFeatures(features);
         config.enableFeatures(Config.Feature.Sessions);
@@ -72,12 +70,7 @@ public class TestUtils {
     }
 
     static Config getConfigEvents(Integer eventThreshold) {
-        File sdkStorageRootDirectory = getTestSDirectory();
-        checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
-        Config config = new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
-        config.setCustomDeviceId(DEVICE_ID);
-        config.setApplicationVersion(APPLICATION_VERSION);
-
+        Config config = getBaseConfig();
         config.enableFeatures(Config.Feature.Events);
 
         if (eventThreshold != null) {
@@ -92,11 +85,7 @@ public class TestUtils {
     }
 
     static Config getConfigFeedback(Config.Feature... features) {
-        File sdkStorageRootDirectory = getTestSDirectory();
-        checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
-        Config config = new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
-        config.setCustomDeviceId(DEVICE_ID);
-        config.setApplicationVersion(APPLICATION_VERSION);
+        Config config = getBaseConfig();
 
         config.enableFeatures(features);
         config.enableFeatures(Config.Feature.Feedback);
@@ -416,5 +405,16 @@ public class TestUtils {
         InternalConfig ic = new InternalConfig(config);
         ic.setLogger(mock(Log.class));
         return ic;
+    }
+
+    static void validateRequestMakerRequiredParams(String expectedEndpoint, String customEndpoint, Boolean requestShouldBeDelayed, Boolean networkingIsEnabled) {
+        Assert.assertEquals(expectedEndpoint, customEndpoint);
+        Assert.assertFalse(requestShouldBeDelayed);
+        Assert.assertTrue(networkingIsEnabled);
+    }
+
+    static void validateMetrics(String metrics) {
+        Params params = Device.dev.buildMetrics();
+        Assert.assertEquals(params.get("metrics"), metrics);
     }
 }
