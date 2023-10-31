@@ -390,7 +390,7 @@ public class ModuleRemoteConfig extends ModuleBase {
         public @Nonnull Map<String, RCData> getAllValuesAndEnroll() {
             synchronized (Countly.instance()) {
                 L.i("[RemoteConfig] getAllValuesAndEnroll");
-                Map<String, RCData> values = getAllRemoteConfigValuesInternal();
+                Map<String, RCData> values = getRemoteConfigValueStoreInternal().getAllValues();
 
                 if (values.isEmpty()) {
                     L.i("[RemoteConfig] getAllValuesAndEnroll, No value to enroll");
@@ -437,7 +437,7 @@ public class ModuleRemoteConfig extends ModuleBase {
                     return new RCData(null, true);
                 }
 
-                RCData data = getRCValue(key);
+                RCData data = getRemoteConfigValueStoreInternal().getValue(key);
 
                 if (data.value == null) {
                     L.i("[RemoteConfig] getValueAndEnroll, No value to enroll");
