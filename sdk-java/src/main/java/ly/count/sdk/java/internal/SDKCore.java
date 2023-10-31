@@ -433,6 +433,24 @@ public class SDKCore {
         sdkStorage.init(givenConfig);
         givenConfig.storageProvider = sdkStorage;
         config = prepareConfig(givenConfig);
+        config.storageProvider = sdkStorage;
+
+        if (config.immediateRequestGenerator == null) {
+            config.immediateRequestGenerator = ImmediateRequestMaker::new;
+        }
+
+        //setup module mapping
+        prepareMappings(config);
+
+        //create internal timer
+        countlyTimer = new CountlyTimer(L);
+        countlyTimer.startTimer(config.getSendUpdateEachSeconds(), this::onTimer);
+
+        //setup and perform migrations
+        MigrationHelper migrationHelper = new MigrationHelper(L);
+        migrationHelper.setupMigrations(config.storageProvider);
+        migrationHelper.applyMigrations(new HashMap<>());
+
         config.setLogger(L);
 
         if (config.immediateRequestGenerator == null) {
@@ -721,8 +739,9 @@ public class SDKCore {
 
         Request request = ModuleRequests.nonSessionRequest(config);
         ModuleCrash.putCrashIntoParams(crash, request.params);
-        ModuleRequests.addRequiredParams(config, request.params);
-        ModuleRequests.addRequiredTimeParams(request.params);
+      
+        ModuleRequests.addRequiredParametersToParams(config, request.params);
+        ModuleRequests.addRequiredTimeParametersToParams(request.params);
 
         if (Storage.push(config, request)) {
             L.i("[SDKCore] Added request " + request.storageId() + " instead of crash " + crash.storageId());

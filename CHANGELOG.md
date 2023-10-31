@@ -6,13 +6,16 @@
 * Session update time duration increased to 60 seconds from 30 seconds.
 * Adding remaining request queue size information to every request.
 * Adding application version information to every request.
-* Added the remote config feature. Added consent for it "Config.Feature.RemoteConfig".
+* Added the remote config feature.
 * Remote Config module is accessible through "Countly::instance()::remoteConfig()" call.
 * Added configuration functions to configure Remote Config module on init:
   * 'enableRemoteConfigValueCaching' to enable caching of remote config values
   * 'enrollABOnRCDownload' to enroll A/B tests when remote config values downloaded
   * 'enableRemoteConfigAutomaticTriggers' to automatically download remote config values on init
   * 'remoteConfigRegisterGlobalCallback(RCDownloadCallback callback)' to register a remote config callback
+* Added the ability to set the user profile picture with an URL
+
+* Fixed a bug where it was not possible to send a profile picture with binary data
 
 ## 23.8.0
 
