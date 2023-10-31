@@ -103,22 +103,12 @@ public class ModuleRemoteConfig extends ModuleBase {
         }
     }
 
-    private RCData getRCValue(@Nonnull String key) {
-        try {
-            RemoteConfigValueStore rcvs = loadRCValuesFromStorage();
-            return rcvs.getValue(key);
-        } catch (Exception ex) {
-            L.e("[ModuleRemoteConfig] getRCValue, Call failed:[" + ex + "]");
-            return new RCData(null, true);
-        }
-    }
-
     /**
      * Loads the remote config values from the storage
      *
      * @return see {@link RemoteConfigValueStore}
      */
-    private @Nonnull RemoteConfigValueStore loadRCValuesFromStorage() {
+    private @Nonnull RemoteConfigValueStore getRemoteConfigValueStoreInternal() {
         Object rcvs = internalConfig.storageProvider.getRemoteConfigValues();
         if (rcvs instanceof JSONObject) {
             return new RemoteConfigValueStore((JSONObject) rcvs, remoteConfigValuesShouldBeCached, L);
@@ -129,16 +119,6 @@ public class ModuleRemoteConfig extends ModuleBase {
 
     private void clearValueStoreInternal() {
         internalConfig.storageProvider.setRemoteConfigValues(null);
-    }
-
-    private @Nonnull Map<String, RCData> getAllRemoteConfigValuesInternal() {
-        try {
-            RemoteConfigValueStore rcvs = loadRCValuesFromStorage();
-            return rcvs.getAllValues();
-        } catch (Exception ex) {
-            L.e("[ModuleRemoteConfig] getAllRemoteConfigValuesInternal, Call failed:[" + ex + "]");
-            return new HashMap<>();
-        }
     }
 
     private @Nonnull String[] prepareKeysIncludeExclude(@Nullable final String[] keysOnly, @Nullable final String[] keysExcept) {
@@ -252,7 +232,7 @@ public class ModuleRemoteConfig extends ModuleBase {
      */
     private void mergeCheckResponseIntoCurrentValues(boolean clearOldValues, @Nonnull Map<String, RCData> newRC) {
         //merge the new values into the current ones
-        RemoteConfigValueStore rcvs = loadRCValuesFromStorage();
+        RemoteConfigValueStore rcvs = getRemoteConfigValueStoreInternal();
         rcvs.mergeValues(newRC, clearOldValues);
 
         L.d("[ModuleRemoteConfig] mergeCheckResponseIntoCurrentValues, Finished remote config processing, starting saving");
@@ -280,7 +260,7 @@ public class ModuleRemoteConfig extends ModuleBase {
     private void cacheOrClearRCValuesIfNeeded() {
         L.v("[ModuleRemoteConfig] cacheOrClearRCValuesIfNeeded, cache-clearing values");
 
-        RemoteConfigValueStore rcvs = loadRCValuesFromStorage();
+        RemoteConfigValueStore rcvs = getRemoteConfigValueStoreInternal();
         rcvs.cacheClearValues();
         saveRCValues(rcvs);
     }
@@ -319,7 +299,9 @@ public class ModuleRemoteConfig extends ModuleBase {
     @Override
     public void initFinished(@Nonnull InternalConfig config) {
         //update remote config values if automatic update is enabled, and we are not in temporary id mode
-        rcAutomaticDownloadTrigger(false);
+        if (!config.isTemporaryIdEnabled()) {
+            rcAutomaticDownloadTrigger(false);
+        }
     }
 
     @Override
@@ -396,7 +378,7 @@ public class ModuleRemoteConfig extends ModuleBase {
         public @Nonnull Map<String, RCData> getValues() {
             synchronized (Countly.instance()) {
                 L.i("[RemoteConfig] getValues");
-                return getAllRemoteConfigValuesInternal();
+                return getRemoteConfigValueStoreInternal().getAllValues();
             }
         }
 
@@ -436,7 +418,7 @@ public class ModuleRemoteConfig extends ModuleBase {
                     return new RCData(null, true);
                 }
 
-                return getRCValue(key);
+                return getRemoteConfigValueStoreInternal().getValue(key);
             }
         }
 
