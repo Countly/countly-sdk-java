@@ -1,14 +1,13 @@
 package ly.count.sdk.java.internal;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Object for application/x-www-form-urlencoded string building and manipulation
@@ -74,6 +73,8 @@ public class Params {
             for (Object value : collection)
                 if (value instanceof JSONable) {
                     json.add(((JSONable) value).toJSON(L));
+                } else if (value instanceof String) {
+                    json.add((String) value);
                 }
             return this;
         }

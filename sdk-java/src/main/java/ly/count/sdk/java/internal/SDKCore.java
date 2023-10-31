@@ -728,8 +728,8 @@ public class SDKCore {
 
         Request request = ModuleRequests.nonSessionRequest(config);
         ModuleCrash.putCrashIntoParams(crash, request.params);
-        ModuleRequests.addRequired(config, request);
-        ModuleRequests.addRequiredTimeParams(request);
+        ModuleRequests.addRequiredParametersToParams(config, request.params);
+        ModuleRequests.addRequiredTimeParametersToParams(request.params);
 
         if (Storage.push(config, request)) {
             L.i("[SDKCore] Added request " + request.storageId() + " instead of crash " + crash.storageId());

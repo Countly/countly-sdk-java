@@ -99,22 +99,20 @@ public class Device {
             .put("_app_version", getAppVersion());
 
         //override metric values
-        if (metricOverride != null) {
-            for (String k : metricOverride.keySet()) {
-                if (k == null || k.length() == 0) {
-                    //L.w("Provided metric override key can't be null or empty");//todo add log
-                    continue;
-                }
-
-                String overrideValue = metricOverride.get(k);
-
-                if (overrideValue == null) {
-                    //L.w("Provided metric override value can't be null, key:[" + k + "]");//todo add log
-                    continue;
-                }
-
-                metricObj.put(k, overrideValue);
+        for (String k : metricOverride.keySet()) {
+            if (k == null || k.isEmpty()) {
+                L.w("Provided metric override key can't be null or empty");
+                continue;
             }
+
+            String overrideValue = metricOverride.get(k);
+
+            if (overrideValue == null) {
+                L.w("Provided metric override value can't be null, key:[" + k + "]");
+                continue;
+            }
+
+            metricObj.put(k, overrideValue);
         }
 
         //add the object after adding the overrides
@@ -362,6 +360,7 @@ public class Device {
         return this;
     }
 
+    //todo null handling
     public Device setMetricOverride(Map<String, String> givenMetricOverride) {
         metricOverride.putAll(givenMetricOverride);
         return this;
