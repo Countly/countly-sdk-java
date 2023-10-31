@@ -33,7 +33,7 @@ public class ModuleRemoteConfigTests {
      */
     @Test
     public void clearAll() {
-        Countly.instance().init(TestUtils.getConfigRemoteConfigs());
+        Countly.instance().init(TestUtils.getConfigRemoteConfigs().enableRemoteConfigValueCaching());
 
         JSONObject remoteConfigMockData = new JSONObject();
         remoteConfigMockData.put(TestUtils.keysValues[0], "testValue");
@@ -53,7 +53,7 @@ public class ModuleRemoteConfigTests {
     public void clearAll_emptyResponse() {
         loadCountlyStoreWithRCValues("{\"rc\":{\"testKey\":{\"v\":\"testValue\",\"c\":0}}}");
         //enabled rc automatic triggers to load from countly store
-        Countly.instance().init(TestUtils.getConfigRemoteConfigs().enableRemoteConfigAutomaticTriggers());
+        Countly.instance().init(TestUtils.getConfigRemoteConfigs().enableRemoteConfigAutomaticTriggers().enableRemoteConfigValueCaching());
         clearAll_base(new JSONObject(), 1);
     }
 
@@ -84,7 +84,7 @@ public class ModuleRemoteConfigTests {
     public void getValue() {
         loadCountlyStoreWithRCValues("{\"rc\":{\"testKey\":{\"v\":\"testValue\",\"c\":0}}}");
         //enabled rc automatic triggers to load from countly store
-        Countly.instance().init(TestUtils.getConfigRemoteConfigs().enableRemoteConfigAutomaticTriggers());
+        Countly.instance().init(TestUtils.getConfigRemoteConfigs().enableRemoteConfigAutomaticTriggers().enableRemoteConfigValueCaching());
         Assert.assertEquals(1, Countly.instance().remoteConfig().getValues().size());
 
         validateRCData(Countly.instance().remoteConfig().getValue("testKey"), "testValue", false);
@@ -245,7 +245,7 @@ public class ModuleRemoteConfigTests {
         JSONObject serverResponse = new JSONObject();
         serverResponse.put(TestUtils.keysValues[0], TestUtils.keysValues[1]);
 
-        Countly.instance().init(TestUtils.getConfigRemoteConfigs().remoteConfigRegisterGlobalCallback(callback));
+        Countly.instance().init(TestUtils.getConfigRemoteConfigs().remoteConfigRegisterGlobalCallback(callback).enableRemoteConfigValueCaching());
         SDKCore.instance.config.immediateRequestGenerator = () -> remoteConfigRequestMaker(serverResponse, included, omitted);
 
         downloadKeys.run();
@@ -262,7 +262,7 @@ public class ModuleRemoteConfigTests {
         Assert.assertEquals(rcData.isCurrentUsersData, isCurrentUsersData);
     }
 
-    private void loadCountlyStoreWithRCValues(String values) {
+    protected static void loadCountlyStoreWithRCValues(String values) {
         TestUtils.writeToFile(SDKStorage.JSON_FILE_NAME, values);
     }
 
@@ -272,7 +272,7 @@ public class ModuleRemoteConfigTests {
      * @param remoteConfigMockData mock data to return
      * @return request maker
      */
-    private ImmediateRequestI remoteConfigRequestMaker(JSONObject remoteConfigMockData, String[] keysInclude, String[] keysExclude) {
+    protected static ImmediateRequestI remoteConfigRequestMaker(JSONObject remoteConfigMockData, String[] keysInclude, String[] keysExclude) {
 
         return (requestData, customEndpoint, cp, requestShouldBeDelayed, networkingIsEnabled, callback, log) -> {
             Map<String, String> params = TestUtils.parseQueryParams(requestData);
