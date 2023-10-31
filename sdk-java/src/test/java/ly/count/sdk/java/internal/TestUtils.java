@@ -64,6 +64,10 @@ public class TestUtils {
         return config;
     }
 
+    static Config getConfigRemoteConfigs() {
+        return getBaseConfig().enableFeatures(Config.Feature.RemoteConfig);
+    }
+
     static Config getConfigSessions(Config.Feature... features) {
         Config config = getBaseConfig();
         config.setEventQueueSizeToSend(2);

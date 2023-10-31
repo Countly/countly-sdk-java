@@ -34,6 +34,20 @@ public interface StorageProvider {
     void setDeviceIdType(String deviceIdTypeString);
 
     /**
+     * Set remote config values
+     *
+     * @param remoteConfigValues set of remote config values
+     */
+    void setRemoteConfigValues(Object remoteConfigValues);
+
+    /**
+     * Get remote config values
+     *
+     * @return set of remote config values
+     */
+    Object getRemoteConfigValues();
+  
+    /**
      * Get migration version
      *
      * @return migration version

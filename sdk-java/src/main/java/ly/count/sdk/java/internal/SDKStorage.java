@@ -30,6 +30,7 @@ public class SDKStorage implements StorageProvider {
     //key names
     protected static final String key_device_id = "did";
     protected static final String key_device_id_type = "did_t";
+    protected static final String key_remote_config = "rc";
     protected static final String key_migration_version = "dv";
 
     private JsonFileStorage jsonFileStorage;
@@ -358,6 +359,15 @@ public class SDKStorage implements StorageProvider {
     }
 
     @Override
+    public void setRemoteConfigValues(Object s) {
+        jsonFileStorage.addAndSave(key_remote_config, s);
+    }
+
+    @Override
+    public Object getRemoteConfigValues() {
+        return jsonFileStorage.get(key_remote_config);
+    }
+  
     public Integer getMigrationVersion() {
         return jsonFileStorage.getInt(key_migration_version, -1);
     }
