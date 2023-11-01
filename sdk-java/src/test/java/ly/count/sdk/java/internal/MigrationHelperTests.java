@@ -49,6 +49,11 @@ public class MigrationHelperTests {
         TestUtils.createCleanTestState();
     }
 
+    /**
+     * "MigrationHelper" constructor
+     * Validate default values
+     * Current data model version should be -1, logger should not be null, storage provider should be null, latest migration version should be expected latest schema version
+     */
     @Test
     public void migrationHelper_defaults() {
         MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));

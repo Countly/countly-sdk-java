@@ -105,7 +105,7 @@ public class JsonFileStorage {
      * @param defaultValue to return if key not found
      * @return value, if key not found returns defaultValue
      */
-    public JSONObject getJsonObj(@Nonnull final String key, JSONObject defaultValue) {
+    public JSONObject getJsonObj(@Nonnull final String key, final JSONObject defaultValue) {
         return json.optJSONObject(key, defaultValue);
     }
 

@@ -11,11 +11,17 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class ScenarioRemoteConfigDeviceIdChangeTests {
+    /**
+     * Before each test, clean up the state
+     */
     @Before
     public void beforeTest() {
         TestUtils.createCleanTestState();
     }
 
+    /**
+     * After each test, clean up the state
+     */
     @After
     public void stop() {
         Countly.instance().halt();

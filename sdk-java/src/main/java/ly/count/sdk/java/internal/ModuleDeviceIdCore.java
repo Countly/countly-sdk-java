@@ -271,7 +271,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
         }
     }
 
-    private void clearAndDownloadRCValuesAfterIdChange(boolean valuesShouldBeCacheCleared) {
+    private void clearAndDownloadRCValuesAfterIdChange(final boolean valuesShouldBeCacheCleared) {
         ModuleRemoteConfig moduleRC = SDKCore.instance.module(ModuleRemoteConfig.class);
         if (moduleRC != null) {
             moduleRC.clearAndDownloadAfterIdChange(valuesShouldBeCacheCleared);
