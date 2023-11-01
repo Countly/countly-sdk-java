@@ -65,7 +65,7 @@ public class ModuleRemoteConfigTests {
 
     private void clearAll_base(JSONObject mockData, final int countlyStoreRCSize) {
         Assert.assertEquals(countlyStoreRCSize, Countly.instance().remoteConfig().getValues().size());
-        SDKCore.instance.config.immediateRequestGenerator = () -> remoteConfigRequestMaker(mockData, null, null);
+        SDKCore.instance.config.immediateRequestGenerator = () -> remoteConfigRequestMaker(mockData, null, null, null);
         //load values from request maker which provides mockData
         Countly.instance().remoteConfig().downloadAllKeys((rResult, error, fullValueUpdate, downloadedValues) -> {
             Assert.assertEquals(rResult, RequestResult.Success);
@@ -251,16 +251,161 @@ public class ModuleRemoteConfigTests {
         JSONObject serverResponse = new JSONObject();
         serverResponse.put(TestUtils.keysValues[0], TestUtils.keysValues[1]);
 
-        Countly.instance().init(TestUtils.getConfigRemoteConfigs().remoteConfigRegisterGlobalCallback(callback).enableRemoteConfigValueCaching());
-        SDKCore.instance.config.immediateRequestGenerator = () -> remoteConfigRequestMaker(serverResponse, included, omitted);
+        Countly.instance().init(TestUtils.getConfigRemoteConfigs().remoteConfigRegisterGlobalCallback(callback).enableRemoteConfigValueCaching().enrollABOnRCDownload());
+        SDKCore.instance.config.immediateRequestGenerator = () -> remoteConfigRequestMaker(serverResponse, included, omitted, "1");
 
         downloadKeys.run();
         validateRemoteConfigValues(Countly.instance().remoteConfig().getValues(), serverResponse, true);
     }
 
+    /**
+     * "getAllValuesAndEnroll"
+     * Returning a mock json response, validating that key at the created request
+     * RQ must have 1 request, and it must be an enroll request and should have a 'keys' param
+     */
+    @Test
+    public void getAllValuesAndEnroll() {
+        loadCountlyStoreWithRCValues("{\"rc\":{\"testKey\":{\"v\":\"testValue\",\"c\":1}}}");
+        Countly.instance().init(TestUtils.getConfigRemoteConfigs());
+
+        Assert.assertEquals(1, Countly.instance().remoteConfig().getValues().size());
+        Countly.instance().remoteConfig().getAllValuesAndEnroll();
+        validateABRequestInRQForEnroll("[\"testKey\"]", 1);
+    }
+
+    /**
+     * "getAllValuesAndEnroll" with empty store
+     * Validating that request is not created because empty store
+     * RQ must have 0 request
+     */
+    @Test
+    public void getAllValuesAndEnroll_empty() {
+        Countly.instance().init(TestUtils.getConfigRemoteConfigs());
+
+        Assert.assertEquals(0, Countly.instance().remoteConfig().getValues().size());
+        Countly.instance().remoteConfig().getAllValuesAndEnroll();
+        validateABRequestInRQForEnroll(null, 0);
+    }
+
+    /**
+     * "enrollIntoABTestsForKeys" with empty store
+     * Validating that request is not created because empty store
+     * RQ must have 0 request because keys are given as null
+     */
+    @Test
+    public void enrollIntoABTestsForKeys_nullKeys() {
+        Countly.instance().init(TestUtils.getConfigRemoteConfigs());
+        Assert.assertEquals(0, Countly.instance().remoteConfig().getValues().size());
+        Countly.instance().remoteConfig().enrollIntoABTestsForKeys(null);
+        validateABRequestInRQForEnroll(null, 0);
+    }
+
+    /**
+     * "enrollIntoABTestsForKeys" with empty store
+     * Validating that request is not created because empty store
+     * RQ must have 0 request because keys are given as empty array
+     */
+    @Test
+    public void enrollIntoABTestsForKeys_emptyKeys() {
+        Countly.instance().init(TestUtils.getConfigRemoteConfigs());
+        Assert.assertEquals(0, Countly.instance().remoteConfig().getValues().size());
+        Countly.instance().remoteConfig().enrollIntoABTestsForKeys(new String[] {});
+        validateABRequestInRQForEnroll(null, 0);
+    }
+
+    /**
+     * "getValueAndEnroll" with empty store
+     * Validating that request is not created because empty store
+     * RQ must have 0 request because key is given as null
+     */
+    @Test
+    public void getValueAndEnroll_nullKey() {
+        Countly.instance().init(TestUtils.getConfigRemoteConfigs());
+        Assert.assertEquals(0, Countly.instance().remoteConfig().getValues().size());
+        Countly.instance().remoteConfig().getValueAndEnroll(null);
+        validateABRequestInRQForEnroll(null, 0);
+    }
+
+    /**
+     * "getValueAndEnroll" with empty store
+     * Validating that request is not created because empty store
+     * RQ must have 0 request because key is given but not exist in store
+     */
+    @Test
+    public void getValueAndEnroll_nullValue() {
+        Countly.instance().init(TestUtils.getConfigRemoteConfigs());
+        Assert.assertEquals(0, Countly.instance().remoteConfig().getValues().size());
+        Countly.instance().remoteConfig().getValueAndEnroll("testKey");
+        validateABRequestInRQForEnroll(null, 0);
+    }
+
+    /**
+     * "getValueAndEnroll"
+     * Store is loaded with mock data. Validating that key at the created request
+     * RQ must have 1 request, and it must be an enroll request and should have a 'keys' param
+     */
+    @Test
+    public void getValueAndEnroll() {
+        loadCountlyStoreWithRCValues("{\"rc\":{\"testKey\":{\"v\":\"testValue\",\"c\":1}}}");
+
+        Countly.instance().init(TestUtils.getConfigRemoteConfigs());
+        Assert.assertEquals(1, Countly.instance().remoteConfig().getValues().size());
+        Countly.instance().remoteConfig().getValueAndEnroll("testKey");
+        validateABRequestInRQForEnroll("[\"testKey\"]", 1);
+    }
+
+    /**
+     * "exitABTestsForKeys" with empty store
+     * Validating that request is not created because empty store
+     * RQ must have 0 request because keys are given as null
+     */
+    @Test
+    public void exitABTestsForKeys_nullKeys() {
+        Countly.instance().init(TestUtils.getConfigRemoteConfigs());
+        Assert.assertEquals(0, Countly.instance().remoteConfig().getValues().size());
+        Countly.instance().remoteConfig().exitABTestsForKeys(null);
+        validateABRequestInRQ(null, 1, "ab_opt_out", null);
+    }
+
+    /**
+     * "exitABTestsForKeys"
+     * Store is loaded with mock data. Validating that key at the created request and method is correct
+     * RQ must have 1 request, and it must be an enroll request and should have a 'keys' param
+     */
+    @Test
+    public void exitABTestsForKeys() {
+        loadCountlyStoreWithRCValues("{\"rc\":{\"testKey\":{\"v\":\"testValue\",\"c\":1}}}");
+
+        Countly.instance().init(TestUtils.getConfigRemoteConfigs());
+        Assert.assertEquals(1, Countly.instance().remoteConfig().getValues().size());
+        Countly.instance().remoteConfig().exitABTestsForKeys(new String[] { "testKey" });
+        validateABRequestInRQ("[\"testKey\"]", 1, "ab_opt_out", null);
+    }
+  
     private void validateRemoteConfigValues(Map<String, RCData> rcValuesStore, JSONObject rcValuesServer, final boolean isCurrentUsersData) {
         Assert.assertEquals(rcValuesServer.keySet().size(), rcValuesStore.size());
         rcValuesServer.keySet().forEach(key -> validateRCData(rcValuesStore.get(key), rcValuesServer.get(key), isCurrentUsersData));
+    }
+
+    private void validateABRequestInRQForEnroll(String keys, int expectedRQSize) {
+        validateABRequestInRQ(keys, expectedRQSize, "ab", "/o/sdk?");
+    }
+
+    private void validateABRequestInRQ(String keys, int expectedRQSize, String method, String endpointOverride) {
+        Map<String, String>[] requests = TestUtils.getCurrentRQ();
+        Assert.assertEquals(expectedRQSize, requests.length);
+        if (expectedRQSize < 1) {
+            return;
+        }
+
+        TestUtils.validateRequiredParams(requests[0]);
+        Assert.assertEquals(method, requests[0].get("method"));
+        if (endpointOverride != null) {
+            Assert.assertEquals(endpointOverride, requests[0].get("endpoint"));
+        }
+        if (keys != null) {
+            Assert.assertEquals(keys, Utils.urldecode(requests[0].get("keys")));
+        }
     }
 
     private void validateRCData(RCData rcData, Object value, final boolean isCurrentUsersData) {
@@ -289,6 +434,7 @@ public class ModuleRemoteConfigTests {
             if (keysExclude != null) {
                 Assert.assertEquals(new JSONArray(Arrays.asList(keysExclude)).toString(), Utils.urldecode(params.get("omit_keys")));
             }
+            Assert.assertEquals(oi, params.get("oi"));
             TestUtils.validateMetrics(Utils.urldecode(params.get("metrics")));
             TestUtils.validateRequestMakerRequiredParams("/o/sdk?", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
             TestUtils.validateRequiredParams(params);
