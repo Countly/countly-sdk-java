@@ -377,10 +377,10 @@ public class ModuleRemoteConfigTests {
     }
 
     private void validateABRequestInRQForEnroll(String keys, int expectedRQSize) {
-        validateABRequestInRQ(keys, expectedRQSize, "ab", "/o/sdk");
+        validateABRequestInRQ(keys, expectedRQSize, "ab", "/o/sdk?");
     }
 
-    private void validateABRequestInRQ(String keys, int expectedRQSize, String method, String enrollParam) {
+    private void validateABRequestInRQ(String keys, int expectedRQSize, String method, String endpointOverride) {
         Map<String, String>[] requests = TestUtils.getCurrentRQ();
         Assert.assertEquals(expectedRQSize, requests.length);
         if (expectedRQSize < 1) {
@@ -389,8 +389,8 @@ public class ModuleRemoteConfigTests {
 
         TestUtils.validateRequiredParams(requests[0]);
         Assert.assertEquals(method, requests[0].get("method"));
-        if (enrollParam != null) {
-            Assert.assertEquals(enrollParam, requests[0].get("new_end_point"));
+        if (endpointOverride != null) {
+            Assert.assertEquals(endpointOverride, requests[0].get("endpoint"));
         }
         if (keys != null) {
             Assert.assertEquals(keys, Utils.urldecode(requests[0].get("keys")));
