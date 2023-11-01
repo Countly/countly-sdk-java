@@ -16,11 +16,17 @@ import org.mockito.Mockito;
 @RunWith(JUnit4.class)
 public class ModuleRemoteConfigTests {
 
+    /**
+     * Create clean test state before each test
+     */
     @Before
     public void beforeTest() {
         TestUtils.createCleanTestState();
     }
 
+    /**
+     * Clean up test state after each test
+     */
     @After
     public void stop() {
         Countly.instance().halt();
@@ -57,7 +63,7 @@ public class ModuleRemoteConfigTests {
         clearAll_base(new JSONObject(), 1);
     }
 
-    private void clearAll_base(JSONObject mockData, int countlyStoreRCSize) {
+    private void clearAll_base(JSONObject mockData, final int countlyStoreRCSize) {
         Assert.assertEquals(countlyStoreRCSize, Countly.instance().remoteConfig().getValues().size());
         SDKCore.instance.config.immediateRequestGenerator = () -> remoteConfigRequestMaker(mockData, null, null, null);
         //load values from request maker which provides mockData
@@ -224,7 +230,7 @@ public class ModuleRemoteConfigTests {
         downloadOmittingKeys_base(null);
     }
 
-    private void downloadSpecificKeys_base(String[] included) {
+    private void downloadSpecificKeys_base(final String[] included) {
         downloadKeys_base(null, included, () -> Countly.instance().remoteConfig().downloadSpecificKeys(included,
             (rResult, error, fullValueUpdate, downloadedValues) -> {
                 Assert.assertEquals(RequestResult.Success, rResult);
@@ -232,11 +238,11 @@ public class ModuleRemoteConfigTests {
             }));
     }
 
-    private void downloadOmittingKeys_base(String[] omitted) {
+    private void downloadOmittingKeys_base(final String[] omitted) {
         downloadKeys_base(omitted, null, () -> Countly.instance().remoteConfig().downloadOmittingKeys(omitted, null));
     }
 
-    private void downloadKeys_base(String[] omitted, String[] included, Runnable downloadKeys) {
+    private void downloadKeys_base(String[] omitted, String[] included, final Runnable downloadKeys) {
         RCDownloadCallback callback = (rResult, error, fullValueUpdate, downloadedValues) -> {
             Assert.assertEquals(RequestResult.Success, rResult);
             Assert.assertNull(error);
@@ -375,6 +381,11 @@ public class ModuleRemoteConfigTests {
         Countly.instance().remoteConfig().exitABTestsForKeys(new String[] { "testKey" });
         validateABRequestInRQ("[\"testKey\"]", 1, "ab_opt_out", null);
     }
+  
+    private void validateRemoteConfigValues(Map<String, RCData> rcValuesStore, JSONObject rcValuesServer, final boolean isCurrentUsersData) {
+        Assert.assertEquals(rcValuesServer.keySet().size(), rcValuesStore.size());
+        rcValuesServer.keySet().forEach(key -> validateRCData(rcValuesStore.get(key), rcValuesServer.get(key), isCurrentUsersData));
+    }
 
     private void validateABRequestInRQForEnroll(String keys, int expectedRQSize) {
         validateABRequestInRQ(keys, expectedRQSize, "ab", "/o/sdk?");
@@ -397,17 +408,12 @@ public class ModuleRemoteConfigTests {
         }
     }
 
-    private void validateRemoteConfigValues(Map<String, RCData> rcValuesStore, JSONObject rcValuesServer, boolean isCurrentUsersData) {
-        Assert.assertEquals(rcValuesServer.keySet().size(), rcValuesStore.size());
-        rcValuesServer.keySet().forEach(key -> validateRCData(rcValuesStore.get(key), rcValuesServer.get(key), isCurrentUsersData));
-    }
-
-    private void validateRCData(RCData rcData, Object value, boolean isCurrentUsersData) {
+    private void validateRCData(RCData rcData, Object value, final boolean isCurrentUsersData) {
         Assert.assertEquals(rcData.value, value);
         Assert.assertEquals(rcData.isCurrentUsersData, isCurrentUsersData);
     }
 
-    protected static void loadCountlyStoreWithRCValues(String values) {
+    protected static void loadCountlyStoreWithRCValues(final String values) {
         TestUtils.writeToFile(SDKStorage.JSON_FILE_NAME, values);
     }
 
@@ -417,7 +423,7 @@ public class ModuleRemoteConfigTests {
      * @param remoteConfigMockData mock data to return
      * @return request maker
      */
-    protected static ImmediateRequestI remoteConfigRequestMaker(JSONObject remoteConfigMockData, String[] keysInclude, String[] keysExclude, String oi) {
+    protected static ImmediateRequestI remoteConfigRequestMaker(JSONObject remoteConfigMockData, final String[] keysInclude, final String[] keysExclude) {
 
         return (requestData, customEndpoint, cp, requestShouldBeDelayed, networkingIsEnabled, callback, log) -> {
             Map<String, String> params = TestUtils.parseQueryParams(requestData);

@@ -1,8 +1,8 @@
 package ly.count.sdk.java.internal;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nonnull;
 import org.json.JSONObject;
 
@@ -27,6 +27,9 @@ public class RemoteConfigValueStore {
     // CLEANSING
     //========================================
 
+    /**
+     * Cleanses the values by removing all values that are not for the current user
+     */
     public void cacheClearValues() {
         if (!valuesCanBeCached) {
             clearValues();
@@ -53,6 +56,9 @@ public class RemoteConfigValueStore {
         }
     }
 
+    /**
+     * Cleanses the values by removing all values that are not for the current user
+     */
     public void clearValues() {
         values.clear();
     }
@@ -61,18 +67,23 @@ public class RemoteConfigValueStore {
     // MERGING
     //========================================
 
-    public void mergeValues(@Nonnull Map<String, RCData> newValues, boolean fullUpdate) {
+    /**
+     * Merges the provided values with the stored values
+     *
+     * @param newValues values to merge
+     * @param fullUpdate if true, all values will be replaced with the provided ones
+     */
+    public void mergeValues(@Nonnull Map<String, RCData> newValues, final boolean fullUpdate) {
         L.v("[RemoteConfigValueStore] mergeValues, stored values C:" + values.length() + "provided values C:" + newValues.size());
 
         if (fullUpdate) {
             clearValues();
         }
-
         for (Map.Entry<String, RCData> entry : newValues.entrySet()) {
             String key = entry.getKey();
             Object newValue = entry.getValue().value;
-            JSONObject newObj = new JSONObject();
             try {
+                JSONObject newObj = new JSONObject();
                 newObj.put(keyValue, newValue);
                 newObj.put(keyCacheFlag, cacheValFresh);
                 values.put(key, newObj);
@@ -87,7 +98,7 @@ public class RemoteConfigValueStore {
     // CONSTRUCTION
     //========================================
 
-    protected RemoteConfigValueStore(@Nonnull JSONObject values, boolean valuesShouldBeCached, @Nonnull Log L) {
+    protected RemoteConfigValueStore(@Nonnull JSONObject values, boolean valuesShouldBeCached, final @Nonnull Log L) {
         this.values = values;
         this.valuesCanBeCached = valuesShouldBeCached;
         this.L = L;
@@ -97,7 +108,13 @@ public class RemoteConfigValueStore {
     // GET VALUES
     //========================================
 
-    public @Nonnull RCData getValue(@Nonnull String key) {
+    /**
+     * Returns the value for the provided key
+     *
+     * @param key to get value for
+     * @return value for the provided key
+     */
+    public @Nonnull RCData getValue(@Nonnull final String key) {
         RCData res = new RCData(null, true);
         try {
             JSONObject rcObj = values.optJSONObject(key);
@@ -113,8 +130,13 @@ public class RemoteConfigValueStore {
         return res;
     }
 
+    /**
+     * Returns all values
+     *
+     * @return all values
+     */
     public @Nonnull Map<String, RCData> getAllValues() {
-        Map<String, RCData> ret = new HashMap<>();
+        Map<String, RCData> ret = new ConcurrentHashMap<>();
 
         Iterator<String> keys = values.keys();
         while (keys.hasNext()) {
@@ -126,7 +148,7 @@ public class RemoteConfigValueStore {
                 }
                 Object rcObjVal = rcObj.opt(keyValue);
                 int rcObjCache = rcObj.getInt(keyCacheFlag);
-                ret.put(key, new RCData(rcObjVal, (rcObjCache != cacheValCached)));
+                ret.put(key, new RCData(rcObjVal, rcObjCache != cacheValCached));
             } catch (Exception ex) {
                 L.e("[RemoteConfigValueStore] Got JSON exception while calling 'getAllValues': " + ex);
             }

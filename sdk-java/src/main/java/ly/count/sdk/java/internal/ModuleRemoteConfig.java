@@ -2,9 +2,9 @@ package ly.count.sdk.java.internal;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import ly.count.sdk.java.Config;
@@ -134,7 +134,7 @@ public class ModuleRemoteConfig extends ModuleBase {
         return res;
     }
 
-    private String prepareRemoteConfigRequest(@Nullable String keysInclude, @Nullable String keysExclude, @Nonnull Params preparedMetrics, boolean autoEnroll) {
+    private String prepareRemoteConfigRequest(@Nullable String keysInclude, @Nullable String keysExclude, @Nonnull Params preparedMetrics, final boolean autoEnroll) {
 
         Params params = ModuleRequests.prepareRequiredParams(internalConfig).add("method", "rc");
 
@@ -158,8 +158,8 @@ public class ModuleRemoteConfig extends ModuleBase {
         return params.toString();
     }
 
-    private @Nonnull Map<String, RCData> downloadedValuesIntoMap(@Nullable JSONObject jsonObject) {
-        Map<String, RCData> result = new HashMap<>();
+    private @Nonnull Map<String, RCData> downloadedValuesIntoMap(@Nullable final JSONObject jsonObject) {
+        Map<String, RCData> result = new ConcurrentHashMap<>();
 
         if (jsonObject == null) {
             return result;
@@ -224,7 +224,7 @@ public class ModuleRemoteConfig extends ModuleBase {
      * Merge the values acquired from the server into the current values.
      * Clear if needed.
      */
-    private void mergeCheckResponseIntoCurrentValues(boolean clearOldValues, @Nonnull Map<String, RCData> newRC) {
+    private void mergeCheckResponseIntoCurrentValues(final boolean clearOldValues, @Nonnull Map<String, RCData> newRC) {
         //merge the new values into the current ones
         RemoteConfigValueStore rcvs = getRemoteConfigValueStoreInternal();
         rcvs.mergeValues(newRC, clearOldValues);
@@ -236,11 +236,11 @@ public class ModuleRemoteConfig extends ModuleBase {
         L.d("[ModuleRemoteConfig] mergeCheckResponseIntoCurrentValues, Finished remote config saving");
     }
 
-    private void saveRCValues(@Nonnull RemoteConfigValueStore rcvs) {
+    private void saveRCValues(@Nonnull final RemoteConfigValueStore rcvs) {
         internalConfig.storageProvider.setRemoteConfigValues(rcvs.values);
     }
 
-    void clearAndDownloadAfterIdChange(boolean valuesShouldBeCacheCleared) {
+    void clearAndDownloadAfterIdChange(final boolean valuesShouldBeCacheCleared) {
         L.v("[RemoteConfig] Clearing remote config values and preparing to download after ID update, " + valuesShouldBeCacheCleared);
 
         if (valuesShouldBeCacheCleared) {
@@ -259,7 +259,7 @@ public class ModuleRemoteConfig extends ModuleBase {
         saveRCValues(rcvs);
     }
 
-    private void notifyDownloadCallbacks(RCDownloadCallback devProvidedCallback, RequestResult requestResult, String message, boolean fullUpdate, Map<String, RCData> downloadedValues) {
+    private void notifyDownloadCallbacks(final RCDownloadCallback devProvidedCallback, RequestResult requestResult, String message, boolean fullUpdate, Map<String, RCData> downloadedValues) {
         downloadCallbacks.forEach(callback -> callback.callback(requestResult, message, fullUpdate, downloadedValues));
 
         if (devProvidedCallback != null) {
@@ -267,7 +267,7 @@ public class ModuleRemoteConfig extends ModuleBase {
         }
     }
 
-    private void rcAutomaticDownloadTrigger(boolean cacheClearOldValues) {
+    private void rcAutomaticDownloadTrigger(final boolean cacheClearOldValues) {
         if (cacheClearOldValues) {
             cacheOrClearRCValuesIfNeeded();
         }
@@ -281,7 +281,7 @@ public class ModuleRemoteConfig extends ModuleBase {
     }
 
     @Override
-    public void onDeviceId(InternalConfig config, Config.DID deviceId, Config.DID oldDeviceId) {
+    public void onDeviceId(final InternalConfig config, Config.DID deviceId, Config.DID oldDeviceId) {
         L.v("[ModuleRemoteConfig] onDeviceId, Device ID changed will update values: [" + updateRemoteConfigAfterIdChange + "]");
 
         if (updateRemoteConfigAfterIdChange) {
@@ -291,7 +291,7 @@ public class ModuleRemoteConfig extends ModuleBase {
     }
 
     @Override
-    public void initFinished(@Nonnull InternalConfig config) {
+    public void initFinished(@Nonnull final InternalConfig config) {
         //update remote config values if automatic update is enabled, and we are not in temporary id mode
         if (!config.isTemporaryIdEnabled()) {
             rcAutomaticDownloadTrigger(false);
@@ -299,12 +299,12 @@ public class ModuleRemoteConfig extends ModuleBase {
     }
 
     @Override
-    public Boolean onRequest(Request request) {
+    public Boolean onRequest(final Request request) {
         return true;
     }
 
     @Override
-    public void stop(InternalConfig config, boolean clear) {
+    public void stop(InternalConfig config, final boolean clear) {
         super.stop(config, clear);
         remoteConfigInterface = null;
         if (clear) {
@@ -321,7 +321,7 @@ public class ModuleRemoteConfig extends ModuleBase {
          * @param keysToOmit A list of keys that need to be downloaded
          * @param callback This is called when the operation concludes
          */
-        public void downloadOmittingKeys(@Nullable String[] keysToOmit, @Nullable RCDownloadCallback callback) {
+        public void downloadOmittingKeys(@Nullable String[] keysToOmit, @Nullable final RCDownloadCallback callback) {
             synchronized (Countly.instance()) {
                 L.i("[RemoteConfig] downloadOmittingKeys");
 
@@ -340,7 +340,7 @@ public class ModuleRemoteConfig extends ModuleBase {
          * @param keysToInclude Keys for which the RC should be initialized
          * @param callback This is called when the operation concludes
          */
-        public void downloadSpecificKeys(@Nullable String[] keysToInclude, @Nullable RCDownloadCallback callback) {
+        public void downloadSpecificKeys(@Nullable String[] keysToInclude, @Nullable final RCDownloadCallback callback) {
             synchronized (Countly.instance()) {
                 L.i("[RemoteConfig] downloadSpecificKeys");
 
@@ -478,7 +478,7 @@ public class ModuleRemoteConfig extends ModuleBase {
          *
          * @param callback The callback that should be added
          */
-        public void registerDownloadCallback(@Nullable RCDownloadCallback callback) {
+        public void registerDownloadCallback(@Nullable final RCDownloadCallback callback) {
             synchronized (Countly.instance()) {
                 L.i("[RemoteConfig] registerDownloadCallback");
                 if (callback == null) {
@@ -494,7 +494,7 @@ public class ModuleRemoteConfig extends ModuleBase {
          *
          * @param callback The callback that should be removed
          */
-        public void removeDownloadCallback(@Nullable RCDownloadCallback callback) {
+        public void removeDownloadCallback(@Nullable final RCDownloadCallback callback) {
             synchronized (Countly.instance()) {
                 L.i("[RemoteConfig] removeDownloadCallback");
                 if (callback == null) {
