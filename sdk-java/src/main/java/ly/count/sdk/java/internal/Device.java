@@ -360,9 +360,16 @@ public class Device {
         return this;
     }
 
-    //todo null handling
+    /**
+     * Set metric override value
+     *
+     * @param givenMetricOverride key value pair of metric override
+     * @return this instance for method chaining
+     */
     public Device setMetricOverride(Map<String, String> givenMetricOverride) {
-        metricOverride.putAll(givenMetricOverride);
+        if (givenMetricOverride != null && !givenMetricOverride.isEmpty()) {
+            metricOverride.putAll(givenMetricOverride);
+        }
         return this;
     }
 }
