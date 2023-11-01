@@ -435,6 +435,7 @@ public class ModuleRemoteConfigTests {
                 Assert.assertEquals(new JSONArray(Arrays.asList(keysExclude)).toString(), Utils.urldecode(params.get("omit_keys")));
             }
             Assert.assertEquals(oi, params.get("oi"));
+          
             TestUtils.validateMetrics(Utils.urldecode(params.get("metrics")));
             TestUtils.validateRequestMakerRequiredParams("/o/sdk?", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
             TestUtils.validateRequiredParams(params);

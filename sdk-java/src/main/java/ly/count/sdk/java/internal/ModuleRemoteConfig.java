@@ -22,6 +22,14 @@ public class ModuleRemoteConfig extends ModuleBase {
     boolean remoteConfigValuesShouldBeCached = false;
     List<RCDownloadCallback> downloadCallbacks = new ArrayList<>(2);
 
+    //if set to true, it will automatically download remote configs on module startup
+    boolean automaticDownloadTriggersEnabled;
+
+    // if set to true we should add 'oi=1' to our RC download call
+    boolean autoEnrollEnabled;
+    boolean remoteConfigValuesShouldBeCached = false;
+    List<RCDownloadCallback> downloadCallbacks = new ArrayList<>(2);
+
     ModuleRemoteConfig() {
     }
 
@@ -29,7 +37,11 @@ public class ModuleRemoteConfig extends ModuleBase {
     public void init(final InternalConfig config) {
         super.init(config);
         L.v("[ModuleRemoteConfig] init, Initialising");
-        L.d("[ModuleRemoteConfig] init, Setting if remote config Automatic triggers enabled, " + config.isRemoteConfigAutomaticDownloadTriggersEnabled() + ", caching enabled: " + config.isRemoteConfigValueCachingEnabled() + ", auto enroll enabled: " + config.isAutoEnrollFlagEnabled());
+
+        L.d("[ModuleRemoteConfig] init, remote config Automatic triggers enabled " + config.isRemoteConfigAutomaticDownloadTriggersEnabled());
+        L.d("[ModuleRemoteConfig] init, caching enabled: " + config.isRemoteConfigValueCachingEnabled());
+        L.d("[ModuleRemoteConfig] init, auto enroll enabled: " + config.isAutoEnrollFlagEnabled());
+
         automaticDownloadTriggersEnabled = config.isRemoteConfigAutomaticDownloadTriggersEnabled();
         remoteConfigValuesShouldBeCached = config.isRemoteConfigValueCachingEnabled();
         autoEnrollEnabled = config.isAutoEnrollFlagEnabled();
