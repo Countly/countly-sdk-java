@@ -189,13 +189,12 @@ public class ModuleRemoteConfig extends ModuleBase {
         }
         Params params = new Params();
         params.add("method", "ab");
-        params.add("new_end_point", "/o/sdk");
 
         if (keys.length > 0) { // exits all otherwise
             params.add("keys", new JSONArray(Arrays.asList(keys)).toString());
         }
 
-        ModuleRequests.pushAsync(internalConfig, new Request(params));
+        ModuleRequests.pushAsync(internalConfig, new Request(params).endpoint("/o/sdk?"));
     }
 
     /**
