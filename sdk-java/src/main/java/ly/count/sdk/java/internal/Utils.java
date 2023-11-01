@@ -328,7 +328,7 @@ public class Utils {
 
     public static class Base64 {
         public static String encode(byte[] bytes) {
-            return ly.count.sdk.java.internal.Base64.encodeBytes(bytes);
+            return java.util.Base64.getEncoder().encodeToString(bytes);
         }
 
         public static String encode(String string) {
@@ -343,8 +343,8 @@ public class Utils {
         public static byte[] decode(String string, Log L) {
             byte[] res = null;
             try {
-                res = ly.count.sdk.java.internal.Base64.decode(string);
-            } catch (IOException e) {
+                res = java.util.Base64.getDecoder().decode(string);
+            } catch (IllegalArgumentException e) {
                 //should not get here
                 if (L != null) {
                     L.e("Utils Error while decoding base64 string, " + e);
