@@ -17,9 +17,9 @@ public class RemoteConfigValueStore {
 
     //  Structure of the JSON objects we will have
     //   {
-    //      “key”: {
-    //          “v”: “value”,
-    //          “c”: 0
+    //      "key": {
+    //          "v”: "value",
+    //          "c": 0
     //      }
     //   }
 

@@ -22,14 +22,6 @@ public class ModuleRemoteConfig extends ModuleBase {
     boolean remoteConfigValuesShouldBeCached = false;
     List<RCDownloadCallback> downloadCallbacks = new ArrayList<>(2);
 
-    //if set to true, it will automatically download remote configs on module startup
-    boolean automaticDownloadTriggersEnabled;
-
-    // if set to true we should add 'oi=1' to our RC download call
-    boolean autoEnrollEnabled;
-    boolean remoteConfigValuesShouldBeCached = false;
-    List<RCDownloadCallback> downloadCallbacks = new ArrayList<>(2);
-
     ModuleRemoteConfig() {
     }
 

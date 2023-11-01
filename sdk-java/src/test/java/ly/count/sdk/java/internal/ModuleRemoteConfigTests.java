@@ -381,7 +381,7 @@ public class ModuleRemoteConfigTests {
         Countly.instance().remoteConfig().exitABTestsForKeys(new String[] { "testKey" });
         validateABRequestInRQ("[\"testKey\"]", 1, "ab_opt_out", null);
     }
-  
+
     private void validateRemoteConfigValues(Map<String, RCData> rcValuesStore, JSONObject rcValuesServer, final boolean isCurrentUsersData) {
         Assert.assertEquals(rcValuesServer.keySet().size(), rcValuesStore.size());
         rcValuesServer.keySet().forEach(key -> validateRCData(rcValuesStore.get(key), rcValuesServer.get(key), isCurrentUsersData));
@@ -423,7 +423,7 @@ public class ModuleRemoteConfigTests {
      * @param remoteConfigMockData mock data to return
      * @return request maker
      */
-    protected static ImmediateRequestI remoteConfigRequestMaker(JSONObject remoteConfigMockData, final String[] keysInclude, final String[] keysExclude) {
+    protected static ImmediateRequestI remoteConfigRequestMaker(JSONObject remoteConfigMockData, final String[] keysInclude, final String[] keysExclude, final String oi) {
 
         return (requestData, customEndpoint, cp, requestShouldBeDelayed, networkingIsEnabled, callback, log) -> {
             Map<String, String> params = TestUtils.parseQueryParams(requestData);
@@ -435,7 +435,7 @@ public class ModuleRemoteConfigTests {
                 Assert.assertEquals(new JSONArray(Arrays.asList(keysExclude)).toString(), Utils.urldecode(params.get("omit_keys")));
             }
             Assert.assertEquals(oi, params.get("oi"));
-          
+
             TestUtils.validateMetrics(Utils.urldecode(params.get("metrics")));
             TestUtils.validateRequestMakerRequiredParams("/o/sdk?", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
             TestUtils.validateRequiredParams(params);
