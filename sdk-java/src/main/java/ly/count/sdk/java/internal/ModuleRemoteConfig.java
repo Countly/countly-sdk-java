@@ -109,12 +109,7 @@ public class ModuleRemoteConfig extends ModuleBase {
      * @return see {@link RemoteConfigValueStore}
      */
     private @Nonnull RemoteConfigValueStore getRemoteConfigValueStoreInternal() {
-        Object rcvs = internalConfig.storageProvider.getRemoteConfigValues();
-        if (rcvs instanceof JSONObject) {
-            return new RemoteConfigValueStore((JSONObject) rcvs, remoteConfigValuesShouldBeCached, L);
-        }
-
-        return new RemoteConfigValueStore(new JSONObject(), remoteConfigValuesShouldBeCached, L);
+        return new RemoteConfigValueStore(internalConfig.storageProvider.getRemoteConfigValues(), remoteConfigValuesShouldBeCached, L);
     }
 
     private void clearValueStoreInternal() {
