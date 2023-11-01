@@ -7,13 +7,13 @@ import javax.annotation.Nonnull;
 import org.json.JSONObject;
 
 public class RemoteConfigValueStore {
-    public JSONObject values;
-    private final Log L;
-    public boolean valuesCanBeCached;
-    public static final String keyValue = "v";
-    public static final String keyCacheFlag = "c";
-    public static final int cacheValCached = 0;
-    public static final int cacheValFresh = 1;
+    protected JSONObject values;
+    protected Log L;
+    protected boolean valuesCanBeCached;
+    protected static final String keyValue = "v";
+    protected static final String keyCacheFlag = "c";
+    protected static final int cacheValCached = 0;
+    protected static final int cacheValFresh = 1;
 
     //  Structure of the JSON objects we will have
     //   {
@@ -23,6 +23,19 @@ public class RemoteConfigValueStore {
     //      }
     //   }
 
+    /**
+     * Constructor
+     *
+     * @param values values to store
+     * @param valuesShouldBeCached if true, values will be cached
+     * @param L logger
+     */
+    protected RemoteConfigValueStore(@Nonnull JSONObject values, boolean valuesShouldBeCached, final @Nonnull Log L) {
+        this.values = values;
+        this.valuesCanBeCached = valuesShouldBeCached;
+        this.L = L;
+    }
+
     //========================================
     // CLEANSING
     //========================================
@@ -30,7 +43,7 @@ public class RemoteConfigValueStore {
     /**
      * Cleanses the values by removing all values that are not for the current user
      */
-    public void cacheClearValues() {
+    protected void cacheClearValues() {
         if (!valuesCanBeCached) {
             clearValues();
             return;
@@ -59,7 +72,7 @@ public class RemoteConfigValueStore {
     /**
      * Cleanses the values by removing all values that are not for the current user
      */
-    public void clearValues() {
+    private void clearValues() {
         values.clear();
     }
 
@@ -73,7 +86,7 @@ public class RemoteConfigValueStore {
      * @param newValues values to merge
      * @param fullUpdate if true, all values will be replaced with the provided ones
      */
-    public void mergeValues(@Nonnull Map<String, RCData> newValues, final boolean fullUpdate) {
+    protected void mergeValues(@Nonnull Map<String, RCData> newValues, final boolean fullUpdate) {
         L.v("[RemoteConfigValueStore] mergeValues, stored values C:" + values.length() + "provided values C:" + newValues.size());
 
         if (fullUpdate) {
@@ -95,16 +108,6 @@ public class RemoteConfigValueStore {
     }
 
     //========================================
-    // CONSTRUCTION
-    //========================================
-
-    protected RemoteConfigValueStore(@Nonnull JSONObject values, boolean valuesShouldBeCached, final @Nonnull Log L) {
-        this.values = values;
-        this.valuesCanBeCached = valuesShouldBeCached;
-        this.L = L;
-    }
-
-    //========================================
     // GET VALUES
     //========================================
 
@@ -114,7 +117,7 @@ public class RemoteConfigValueStore {
      * @param key to get value for
      * @return value for the provided key
      */
-    public @Nonnull RCData getValue(@Nonnull final String key) {
+    protected @Nonnull RCData getValue(@Nonnull final String key) {
         RCData res = new RCData(null, true);
         try {
             JSONObject rcObj = values.optJSONObject(key);
@@ -135,7 +138,7 @@ public class RemoteConfigValueStore {
      *
      * @return all values
      */
-    public @Nonnull Map<String, RCData> getAllValues() {
+    protected @Nonnull Map<String, RCData> getAllValues() {
         Map<String, RCData> ret = new ConcurrentHashMap<>();
 
         Iterator<String> keys = values.keys();
