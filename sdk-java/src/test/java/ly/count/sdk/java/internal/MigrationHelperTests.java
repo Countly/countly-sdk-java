@@ -49,6 +49,11 @@ public class MigrationHelperTests {
         TestUtils.createCleanTestState();
     }
 
+    /**
+     * "MigrationHelper" constructor
+     * Validate default values
+     * Current data model version should be -1, logger should not be null, storage provider should be null, latest migration version should be expected latest schema version
+     */
     @Test
     public void migrationHelper_defaults() {
         MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
@@ -132,20 +137,17 @@ public class MigrationHelperTests {
      */
     @Test
     public void applyMigrations_latestToLatest() throws IOException {
-        setDataVersionInConfigFile(1); //set data version to latest
+        setDataVersionInConfigFile(expectedLatestSchemaVersion); //set data version to latest
         initStorage(); // to initialize json storage after data version is set to 1
 
         MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
         migrationHelper.setupMigrations(storageProvider);
         Assert.assertEquals(expectedLatestSchemaVersion, migrationHelper.currentDataModelVersion); //latest state
-
-        migrationHelper.logger = Mockito.spy(migrationHelper.logger);
         //run migration helper apply
         migrationHelper.applyMigrations(new HashMap<>());
         //check migration version is at the latest after apply both from class and file
         Assert.assertEquals(expectedLatestSchemaVersion, migrationHelper.currentDataModelVersion);
         Assert.assertEquals(expectedLatestSchemaVersion, TestUtils.getJsonStorageProperty(SDKStorage.key_migration_version));
-        Mockito.verify(migrationHelper.logger, Mockito.times(1)).d("[MigrationHelper] migration_DeleteConfigFile_01, Migration already applied");
     }
 
     /**

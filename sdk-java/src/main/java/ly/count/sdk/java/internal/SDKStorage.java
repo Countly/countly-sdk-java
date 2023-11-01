@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
+import org.json.JSONObject;
 
 public class SDKStorage implements StorageProvider {
 
@@ -359,15 +360,16 @@ public class SDKStorage implements StorageProvider {
     }
 
     @Override
-    public void setRemoteConfigValues(Object s) {
+    public void setRemoteConfigValues(JSONObject s) {
         jsonFileStorage.addAndSave(key_remote_config, s);
     }
 
     @Override
-    public Object getRemoteConfigValues() {
-        return jsonFileStorage.get(key_remote_config);
+    public JSONObject getRemoteConfigValues() {
+        return jsonFileStorage.getJsonObj(key_remote_config, new JSONObject());
     }
-  
+
+    @Override
     public Integer getMigrationVersion() {
         return jsonFileStorage.getInt(key_migration_version, -1);
     }

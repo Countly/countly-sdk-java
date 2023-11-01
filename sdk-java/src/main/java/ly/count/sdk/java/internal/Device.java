@@ -1,6 +1,8 @@
 package ly.count.sdk.java.internal;
 
 import com.sun.management.OperatingSystemMXBean;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.util.Date;
@@ -360,9 +362,18 @@ public class Device {
         return this;
     }
 
-    //todo null handling
-    public Device setMetricOverride(Map<String, String> givenMetricOverride) {
-        metricOverride.putAll(givenMetricOverride);
+    /**
+     * Set metric override value
+     *
+     * @param givenMetricOverride key value pair of metric override
+     * @return this instance for method chaining
+     */
+    public @Nonnull Device setMetricOverride(@Nullable Map<String, String> givenMetricOverride) {
+        if (givenMetricOverride != null) {
+            metricOverride.putAll(givenMetricOverride);
+        } else {
+            L.w("[Device] setMetricOverride, provided metric override is 'null'");
+        }
         return this;
     }
 }

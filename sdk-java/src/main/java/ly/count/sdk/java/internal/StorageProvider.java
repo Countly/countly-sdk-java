@@ -1,5 +1,7 @@
 package ly.count.sdk.java.internal;
 
+import org.json.JSONObject;
+
 /**
  * Interface for storage provider
  */
@@ -38,15 +40,15 @@ public interface StorageProvider {
      *
      * @param remoteConfigValues set of remote config values
      */
-    void setRemoteConfigValues(Object remoteConfigValues);
+    void setRemoteConfigValues(JSONObject remoteConfigValues);
 
     /**
      * Get remote config values
      *
      * @return set of remote config values
      */
-    Object getRemoteConfigValues();
-  
+    JSONObject getRemoteConfigValues();
+
     /**
      * Get migration version
      *

@@ -187,6 +187,7 @@ public class ModuleRequests extends ModuleBase {
 
     public static Params prepareRequiredParams(InternalConfig config) {
         Params params = new Params();
+
         addRequiredTimeParametersToParams(params);
         addRequiredParametersToParams(config, params);
 

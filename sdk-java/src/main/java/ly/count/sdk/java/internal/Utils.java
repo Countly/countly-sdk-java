@@ -248,7 +248,7 @@ public class Utils {
     }
 
     public static Map<String, String> fixSegmentKeysAndValues(final int keyLength, final int valueLength, final Map<String, String> segments, Log logger) {
-        if (segments == null || segments.size() == 0) {
+        if (segments == null || segments.isEmpty()) {
             return segments;
         }
 
@@ -365,6 +365,7 @@ public class Utils {
 
     /**
      * Check whether given string is a valid URL or not
+     *
      * @param url
      * @return
      */
