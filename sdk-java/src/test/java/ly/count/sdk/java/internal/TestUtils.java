@@ -131,7 +131,7 @@ public class TestUtils {
      * @return array of request params
      */
     protected static Map<String, String>[] getCurrentRQ(File targetFolder, Log logger) {
-        Storage.await(mock(Log.class)); // wait for request to be write to the disk
+        Storage.await(mock(Log.class)); // wait for request to be written to the disk
 
         //check whether target folder is a directory or not
         if (!targetFolder.isDirectory()) {

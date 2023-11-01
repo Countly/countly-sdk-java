@@ -15,10 +15,8 @@ import org.json.JSONObject;
 public class ModuleRemoteConfig extends ModuleBase {
     boolean updateRemoteConfigAfterIdChange = false;
     RemoteConfig remoteConfigInterface = null;
-
     //if set to true, it will automatically download remote configs on module startup
     boolean automaticDownloadTriggersEnabled;
-
     // if set to true we should add 'oi=1' to our RC download call
     boolean autoEnrollEnabled;
     boolean remoteConfigValuesShouldBeCached = false;
@@ -31,6 +29,7 @@ public class ModuleRemoteConfig extends ModuleBase {
     public void init(final InternalConfig config) {
         super.init(config);
         L.v("[ModuleRemoteConfig] init, Initialising");
+
         L.d("[ModuleRemoteConfig] init, remote config Automatic triggers enabled " + config.isRemoteConfigAutomaticDownloadTriggersEnabled());
         L.d("[ModuleRemoteConfig] init, caching enabled: " + config.isRemoteConfigValueCachingEnabled());
         L.d("[ModuleRemoteConfig] init, auto enroll enabled: " + config.isAutoEnrollFlagEnabled());
@@ -178,6 +177,51 @@ public class ModuleRemoteConfig extends ModuleBase {
         }
 
         return result;
+    }
+
+    /**
+     * Internal function to form and send a request to enroll user for given keys
+     *
+     * @param keys - keys for which the user should be enrolled
+     */
+    void enrollIntoABTestsForKeysInternal(@Nonnull String[] keys) {
+        L.d("[ModuleRemoteConfig] enrollIntoABTestsForKeysInternal, Enrolling user for the given keys:" + Arrays.toString(keys));
+
+        if (internalConfig.isTemporaryIdEnabled() || internalConfig.getDeviceId() == null) {
+            L.d("[ModuleRemoteConfig] enrollIntoABTestsForKeysInternal, Enrolling user was aborted, temporary device ID mode is set or device ID is null.");
+            return;
+        }
+        Params params = new Params();
+        params.add("method", "ab");
+
+        if (keys.length > 0) { // exits all otherwise
+            params.add("keys", new JSONArray(Arrays.asList(keys)).toString());
+        }
+
+        ModuleRequests.pushAsync(internalConfig, new Request(params).endpoint("/o/sdk?"));
+    }
+
+    /**
+     * Internal function to form and send the request to remove user from A/B tests for given keys
+     *
+     * @param keys - keys for which the user should be removed from keys
+     */
+    void exitABTestsForKeysInternal(@Nonnull String[] keys) {
+        L.d("[ModuleRemoteConfig] exitABTestsForKeysInternal, Removing user for the tests with given keys:" + Arrays.toString(keys));
+
+        if (internalConfig.isTemporaryIdEnabled() || internalConfig.getDeviceId() == null) {
+            L.d("[ModuleRemoteConfig] exitABTestsForKeysInternal, Removing user from tests was aborted, temporary device ID mode is set or device ID is null.");
+            return;
+        }
+
+        Params params = new Params();
+
+        params.add("method", "ab_opt_out");
+        if (keys.length > 0) { // exits all otherwise
+            params.add("keys", new JSONArray(Arrays.asList(keys)).toString());
+        }
+
+        ModuleRequests.pushAsync(internalConfig, new Request(params));
     }
 
     /**
@@ -337,6 +381,27 @@ public class ModuleRemoteConfig extends ModuleBase {
         }
 
         /**
+         * Returns all available remote config values and enrolls to A/B tests for those values
+         *
+         * @return The available RC values
+         */
+        public @Nonnull Map<String, RCData> getAllValuesAndEnroll() {
+            synchronized (Countly.instance()) {
+                L.i("[RemoteConfig] getAllValuesAndEnroll");
+                Map<String, RCData> values = getRemoteConfigValueStoreInternal().getAllValues();
+
+                if (values.isEmpty()) {
+                    L.i("[RemoteConfig] getAllValuesAndEnroll, No value to enroll");
+                } else {
+                    // assuming the values is not empty enroll for the keys
+                    enrollIntoABTestsForKeys(values.keySet().toArray(new String[0]));// enroll
+                }
+
+                return values;
+            }
+        }
+
+        /**
          * Return the remote config value for a specific key
          *
          * @param key Key for which the remote config value needs to be returned
@@ -352,6 +417,63 @@ public class ModuleRemoteConfig extends ModuleBase {
                 }
 
                 return getRemoteConfigValueStoreInternal().getValue(key);
+            }
+        }
+
+        /**
+         * Returns the remote config value for a specific key and enrolls to A/B tests for it
+         *
+         * @param key Key for which the remote config value needs to be returned
+         * @return The returned value. If no value existed for the key then the inner object will be returned as "null"
+         */
+        public @Nonnull RCData getValueAndEnroll(@Nullable String key) {
+            synchronized (Countly.instance()) {
+                L.i("[RemoteConfig] getValueAndEnroll, key:[" + key + "]");
+
+                if (Utils.isEmptyOrNull(key)) {
+                    L.i("[RemoteConfig] getValueAndEnroll, A valid key should be provided to get its value.");
+                    return new RCData(null, true);
+                }
+
+                RCData data = getRemoteConfigValueStoreInternal().getValue(key);
+                if (data.value == null) {
+                    L.i("[RemoteConfig] getValueAndEnroll, No value to enroll");
+                } else {
+                    // assuming value is not null enroll to key
+                    enrollIntoABTestsForKeys(new String[] { key });
+                }
+                return data;
+            }
+        }
+
+        /**
+         * Enrolls user to AB tests of the given keys.
+         *
+         * @param keys - String array of keys (parameters)
+         */
+        public void enrollIntoABTestsForKeys(@Nullable String[] keys) {
+            synchronized (Countly.instance()) {
+                L.i("[RemoteConfig] enrollIntoABTestsForKeys");
+                if (keys == null || keys.length == 0) {
+                    L.w("[RemoteConfig] enrollIntoABTestsForKeys, A key should be provided to enroll the user.");
+                    return;
+                }
+                enrollIntoABTestsForKeysInternal(keys);
+            }
+        }
+
+        /**
+         * Removes user from A/B tests for the given keys. If no key provided would remove the user from all tests.
+         *
+         * @param keys - String array of keys (parameters)
+         */
+        public void exitABTestsForKeys(@Nullable String[] keys) {
+            synchronized (Countly.instance()) {
+                L.i("[RemoteConfig] exitABTestsForKeys");
+                if (keys == null) {
+                    keys = new String[0];
+                }
+                exitABTestsForKeysInternal(keys);
             }
         }
 
