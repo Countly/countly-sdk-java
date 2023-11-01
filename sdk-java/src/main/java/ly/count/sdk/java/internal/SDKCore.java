@@ -433,6 +433,7 @@ public class SDKCore {
         sdkStorage.init(givenConfig);
         givenConfig.storageProvider = sdkStorage;
         config = prepareConfig(givenConfig);
+        config.setLogger(L);
         config.storageProvider = sdkStorage;
 
         if (config.immediateRequestGenerator == null) {
@@ -450,15 +451,6 @@ public class SDKCore {
         MigrationHelper migrationHelper = new MigrationHelper(L);
         migrationHelper.setupMigrations(config.storageProvider);
         migrationHelper.applyMigrations(new HashMap<>());
-
-        config.setLogger(L);
-
-        if (config.immediateRequestGenerator == null) {
-            config.immediateRequestGenerator = ImmediateRequestMaker::new;
-        }
-        prepareMappings(config);
-        countlyTimer = new CountlyTimer(L);
-        countlyTimer.startTimer(config.getSendUpdateEachSeconds(), this::onTimer);
 
         requestQueueMemory = new ArrayDeque<>(config.getRequestQueueMaxSize());
         // ModuleSessions is always enabled, even without consent
