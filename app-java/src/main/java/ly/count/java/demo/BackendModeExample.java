@@ -32,11 +32,10 @@ public class BackendModeExample {
     }
 
     private static void recordView() {
-        Map<String, Object> segmentation = new HashMap<String, Object>() {{
-            put("visit", "1");
-            put("segment", "Windows");
-            put("start", "1");
-        }};
+        Map<String, Object> segmentation = new HashMap<>();
+        segmentation.put("visit", "1");
+        segmentation.put("segment", "Windows");
+        segmentation.put("start", "1");
 
         Countly.backendMode().recordView(DEVICE_ID, "SampleView", segmentation, 1646640780130L);
     }
