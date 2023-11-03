@@ -85,10 +85,14 @@ public class MigrationHelper {
         logger.i("[MigrationHelper] migration_DeleteConfigFile_01, Deleting config file migrating from 00 to 01");
         currentDataModelVersion += 1;
 
-        String fileName = (String) migrationParams.get("config_file");
         File sdkPath = (File) migrationParams.get("sdk_path");
 
-        try (ObjectInputStream stream = new ObjectInputStream(new ByteArrayInputStream(Files.readAllBytes(new File(sdkPath, fileName).toPath())))) {
+        File configFile = new File(sdkPath, SDKStorage.FILE_NAME_PREFIX + SDKStorage.FILE_NAME_SEPARATOR + InternalConfig.getStoragePrefix());
+        if (!configFile.isFile() || !configFile.exists()) {
+            logger.d("[MigrationHelper] migration_DeleteConfigFile_01, Config file doesn't exist, no need to migrate");
+            return true;
+        }
+        try (ObjectInputStream stream = new ObjectInputStream(new ByteArrayInputStream(Files.readAllBytes(configFile.toPath())))) {
             try {
                 new URL(stream.readUTF()); // read server url
                 stream.readUTF(); // read app key

@@ -444,7 +444,9 @@ public class SDKCore {
         //setup and perform migrations
         MigrationHelper migrationHelper = new MigrationHelper(L);
         migrationHelper.setupMigrations(config.storageProvider);
-        migrationHelper.applyMigrations(new HashMap<>());
+        Map<String, Object> migrationParams = new HashMap<>();
+        migrationParams.put("sdk_path", config.getSdkStorageRootDirectory());
+        migrationHelper.applyMigrations(migrationParams);
 
         requestQueueMemory = new ArrayDeque<>(config.getRequestQueueMaxSize());
         // ModuleSessions is always enabled, even without consent

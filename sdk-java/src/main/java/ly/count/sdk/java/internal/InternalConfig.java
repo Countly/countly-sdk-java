@@ -14,7 +14,6 @@ import ly.count.sdk.java.Config;
  * Only members of {@link InternalConfig} can be changed, members of {@link Config} are non-modifiable.
  */
 public class InternalConfig extends Config {
-    // private static final Log.Module L = Log.module("InternalConfig");
 
     /**
      * Whether to use default networking, meaning networking in the same process with SDK
