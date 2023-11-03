@@ -137,7 +137,7 @@ public class MigrationHelper {
 
             //device ids
             l = stream.readInt();
-            while (l-- > 0) {
+            while (l-- > 0) { //todo smth happening here
                 byte[] b = new byte[stream.readInt()];
                 stream.readFully(b);
                 stream.readInt(); // realm
