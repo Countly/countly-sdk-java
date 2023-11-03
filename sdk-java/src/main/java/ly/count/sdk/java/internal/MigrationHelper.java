@@ -87,7 +87,7 @@ public class MigrationHelper {
 
         File sdkPath = (File) migrationParams.get("sdk_path");
 
-        File configFile = new File(sdkPath, SDKStorage.FILE_NAME_PREFIX + SDKStorage.FILE_NAME_SEPARATOR + InternalConfig.getStoragePrefix());
+        File configFile = new File(sdkPath, SDKStorage.FILE_NAME_PREFIX + SDKStorage.FILE_NAME_SEPARATOR + InternalConfig.getStoragePrefix() + SDKStorage.FILE_NAME_SEPARATOR + InternalConfig.storageId());
         if (!configFile.isFile() || !configFile.exists()) {
             logger.d("[MigrationHelper] migration_DeleteConfigFile_01, Config file doesn't exist, no need to migrate");
             return true;

@@ -85,6 +85,10 @@ public class InternalConfig extends Config {
         return "config";
     }
 
+    public static Long storageId() {
+        return 0L;
+    }
+
     public DID getDeviceId() {
         return getDeviceId(DID.REALM_DID);
     }
