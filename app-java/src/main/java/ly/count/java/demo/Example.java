@@ -234,8 +234,101 @@ public class Example {
             .setApplicationVersion("123.56.h");
 
         // Main initialization call, SDK can be used after this one is done
-        //Countly.instance().init(config);
-        byte[] salt = Files.readAllBytes(new File("/Users/countly/__COUNTLY/java_test/[CLY]_config_0").toPath());
-        System.out.println(Arrays.toString(salt));
+        Countly.instance().init(config);
+
+        Countly.onConsent(Config.Feature.Events, Config.Feature.Sessions, Config.Feature.CrashReporting, Config.Feature.Views, Config.Feature.UserProfiles, Config.Feature.Location, Config.Feature.Feedback);
+
+        // Usually, all interactions with SDK are to be done through a session instance:
+        Countly.session().begin();
+        boolean running = true;
+        while (running) {
+
+            System.out.println("Choose your option: ");
+
+            System.out.println("1) Record basic event");
+            System.out.println("2) Record event with segmentation");
+            System.out.println("3) Record event with sum and count");
+            System.out.println("4) Record event with sum and segmentation");
+            System.out.println("5) Record timed event with sum, count, duration and segmentation");
+
+            System.out.println("6) Record start view");
+            System.out.println("7) Record another view");
+
+            System.out.println("8) Set location");
+            System.out.println("9) Set user profile");
+            System.out.println("10) Set user custom profile");
+            System.out.println("11) Record an exception");
+            System.out.println("12) Start a view called 'example_view'");
+            System.out.println("13) End a view called 'example_view'");
+
+            System.out.println("14) Change device id with merge");
+            System.out.println("15) Change device id without merge");
+
+            System.out.println("16) Enter to feedback widget functionality");
+
+            System.out.println("0) Exit ");
+
+            int input = scanner.nextInt();
+            switch (input) {
+                case 0:
+                    running = false;
+                    break;
+                case 1:
+                    basicEvent();
+                    break;
+                case 2:
+                    eventWithSegmentation();
+                    break;
+                case 3:
+                    eventWithSumAndCount();
+                    break;
+                case 4:
+                    eventWithSumAndSegmentation();
+                    break;
+                case 5:
+                    timedEventWithSumCountSegmentationAndDuration();
+                    break;
+                case 6:
+                    recordStartView();
+                    break;
+                case 7:
+                    recordAnotherView();
+                    break;
+                case 8:
+                    setLocation();
+                    break;
+                case 9:
+                    setUserProfile();
+                    break;
+                case 10:
+                    setCustomProfile();
+                    break;
+                case 11:
+                    recordCrash();
+                    break;
+                case 12:
+                    Countly.session().view("example_view").start(true);
+                    break;
+                case 13:
+                    Countly.session().view("example_view").stop(false);
+                    break;
+                case 14:
+                    changeDeviceIdWithMerge();
+                    break;
+                case 15:
+                    changeDeviceIdWithoutMerge();
+                    break;
+                case 16:
+                    feedbackWidgets(scanner);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        // Gracefully stop SDK to stop all SDK threads and allow this app to exit
+        // Just in case, usually you don't want to clear data to reuse device id for next app runs
+        // and to send any requests which might not be sent
+        Countly.stop(false);
     }
 }
