@@ -428,7 +428,6 @@ public class SDKCore {
         config.sdk = this;
         sdkStorage.init(config);
         config.storageProvider = sdkStorage;
-        setDeviceIdFromStorageIfExist(config);
 
         if (config.immediateRequestGenerator == null) {
             config.immediateRequestGenerator = ImmediateRequestMaker::new;
@@ -447,6 +446,8 @@ public class SDKCore {
         Map<String, Object> migrationParams = new HashMap<>();
         migrationParams.put("sdk_path", config.getSdkStorageRootDirectory());
         migrationHelper.applyMigrations(migrationParams);
+
+        setDeviceIdFromStorageIfExist(config);
 
         requestQueueMemory = new ArrayDeque<>(config.getRequestQueueMaxSize());
         // ModuleSessions is always enabled, even without consent

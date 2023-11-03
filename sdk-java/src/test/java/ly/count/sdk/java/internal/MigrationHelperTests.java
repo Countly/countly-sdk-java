@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
+import ly.count.sdk.java.Countly;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -185,6 +186,14 @@ public class MigrationHelperTests {
         //check migration version is at the latest after apply both from class and file
         Assert.assertEquals(1, migrationHelper.currentDataModelVersion);
         Mockito.verify(migrationHelper.logger, Mockito.times(1)).i("[MigrationHelper] migration_DeleteConfigFile_01, Deleting config file migrating from 00 to 01");
+    }
+
+    @Test
+    public void applyMigrations_0to1_initCountly() throws IOException {
+        Files.write(TestUtils.createFile("config_0").toPath(), EXAMPLE_CONFIG); //mock a sdk config file, to simulate storage is not empty
+        Countly.instance().init(TestUtils.getBaseConfig(null));
+        Assert.assertEquals("CLY_0c54e5e7-eb86-4c17-81f0-4d7910d8ab0e", Countly.instance().getDeviceId());
+        Assert.assertEquals(DeviceIdType.SDK_GENERATED, Countly.instance().getDeviceIdType());
     }
 
     void setDataVersionInConfigFile(final int targetDataVersion) throws IOException {

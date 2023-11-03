@@ -95,7 +95,7 @@ public class MigrationHelper {
             readUnnecessaryParts(stream);
             //device ids
             int l = stream.readInt();
-            while (l-- > 0) { //todo smth happening here
+            while (l-- > 0) {
                 byte[] b = new byte[stream.readInt()];
                 stream.readFully(b);
 
