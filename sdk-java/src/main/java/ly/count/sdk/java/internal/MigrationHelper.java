@@ -4,7 +4,6 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.net.URL;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
@@ -93,50 +92,9 @@ public class MigrationHelper {
             return true;
         }
         try (ObjectInputStream stream = new ObjectInputStream(new ByteArrayInputStream(Files.readAllBytes(configFile.toPath())))) {
-            try {
-                new URL(stream.readUTF()); // read server url
-                stream.readUTF(); // read app key
-            } catch (Exception e) {
-                logger.e("[MigrationHelper] migration_DeleteConfigFile_01, Cannot happen " + e);
-                return false;
-            }
-
-            stream.readInt(); // read features
-            stream.readUTF();//we are only reading this for backwards compatibility. Throw away in the future
-            stream.readInt(); // logging level
-            stream.readUTF(); // sdk name
-            stream.readUTF(); // sdk version
-            stream.readObject();//we are only reading this for backwards compatibility. Throw away in the future
-            stream.readObject(); // app version
-            stream.readBoolean(); // forceHTTPPost
-            stream.readObject(); // salt
-            stream.readInt(); // networkConnectionTimeout
-            stream.readInt(); // networkReadTimeout
-            int l = stream.readInt(); // publicKeyPins size
-            for (int i = 0; i < l; i++) {
-                stream.readUTF(); // publicKeyPins
-            }
-            l = stream.readInt(); // certificatePins size
-            for (int i = 0; i < l; i++) {
-                stream.readUTF(); // certificatePins
-            }
-            stream.readInt(); // sendUpdateEachSeconds
-            stream.readInt(); // eventQueueThreshold
-            stream.readInt();//throwawaySessionCooldownPeriod
-            stream.readBoolean();//throwawayCountlyTestMode
-            stream.readInt();//throwawayCrashReportingANRCheckingPeriod
-            stream.readObject(); // crashProcessorClass
-
-            l = stream.readInt(); // moduleOverrides size
-            if (l > 0) {
-                while (l-- > 0) {
-                    stream.readInt(); // index
-                    stream.readUTF(); // class name
-                }
-            }
-
+            readUnnecessaryParts(stream);
             //device ids
-            l = stream.readInt();
+            int l = stream.readInt();
             while (l-- > 0) { //todo smth happening here
                 byte[] b = new byte[stream.readInt()];
                 stream.readFully(b);
@@ -158,5 +116,43 @@ public class MigrationHelper {
         }
 
         return true;
+    }
+
+    private void readUnnecessaryParts(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+        stream.readUTF(); // read server url
+        stream.readUTF(); // read app key
+        stream.readInt(); // read features
+        stream.readUTF();//we are only reading this for backwards compatibility. Throw away in the future
+        stream.readInt(); // logging level
+        stream.readUTF(); // sdk name
+        stream.readUTF(); // sdk version
+        stream.readObject();//we are only reading this for backwards compatibility. Throw away in the future
+        stream.readObject(); // app version
+        stream.readBoolean(); // forceHTTPPost
+        stream.readObject(); // salt
+        stream.readInt(); // networkConnectionTimeout
+        stream.readInt(); // networkReadTimeout
+        int l = stream.readInt(); // publicKeyPins size
+        for (int i = 0; i < l; i++) {
+            stream.readUTF(); // publicKeyPins
+        }
+        l = stream.readInt(); // certificatePins size
+        for (int i = 0; i < l; i++) {
+            stream.readUTF(); // certificatePins
+        }
+        stream.readInt(); // sendUpdateEachSeconds
+        stream.readInt(); // eventQueueThreshold
+        stream.readInt();//throwawaySessionCooldownPeriod
+        stream.readBoolean();//throwawayCountlyTestMode
+        stream.readInt();//throwawayCrashReportingANRCheckingPeriod
+        stream.readObject(); // crashProcessorClass
+
+        l = stream.readInt(); // moduleOverrides size
+        if (l > 0) {
+            while (l-- > 0) {
+                stream.readInt(); // index
+                stream.readUTF(); // class name
+            }
+        }
     }
 }
