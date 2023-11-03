@@ -409,32 +409,26 @@ public class SDKCore {
         return null;
     }
 
-    protected InternalConfig prepareConfig(InternalConfig config) {
-        InternalConfig loaded = null;
-        try {
-            loaded = Storage.read(config, new InternalConfig());
-        } catch (IllegalArgumentException e) {
-            L.e("[SDKCore] Cannot happen" + e);
+    protected void setDeviceIdFromStorageIfExist(InternalConfig config) {
+        String deviceId = sdkStorage.getDeviceID();
+        String deviceIdType = sdkStorage.getDeviceIdType();
+
+        if (Utils.isEmptyOrNull(deviceId) || Utils.isEmptyOrNull(deviceIdType)) {
+            return;
         }
 
-        if (loaded == null) {
-            return config;
-        } else {
-            loaded.setFrom(config);
-            return loaded;
-        }
+        config.setDeviceId(new Config.DID(Config.DID.REALM_DID, DeviceIdType.toInt(deviceIdType), deviceId));
     }
 
     public void init(final InternalConfig givenConfig) {
+        config = givenConfig;
         L = givenConfig.getLogger();
         L.i("[SDKCore] Initializing Countly");
 
-        givenConfig.sdk = this;
-        sdkStorage.init(givenConfig);
-        givenConfig.storageProvider = sdkStorage;
-        config = prepareConfig(givenConfig);
-        config.setLogger(L);
+        config.sdk = this;
+        sdkStorage.init(config);
         config.storageProvider = sdkStorage;
+        setDeviceIdFromStorageIfExist(config);
 
         if (config.immediateRequestGenerator == null) {
             config.immediateRequestGenerator = ImmediateRequestMaker::new;
@@ -454,9 +448,9 @@ public class SDKCore {
 
         requestQueueMemory = new ArrayDeque<>(config.getRequestQueueMaxSize());
         // ModuleSessions is always enabled, even without consent
-        int consents = givenConfig.getFeatures1() | CoreFeature.Sessions.getIndex();
+        int consents = config.getFeatures1() | CoreFeature.Sessions.getIndex();
         // build modules
-        buildModules(givenConfig, consents);
+        buildModules(config, consents);
 
         final List<Integer> failed = new ArrayList<>();
 
@@ -474,14 +468,14 @@ public class SDKCore {
             modules.remove(feature);
         }
 
-        recover(givenConfig);
+        recover(config);
 
         if (config.isDefaultNetworking()) {
             networking = new DefaultNetworking();
 
             if (config.isBackendModeEnabled()) {
                 //Backend mode is enabled, we will use memory only request queue.
-                networking.init(givenConfig, new IStorageForRequestQueue() {
+                networking.init(config, new IStorageForRequestQueue() {
                     @Override
                     public Request getNextRequest() {
                         synchronized (SDKCore.instance.lockBRQStorage) {
@@ -509,37 +503,35 @@ public class SDKCore {
                 });
             } else {
                 // Backend mode isn't enabled, we use persistent file storage.
-                networking.init(givenConfig, new IStorageForRequestQueue() {
+                networking.init(config, new IStorageForRequestQueue() {
                     @Override
                     public Request getNextRequest() {
-                        return Storage.readOne(givenConfig, new Request(0L), true);
+                        return Storage.readOne(config, new Request(0L), true);
                     }
 
                     @Override
                     public Boolean removeRequest(Request request) {
-                        return Storage.remove(givenConfig, request);
+                        return Storage.remove(config, request);
                     }
 
                     @Override
                     public Integer remaningRequests() {
-                        return Storage.list(givenConfig, Request.getStoragePrefix()).size() - 1;
+                        return Storage.list(config, Request.getStoragePrefix()).size() - 1;
                     }
                 });
             }
         }
 
         try {
-            user = Storage.read(givenConfig, new UserImpl(givenConfig));
+            user = Storage.read(config, new UserImpl(config));
             if (user == null) {
-                user = new UserImpl(givenConfig);
+                user = new UserImpl(config);
             }
         } catch (Throwable e) {
             L.e("[SDKCore] Cannot happen" + e);
-            user = new UserImpl(givenConfig);
+            user = new UserImpl(config);
         }
 
-        config.sdk = this;
-        config.storageProvider = this.sdkStorage;
         initFinished(config);
     }
 
@@ -591,11 +583,13 @@ public class SDKCore {
     public void onDeviceId(InternalConfig config, Config.DID id, Config.DID old) {
         L.d("onDeviceId " + id + ", old " + old);
         if (id != null && (!id.equals(old) || !id.equals(config.getDeviceId(id.realm)))) {
+            sdkStorage.setDeviceID(id.id);
+            sdkStorage.setDeviceIdType(DeviceIdType.fromInt(id.strategy).name());
             config.setDeviceId(id);
-            Storage.push(config, instance.config);
         } else if (id == null && old != null) {
             if (config.removeDeviceId(old)) {
-                Storage.push(config, config);
+                sdkStorage.setDeviceIdType("");
+                sdkStorage.setDeviceID("");
             }
         }
 
@@ -706,7 +700,7 @@ public class SDKCore {
      * Core instance config
      */
 
-    public void onSignal(InternalConfig config, int id, Byteable param1, Byteable param2) {
+    public void onSignal(InternalConfig config, int id) {
         if (id == Signal.DID.getIndex()) {
             networking.check(config);
         }
@@ -731,7 +725,7 @@ public class SDKCore {
 
         Request request = ModuleRequests.nonSessionRequest(config);
         ModuleCrash.putCrashIntoParams(crash, request.params);
-      
+
         ModuleRequests.addRequiredParametersToParams(config, request.params);
         ModuleRequests.addRequiredTimeParametersToParams(request.params);
 

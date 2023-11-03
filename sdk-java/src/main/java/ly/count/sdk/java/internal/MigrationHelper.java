@@ -1,5 +1,11 @@
 package ly.count.sdk.java.internal;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.net.URL;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +40,7 @@ public class MigrationHelper {
         this.logger = logger;
 
         // add migrations below
-        //migrations.add(this::migration_DeleteConfigFile_01);
+        migrations.add(this::migration_DeleteConfigFile_01);
         latestMigrationVersion = migrations.size();
     }
 
@@ -78,6 +84,67 @@ public class MigrationHelper {
         }
         logger.i("[MigrationHelper] migration_DeleteConfigFile_01, Deleting config file migrating from 00 to 01");
         currentDataModelVersion += 1;
+
+        String fileName = (String) migrationParams.get("config_file");
+        File sdkPath = (File) migrationParams.get("sdk_path");
+
+        try (ObjectInputStream stream = new ObjectInputStream(new ByteArrayInputStream(Files.readAllBytes(new File(sdkPath, fileName).toPath())))) {
+            try {
+                new URL(stream.readUTF()); // read server url
+                stream.readUTF(); // read app key
+            } catch (Exception e) {
+                logger.e("[MigrationHelper] migration_DeleteConfigFile_01, Cannot happen " + e);
+                return false;
+            }
+
+            stream.readInt(); // read features
+            stream.readUTF();//we are only reading this for backwards compatibility. Throw away in the future
+            stream.readInt(); // logging level
+            stream.readUTF(); // sdk name
+            stream.readUTF(); // sdk version
+            stream.readObject();//we are only reading this for backwards compatibility. Throw away in the future
+            stream.readObject(); // app version
+            stream.readBoolean(); // forceHTTPPost
+            stream.readObject(); // salt
+            stream.readInt(); // networkConnectionTimeout
+            stream.readInt(); // networkReadTimeout
+            int l = stream.readInt(); // publicKeyPins size
+            for (int i = 0; i < l; i++) {
+                stream.readUTF(); // publicKeyPins
+            }
+            l = stream.readInt(); // certificatePins size
+            for (int i = 0; i < l; i++) {
+                stream.readUTF(); // certificatePins
+            }
+            stream.readInt(); // sendUpdateEachSeconds
+            stream.readInt(); // eventQueueThreshold
+            stream.readInt();//throwawaySessionCooldownPeriod
+            stream.readBoolean();//throwawayCountlyTestMode
+            stream.readInt();//throwawayCrashReportingANRCheckingPeriod
+            stream.readObject(); // crashProcessorClass
+
+            l = stream.readInt(); // moduleOverrides size
+            if (l > 0) {
+                while (l-- > 0) {
+                    stream.readInt(); // index
+                    stream.readUTF(); // class name
+                }
+            }
+
+            //device ids
+            l = stream.readInt();
+            while (l-- > 0) {
+                byte[] b = new byte[stream.readInt()];
+                stream.readFully(b);
+                stream.readInt(); // realm
+                storageProvider.setDeviceIdType(DeviceIdType.fromInt(stream.readInt()).name());
+                storageProvider.setDeviceID((String) stream.readObject());
+            }
+        } catch (IOException | ClassNotFoundException e) {
+            logger.e("[MigrationHelper] migration_DeleteConfigFile_01, Cannot deserialize config " + e);
+            return false;
+        }
+
         return true;
     }
 }
