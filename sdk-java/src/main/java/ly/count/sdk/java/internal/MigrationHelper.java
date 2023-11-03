@@ -76,6 +76,12 @@ public class MigrationHelper {
         storageProvider.setMigrationVersion(currentDataModelVersion);
     }
 
+    /**
+     * Deletes the config file and extracts device id and type from the config file that is stored as bytes
+     *
+     * @param migrationParams parameters to pass to migrations
+     * @return true if the migration was successful, false otherwise
+     */
     protected boolean migration_DeleteConfigFile_01(final Map<String, Object> migrationParams) {
         if (currentDataModelVersion >= 1) {
             logger.d("[MigrationHelper] migration_DeleteConfigFile_01, Migration already applied");
@@ -118,6 +124,13 @@ public class MigrationHelper {
         return true;
     }
 
+    /**
+     * Reads unnecessary parts of the config file for the 1st migration
+     *
+     * @param stream of device id data
+     * @throws IOException if there is a problem with reading the stream
+     * @throws ClassNotFoundException if there is a problem with reading the stream
+     */
     private void readUnnecessaryParts(ObjectInputStream stream) throws IOException, ClassNotFoundException {
         stream.readUTF(); // read server url
         stream.readUTF(); // read app key
