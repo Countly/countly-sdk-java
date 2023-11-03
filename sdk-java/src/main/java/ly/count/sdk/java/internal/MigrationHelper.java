@@ -140,12 +140,15 @@ public class MigrationHelper {
             while (l-- > 0) { //todo smth happening here
                 byte[] b = new byte[stream.readInt()];
                 stream.readFully(b);
-                stream.readInt(); // realm
-                DeviceIdType type = DeviceIdType.fromInt(stream.readInt());
-                Object deviceId = stream.readObject();
-                if (type != null && deviceId instanceof String && !Utils.isEmptyOrNull((String) deviceId)) {
-                    storageProvider.setDeviceIdType(type.name());
-                    storageProvider.setDeviceID((String) deviceId);
+
+                try (ObjectInputStream idStream = new ObjectInputStream(new ByteArrayInputStream(b))) {
+                    idStream.readInt(); // realm
+                    DeviceIdType type = DeviceIdType.fromInt(idStream.readInt());
+                    Object deviceId = idStream.readObject();
+                    if (type != null && deviceId instanceof String && !Utils.isEmptyOrNull((String) deviceId)) {
+                        storageProvider.setDeviceIdType(type.name());
+                        storageProvider.setDeviceID((String) deviceId);
+                    }
                 }
             }
             Files.delete(configFile.toPath());
