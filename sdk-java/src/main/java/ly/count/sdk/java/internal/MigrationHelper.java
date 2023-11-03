@@ -141,9 +141,14 @@ public class MigrationHelper {
                 byte[] b = new byte[stream.readInt()];
                 stream.readFully(b);
                 stream.readInt(); // realm
-                storageProvider.setDeviceIdType(DeviceIdType.fromInt(stream.readInt()).name());
-                storageProvider.setDeviceID((String) stream.readObject());
+                DeviceIdType type = DeviceIdType.fromInt(stream.readInt());
+                Object deviceId = stream.readObject();
+                if (type != null && deviceId instanceof String && !Utils.isEmptyOrNull((String) deviceId)) {
+                    storageProvider.setDeviceIdType(type.name());
+                    storageProvider.setDeviceID((String) deviceId);
+                }
             }
+            Files.delete(configFile.toPath());
         } catch (IOException | ClassNotFoundException e) {
             logger.e("[MigrationHelper] migration_DeleteConfigFile_01, Cannot deserialize config " + e);
             return false;
