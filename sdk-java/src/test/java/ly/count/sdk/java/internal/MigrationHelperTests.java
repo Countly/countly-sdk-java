@@ -161,7 +161,7 @@ public class MigrationHelperTests {
     /**
      * "applyMigrations" from 0 to 1
      * Upgrading from legacy state to the latest version, mock config file, just old type of data.
-     * Data version must be 1 after applying migrations and expected log must be logged.
+     * Data version must be 1 after applying migrations and expected log must be logged. and expected device id type must match
      */
     @Test
     public void applyMigrations_0to1() throws IOException {
@@ -188,6 +188,11 @@ public class MigrationHelperTests {
         Mockito.verify(migrationHelper.logger, Mockito.times(1)).i("[MigrationHelper] migration_DeleteConfigFile_01, Deleting config file migrating from 00 to 01");
     }
 
+    /**
+     * "applyMigrations" from 0 to 1 by init Countly
+     * Upgrading from legacy state to the latest version, mock config file, just old type of data.
+     * Data version must be 1 after applying migrations and expected log must be logged. and expected device id type must match
+     */
     @Test
     public void applyMigrations_0to1_initCountly() throws IOException {
         Files.write(TestUtils.createFile("config_0").toPath(), EXAMPLE_CONFIG); //mock a sdk config file, to simulate storage is not empty
