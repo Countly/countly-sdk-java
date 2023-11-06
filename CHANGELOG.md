@@ -15,7 +15,7 @@
   * 'remoteConfigRegisterGlobalCallback(RCDownloadCallback callback)' to register a remote config callback
 * Added the ability to set the user profile picture with an URL
 * Added to a way to get device id type by calling "Countly.instance().getDeviceIdType()" call.
-* Config storage is deleted, only device id and device id type are stored now
+* All config values are not stored now, only device id and type are stored for config.
 
 * Fixed a bug where it was not possible to send a profile picture with binary data
 

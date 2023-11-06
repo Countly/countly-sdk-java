@@ -22,7 +22,9 @@ import static org.mockito.Mockito.spy;
 public class MigrationHelperTests {
     final int expectedLatestSchemaVersion = 1;
 
-    static final byte[] EXAMPLE_CONFIG = {
+    //example config file contains old type of data
+    //has SDK_GENERATED device id type and id value of CLY_0c54e5e7-eb86-4c17-81f0-4d7910d8ab0es
+    static final byte[] MOCK_OLD_CONFIG_FILE_sdkGenId = {
         -84, -19, 0, 5, 119, 78, 0, 21, 104, 116, 116, 112, 115, 58, 47, 47, 120, 120, 120, 46, 115, 101, 114, 118, 101, 114, 46, 108, 121, 0, 15, 67, 79, 85, 78, 84, 76, 89, 95, 65, 80, 80, 95, 75, 69, 89, 0, -128, 0, 126, 0, 7, 67, 111, 117, 110, 116, 108, 121, 0, 0, 0, 1, 0, 11, 106, 97, 118, 97,
         45, 110, 97, 116, 105, 118, 101, 0, 6, 50, 51, 46, 56, 46, 48, 116, 0, 4, 110, 97, 109, 101, 116, 0, 8, 49, 50, 51, 46, 53, 54, 46, 104, 119, 1, 0, 112, 119, 33, 0, 0, 0, 30, 0, 0, 0, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 60, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 5, 112, 119, 69, 0, 0, 0, 0, 0,
         0, 0, 1, 0, 0, 0, 57, -84, -19, 0, 5, 119, 8, 0, 0, 0, 0, 0, 0, 0, 0, 116, 0, 40, 67, 76, 89, 95, 48, 99, 53, 52, 101, 53, 101, 55, 45, 101, 98, 56, 54, 45, 52, 99, 49, 55, 45, 56, 49, 102, 48, 45, 52, 100, 55, 57, 49, 48, 100, 56, 97, 98, 48, 101
@@ -165,7 +167,7 @@ public class MigrationHelperTests {
      */
     @Test
     public void applyMigrations_0to1() throws IOException {
-        Files.write(TestUtils.createFile("config_0").toPath(), EXAMPLE_CONFIG); //mock a sdk config file, to simulate storage is not empty
+        Files.write(TestUtils.createFile("config_0").toPath(), MOCK_OLD_CONFIG_FILE_sdkGenId); //mock a sdk config file, to simulate storage is not empty
         initStorage(); // to initialize json storage after mock sdk file is created
 
         MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
@@ -195,7 +197,7 @@ public class MigrationHelperTests {
      */
     @Test
     public void applyMigrations_0to1_initCountly() throws IOException {
-        Files.write(TestUtils.createFile("config_0").toPath(), EXAMPLE_CONFIG); //mock a sdk config file, to simulate storage is not empty
+        Files.write(TestUtils.createFile("config_0").toPath(), MOCK_OLD_CONFIG_FILE_sdkGenId); //mock a sdk config file, to simulate storage is not empty
         Countly.instance().init(TestUtils.getBaseConfig(null));
         Assert.assertEquals("CLY_0c54e5e7-eb86-4c17-81f0-4d7910d8ab0e", Countly.instance().getDeviceId());
         Assert.assertEquals(DeviceIdType.SDK_GENERATED, Countly.instance().getDeviceIdType());

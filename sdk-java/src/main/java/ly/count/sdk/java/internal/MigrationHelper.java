@@ -91,12 +91,8 @@ public class MigrationHelper {
         currentDataModelVersion += 1;
 
         File sdkPath = (File) migrationParams.get("sdk_path");
-
         File configFile = new File(sdkPath, SDKStorage.FILE_NAME_PREFIX + SDKStorage.FILE_NAME_SEPARATOR + InternalConfig.getStoragePrefix() + SDKStorage.FILE_NAME_SEPARATOR + InternalConfig.storageId());
-        if (!configFile.isFile() || !configFile.exists()) {
-            logger.d("[MigrationHelper] migration_DeleteConfigFile_01, Config file doesn't exist, no need to migrate");
-            return true;
-        }
+
         try (ObjectInputStream stream = new ObjectInputStream(new ByteArrayInputStream(Files.readAllBytes(configFile.toPath())))) {
             readUnnecessaryParts(stream);
             //device ids
@@ -115,9 +111,14 @@ public class MigrationHelper {
                     }
                 }
             }
-            Files.delete(configFile.toPath());
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (Exception e) {
             logger.e("[MigrationHelper] migration_DeleteConfigFile_01, Cannot deserialize config " + e);
+        }
+
+        try { // if we cannot delete the config file, we cannot continue
+            Files.delete(configFile.toPath());
+        } catch (IOException e) {
+            logger.e("[MigrationHelper] migration_DeleteConfigFile_01, Cannot delete config file " + e);
             return false;
         }
 
