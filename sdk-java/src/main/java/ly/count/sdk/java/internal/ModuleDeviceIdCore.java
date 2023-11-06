@@ -101,9 +101,9 @@ public class ModuleDeviceIdCore extends ModuleBase {
     }
 
     @Override
-    public void onDeviceId(InternalConfig config, final Config.DID deviceId, final Config.DID oldDeviceId) {
-        L.d("[ModuleDeviceIdCore] onDeviceId [" + deviceId + "]");
-
+    public void deviceIdChanged(Config.DID oldDeviceId, boolean withMerge) {
+        L.d("[ModuleDeviceIdCore] deviceIdChanged, oldDeviceId [" + oldDeviceId + "] withMerge [" + withMerge + "]");
+        Config.DID deviceId = internalConfig.getDeviceId();
         SessionImpl session = SDKCore.instance.getSession();
 
         if (deviceId != null && oldDeviceId != null && deviceId.realm == Config.DID.REALM_DID && !deviceId.equals(oldDeviceId)) {
@@ -115,7 +115,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
             }
 
             // add device id change request
-            Request request = ModuleRequests.nonSessionRequest(config);
+            Request request = ModuleRequests.nonSessionRequest(internalConfig);
 
             //if we are missing the device ID, add it
             if (!request.params.has(Params.PARAM_DEVICE_ID)) {
@@ -124,10 +124,19 @@ public class ModuleDeviceIdCore extends ModuleBase {
             //add the old device ID every time
             request.params.add(Params.PARAM_OLD_DEVICE_ID, oldDeviceId.id);
 
-            ModuleRequests.pushAsync(config, request);
+            ModuleRequests.pushAsync(internalConfig, request);
 
-            sendDIDSignal(config, deviceId, oldDeviceId);
-        } else if (deviceId == null && oldDeviceId != null && oldDeviceId.realm == Config.DID.REALM_DID) {
+            sendDIDSignal(internalConfig, deviceId, oldDeviceId);
+        }
+    }
+
+    @Override
+    public void onDeviceId(InternalConfig config, final Config.DID deviceId, final Config.DID oldDeviceId) {
+        L.d("[ModuleDeviceIdCore] onDeviceId [" + deviceId + "]");
+
+        SessionImpl session = SDKCore.instance.getSession();
+
+        if (deviceId == null && oldDeviceId != null && oldDeviceId.realm == Config.DID.REALM_DID) {
             // device id is unset
             if (session != null) {
                 L.d("[ModuleDeviceIdCore] Ending session because device id was unset from [" + oldDeviceId.id + "]");

@@ -617,7 +617,7 @@ public class SDKCore {
             onDeviceId(config, null, oldDeviceId);
             onDeviceId(config, config.getDeviceId(), null);
         }
-        modules.forEach((feature, module) -> module.deviceIdChanged(withMerge));
+        modules.forEach((feature, module) -> module.deviceIdChanged(oldDeviceId, withMerge));
     }
 
     public void login(String id) {

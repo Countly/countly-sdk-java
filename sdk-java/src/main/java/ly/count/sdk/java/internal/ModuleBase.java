@@ -132,7 +132,7 @@ public abstract class ModuleBase {
     /**
      * Called when the device id is changed.
      */
-    protected void deviceIdChanged(boolean withMerge) {
+    protected void deviceIdChanged(Config.DID oldDeviceId, boolean withMerge) {
 
     }
 }
