@@ -371,41 +371,6 @@ public class InternalConfig extends Config implements Storable {
         return false;
     }
 
-    //region rating module
-    public long getRatingWidgetTimeout() {
-        return ratingWidgetTimeout;
-    }
-
-    public Integer getStarRatingSessionLimit() {
-        return starRatingSessionLimit;
-    }
-
-    public String getStarRatingTextTitle() {
-        return starRatingTextTitle;
-    }
-
-    public String getStarRatingTextMessage() {
-        return starRatingTextMessage;
-    }
-
-    public String getStarRatingTextDismiss() {
-        return starRatingTextDismiss;
-    }
-
-    public Boolean getAutomaticStarRatingShouldBeShown() {
-        return automaticStarRatingShouldBeShown;
-    }
-
-    public Boolean getStarRatingDialogIsCancelable() {
-        return starRatingIsDialogCancelable;
-    }
-
-    public Boolean getStarRatingDisabledForNewVersion() {
-        return starRatingDisabledAutomaticForNewVersions;
-    }
-
-    //endregion
-
     //region remote config
     public boolean isRemoteConfigAutomaticDownloadTriggersEnabled() {
         return enableRemoteConfigAutomaticDownloadTriggers;
