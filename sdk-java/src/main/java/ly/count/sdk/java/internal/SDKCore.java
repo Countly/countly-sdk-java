@@ -587,12 +587,12 @@ public class SDKCore {
         L.d("onDeviceId " + id + ", old " + old);
         if (id != null && (!id.equals(old) || !id.equals(config.getDeviceId(id.realm)))) {
             sdkStorage.setDeviceID(id.id);
-            sdkStorage.setDeviceIdType(DeviceIdType.fromInt(id.strategy).name());
+            sdkStorage.setDeviceIdType(DeviceIdType.fromInt(id.strategy, L).name());
             config.setDeviceId(id);
         } else if (id == null && old != null) {
             if (config.removeDeviceId(old)) {
-                sdkStorage.setDeviceIdType("");
-                sdkStorage.setDeviceID("");
+                sdkStorage.setDeviceIdType(null);
+                sdkStorage.setDeviceID(null);
             }
         }
 

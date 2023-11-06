@@ -271,7 +271,7 @@ public class Countly implements Usage {
      * @return see {@link DeviceIdType}
      */
     public DeviceIdType getDeviceIdType() {
-        return DeviceIdType.fromInt(sdk.config.getDeviceId().strategy);
+        return DeviceIdType.fromInt(sdk.config.getDeviceId().strategy, L);
     }
 
     @Override

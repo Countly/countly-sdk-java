@@ -107,7 +107,7 @@ public class MigrationHelper {
 
                 try (ObjectInputStream idStream = new ObjectInputStream(new ByteArrayInputStream(b))) {
                     idStream.readInt(); // realm
-                    DeviceIdType type = DeviceIdType.fromInt(idStream.readInt());
+                    DeviceIdType type = DeviceIdType.fromInt(idStream.readInt(), logger);
                     Object deviceId = idStream.readObject();
                     if (type != null && deviceId instanceof String && !Utils.isEmptyOrNull((String) deviceId)) {
                         storageProvider.setDeviceIdType(type.name());
