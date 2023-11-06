@@ -128,4 +128,11 @@ public abstract class ModuleBase {
      */
     protected void initFinished(InternalConfig config) {
     }
+
+    /**
+     * Called when the device id is changed.
+     */
+    protected void deviceIdChanged(boolean withMerge) {
+
+    }
 }

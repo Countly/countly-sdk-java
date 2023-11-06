@@ -254,28 +254,14 @@ public class ModuleDeviceIdCore extends ModuleBase {
      */
     public void changeDeviceId(InternalConfig config, String id, boolean withMerge) {
         if (Utils.isEmptyOrNull(id)) {
-            L.e("[ModuleDeviceIdCore] Empty id passed to resetId method");
-        } else {
-            final Config.DID old = config.getDeviceId();
-            config.setDeviceId(new Config.DID(Config.DID.REALM_DID, Config.DID.STRATEGY_CUSTOM, id));
-            Storage.push(config, config);
-
-            if (withMerge) {
-                clearAndDownloadRCValuesAfterIdChange(false);
-                SDKCore.instance.onDeviceId(config, config.getDeviceId(), old);
-            } else {
-                clearAndDownloadRCValuesAfterIdChange(true);
-                SDKCore.instance.onDeviceId(config, null, old);
-                SDKCore.instance.onDeviceId(config, config.getDeviceId(), null);
-            }
+            L.w("[ModuleDeviceIdCore] changeDeviceId, Empty id passed to changeDeviceId method");
+            return;
         }
-    }
 
-    private void clearAndDownloadRCValuesAfterIdChange(final boolean valuesShouldBeCacheCleared) {
-        ModuleRemoteConfig moduleRC = SDKCore.instance.module(ModuleRemoteConfig.class);
-        if (moduleRC != null) {
-            moduleRC.clearAndDownloadAfterIdChange(valuesShouldBeCacheCleared);
-        }
+        final Config.DID old = config.getDeviceId();
+        config.setDeviceId(new Config.DID(Config.DID.REALM_DID, Config.DID.STRATEGY_CUSTOM, id));
+        Storage.push(config, config);
+        SDKCore.instance.deviceIdChanged(old, withMerge);
     }
 
     protected Future<Config.DID> acquireId(final InternalConfig config, final Config.DID holder, final boolean fallbackAllowed, final Tasks.Callback<Config.DID> callback) {

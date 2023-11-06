@@ -609,6 +609,17 @@ public class SDKCore {
         }
     }
 
+    public void deviceIdChanged(Config.DID oldDeviceId, boolean withMerge) {
+        L.d("[SDKCore] deviceIdChanged, newDeviceId:[" + config.getDeviceId() + "], oldDeviceId:[ " + oldDeviceId + "], withMerge:[" + withMerge + "]");
+        modules.forEach((feature, module) -> module.deviceIdChanged(withMerge));
+        if (withMerge) {
+            onDeviceId(config, config.getDeviceId(), oldDeviceId);
+        } else {
+            onDeviceId(config, null, oldDeviceId);
+            onDeviceId(config, config.getDeviceId(), null);
+        }
+    }
+
     public void login(String id) {
         ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).login(config, id);
     }
@@ -731,7 +742,7 @@ public class SDKCore {
 
         Request request = ModuleRequests.nonSessionRequest(config);
         ModuleCrash.putCrashIntoParams(crash, request.params);
-      
+
         ModuleRequests.addRequiredParametersToParams(config, request.params);
         ModuleRequests.addRequiredTimeParametersToParams(request.params);
 
