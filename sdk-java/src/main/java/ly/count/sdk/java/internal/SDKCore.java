@@ -611,13 +611,13 @@ public class SDKCore {
 
     public void deviceIdChanged(Config.DID oldDeviceId, boolean withMerge) {
         L.d("[SDKCore] deviceIdChanged, newDeviceId:[" + config.getDeviceId() + "], oldDeviceId:[ " + oldDeviceId + "], withMerge:[" + withMerge + "]");
-        modules.forEach((feature, module) -> module.deviceIdChanged(withMerge));
         if (withMerge) {
             onDeviceId(config, config.getDeviceId(), oldDeviceId);
         } else {
             onDeviceId(config, null, oldDeviceId);
             onDeviceId(config, config.getDeviceId(), null);
         }
+        modules.forEach((feature, module) -> module.deviceIdChanged(withMerge));
     }
 
     public void login(String id) {
