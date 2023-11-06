@@ -41,7 +41,7 @@ public class TestUtils {
 
     public static final String[] eKeys = new String[] { "eventKey1", "eventKey2", "eventKey3", "eventKey4", "eventKey5", "eventKey6", "eventKey7" };
 
-    public static final String[] keysValues = new String[] { "key", "value", "key1", "value1" };
+    public static final String[] keysValues = new String[] { "key", "value", "key1", "value1", "key2", "value2" };
 
     static String feedbackWidgetData =
         "[{\"_id\":\"5b2158ea790ce051e713db07\",\"email\":\"user@mailprovider.com\",\"comment\":\"Notbad,thismightbebetter.\",\"ts\":1528912105570,\"device_id\":\"fb@count.ly\",\"cd\":\"2018-06-13T17:48:26.071Z\",\"uid\":\"1\",\"contact_me\":false,\"rating\":3,\"widget_id\":\"5b21581b967c4850a7818617\"},{\"_id\":\"5b2b80823a69147963e5b826\",\"email\":\"5score@rating.com\",\"comment\":\"5comment.\",\"ts\":1529577665765,\"device_id\":\"fb@count.ly\",\"cd\":\"2018-06-21T10:40:02.746Z\",\"uid\":\"1\",\"contact_me\":true,\"rating\":5,\"widget_id\":\"5b21581b967c4850a7818617\"}]";
