@@ -402,48 +402,6 @@ public class Config {
      */
     protected boolean requiresConsent = false;
 
-    /**
-     * If star rating dialog should be cancellable
-     */
-    protected Boolean starRatingIsDialogCancelable = null;
-
-    /**
-     * if star rating should be shown for each new version
-     */
-    protected Boolean starRatingDisabledAutomaticForNewVersions = null;
-
-    //region Rating Module related fields
-
-    /**
-     * After how much time the timeout error is returned when showing rating widget
-     */
-    protected long ratingWidgetTimeout = 3000L;
-
-    /**
-     * After how many sessions the automatic star rating is shown
-     */
-    protected int starRatingSessionLimit = -1;
-
-    /**
-     * Star rating dialog title
-     */
-    protected String starRatingTextTitle = null;
-
-    /**
-     * Star rating dialog message
-     */
-    protected String starRatingTextMessage = null;
-
-    /**
-     * Star rating dialog dismiss message
-     */
-    protected String starRatingTextDismiss = null;
-
-    /**
-     * If automatic star rating should be shown
-     */
-    protected Boolean automaticStarRatingShouldBeShown = null;
-
     //endregion
 
     //Begin Remote Config Module Fields
