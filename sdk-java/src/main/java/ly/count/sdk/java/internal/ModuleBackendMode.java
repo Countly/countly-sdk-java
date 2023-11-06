@@ -91,6 +91,7 @@ public class ModuleBackendMode extends ModuleBase {
 
         JSONObject metricsJson = new JSONObject(metrics);
         request.params.add("metrics", metricsJson);
+        ModuleRequests.addRequiredParametersToParams(internalConfig, request.params);
 
         if (location != null) {
             for (Map.Entry<String, String> entry : location.entrySet()) {
@@ -113,6 +114,7 @@ public class ModuleBackendMode extends ModuleBase {
         Request request = new Request();
         request.params.add("device_id", deviceID);
         request.params.add("session_duration", duration);
+        ModuleRequests.addRequiredParametersToParams(internalConfig, request.params);
 
         addTimeInfoIntoRequest(request, timestamp);
         addRequestToRequestQ(request);
@@ -133,6 +135,7 @@ public class ModuleBackendMode extends ModuleBase {
         request.params.add("device_id", deviceID);
         request.params.add("end_session", 1);
         request.params.add("session_duration", duration);
+        ModuleRequests.addRequiredParametersToParams(internalConfig, request.params);
 
         addTimeInfoIntoRequest(request, timestamp);
         addRequestToRequestQ(request);
@@ -162,6 +165,7 @@ public class ModuleBackendMode extends ModuleBase {
         Request request = new Request();
         request.params.add("device_id", deviceID);
         request.params.add("crash", crash);
+        ModuleRequests.addRequiredParametersToParams(internalConfig, request.params);
 
         addTimeInfoIntoRequest(request, timestamp);
 
@@ -204,6 +208,7 @@ public class ModuleBackendMode extends ModuleBase {
 
         request.params.add("device_id", deviceID);
         request.params.add("user_details", properties);
+        ModuleRequests.addRequiredParametersToParams(internalConfig, request.params);
 
         addTimeInfoIntoRequest(request, timestamp);
         addRequestToRequestQ(request);
@@ -230,6 +235,7 @@ public class ModuleBackendMode extends ModuleBase {
             request.params.add(item.getKey(), item.getValue());
         }
 
+        ModuleRequests.addRequiredParametersToParams(internalConfig, request.params);
         addRequestToRequestQ(request);
     }
 
@@ -285,6 +291,8 @@ public class ModuleBackendMode extends ModuleBase {
         Request request = new Request();
         request.params.add("device_id", deviceID);
         request.params.add("events", events);
+        ModuleRequests.addRequiredParametersToParams(internalConfig, request.params);
+
         addTimeInfoIntoRequest(request, System.currentTimeMillis());
         request.own(ModuleBackendMode.class);
         addRequestToRequestQ(request);
