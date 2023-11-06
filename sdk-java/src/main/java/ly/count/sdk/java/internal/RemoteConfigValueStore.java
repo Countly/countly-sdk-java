@@ -41,7 +41,8 @@ public class RemoteConfigValueStore {
     //========================================
 
     /**
-     * Cleanses the values by removing all values that are not for the current user
+     * If caching is not enabled, it clears all values.
+     * If caching is enabled, it marks all values as "cached"
      */
     protected void cacheClearValues() {
         if (!valuesCanBeCached) {
@@ -70,7 +71,7 @@ public class RemoteConfigValueStore {
     }
 
     /**
-     * Cleanses the values by removing all values that are not for the current user
+     * Clears all values
      */
     private void clearValues() {
         values.clear();
