@@ -199,16 +199,29 @@ public class MigrationHelperTests {
     }
 
     /**
-     * "applyMigrations" from 0 to 1 by init Countly
+     * "applyMigrations" from 0 to 1 by init Countly with SDK_GENERATED device id
      * Upgrading from legacy state to the latest version, mock config file, just old type of data.
      * Data version must be 1 after applying migrations and expected log must be logged. and expected device id type must match
      */
     @Test
-    public void applyMigrations_0to1_initCountly() throws IOException {
+    public void applyMigrations_0to1_initCountlySdkGen() throws IOException {
         Files.write(TestUtils.createFile("config_0").toPath(), MOCK_OLD_CONFIG_FILE_sdkGenId); //mock a sdk config file, to simulate storage is not empty
         Countly.instance().init(TestUtils.getBaseConfig(null));
         Assert.assertEquals("CLY_0c54e5e7-eb86-4c17-81f0-4d7910d8ab0e", Countly.instance().getDeviceId());
         Assert.assertEquals(DeviceIdType.SDK_GENERATED, Countly.instance().getDeviceIdType());
+    }
+
+    /**
+     * "applyMigrations" from 0 to 1 by init Countly with DEVELOPER_SUPPLIED device id
+     * Upgrading from legacy state to the latest version, mock config file, just old type of data.
+     * Data version must be 1 after applying migrations and expected log must be logged. and expected device id type must match
+     */
+    @Test
+    public void applyMigrations_0to1_initCountlyDevSupplied() throws IOException {
+        Files.write(TestUtils.createFile("config_0").toPath(), MOCK_OLD_CONFIG_FILE_devSupplied); //mock a sdk config file, to simulate storage is not empty
+        Countly.instance().init(TestUtils.getBaseConfig(null));
+        Assert.assertEquals("some_random_device_id", Countly.instance().getDeviceId());
+        Assert.assertEquals(DeviceIdType.DEVELOPER_SUPPLIED, Countly.instance().getDeviceIdType());
     }
 
     void setDataVersionInConfigFile(final int targetDataVersion) throws IOException {
