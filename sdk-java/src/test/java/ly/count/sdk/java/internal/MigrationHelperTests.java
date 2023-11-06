@@ -45,6 +45,14 @@ public class MigrationHelperTests {
         0, 0, 1, 0, 0, 0, 38, -84, -19, 0, 5, 119, 8, 0, 0, 0, 0, 10, 116, 0, 21, 115, 111, 109, 101, 95, 114, 97, 110, 100, 111, 109, 95, 100, 101, 118, 105, 99, 101, 95, 105, 100
     };
 
+    //example config file contains old type of data
+    //has 'DEVELOPER_SUPPLIED' device id type and id value of null
+    static final byte[] MOCK_OLD_CONFIG_FILE_noDeviceId = {
+        -84, -19, 0, 5, 119, 78, 0, 21, 104, 116, 116, 112, 115, 58, 47, 47, 120, 120, 120, 46, 115, 101, 114, 118, 101, 114, 46, 108, 121, 0, 15, 67, 79, 85, 78, 84, 76, 89, 95, 65, 80, 80, 95, 75, 69, 89, 0, -128, 0, 126, 0, 7, 67, 111, 117, 110, 116, 108, 121, 0, 0, 0, 1, 0, 11, 106, 97, 118, 97,
+        45, 110, 97, 116, 105, 118, 101, 0, 6, 50, 51, 46, 56, 46, 48, 116, 0, 4, 110, 97, 109, 101, 116, 0, 8, 49, 50, 51, 46, 53, 54, 46, 104, 119, 1, 0, 112, 119, 33, 0, 0, 0, 30, 0, 0, 0, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 60, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 5, 112, 119, 27, 0, 0, 0, 0, 0,
+        0, 0, 1, 0, 0, 0, 15, -84, -19, 0, 5, 119, 8, 0, 0, 0, 0, 0, 0, 0, 10, 112
+    };
+
     SDKStorage storageProvider;
 
     /**
@@ -229,6 +237,36 @@ public class MigrationHelperTests {
         Countly.instance().init(TestUtils.getBaseConfig(null));
         Assert.assertEquals("some_random_device_id", Countly.instance().getDeviceId());
         Assert.assertEquals(DeviceIdType.DEVELOPER_SUPPLIED, Countly.instance().getDeviceIdType());
+    }
+
+    /**
+     * "applyMigrations" from 0 to 1 by init Countly with corrupted old config file
+     * Upgrading from legacy state to the latest version, mock config file, just old type of data.
+     * Data version must be 1 after applying migrations and expected log must be logged. and sdk should generate the device id
+     */
+    @Test
+    public void applyMigrations_0to1_initCountlyCorrupted() throws IOException {
+        Files.write(TestUtils.createFile("config_0").toPath(), MOCK_OLD_CONFIG_FILE_corrupted); //mock a sdk config file, to simulate storage is not empty
+        Countly.instance().init(TestUtils.getBaseConfig(null));
+        ScenarioDeviceIdInitTests.waitForNoNullDeviceID(Countly.instance());//wait for id to generate
+
+        Assert.assertTrue(Countly.instance().getDeviceId().startsWith("CLY_"));
+        Assert.assertEquals(DeviceIdType.SDK_GENERATED, Countly.instance().getDeviceIdType());
+    }
+
+    /**
+     * "applyMigrations" from 0 to 1 by init Countly with no device id
+     * Upgrading from legacy state to the latest version, mock config file, just old type of data.
+     * Data version must be 1 after applying migrations and expected log must be logged. and sdk should generate the device id
+     */
+    @Test
+    public void applyMigrations_0to1_initCountlyNoDeviceId() throws IOException {
+        Files.write(TestUtils.createFile("config_0").toPath(), MOCK_OLD_CONFIG_FILE_noDeviceId); //mock a sdk config file, to simulate storage is not empty
+        Countly.instance().init(TestUtils.getBaseConfig(null));
+        ScenarioDeviceIdInitTests.waitForNoNullDeviceID(Countly.instance());//wait for id to generate
+
+        Assert.assertTrue(Countly.instance().getDeviceId().startsWith("CLY_"));
+        Assert.assertEquals(DeviceIdType.SDK_GENERATED, Countly.instance().getDeviceIdType());
     }
 
     void setDataVersionInConfigFile(final int targetDataVersion) throws IOException {

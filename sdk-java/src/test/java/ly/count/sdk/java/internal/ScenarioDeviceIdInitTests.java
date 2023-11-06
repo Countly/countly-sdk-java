@@ -9,8 +9,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.util.UUID;
-
 import static org.mockito.Mockito.mock;
 
 @RunWith(JUnit4.class)
@@ -124,7 +122,7 @@ public class ScenarioDeviceIdInitTests {
         Assert.assertEquals(Config.DeviceIdStrategy.CUSTOM_ID.getIndex(), SDKCore.instance.config.getDeviceIdStrategy());
     }
 
-    String waitForNoNullDeviceID(Countly instance) {
+    static String waitForNoNullDeviceID(Countly instance) {
         String initialDId = null;
         while (initialDId == null) {
             try {
