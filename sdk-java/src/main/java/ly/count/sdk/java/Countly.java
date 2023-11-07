@@ -3,6 +3,7 @@ package ly.count.sdk.java;
 import java.io.File;
 import java.util.Map;
 import ly.count.sdk.java.internal.Device;
+import ly.count.sdk.java.internal.DeviceIdType;
 import ly.count.sdk.java.internal.InternalConfig;
 import ly.count.sdk.java.internal.Log;
 import ly.count.sdk.java.internal.ModuleBackendMode;
@@ -262,6 +263,15 @@ public class Countly implements Usage {
     @Override
     public String getDeviceId() {
         return sdk.config.getDeviceId().id;
+    }
+
+    /**
+     * Get device ID type.
+     *
+     * @return see {@link DeviceIdType}
+     */
+    public DeviceIdType getDeviceIdType() {
+        return DeviceIdType.fromInt(sdk.config.getDeviceId().strategy, L);
     }
 
     @Override

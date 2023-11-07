@@ -1,11 +1,6 @@
 package ly.count.sdk.java;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -13,8 +8,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import ly.count.sdk.java.internal.Byteable;
 import ly.count.sdk.java.internal.CoreFeature;
 import ly.count.sdk.java.internal.Log;
 import ly.count.sdk.java.internal.LogCallback;
@@ -126,7 +121,7 @@ public class Config {
      * Holder class for various ids met
      * adata and id itself. Final, unmodifiable.
      */
-    public static final class DID implements Byteable {
+    public static final class DID {
         public static final int STRATEGY_UUID = 0;
         public static final int STRATEGY_CUSTOM = 10;
         public static final int REALM_DID = 0;
@@ -143,12 +138,12 @@ public class Config {
 
         @Override
         public boolean equals(Object obj) {
-            if (obj == null || !(obj instanceof DID)) {
+            if (!(obj instanceof DID)) {
                 return false;
             }
             DID did = (DID) obj;
             return did.realm == realm && did.strategy == strategy &&
-                (did.id == null ? id == null : did.id.equals(id));
+                (Objects.equals(did.id, id));
         }
 
         @Override
@@ -159,87 +154,6 @@ public class Config {
         @Override
         public String toString() {
             return "DID " + id + " (" + realm + ", " + strategy + ")";
-        }
-
-        @Override
-        public byte[] store(Log L) {
-            ByteArrayOutputStream bytes = null;
-            ObjectOutputStream stream = null;
-            try {
-                bytes = new ByteArrayOutputStream();
-                stream = new ObjectOutputStream(bytes);
-                stream.writeInt(realm);
-                stream.writeInt(strategy);
-                stream.writeObject(id);
-                stream.close();
-                return bytes.toByteArray();
-            } catch (IOException e) {
-                if (L != null) {
-                    L.e("[Config] Cannot serialize config" + e.toString());
-                }
-            } finally {
-                if (stream != null) {
-                    try {
-                        stream.close();
-                    } catch (IOException e) {
-                        if (L != null) {
-                            L.e("[Config] Cannot happen" + e.toString());
-                        }
-                    }
-                }
-                if (bytes != null) {
-                    try {
-                        bytes.close();
-                    } catch (IOException e) {
-                        if (L != null) {
-                            L.e("[Config] Cannot happen" + e.toString());
-                        }
-                    }
-                }
-            }
-            return null;
-        }
-
-        @Override
-        public boolean restore(byte[] data, Log L) {
-            ByteArrayInputStream bytes = null;
-            ObjectInputStream stream = null;
-
-            try {
-                bytes = new ByteArrayInputStream(data);
-                stream = new ObjectInputStream(bytes);
-
-                this.realm = stream.readInt();
-                this.strategy = stream.readInt();
-                this.id = (String) stream.readObject();
-
-                return true;
-            } catch (IOException | ClassNotFoundException e) {
-                if (L != null) {
-                    L.e("[Config] Cannot deserialize config" + e.toString());
-                }
-            } finally {
-                if (stream != null) {
-                    try {
-                        stream.close();
-                    } catch (IOException e) {
-                        if (L != null) {
-                            L.e("[Config] Cannot happen" + e.toString());
-                        }
-                    }
-                }
-                if (bytes != null) {
-                    try {
-                        bytes.close();
-                    } catch (IOException e) {
-                        if (L != null) {
-                            L.e("[Config] Cannot happen" + e.toString());
-                        }
-                    }
-                }
-            }
-
-            return false;
         }
     }
 
