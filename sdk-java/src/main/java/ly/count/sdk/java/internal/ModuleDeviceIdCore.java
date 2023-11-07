@@ -187,7 +187,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
     }
 
     /**
-     * Just a wrapper around {@link SDKCore#onSignal(InternalConfig, int, Byteable, Byteable)}} for {@link SDKCore.Signal#DID} case
+     * Just a wrapper around {@link SDKCore#onSignal(InternalConfig, int)}} for {@link SDKCore.Signal#DID} case
      *
      * @param config InternalConfig to run in
      * @param id new {@link Config.DID} if any
@@ -195,7 +195,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
      */
     private void sendDIDSignal(InternalConfig config, Config.DID id, Config.DID old) {
         L.d("[ModuleDeviceIdCore] Sending device id signal: [" + id + "], was [" + old + "]");
-        SDKCore.instance.onSignal(config, SDKCore.Signal.DID.getIndex(), id, old);
+        SDKCore.instance.onSignal(config, SDKCore.Signal.DID.getIndex());
     }
 
     /**
@@ -212,7 +212,8 @@ public class ModuleDeviceIdCore extends ModuleBase {
         } else {
             final Config.DID old = config.getDeviceId();
             config.setDeviceId(new Config.DID(Config.DID.REALM_DID, Config.DID.STRATEGY_CUSTOM, id));
-            Storage.push(config, config);
+            config.storageProvider.setDeviceIdType(DeviceIdType.DEVELOPER_SUPPLIED.name());
+            config.storageProvider.setDeviceID(id);
 
             // old session end & new session begin requests are supposed to happen here
             SDKCore.instance.onDeviceId(config, config.getDeviceId(), old);
@@ -229,7 +230,8 @@ public class ModuleDeviceIdCore extends ModuleBase {
     public void logout(final InternalConfig config) {
         final Config.DID old = config.getDeviceId();
         config.removeDeviceId(old);
-        Storage.push(config, config);
+        config.storageProvider.setDeviceID("");
+        config.storageProvider.setDeviceIdType("");
 
         SDKCore.instance.onDeviceId(config, null, old);
         acquireId(config, new Config.DID(Config.DID.REALM_DID, config.getDeviceIdStrategy(), null));
