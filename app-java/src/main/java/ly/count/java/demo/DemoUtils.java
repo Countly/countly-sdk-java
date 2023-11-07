@@ -1,6 +1,6 @@
 package ly.count.java.demo;
 
-public class DemoUtils {
+public final class DemoUtils {
 
     private DemoUtils() {
     }
@@ -10,7 +10,7 @@ public class DemoUtils {
      *
      * @param message message to print
      */
-    protected static void println(String message) {
+    static void println(final String message) {
         System.out.println(message);
     }
 
@@ -20,7 +20,7 @@ public class DemoUtils {
      * @param message message to print
      * @param args arguments to format message
      */
-    protected static void printf(String message, Object... args) {
+    static void printf(final String message, final Object... args) {
         System.out.printf(message, args);
     }
 }
