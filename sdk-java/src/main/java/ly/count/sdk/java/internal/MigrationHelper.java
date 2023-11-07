@@ -108,6 +108,8 @@ public class MigrationHelper {
                     if (type != null && deviceId instanceof String && !Utils.isEmptyOrNull((String) deviceId)) {
                         storageProvider.setDeviceIdType(type.name());
                         storageProvider.setDeviceID((String) deviceId);
+                    } else {
+                        logger.w("[MigrationHelper] migration_DeleteConfigFile_01, Cannot deserialize device id, read type:[" + type + "], read id:[" + deviceId + "] , skipping");
                     }
                 }
             }
