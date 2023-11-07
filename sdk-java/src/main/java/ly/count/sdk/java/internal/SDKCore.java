@@ -385,8 +385,11 @@ public class SDKCore {
         return module(ModuleFeedback.class).feedbackInterface;
     }
 
-    public ModuleRemoteConfig.RemoteConfig remoteConfig() {
+    public ModuleDeviceIdCore.DeviceId deviceId() {
+        return module(ModuleDeviceIdCore.class).deviceIdInterface;
+    }
 
+    public ModuleRemoteConfig.RemoteConfig remoteConfig() {
         if (!hasConsentForFeature(CoreFeature.RemoteConfig)) {
             L.v("[SDKCore] remoteConfig, RemoteConfig feature has no consent, returning null");
             return null;
@@ -606,6 +609,17 @@ public class SDKCore {
         }
     }
 
+    public void notifyModulesDeviceIdChanged(Config.DID oldDeviceId, boolean withMerge) {
+        L.d("[SDKCore] deviceIdChanged, newDeviceId:[" + config.getDeviceId() + "], oldDeviceId:[ " + oldDeviceId + "], withMerge:[" + withMerge + "]");
+        if (withMerge) {
+            onDeviceId(config, config.getDeviceId(), oldDeviceId);
+        } else {
+            onDeviceId(config, null, oldDeviceId);
+            onDeviceId(config, config.getDeviceId(), null);
+        }
+        modules.forEach((feature, module) -> module.deviceIdChanged(oldDeviceId, withMerge));
+    }
+
     public void login(String id) {
         ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).login(config, id);
     }
@@ -614,8 +628,15 @@ public class SDKCore {
         ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).logout(config);
     }
 
+    /**
+     * Change device ID
+     *
+     * @param config to configure
+     * @param id to change to
+     * @deprecated use {@link ModuleDeviceIdCore.DeviceId#changeWithoutMerge(String)}
+     */
     public void changeDeviceIdWithoutMerge(InternalConfig config, String id) {
-        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).changeDeviceId(config, id, false);
+        deviceId().changeWithoutMerge(id);
     }
 
     /**
@@ -623,9 +644,10 @@ public class SDKCore {
      *
      * @param config to configure
      * @param id to change to
+     * @deprecated use {@link ModuleDeviceIdCore.DeviceId#changeWithMerge(String)} instead
      */
     public void changeDeviceIdWithMerge(InternalConfig config, String id) {
-        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).changeDeviceId(config, id, true);
+        deviceId().changeWithMerge(id);
     }
 
     public static boolean enabled(int feature) {

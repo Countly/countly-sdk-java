@@ -38,7 +38,7 @@ public class ScenarioDeviceIdInitTests {
     public void firstInit_ProvidedNothing() {
         Countly.instance().init(TestUtils.getBaseConfig(null));
 
-        assertIsSDKGeneratedID(waitForNoNullDeviceID(Countly.instance()));
+        assertIsSDKGeneratedID(Countly.instance().deviceId().getID());
         Assert.assertEquals(Config.DeviceIdStrategy.UUID.getIndex(), SDKCore.instance.config.getDeviceIdStrategy());
     }
 
@@ -51,7 +51,7 @@ public class ScenarioDeviceIdInitTests {
     public void firstInit_ProvidedCustomId() {
         Countly.instance().init(TestUtils.getBaseConfig(TestUtils.DEVICE_ID));
 
-        Assert.assertEquals(TestUtils.DEVICE_ID, Countly.instance().getDeviceId());
+        Assert.assertEquals(TestUtils.DEVICE_ID, Countly.instance().deviceId().getID());
         Assert.assertEquals(Config.DeviceIdStrategy.CUSTOM_ID.getIndex(), SDKCore.instance.config.getDeviceIdStrategy());
     }
 
@@ -66,7 +66,7 @@ public class ScenarioDeviceIdInitTests {
     public void followupInit_FirstNothingProvidedNothing() {
         Countly.instance().init(TestUtils.getBaseConfig(null));
 
-        String initialDId = waitForNoNullDeviceID(Countly.instance());
+        String initialDId = Countly.instance().deviceId().getID();
         assertIsSDKGeneratedID(initialDId);
         Assert.assertEquals(Config.DeviceIdStrategy.UUID.getIndex(), SDKCore.instance.config.getDeviceIdStrategy());
 
@@ -74,7 +74,7 @@ public class ScenarioDeviceIdInitTests {
         Countly.instance().stop();
         Countly.instance().init(TestUtils.getBaseConfig(null));
 
-        Assert.assertEquals(initialDId, Countly.instance().getDeviceId());
+        Assert.assertEquals(initialDId, Countly.instance().deviceId().getID());
         Assert.assertEquals(Config.DeviceIdStrategy.UUID.getIndex(), SDKCore.instance.config.getDeviceIdStrategy());
     }
 
@@ -87,7 +87,7 @@ public class ScenarioDeviceIdInitTests {
     public void followupInit_FirstNothingProvidedCustomId() {
         Countly.instance().init(TestUtils.getBaseConfig(null));
 
-        String initialDId = waitForNoNullDeviceID(Countly.instance());
+        String initialDId = Countly.instance().deviceId().getID();
 
         assertIsSDKGeneratedID(initialDId);
         Assert.assertEquals(Config.DeviceIdStrategy.UUID.getIndex(), SDKCore.instance.config.getDeviceIdStrategy());
@@ -96,7 +96,7 @@ public class ScenarioDeviceIdInitTests {
         Countly.instance().stop();
         Countly.instance().init(TestUtils.getBaseConfig(alternativeDeviceID));
 
-        Assert.assertEquals(initialDId, Countly.instance().getDeviceId());
+        Assert.assertEquals(initialDId, Countly.instance().deviceId().getID());
         //todo this is what the SDK should return
         //Assert.assertEquals(Config.DeviceIdStrategy.UUID.getIndex(), SDKCore.instance.config.getDeviceIdStrategy());
     }
@@ -111,28 +111,15 @@ public class ScenarioDeviceIdInitTests {
     public void followupInit_FirstCustomProvidedCustomId() {
         Countly.instance().init(TestUtils.getBaseConfig(TestUtils.DEVICE_ID));
 
-        Assert.assertEquals(TestUtils.DEVICE_ID, Countly.instance().getDeviceId());
+        Assert.assertEquals(TestUtils.DEVICE_ID, Countly.instance().deviceId().getID());
         Assert.assertEquals(Config.DeviceIdStrategy.CUSTOM_ID.getIndex(), SDKCore.instance.config.getDeviceIdStrategy());
 
         //setup followup state
         Countly.instance().stop();
         Countly.instance().init(TestUtils.getBaseConfig(alternativeDeviceID));
 
-        Assert.assertEquals(TestUtils.DEVICE_ID, Countly.instance().getDeviceId());
+        Assert.assertEquals(TestUtils.DEVICE_ID, Countly.instance().deviceId().getID());
         Assert.assertEquals(Config.DeviceIdStrategy.CUSTOM_ID.getIndex(), SDKCore.instance.config.getDeviceIdStrategy());
-    }
-
-    static String waitForNoNullDeviceID(Countly instance) {
-        String initialDId = null;
-        while (initialDId == null) {
-            try {
-                initialDId = instance.getDeviceId();
-            } catch (Exception ignored) {
-                //do nothing
-            }
-        }
-
-        return initialDId;
     }
 
     void assertIsSDKGeneratedID(String providedID) {

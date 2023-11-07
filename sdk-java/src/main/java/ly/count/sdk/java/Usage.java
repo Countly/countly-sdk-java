@@ -1,6 +1,7 @@
 package ly.count.sdk.java;
 
 import java.util.Map;
+import ly.count.sdk.java.internal.ModuleDeviceIdCore;
 import ly.count.sdk.java.internal.ModuleEvents;
 
 /**
@@ -44,7 +45,7 @@ public interface Usage {
      * this method still returns an object, yet any modifications to it won't result in any data stored
      * or sent to the server/
      *
-     * //@ee Feature is not available in Countly Community Edition
+     * //@ee Feature is not available in Countly Lite Edition
      *
      * @return current {@link User} instance
      */
@@ -129,6 +130,9 @@ public interface Usage {
 
     /**
      * This method returns the Device ID that is currently used by the SDK.
+     *
+     * @return Device ID string
+     * @deprecated use {@link ModuleDeviceIdCore.DeviceId#getID()}
      */
     String getDeviceId();
 
@@ -136,6 +140,7 @@ public interface Usage {
      * Change device id with merging profiles on server, just set device id to new one.
      *
      * @param id new user / device id string, cannot be empty
+     * @deprecated use {@link ModuleDeviceIdCore.DeviceId#changeWithMerge(String)}
      */
     Usage changeDeviceIdWithMerge(String id);
 
@@ -143,6 +148,7 @@ public interface Usage {
      * Change device id without merging profiles on server, just set device id to new one.
      *
      * @param id new user / device id string, cannot be empty
+     * @deprecated use {@link ModuleDeviceIdCore.DeviceId#changeWithoutMerge(String)}
      */
     Usage changeDeviceIdWithoutMerge(String id);
 }
