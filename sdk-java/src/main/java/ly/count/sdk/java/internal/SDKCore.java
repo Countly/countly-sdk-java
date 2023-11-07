@@ -385,6 +385,15 @@ public class SDKCore {
         return module(ModuleFeedback.class).feedbackInterface;
     }
 
+    public ModuleDeviceIdCore.DeviceId deviceId() {
+        if (!hasConsentForFeature(CoreFeature.DeviceId)) {
+            L.v("[SDKCore] deviceId, DeviceId feature has no consent, returning null");
+            return null;
+        }
+
+        return module(ModuleDeviceIdCore.class).deviceIdInterface;
+    }
+
     public ModuleRemoteConfig.RemoteConfig remoteConfig() {
 
         if (!hasConsentForFeature(CoreFeature.RemoteConfig)) {
@@ -628,8 +637,15 @@ public class SDKCore {
         ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).logout(config);
     }
 
+    /**
+     * Change device ID
+     *
+     * @param config to configure
+     * @param id to change to
+     * @deprecated use {@link ModuleDeviceIdCore.DeviceId#changeWithoutMerge(String)}
+     */
     public void changeDeviceIdWithoutMerge(InternalConfig config, String id) {
-        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).changeDeviceId(config, id, false);
+        deviceId().changeWithoutMerge(id);
     }
 
     /**
@@ -637,9 +653,10 @@ public class SDKCore {
      *
      * @param config to configure
      * @param id to change to
+     * @deprecated use {@link ModuleDeviceIdCore.DeviceId#changeWithMerge(String)} instead
      */
     public void changeDeviceIdWithMerge(InternalConfig config, String id) {
-        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).changeDeviceId(config, id, true);
+        deviceId().changeWithMerge(id);
     }
 
     public static boolean enabled(int feature) {
