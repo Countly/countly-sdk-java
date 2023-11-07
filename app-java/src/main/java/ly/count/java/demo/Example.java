@@ -85,13 +85,13 @@ public class Example {
         List<CountlyFeedbackWidget> widgets = new ArrayList<>();
         Countly.instance().feedback().getAvailableFeedbackWidgets((retrievedWidgets, error) -> {
             if (error != null) {
-                System.out.println("Error while retrieving feedback widgets: " + error);
+                DemoUtils.println("Error while retrieving feedback widgets: " + error);
                 return;
             }
-            System.out.println("Retrieved feedback widgets: " + retrievedWidgets.size());
+            DemoUtils.println("Retrieved feedback widgets: " + retrievedWidgets.size());
 
             for (int i = 0; i < retrievedWidgets.size(); i++) {
-                System.out.println(i + ") Widget: " + retrievedWidgets.get(i).toString());
+                DemoUtils.println(i + ") Widget: " + retrievedWidgets.get(i).toString());
             }
 
             widgets.addAll(retrievedWidgets);
@@ -102,17 +102,17 @@ public class Example {
 
     static void getFeedbackWidgetUrl(CountlyFeedbackWidget widget) {
         String constructedUrl = Countly.instance().feedback().constructFeedbackWidgetUrl(widget);
-        System.out.println("Retrieved feedback widget url: " + constructedUrl);
+        DemoUtils.println("Retrieved feedback widget url: " + constructedUrl);
     }
 
     static void getFeedbackWidgetData(CountlyFeedbackWidget widget) {
 
         Countly.instance().feedback().getFeedbackWidgetData(widget, (jsonObject, error) -> {
             if (error != null) {
-                System.out.println("Error while retrieving feedback widget url: " + error);
+                DemoUtils.println("Error while retrieving feedback widget url: " + error);
                 return;
             }
-            System.out.println("Retrieved feedback widget data: " + jsonObject.toString());
+            DemoUtils.println("Retrieved feedback widget data: " + jsonObject.toString());
         });
     }
 
@@ -158,15 +158,15 @@ public class Example {
         List<CountlyFeedbackWidget> feedbackWidgets = new ArrayList<>();
         boolean running = true;
         while (running) {
-            System.out.println("You should get feedback widgets first");
-            System.out.println("Choose your option for feedback: ");
+            DemoUtils.println("You should get feedback widgets first");
+            DemoUtils.println("Choose your option for feedback: ");
 
-            System.out.println("0) To exit from feedback widget functionality");
+            DemoUtils.println("0) To exit from feedback widget functionality");
 
-            System.out.println("1) Get feedback widgets");
-            System.out.println("2.X) Get feedback widget data with index of widget");
-            System.out.println("3.X) Report feedback widget manually with index of widget");
-            System.out.println("4.X) Construct feedback widget url with index of widget");
+            DemoUtils.println("1) Get feedback widgets");
+            DemoUtils.println("2.X) Get feedback widget data with index of widget");
+            DemoUtils.println("3.X) Report feedback widget manually with index of widget");
+            DemoUtils.println("4.X) Construct feedback widget url with index of widget");
 
             String[] input = scanner.next().split("\\.");
             switch (input[0]) {
@@ -211,7 +211,7 @@ public class Example {
 
         if (!(sdkStorageRootDirectory.exists() && sdkStorageRootDirectory.isDirectory())) {
             if (!sdkStorageRootDirectory.mkdirs()) {
-                System.out.println("Directory creation failed");
+                DemoUtils.println("Directory creation failed");
             }
         }
 
@@ -224,7 +224,7 @@ public class Example {
             .setLogListener(new LogCallback() {
                 @Override
                 public void LogHappened(String logMessage, Config.LoggingLevel logLevel) {
-                    //System.out.println("[" + logLevel + "] " + logMessage);
+                    //DemoUtils.println("[" + logLevel + "] " + logMessage);
                 }
             })
             .setEventQueueSizeToSend(1)//setting queue size to "1" should only be done for testing, unless you have a really good reason to do it
@@ -241,30 +241,30 @@ public class Example {
         boolean running = true;
         while (running) {
 
-            System.out.println("Choose your option: ");
+            DemoUtils.println("Choose your option: ");
 
-            System.out.println("1) Record basic event");
-            System.out.println("2) Record event with segmentation");
-            System.out.println("3) Record event with sum and count");
-            System.out.println("4) Record event with sum and segmentation");
-            System.out.println("5) Record timed event with sum, count, duration and segmentation");
+            DemoUtils.println("1) Record basic event");
+            DemoUtils.println("2) Record event with segmentation");
+            DemoUtils.println("3) Record event with sum and count");
+            DemoUtils.println("4) Record event with sum and segmentation");
+            DemoUtils.println("5) Record timed event with sum, count, duration and segmentation");
 
-            System.out.println("6) Record start view");
-            System.out.println("7) Record another view");
+            DemoUtils.println("6) Record start view");
+            DemoUtils.println("7) Record another view");
 
-            System.out.println("8) Set location");
-            System.out.println("9) Set user profile");
-            System.out.println("10) Set user custom profile");
-            System.out.println("11) Record an exception");
-            System.out.println("12) Start a view called 'example_view'");
-            System.out.println("13) End a view called 'example_view'");
+            DemoUtils.println("8) Set location");
+            DemoUtils.println("9) Set user profile");
+            DemoUtils.println("10) Set user custom profile");
+            DemoUtils.println("11) Record an exception");
+            DemoUtils.println("12) Start a view called 'example_view'");
+            DemoUtils.println("13) End a view called 'example_view'");
 
-            System.out.println("14) Change device id with merge");
-            System.out.println("15) Change device id without merge");
+            DemoUtils.println("14) Change device id with merge");
+            DemoUtils.println("15) Change device id without merge");
 
-            System.out.println("16) Enter to feedback widget functionality");
+            DemoUtils.println("16) Enter to feedback widget functionality");
 
-            System.out.println("0) Exit ");
+            DemoUtils.println("0) Exit ");
 
             int input = scanner.nextInt();
             switch (input) {

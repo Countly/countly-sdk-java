@@ -118,9 +118,9 @@ public class BackendModeExample {
         threads[0] = new Thread(() -> {
             try {
                 latch.await();
-                System.out.println("Thread[00] executing at: " + System.currentTimeMillis());
+                DemoUtils.println("Thread[00] executing at: " + System.currentTimeMillis());
                 recordEvent();
-                System.out.println("Thread[00] finished at: " + System.currentTimeMillis());
+                DemoUtils.println("Thread[00] finished at: " + System.currentTimeMillis());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -129,9 +129,9 @@ public class BackendModeExample {
         threads[1] = new Thread(() -> {
             try {
                 latch.await();
-                System.out.println("Thread[01] executing at: " + System.currentTimeMillis());
+                DemoUtils.println("Thread[01] executing at: " + System.currentTimeMillis());
                 recordView();
-                System.out.println("Thread[01] finished at: " + System.currentTimeMillis());
+                DemoUtils.println("Thread[01] finished at: " + System.currentTimeMillis());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -140,9 +140,9 @@ public class BackendModeExample {
         threads[2] = new Thread(() -> {
             try {
                 latch.await();
-                System.out.println("Thread[02] executing at: " + System.currentTimeMillis());
+                DemoUtils.println("Thread[02] executing at: " + System.currentTimeMillis());
                 recordUserDetailAndProperties();
-                System.out.println("Thread[02] finished at: " + System.currentTimeMillis());
+                DemoUtils.println("Thread[02] finished at: " + System.currentTimeMillis());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -151,9 +151,9 @@ public class BackendModeExample {
         threads[3] = new Thread(() -> {
             try {
                 latch.await();
-                System.out.println("Thread[03] executing at: " + System.currentTimeMillis());
+                DemoUtils.println("Thread[03] executing at: " + System.currentTimeMillis());
                 recordExceptionWithThrowableAndSegmentation();
-                System.out.println("Thread[03] finished at: " + System.currentTimeMillis());
+                DemoUtils.println("Thread[03] finished at: " + System.currentTimeMillis());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -162,9 +162,9 @@ public class BackendModeExample {
         threads[4] = new Thread(() -> {
             try {
                 latch.await();
-                System.out.println("Thread[04] executing at: " + System.currentTimeMillis());
+                DemoUtils.println("Thread[04] executing at: " + System.currentTimeMillis());
                 recordDirectRequest();
-                System.out.println("Thread[04] finished at: " + System.currentTimeMillis());
+                DemoUtils.println("Thread[04] finished at: " + System.currentTimeMillis());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -172,9 +172,9 @@ public class BackendModeExample {
         threads[5] = new Thread(() -> {
             try {
                 latch.await();
-                System.out.println("Thread[05] executing at: " + System.currentTimeMillis());
+                DemoUtils.println("Thread[05] executing at: " + System.currentTimeMillis());
                 recordExceptionWithMessageAndSegmentation();
-                System.out.println("Thread[05] finished at: " + System.currentTimeMillis());
+                DemoUtils.println("Thread[05] finished at: " + System.currentTimeMillis());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -183,9 +183,9 @@ public class BackendModeExample {
         threads[6] = new Thread(() -> {
             try {
                 latch.await();
-                System.out.println("Thread[06] executing at: " + System.currentTimeMillis());
+                DemoUtils.println("Thread[06] executing at: " + System.currentTimeMillis());
                 recordDirectRequest();
-                System.out.println("Thread[06] finished at: " + System.currentTimeMillis());
+                DemoUtils.println("Thread[06] finished at: " + System.currentTimeMillis());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -194,9 +194,9 @@ public class BackendModeExample {
         threads[7] = new Thread(() -> {
             try {
                 latch.await();
-                System.out.println("Thread[07] executing at: " + System.currentTimeMillis());
+                DemoUtils.println("Thread[07] executing at: " + System.currentTimeMillis());
                 recordView();
-                System.out.println("Thread[07] finished at: " + System.currentTimeMillis());
+                DemoUtils.println("Thread[07] finished at: " + System.currentTimeMillis());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -205,9 +205,9 @@ public class BackendModeExample {
         threads[8] = new Thread(() -> {
             try {
                 latch.await();
-                System.out.println("Thread[08] executing at: " + System.currentTimeMillis());
+                DemoUtils.println("Thread[08] executing at: " + System.currentTimeMillis());
                 recordUserDetailAndProperties();
-                System.out.println("Thread[08] finished at: " + System.currentTimeMillis());
+                DemoUtils.println("Thread[08] finished at: " + System.currentTimeMillis());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -216,9 +216,9 @@ public class BackendModeExample {
         threads[9] = new Thread(() -> {
             try {
                 latch.await();
-                System.out.println("Thread[09] executing at: " + System.currentTimeMillis());
+                DemoUtils.println("Thread[09] executing at: " + System.currentTimeMillis());
                 recordUserDetailAndProperties();
-                System.out.println("Thread[09] finished at: " + System.currentTimeMillis());
+                DemoUtils.println("Thread[09] finished at: " + System.currentTimeMillis());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -227,9 +227,9 @@ public class BackendModeExample {
         threads[10] = new Thread(() -> {
             try {
                 latch.await();
-                System.out.println("Thread[10] executing at: " + System.currentTimeMillis());
+                DemoUtils.println("Thread[10] executing at: " + System.currentTimeMillis());
                 startSession();
-                System.out.println("Thread[10] finished at: " + System.currentTimeMillis());
+                DemoUtils.println("Thread[10] finished at: " + System.currentTimeMillis());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -237,9 +237,9 @@ public class BackendModeExample {
         threads[11] = new Thread(() -> {
             try {
                 latch.await();
-                System.out.println("Thread[11] executing at: " + System.currentTimeMillis());
+                DemoUtils.println("Thread[11] executing at: " + System.currentTimeMillis());
                 recordView();
-                System.out.println("Thread[11] finished at: " + System.currentTimeMillis());
+                DemoUtils.println("Thread[11] finished at: " + System.currentTimeMillis());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -247,9 +247,9 @@ public class BackendModeExample {
         threads[12] = new Thread(() -> {
             try {
                 latch.await();
-                System.out.println("Thread[12] executing at: " + System.currentTimeMillis());
+                DemoUtils.println("Thread[12] executing at: " + System.currentTimeMillis());
                 recordUserDetailAndProperties();
-                System.out.println("Thread[12] finished at: " + System.currentTimeMillis());
+                DemoUtils.println("Thread[12] finished at: " + System.currentTimeMillis());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -261,7 +261,7 @@ public class BackendModeExample {
 
         latch.countDown();
 
-        // System.out.println("All threads completed at: " + System.currentTimeMillis());
+        // DemoUtils.println("All threads completed at: " + System.currentTimeMillis());
     }
 
     static void recordDataWithLegacyCalls() {
@@ -314,7 +314,7 @@ public class BackendModeExample {
 
         if (!(sdkStorageRootDirectory.exists() && sdkStorageRootDirectory.isDirectory())) {
             if (!sdkStorageRootDirectory.mkdirs()) {
-                System.out.println("Directory creation failed");
+                DemoUtils.println("Directory creation failed");
             }
         }
 
@@ -323,20 +323,20 @@ public class BackendModeExample {
         boolean running = true;
         while (running) {
 
-            System.out.println("Choose your option: ");
+            DemoUtils.println("Choose your option: ");
 
-            System.out.println("1) Record an event with key, count, sum, duration and segmentation");
-            System.out.println("2) Record a view");
-            System.out.println("3) Record user properties");
-            System.out.println("4) Record an exception with throwable and segmentation");
-            System.out.println("5) Record an exception with message, stacktrace and segmentation");
-            System.out.println("6) Start session");
-            System.out.println("7) Update session");
-            System.out.println("8) End session");
-            System.out.println("9) Record a direct request");
-            System.out.println("10) Run Multiple Threads");
-            System.out.println("99) Record data with legacy calls");
-            System.out.println("0) Exit ");
+            DemoUtils.println("1) Record an event with key, count, sum, duration and segmentation");
+            DemoUtils.println("2) Record a view");
+            DemoUtils.println("3) Record user properties");
+            DemoUtils.println("4) Record an exception with throwable and segmentation");
+            DemoUtils.println("5) Record an exception with message, stacktrace and segmentation");
+            DemoUtils.println("6) Start session");
+            DemoUtils.println("7) Update session");
+            DemoUtils.println("8) End session");
+            DemoUtils.println("9) Record a direct request");
+            DemoUtils.println("10) Run Multiple Threads");
+            DemoUtils.println("99) Record data with legacy calls");
+            DemoUtils.println("0) Exit ");
 
             int input = scanner.nextInt();
             switch (input) {
