@@ -10,8 +10,6 @@ public enum CoreFeature {
     CrashReporting(1 << 4, ModuleCrash::new),
     Location(1 << 5),
     UserProfiles(1 << 6),
-    StarRating(1 << 7, ModuleRatingCore::new),
-
     /*
     THESE ARE ONLY HERE AS DOCUMENTATION
     THEY SHOW WHICH ID'S ARE USED IN ANDROID
@@ -56,7 +54,6 @@ public enum CoreFeature {
         put(CrashReporting.index, CrashReporting);
         put(Location.index, Location);
         put(UserProfiles.index, UserProfiles);
-        put(StarRating.index, StarRating);
         put(BackendMode.index, BackendMode);
         put(RemoteConfig.index, RemoteConfig);
         put(TestDummy.index, TestDummy);
