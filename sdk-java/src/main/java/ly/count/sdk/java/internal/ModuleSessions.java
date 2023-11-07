@@ -27,13 +27,13 @@ public class ModuleSessions extends ModuleBase {
     @Override
     public void initFinished(final InternalConfig config) {
         try {
-            timedEvents = Storage.read(config, new TimedEvents(L));
+            timedEvents = Storage.read(config, new TimedEvents());
             if (timedEvents == null) {
-                timedEvents = new TimedEvents(L);
+                timedEvents = new TimedEvents();
             }
         } catch (Throwable e) {
             L.e("[ModuleSessions] initFinished,  Cannot happen" + e);
-            timedEvents = new TimedEvents(L);
+            timedEvents = new TimedEvents();
         }
     }
 

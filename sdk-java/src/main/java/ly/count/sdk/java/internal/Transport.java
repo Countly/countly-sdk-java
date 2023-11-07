@@ -477,7 +477,7 @@ public class Transport implements X509TrustManager {
             throw new IllegalArgumentException("PublicKeyManager: X509Certificate array is null");
         }
 
-        if (!(chain.length > 0)) {
+        if (chain.length == 0) {
             throw new IllegalArgumentException("PublicKeyManager: X509Certificate is empty");
         }
 

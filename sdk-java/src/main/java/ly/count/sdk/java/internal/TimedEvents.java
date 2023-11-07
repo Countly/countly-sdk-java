@@ -13,12 +13,9 @@ import ly.count.sdk.java.Event;
 
 class TimedEvents implements Storable, EventImpl.EventRecorder {
 
-    private final Log L;
-
     private final Map<String, EventImpl> events;
 
-    protected TimedEvents(Log logger) {
-        L = logger;
+    protected TimedEvents() {
         events = new HashMap<>();
     }
 

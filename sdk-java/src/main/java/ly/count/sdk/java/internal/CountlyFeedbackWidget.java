@@ -1,6 +1,7 @@
 package ly.count.sdk.java.internal;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 public class CountlyFeedbackWidget {
     public String widgetId;
@@ -18,5 +19,10 @@ public class CountlyFeedbackWidget {
         String str = widgetId + type + name + Arrays.toString(tags);
         String str2 = gonnaCompare.widgetId + gonnaCompare.type + gonnaCompare.name + Arrays.toString(gonnaCompare.tags);
         return str.equals(str2);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(widgetId, type, name);
     }
 }

@@ -10,7 +10,7 @@ import org.powermock.reflect.Whitebox;
 
 @RunWith(JUnit4.class)
 public class RequestTests {
-    private final String urlString = "http://www.google.com";
+    private static final String urlString = "http://www.google.com";
     private URL url;
 
     @Before

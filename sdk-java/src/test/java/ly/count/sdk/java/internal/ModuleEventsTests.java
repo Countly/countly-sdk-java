@@ -327,6 +327,7 @@ public class ModuleEventsTests {
      * in memory and cache queue should not contain it, timed events should
      * and data should not be set
      */
+    @Test
     public void endEvent_withSegmentation_negativeCount() {
         init(TestUtils.getConfigEvents(4));
 

@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import ly.count.sdk.java.internal.Byteable;
 import ly.count.sdk.java.internal.CoreFeature;
@@ -143,12 +144,12 @@ public class Config {
 
         @Override
         public boolean equals(Object obj) {
-            if (obj == null || !(obj instanceof DID)) {
+            if (!(obj instanceof DID)) {
                 return false;
             }
             DID did = (DID) obj;
             return did.realm == realm && did.strategy == strategy &&
-                (did.id == null ? id == null : did.id.equals(id));
+                (Objects.equals(did.id, id));
         }
 
         @Override
