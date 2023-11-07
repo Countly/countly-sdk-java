@@ -172,11 +172,15 @@ public class ModuleRemoteConfig extends ModuleBase {
         for (String key : jsonObject.keySet()) {
             Object value = jsonObject.opt(key);
             if (value != null) {
-                result.put(key, new RCData(value, true));
+                result.put(key, createRcData(value));
             }
         }
 
         return result;
+    }
+
+    private RCData createRcData(Object value) {
+        return new RCData(value, true);
     }
 
     /**

@@ -97,15 +97,20 @@ public class RemoteConfigValueStore {
             String key = entry.getKey();
             Object newValue = entry.getValue().value;
             try {
-                JSONObject newObj = new JSONObject();
-                newObj.put(keyValue, newValue);
-                newObj.put(keyCacheFlag, cacheValFresh);
+                JSONObject newObj = createValueObj(newValue);
                 values.put(key, newObj);
             } catch (Exception e) {
                 L.e("[RemoteConfigValueStore] Failed merging remote config values");
             }
         }
         L.v("[RemoteConfigValueStore] merging done:" + values.toString());
+    }
+
+    private JSONObject createValueObj(Object newValue) {
+        JSONObject newObj = new JSONObject();
+        newObj.put(keyValue, newValue);
+        newObj.put(keyCacheFlag, cacheValFresh);
+        return newObj;
     }
 
     //========================================
@@ -152,12 +157,16 @@ public class RemoteConfigValueStore {
                 }
                 Object rcObjVal = rcObj.opt(keyValue);
                 int rcObjCache = rcObj.getInt(keyCacheFlag);
-                ret.put(key, new RCData(rcObjVal, rcObjCache != cacheValCached));
+                ret.put(key, createRcData(rcObjVal, rcObjCache));
             } catch (Exception ex) {
                 L.e("[RemoteConfigValueStore] Got JSON exception while calling 'getAllValues': " + ex);
             }
         }
 
         return ret;
+    }
+
+    private RCData createRcData(Object value, int cacheFlag) {
+        return new RCData(value, cacheFlag != cacheValCached);
     }
 }

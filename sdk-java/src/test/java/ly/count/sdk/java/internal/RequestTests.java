@@ -1,16 +1,12 @@
 package ly.count.sdk.java.internal;
 
+import java.net.URL;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.powermock.reflect.Whitebox;
-
-import java.net.URL;
-
-import ly.count.sdk.java.internal.Params;
-import ly.count.sdk.java.internal.Request;
 
 @RunWith(JUnit4.class)
 public class RequestTests {
@@ -106,9 +102,9 @@ public class RequestTests {
         StringBuilder sbParams = new StringBuilder();
 
         for (int a = 0; a < 1000; a++) {
-            if (a != 0) sbParams.append("&");
+            if (a != 0) sbParams.append('&');
             sbParams.append("qq").append(a);
-            sbParams.append("=").append(a);
+            sbParams.append('=').append(a);
         }
 
         Request request = Whitebox.invokeConstructor(Request.class, sbParams.toString());

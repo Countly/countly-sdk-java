@@ -1,9 +1,9 @@
 package ly.count.sdk.java.internal;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -11,6 +11,7 @@ import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -316,7 +317,7 @@ public class Utils {
             return fileContent.toString();
         }
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+        try (BufferedReader reader = Files.newBufferedReader(file.toPath())) {
             String line;
             while ((line = reader.readLine()) != null) {
                 fileContent.append(line);
@@ -361,6 +362,10 @@ public class Utils {
                 return null;
             }
         }
+    }
+
+    public static ByteArrayInputStream getByteArrayInputStream(byte[] bytes) {
+        return new ByteArrayInputStream(bytes);
     }
 
     /**

@@ -1,9 +1,10 @@
 package ly.count.sdk.java.internal;
 
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -251,7 +252,7 @@ public class UtilsTests {
 
         File file = new File(fileName);
         file.createNewFile();
-        FileWriter writer = new FileWriter(file);
+        BufferedWriter writer = Files.newBufferedWriter(file.toPath());
         writer.write(fileContent);
         writer.close();
 
@@ -289,7 +290,7 @@ public class UtilsTests {
 
             File file = new File(TEST_FILE_NAME);
             file.createNewFile();
-            FileWriter writer = new FileWriter(file);
+            BufferedWriter writer = Files.newBufferedWriter(file.toPath());
             writer.write(fileContent);
             writer.close();
             file.setReadable(false);

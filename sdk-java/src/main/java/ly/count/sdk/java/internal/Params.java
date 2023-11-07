@@ -116,9 +116,9 @@ public class Params {
 
     public Params add(String key, Object value) {
         if (params.length() > 0) {
-            params.append("&");
+            params.append('&');
         }
-        params.append(key).append("=");
+        params.append(key).append('=');
         if (value != null) {
             params.append(Utils.urlencode(value.toString(), L));
         }
@@ -130,7 +130,7 @@ public class Params {
             return this;
         }
         if (this.params.length() > 0) {
-            this.params.append("&");
+            this.params.append('&');
         }
         this.params.append(params.toString());
         return this;
@@ -152,16 +152,25 @@ public class Params {
     }
 
     public String remove(String key) {
-        List<String> pairs = new ArrayList<>(Arrays.asList(params.toString().split("&")));
+        String query = params.toString();
+        String[] pairs = query.split("&");
+        String result = null;
+        StringBuilder newParams = new StringBuilder();
+
         for (String pair : pairs) {
-            String comps[] = pair.split("=");
+            String[] comps = pair.split("=");
             if (comps.length == 2 && comps[0].equals(key)) {
-                pairs.remove(pair);
-                this.params = new StringBuilder(Utils.join(pairs, "&"));
-                return Utils.urldecode(comps[1]);
+                result = Utils.urldecode(comps[1]);
+            } else {
+                if (newParams.length() > 0) {
+                    newParams.append('&');
+                }
+                newParams.append(pair);
             }
         }
-        return null;
+
+        params = newParams;
+        return result;
     }
 
     public Map<String, String> map() {

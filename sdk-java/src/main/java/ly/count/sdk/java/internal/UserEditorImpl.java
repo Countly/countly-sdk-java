@@ -258,28 +258,36 @@ public class UserEditorImpl implements UserEditor {
                     }
                     break;
                 default:
-                    if (value == null || value instanceof String || value instanceof Integer || value instanceof Float || value instanceof Double || value instanceof Boolean
-                        || value instanceof String[] || value instanceof Integer[] || value instanceof Float[] || value instanceof Double[] || value instanceof Boolean[] || value instanceof Object[]) {
-                        if (!changes.has(CUSTOM)) {
-                            changes.put(CUSTOM, new JSONObject());
-                        }
-                        changes.getJSONObject(CUSTOM).put(key, value);
-                        if (value == null) {
-                            user.custom.remove(key);
-                        } else {
-                            user.custom.put(key, value);
-                        }
-                    } else {
-                        L.e("[UserEditorImpl] Type of value " + value + " '" + value.getClass().getSimpleName() + "' is not supported yet, thus user property is not stored");
-                    }
+                    performCustomUpdate(key, value, changes);
                     break;
             }
         }
-        if (ops.size() > 0 && !changes.has(CUSTOM)) {
+
+        applyOps(changes);
+    }
+
+    private void applyOps(JSONObject changes) throws JSONException {
+        if (!ops.isEmpty() && !changes.has(CUSTOM)) {
             changes.put(CUSTOM, new JSONObject());
         }
         for (Op op : ops) {
             op.apply(changes.getJSONObject(CUSTOM));
+        }
+    }
+
+    private void performCustomUpdate(String key, Object value, JSONObject changes) throws JSONException {
+        if (value == null || value instanceof String || value instanceof Integer || value instanceof Float || value instanceof Double || value instanceof Boolean || value instanceof Object[]) {
+            if (!changes.has(CUSTOM)) {
+                changes.put(CUSTOM, new JSONObject());
+            }
+            changes.getJSONObject(CUSTOM).put(key, value);
+            if (value == null) {
+                user.custom.remove(key);
+            } else {
+                user.custom.put(key, value);
+            }
+        } else {
+            L.e("[UserEditorImpl] performCustomUpdate, Type of value " + value + " '" + value.getClass().getSimpleName() + "' is not supported yet, thus user property is not stored");
         }
     }
 
