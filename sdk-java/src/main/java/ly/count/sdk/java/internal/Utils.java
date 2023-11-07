@@ -364,7 +364,7 @@ public class Utils {
         }
     }
 
-    public static ByteArrayInputStream getByteArrayInputStream(byte[] bytes) {
+    public static ByteArrayInputStream getByteArrayInputStream(final byte[] bytes) {
         return new ByteArrayInputStream(bytes);
     }
 

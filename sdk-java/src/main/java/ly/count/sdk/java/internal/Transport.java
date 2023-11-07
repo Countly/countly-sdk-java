@@ -452,7 +452,7 @@ public class Transport implements X509TrustManager {
     /*
      * For not creating object inside loop
      */
-    private PublicKey getPublicKeyFromCertificate(byte[] data) throws NoSuchAlgorithmException, InvalidKeySpecException {
+    private PublicKey getPublicKeyFromCertificate(final byte[] data) throws NoSuchAlgorithmException, InvalidKeySpecException {
         X509EncodedKeySpec spec = new X509EncodedKeySpec(data);
         KeyFactory kf = KeyFactory.getInstance("RSA");
         PublicKey k = kf.generatePublic(spec);

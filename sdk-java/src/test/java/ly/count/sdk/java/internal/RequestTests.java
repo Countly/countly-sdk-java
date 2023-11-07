@@ -102,7 +102,9 @@ public class RequestTests {
         StringBuilder sbParams = new StringBuilder();
 
         for (int a = 0; a < 1000; a++) {
-            if (a != 0) sbParams.append('&');
+            if (a != 0) {
+                sbParams.append('&');
+            }
             sbParams.append("qq").append(a);
             sbParams.append('=').append(a);
         }

@@ -266,7 +266,7 @@ public class UserEditorImpl implements UserEditor {
         applyOps(changes);
     }
 
-    private void applyOps(JSONObject changes) throws JSONException {
+    private void applyOps(final JSONObject changes) throws JSONException {
         if (!ops.isEmpty() && !changes.has(CUSTOM)) {
             changes.put(CUSTOM, new JSONObject());
         }
@@ -275,7 +275,7 @@ public class UserEditorImpl implements UserEditor {
         }
     }
 
-    private void performCustomUpdate(String key, Object value, JSONObject changes) throws JSONException {
+    private void performCustomUpdate(final String key, final Object value, final JSONObject changes) throws JSONException {
         if (value == null || value instanceof String || value instanceof Integer || value instanceof Float || value instanceof Double || value instanceof Boolean || value instanceof Object[]) {
             if (!changes.has(CUSTOM)) {
                 changes.put(CUSTOM, new JSONObject());

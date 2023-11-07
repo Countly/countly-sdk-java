@@ -106,7 +106,7 @@ public class RemoteConfigValueStore {
         L.v("[RemoteConfigValueStore] merging done:" + values.toString());
     }
 
-    private JSONObject createValueObj(Object newValue) {
+    private JSONObject createValueObj(final Object newValue) {
         JSONObject newObj = new JSONObject();
         newObj.put(keyValue, newValue);
         newObj.put(keyCacheFlag, cacheValFresh);
@@ -166,7 +166,7 @@ public class RemoteConfigValueStore {
         return ret;
     }
 
-    private RCData createRcData(Object value, int cacheFlag) {
+    private RCData createRcData(final Object value, final int cacheFlag) {
         return new RCData(value, cacheFlag != cacheValCached);
     }
 }

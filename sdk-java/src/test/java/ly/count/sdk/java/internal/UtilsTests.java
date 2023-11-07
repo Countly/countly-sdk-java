@@ -252,14 +252,15 @@ public class UtilsTests {
 
         File file = new File(fileName);
         file.createNewFile();
-        BufferedWriter writer = Files.newBufferedWriter(file.toPath());
-        writer.write(fileContent);
-        writer.close();
+        try (BufferedWriter writer = Files.newBufferedWriter(file.toPath())) {
+            writer.write(fileContent);
+            writer.close();
 
-        String result = Utils.readFileContent(file, logger);
-        //delete file
-        file.delete();
-        Assert.assertEquals(fileContent, result);
+            String result = Utils.readFileContent(file, logger);
+            //delete file
+            file.delete();
+            Assert.assertEquals(fileContent, result);
+        }
     }
 
     /**

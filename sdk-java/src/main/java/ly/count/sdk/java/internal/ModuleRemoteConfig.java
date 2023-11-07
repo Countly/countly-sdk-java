@@ -179,7 +179,7 @@ public class ModuleRemoteConfig extends ModuleBase {
         return result;
     }
 
-    private RCData createRcData(Object value) {
+    private RCData createRcData(final Object value) {
         return new RCData(value, true);
     }
 
