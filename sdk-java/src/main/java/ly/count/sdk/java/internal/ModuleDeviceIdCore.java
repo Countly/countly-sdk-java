@@ -308,7 +308,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
     }
 
     protected DeviceIdType getTypeInternal() {
-        //todo impl after merge
+        //todo impl after merge, delete the Countly one
         return null;
     }
 
@@ -318,24 +318,44 @@ public class ModuleDeviceIdCore extends ModuleBase {
 
     public class DeviceId {
 
+        /**
+         * Returns current device id.
+         *
+         * @return device id string
+         */
         public String getID() {
             synchronized (Countly.instance()) {
                 return getIDInternal();
             }
         }
 
+        /**
+         * Returns current device id type.
+         *
+         * @return device id type
+         */
         public DeviceIdType getType() {
             synchronized (Countly.instance()) {
                 return getTypeInternal();
             }
         }
 
+        /**
+         * Change device id with merging profiles on server, just set device id to new one.
+         *
+         * @param id new device id string, cannot be empty
+         */
         public void changeWithMerge(String id) {
             synchronized (Countly.instance()) {
                 changeDeviceIdInternal(internalConfig, id, true);
             }
         }
 
+        /**
+         * Change device id without merging profiles on server, just set device id to new one.
+         *
+         * @param id new device id string, cannot be empty
+         */
         public void changeWithoutMerge(String id) {
             synchronized (Countly.instance()) {
                 changeDeviceIdInternal(internalConfig, id, false);
