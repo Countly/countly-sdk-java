@@ -256,7 +256,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
         final Config.DID old = config.getDeviceId();
         config.setDeviceId(new Config.DID(Config.DID.REALM_DID, Config.DID.STRATEGY_CUSTOM, id));
         Storage.push(config, config);
-        SDKCore.instance.deviceIdChanged(old, withMerge);
+        SDKCore.instance.notifyModulesDeviceIdChanged(old, withMerge);
     }
 
     /**

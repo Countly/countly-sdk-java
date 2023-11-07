@@ -386,16 +386,10 @@ public class SDKCore {
     }
 
     public ModuleDeviceIdCore.DeviceId deviceId() {
-        if (!hasConsentForFeature(CoreFeature.DeviceId)) {
-            L.v("[SDKCore] deviceId, DeviceId feature has no consent, returning null");
-            return null;
-        }
-
         return module(ModuleDeviceIdCore.class).deviceIdInterface;
     }
 
     public ModuleRemoteConfig.RemoteConfig remoteConfig() {
-
         if (!hasConsentForFeature(CoreFeature.RemoteConfig)) {
             L.v("[SDKCore] remoteConfig, RemoteConfig feature has no consent, returning null");
             return null;
@@ -615,7 +609,7 @@ public class SDKCore {
         }
     }
 
-    public void deviceIdChanged(Config.DID oldDeviceId, boolean withMerge) {
+    public void notifyModulesDeviceIdChanged(Config.DID oldDeviceId, boolean withMerge) {
         L.d("[SDKCore] deviceIdChanged, newDeviceId:[" + config.getDeviceId() + "], oldDeviceId:[ " + oldDeviceId + "], withMerge:[" + withMerge + "]");
         if (withMerge) {
             onDeviceId(config, config.getDeviceId(), oldDeviceId);
