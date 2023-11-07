@@ -2,10 +2,10 @@ package ly.count.java.demo;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.concurrent.ConcurrentHashMap;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.internal.CountlyFeedbackWidget;
@@ -25,7 +25,7 @@ public class Example {
 
     static void eventWithSegmentation() {
 
-        Map<String, String> segment = new HashMap<String, String>() {{
+        Map<String, String> segment = new ConcurrentHashMap<String, String>() {{
             put("Time Spent", "60");
             put("Retry Attempts", "60");
         }};
@@ -35,7 +35,7 @@ public class Example {
     }
 
     static void eventWithSumAndSegmentation() {
-        Map<String, String> segment = new HashMap<String, String>() {{
+        Map<String, String> segment = new ConcurrentHashMap<String, String>() {{
             put("Time Spent", "60");
             put("Retry Attempts", "60");
         }};
@@ -46,7 +46,7 @@ public class Example {
     }
 
     static void timedEventWithSumCountSegmentationAndDuration() {
-        Map<String, String> segment = new HashMap<String, String>() {{
+        Map<String, String> segment = new ConcurrentHashMap<String, String>() {{
             put("Time Spent", "60");
             put("Retry Attempts", "60");
         }};
@@ -117,7 +117,7 @@ public class Example {
     }
 
     static void reportFeedbackWidgetManually(CountlyFeedbackWidget widget) {
-        Map<String, Object> widgetResult = new HashMap<>();
+        Map<String, Object> widgetResult = new ConcurrentHashMap<>();
         widgetResult.put("rating", 5);
         widgetResult.put("comment", "This is a comment");
         widgetResult.put("email", "test@count.ly");
@@ -135,7 +135,7 @@ public class Example {
 
     static void recordCrash() {
         try {
-            int a = 10 / 0;
+            int dividedByZero = 10 / 0;
         } catch (Exception e) {
             Countly.api().addCrashReport(e, false, "Divided by zero", null, "sample app");
         }
@@ -198,7 +198,7 @@ public class Example {
         String COUNTLY_SERVER_URL = "https://xxx.server.ly/";
         String COUNTLY_APP_KEY = "COUNTLY_APP_KEY";
 
-        Map<String, String> metricOverride = new HashMap<>();
+        Map<String, String> metricOverride = new ConcurrentHashMap<>();
         metricOverride.put("aa", "11");
         metricOverride.put("bb", "222");
 

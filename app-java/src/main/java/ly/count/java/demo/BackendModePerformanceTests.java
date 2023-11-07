@@ -8,7 +8,7 @@ import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.internal.Device;
 
-public class BackendModePerformanceTests {
+public abstract class BackendModePerformanceTests {
     final static String DEVICE_ID = "device-id";
     final static String COUNTLY_APP_KEY = "COUNTLY_APP_KEY";
     final static String COUNTLY_SERVER_URL = "https://xxx.server.ly/";
@@ -178,36 +178,37 @@ public class BackendModePerformanceTests {
     public static void main(String[] args) throws Exception {
         boolean running = true;
         long startTime = 0;
-        Scanner scanner = new Scanner(System.in);
-        while (running) {
+        try (Scanner scanner = new Scanner(System.in)) {
+            while (running) {
 
-            DemoUtils.println("Choose your option: ");
+                DemoUtils.println("Choose your option: ");
 
-            DemoUtils.println("1) Perform Large Request Queue Size Test");
-            DemoUtils.println("2) Perform Large Event queues test");
-            DemoUtils.println("3) Record bulk data to server");
+                DemoUtils.println("1) Perform Large Request Queue Size Test");
+                DemoUtils.println("2) Perform Large Event queues test");
+                DemoUtils.println("3) Record bulk data to server");
 
-            int input = scanner.nextInt();
-            startTime = System.currentTimeMillis();
-            switch (input) {
-                case 1:
-                    performLargeRequestQueueSizeTest();
-                    running = false;
-                    DemoUtils.printf("Time spent: %dms%n", (System.currentTimeMillis() - startTime));
-                    break;
-                case 2:
-                    performLargeEventQueueTest();
-                    running = false;
-                    DemoUtils.printf("Time spent: %dms%n", (System.currentTimeMillis() - startTime));
-                    break;
-                case 3:
-                    startTime = System.currentTimeMillis();
-                    recordBulkDataAndSendToServer();
-                    running = false;
-                    DemoUtils.printf("Time spent: %dms%n", (System.currentTimeMillis() - startTime));
-                    break;
-                default:
-                    break;
+                int input = scanner.nextInt();
+                startTime = System.currentTimeMillis();
+                switch (input) {
+                    case 1:
+                        performLargeRequestQueueSizeTest();
+                        running = false;
+                        DemoUtils.printf("Time spent: %dms%n", (System.currentTimeMillis() - startTime));
+                        break;
+                    case 2:
+                        performLargeEventQueueTest();
+                        running = false;
+                        DemoUtils.printf("Time spent: %dms%n", (System.currentTimeMillis() - startTime));
+                        break;
+                    case 3:
+                        startTime = System.currentTimeMillis();
+                        recordBulkDataAndSendToServer();
+                        running = false;
+                        DemoUtils.printf("Time spent: %dms%n", (System.currentTimeMillis() - startTime));
+                        break;
+                    default:
+                        break;
+                }
             }
         }
 
