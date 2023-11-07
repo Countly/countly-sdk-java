@@ -8,32 +8,34 @@ import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.internal.Device;
 
-public abstract class BackendModePerformanceTests {
+public final class BackendModePerformanceTests {
     final static String DEVICE_ID = "device-id";
     final static String COUNTLY_APP_KEY = "COUNTLY_APP_KEY";
     final static String COUNTLY_SERVER_URL = "https://xxx.server.ly/";
 
-    private static void initSDK(int eventQueueSize, int requestQueueSize) {
-        Config config = new Config(COUNTLY_SERVER_URL, COUNTLY_APP_KEY)
-            .setLoggingLevel(Config.LoggingLevel.OFF)
-            .enableBackendMode()
-            .setRequestQueueMaxSize(requestQueueSize)
-            .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
-            .setRequiresConsent(false)
-            .setEventQueueSizeToSend(1);
+    private BackendModePerformanceTests() {
+    }
 
+    private static void initSDK(int eventQueueSize, int requestQueueSize) {
         // System specific folder structure
         String[] sdkStorageRootPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
         File sdkStorageRootDirectory = new File(String.join(File.separator, sdkStorageRootPath));
 
-        if (!(sdkStorageRootDirectory.exists() && sdkStorageRootDirectory.isDirectory())) {
-            if (!sdkStorageRootDirectory.mkdirs()) {
-                DemoUtils.println("Directory creation failed");
-            }
+        if ((!(sdkStorageRootDirectory.exists() && sdkStorageRootDirectory.isDirectory())) && !sdkStorageRootDirectory.mkdirs()) {
+            DemoUtils.println("Directory creation failed");
         }
 
+        Config config = new Config(COUNTLY_SERVER_URL, COUNTLY_APP_KEY, sdkStorageRootDirectory)
+            .setLoggingLevel(Config.LoggingLevel.OFF)
+            .enableBackendMode()
+            .setRequestQueueMaxSize(requestQueueSize)
+            .setEventQueueSizeToSend(eventQueueSize)
+            .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
+            .setRequiresConsent(false)
+            .setEventQueueSizeToSend(1);
+
         // Main initialization call, SDK can be used after this one is done
-        Countly.init(sdkStorageRootDirectory, config);
+        Countly.instance().init(config);
     }
 
     static void performLargeRequestQueueSizeTest() {
@@ -119,15 +121,14 @@ public abstract class BackendModePerformanceTests {
     }
 
     static void performLargeEventQueueTest() {
-        int noOfEvents = 100000;
+        int noOfEvents = 100_000;
         DemoUtils.println("===== Test Start: 'Large Event queues against multiple devices ids' =====");
         DemoUtils.printf("Before SDK Initialization: Total Memory = %dMb, Available RAM = %dMb %n", Device.dev.getRAMTotal(), Device.dev.getRAMAvailable());
         initSDK(noOfEvents, 1000);
         DemoUtils.printf("After SDK Initialization: Total Memory = %d Mb, Available RAM= %d Mb %n", Device.dev.getRAMTotal(), Device.dev.getRAMAvailable());
-
         int noOfDevices = 10;
         for (int d = 0; d <= noOfDevices; ++d) {
-            DemoUtils.printf("Adding %d events into event Queue against deviceID = %s%n", 100000, "device-id-" + d);
+            DemoUtils.printf("Adding %d events into event Queue against deviceID = %s%n", 1_000_00, "device-id-" + d);
             for (int i = 1; i <= noOfEvents; ++i) {
 
                 Map<String, Object> segment = new HashMap<String, Object>() {{
@@ -193,7 +194,7 @@ public abstract class BackendModePerformanceTests {
                     case 1:
                         performLargeRequestQueueSizeTest();
                         running = false;
-                        DemoUtils.printf("Time spent: %dms%n", (System.currentTimeMillis() - startTime));
+                        DemoUtils.printf("Time spent: %dms%n", System.currentTimeMillis() - startTime);
                         break;
                     case 2:
                         performLargeEventQueueTest();

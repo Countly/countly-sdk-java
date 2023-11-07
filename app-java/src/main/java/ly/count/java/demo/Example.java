@@ -25,10 +25,9 @@ public class Example {
 
     static void eventWithSegmentation() {
 
-        Map<String, String> segment = new ConcurrentHashMap<String, String>() {{
-            put("Time Spent", "60");
-            put("Retry Attempts", "60");
-        }};
+        Map<String, String> segment = new ConcurrentHashMap<>();
+        segment.put("Time Spent", "60");
+        segment.put("Retry Attempts", "60");
 
         Countly.api().event("Event With Sum")
             .setSegmentation(segment).record();
@@ -135,8 +134,9 @@ public class Example {
 
     static void recordCrash() {
         try {
-            int dividedByZero = 10 / 0;
+            throw new ArithmeticException("/ by zero");
         } catch (Exception e) {
+            e.printStackTrace();
             Countly.api().addCrashReport(e, false, "Divided by zero", null, "sample app");
         }
     }
