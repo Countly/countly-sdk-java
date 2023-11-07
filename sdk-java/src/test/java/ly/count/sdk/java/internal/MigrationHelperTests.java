@@ -269,6 +269,21 @@ public class MigrationHelperTests {
         Assert.assertEquals(DeviceIdType.SDK_GENERATED, Countly.instance().getDeviceIdType());
     }
 
+    /**
+     * "applyMigrations" from 0 to 1 by init Countly with no device id, custom device id given
+     * Upgrading from legacy state to the latest version, mock config file, just old type of data.
+     * Data version must be 1 after applying migrations and expected log must be logged. and sdk should generate the device id
+     */
+    @Test
+    public void applyMigrations_0to1_initCountlyNoDeviceId_customDeviceId() throws IOException {
+        Files.write(TestUtils.createFile("config_0").toPath(), MOCK_OLD_CONFIG_FILE_noDeviceId); //mock a sdk config file, to simulate storage is not empty
+        Countly.instance().init(TestUtils.getBaseConfig());
+        ScenarioDeviceIdInitTests.waitForNoNullDeviceID(Countly.instance());//wait for id to generate
+
+        Assert.assertEquals(TestUtils.DEVICE_ID, Countly.instance().getDeviceId());
+        Assert.assertEquals(DeviceIdType.DEVELOPER_SUPPLIED, Countly.instance().getDeviceIdType());
+    }
+
     void setDataVersionInConfigFile(final int targetDataVersion) throws IOException {
         //prepare storage in case we need to
         TestUtils.checkSdkStorageRootDirectoryExist(TestUtils.getTestSDirectory());
