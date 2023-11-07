@@ -14,8 +14,14 @@
   * 'enableRemoteConfigAutomaticTriggers' to automatically download remote config values on init
   * 'remoteConfigRegisterGlobalCallback(RCDownloadCallback callback)' to register a remote config callback
 * Added the ability to set the user profile picture with an URL
+* Added the function get device id type by "Countly::deviceId::getType" via "instance()" call
 
 * Fixed a bug where it was not possible to send a profile picture with binary data
+
+* Depcerated following functions from "Usage" interface and respective implementations:
+  * "changeDeviceIdWithoutMerge" instead use "Countly::deviceId::changeWithoutMerge" via "instance()" call
+  * "changeDeviceIdWithMerge" instead use "Countly::deviceId::changeWithMerge" via "instance()" call
+  * "getDeviceId" instead use "Countly::deviceId::getID" via "instance()" call
 
 ## 23.8.0
 
