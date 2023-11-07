@@ -245,7 +245,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
      * @param config context to run in
      * @param id new user id
      */
-    public void changeDeviceIdInternal(InternalConfig config, String id, boolean withMerge) {
+    protected void changeDeviceIdInternal(InternalConfig config, String id, boolean withMerge) {
         if (Utils.isEmptyOrNull(id)) {
             L.w("[ModuleDeviceIdCore] changeDeviceId, Empty id passed to changeDeviceId method");
             return;
