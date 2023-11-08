@@ -598,11 +598,11 @@ public class SDKCore {
     }
 
     public void login(String id) {
-        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).login(config, id);
+        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).login(id);
     }
 
     public void logout() {
-        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).logout(config);
+        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).logout();
     }
 
     /**
