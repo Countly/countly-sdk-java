@@ -231,7 +231,7 @@ public class ModuleFeedbackTests {
             return;
         }
 
-        StringBuilder widgetListUrl = new StringBuilder();
+        StringBuilder widgetListUrl = new StringBuilder(64);
         widgetListUrl.append(TestUtils.SERVER_URL);
         widgetListUrl.append("/feedback/");
         widgetListUrl.append(widgetInfo.type.name());

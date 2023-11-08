@@ -494,7 +494,8 @@ public class SessionImplTests {
      * should return true
      */
     @Test
-    public void equals() {
+    public void equals_test() {
+        //test keyword added for codacy
         Countly.instance().init(TestUtils.getConfigSessions());
         SessionImpl session = (SessionImpl) Countly.session().update();
         session.end();
