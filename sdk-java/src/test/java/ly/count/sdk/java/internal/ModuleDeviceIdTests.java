@@ -28,17 +28,8 @@ public class ModuleDeviceIdTests {
      */
     @Test
     public void generatedDeviceId() {
-        Countly.instance().init(TestUtils.getBaseConfig().setCustomDeviceId(null));
-        String deviceId = null;
-        //todo remove this "while loop" mess after refactoring the SDK
-        while (deviceId == null) { //wait for device ID to be generated
-            try {
-                deviceId = Countly.instance().getDeviceId();
-            } catch (Exception ignored) {
-                //do nothing
-            }
-        }
-        Assert.assertTrue(deviceId.startsWith("CLY_"));
+        Countly.instance().init(TestUtils.getBaseConfig(null));
+        Assert.assertTrue(Countly.instance().deviceId().getID().startsWith("CLY_"));
     }
 
     /**
@@ -49,6 +40,6 @@ public class ModuleDeviceIdTests {
     @Test
     public void customDeviceId() {
         Countly.instance().init(TestUtils.getBaseConfig());
-        Assert.assertFalse(Countly.instance().getDeviceId().contains("CLY_"));
+        Assert.assertFalse(Countly.instance().deviceId().getID().contains("CLY_"));
     }
 }
