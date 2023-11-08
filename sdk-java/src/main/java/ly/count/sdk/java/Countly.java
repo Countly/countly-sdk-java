@@ -7,6 +7,7 @@ import ly.count.sdk.java.internal.DeviceIdType;
 import ly.count.sdk.java.internal.InternalConfig;
 import ly.count.sdk.java.internal.Log;
 import ly.count.sdk.java.internal.ModuleBackendMode;
+import ly.count.sdk.java.internal.ModuleDeviceIdCore;
 import ly.count.sdk.java.internal.ModuleEvents;
 import ly.count.sdk.java.internal.ModuleFeedback;
 import ly.count.sdk.java.internal.ModuleRemoteConfig;
@@ -260,12 +261,18 @@ public class Countly implements Usage {
         return this;
     }
 
+    /**
+     * Get current device id.
+     *
+     * @return device id string
+     * @deprecated use "getID()" via deviceId() call
+     */
     @Override
     public String getDeviceId() {
-        return sdk.config.getDeviceId().id;
+        return deviceId().getID();
     }
 
-    /**
+    /*
      * Get device ID type.
      *
      * @return see {@link DeviceIdType}
@@ -274,21 +281,35 @@ public class Countly implements Usage {
         return DeviceIdType.fromInt(sdk.config.getDeviceId().strategy, L);
     }
 
+  /**
+     * Change device id with merging
+     *
+     * @param id new user / device id string, cannot be empty
+     * @return {@link Usage} instance
+     * @deprecated use "changeWithMerge(String)" via deviceId() call
+     */
     @Override
     public Usage changeDeviceIdWithMerge(String id) {
         if (L != null) {
             L.d("[Countly] changeDeviceIdWithoutMerge: id = " + id);
         }
-        sdk.changeDeviceIdWithMerge(sdk.config, id);
+        deviceId().changeWithMerge(id);
         return this;
     }
 
+    /**
+     * Change device id without merging
+     *
+     * @param id new user / device id string, cannot be empty
+     * @return {@link Usage} instance
+     * @deprecated use "changeWithoutMerge(String)" via deviceId() call
+     */
     @Override
     public Usage changeDeviceIdWithoutMerge(String id) {
         if (L != null) {
             L.d("[Countly] changeDeviceIdWithoutMerge: id = " + id);
         }
-        sdk.changeDeviceIdWithoutMerge(sdk.config, id);
+        deviceId().changeWithoutMerge(id);
         return this;
     }
 
@@ -369,6 +390,21 @@ public class Countly implements Usage {
             return null;
         }
         return sdk.remoteConfig();
+    }
+
+    /**
+     * <code>DeviceId</code> interface to use device id functionalities.
+     *
+     * @return {@link ModuleDeviceIdCore.DeviceId} instance.
+     */
+    public ModuleDeviceIdCore.DeviceId deviceId() {
+        if (!isInitialized()) {
+            if (L != null) {
+                L.e("[Countly] SDK is not initialized yet.");
+            }
+            return null;
+        }
+        return sdk.deviceId();
     }
 
     /**

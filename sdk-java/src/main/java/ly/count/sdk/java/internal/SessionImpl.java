@@ -395,11 +395,17 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         return this;
     }
 
+    /**
+     * @deprecated use {@link ModuleDeviceIdCore.DeviceId#getID()} instead
+     */
     @Override
     public String getDeviceId() {
         return config.getDeviceId().id;
     }
 
+    /**
+     * @deprecated use {@link ModuleDeviceIdCore.DeviceId#changeWithMerge(String)} instead
+     */
     @Override
     public Usage changeDeviceIdWithMerge(String id) {
         if (config.isBackendModeEnabled()) {
@@ -412,6 +418,9 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         return this;
     }
 
+    /**
+     * @deprecated use {@link ModuleDeviceIdCore.DeviceId#changeWithoutMerge(String)} instead
+     */
     @Override
     public Usage changeDeviceIdWithoutMerge(String id) {
         if (config.isBackendModeEnabled()) {
