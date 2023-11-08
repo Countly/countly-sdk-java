@@ -11,6 +11,8 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.KeyFactory;
 import java.security.KeyStore;
@@ -167,7 +169,7 @@ public class Transport implements X509TrustManager {
                     Map<String, String> map = request.params.map();
                     for (String key : map.keySet()) {
                         String value = Utils.urldecode(map.get(key));
-                        salting.append(key).append("=").append(value).append("&");
+                        salting.append(key).append('=').append(value).append('&');
                         addMultipart(output, writer, boundary, "text/plain", key, value, null);
                     }
 
@@ -388,7 +390,7 @@ public class Transport implements X509TrustManager {
                 try {
                     byte[] data = Utils.readStream(Transport.class.getClassLoader().getResourceAsStream(key), L);
                     if (data != null) {
-                        String string = new String(data);
+                        String string = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(data)).toString();
                         if (string.contains("--BEGIN")) {
                             data = Utils.Base64.decode(trimPem(string), L);
                         }
@@ -400,6 +402,7 @@ public class Transport implements X509TrustManager {
                         X509EncodedKeySpec spec = new X509EncodedKeySpec(data);
                         KeyFactory kf = KeyFactory.getInstance("RSA");
                         PublicKey k = kf.generatePublic(spec);
+                        
                         keyPins.add(k.getEncoded());
                     } catch (InvalidKeySpecException e) {
                         L.d("[network] Certificate in instead of public key it seems " + e);
@@ -467,7 +470,7 @@ public class Transport implements X509TrustManager {
             throw new IllegalArgumentException("PublicKeyManager: X509Certificate array is null");
         }
 
-        if (!(chain.length > 0)) {
+        if (chain.length == 0) {
             throw new IllegalArgumentException("PublicKeyManager: X509Certificate is empty");
         }
 

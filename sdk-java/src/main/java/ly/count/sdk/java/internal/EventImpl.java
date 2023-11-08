@@ -206,7 +206,7 @@ class EventImpl implements Event, JSONable {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null || !(obj instanceof EventImpl)) {
+        if (!(obj instanceof EventImpl)) {
             return false;
         }
         EventImpl event = (EventImpl) obj;

@@ -347,7 +347,7 @@ public class ModuleFeedback extends ModuleBase {
         widgetListUrl.append(internalConfig.getServerURL());
         widgetListUrl.append("/feedback/");
         widgetListUrl.append(widgetInfo.type.name());
-        widgetListUrl.append("?");
+        widgetListUrl.append('?');
         Params params = new Params()
             .add("widget_id", widgetInfo.widgetId)
             .add("device_id", internalConfig.getDeviceId().id)
