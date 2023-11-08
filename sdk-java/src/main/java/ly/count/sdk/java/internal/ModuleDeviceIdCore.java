@@ -125,15 +125,13 @@ public class ModuleDeviceIdCore extends ModuleBase {
     /**
      * Puts {@code "device_id"} parameter into all requests which don't have it yet
      *
-     * @param config InternalConfig to run in
-     * @param deviceId deviceId string
      * @return {@code true} if {@link Request}s changed successfully, {@code false} otherwise
      */
-    private boolean transformRequests(final InternalConfig config, final String deviceId) {
-        return Storage.transform(config, Request.getStoragePrefix(), (id, data) -> {
+    private boolean transformRequests() {
+        return Storage.transform(internalConfig, Request.getStoragePrefix(), (id, data) -> {
             Request request = new Request(id);
             if (request.restore(data, L) && !request.params.has(Params.PARAM_DEVICE_ID)) {
-                request.params.add(Params.PARAM_DEVICE_ID, deviceId);
+                request.params.add(Params.PARAM_DEVICE_ID, getIDInternal());
                 return request.store(L);
             }
             return null;
@@ -181,10 +179,9 @@ public class ModuleDeviceIdCore extends ModuleBase {
             return;
         }
 
-        Config.DID did = new Config.DID(type.index, id);
         internalConfig.storageProvider.setDeviceIdType(type.name());
         internalConfig.storageProvider.setDeviceID(id);
-        internalConfig.setDeviceId(did);
+        internalConfig.setDeviceId(new Config.DID(type.index, id));
 
         if (!withMerge) {
             SessionImpl session = SDKCore.instance.getSession();
@@ -192,7 +189,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
                 L.d("[ModuleDeviceIdCore] changeDeviceIdInternal, Ending session because device id was unset from [" + old.id + "]");
                 session.end(null, null, old.id);
             }
-            changeOldRequestsDeviceIds(did);
+            changeOldRequestsDeviceIds();
         }
 
         SDKCore.instance.notifyModulesDeviceIdChanged(old.id, withMerge);
@@ -239,7 +236,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
         return did;
     }
 
-    private void changeOldRequestsDeviceIds(Config.DID deviceId) {
+    private void changeOldRequestsDeviceIds() {
         if (this.tasks == null) {
             this.tasks = new Tasks("deviceId", L);
         }
@@ -248,7 +245,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
             public Object call() {
                 // put device_id parameter into existing requests
                 L.i("[ModuleDeviceIdCore] changeOldRequestsDeviceIds, Adding device_id to previous requests");
-                boolean success = transformRequests(internalConfig, deviceId.id);
+                boolean success = transformRequests();
                 if (success) {
                     L.i("[ModuleDeviceIdCore] changeOldRequestsDeviceIds, First transform: success");
                 } else {
@@ -256,7 +253,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
                 }
 
                 // do it second time in case new requests were added during first attempt
-                success = transformRequests(internalConfig, deviceId.id);
+                success = transformRequests();
                 if (!success) {
                     L.e("[ModuleDeviceIdCore] changeOldRequestsDeviceIds, Failed to put device_id into existing requests, following behaviour for unhandled requests is undefined.");
                 } else {
