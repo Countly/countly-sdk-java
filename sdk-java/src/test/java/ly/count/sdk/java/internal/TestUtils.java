@@ -465,4 +465,12 @@ public class TestUtils {
         Params params = Device.dev.buildMetrics();
         Assert.assertEquals(params.get("metrics"), metrics);
     }
+
+    static class AtomicString {
+        String value;
+
+        public AtomicString(String value) {
+            this.value = value;
+        }
+    }
 }

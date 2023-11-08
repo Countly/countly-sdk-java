@@ -50,19 +50,41 @@ public class ModuleDeviceIdTests {
      */
     @Test
     public void changeWithMerge() {
-        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(false);
+        TestUtils.AtomicString deviceID = new TestUtils.AtomicString(TestUtils.DEVICE_ID);
+        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(deviceID, false, DeviceIdType.SDK_GENERATED);
         Countly.instance().init(TestUtils.getBaseConfig(null)); // to create sdk generated device id
         Assert.assertTrue(Countly.instance().deviceId().getID().startsWith("CLY_"));
         Assert.assertEquals(DeviceIdType.SDK_GENERATED, Countly.instance().deviceId().getType());
         Assert.assertEquals(0, callCount.get());
 
-        Countly.instance().deviceId().changeWithMerge(TestUtils.DEVICE_ID);
+        Countly.instance().deviceId().changeWithMerge(deviceID.value);
         Assert.assertEquals(1, callCount.get());
+
+        deviceID.value += "1";
+        Countly.instance().deviceId().changeWithMerge(deviceID.value);
+        Assert.assertEquals(2, callCount.get());
+    }
+
+    @Test
+    public void changeWithoutMerge() {
+        TestUtils.AtomicString deviceID = new TestUtils.AtomicString(TestUtils.keysValues[0]);
+        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(deviceID, true, DeviceIdType.DEVELOPER_SUPPLIED);
+        Countly.instance().init(TestUtils.getBaseConfig()); // to create sdk generated device id
+        Assert.assertEquals(TestUtils.DEVICE_ID, Countly.instance().deviceId().getID());
+        Assert.assertEquals(DeviceIdType.DEVELOPER_SUPPLIED, Countly.instance().deviceId().getType());
+        Assert.assertEquals(0, callCount.get());
+
+        Countly.instance().deviceId().changeWithoutMerge(deviceID.value);
+        Assert.assertEquals(1, callCount.get());
+
+        deviceID.value += "1";
+        Countly.instance().deviceId().changeWithoutMerge(deviceID.value);
+        Assert.assertEquals(2, callCount.get());
     }
 
     @Test
     public void changeWithMerge_nullDeviceId() {
-        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(false);
+        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(null, false, DeviceIdType.SDK_GENERATED);
         Countly.instance().init(TestUtils.getBaseConfig(null)); // to create sdk generated device id
         Assert.assertTrue(Countly.instance().deviceId().getID().startsWith("CLY_"));
         Assert.assertEquals(DeviceIdType.SDK_GENERATED, Countly.instance().deviceId().getType());
@@ -74,7 +96,7 @@ public class ModuleDeviceIdTests {
 
     @Test
     public void changeWithMerge_emptyDeviceId() {
-        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(false);
+        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(new TestUtils.AtomicString(""), false, DeviceIdType.SDK_GENERATED);
         Countly.instance().init(TestUtils.getBaseConfig(null)); // to create sdk generated device id
         Assert.assertTrue(Countly.instance().deviceId().getID().startsWith("CLY_"));
         Assert.assertEquals(DeviceIdType.SDK_GENERATED, Countly.instance().deviceId().getType());
@@ -86,11 +108,14 @@ public class ModuleDeviceIdTests {
 
     @Test
     public void changeWithMerge_sameDeviceId() {
-        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(false);
+        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(new TestUtils.AtomicString(TestUtils.DEVICE_ID), false, DeviceIdType.SDK_GENERATED);
         Countly.instance().init(TestUtils.getBaseConfig(null)); // to create sdk generated device id
         Assert.assertTrue(Countly.instance().deviceId().getID().startsWith("CLY_"));
         Assert.assertEquals(DeviceIdType.SDK_GENERATED, Countly.instance().deviceId().getType());
         Assert.assertEquals(0, callCount.get());
+
+        Countly.instance().deviceId().changeWithMerge(TestUtils.DEVICE_ID);
+        Assert.assertEquals(1, callCount.get());
 
         Countly.instance().deviceId().changeWithMerge(TestUtils.DEVICE_ID);
         Assert.assertEquals(1, callCount.get());
@@ -110,7 +135,7 @@ public class ModuleDeviceIdTests {
         Assert.assertEquals(DeviceIdType.DEVELOPER_SUPPLIED, Countly.instance().deviceId().getType());
     }
 
-    private AtomicInteger initDummyModuleForDeviceIdChangedCallback(boolean withoutMerge) {
+    private AtomicInteger initDummyModuleForDeviceIdChangedCallback(TestUtils.AtomicString deviceId, boolean withoutMerge, DeviceIdType type) {
         AtomicInteger callCount = new AtomicInteger(0);
         SDKCore.testDummyModule = new ModuleBase() {
             @Override
@@ -118,8 +143,8 @@ public class ModuleDeviceIdTests {
                 super.deviceIdChanged(oldDeviceId, withMerge);
                 callCount.incrementAndGet();
                 Assert.assertEquals(!withoutMerge, withMerge);
-                Assert.assertEquals(TestUtils.DEVICE_ID, internalConfig.getDeviceId().id);
-                Assert.assertEquals(DeviceIdType.DEVELOPER_SUPPLIED.index, internalConfig.getDeviceIdStrategy());
+                Assert.assertEquals(deviceId.value, internalConfig.getDeviceId().id);
+                Assert.assertEquals(type.index, internalConfig.getDeviceIdStrategy());
             }
         };
 
