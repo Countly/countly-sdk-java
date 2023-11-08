@@ -223,7 +223,7 @@ public class TestUtils {
         //stream all files from target folder and filter only request files and sort them by last modified
         return Stream.of(files)
             .filter(file -> file.getName().startsWith("[CLY]_request_"))
-            .sorted(Comparator.comparing(file -> Long.parseLong(file.getName().split("_")[3])))
+            .sorted(Comparator.comparing(file -> Long.parseLong(file.getName().split("_")[2])))
             .toArray(File[]::new);
     }
 

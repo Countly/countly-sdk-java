@@ -189,7 +189,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
                 L.d("[ModuleDeviceIdCore] changeDeviceIdInternal, Ending session because device id was unset from [" + old.id + "]");
                 session.end(null, null, old.id);
             }
-            changeOldRequestsDeviceIds();
+            addDeviceIdToOldRequestsIfNotExist();
         }
 
         SDKCore.instance.notifyModulesDeviceIdChanged(old.id, withMerge);
@@ -236,7 +236,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
         return did;
     }
 
-    private void changeOldRequestsDeviceIds() {
+    private void addDeviceIdToOldRequestsIfNotExist() {
         if (this.tasks == null) {
             this.tasks = new Tasks("deviceId", L);
         }
@@ -244,20 +244,20 @@ public class ModuleDeviceIdCore extends ModuleBase {
             @Override
             public Object call() {
                 // put device_id parameter into existing requests
-                L.i("[ModuleDeviceIdCore] changeOldRequestsDeviceIds, Adding device_id to previous requests");
+                L.i("[ModuleDeviceIdCore] addDeviceIdToOldRequestsIfNotExist, Adding device_id to previous requests");
                 boolean success = transformRequests();
                 if (success) {
-                    L.i("[ModuleDeviceIdCore] changeOldRequestsDeviceIds, First transform: success");
+                    L.i("[ModuleDeviceIdCore] addDeviceIdToOldRequestsIfNotExist, First transform: success");
                 } else {
-                    L.w("[ModuleDeviceIdCore] changeOldRequestsDeviceIds, First transform: failure");
+                    L.w("[ModuleDeviceIdCore] addDeviceIdToOldRequestsIfNotExist, First transform: failure");
                 }
 
                 // do it second time in case new requests were added during first attempt
                 success = transformRequests();
                 if (!success) {
-                    L.e("[ModuleDeviceIdCore] changeOldRequestsDeviceIds, Failed to put device_id into existing requests, following behaviour for unhandled requests is undefined.");
+                    L.e("[ModuleDeviceIdCore] addDeviceIdToOldRequestsIfNotExist, Failed to put device_id into existing requests, following behaviour for unhandled requests is undefined.");
                 } else {
-                    L.i("[ModuleDeviceIdCore] changeOldRequestsDeviceIds, Second transform: success");
+                    L.i("[ModuleDeviceIdCore] addDeviceIdToOldRequestsIfNotExist, Second transform: success");
                 }
                 return null;
             }
