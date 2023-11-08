@@ -15,8 +15,6 @@ import ly.count.sdk.java.UserEditor;
  */
 
 public class UserImpl extends User implements Storable {
-    // private static final Log.Module L = Log.module("UserImpl");
-
     private Log L = null;
 
     String id;
