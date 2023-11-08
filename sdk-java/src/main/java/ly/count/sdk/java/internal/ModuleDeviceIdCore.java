@@ -254,9 +254,13 @@ public class ModuleDeviceIdCore extends ModuleBase {
             return;
         }
 
-        internalConfig.setDeviceId(new Config.DID(Config.DID.STRATEGY_CUSTOM, id));
         internalConfig.storageProvider.setDeviceIdType(DeviceIdType.DEVELOPER_SUPPLIED.name());
         internalConfig.storageProvider.setDeviceID(id);
+        if (!withMerge) {
+            config.removeDeviceId(old);
+            SDKCore.instance.notifyModulesDeviceIdChanged(null, false);
+        }
+        internalConfig.setDeviceId(new Config.DID(Config.DID.STRATEGY_CUSTOM, id));
         SDKCore.instance.notifyModulesDeviceIdChanged(old.id, withMerge);
     }
 
