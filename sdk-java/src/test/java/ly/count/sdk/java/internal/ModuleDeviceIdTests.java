@@ -66,7 +66,7 @@ public class ModuleDeviceIdTests {
         deviceID.value += "1";
         Countly.instance().deviceId().changeWithMerge(deviceID.value);
         Assert.assertEquals(2, callCount.get());
-        validateDeviceIdChangeRequest(new String[] { oldDeviceId, TestUtils.DEVICE_ID }, new String[] { TestUtils.DEVICE_ID }, 2);
+        validateDeviceIdChangeRequest(new String[] { oldDeviceId, TestUtils.DEVICE_ID }, new String[] { TestUtils.DEVICE_ID, TestUtils.DEVICE_ID + "1" }, 2);
     }
 
     @Test
@@ -84,7 +84,7 @@ public class ModuleDeviceIdTests {
         deviceID.value += "1";
         Countly.instance().deviceId().changeWithoutMerge(deviceID.value);
         Assert.assertEquals(2, callCount.get());
-        validateDeviceIdChangeRequest(new String[] { TestUtils.DEVICE_ID, TestUtils.keysValues[0] }, new String[] { TestUtils.DEVICE_ID }, 2);
+        validateDeviceIdChangeRequest(new String[] { TestUtils.DEVICE_ID, TestUtils.keysValues[0] }, new String[] { TestUtils.keysValues[0], TestUtils.keysValues[0] + "1" }, 2);
     }
 
     @Test
