@@ -364,10 +364,6 @@ public class Utils {
         }
     }
 
-    public static ByteArrayInputStream getByteArrayInputStream(final byte[] bytes) {
-        return new ByteArrayInputStream(bytes);
-    }
-
     /**
      * Check whether given string is a valid URL or not
      *

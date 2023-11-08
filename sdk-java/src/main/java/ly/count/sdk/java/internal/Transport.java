@@ -1,6 +1,7 @@
 package ly.count.sdk.java.internal;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -398,12 +399,15 @@ public class Transport implements X509TrustManager {
                     }
 
                     try {
-                        PublicKey k = getPublicKeyFromCertificate(data);
+                        X509EncodedKeySpec spec = new X509EncodedKeySpec(data);
+                        KeyFactory kf = KeyFactory.getInstance("RSA");
+                        PublicKey k = kf.generatePublic(spec);
+                        
                         keyPins.add(k.getEncoded());
                     } catch (InvalidKeySpecException e) {
                         L.d("[network] Certificate in instead of public key it seems " + e);
                         CertificateFactory cf = CertificateFactory.getInstance("X.509");
-                        Certificate cert = cf.generateCertificate(Utils.getByteArrayInputStream(data));
+                        Certificate cert = cf.generateCertificate(new ByteArrayInputStream(data));
                         keyPins.add(cert.getPublicKey().getEncoded());
                     }
                 } catch (NoSuchAlgorithmException e) {
@@ -425,7 +429,7 @@ public class Transport implements X509TrustManager {
                 }
 
                 CertificateFactory cf = CertificateFactory.getInstance("X.509");
-                Certificate certificate = cf.generateCertificate(Utils.getByteArrayInputStream(data));
+                Certificate certificate = cf.generateCertificate(new ByteArrayInputStream(data));
                 certPins.add(certificate.getEncoded());
             }
         }
@@ -447,17 +451,6 @@ public class Transport implements X509TrustManager {
         } catch (Throwable t) {
             throw new CertificateException(t);
         }
-    }
-
-    /*
-     * For not creating object inside loop
-     */
-    private PublicKey getPublicKeyFromCertificate(final byte[] data) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        X509EncodedKeySpec spec = new X509EncodedKeySpec(data);
-        KeyFactory kf = KeyFactory.getInstance("RSA");
-        PublicKey k = kf.generatePublic(spec);
-
-        return k;
     }
 
     @Override
