@@ -349,12 +349,16 @@ public class TestUtils {
     }
 
     public static void validateRequiredParams(Map<String, String> params) {
+        validateRequiredParams(params, Countly.instance().deviceId().getID());
+    }
+
+    public static void validateRequiredParams(Map<String, String> params, String deviceId) {
         int hour = Integer.parseInt(params.get("hour"));
         int dow = Integer.parseInt(params.get("dow"));
         int tz = Integer.parseInt(params.get("tz"));
 
         validateSdkIdentityParams(params);
-        Assert.assertEquals(SDKCore.instance.config.getDeviceId().id, params.get("device_id"));
+        Assert.assertEquals(deviceId, params.get("device_id"));
         Assert.assertEquals(SERVER_APP_KEY, params.get("app_key"));
         Assert.assertEquals(APPLICATION_VERSION, params.get("av"));
         Assert.assertTrue(Long.parseLong(params.get("timestamp")) > 0);

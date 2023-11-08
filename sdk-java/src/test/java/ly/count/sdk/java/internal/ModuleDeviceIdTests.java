@@ -66,7 +66,7 @@ public class ModuleDeviceIdTests {
         deviceID.value += "1";
         Countly.instance().deviceId().changeWithMerge(deviceID.value);
         Assert.assertEquals(2, callCount.get());
-        validateDeviceIdChangeRequest(new String[] { oldDeviceId, TestUtils.DEVICE_ID }, 2);
+        validateDeviceIdChangeRequest(new String[] { oldDeviceId, TestUtils.DEVICE_ID }, new String[] { TestUtils.DEVICE_ID }, 2);
     }
 
     @Test
@@ -84,7 +84,7 @@ public class ModuleDeviceIdTests {
         deviceID.value += "1";
         Countly.instance().deviceId().changeWithoutMerge(deviceID.value);
         Assert.assertEquals(2, callCount.get());
-        validateDeviceIdChangeRequest(new String[] { TestUtils.DEVICE_ID, TestUtils.keysValues[0] }, 2);
+        validateDeviceIdChangeRequest(new String[] { TestUtils.DEVICE_ID, TestUtils.keysValues[0] }, new String[] { TestUtils.DEVICE_ID }, 2);
     }
 
     @Test
@@ -98,7 +98,7 @@ public class ModuleDeviceIdTests {
         Countly.instance().deviceId().changeWithMerge(null);
         Assert.assertEquals(0, callCount.get());
 
-        validateDeviceIdChangeRequest(null, 0);
+        validateDeviceIdChangeRequest(null, null, 0);
     }
 
     @Test
@@ -111,7 +111,7 @@ public class ModuleDeviceIdTests {
 
         Countly.instance().deviceId().changeWithMerge("");
         Assert.assertEquals(0, callCount.get());
-        validateDeviceIdChangeRequest(null, 0);
+        validateDeviceIdChangeRequest(null, null, 0);
     }
 
     @Test
@@ -129,7 +129,7 @@ public class ModuleDeviceIdTests {
         Countly.instance().deviceId().changeWithMerge(TestUtils.DEVICE_ID);
         Assert.assertEquals(1, callCount.get());
 
-        validateDeviceIdChangeRequest(new String[] { oldDeviceId }, 1);
+        validateDeviceIdChangeRequest(new String[] { oldDeviceId }, new String[] { TestUtils.DEVICE_ID }, 1);
     }
 
     @Test
@@ -159,7 +159,7 @@ public class ModuleDeviceIdTests {
         Assert.assertEquals(1, callCount.get());
     }
 
-    private void validateDeviceIdChangeRequest(String[] oldDeviceIds, final int rqSize) {
+    private void validateDeviceIdChangeRequest(String[] oldDeviceIds, String[] deviceIds, final int rqSize) {
         Map<String, String>[] requests = TestUtils.getCurrentRQ();
         Assert.assertEquals(rqSize, TestUtils.getCurrentRQ().length);
         if (rqSize < 1) {
@@ -167,7 +167,7 @@ public class ModuleDeviceIdTests {
         }
 
         for (int i = 0; i < rqSize; i++) {
-            //TestUtils.validateRequiredParams(requests[i]);
+            TestUtils.validateRequiredParams(requests[i], deviceIds[i]);
             Assert.assertEquals(oldDeviceIds[i], requests[i].get("old_device_id"));
         }
     }
