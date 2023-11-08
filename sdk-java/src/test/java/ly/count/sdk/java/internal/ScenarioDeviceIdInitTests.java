@@ -68,9 +68,7 @@ public class ScenarioDeviceIdInitTests {
         String initialDId = Countly.instance().deviceId().getID();
         assertIsSDKGeneratedID(initialDId);
         Assert.assertEquals(DeviceIdType.SDK_GENERATED, Countly.instance().deviceId().getType());
-
-        Countly.instance().login("test");
-
+        
         //setup followup state
         Countly.instance().stop();
         Countly.instance().init(TestUtils.getBaseConfig(null));
