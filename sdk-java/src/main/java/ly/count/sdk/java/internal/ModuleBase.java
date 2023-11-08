@@ -131,6 +131,9 @@ public abstract class ModuleBase {
 
     /**
      * Called when the device id is changed.
+     *
+     * @param oldDeviceId old device id
+     * @param withMerge if the device id change is with merge or not
      */
     protected void deviceIdChanged(String oldDeviceId, boolean withMerge) {
 

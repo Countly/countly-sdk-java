@@ -103,7 +103,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
             // device id changed
             if (session != null && session.isActive()) {
                 // end previous session
-                L.d("[ModuleDeviceIdCore] Ending session because device id was changed from [" + oldDeviceId + "]");
+                L.d("[ModuleDeviceIdCore] deviceIdChanged, Ending session because device id was changed from [" + oldDeviceId + "]");
                 session.end(null, null, oldDeviceId);
             }
 
@@ -123,7 +123,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
         } else if (deviceId == null && oldDeviceId != null) {
             // device id is unset
             if (session != null) {
-                L.d("[ModuleDeviceIdCore] Ending session because device id was unset from [" + oldDeviceId + "]");
+                L.d("[ModuleDeviceIdCore] deviceIdChanged, Ending session because device id was unset from [" + oldDeviceId + "]");
                 session.end(null, null, oldDeviceId);
             }
 
@@ -137,20 +137,20 @@ public class ModuleDeviceIdCore extends ModuleBase {
                 @Override
                 public Object call() {
                     // put device_id parameter into existing requests
-                    L.i("[ModuleDeviceIdCore] Adding device_id to previous requests");
+                    L.i("[ModuleDeviceIdCore] deviceIdChanged, Adding device_id to previous requests");
                     boolean success = transformRequests(internalConfig, deviceId.id);
                     if (success) {
-                        L.i("[ModuleDeviceIdCore] First transform: success");
+                        L.i("[ModuleDeviceIdCore] deviceIdChanged, First transform: success");
                     } else {
-                        L.w("[ModuleDeviceIdCore] First transform: failure");
+                        L.w("[ModuleDeviceIdCore] deviceIdChanged, First transform: failure");
                     }
 
                     // do it second time in case new requests were added during first attempt
                     success = transformRequests(internalConfig, deviceId.id);
                     if (!success) {
-                        L.e("[ModuleDeviceIdCore] Failed to put device_id into existing requests, following behaviour for unhandled requests is undefined.");
+                        L.e("[ModuleDeviceIdCore] deviceIdChanged, Failed to put device_id into existing requests, following behaviour for unhandled requests is undefined.");
                     } else {
-                        L.i("[ModuleDeviceIdCore] Second transform: success");
+                        L.i("[ModuleDeviceIdCore] deviceIdChanged, Second transform: success");
                     }
                     sendDIDSignal(internalConfig, deviceId);
                     return null;
@@ -245,12 +245,12 @@ public class ModuleDeviceIdCore extends ModuleBase {
      */
     protected void changeDeviceIdInternal(InternalConfig config, String id, boolean withMerge) {
         if (Utils.isEmptyOrNull(id)) {
-            L.w("[ModuleDeviceIdCore] changeDeviceId, Empty id passed to changeDeviceId method");
+            L.d("[ModuleDeviceIdCore] changeDeviceIdInternal, Empty id passed to changeDeviceId method");
             return;
         }
         final Config.DID old = config.getDeviceId();
         if (old.id.equals(id)) {
-            L.w("[ModuleDeviceIdCore] changeDeviceId, Same id passed to changeDeviceId method, ignoring");
+            L.d("[ModuleDeviceIdCore] changeDeviceIdInternal, Same id passed to changeDeviceId method, ignoring");
             return;
         }
 
@@ -327,6 +327,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
          */
         public String getID() {
             synchronized (Countly.instance()) {
+                L.i("[DeviceId] getID, Getting device id");
                 return getIDInternal();
             }
         }
@@ -338,6 +339,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
          */
         public DeviceIdType getType() {
             synchronized (Countly.instance()) {
+                L.i("[DeviceId] getType, Getting device id type");
                 return getTypeInternal();
             }
         }
@@ -349,6 +351,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
          */
         public void changeWithMerge(String id) {
             synchronized (Countly.instance()) {
+                L.i("[DeviceId] changeWithMerge, Changing device id with merge to [" + id + "]");
                 changeDeviceIdInternal(internalConfig, id, true);
             }
         }
@@ -360,6 +363,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
          */
         public void changeWithoutMerge(String id) {
             synchronized (Countly.instance()) {
+                L.i("[DeviceId] changeWithMerge, Changing device id without merge to [" + id + "]");
                 changeDeviceIdInternal(internalConfig, id, false);
             }
         }
