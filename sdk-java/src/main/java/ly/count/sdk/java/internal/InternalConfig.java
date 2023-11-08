@@ -90,16 +90,11 @@ public class InternalConfig extends Config {
     }
 
     public DID getDeviceId() {
-        return getDeviceId(DID.REALM_DID);
-    }
-
-    public DID getDeviceId(int realm) {
-        for (DID DID : dids) {
-            if (DID.realm == realm) {
-                return DID;
-            }
+        if (dids.isEmpty()) {
+            return null;
+        } else {
+            return dids.get(0);
         }
-        return null;
     }
 
     public DID setDeviceId(DID id) {
@@ -108,12 +103,7 @@ public class InternalConfig extends Config {
                 configLog.e("DID cannot be null");
             }
         }
-        DID old = null;
-        for (DID did : dids) {
-            if (did.realm == id.realm) {
-                old = did;
-            }
-        }
+        DID old = getDeviceId();
         if (old != null) {
             dids.remove(old);
         }

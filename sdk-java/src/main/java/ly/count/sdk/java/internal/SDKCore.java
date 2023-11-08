@@ -420,7 +420,7 @@ public class SDKCore {
             return;
         }
 
-        config.setDeviceId(new Config.DID(Config.DID.REALM_DID, DeviceIdType.toInt(deviceIdType), deviceId));
+        config.setDeviceId(new Config.DID(DeviceIdType.toInt(deviceIdType), deviceId));
     }
 
     public void init(final InternalConfig givenConfig) {
@@ -588,7 +588,7 @@ public class SDKCore {
 
     public void onDeviceId(InternalConfig config, Config.DID id, Config.DID old) {
         L.d("onDeviceId " + id + ", old " + old);
-        if (id != null && (!id.equals(old) || !id.equals(config.getDeviceId(id.realm)))) {
+        if (id != null && (!id.equals(old) || !id.equals(config.getDeviceId()))) {
             sdkStorage.setDeviceID(id.id);
             sdkStorage.setDeviceIdType(DeviceIdType.fromInt(id.strategy, L).name());
             config.setDeviceId(id);
@@ -603,7 +603,7 @@ public class SDKCore {
             module.onDeviceId(config, id, old);
         }
 
-        if (id != null && id.realm == Config.DID.REALM_DID) {
+        if (id != null) {
             user.id = id.id;
             L.d("[SDKCore] 5");
         }
