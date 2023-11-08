@@ -1,8 +1,9 @@
 package ly.count.sdk.java.internal;
 
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +19,6 @@ import static ly.count.sdk.java.internal.SDKStorage.EVENT_QUEUE_FILE_NAME;
 import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_PREFIX;
 import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_SEPARATOR;
 import static ly.count.sdk.java.internal.TestUtils.validateEvent;
-import static ly.count.sdk.java.internal.TestUtils.validateEQSize;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -241,7 +241,7 @@ public class EventQueueTests {
             file.delete();
             return;
         }
-        FileWriter writer = new FileWriter(file);
+        BufferedWriter writer = Files.newBufferedWriter(file.toPath());
         writer.write(fileContent);
         writer.close();
     }
