@@ -593,7 +593,6 @@ public class SDKCore {
         modules.forEach((feature, module) -> module.deviceIdChanged(old, withMerge));
         if (id != null) {
             user.id = id.id;
-            L.d("[SDKCore] 5");
         }
     }
 
