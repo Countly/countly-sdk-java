@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.TreeMap;
+import javax.annotation.Nullable;
 import ly.count.sdk.java.Config;
 
 public class SDKCore {
@@ -385,8 +386,11 @@ public class SDKCore {
         return module(ModuleFeedback.class).feedbackInterface;
     }
 
-    public ModuleRemoteConfig.RemoteConfig remoteConfig() {
+    public ModuleDeviceIdCore.DeviceId deviceId() {
+        return module(ModuleDeviceIdCore.class).deviceIdInterface;
+    }
 
+    public ModuleRemoteConfig.RemoteConfig remoteConfig() {
         if (!hasConsentForFeature(CoreFeature.RemoteConfig)) {
             L.v("[SDKCore] remoteConfig, RemoteConfig feature has no consent, returning null");
             return null;
@@ -409,31 +413,24 @@ public class SDKCore {
         return null;
     }
 
-    protected InternalConfig prepareConfig(InternalConfig config) {
-        InternalConfig loaded = null;
-        try {
-            loaded = Storage.read(config, new InternalConfig());
-        } catch (IllegalArgumentException e) {
-            L.e("[SDKCore] Cannot happen" + e);
+    protected void setDeviceIdFromStorageIfExist(InternalConfig config) {
+        String deviceId = sdkStorage.getDeviceID();
+        String deviceIdType = sdkStorage.getDeviceIdType();
+
+        if (Utils.isEmptyOrNull(deviceId) || Utils.isEmptyOrNull(deviceIdType)) {
+            return;
         }
 
-        if (loaded == null) {
-            return config;
-        } else {
-            loaded.setFrom(config);
-            return loaded;
-        }
+        config.setDeviceId(new Config.DID(DeviceIdType.toInt(deviceIdType), deviceId));
     }
 
     public void init(final InternalConfig givenConfig) {
+        config = givenConfig;
         L = givenConfig.getLogger();
         L.i("[SDKCore] Initializing Countly");
 
-        givenConfig.sdk = this;
-        sdkStorage.init(givenConfig);
-        givenConfig.storageProvider = sdkStorage;
-        config = prepareConfig(givenConfig);
-        config.setLogger(L);
+        config.sdk = this;
+        sdkStorage.init(config);
         config.storageProvider = sdkStorage;
 
         if (config.immediateRequestGenerator == null) {
@@ -450,13 +447,17 @@ public class SDKCore {
         //setup and perform migrations
         MigrationHelper migrationHelper = new MigrationHelper(L);
         migrationHelper.setupMigrations(config.storageProvider);
-        migrationHelper.applyMigrations(new HashMap<>());
+        Map<String, Object> migrationParams = new HashMap<>();
+        migrationParams.put("sdk_path", config.getSdkStorageRootDirectory());
+        migrationHelper.applyMigrations(migrationParams);
+
+        setDeviceIdFromStorageIfExist(config);
 
         requestQueueMemory = new ArrayDeque<>(config.getRequestQueueMaxSize());
         // ModuleSessions is always enabled, even without consent
-        int consents = givenConfig.getFeatures1() | CoreFeature.Sessions.getIndex();
+        int consents = config.getFeatures1() | CoreFeature.Sessions.getIndex();
         // build modules
-        buildModules(givenConfig, consents);
+        buildModules(config, consents);
 
         final List<Integer> failed = new ArrayList<>();
 
@@ -474,14 +475,14 @@ public class SDKCore {
             modules.remove(feature);
         }
 
-        recover(givenConfig);
+        recover(config);
 
         if (config.isDefaultNetworking()) {
             networking = new DefaultNetworking();
 
             if (config.isBackendModeEnabled()) {
                 //Backend mode is enabled, we will use memory only request queue.
-                networking.init(givenConfig, new IStorageForRequestQueue() {
+                networking.init(config, new IStorageForRequestQueue() {
                     @Override
                     public Request getNextRequest() {
                         synchronized (SDKCore.instance.lockBRQStorage) {
@@ -509,37 +510,35 @@ public class SDKCore {
                 });
             } else {
                 // Backend mode isn't enabled, we use persistent file storage.
-                networking.init(givenConfig, new IStorageForRequestQueue() {
+                networking.init(config, new IStorageForRequestQueue() {
                     @Override
                     public Request getNextRequest() {
-                        return Storage.readOne(givenConfig, new Request(0L), true);
+                        return Storage.readOne(config, new Request(0L), true);
                     }
 
                     @Override
                     public Boolean removeRequest(Request request) {
-                        return Storage.remove(givenConfig, request);
+                        return Storage.remove(config, request);
                     }
 
                     @Override
                     public Integer remaningRequests() {
-                        return Storage.list(givenConfig, Request.getStoragePrefix()).size() - 1;
+                        return Storage.list(config, Request.getStoragePrefix()).size() - 1;
                     }
                 });
             }
         }
 
         try {
-            user = Storage.read(givenConfig, new UserImpl(givenConfig));
+            user = Storage.read(config, new UserImpl(config));
             if (user == null) {
-                user = new UserImpl(givenConfig);
+                user = new UserImpl(config);
             }
         } catch (Throwable e) {
             L.e("[SDKCore] Cannot happen" + e);
-            user = new UserImpl(givenConfig);
+            user = new UserImpl(config);
         }
 
-        config.sdk = this;
-        config.storageProvider = this.sdkStorage;
         initFinished(config);
     }
 
@@ -588,37 +587,21 @@ public class SDKCore {
         }
     }
 
-    public void onDeviceId(InternalConfig config, Config.DID id, Config.DID old) {
-        L.d("onDeviceId " + id + ", old " + old);
-        if (id != null && (!id.equals(old) || !id.equals(config.getDeviceId(id.realm)))) {
-            config.setDeviceId(id);
-            Storage.push(config, instance.config);
-        } else if (id == null && old != null) {
-            if (config.removeDeviceId(old)) {
-                Storage.push(config, config);
-            }
-        }
-
-        for (ModuleBase module : modules.values()) {
-            module.onDeviceId(config, id, old);
-        }
-
-        if (id != null && id.realm == Config.DID.REALM_DID) {
+    public void notifyModulesDeviceIdChanged(@Nullable String old, final boolean withMerge) {
+        L.d("[SDKCore] deviceIdChanged, newDeviceId:[" + config.getDeviceId() + "], oldDeviceId:[ " + old + "]");
+        Config.DID id = config.getDeviceId();
+        modules.forEach((feature, module) -> module.deviceIdChanged(old, withMerge));
+        if (id != null) {
             user.id = id.id;
-            L.d("[SDKCore] 5");
         }
     }
 
     public void login(String id) {
-        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).login(config, id);
+        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).login(id);
     }
 
     public void logout() {
-        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).logout(config);
-    }
-
-    public void changeDeviceIdWithoutMerge(InternalConfig config, String id) {
-        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).changeDeviceId(config, id, false);
+        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).logout();
     }
 
     /**
@@ -626,9 +609,21 @@ public class SDKCore {
      *
      * @param config to configure
      * @param id to change to
+     * @deprecated use {@link ModuleDeviceIdCore.DeviceId#changeWithoutMerge(String)}
+     */
+    public void changeDeviceIdWithoutMerge(InternalConfig config, String id) {
+        deviceId().changeWithoutMerge(id);
+    }
+
+    /**
+     * Change device ID
+     *
+     * @param config to configure
+     * @param id to change to
+     * @deprecated use {@link ModuleDeviceIdCore.DeviceId#changeWithMerge(String)} instead
      */
     public void changeDeviceIdWithMerge(InternalConfig config, String id) {
-        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).changeDeviceId(config, id, true);
+        deviceId().changeWithMerge(id);
     }
 
     public static boolean enabled(int feature) {
@@ -706,7 +701,7 @@ public class SDKCore {
      * Core instance config
      */
 
-    public void onSignal(InternalConfig config, int id, Byteable param1, Byteable param2) {
+    public void onSignal(InternalConfig config, int id) {
         if (id == Signal.DID.getIndex()) {
             networking.check(config);
         }
@@ -731,7 +726,7 @@ public class SDKCore {
 
         Request request = ModuleRequests.nonSessionRequest(config);
         ModuleCrash.putCrashIntoParams(crash, request.params);
-      
+
         ModuleRequests.addRequiredParametersToParams(config, request.params);
         ModuleRequests.addRequiredTimeParametersToParams(request.params);
 

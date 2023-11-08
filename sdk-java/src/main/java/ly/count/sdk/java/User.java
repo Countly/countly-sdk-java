@@ -36,13 +36,6 @@ public abstract class User {
     }
 
     /**
-     * Current device id
-     *
-     * @return id string if device id available, null otherwise
-     */
-    public abstract String id();
-
-    /**
      * Current user name
      *
      * @return name string if it was set previously, null otherwise

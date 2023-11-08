@@ -7,13 +7,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class ModuleRemoteConfig extends ModuleBase {
-    boolean updateRemoteConfigAfterIdChange = false;
     RemoteConfig remoteConfigInterface = null;
     //if set to true, it will automatically download remote configs on module startup
     boolean automaticDownloadTriggersEnabled;
@@ -248,17 +246,6 @@ public class ModuleRemoteConfig extends ModuleBase {
         internalConfig.storageProvider.setRemoteConfigValues(rcvs.values);
     }
 
-    void clearAndDownloadAfterIdChange(final boolean valuesShouldBeCacheCleared) {
-        L.v("[RemoteConfig] Clearing remote config values and preparing to download after ID update, " + valuesShouldBeCacheCleared);
-
-        if (valuesShouldBeCacheCleared) {
-            cacheOrClearRCValuesIfNeeded();
-        }
-        if (automaticDownloadTriggersEnabled) {
-            updateRemoteConfigAfterIdChange = true;
-        }
-    }
-
     private void cacheOrClearRCValuesIfNeeded() {
         L.v("[ModuleRemoteConfig] cacheOrClearRCValuesIfNeeded, cache-clearing values");
 
@@ -289,11 +276,15 @@ public class ModuleRemoteConfig extends ModuleBase {
     }
 
     @Override
-    public void onDeviceId(final InternalConfig config, Config.DID deviceId, Config.DID oldDeviceId) {
-        L.v("[ModuleRemoteConfig] onDeviceId, Device ID changed will update values: [" + updateRemoteConfigAfterIdChange + "]");
+    protected void deviceIdChanged(String oldDeviceId, boolean withMerge) {
+        L.v("[ModuleRemoteConfig] deviceIdChanged, Clearing remote config values and preparing to download after ID update, " + !withMerge);
+        super.deviceIdChanged(oldDeviceId, withMerge);
 
-        if (updateRemoteConfigAfterIdChange) {
-            updateRemoteConfigAfterIdChange = false;
+        if (!withMerge) {
+            cacheOrClearRCValuesIfNeeded();
+        }
+
+        if (automaticDownloadTriggersEnabled) {
             rcAutomaticDownloadTrigger(true);
         }
     }

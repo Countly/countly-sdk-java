@@ -64,7 +64,7 @@ public class ModuleSessions extends ModuleBase {
      */
     public void onDeviceId(final InternalConfig config, final Config.DID deviceId, final Config.DID oldDeviceId) {
         L.d("[ModuleSessions] onDeviceId " + deviceId + ", old " + oldDeviceId);
-        if (deviceId != null && oldDeviceId != null && deviceId.realm == Config.DID.REALM_DID && !deviceId.equals(oldDeviceId) && getSession() == null) {
+        if (deviceId != null && oldDeviceId != null && !deviceId.equals(oldDeviceId) && getSession() == null) {
             session(config, null).begin();
         }
     }
