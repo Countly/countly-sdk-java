@@ -49,7 +49,7 @@ public class SDKCore {
     }
 
     protected Log L = null;
-    private static ModuleBase testDummyModule = null;//set during testing when trying to check the SDK's lifecycle
+    protected static ModuleBase testDummyModule = null;//set during testing when trying to check the SDK's lifecycle
 
     protected static void registerDefaultModuleMappings() {
         moduleMappings.put(CoreFeature.DeviceId.getIndex(), ModuleDeviceIdCore.class);

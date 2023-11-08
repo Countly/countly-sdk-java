@@ -42,4 +42,12 @@ public class ModuleDeviceIdTests {
         Countly.instance().init(TestUtils.getBaseConfig());
         Assert.assertFalse(Countly.instance().deviceId().getID().contains("CLY_"));
     }
+
+    /**
+     * Device ID acquisition process
+     */
+    @Test
+    public void changeWithMerge() {
+
+    }
 }
