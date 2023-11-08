@@ -90,10 +90,10 @@ public class InternalConfig extends Config {
     }
 
     public DID getDeviceId() {
-        if (dids.isEmpty()) {
-            return null;
-        } else {
+        if (!dids.isEmpty()) {
             return dids.get(0);
+        } else {
+            return null;
         }
     }
 
@@ -113,6 +113,15 @@ public class InternalConfig extends Config {
 
     public boolean removeDeviceId(DID did) {
         return this.dids.remove(did);
+    }
+
+    public boolean removeDeviceId(String id) {
+        for (DID did : dids) {
+            if (did.id.equals(id)) {
+                return this.dids.remove(did);
+            }
+        }
+        return false;
     }
 
     public int getFeatures1() {

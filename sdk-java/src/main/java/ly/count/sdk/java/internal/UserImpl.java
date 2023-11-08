@@ -15,11 +15,19 @@ import ly.count.sdk.java.UserEditor;
  */
 
 public class UserImpl extends User implements Storable {
-    // private static final Log.Module L = Log.module("UserImpl");
-
     private Log L = null;
 
-    String id, name, username, email, org, phone, picturePath, locale, country, city, location;
+    String id;
+    String name;
+    String username;
+    String email;
+    String org;
+    String phone;
+    String picturePath;
+    String locale;
+    String country;
+    String city;
+    String location;
     byte[] picture;
     Gender gender;
     Integer birthyear;
@@ -253,5 +261,6 @@ public class UserImpl extends User implements Storable {
     @Override
     public void setId(Long id) {
         this.id = id.toString();
+        //todo remove this
     }
 }

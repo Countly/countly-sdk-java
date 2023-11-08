@@ -148,7 +148,7 @@ public class Config {
 
         @Override
         public String toString() {
-            return "DID " + id + " (" + strategy + ")";
+            return "DID " + id + " ( " + strategy + ")";
         }
     }
 

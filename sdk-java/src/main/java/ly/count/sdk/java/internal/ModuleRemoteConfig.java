@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -273,7 +272,7 @@ public class ModuleRemoteConfig extends ModuleBase {
     }
 
     @Override
-    protected void deviceIdChanged(Config.DID oldDeviceId, boolean withMerge) {
+    protected void deviceIdChanged(String oldDeviceId, boolean withMerge) {
         L.v("[ModuleRemoteConfig] deviceIdChanged, Clearing remote config values and preparing to download after ID update, " + !withMerge);
         super.deviceIdChanged(oldDeviceId, withMerge);
 

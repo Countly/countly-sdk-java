@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.TreeMap;
+import javax.annotation.Nullable;
 import ly.count.sdk.java.Config;
 
 public class SDKCore {
@@ -586,46 +587,21 @@ public class SDKCore {
         }
     }
 
-    public void onDeviceId(InternalConfig config, Config.DID id, Config.DID old) {
-        L.d("onDeviceId " + id + ", old " + old);
-        if (id != null && (!id.equals(old) || !id.equals(config.getDeviceId()))) {
-            sdkStorage.setDeviceID(id.id);
-            sdkStorage.setDeviceIdType(DeviceIdType.fromInt(id.strategy, L).name());
-            config.setDeviceId(id);
-        } else if (id == null && old != null) {
-            if (config.removeDeviceId(old)) {
-                sdkStorage.setDeviceIdType(null);
-                sdkStorage.setDeviceID(null);
-            }
-        }
-
-        for (ModuleBase module : modules.values()) {
-            module.onDeviceId(config, id, old);
-        }
-
+    public void notifyModulesDeviceIdChanged(@Nullable String old, final boolean withMerge) {
+        L.d("[SDKCore] deviceIdChanged, newDeviceId:[" + config.getDeviceId() + "], oldDeviceId:[ " + old + "]");
+        Config.DID id = config.getDeviceId();
+        modules.forEach((feature, module) -> module.deviceIdChanged(old, withMerge));
         if (id != null) {
             user.id = id.id;
-            L.d("[SDKCore] 5");
         }
-    }
-
-    public void notifyModulesDeviceIdChanged(Config.DID oldDeviceId, boolean withMerge) {
-        L.d("[SDKCore] deviceIdChanged, newDeviceId:[" + config.getDeviceId() + "], oldDeviceId:[ " + oldDeviceId + "], withMerge:[" + withMerge + "]");
-        if (withMerge) {
-            onDeviceId(config, config.getDeviceId(), oldDeviceId);
-        } else {
-            onDeviceId(config, null, oldDeviceId);
-            onDeviceId(config, config.getDeviceId(), null);
-        }
-        modules.forEach((feature, module) -> module.deviceIdChanged(oldDeviceId, withMerge));
     }
 
     public void login(String id) {
-        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).login(config, id);
+        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).login(id);
     }
 
     public void logout() {
-        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).logout(config);
+        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).logout();
     }
 
     /**
