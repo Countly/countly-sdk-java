@@ -77,18 +77,18 @@ public class ModuleDeviceIdCore extends ModuleBase {
 
             if (Utils.isNotEmpty(config.getCustomDeviceId())) {
                 // developer specified id on SDK init
-                Config.DID did = new Config.DID(Config.DID.REALM_DID, Config.DID.STRATEGY_CUSTOM, config.getCustomDeviceId());
+                Config.DID did = new Config.DID(Config.DID.STRATEGY_CUSTOM, config.getCustomDeviceId());
                 L.d("[ModuleDeviceIdCore] initFinished, Got developer id [" + did + "]");
                 SDKCore.instance.onDeviceId(config, did, null);
             } else {
                 // regular flow - acquire id using specified strategy
-                Config.DID did = new Config.DID(Config.DID.REALM_DID, config.getDeviceIdStrategy(), null);
+                Config.DID did = new Config.DID(config.getDeviceIdStrategy(), null);
                 acquireId(config, did);
             }
         } else {
             // second or next app launch, notify id is available
             Config.DID loadedDid = config.getDeviceId();
-            L.d("[ModuleDeviceIdCore] initFinished, Loading previously saved device id:[" + loadedDid.id + "] realm:[" + loadedDid.realm + "] strategy:[" + loadedDid.strategy + "]");
+            L.d("[ModuleDeviceIdCore] initFinished, Loading previously saved device id:[" + loadedDid.id + "] strategy:[" + loadedDid.strategy + "]");
             SDKCore.instance.onDeviceId(config, loadedDid, loadedDid);
         }
     }
@@ -99,7 +99,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
         Config.DID deviceId = internalConfig.getDeviceId();
         SessionImpl session = SDKCore.instance.getSession();
 
-        if (deviceId != null && oldDeviceId != null && deviceId.realm == Config.DID.REALM_DID && !deviceId.equals(oldDeviceId)) {
+        if (deviceId != null && oldDeviceId != null && !deviceId.equals(oldDeviceId)) {
             // device id changed
             if (session != null && session.isActive()) {
                 // end previous session
@@ -129,7 +129,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
 
         SessionImpl session = SDKCore.instance.getSession();
 
-        if (deviceId == null && oldDeviceId != null && oldDeviceId.realm == Config.DID.REALM_DID) {
+        if (deviceId == null && oldDeviceId != null) {
             // device id is unset
             if (session != null) {
                 L.d("[ModuleDeviceIdCore] Ending session because device id was unset from [" + oldDeviceId.id + "]");
@@ -137,7 +137,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
             }
 
             sendDIDSignal(config, null, oldDeviceId);
-        } else if (deviceId != null && oldDeviceId == null && deviceId.realm == Config.DID.REALM_DID) {
+        } else if (deviceId != null && oldDeviceId == null) {
             // device id just acquired
             if (this.tasks == null) {
                 this.tasks = new Tasks("deviceId", L);
@@ -211,7 +211,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
             L.e("[ModuleDeviceIdCore] Empty id passed to login method");
         } else {
             final Config.DID old = config.getDeviceId();
-            config.setDeviceId(new Config.DID(Config.DID.REALM_DID, Config.DID.STRATEGY_CUSTOM, id));
+            config.setDeviceId(new Config.DID(Config.DID.STRATEGY_CUSTOM, id));
             config.storageProvider.setDeviceIdType(DeviceIdType.DEVELOPER_SUPPLIED.name());
             config.storageProvider.setDeviceID(id);
 
@@ -234,7 +234,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
         config.storageProvider.setDeviceIdType("");
 
         SDKCore.instance.onDeviceId(config, null, old);
-        acquireId(config, new Config.DID(Config.DID.REALM_DID, config.getDeviceIdStrategy(), null));
+        acquireId(config, new Config.DID(config.getDeviceIdStrategy(), null));
     }
 
     /**
@@ -254,8 +254,14 @@ public class ModuleDeviceIdCore extends ModuleBase {
         }
 
         final Config.DID old = config.getDeviceId();
-        config.setDeviceId(new Config.DID(Config.DID.REALM_DID, Config.DID.STRATEGY_CUSTOM, id));
-        Storage.push(config, config);
+        if (old.id.equals(id)) {
+            L.w("[ModuleDeviceIdCore] changeDeviceId, Same id passed to changeDeviceId method, ignoring");
+            return;
+        }
+
+        internalConfig.setDeviceId(new Config.DID(Config.DID.STRATEGY_CUSTOM, id));
+        internalConfig.storageProvider.setDeviceIdType(DeviceIdType.DEVELOPER_SUPPLIED.name());
+        internalConfig.storageProvider.setDeviceID(id);
         SDKCore.instance.notifyModulesDeviceIdChanged(old, withMerge);
     }
 
@@ -267,7 +273,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
      * @param holder DID object which holds strategy and possibly other info for id generation
      */
     protected void acquireId(final InternalConfig config, final Config.DID holder) {
-        L.i("[ModuleDeviceIdCore] acquireId, Acquiring device id of strategy [" + holder.strategy + " / " + holder.realm + "]");
+        L.i("[ModuleDeviceIdCore] acquireId, Acquiring device id of strategy [" + holder.strategy + "]");
         Config.DID did = null;
 
         int index = holder.strategy;
@@ -280,7 +286,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
             } else {
                 String id = generator.generate(config);
                 if (Utils.isNotEmpty(id)) {
-                    did = new Config.DID(holder.realm, index, id);
+                    did = new Config.DID(index, id);
                     break;
                 } else {
                     L.w("[ModuleDeviceIdCore] Device id strategy [" + index + "] didn't return. Falling back to next one.");

@@ -248,7 +248,6 @@ public class MigrationHelperTests {
     public void applyMigrations_0to1_initCountlyCorrupted() throws IOException {
         Files.write(TestUtils.createFile("config_0").toPath(), MOCK_OLD_CONFIG_FILE_corrupted); //mock a sdk config file, to simulate storage is not empty
         Countly.instance().init(TestUtils.getBaseConfig(null));
-        ScenarioDeviceIdInitTests.waitForNoNullDeviceID(Countly.instance());//wait for id to generate
 
         Assert.assertTrue(Countly.instance().getDeviceId().startsWith("CLY_"));
         Assert.assertEquals(DeviceIdType.SDK_GENERATED, Countly.instance().getDeviceIdType());
@@ -263,7 +262,6 @@ public class MigrationHelperTests {
     public void applyMigrations_0to1_initCountlyNoDeviceId() throws IOException {
         Files.write(TestUtils.createFile("config_0").toPath(), MOCK_OLD_CONFIG_FILE_noDeviceId); //mock a sdk config file, to simulate storage is not empty
         Countly.instance().init(TestUtils.getBaseConfig(null));
-        ScenarioDeviceIdInitTests.waitForNoNullDeviceID(Countly.instance());//wait for id to generate
 
         Assert.assertTrue(Countly.instance().getDeviceId().startsWith("CLY_"));
         Assert.assertEquals(DeviceIdType.SDK_GENERATED, Countly.instance().getDeviceIdType());
@@ -278,7 +276,6 @@ public class MigrationHelperTests {
     public void applyMigrations_0to1_initCountlyNoDeviceId_customDeviceId() throws IOException {
         Files.write(TestUtils.createFile("config_0").toPath(), MOCK_OLD_CONFIG_FILE_noDeviceId); //mock a sdk config file, to simulate storage is not empty
         Countly.instance().init(TestUtils.getBaseConfig());
-        ScenarioDeviceIdInitTests.waitForNoNullDeviceID(Countly.instance());//wait for id to generate
 
         Assert.assertEquals(TestUtils.DEVICE_ID, Countly.instance().getDeviceId());
         Assert.assertEquals(DeviceIdType.DEVELOPER_SUPPLIED, Countly.instance().getDeviceIdType());
