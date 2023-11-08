@@ -72,39 +72,39 @@ public class ModuleDeviceIdCore extends ModuleBase {
         L.i("[ModuleDeviceIdCore] initFinished, Starting device ID acquisition");
         if (config.getDeviceId() == null) {
             // either fresh install, or migration from legacy SDK
-
             L.i("[ModuleDeviceIdCore] initFinished, Acquiring device id");
 
+            Config.DID did;
             if (Utils.isNotEmpty(config.getCustomDeviceId())) {
                 // developer specified id on SDK init
-                Config.DID did = new Config.DID(Config.DID.REALM_DID, Config.DID.STRATEGY_CUSTOM, config.getCustomDeviceId());
+                did = new Config.DID(Config.DID.STRATEGY_CUSTOM, config.getCustomDeviceId());
                 L.d("[ModuleDeviceIdCore] initFinished, Got developer id [" + did + "]");
-                SDKCore.instance.onDeviceId(config, did, null);
             } else {
                 // regular flow - acquire id using specified strategy
-                Config.DID did = new Config.DID(Config.DID.REALM_DID, config.getDeviceIdStrategy(), null);
-                acquireId(config, did);
+                did = acquireId(config);
             }
+
+            config.setDeviceId(did);
+            config.storageProvider.setDeviceID(config.getCustomDeviceId());
+            config.storageProvider.setDeviceIdType(DeviceIdType.DEVELOPER_SUPPLIED.name());
         } else {
-            // second or next app launch, notify id is available
             Config.DID loadedDid = config.getDeviceId();
-            L.d("[ModuleDeviceIdCore] initFinished, Loading previously saved device id:[" + loadedDid.id + "] realm:[" + loadedDid.realm + "] strategy:[" + loadedDid.strategy + "]");
-            SDKCore.instance.onDeviceId(config, loadedDid, loadedDid);
+            L.d("[ModuleDeviceIdCore] initFinished, Loading previously saved device id:[" + loadedDid.id + "] strategy:[" + loadedDid.strategy + "]");
         }
     }
 
     @Override
-    public void deviceIdChanged(Config.DID oldDeviceId, boolean withMerge) {
+    public void deviceIdChanged(String oldDeviceId, boolean withMerge) {
         L.d("[ModuleDeviceIdCore] deviceIdChanged, oldDeviceId [" + oldDeviceId + "] withMerge [" + withMerge + "]");
         Config.DID deviceId = internalConfig.getDeviceId();
         SessionImpl session = SDKCore.instance.getSession();
 
-        if (deviceId != null && oldDeviceId != null && deviceId.realm == Config.DID.REALM_DID && !deviceId.equals(oldDeviceId)) {
+        if (deviceId != null && oldDeviceId != null && !deviceId.id.equals(oldDeviceId)) {
             // device id changed
             if (session != null && session.isActive()) {
                 // end previous session
-                L.d("[ModuleDeviceIdCore] Ending session because device id was changed from [" + oldDeviceId.id + "]");
-                session.end(null, null, oldDeviceId.id);
+                L.d("[ModuleDeviceIdCore] Ending session because device id was changed from [" + oldDeviceId + "]");
+                session.end(null, null, oldDeviceId);
             }
 
             // add device id change request
@@ -115,38 +115,30 @@ public class ModuleDeviceIdCore extends ModuleBase {
                 request.params.add(Params.PARAM_DEVICE_ID, deviceId.id);
             }
             //add the old device ID every time
-            request.params.add(Params.PARAM_OLD_DEVICE_ID, oldDeviceId.id);
+            request.params.add(Params.PARAM_OLD_DEVICE_ID, oldDeviceId);
 
             ModuleRequests.pushAsync(internalConfig, request);
 
-            sendDIDSignal(internalConfig, deviceId, oldDeviceId);
-        }
-    }
-
-    @Override
-    public void onDeviceId(InternalConfig config, final Config.DID deviceId, final Config.DID oldDeviceId) {
-        L.d("[ModuleDeviceIdCore] onDeviceId [" + deviceId + "]");
-
-        SessionImpl session = SDKCore.instance.getSession();
-        if (deviceId == null && oldDeviceId != null && oldDeviceId.realm == Config.DID.REALM_DID) {
+            sendDIDSignal(internalConfig, deviceId);
+        } else if (deviceId == null && oldDeviceId != null) {
             // device id is unset
             if (session != null) {
-                L.d("[ModuleDeviceIdCore] Ending session because device id was unset from [" + oldDeviceId.id + "]");
-                session.end(null, null, oldDeviceId.id);
+                L.d("[ModuleDeviceIdCore] Ending session because device id was unset from [" + oldDeviceId + "]");
+                session.end(null, null, oldDeviceId);
             }
 
-            sendDIDSignal(config, null, oldDeviceId);
-        } else if (deviceId != null && oldDeviceId == null && deviceId.realm == Config.DID.REALM_DID) {
+            sendDIDSignal(internalConfig, null);
+        } else if (deviceId != null && oldDeviceId == null) {
             // device id just acquired
             if (this.tasks == null) {
                 this.tasks = new Tasks("deviceId", L);
             }
             tasks.run(new Tasks.Task<Object>(0L) {
                 @Override
-                public Object call() throws Exception {
+                public Object call() {
                     // put device_id parameter into existing requests
                     L.i("[ModuleDeviceIdCore] Adding device_id to previous requests");
-                    boolean success = transformRequests(config, deviceId.id);
+                    boolean success = transformRequests(internalConfig, deviceId.id);
                     if (success) {
                         L.i("[ModuleDeviceIdCore] First transform: success");
                     } else {
@@ -154,13 +146,13 @@ public class ModuleDeviceIdCore extends ModuleBase {
                     }
 
                     // do it second time in case new requests were added during first attempt
-                    success = transformRequests(config, deviceId.id);
+                    success = transformRequests(internalConfig, deviceId.id);
                     if (!success) {
                         L.e("[ModuleDeviceIdCore] Failed to put device_id into existing requests, following behaviour for unhandled requests is undefined.");
                     } else {
                         L.i("[ModuleDeviceIdCore] Second transform: success");
                     }
-                    sendDIDSignal(config, deviceId, null);
+                    sendDIDSignal(internalConfig, deviceId);
                     return null;
                 }
             });
@@ -190,10 +182,9 @@ public class ModuleDeviceIdCore extends ModuleBase {
      *
      * @param config InternalConfig to run in
      * @param id new {@link Config.DID} if any
-     * @param old old {@link Config.DID} if any
      */
-    private void sendDIDSignal(InternalConfig config, Config.DID id, Config.DID old) {
-        L.d("[ModuleDeviceIdCore] Sending device id signal: [" + id + "], was [" + old + "]");
+    private void sendDIDSignal(InternalConfig config, Config.DID id) {
+        L.d("[ModuleDeviceIdCore] Sending device id signal: [" + id + "]");
         SDKCore.instance.onSignal(config, SDKCore.Signal.DID.getIndex());
     }
 
@@ -207,15 +198,15 @@ public class ModuleDeviceIdCore extends ModuleBase {
      */
     public void login(InternalConfig config, String id) {
         if (Utils.isEmptyOrNull(id)) {
-            L.e("[ModuleDeviceIdCore] Empty id passed to login method");
+            L.e("[ModuleDeviceIdCore] login, Empty id passed to login method");
         } else {
             final Config.DID old = config.getDeviceId();
-            config.setDeviceId(new Config.DID(Config.DID.REALM_DID, Config.DID.STRATEGY_CUSTOM, id));
+            config.setDeviceId(new Config.DID(Config.DID.STRATEGY_CUSTOM, id));
             config.storageProvider.setDeviceIdType(DeviceIdType.DEVELOPER_SUPPLIED.name());
             config.storageProvider.setDeviceID(id);
 
             // old session end & new session begin requests are supposed to happen here
-            SDKCore.instance.onDeviceId(config, config.getDeviceId(), old);
+            SDKCore.instance.notifyModulesDeviceIdChanged(old.id, true);
         }
     }
 
@@ -229,11 +220,12 @@ public class ModuleDeviceIdCore extends ModuleBase {
     public void logout(final InternalConfig config) {
         final Config.DID old = config.getDeviceId();
         config.removeDeviceId(old);
-        config.storageProvider.setDeviceID("");
-        config.storageProvider.setDeviceIdType("");
+        SDKCore.instance.notifyModulesDeviceIdChanged(old.id, false);
 
-        SDKCore.instance.onDeviceId(config, null, old);
-        acquireId(config, new Config.DID(Config.DID.REALM_DID, config.getDeviceIdStrategy(), null));
+        Config.DID newId = acquireId(config);
+        config.storageProvider.setDeviceID(newId.id);
+        config.storageProvider.setDeviceIdType(DeviceIdType.fromInt(newId.strategy, L).name());
+        SDKCore.instance.notifyModulesDeviceIdChanged(null, false);
     }
 
     /**
@@ -251,11 +243,16 @@ public class ModuleDeviceIdCore extends ModuleBase {
             L.w("[ModuleDeviceIdCore] changeDeviceId, Empty id passed to changeDeviceId method");
             return;
         }
-
         final Config.DID old = config.getDeviceId();
-        config.setDeviceId(new Config.DID(Config.DID.REALM_DID, Config.DID.STRATEGY_CUSTOM, id));
-        Storage.push(config, config);
-        SDKCore.instance.notifyModulesDeviceIdChanged(old, withMerge);
+        if (old.id.equals(id)) {
+            L.w("[ModuleDeviceIdCore] changeDeviceId, Same id passed to changeDeviceId method, ignoring");
+            return;
+        }
+
+        internalConfig.setDeviceId(new Config.DID(Config.DID.STRATEGY_CUSTOM, id));
+        internalConfig.storageProvider.setDeviceIdType(DeviceIdType.DEVELOPER_SUPPLIED.name());
+        internalConfig.storageProvider.setDeviceID(id);
+        SDKCore.instance.notifyModulesDeviceIdChanged(old.id, withMerge);
     }
 
     /**
@@ -263,13 +260,12 @@ public class ModuleDeviceIdCore extends ModuleBase {
      * In case strategy is available but id cannot be acquired right now, returns null.
      *
      * @param config InternalConfig to run in
-     * @param holder DID object which holds strategy and possibly other info for id generation
      */
-    protected void acquireId(final InternalConfig config, final Config.DID holder) {
-        L.i("[ModuleDeviceIdCore] acquireId, Acquiring device id of strategy [" + holder.strategy + " / " + holder.realm + "]");
+    protected Config.DID acquireId(final InternalConfig config) {
+        L.i("[ModuleDeviceIdCore] acquireId, Acquiring device id of strategy [" + config.getDeviceIdStrategy() + "]");
         Config.DID did = null;
 
-        int index = holder.strategy;
+        int index = config.getDeviceIdStrategy();
 
         while (index >= 0) {
             DeviceIdGenerator generator = generators.get(index);
@@ -279,7 +275,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
             } else {
                 String id = generator.generate(config);
                 if (Utils.isNotEmpty(id)) {
-                    did = new Config.DID(holder.realm, index, id);
+                    did = new Config.DID(index, id);
                     break;
                 } else {
                     L.w("[ModuleDeviceIdCore] Device id strategy [" + index + "] didn't return. Falling back to next one.");
@@ -293,10 +289,11 @@ public class ModuleDeviceIdCore extends ModuleBase {
                 L.i("[ModuleDeviceIdCore] acquireId, no custom device id. SDK has generated a random device id.");
             }
             L.d("[ModuleDeviceIdCore] acquireId, Got device id: " + did);
-            SDKCore.instance.onDeviceId(config, did, null);
         } else {
             L.i("[ModuleDeviceIdCore] acquireId, No device id of strategy [" + config.getDeviceIdStrategy() + "] is available yet");
         }
+
+        return did;
     }
 
     @Override

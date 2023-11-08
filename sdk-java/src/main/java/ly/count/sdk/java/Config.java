@@ -124,14 +124,10 @@ public class Config {
     public static final class DID {
         public static final int STRATEGY_UUID = 0;
         public static final int STRATEGY_CUSTOM = 10;
-        public static final int REALM_DID = 0;
-
-        public int realm;
         public int strategy;
         public String id;
 
-        public DID(int realm, int strategy, String id) {
-            this.realm = realm;
+        public DID(int strategy, String id) {
             this.strategy = strategy;
             this.id = id;
         }
@@ -142,8 +138,7 @@ public class Config {
                 return false;
             }
             DID did = (DID) obj;
-            return did.realm == realm && did.strategy == strategy &&
-                (Objects.equals(did.id, id));
+            return did.strategy == strategy && (Objects.equals(did.id, id));
         }
 
         @Override
@@ -153,7 +148,7 @@ public class Config {
 
         @Override
         public String toString() {
-            return "DID " + id + " (" + realm + ", " + strategy + ")";
+            return "DID " + id + " ( " + strategy + ")";
         }
     }
 
