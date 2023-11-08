@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.TreeMap;
+import javax.annotation.Nullable;
 import ly.count.sdk.java.Config;
 
 public class SDKCore {
@@ -586,7 +587,7 @@ public class SDKCore {
         }
     }
 
-    public void notifyModulesDeviceIdChanged(String old, boolean withMerge) {
+    public void notifyModulesDeviceIdChanged(@Nullable String old, final boolean withMerge) {
         L.d("[SDKCore] deviceIdChanged, newDeviceId:[" + config.getDeviceId() + "], oldDeviceId:[ " + old + "]");
         Config.DID id = config.getDeviceId();
         modules.forEach((feature, module) -> module.deviceIdChanged(old, withMerge));

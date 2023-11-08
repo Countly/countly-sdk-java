@@ -85,8 +85,8 @@ public class ModuleDeviceIdCore extends ModuleBase {
             }
 
             config.setDeviceId(did);
-            config.storageProvider.setDeviceID(config.getCustomDeviceId());
-            config.storageProvider.setDeviceIdType(DeviceIdType.DEVELOPER_SUPPLIED.name());
+            config.storageProvider.setDeviceID(did.id);
+            config.storageProvider.setDeviceIdType(DeviceIdType.fromInt(did.strategy, L).name());
         } else {
             Config.DID loadedDid = config.getDeviceId();
             L.d("[ModuleDeviceIdCore] initFinished, Loading previously saved device id:[" + loadedDid.id + "] strategy:[" + loadedDid.strategy + "]");
@@ -201,6 +201,10 @@ public class ModuleDeviceIdCore extends ModuleBase {
             L.e("[ModuleDeviceIdCore] login, Empty id passed to login method");
         } else {
             final Config.DID old = config.getDeviceId();
+            if (id.equals(old.id)) {
+                L.w("[ModuleDeviceIdCore] login, Same id passed to login method, ignoring");
+                return;
+            }
             config.setDeviceId(new Config.DID(Config.DID.STRATEGY_CUSTOM, id));
             config.storageProvider.setDeviceIdType(DeviceIdType.DEVELOPER_SUPPLIED.name());
             config.storageProvider.setDeviceID(id);
@@ -223,6 +227,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
         SDKCore.instance.notifyModulesDeviceIdChanged(old.id, false);
 
         Config.DID newId = acquireId(config);
+        config.setDeviceId(newId);
         config.storageProvider.setDeviceID(newId.id);
         config.storageProvider.setDeviceIdType(DeviceIdType.fromInt(newId.strategy, L).name());
         SDKCore.instance.notifyModulesDeviceIdChanged(null, false);
@@ -306,8 +311,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
     }
 
     protected DeviceIdType getTypeInternal() {
-        //todo impl after merge, delete the Countly one
-        return null;
+        return DeviceIdType.fromInt(internalConfig.getDeviceId().strategy, L);
     }
 
     protected String getIDInternal() {

@@ -4,13 +4,7 @@ package ly.count.sdk.java.internal;
  * Device ID Type
  */
 public enum DeviceIdType {
-    DEVELOPER_SUPPLIED(10), SDK_GENERATED(0);
-
-    public final int index;
-
-    DeviceIdType(int index) {
-        this.index = index;
-    }
+    DEVELOPER_SUPPLIED, SDK_GENERATED;
 
     public static DeviceIdType fromInt(int deviceIdType, Log L) {
         switch (deviceIdType) {

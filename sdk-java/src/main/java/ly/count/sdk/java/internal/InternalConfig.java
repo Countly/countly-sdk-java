@@ -90,7 +90,11 @@ public class InternalConfig extends Config {
     }
 
     public DID getDeviceId() {
-        return dids.get(0);
+        if (!dids.isEmpty()) {
+            return dids.get(0);
+        } else {
+            return null;
+        }
     }
 
     public DID setDeviceId(DID id) {
@@ -99,7 +103,7 @@ public class InternalConfig extends Config {
                 configLog.e("DID cannot be null");
             }
         }
-        DID old = dids.get(0);
+        DID old = getDeviceId();
         if (old != null) {
             dids.remove(old);
         }
