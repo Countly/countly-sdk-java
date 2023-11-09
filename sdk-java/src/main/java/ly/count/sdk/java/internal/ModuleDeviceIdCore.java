@@ -97,7 +97,6 @@ public class ModuleDeviceIdCore extends ModuleBase {
     public void deviceIdChanged(String oldDeviceId, boolean withMerge) {
         L.d("[ModuleDeviceIdCore] deviceIdChanged, oldDeviceId [" + oldDeviceId + "] withMerge [" + withMerge + "]");
         Config.DID deviceId = internalConfig.getDeviceId();
-        SessionImpl session = SDKCore.instance.getSession();
 
         if (Utils.isEmptyOrNull(deviceId.id) || Utils.isEmptyOrNull(oldDeviceId)) {
             L.w("[ModuleDeviceIdCore] deviceIdChanged, Empty id passed to changeDeviceId method");
@@ -109,22 +108,6 @@ public class ModuleDeviceIdCore extends ModuleBase {
             // add device id change request and add the old device ID every time
             ModuleRequests.pushAsync(internalConfig, new Request(Params.PARAM_OLD_DEVICE_ID, oldDeviceId));
         }
-    }
-
-    /**
-     * Puts {@code "device_id"} parameter into all requests which don't have it yet
-     *
-     * @return {@code true} if {@link Request}s changed successfully, {@code false} otherwise
-     */
-    private boolean transformRequests() {
-        return Storage.transform(internalConfig, Request.getStoragePrefix(), (id, data) -> {
-            Request request = new Request(id);
-            if (request.restore(data, L) && !request.params.has(Params.PARAM_DEVICE_ID)) {
-                request.params.add(Params.PARAM_DEVICE_ID, getIDInternal());
-                return request.store(L);
-            }
-            return null;
-        });
     }
 
     /**
@@ -212,35 +195,6 @@ public class ModuleDeviceIdCore extends ModuleBase {
         }
 
         return did;
-    }
-
-    //did not added tests because going to be deleted
-    private void addDeviceIdToOldRequestsIfNotExist() {
-        if (this.tasks == null) {
-            this.tasks = new Tasks("deviceId", L);
-        }
-        tasks.run(new Tasks.Task<Object>(0L) {
-            @Override
-            public Object call() {
-                // put device_id parameter into existing requests
-                L.i("[ModuleDeviceIdCore] addDeviceIdToOldRequestsIfNotExist, Adding device_id to previous requests");
-                boolean success = transformRequests();
-                if (success) {
-                    L.i("[ModuleDeviceIdCore] addDeviceIdToOldRequestsIfNotExist, First transform: success");
-                } else {
-                    L.w("[ModuleDeviceIdCore] addDeviceIdToOldRequestsIfNotExist, First transform: failure");
-                }
-
-                // do it second time in case new requests were added during first attempt
-                success = transformRequests();
-                if (!success) {
-                    L.e("[ModuleDeviceIdCore] addDeviceIdToOldRequestsIfNotExist, Failed to put device_id into existing requests, following behaviour for unhandled requests is undefined.");
-                } else {
-                    L.i("[ModuleDeviceIdCore] addDeviceIdToOldRequestsIfNotExist, Second transform: success");
-                }
-                return null;
-            }
-        });
     }
 
     @Override
