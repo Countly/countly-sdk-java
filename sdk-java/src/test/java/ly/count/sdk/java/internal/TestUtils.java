@@ -353,7 +353,7 @@ public class TestUtils {
     }
 
     public static void validateRequiredParams(Map<String, String> params) {
-        validateRequiredParams(params, Countly.instance().deviceId().getID());
+        validateRequiredParams(params, TestUtils.DEVICE_ID);
     }
 
     public static void validateRequiredParams(Map<String, String> params, String deviceId) {

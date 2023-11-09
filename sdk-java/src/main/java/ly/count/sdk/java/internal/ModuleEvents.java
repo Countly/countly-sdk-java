@@ -21,7 +21,7 @@ public class ModuleEvents extends ModuleBase {
 
     @Override
     protected void onTimer() {
-        addEventsToRequestQ();
+        addEventsToRequestQ(null);
     }
 
     @Override
@@ -38,7 +38,7 @@ public class ModuleEvents extends ModuleBase {
                 L.d("[ModuleEvents] deviceIdChanged, Ending timed event: [" + timedEventEntry.getKey() + "]");
                 timedEventEntry.getValue().record();
             }
-            addEventsToRequestQ();
+            addEventsToRequestQ(oldDeviceId);
         }
     }
 
@@ -51,10 +51,13 @@ public class ModuleEvents extends ModuleBase {
         }
     }
 
-    private synchronized void addEventsToRequestQ() {
+    private synchronized void addEventsToRequestQ(String deviceId) {
         L.d("[ModuleEvents] addEventsToRequestQ");
 
         Request request = new Request();
+        if (deviceId != null) {
+            request.params.add("device_id", deviceId);
+        }
         request.params.arr("events").put(eventQueue.eventQueueMemoryCache).add();
         request.own(ModuleEvents.class);
 
@@ -104,7 +107,7 @@ public class ModuleEvents extends ModuleBase {
     private void checkEventQueueToSend(boolean forceSend) {
         L.d("[ModuleEvents] queue size:[" + eventQueue.eqSize() + "] || forceSend: " + forceSend);
         if (forceSend || (eventQueue.eqSize() >= internalConfig.getEventsBufferSize())) {
-            addEventsToRequestQ();
+            addEventsToRequestQ(null);
         }
     }
 
