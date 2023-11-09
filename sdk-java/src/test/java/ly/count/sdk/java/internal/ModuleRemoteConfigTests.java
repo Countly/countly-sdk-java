@@ -438,7 +438,7 @@ public class ModuleRemoteConfigTests {
 
             TestUtils.validateMetrics(Utils.urldecode(params.get("metrics")));
             TestUtils.validateRequestMakerRequiredParams("/o/sdk?", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
-            TestUtils.validateRequiredParams(params);
+            TestUtils.validateRequiredParams(params, TestUtils.keysValues[0]);
             callback.callback(remoteConfigMockData);
         };
     }
