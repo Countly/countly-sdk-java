@@ -318,12 +318,12 @@ public class TestUtils {
     }
 
     static List<EventImpl> readEventsFromRequest() {
-        return readEventsFromRequest(0);
+        return readEventsFromRequest(0, TestUtils.DEVICE_ID);
     }
 
-    static List<EventImpl> readEventsFromRequest(int requestIndex) {
+    static List<EventImpl> readEventsFromRequest(int requestIndex, String deviceId) {
         Map<String, String> request = getCurrentRQ()[requestIndex];
-        validateRequiredParams(request);
+        validateRequiredParams(request, deviceId);
         JSONArray array = new JSONArray(request.get("events"));
         List<EventImpl> result = new ArrayList<>();
 

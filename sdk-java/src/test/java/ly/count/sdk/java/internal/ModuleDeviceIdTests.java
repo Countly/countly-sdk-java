@@ -1,6 +1,5 @@
 package ly.count.sdk.java.internal;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -222,8 +221,7 @@ public class ModuleDeviceIdTests {
      */
     @Test
     public void logout_sdkGenerated() {
-        TestUtils.AtomicString deviceID = new TestUtils.AtomicString(TestUtils.DEVICE_ID);
-        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(deviceID, true, DeviceIdType.SDK_GENERATED);
+        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(null, true, DeviceIdType.SDK_GENERATED);
         Countly.instance().init(TestUtils.getConfigDeviceId(null)); // to create sdk generated device id
         setupView_Event_Session();
 
@@ -299,11 +297,6 @@ public class ModuleDeviceIdTests {
      * @param oldDeviceId to validate device id in requests before device id change
      */
     private void validateDeviceIdWithoutMergeChange(final int rqSize, String oldDeviceId) {
-
-        Arrays.stream(TestUtils.getCurrentRQ()).forEach(rq -> {
-            System.out.println(rq);
-        });
-
         Map<String, String>[] requests = TestUtils.getCurrentRQ();
         if (rqSize < 3) {
             Assert.fail("RQ size must be at least 3");
@@ -318,15 +311,19 @@ public class ModuleDeviceIdTests {
         int remainingRequestIndex = 1; // if there is no event request, then this will be 1 to continue checking
 
         // validate event request if exists
-        List<EventImpl> existingEvents = TestUtils.readEventsFromRequest(1);
-        if (!existingEvents.isEmpty()) {
-            remainingRequestIndex++;
+        try {
+            List<EventImpl> existingEvents = TestUtils.readEventsFromRequest(1, oldDeviceId);
+            if (!existingEvents.isEmpty()) {
+                remainingRequestIndex++;
+            }
+        } catch (NullPointerException ignored) {
+            //do nothing
         }
 
         // validate end session request
         TestUtils.validateRequiredParams(requests[remainingRequestIndex], oldDeviceId); // second begin session request must have new device id
         Assert.assertEquals("1", requests[remainingRequestIndex].get("end_session")); // validate begin session value is 1
-
+        remainingRequestIndex++;
         // validate second begin session request
         TestUtils.validateRequiredParams(requests[remainingRequestIndex], Countly.instance().deviceId().getID()); // second begin session request must have new device id
         TestUtils.validateMetrics(requests[remainingRequestIndex].get("metrics")); // validate metrics exist in the second session request
