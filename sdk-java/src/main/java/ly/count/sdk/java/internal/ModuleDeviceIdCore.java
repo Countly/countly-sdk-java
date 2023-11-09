@@ -123,24 +123,6 @@ public class ModuleDeviceIdCore extends ModuleBase {
     }
 
     /**
-     * Puts {@code "device_id"} parameter into all requests which don't have it yet
-     *
-     * @param config InternalConfig to run in
-     * @param deviceId deviceId string
-     * @return {@code true} if {@link Request}s changed successfully, {@code false} otherwise
-     */
-    private boolean transformRequests(final InternalConfig config, final String deviceId) {
-        return Storage.transform(config, Request.getStoragePrefix(), (id, data) -> {
-            Request request = new Request(id);
-            if (request.restore(data, L) && !request.params.has(Params.PARAM_DEVICE_ID)) {
-                request.params.add(Params.PARAM_DEVICE_ID, deviceId);
-                return request.store(L);
-            }
-            return null;
-        });
-    }
-
-    /**
      * Logging into app-specific account:
      * - reset device id and notify modules;
      * - send corresponding request to server.
@@ -192,7 +174,6 @@ public class ModuleDeviceIdCore extends ModuleBase {
                 L.d("[ModuleDeviceIdCore] changeDeviceIdInternal, Ending session because device id was unset from [" + old.id + "]");
                 session.end(null, null, old.id);
             }
-            changeOldRequestsDeviceIds(did);
         }
 
         SDKCore.instance.notifyModulesDeviceIdChanged(old.id, withMerge);
@@ -237,34 +218,6 @@ public class ModuleDeviceIdCore extends ModuleBase {
         }
 
         return did;
-    }
-
-    private void changeOldRequestsDeviceIds(Config.DID deviceId) {
-        if (this.tasks == null) {
-            this.tasks = new Tasks("deviceId", L);
-        }
-        tasks.run(new Tasks.Task<Object>(0L) {
-            @Override
-            public Object call() {
-                // put device_id parameter into existing requests
-                L.i("[ModuleDeviceIdCore] changeOldRequestsDeviceIds, Adding device_id to previous requests");
-                boolean success = transformRequests(internalConfig, deviceId.id);
-                if (success) {
-                    L.i("[ModuleDeviceIdCore] changeOldRequestsDeviceIds, First transform: success");
-                } else {
-                    L.w("[ModuleDeviceIdCore] changeOldRequestsDeviceIds, First transform: failure");
-                }
-
-                // do it second time in case new requests were added during first attempt
-                success = transformRequests(internalConfig, deviceId.id);
-                if (!success) {
-                    L.e("[ModuleDeviceIdCore] changeOldRequestsDeviceIds, Failed to put device_id into existing requests, following behaviour for unhandled requests is undefined.");
-                } else {
-                    L.i("[ModuleDeviceIdCore] changeOldRequestsDeviceIds, Second transform: success");
-                }
-                return null;
-            }
-        });
     }
 
     @Override
