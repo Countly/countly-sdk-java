@@ -1,14 +1,13 @@
 package ly.count.sdk.java.internal;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-import ly.count.sdk.java.Countly;
 
 public class ModuleEvents extends ModuleBase {
     protected EventQueue eventQueue = null;
-    final Map<String, EventImpl> timedEvents = new HashMap<>();
+    final Map<String, EventImpl> timedEvents = new ConcurrentHashMap<>();
     protected Events eventsInterface = null;
 
     @Override
@@ -35,10 +34,11 @@ public class ModuleEvents extends ModuleBase {
         super.deviceIdChanged(oldDeviceId, withMerge);
         L.d("[ModuleEvents] deviceIdChanged: oldDeviceId = " + oldDeviceId + ", withMerge = " + withMerge);
         if (!withMerge) {
-            timedEvents.forEach((key, event) -> {
-                L.d("[ModuleEvents] deviceIdChanged, Ending timed event: [" + key + "]");
-                endEventInternal(event.key, event.segmentation, event.count, event.sum);
-            });
+            for (Map.Entry<String, EventImpl> timedEventEntry : timedEvents.entrySet()) {
+                L.d("[ModuleEvents] deviceIdChanged, Ending timed event: [" + timedEventEntry.getKey() + "]");
+                timedEventEntry.getValue().record();
+            }
+            addEventsToRequestQ();
         }
     }
 
@@ -55,7 +55,6 @@ public class ModuleEvents extends ModuleBase {
         L.d("[ModuleEvents] addEventsToRequestQ");
 
         Request request = new Request();
-        request.params.add("device_id", Countly.instance().getDeviceId());
         request.params.arr("events").put(eventQueue.eventQueueMemoryCache).add();
         request.own(ModuleEvents.class);
 

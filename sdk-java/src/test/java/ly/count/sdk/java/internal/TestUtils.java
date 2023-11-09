@@ -76,6 +76,10 @@ public class TestUtils {
         return config;
     }
 
+    static Config getConfigDeviceId(String deviceId) {
+        return getBaseConfig(deviceId).enableFeatures(Config.Feature.Sessions, Config.Feature.Views, Config.Feature.Events);
+    }
+
     static Config getConfigSessions() {
         return getConfigSessions((Config.Feature) null);
     }
