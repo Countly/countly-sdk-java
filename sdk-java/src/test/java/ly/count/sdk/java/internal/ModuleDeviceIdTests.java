@@ -3,6 +3,7 @@ package ly.count.sdk.java.internal;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
@@ -85,7 +86,7 @@ public class ModuleDeviceIdTests {
      * request order should be first began session, 1 events, 1 end session, second began session, second end session, third began session
      */
     @Test
-    public void changeWithoutMerge() {
+    public void changeWithoutMerge() throws InterruptedException {
         //why atomic string? Because changing it should also trigger dummy module callback asserts.
         //so it should be modifiable from outside
         TestUtils.AtomicString deviceID = new TestUtils.AtomicString(TestUtils.keysValues[0]);
@@ -97,6 +98,7 @@ public class ModuleDeviceIdTests {
         validateDeviceIdDeveloperSupplied(TestUtils.DEVICE_ID);
         Assert.assertEquals(0, callCount.get());
 
+        Thread.sleep(1000); // waiting for timed event duration
         Countly.instance().deviceId().changeWithoutMerge(deviceID.value);
         Assert.assertEquals(1, callCount.get());
         validateDeviceIdWithoutMergeChange(4, TestUtils.DEVICE_ID); // there should be 2 began, 1 end, 1 events request
@@ -220,7 +222,7 @@ public class ModuleDeviceIdTests {
      * uuid strategy generates a new id
      */
     @Test
-    public void logout_sdkGenerated() {
+    public void logout_sdkGenerated() throws InterruptedException {
         AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(null, true, DeviceIdType.SDK_GENERATED);
         Countly.instance().init(TestUtils.getConfigDeviceId(null)); // to create sdk generated device id
         setupView_Event_Session();
@@ -229,6 +231,7 @@ public class ModuleDeviceIdTests {
         Assert.assertEquals(0, callCount.get());
         String oldDeviceId = Countly.instance().deviceId().getID();
 
+        Thread.sleep(1000);  // waiting for timed event duration
         Countly.instance().logout();
         Assert.assertEquals(1, callCount.get());
         validateDeviceIdWithoutMergeChange(4, oldDeviceId);
@@ -314,6 +317,17 @@ public class ModuleDeviceIdTests {
         try {
             List<EventImpl> existingEvents = TestUtils.readEventsFromRequest(1, oldDeviceId);
             if (!existingEvents.isEmpty()) {
+                Map<String, Object> viewSegmentation = new ConcurrentHashMap<>();
+                viewSegmentation.put("segment", Device.dev.getOS());
+                viewSegmentation.put("name", TestUtils.keysValues[1]);
+                viewSegmentation.put("start", "1");
+                viewSegmentation.put("visit", "1");
+                TestUtils.validateEvent(existingEvents.get(0), "[CLY]_view", viewSegmentation, 1, null, null); // view start event
+                TestUtils.validateEvent(existingEvents.get(1), TestUtils.keysValues[2], null, 1, null, null); // casual event
+                TestUtils.validateEvent(existingEvents.get(2), TestUtils.keysValues[0], null, 1, null, 1.0); // timed event
+                viewSegmentation.remove("start");
+                viewSegmentation.remove("visit");
+                TestUtils.validateEvent(existingEvents.get(3), "[CLY]_view", viewSegmentation, 1, null, 1.0); // view stop event
                 remainingRequestIndex++;
             }
         } catch (NullPointerException ignored) {

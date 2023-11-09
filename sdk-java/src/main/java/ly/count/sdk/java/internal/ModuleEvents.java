@@ -39,7 +39,7 @@ public class ModuleEvents extends ModuleBase {
         if (!withMerge) {
             for (Map.Entry<String, EventImpl> timedEventEntry : timedEvents.entrySet()) {
                 L.d("[ModuleEvents] deviceIdChanged, Ending timed event: [" + timedEventEntry.getKey() + "]");
-                timedEventEntry.getValue().record();
+                endEventInternal(timedEventEntry.getKey(), timedEventEntry.getValue().segmentation, timedEventEntry.getValue().count, timedEventEntry.getValue().sum);
             }
 
             // this part is to end and record the current view if exists
