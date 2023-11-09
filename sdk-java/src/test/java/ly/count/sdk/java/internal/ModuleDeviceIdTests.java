@@ -1,6 +1,7 @@
 package ly.count.sdk.java.internal;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -71,18 +72,18 @@ public class ModuleDeviceIdTests {
 
         Countly.instance().deviceId().changeWithMerge(deviceID.value); // TestUtils.DEVICE_ID
         Assert.assertEquals(1, callCount.get());
-        validateDeviceIdWithMerge(oldDeviceId, 1, 2);
+        validateDeviceIdWithMergeChange(oldDeviceId, 1, 2);
 
         deviceID.value += "1";
         Countly.instance().deviceId().changeWithMerge(deviceID.value); // TestUtils.DEVICE_ID + "1"
         Assert.assertEquals(2, callCount.get());
-        validateDeviceIdWithMerge(TestUtils.DEVICE_ID, 2, 3);
+        validateDeviceIdWithMergeChange(TestUtils.DEVICE_ID, 2, 3);
     }
 
     /**
      * "changeWithoutMerge" with custom device id
-     * Validating that new id set and callback is called, and existing events,
-     * timed events and session must end, new session must begin
+     * Validating that new id set and callback is called, and existing events,timed events and session must end, new session must begin
+     * request order should be first began session, 1 events, 1 end session, second began session, second end session, third began session
      */
     @Test
     public void changeWithoutMerge() {
@@ -100,13 +101,13 @@ public class ModuleDeviceIdTests {
         Countly.instance().deviceId().changeWithoutMerge(deviceID.value);
         Assert.assertEquals(1, callCount.get());
         validateDeviceIdWithoutMergeChange(4, TestUtils.DEVICE_ID); // there should be 2 began, 1 end, 1 events request
-        TestUtils.flushCurrentRQ(); // clean current rq to test out new tests
+        TestUtils.flushCurrentRQWithOldDeviceId(TestUtils.DEVICE_ID); // clean current rq with old device id requests
 
         deviceID.value += "1"; //change device id
         Countly.instance().deviceId().changeWithoutMerge(deviceID.value);
         Assert.assertEquals(2, callCount.get());
         //if device id is not merged, then device id change request should not exist
-        validateDeviceIdWithoutMergeChange(2, TestUtils.keysValues[0]); // additional 1 session end 1 session begin, no events because no events exist
+        validateDeviceIdWithoutMergeChange(3, TestUtils.keysValues[0]); // additional 1 session end 1 session begin, no events because no events exist
     }
 
     /**
@@ -166,11 +167,11 @@ public class ModuleDeviceIdTests {
 
         Countly.instance().deviceId().changeWithMerge(TestUtils.DEVICE_ID);
         Assert.assertEquals(1, callCount.get());
-        validateDeviceIdWithMerge(oldDeviceId, 1, 2);
+        validateDeviceIdWithMergeChange(oldDeviceId, 1, 2);
 
         Countly.instance().deviceId().changeWithMerge(TestUtils.DEVICE_ID);
         Assert.assertEquals(1, callCount.get());
-        validateDeviceIdWithMerge(oldDeviceId, 1, 2);
+        validateDeviceIdWithMergeChange(oldDeviceId, 1, 2);
     }
 
     /**
@@ -189,7 +190,7 @@ public class ModuleDeviceIdTests {
 
         Countly.instance().deviceId().changeWithMerge(TestUtils.DEVICE_ID);
         Assert.assertEquals(1, callCount.get());
-        validateDeviceIdWithMerge(oldDeviceId, 0, 1); // fix ModuleSession - line 74
+        validateDeviceIdWithMergeChange(oldDeviceId, 0, 1); // fix: ModuleSession - line 74
     }
 
     /**
@@ -216,7 +217,7 @@ public class ModuleDeviceIdTests {
 
     /**
      * "logout"
-     * Validating that all required requests are added, 2 began session, 1 end session, 1 events
+     * Validating that all required requests are added, order should be first began session, 1 events, 1 end session, second began session
      * uuid strategy generates a new id
      */
     @Test
@@ -283,24 +284,63 @@ public class ModuleDeviceIdTests {
         Assert.assertEquals(TestUtils.DEVICE_ID, did.id);
     }
 
+    /**
+     * validates that requests in RQ are valid for without merge request
+     * It validates the requests after a without merge device id change
+     * There are 4 requests possibility:
+     * - First begin session request (required) #has old device id
+     * - An event queue request which contains views, timed events and events (not required) #has old device id
+     * - An end session request (required) #has old device id
+     * - Second begin session request (required) #has new device id
+     * <p>
+     * So at least 3 requests must exist in the RQ
+     *
+     * @param rqSize expected RQ size
+     * @param oldDeviceId to validate device id in requests before device id change
+     */
     private void validateDeviceIdWithoutMergeChange(final int rqSize, String oldDeviceId) {
+
+        Arrays.stream(TestUtils.getCurrentRQ()).forEach(rq -> {
+            System.out.println(rq);
+        });
+
         Map<String, String>[] requests = TestUtils.getCurrentRQ();
+        if (rqSize < 3) {
+            Assert.fail("RQ size must be at least 3");
+        }
         Assert.assertEquals(rqSize, TestUtils.getCurrentRQ().length);
 
-        AtomicInteger idx = new AtomicInteger();
-        Arrays.stream(requests).forEach((request) -> {
-            if (request.containsKey("begin_session") && idx.get() != 0) {
-                //validate new begin session request
-                TestUtils.validateRequiredParams(request, Countly.instance().deviceId().getID());
-            } else {
-                TestUtils.validateRequiredParams(request, oldDeviceId);
-            }
-            Assert.assertNull(request.get("old_device_id")); // in without merge this should not exist in all reqs
-            idx.getAndIncrement();
-        });
+        // validate first begin session request
+        TestUtils.validateRequiredParams(requests[0], oldDeviceId); // first request must be began session request
+        TestUtils.validateMetrics(requests[0].get("metrics")); // validate metrics exist in the first session request
+        Assert.assertEquals("1", requests[0].get("begin_session")); // validate begin session value is 1
+
+        int remainingRequestIndex = 1; // if there is no event request, then this will be 1 to continue checking
+
+        // validate event request if exists
+        List<EventImpl> existingEvents = TestUtils.readEventsFromRequest(1);
+        if (!existingEvents.isEmpty()) {
+            remainingRequestIndex++;
+        }
+
+        // validate end session request
+        TestUtils.validateRequiredParams(requests[remainingRequestIndex], oldDeviceId); // second begin session request must have new device id
+        Assert.assertEquals("1", requests[remainingRequestIndex].get("end_session")); // validate begin session value is 1
+
+        // validate second begin session request
+        TestUtils.validateRequiredParams(requests[remainingRequestIndex], Countly.instance().deviceId().getID()); // second begin session request must have new device id
+        TestUtils.validateMetrics(requests[remainingRequestIndex].get("metrics")); // validate metrics exist in the second session request
+        Assert.assertEquals("1", requests[remainingRequestIndex].get("begin_session")); // validate begin session value is 1
     }
 
-    private void validateDeviceIdWithMerge(String oldDeviceId, final int rqIdx, final int rqSize) {
+    /**
+     * Validates that the device id change request is valid
+     *
+     * @param oldDeviceId expected value of "old_device_id" param
+     * @param rqIdx index of the request in the RQ
+     * @param rqSize expected RQ size
+     */
+    private void validateDeviceIdWithMergeChange(String oldDeviceId, final int rqIdx, final int rqSize) {
         Map<String, String>[] requests = TestUtils.getCurrentRQ();
         Assert.assertEquals(rqSize, TestUtils.getCurrentRQ().length);
 
@@ -308,6 +348,14 @@ public class ModuleDeviceIdTests {
         Assert.assertEquals(oldDeviceId, requests[rqIdx].get("old_device_id"));
     }
 
+    /**
+     * Initializes the dummy module to listen for device id change callbacks
+     *
+     * @param deviceId to validate expected device id is set
+     * @param withoutMerge to validate its value
+     * @param type to validate by types
+     * @return call count of the callback
+     */
     private AtomicInteger initDummyModuleForDeviceIdChangedCallback(TestUtils.AtomicString deviceId, boolean withoutMerge, DeviceIdType type) {
         AtomicInteger callCount = new AtomicInteger(0);
         SDKCore.testDummyModule = new ModuleBase() {
@@ -335,7 +383,6 @@ public class ModuleDeviceIdTests {
 
     private void validateDeviceIdIsSdkGenerated() {
         String deviceId = Countly.instance().deviceId().getID();
-        Assert.assertTrue(deviceId.startsWith("CLY_"));
         try {
             validateDeviceIdIsUUID(deviceId);
             Assert.assertEquals(DeviceIdType.SDK_GENERATED, Countly.instance().deviceId().getType());
@@ -349,6 +396,7 @@ public class ModuleDeviceIdTests {
      */
     private void validateDeviceIdIsUUID(String deviceId) {
         try {
+            Assert.assertTrue(deviceId.startsWith("CLY_"));
             String[] parts = deviceId.split("CLY_");
             UUID uuid = UUID.fromString(parts[1]);
             Assert.assertEquals(parts[1], uuid.toString());
@@ -357,6 +405,10 @@ public class ModuleDeviceIdTests {
         }
     }
 
+    /**
+     * Validates that the began session request is valid
+     * and it should be the first request
+     */
     private void validateBeganSessionRequest() {
         Map<String, String>[] requests = TestUtils.getCurrentRQ();
         Assert.assertEquals(1, requests.length); // always 1 because it is the first request

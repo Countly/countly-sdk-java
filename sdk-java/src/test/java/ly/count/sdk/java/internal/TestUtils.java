@@ -162,10 +162,15 @@ public class TestUtils {
         return resultMapArray;
     }
 
-    static void flushCurrentRQ() {
+    static void flushCurrentRQWithOldDeviceId(String oldDeviceId) {
         Arrays.stream(getRequestFiles(getTestSDirectory())).forEach(file -> {
             try {
-                Files.deleteIfExists(file.toPath());
+                if (file.exists() && file.isFile()) {
+                    String content = Utils.readFileContent(file, mock(Log.class));
+                    if (content.contains(oldDeviceId)) {
+                        Files.delete(file.toPath());
+                    }
+                }
             } catch (IOException ignored) {
                 //do nothing
             }
