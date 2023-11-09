@@ -174,6 +174,25 @@ public class ModuleDeviceIdTests {
     }
 
     /**
+     * "changeWithMerge" with not started session
+     * Validating that only one request must exist and it should be a device id change request and callback should be called only once
+     * SDK must generate an id first, then should change with developer supplied. Only one request must exist
+     */
+    @Test
+    public void changeWithMerge_sessionNotStarted() {
+        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(new TestUtils.AtomicString(TestUtils.DEVICE_ID), false, DeviceIdType.DEVELOPER_SUPPLIED);
+        Countly.instance().init(TestUtils.getConfigDeviceId(null)); // to create sdk generated device id
+
+        String oldDeviceId = Countly.instance().deviceId().getID();
+        validateDeviceIdIsSdkGenerated();
+        Assert.assertEquals(0, callCount.get());
+
+        Countly.instance().deviceId().changeWithMerge(TestUtils.DEVICE_ID);
+        Assert.assertEquals(1, callCount.get());
+        validateDeviceIdWithMerge(oldDeviceId, 0, 1); // fix ModuleSession - line 74
+    }
+
+    /**
      * "getID", "getType"
      * Custom id is not given, validating that device id is sdk generated
      * Type must be 'SDK_GENERATED' and generated id should be a valid UUID

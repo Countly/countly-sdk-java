@@ -108,11 +108,6 @@ public class ModuleDeviceIdCore extends ModuleBase {
         if (withMerge) {
             // add device id change request and add the old device ID every time
             ModuleRequests.pushAsync(internalConfig, new Request(Params.PARAM_OLD_DEVICE_ID, oldDeviceId));
-        } else if (session != null && session.isActive()) {
-            // device id changed
-            L.d("[ModuleDeviceIdCore] deviceIdChanged, Ending session because device id was unset from [" + oldDeviceId + "]");
-            session.end(null, null, oldDeviceId);
-            addDeviceIdToOldRequestsIfNotExist();
         }
     }
 
