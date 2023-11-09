@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import org.junit.After;
 import org.junit.Assert;
@@ -235,6 +236,34 @@ public class ModuleDeviceIdTests {
         validateBeganSessionRequest();// only began request exist
     }
 
+    /**
+     * "acquireId"
+     * Validating that acquired id is sdk generated and UUID
+     * Acquired id must comply to UUID structure
+     */
+    @Test
+    public void acquireId_sdkGenerated() {
+        Countly.instance().init(TestUtils.getBaseConfig(null)); // no custom id provided
+        validateDeviceIdIsSdkGenerated(); // validate id exist and sdk generated
+
+        Config.DID did = SDKCore.instance.module(ModuleDeviceIdCore.class).acquireId();
+        validateDeviceIdIsUUID(did.id);
+    }
+
+    /**
+     * "acquireId"
+     * Validating that acquired id is developer supplied
+     * Acquired id must be same with the given id
+     */
+    @Test
+    public void acquireId_customId() {
+        Countly.instance().init(TestUtils.getBaseConfig(TestUtils.DEVICE_ID)); // custom id provided
+        validateDeviceIdDeveloperSupplied(TestUtils.DEVICE_ID); // validate id exist and developer supplied
+
+        Config.DID did = SDKCore.instance.module(ModuleDeviceIdCore.class).acquireId();
+        Assert.assertEquals(TestUtils.DEVICE_ID, did.id);
+    }
+
     private void validateDeviceIdWithoutMergeChange(final int rqSize, String oldDeviceId) {
         Map<String, String>[] requests = TestUtils.getCurrentRQ();
         Assert.assertEquals(rqSize, TestUtils.getCurrentRQ().length);
@@ -285,17 +314,25 @@ public class ModuleDeviceIdTests {
         Assert.assertEquals(DeviceIdType.DEVELOPER_SUPPLIED, Countly.instance().deviceId().getType());
     }
 
-    /**
-     * Validates that the device id is a valid UUID and starts with "CLY_"
-     */
     private void validateDeviceIdIsSdkGenerated() {
         String deviceId = Countly.instance().deviceId().getID();
         Assert.assertTrue(deviceId.startsWith("CLY_"));
         try {
+            validateDeviceIdIsUUID(deviceId);
+            Assert.assertEquals(DeviceIdType.SDK_GENERATED, Countly.instance().deviceId().getType());
+        } catch (IllegalArgumentException e) {
+            Assert.fail("Device id is not a valid UUID");
+        }
+    }
+
+    /**
+     * Validates that the device id is a valid UUID and starts with "CLY_"
+     */
+    private void validateDeviceIdIsUUID(String deviceId) {
+        try {
             String[] parts = deviceId.split("CLY_");
             UUID uuid = UUID.fromString(parts[1]);
             Assert.assertEquals(parts[1], uuid.toString());
-            Assert.assertEquals(DeviceIdType.SDK_GENERATED, Countly.instance().deviceId().getType());
         } catch (IllegalArgumentException e) {
             Assert.fail("Device id is not a valid UUID");
         }

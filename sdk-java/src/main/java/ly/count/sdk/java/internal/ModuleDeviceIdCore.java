@@ -81,7 +81,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
                 L.d("[ModuleDeviceIdCore] initFinished, Got developer id [" + did + "]");
             } else {
                 // regular flow - acquire id using specified strategy
-                did = acquireId(config);
+                did = acquireId();
             }
 
             config.setDeviceId(did);
@@ -149,7 +149,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
      * - send corresponding request to server.
      */
     public void logout() {
-        Config.DID did = acquireId(internalConfig);
+        Config.DID did = acquireId();
         changeDeviceIdInternal(did.id, DeviceIdType.fromInt(did.strategy, L), false);
     }
 
@@ -183,14 +183,12 @@ public class ModuleDeviceIdCore extends ModuleBase {
     /**
      * Gets id of the strategy supplied. In case strategy is not available, returns a fallback strategy.
      * In case strategy is available but id cannot be acquired right now, returns null.
-     *
-     * @param config InternalConfig to run in
      */
-    protected Config.DID acquireId(final InternalConfig config) {
-        L.i("[ModuleDeviceIdCore] acquireId, Acquiring device id of strategy [" + config.getDeviceIdStrategy() + "]");
+    protected Config.DID acquireId() {
+        L.i("[ModuleDeviceIdCore] acquireId, Acquiring device id of strategy [" + internalConfig.getDeviceIdStrategy() + "]");
         Config.DID did = null;
 
-        int index = config.getDeviceIdStrategy();
+        int index = internalConfig.getDeviceIdStrategy();
 
         while (index >= 0) {
             DeviceIdGenerator generator = generators.get(index);
@@ -198,7 +196,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
                 L.w("[ModuleDeviceIdCore] Device id strategy [" + index + "] is not available. Falling back to next one.");
                 index--;
             } else {
-                String id = generator.generate(config);
+                String id = generator.generate(internalConfig);
                 if (Utils.isNotEmpty(id)) {
                     did = new Config.DID(index, id);
                     break;
@@ -215,12 +213,13 @@ public class ModuleDeviceIdCore extends ModuleBase {
             }
             L.d("[ModuleDeviceIdCore] acquireId, Got device id: " + did);
         } else {
-            L.i("[ModuleDeviceIdCore] acquireId, No device id of strategy [" + config.getDeviceIdStrategy() + "] is available yet");
+            L.i("[ModuleDeviceIdCore] acquireId, No device id of strategy [" + internalConfig.getDeviceIdStrategy() + "] is available yet");
         }
 
         return did;
     }
 
+    //did not added tests because going to be deleted
     private void addDeviceIdToOldRequestsIfNotExist() {
         if (this.tasks == null) {
             this.tasks = new Tasks("deviceId", L);
