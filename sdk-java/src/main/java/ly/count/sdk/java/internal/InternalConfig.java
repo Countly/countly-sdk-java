@@ -90,11 +90,10 @@ public class InternalConfig extends Config {
     }
 
     public DID getDeviceId() {
-        if (!dids.isEmpty()) {
-            return dids.get(0);
-        } else {
+        if (dids.isEmpty()) {
             return null;
         }
+        return dids.get(0);
     }
 
     public DID setDeviceId(DID id) {

@@ -123,6 +123,11 @@ public class Transport implements X509TrustManager {
      */
     HttpURLConnection connection(final Request request, final User user) throws IOException {
         String endpoint = request.params.remove(Request.ENDPOINT);
+
+        if (!request.params.has("device_id") && config.getDeviceId() != null) {
+            request.params.add("device_id", config.getDeviceId().id);
+        }
+
         if (endpoint == null) {
             endpoint = "/i?";
         }
@@ -402,7 +407,7 @@ public class Transport implements X509TrustManager {
                         X509EncodedKeySpec spec = new X509EncodedKeySpec(data);
                         KeyFactory kf = KeyFactory.getInstance("RSA");
                         PublicKey k = kf.generatePublic(spec);
-                        
+
                         keyPins.add(k.getEncoded());
                     } catch (InvalidKeySpecException e) {
                         L.d("[network] Certificate in instead of public key it seems " + e);

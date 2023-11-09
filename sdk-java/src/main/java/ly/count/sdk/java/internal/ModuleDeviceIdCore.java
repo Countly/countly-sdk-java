@@ -112,7 +112,6 @@ public class ModuleDeviceIdCore extends ModuleBase {
             // device id changed
             L.d("[ModuleDeviceIdCore] deviceIdChanged, Ending session because device id was unset from [" + oldDeviceId + "]");
             session.end(null, null, oldDeviceId);
-            addDeviceIdToOldRequestsIfNotExist();
         }
     }
 
@@ -217,35 +216,6 @@ public class ModuleDeviceIdCore extends ModuleBase {
         }
 
         return did;
-    }
-
-    //did not added tests because going to be deleted
-    private void addDeviceIdToOldRequestsIfNotExist() {
-        if (this.tasks == null) {
-            this.tasks = new Tasks("deviceId", L);
-        }
-        tasks.run(new Tasks.Task<Object>(0L) {
-            @Override
-            public Object call() {
-                // put device_id parameter into existing requests
-                L.i("[ModuleDeviceIdCore] addDeviceIdToOldRequestsIfNotExist, Adding device_id to previous requests");
-                boolean success = transformRequests();
-                if (success) {
-                    L.i("[ModuleDeviceIdCore] addDeviceIdToOldRequestsIfNotExist, First transform: success");
-                } else {
-                    L.w("[ModuleDeviceIdCore] addDeviceIdToOldRequestsIfNotExist, First transform: failure");
-                }
-
-                // do it second time in case new requests were added during first attempt
-                success = transformRequests();
-                if (!success) {
-                    L.e("[ModuleDeviceIdCore] addDeviceIdToOldRequestsIfNotExist, Failed to put device_id into existing requests, following behaviour for unhandled requests is undefined.");
-                } else {
-                    L.i("[ModuleDeviceIdCore] addDeviceIdToOldRequestsIfNotExist, Second transform: success");
-                }
-                return null;
-            }
-        });
     }
 
     @Override
