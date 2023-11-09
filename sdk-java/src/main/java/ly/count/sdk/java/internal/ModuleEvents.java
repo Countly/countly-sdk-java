@@ -31,6 +31,18 @@ public class ModuleEvents extends ModuleBase {
     }
 
     @Override
+    public void deviceIdChanged(String oldDeviceId, boolean withMerge) {
+        super.deviceIdChanged(oldDeviceId, withMerge);
+        L.d("[ModuleEvents] deviceIdChanged: oldDeviceId = " + oldDeviceId + ", withMerge = " + withMerge);
+        if (!withMerge) {
+            timedEvents.forEach((key, event) -> {
+                L.d("[ModuleEvents] deviceIdChanged, Ending timed event: [" + key + "]");
+                endEventInternal(event.key, event.segmentation, event.count, event.sum);
+            });
+        }
+    }
+
+    @Override
     public void stop(InternalConfig config, final boolean clear) {
         super.stop(config, clear);
         if (clear) {

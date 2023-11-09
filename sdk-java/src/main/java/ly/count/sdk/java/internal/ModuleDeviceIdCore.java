@@ -99,26 +99,20 @@ public class ModuleDeviceIdCore extends ModuleBase {
         Config.DID deviceId = internalConfig.getDeviceId();
         SessionImpl session = SDKCore.instance.getSession();
 
-        if (deviceId != null && oldDeviceId != null && !deviceId.id.equals(oldDeviceId)) {
+        if (Utils.isEmptyOrNull(deviceId.id) || Utils.isEmptyOrNull(oldDeviceId)) {
+            L.w("[ModuleDeviceIdCore] deviceIdChanged, Empty id passed to changeDeviceId method");
+            return;
+        }
+
+        //if without merge then we should not send this request
+        if (withMerge) {
+            // add device id change request and add the old device ID every time
+            ModuleRequests.pushAsync(internalConfig, new Request(Params.PARAM_OLD_DEVICE_ID, oldDeviceId));
+        } else if (session != null && session.isActive()) {
             // device id changed
-            if (session != null && session.isActive()) {
-                // end previous session
-                L.d("[ModuleDeviceIdCore] Ending session because device id was changed from [" + oldDeviceId + "]");
-                session.end(null, null, oldDeviceId);
-            }
-
-            // add device id change request
-            Request request = ModuleRequests.nonSessionRequest(internalConfig);
-
-            //if we are missing the device ID, add it
-            if (!request.params.has(Params.PARAM_DEVICE_ID)) {
-                request.params.add(Params.PARAM_DEVICE_ID, deviceId.id);
-            }
-            //add the old device ID every time
-            request.params.add(Params.PARAM_OLD_DEVICE_ID, oldDeviceId);
-
-            ModuleRequests.pushAsync(internalConfig, request);
-            SDKCore.instance.onSignal(internalConfig, SDKCore.Signal.DID.getIndex());
+            L.d("[ModuleDeviceIdCore] deviceIdChanged, Ending session because device id was unset from [" + oldDeviceId + "]");
+            session.end(null, null, oldDeviceId);
+            addDeviceIdToOldRequestsIfNotExist();
         }
     }
 
@@ -182,15 +176,6 @@ public class ModuleDeviceIdCore extends ModuleBase {
         internalConfig.storageProvider.setDeviceIdType(type.name());
         internalConfig.storageProvider.setDeviceID(id);
         internalConfig.setDeviceId(new Config.DID(type.index, id));
-
-        if (!withMerge) {
-            SessionImpl session = SDKCore.instance.getSession();
-            if (session != null) {
-                L.d("[ModuleDeviceIdCore] changeDeviceIdInternal, Ending session because device id was unset from [" + old.id + "]");
-                session.end(null, null, old.id);
-            }
-            addDeviceIdToOldRequestsIfNotExist();
-        }
 
         SDKCore.instance.notifyModulesDeviceIdChanged(old.id, withMerge);
     }
