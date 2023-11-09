@@ -162,6 +162,16 @@ public class TestUtils {
         return resultMapArray;
     }
 
+    static void flushCurrentRQ() {
+        Arrays.stream(getRequestFiles(getTestSDirectory())).forEach(file -> {
+            try {
+                Files.deleteIfExists(file.toPath());
+            } catch (IOException ignored) {
+                //do nothing
+            }
+        });
+    }
+
     protected static List<EventImpl> getCurrentEQ() {
         return getCurrentEQ(getTestSDirectory(), mock(Log.class));
     }

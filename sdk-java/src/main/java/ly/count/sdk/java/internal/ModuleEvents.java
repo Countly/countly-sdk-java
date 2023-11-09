@@ -54,6 +54,11 @@ public class ModuleEvents extends ModuleBase {
     private synchronized void addEventsToRequestQ(String deviceId) {
         L.d("[ModuleEvents] addEventsToRequestQ");
 
+        if (eventQueue.eventQueueMemoryCache.isEmpty()) {
+            L.d("[ModuleEvents] addEventsToRequestQ, eventQueueMemoryCache is empty, skipping");
+            return;
+        }
+
         Request request = new Request();
         if (deviceId != null) {
             request.params.add("device_id", deviceId);
