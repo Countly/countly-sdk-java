@@ -125,6 +125,7 @@ public class Transport implements X509TrustManager {
         String endpoint = request.params.remove(Request.ENDPOINT);
 
         if (!request.params.has("device_id") && config.getDeviceId() != null) {
+            //fallback if request does not have any device id
             request.params.add("device_id", config.getDeviceId().id);
         }
 
