@@ -179,9 +179,7 @@ public class ModuleRemoteConfigTests {
      */
     @Test
     public void removeDownloadCallback() {
-        RCDownloadCallback callback = (rResult, error, fullValueUpdate, downloadedValues) -> {
-            Assert.assertEquals(RequestResult.Success, rResult);
-        };
+        RCDownloadCallback callback = (rResult, error, fullValueUpdate, downloadedValues) -> Assert.assertEquals(RequestResult.Success, rResult);
         Countly.instance().init(TestUtils.getConfigRemoteConfigs().remoteConfigRegisterGlobalCallback(callback));
         ModuleRemoteConfig rcModule = SDKCore.instance.module(ModuleRemoteConfig.class);
 
@@ -438,7 +436,7 @@ public class ModuleRemoteConfigTests {
 
             TestUtils.validateMetrics(Utils.urldecode(params.get("metrics")));
             TestUtils.validateRequestMakerRequiredParams("/o/sdk?", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
-            TestUtils.validateRequiredParams(params);
+            TestUtils.validateRequiredParams(params, Countly.instance().deviceId().getID());
             callback.callback(remoteConfigMockData);
         };
     }

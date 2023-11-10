@@ -49,7 +49,7 @@ public class ScenarioRemoteConfigDeviceIdChangeTests {
         Assert.assertEquals(1, Countly.instance().remoteConfig().getValues().size());
 
         //change device id
-        Countly.instance().changeDeviceIdWithMerge(TestUtils.keysValues[0]);
+        Countly.instance().deviceId().changeWithMerge(TestUtils.keysValues[0]);
 
         Countly.instance().remoteConfig().getValues().forEach((key, value) -> Assert.assertTrue(value.isCurrentUsersData));
         Assert.assertEquals(3, Countly.instance().remoteConfig().getValues().size());
@@ -76,7 +76,7 @@ public class ScenarioRemoteConfigDeviceIdChangeTests {
         Assert.assertEquals(1, Countly.instance().remoteConfig().getValues().size());
 
         //change device id
-        Countly.instance().changeDeviceIdWithoutMerge(TestUtils.keysValues[0]);
+        Countly.instance().deviceId().changeWithoutMerge(TestUtils.keysValues[0]);
 
         Countly.instance().remoteConfig().getValues().forEach((key, value) -> Assert.assertTrue(value.isCurrentUsersData));
         Assert.assertEquals(3, Countly.instance().remoteConfig().getValues().size());

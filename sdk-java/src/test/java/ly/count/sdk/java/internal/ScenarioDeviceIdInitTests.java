@@ -1,6 +1,5 @@
 package ly.count.sdk.java.internal;
 
-import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import org.junit.After;
 import org.junit.Assert;
@@ -39,7 +38,7 @@ public class ScenarioDeviceIdInitTests {
         Countly.instance().init(TestUtils.getBaseConfig(null));
 
         assertIsSDKGeneratedID(Countly.instance().deviceId().getID());
-        Assert.assertEquals(Config.DeviceIdStrategy.UUID.getIndex(), SDKCore.instance.config.getDeviceIdStrategy());
+        Assert.assertEquals(DeviceIdType.SDK_GENERATED, Countly.instance().deviceId().getType());
     }
 
     /**
@@ -52,7 +51,7 @@ public class ScenarioDeviceIdInitTests {
         Countly.instance().init(TestUtils.getBaseConfig(TestUtils.DEVICE_ID));
 
         Assert.assertEquals(TestUtils.DEVICE_ID, Countly.instance().deviceId().getID());
-        Assert.assertEquals(Config.DeviceIdStrategy.CUSTOM_ID.getIndex(), SDKCore.instance.config.getDeviceIdStrategy());
+        Assert.assertEquals(DeviceIdType.DEVELOPER_SUPPLIED, Countly.instance().deviceId().getType());
     }
 
     //followup init where:
@@ -68,14 +67,14 @@ public class ScenarioDeviceIdInitTests {
 
         String initialDId = Countly.instance().deviceId().getID();
         assertIsSDKGeneratedID(initialDId);
-        Assert.assertEquals(Config.DeviceIdStrategy.UUID.getIndex(), SDKCore.instance.config.getDeviceIdStrategy());
+        Assert.assertEquals(DeviceIdType.SDK_GENERATED, Countly.instance().deviceId().getType());
 
         //setup followup state
         Countly.instance().stop();
         Countly.instance().init(TestUtils.getBaseConfig(null));
 
         Assert.assertEquals(initialDId, Countly.instance().deviceId().getID());
-        Assert.assertEquals(Config.DeviceIdStrategy.UUID.getIndex(), SDKCore.instance.config.getDeviceIdStrategy());
+        Assert.assertEquals(DeviceIdType.SDK_GENERATED, Countly.instance().deviceId().getType());
     }
 
     /**
@@ -90,15 +89,14 @@ public class ScenarioDeviceIdInitTests {
         String initialDId = Countly.instance().deviceId().getID();
 
         assertIsSDKGeneratedID(initialDId);
-        Assert.assertEquals(Config.DeviceIdStrategy.UUID.getIndex(), SDKCore.instance.config.getDeviceIdStrategy());
+        Assert.assertEquals(DeviceIdType.SDK_GENERATED, Countly.instance().deviceId().getType());
 
         //setup followup state
         Countly.instance().stop();
         Countly.instance().init(TestUtils.getBaseConfig(alternativeDeviceID));
 
         Assert.assertEquals(initialDId, Countly.instance().deviceId().getID());
-        //todo this is what the SDK should return
-        //Assert.assertEquals(Config.DeviceIdStrategy.UUID.getIndex(), SDKCore.instance.config.getDeviceIdStrategy());
+        Assert.assertEquals(DeviceIdType.SDK_GENERATED, Countly.instance().deviceId().getType());
     }
 
     /**
@@ -112,14 +110,14 @@ public class ScenarioDeviceIdInitTests {
         Countly.instance().init(TestUtils.getBaseConfig(TestUtils.DEVICE_ID));
 
         Assert.assertEquals(TestUtils.DEVICE_ID, Countly.instance().deviceId().getID());
-        Assert.assertEquals(Config.DeviceIdStrategy.CUSTOM_ID.getIndex(), SDKCore.instance.config.getDeviceIdStrategy());
+        Assert.assertEquals(DeviceIdType.DEVELOPER_SUPPLIED, Countly.instance().deviceId().getType());
 
         //setup followup state
         Countly.instance().stop();
         Countly.instance().init(TestUtils.getBaseConfig(alternativeDeviceID));
 
         Assert.assertEquals(TestUtils.DEVICE_ID, Countly.instance().deviceId().getID());
-        Assert.assertEquals(Config.DeviceIdStrategy.CUSTOM_ID.getIndex(), SDKCore.instance.config.getDeviceIdStrategy());
+        Assert.assertEquals(DeviceIdType.DEVELOPER_SUPPLIED, Countly.instance().deviceId().getType());
     }
 
     void assertIsSDKGeneratedID(String providedID) {

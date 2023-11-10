@@ -1,11 +1,9 @@
 package ly.count.sdk.java.internal;
 
-import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Session;
 
 /**
  * Created by artem on 05/01/2017.
- *
  * Contract:
  * <ul>
  *     <li>ModuleBase instances must provide empty constructor with no parameters.</li>
@@ -31,18 +29,6 @@ public abstract class ModuleBase {
     public void init(InternalConfig config) {
         L = config.getLogger();
         internalConfig = config;
-    }
-
-    /**
-     * Device ID has been acquired from the device id provider.
-     * Can be invoked multiple times throughout the ModuleBase lifecycle.
-     * Parameters can be instance equal (==), meaning that id haven't changed.
-     *
-     * @param config InternalConfig to run in
-     * @param deviceId deviceId valid from now on
-     * @param oldDeviceId deviceId valid previously if any
-     */
-    public void onDeviceId(InternalConfig config, Config.DID deviceId, Config.DID oldDeviceId) {
     }
 
     /**
@@ -131,6 +117,9 @@ public abstract class ModuleBase {
 
     /**
      * Called when the device id is changed.
+     *
+     * @param oldDeviceId old device id
+     * @param withMerge if the device id change is with merge or not
      */
     protected void deviceIdChanged(String oldDeviceId, boolean withMerge) {
 

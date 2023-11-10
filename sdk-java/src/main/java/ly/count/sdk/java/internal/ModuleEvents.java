@@ -1,14 +1,16 @@
 package ly.count.sdk.java.internal;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import ly.count.sdk.java.Countly;
+import ly.count.sdk.java.Session;
+import ly.count.sdk.java.View;
 
 public class ModuleEvents extends ModuleBase {
     protected EventQueue eventQueue = null;
-    final Map<String, EventImpl> timedEvents = new HashMap<>();
+    final Map<String, EventImpl> timedEvents = new ConcurrentHashMap<>();
     protected Events eventsInterface = null;
 
     @Override
@@ -22,12 +24,37 @@ public class ModuleEvents extends ModuleBase {
 
     @Override
     protected void onTimer() {
-        addEventsToRequestQ();
+        addEventsToRequestQ(null);
     }
 
     @Override
     public Boolean onRequest(Request request) {
         return true;
+    }
+
+    @Override
+    public void deviceIdChanged(String oldDeviceId, boolean withMerge) {
+        super.deviceIdChanged(oldDeviceId, withMerge);
+        L.d("[ModuleEvents] deviceIdChanged: oldDeviceId = " + oldDeviceId + ", withMerge = " + withMerge);
+        if (!withMerge) {
+            for (Map.Entry<String, EventImpl> timedEventEntry : timedEvents.entrySet()) {
+                L.d("[ModuleEvents] deviceIdChanged, Ending timed event: [" + timedEventEntry.getKey() + "]");
+                endEventInternal(timedEventEntry.getKey(), timedEventEntry.getValue().segmentation, timedEventEntry.getValue().count, timedEventEntry.getValue().sum);
+            }
+
+            // this part is to end and record the current view if exists
+            Session session = Countly.session();
+            if ((session != null && session.isActive())) {
+                View currentView = ((SessionImpl) session).currentView;
+                if (currentView != null) {
+                    currentView.stop(true);
+                } else {
+                    Storage.pushAsync(internalConfig, ((SessionImpl) Countly.session()));
+                }
+            }
+
+            addEventsToRequestQ(oldDeviceId);
+        }
     }
 
     @Override
@@ -39,11 +66,18 @@ public class ModuleEvents extends ModuleBase {
         }
     }
 
-    private synchronized void addEventsToRequestQ() {
+    private synchronized void addEventsToRequestQ(String deviceId) {
         L.d("[ModuleEvents] addEventsToRequestQ");
 
+        if (eventQueue.eventQueueMemoryCache.isEmpty()) {
+            L.d("[ModuleEvents] addEventsToRequestQ, eventQueueMemoryCache is empty, skipping");
+            return;
+        }
+
         Request request = new Request();
-        request.params.add("device_id", Countly.instance().getDeviceId());
+        if (deviceId != null) {
+            request.params.add("device_id", deviceId);
+        }
         request.params.arr("events").put(eventQueue.eventQueueMemoryCache).add();
         request.own(ModuleEvents.class);
 
@@ -93,7 +127,7 @@ public class ModuleEvents extends ModuleBase {
     private void checkEventQueueToSend(boolean forceSend) {
         L.d("[ModuleEvents] queue size:[" + eventQueue.eqSize() + "] || forceSend: " + forceSend);
         if (forceSend || (eventQueue.eqSize() >= internalConfig.getEventsBufferSize())) {
-            addEventsToRequestQ();
+            addEventsToRequestQ(null);
         }
     }
 

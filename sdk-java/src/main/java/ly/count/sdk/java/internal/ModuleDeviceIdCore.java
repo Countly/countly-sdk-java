@@ -81,7 +81,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
                 L.d("[ModuleDeviceIdCore] initFinished, Got developer id [" + did + "]");
             } else {
                 // regular flow - acquire id using specified strategy
-                did = acquireId(config);
+                did = acquireId();
             }
 
             config.setDeviceId(did);
@@ -97,28 +97,16 @@ public class ModuleDeviceIdCore extends ModuleBase {
     public void deviceIdChanged(String oldDeviceId, boolean withMerge) {
         L.d("[ModuleDeviceIdCore] deviceIdChanged, oldDeviceId [" + oldDeviceId + "] withMerge [" + withMerge + "]");
         Config.DID deviceId = internalConfig.getDeviceId();
-        SessionImpl session = SDKCore.instance.getSession();
 
-        if (deviceId != null && oldDeviceId != null && !deviceId.id.equals(oldDeviceId)) {
-            // device id changed
-            if (session != null && session.isActive()) {
-                // end previous session
-                L.d("[ModuleDeviceIdCore] Ending session because device id was changed from [" + oldDeviceId + "]");
-                session.end(null, null, oldDeviceId);
-            }
+        if (Utils.isEmptyOrNull(deviceId.id) || Utils.isEmptyOrNull(oldDeviceId)) {
+            L.w("[ModuleDeviceIdCore] deviceIdChanged, Empty id passed to changeDeviceId method");
+            return;
+        }
 
-            // add device id change request
-            Request request = ModuleRequests.nonSessionRequest(internalConfig);
-
-            //if we are missing the device ID, add it
-            if (!request.params.has(Params.PARAM_DEVICE_ID)) {
-                request.params.add(Params.PARAM_DEVICE_ID, deviceId.id);
-            }
-            //add the old device ID every time
-            request.params.add(Params.PARAM_OLD_DEVICE_ID, oldDeviceId);
-
-            ModuleRequests.pushAsync(internalConfig, request);
-            SDKCore.instance.onSignal(internalConfig, SDKCore.Signal.DID.getIndex());
+        //if without merge then we should not send this request
+        if (withMerge) {
+            // add device id change request and add the old device ID every time
+            ModuleRequests.pushAsync(internalConfig, new Request(Params.PARAM_OLD_DEVICE_ID, oldDeviceId));
         }
     }
 
@@ -139,7 +127,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
      * - send corresponding request to server.
      */
     public void logout() {
-        Config.DID did = acquireId(internalConfig);
+        Config.DID did = acquireId();
         changeDeviceIdInternal(did.id, DeviceIdType.fromInt(did.strategy, L), false);
     }
 
@@ -163,18 +151,9 @@ public class ModuleDeviceIdCore extends ModuleBase {
             return;
         }
 
-        Config.DID did = new Config.DID(type.index, id);
         internalConfig.storageProvider.setDeviceIdType(type.name());
         internalConfig.storageProvider.setDeviceID(id);
-        internalConfig.setDeviceId(did);
-
-        if (!withMerge) {
-            SessionImpl session = SDKCore.instance.getSession();
-            if (session != null) {
-                L.d("[ModuleDeviceIdCore] changeDeviceIdInternal, Ending session because device id was unset from [" + old.id + "]");
-                session.end(null, null, old.id);
-            }
-        }
+        internalConfig.setDeviceId(new Config.DID(type.index, id));
 
         SDKCore.instance.notifyModulesDeviceIdChanged(old.id, withMerge);
     }
@@ -182,14 +161,12 @@ public class ModuleDeviceIdCore extends ModuleBase {
     /**
      * Gets id of the strategy supplied. In case strategy is not available, returns a fallback strategy.
      * In case strategy is available but id cannot be acquired right now, returns null.
-     *
-     * @param config InternalConfig to run in
      */
-    protected Config.DID acquireId(final InternalConfig config) {
-        L.i("[ModuleDeviceIdCore] acquireId, Acquiring device id of strategy [" + config.getDeviceIdStrategy() + "]");
+    protected Config.DID acquireId() {
+        L.i("[ModuleDeviceIdCore] acquireId, Acquiring device id of strategy [" + internalConfig.getDeviceIdStrategy() + "]");
         Config.DID did = null;
 
-        int index = config.getDeviceIdStrategy();
+        int index = internalConfig.getDeviceIdStrategy();
 
         while (index >= 0) {
             DeviceIdGenerator generator = generators.get(index);
@@ -197,7 +174,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
                 L.w("[ModuleDeviceIdCore] Device id strategy [" + index + "] is not available. Falling back to next one.");
                 index--;
             } else {
-                String id = generator.generate(config);
+                String id = generator.generate(internalConfig);
                 if (Utils.isNotEmpty(id)) {
                     did = new Config.DID(index, id);
                     break;
@@ -214,7 +191,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
             }
             L.d("[ModuleDeviceIdCore] acquireId, Got device id: " + did);
         } else {
-            L.i("[ModuleDeviceIdCore] acquireId, No device id of strategy [" + config.getDeviceIdStrategy() + "] is available yet");
+            L.i("[ModuleDeviceIdCore] acquireId, No device id of strategy [" + internalConfig.getDeviceIdStrategy() + "] is available yet");
         }
 
         return did;

@@ -76,6 +76,10 @@ public class TestUtils {
         return config;
     }
 
+    static Config getConfigDeviceId(String deviceId) {
+        return getBaseConfig(deviceId).enableFeatures(Config.Feature.Sessions, Config.Feature.Views, Config.Feature.Events).setEventQueueSizeToSend(10);
+    }
+
     static Config getConfigSessions() {
         return getConfigSessions((Config.Feature) null);
     }
@@ -158,6 +162,21 @@ public class TestUtils {
         return resultMapArray;
     }
 
+    static void flushCurrentRQWithOldDeviceId(String oldDeviceId) {
+        Arrays.stream(getRequestFiles(getTestSDirectory())).forEach(file -> {
+            try {
+                if (file.exists() && file.isFile()) {
+                    String content = Utils.readFileContent(file, mock(Log.class));
+                    if (content.contains(oldDeviceId)) {
+                        Files.delete(file.toPath());
+                    }
+                }
+            } catch (IOException ignored) {
+                //do nothing
+            }
+        });
+    }
+
     protected static List<EventImpl> getCurrentEQ() {
         return getCurrentEQ(getTestSDirectory(), mock(Log.class));
     }
@@ -223,7 +242,7 @@ public class TestUtils {
         //stream all files from target folder and filter only request files and sort them by last modified
         return Stream.of(files)
             .filter(file -> file.getName().startsWith("[CLY]_request_"))
-            .sorted(Comparator.comparing(file -> Long.parseLong(file.getName().split("_")[3])))
+            .sorted(Comparator.comparing(file -> Long.parseLong(file.getName().split("_")[2])))
             .toArray(File[]::new);
     }
 
@@ -299,12 +318,12 @@ public class TestUtils {
     }
 
     static List<EventImpl> readEventsFromRequest() {
-        return readEventsFromRequest(0);
+        return readEventsFromRequest(0, TestUtils.DEVICE_ID);
     }
 
-    static List<EventImpl> readEventsFromRequest(int requestIndex) {
+    static List<EventImpl> readEventsFromRequest(int requestIndex, String deviceId) {
         Map<String, String> request = getCurrentRQ()[requestIndex];
-        validateRequiredParams(request);
+        validateRequiredParams(request, deviceId);
         JSONArray array = new JSONArray(request.get("events"));
         List<EventImpl> result = new ArrayList<>();
 
@@ -349,12 +368,16 @@ public class TestUtils {
     }
 
     public static void validateRequiredParams(Map<String, String> params) {
+        validateRequiredParams(params, TestUtils.DEVICE_ID);
+    }
+
+    public static void validateRequiredParams(Map<String, String> params, String deviceId) {
         int hour = Integer.parseInt(params.get("hour"));
         int dow = Integer.parseInt(params.get("dow"));
         int tz = Integer.parseInt(params.get("tz"));
 
         validateSdkIdentityParams(params);
-        Assert.assertEquals(SDKCore.instance.config.getDeviceId().id, params.get("device_id"));
+        Assert.assertEquals(deviceId, params.get("device_id"));
         Assert.assertEquals(SERVER_APP_KEY, params.get("app_key"));
         Assert.assertEquals(APPLICATION_VERSION, params.get("av"));
         Assert.assertTrue(Long.parseLong(params.get("timestamp")) > 0);
@@ -464,5 +487,13 @@ public class TestUtils {
     static void validateMetrics(String metrics) {
         Params params = Device.dev.buildMetrics();
         Assert.assertEquals(params.get("metrics"), metrics);
+    }
+
+    static class AtomicString {
+        String value;
+
+        public AtomicString(String value) {
+            this.value = value;
+        }
     }
 }

@@ -60,12 +60,19 @@ public class ModuleSessions extends ModuleBase {
     /**
      * Handles one single case of device id change with auto sessions handling, see first {@code if} here:
      *
-     * @see ModuleDeviceIdCore#onDeviceId(InternalConfig, Config.DID, Config.DID)
+     * @see ModuleDeviceIdCore#deviceIdChanged(String, boolean)
      */
-    public void onDeviceId(final InternalConfig config, final Config.DID deviceId, final Config.DID oldDeviceId) {
-        L.d("[ModuleSessions] onDeviceId " + deviceId + ", old " + oldDeviceId);
-        if (deviceId != null && oldDeviceId != null && !deviceId.equals(oldDeviceId) && getSession() == null) {
-            session(config, null).begin();
+    @Override
+    public void deviceIdChanged(String oldDeviceId, boolean withMerge) {
+        Config.DID deviceId = internalConfig.getDeviceId();
+        L.d("[ModuleSessions] deviceIdChanged, " + deviceId + ", old " + oldDeviceId);
+        if (!withMerge && session != null && session.isActive()) {
+            L.d("[ModuleSessions] deviceIdChanged, Ending session because device id was unset from [" + oldDeviceId + "]");
+            session.end(null, null, oldDeviceId);
+        }
+        
+        if (deviceId != null && oldDeviceId != null && (session == null || !session.isActive()) && !withMerge) {
+            session(internalConfig, null).begin();
         }
     }
 

@@ -49,7 +49,7 @@ public class SDKCore {
     }
 
     protected Log L = null;
-    private static ModuleBase testDummyModule = null;//set during testing when trying to check the SDK's lifecycle
+    protected static ModuleBase testDummyModule = null;//set during testing when trying to check the SDK's lifecycle
 
     protected static void registerDefaultModuleMappings() {
         moduleMappings.put(CoreFeature.DeviceId.getIndex(), ModuleDeviceIdCore.class);
@@ -588,12 +588,14 @@ public class SDKCore {
     }
 
     public void notifyModulesDeviceIdChanged(@Nullable String old, final boolean withMerge) {
-        L.d("[SDKCore] deviceIdChanged, newDeviceId:[" + config.getDeviceId() + "], oldDeviceId:[ " + old + "]");
+        L.d("[SDKCore] notifyModulesDeviceIdChanged, newDeviceId:[" + config.getDeviceId() + "], oldDeviceId:[ " + old + "]");
         Config.DID id = config.getDeviceId();
-        modules.forEach((feature, module) -> module.deviceIdChanged(old, withMerge));
-        if (id != null) {
-            user.id = id.id;
+        if (id.id.equals(old)) {
+            L.d("[SDKCore] notifyModulesDeviceIdChanged, newDeviceId is the same as oldDeviceId, skipping");
+            return;
         }
+        modules.forEach((feature, module) -> module.deviceIdChanged(old, withMerge));
+        user.id = id.id;
     }
 
     public void login(String id) {
