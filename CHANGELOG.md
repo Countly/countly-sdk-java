@@ -25,7 +25,7 @@
   * "changeDeviceIdWithMerge" instead use "Countly::deviceId::changeWithMerge" via "instance()" call
   * "getDeviceId" instead use "Countly::deviceId::getID" via "instance()" call
 
-## 23.8.0
+## 23.10.0
 
 * !! Major breaking change !! The following methods and their functionality are deprecated from the "UserEditor" interface and will not function anymore:
   * "addToCohort(key)"
