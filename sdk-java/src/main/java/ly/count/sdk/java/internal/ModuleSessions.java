@@ -70,9 +70,8 @@ public class ModuleSessions extends ModuleBase {
             L.d("[ModuleSessions] deviceIdChanged, Ending session because device id was unset from [" + oldDeviceId + "]");
             session.end(null, null, oldDeviceId);
         }
-        //TODO fix of test "changeWithMerge_sessionNotStarted"
-        // if (deviceId != null && oldDeviceId != null && (session == null || !session.isActive()) && !withMerge) {
-        if (deviceId != null && oldDeviceId != null && (session == null || !session.isActive())) {
+        
+        if (deviceId != null && oldDeviceId != null && (session == null || !session.isActive()) && !withMerge) {
             session(internalConfig, null).begin();
         }
     }

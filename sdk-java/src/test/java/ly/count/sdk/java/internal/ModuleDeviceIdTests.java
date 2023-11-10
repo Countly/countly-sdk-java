@@ -315,6 +315,8 @@ public class ModuleDeviceIdTests {
      * <p>
      * So at least 3 requests must exist in the RQ
      *
+     * This validator assumes that a session was started at the start and automatic sessions are enabled (which will start the session afterwards)
+     *
      * @param rqSize expected RQ size
      * @param oldDeviceId to validate device id in requests before device id change
      */
