@@ -71,8 +71,8 @@ public class ModuleSessions extends ModuleBase {
             session.end(null, null, oldDeviceId);
         }
         //TODO fix of test "changeWithMerge_sessionNotStarted"
-        // if (deviceId != null && oldDeviceId != null && session == null && !withMerge) {
-        if (deviceId != null && oldDeviceId != null && session == null) {
+        // if (deviceId != null && oldDeviceId != null && (session == null || !session.isActive()) && !withMerge) {
+        if (deviceId != null && oldDeviceId != null && (session == null || !session.isActive())) {
             session(internalConfig, null).begin();
         }
     }

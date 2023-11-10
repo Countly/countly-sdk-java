@@ -44,7 +44,7 @@ public class ModuleEvents extends ModuleBase {
 
             // this part is to end and record the current view if exists
             Session session = Countly.session();
-            if (session != null) {
+            if ((session != null && session.isActive())) {
                 View currentView = ((SessionImpl) session).currentView;
                 if (currentView != null) {
                     currentView.stop(true);

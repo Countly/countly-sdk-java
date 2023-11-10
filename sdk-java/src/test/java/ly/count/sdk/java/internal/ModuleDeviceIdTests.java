@@ -195,6 +195,25 @@ public class ModuleDeviceIdTests {
     }
 
     /**
+     * "changeWithoutMerge" with not started session
+     * Validating that only one request must exist and it should be a device id change request and callback should be called only once
+     * SDK must generate an id first, then should change with developer supplied. Only one request must exist
+     */
+    @Test
+    public void changeWithoutMerge_sessionNotStarted() {
+        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(new TestUtils.AtomicString(TestUtils.DEVICE_ID), true, DeviceIdType.DEVELOPER_SUPPLIED);
+        Countly.instance().init(TestUtils.getConfigDeviceId(null)); // to create sdk generated device id
+
+        String oldDeviceId = Countly.instance().deviceId().getID();
+        validateDeviceIdIsSdkGenerated();
+        Assert.assertEquals(0, callCount.get());
+
+        Countly.instance().deviceId().changeWithoutMerge(TestUtils.DEVICE_ID);
+        Assert.assertEquals(1, callCount.get());
+        validateBeganSessionRequest(); // only began session request must exist for new device id
+    }
+
+    /**
      * "getID", "getType"
      * Custom id is not given, validating that device id is sdk generated
      * Type must be 'SDK_GENERATED' and generated id should be a valid UUID
@@ -301,9 +320,6 @@ public class ModuleDeviceIdTests {
      */
     private void validateDeviceIdWithoutMergeChange(final int rqSize, String oldDeviceId) {
         Map<String, String>[] requests = TestUtils.getCurrentRQ();
-        if (rqSize < 3) {
-            Assert.fail("RQ size must be at least 3");
-        }
         Assert.assertEquals(rqSize, TestUtils.getCurrentRQ().length);
 
         // validate first begin session request
