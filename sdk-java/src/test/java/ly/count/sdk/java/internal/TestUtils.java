@@ -77,7 +77,7 @@ public class TestUtils {
     }
 
     static Config getConfigDeviceId(String deviceId) {
-        return getBaseConfig(deviceId).enableFeatures(Config.Feature.Sessions, Config.Feature.Views, Config.Feature.Events);
+        return getBaseConfig(deviceId).enableFeatures(Config.Feature.Sessions, Config.Feature.Views, Config.Feature.Events).setEventQueueSizeToSend(10);
     }
 
     static Config getConfigSessions() {
