@@ -53,12 +53,12 @@ public class Utils {
      * URLDecoder wrapper to remove try-catch
      *
      * @param str string to decode
-     * @return url-decoded {@code str}
+     * @return url-decoded {@code str}, empty string if decoding failed
      */
     public static String urldecode(String str) {
         try {
             return URLDecoder.decode(str, UTF8);
-        } catch (UnsupportedEncodingException e) {
+        } catch (UnsupportedEncodingException | IllegalArgumentException e) {
             return null;
         }
     }
@@ -133,19 +133,31 @@ public class Utils {
 
     /**
      * URLEncoder wrapper to remove try-catch
+     * this class is for the test purposes
+     *
+     * @param str string to encode
+     * @param encoding encoding to use (for testing)
+     * @return url-encoded {@code str}
+     */
+    protected static String urlencode(final String str, Log L, final String encoding) {
+        try {
+            return URLEncoder.encode(str, encoding);
+        } catch (UnsupportedEncodingException e) {
+            if (L != null) {
+                L.e("[Utils] urlencode, No " + encoding + " encoding?" + e);
+            }
+            return "";
+        }
+    }
+
+    /**
+     * URLEncoder wrapper to remove try-catch
      *
      * @param str string to encode
      * @return url-encoded {@code str}
      */
-    public static String urlencode(String str, Log L) {
-        try {
-            return URLEncoder.encode(str, UTF8);
-        } catch (UnsupportedEncodingException e) {
-            if (L != null) {
-                L.e("[Utils] urlencode, No UTF-8 encoding?" + e);
-            }
-            return "";
-        }
+    public static String urlencode(final String str, Log L) {
+        return urlencode(str, L, UTF8);
     }
 
     /**
@@ -155,7 +167,7 @@ public class Utils {
      * @param string string to hash
      * @return hash of the string or null in case of error
      */
-    public static String digestHex(String digestName, String string, Log L) {
+    public static String digestHex(final String digestName, final String string, Log L) {
         try {
             MessageDigest digest = MessageDigest.getInstance(digestName);
             byte[] bytes = string.getBytes(StandardCharsets.UTF_8);
@@ -173,9 +185,12 @@ public class Utils {
      * Get hexadecimal string representation of a byte array
      *
      * @param bytes array of bytes to convert
-     * @return hex string of the byte array in lower case
+     * @return hex string of the byte array in lower case, if null or empty returns empty string
      */
     public static String hex(byte[] bytes) {
+        if (bytes == null || bytes.length == 0) {
+            return "";
+        }
         char[] hexChars = new char[bytes.length * 2];
         for (int j = 0; j < bytes.length; j++) {
             int v = bytes[j] & 0xFF;
@@ -206,7 +221,7 @@ public class Utils {
             return bytes.toByteArray();
         } catch (IOException e) {
             if (L != null) {
-                L.e("Utils Couldn't read stream" + e);
+                L.e("[Utils] readStream, Couldn't read stream" + e);
             }
             return null;
         } finally {
@@ -350,6 +365,10 @@ public class Utils {
         }
 
         public static String decodeToString(String string, Log L) {
+            byte[] result = decode(string, L);
+            if (result == null) {
+                return null;
+            }
             return new String(decode(string, L), StandardCharsets.UTF_8);
         }
     }
