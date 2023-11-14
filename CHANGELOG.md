@@ -1,4 +1,4 @@
-## 23.12.0
+## XX.XX.XX
 
 * Fixed a bug where setting custom user properties would not work.
 
