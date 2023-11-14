@@ -1,8 +1,10 @@
 package ly.count.sdk.java.internal;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
@@ -41,12 +43,11 @@ public class UserEditorTests {
     @Test
     public void setPicturePath_webUrl() {
         Countly.instance().init(TestUtils.getBaseConfig());
-        Countly.session().begin();
-        //set profile picture url and commit it
-        Countly.instance().user().edit().setPicturePath(imgFileWebUrl).commit();
-        validatePictureAndPath(imgFileWebUrl, null);
-
-        Countly.session().end();
+        sessionHandler(() -> {
+            //set profile picture url and commit it
+            Countly.instance().user().edit().setPicturePath(imgFileWebUrl).commit();
+            validatePictureAndPath(imgFileWebUrl, null);
+        });
         validateUserDetailsRequestInRQ(toMap("user_details", "{\"picture\":\"" + imgFileWebUrl + "\"}"));
     }
 
@@ -59,14 +60,15 @@ public class UserEditorTests {
     @Test
     public void setPicturePath_localPath() {
         Countly.instance().init(TestUtils.getBaseConfig());
-        Countly.session().begin();
-        File imgFile = TestUtils.createFile(imgFileName);
-        //set profile picture url and commit it
-        Countly.instance().user().edit().setPicturePath(imgFile.getAbsolutePath()).commit();
-        validatePictureAndPath(imgFile.getAbsolutePath(), null);
-
-        Countly.session().end();
-        validateUserDetailsRequestInRQ(toMap("user_details", "{}", "picturePath", imgFile.getAbsolutePath()));
+        AtomicReference<String> imgFilePath = new AtomicReference<>("test.jpeg");
+        sessionHandler(() -> {
+            File imgFile = TestUtils.createFile(imgFileName);
+            imgFilePath.set(imgFile.getAbsolutePath());
+            //set profile picture url and commit it
+            Countly.instance().user().edit().setPicturePath(imgFile.getAbsolutePath()).commit();
+            validatePictureAndPath(imgFile.getAbsolutePath(), null);
+        });
+        validateUserDetailsRequestInRQ(toMap("user_details", "{}", "picturePath", imgFilePath));
     }
 
     /**
@@ -78,12 +80,11 @@ public class UserEditorTests {
     @Test
     public void setPicturePath_null() {
         Countly.instance().init(TestUtils.getBaseConfig());
-        Countly.session().begin();
-        //set profile picture url and commit it
-        Countly.instance().user().edit().setPicturePath(null).commit();
-        validatePictureAndPath(null, null);
-
-        Countly.session().end();
+        sessionHandler(() -> {
+            //set profile picture url and commit it
+            Countly.instance().user().edit().setPicturePath(null).commit();
+            validatePictureAndPath(null, null);
+        });
         validateUserDetailsRequestInRQ(toMap("user_details", "{\"picture\":null}"));
     }
 
@@ -96,12 +97,11 @@ public class UserEditorTests {
     @Test
     public void setPicturePath_garbage() {
         Countly.instance().init(TestUtils.getBaseConfig());
-        Countly.session().begin();
-        //set profile picture url and commit it
-        Countly.instance().user().edit().setPicturePath("garbage_thing/.txt").commit();
-        validatePictureAndPath(null, null);
-
-        Countly.session().end();
+        sessionHandler(() -> {
+            //set profile picture url and commit it
+            Countly.instance().user().edit().setPicturePath("garbage_thing/.txt").commit();
+            validatePictureAndPath(null, null);
+        });
         validateUserDetailsRequestInRQ(toMap("user_details", "{}"));
     }
 
@@ -115,13 +115,12 @@ public class UserEditorTests {
     @Test
     public void setPicture_binaryData() {
         Countly.instance().init(TestUtils.getBaseConfig());
-        Countly.session().begin();
-        //set profile picture url and commit it
-        byte[] imgData = new byte[] { 10, 13, 34, 12 };
-        Countly.instance().user().edit().setPicture(imgData).commit();
-        validatePictureAndPath(null, imgData);
-
-        Countly.session().end();
+        sessionHandler(() -> {
+            //set profile picture url and commit it
+            byte[] imgData = new byte[] { 10, 13, 34, 12 };
+            Countly.instance().user().edit().setPicture(imgData).commit();
+            validatePictureAndPath(null, imgData);
+        });
         validateUserDetailsRequestInRQ(toMap("user_details", "{}", "picturePath", UserEditorImpl.PICTURE_IN_USER_PROFILE));
     }
 
@@ -134,12 +133,11 @@ public class UserEditorTests {
     @Test
     public void setPicture_null() {
         Countly.instance().init(TestUtils.getBaseConfig());
-        Countly.session().begin();
-        //set profile picture url and commit it
-        Countly.instance().user().edit().setPicture(null).commit();
-        validatePictureAndPath(null, null);
-
-        Countly.session().end();
+        sessionHandler(() -> {
+            //set profile picture url and commit it
+            Countly.instance().user().edit().setPicture(null).commit();
+            validatePictureAndPath(null, null);
+        });
         validateUserDetailsRequestInRQ(toMap("user_details", "{\"picture\":null}"));
     }
 
@@ -151,12 +149,10 @@ public class UserEditorTests {
     @Test
     public void setOnce() {
         Countly.instance().init(TestUtils.getBaseConfig());
-        Countly.session().begin();
-        Countly.instance().user().edit()
+        sessionHandler(() -> Countly.instance().user().edit()
             .setOnce(TestUtils.eKeys[0], 56)
             .setOnce(TestUtils.eKeys[0], TestUtils.eKeys[1])
-            .commit();
-        Countly.session().end();
+            .commit());
         validateUserDetailsRequestInRQ(toMap("user_details", c(opJson(TestUtils.eKeys[0], UserEditorImpl.Op.SET_ONCE, TestUtils.eKeys[1]))));
     }
 
@@ -168,9 +164,7 @@ public class UserEditorTests {
     @Test
     public void setOnce_null() {
         Countly.instance().init(TestUtils.getBaseConfig());
-        Countly.session().begin();
-        Countly.instance().user().edit().setOnce(TestUtils.eKeys[0], null).commit();
-        Countly.session().end();
+        sessionHandler(() -> Countly.instance().user().edit().setOnce(TestUtils.eKeys[0], null).commit());
         validateUserDetailsRequestInRQ(toMap("user_details", "{}"));
     }
 
@@ -182,9 +176,7 @@ public class UserEditorTests {
     @Test
     public void setOnce_empty() {
         Countly.instance().init(TestUtils.getBaseConfig());
-        Countly.session().begin();
-        Countly.instance().user().edit().setOnce(TestUtils.eKeys[0], "").commit();
-        Countly.session().end();
+        sessionHandler(() -> Countly.instance().user().edit().setOnce(TestUtils.eKeys[0], "").commit());
         validateUserDetailsRequestInRQ(toMap("user_details", c(opJson(TestUtils.eKeys[0], UserEditorImpl.Op.SET_ONCE, ""))));
     }
 
@@ -196,14 +188,13 @@ public class UserEditorTests {
     @Test
     public void commit() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
-        Countly.session().begin();
-        Countly.instance().user().edit()
+        sessionHandler(() -> Countly.instance().user().edit()
             .setLocale("en")
             .setCountry("US")
             .setCity("New York")
             .setLocation(40.7128, 74.0060)
-            .commit();
-        Countly.session().end();
+            .commit());
+
         validateUserDetailsRequestInRQ(toMap(
             "user_details", "{\"country\":\"US\",\"city\":\"New York\",\"location\":\"40.7128,74.006\",\"locale\":\"en\"}",
             "country_code", "US",
@@ -267,14 +258,36 @@ public class UserEditorTests {
         ));
     }
 
+    /**
+     * "setCustom" with multiple calls
+     * Validating that multiple calls to setCustom with same key will result in adding it to the request
+     * All added values must be form inside the "custom" json in the request except null param
+     */
     @Test
     public void setCustom() {
         Countly.instance().init(TestUtils.getBaseConfig());
-        Countly.session().begin();
-        Countly.instance().user().edit().setCustom("key", "value").commit();
-        Countly.session().end();
 
-        validateUserDetailsRequestInRQ(toMap("user_details", c(map("key", "value"))));
+        sessionHandler(() -> {
+
+        });
+
+        sessionHandler(() -> Countly.instance().user().edit()
+            .setCustom(TestUtils.eKeys[0], TestUtils.eKeys[1])
+            .setCustom(TestUtils.eKeys[2], TestUtils.eKeys[3])
+            .setCustom(TestUtils.eKeys[4], null)
+            .setCustom(TestUtils.eKeys[5], "")
+            .setCustom(TestUtils.eKeys[2], null) // must remove from requests
+            .setCustom(TestUtils.eKeys[6], 128.987)
+            .setCustom("invalid", new HashMap<>()) // should not be added to request
+            .setCustom("tags", new Object[] { "tag1", "tag2", 34, 67.8, null, "" })
+            .commit());
+
+        validateUserDetailsRequestInRQ(toMap("user_details", c(map(
+            TestUtils.eKeys[0], TestUtils.eKeys[1],
+            TestUtils.eKeys[5], "",
+            TestUtils.eKeys[6], 128.987,
+            "tags", new Object[] { "tag1", "tag2", 34, 67.8, null, "" })
+        )));
     }
 
     private void validatePictureAndPath(String picturePath, byte[] picture) {
@@ -284,7 +297,6 @@ public class UserEditorTests {
 
     private void validateUserDetailsRequestInRQ(Map<String, String> expectedParams) {
         Map<String, String>[] requestsInQ = TestUtils.getCurrentRQ();
-        System.out.println(requestsInQ[0]);
         if (!expectedParams.containsKey("picturePath")) {
             Assert.assertFalse(requestsInQ[0].containsKey("picturePath"));
         }
@@ -315,8 +327,23 @@ public class UserEditorTests {
         return "\"" + key + "\":{\"" + op + "\":" + opValue + "}";
     }
 
+    /**
+     * This function is for reducing
+     * Method invocation 'begin' may produce 'NullPointerException' warning
+     * to only one place
+     *
+     * @param process to run
+     */
+    private void sessionHandler(Runnable process) {
+        Countly.session().begin();
+        process.run();
+        Countly.session().end();
+    }
+
     private String json(Map<String, Object> entries) {
-        return new JSONObject(entries).toString();
+        JSONObject json = new JSONObject();
+        entries.forEach(json::put);
+        return json.toString();
     }
 
     private Map<String, String> toMap(Object... args) {

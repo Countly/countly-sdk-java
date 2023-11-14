@@ -41,9 +41,10 @@ public class UserEditorImpl implements UserEditor {
     /**
      * Transforming changes in "sets" into a json contained in "changes"
      *
-     * @param changes
-     * @throws JSONException
+     * @param changes the json object that will contain the changes
+     * @throws JSONException if something goes wrong
      */
+    @SuppressWarnings("unchecked")
     void perform(JSONObject changes) throws JSONException {
         for (String key : sets.keySet()) {
             Object value = sets.get(key);
