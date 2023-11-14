@@ -11,89 +11,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class UserEditorImpl implements UserEditor {
-    private Log L = null;
-
-    static class Op {
-        static final String INC = "$inc";
-        static final String MUL = "$mul";
-        static final String MIN = "$min";
-        static final String MAX = "$max";
-        static final String SET_ONCE = "$setOnce";
-        static final String PULL = "$pull";
-        static final String PUSH = "$push";
-        static final String PUSH_UNIQUE = "$addToSet";
-
-        final String op;
-        final String key;
-        final Object value;
-
-        Op(String op, String key, Object value) {
-            this.op = op;
-            this.key = key;
-            this.value = value;
-        }
-
-        public void apply(JSONObject json) throws JSONException {
-            JSONObject object;
-            switch (op) {
-                case INC:
-                case MUL:
-                    object = json.optJSONObject(key);
-                    if (object == null) {
-                        object = new JSONObject();
-                    }
-                    if (op.equals(INC)) {
-                        int n = object.optInt(op, 0);
-                        object.put(op, n + (int) value);
-                    } else {
-                        double n = object.optDouble(op, 1);
-                        object.put(op, n * (double) value);
-                    }
-                    json.put(key, object);
-                    break;
-                case MIN:
-                case MAX:
-                    object = json.optJSONObject(key);
-                    if (object == null) {
-                        object = new JSONObject();
-                    }
-                    if (object.has(op)) {
-                        object.put(op, op.equals(MIN) ? Math.min(object.getDouble(op), (Double) value) : Math.max(object.getDouble(op), (Double) value));
-                    } else {
-                        object.put(op, value);
-                    }
-                    json.put(key, object);
-                    break;
-                case SET_ONCE:
-                    object = json.optJSONObject(key);
-                    if (object == null) {
-                        object = new JSONObject();
-                    }
-                    object.put(op, value);
-                    json.put(key, object);
-                    break;
-                case PULL:
-                case PUSH:
-                case PUSH_UNIQUE:
-                    object = json.optJSONObject(key);
-                    if (object == null) {
-                        object = new JSONObject();
-                    }
-                    object.accumulate(op, value);
-                    json.put(key, object);
-                    break;
-            }
-        }
-    }
-
+    public static final String PICTURE_PATH = "picturePath";
+    public static final String PICTURE_IN_USER_PROFILE = "[CLY]_USER_PROFILE_PICTURE";
     static final String NAME = "name";
     static final String USERNAME = "username";
     static final String EMAIL = "email";
     static final String ORG = "org";
     static final String PHONE = "phone";
     static final String PICTURE = "picture";
-    public static final String PICTURE_PATH = "picturePath";
-    public static final String PICTURE_IN_USER_PROFILE = "[CLY]_USER_PROFILE_PICTURE";
     static final String GENDER = "gender";
     static final String BIRTHYEAR = "byear";
     static final String LOCALE = "locale";
@@ -101,10 +26,10 @@ public class UserEditorImpl implements UserEditor {
     static final String CITY = "city";
     static final String LOCATION = "location";
     static final String CUSTOM = "custom";
-
     private final UserImpl user;
     private final Map<String, Object> sets;
     private final List<Op> ops;
+    private Log L = null;
 
     UserEditorImpl(UserImpl user, Log logger) {
         this.L = logger;
@@ -258,7 +183,9 @@ public class UserEditorImpl implements UserEditor {
                     }
                     break;
                 default:
-                    performCustomUpdate(key, value, changes);
+                    if (value instanceof Map) {
+                        ((Map<String, Object>) value).forEach((k, v) -> performCustomUpdate(k, v, changes));
+                    }
                     break;
             }
         }
@@ -576,5 +503,78 @@ public class UserEditorImpl implements UserEditor {
         ops.clear();
 
         return user;
+    }
+
+    static class Op {
+        static final String INC = "$inc";
+        static final String MUL = "$mul";
+        static final String MIN = "$min";
+        static final String MAX = "$max";
+        static final String SET_ONCE = "$setOnce";
+        static final String PULL = "$pull";
+        static final String PUSH = "$push";
+        static final String PUSH_UNIQUE = "$addToSet";
+
+        final String op;
+        final String key;
+        final Object value;
+
+        Op(String op, String key, Object value) {
+            this.op = op;
+            this.key = key;
+            this.value = value;
+        }
+
+        public void apply(JSONObject json) throws JSONException {
+            JSONObject object;
+            switch (op) {
+                case INC:
+                case MUL:
+                    object = json.optJSONObject(key);
+                    if (object == null) {
+                        object = new JSONObject();
+                    }
+                    if (op.equals(INC)) {
+                        int n = object.optInt(op, 0);
+                        object.put(op, n + (int) value);
+                    } else {
+                        double n = object.optDouble(op, 1);
+                        object.put(op, n * (double) value);
+                    }
+                    json.put(key, object);
+                    break;
+                case MIN:
+                case MAX:
+                    object = json.optJSONObject(key);
+                    if (object == null) {
+                        object = new JSONObject();
+                    }
+                    if (object.has(op)) {
+                        object.put(op, op.equals(MIN) ? Math.min(object.getDouble(op), (Double) value) : Math.max(object.getDouble(op), (Double) value));
+                    } else {
+                        object.put(op, value);
+                    }
+                    json.put(key, object);
+                    break;
+                case SET_ONCE:
+                    object = json.optJSONObject(key);
+                    if (object == null) {
+                        object = new JSONObject();
+                    }
+                    object.put(op, value);
+                    json.put(key, object);
+                    break;
+                case PULL:
+                case PUSH:
+                case PUSH_UNIQUE:
+                    object = json.optJSONObject(key);
+                    if (object == null) {
+                        object = new JSONObject();
+                    }
+                    object.accumulate(op, value);
+                    json.put(key, object);
+                    break;
+            }
+        }
     }
 }

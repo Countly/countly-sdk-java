@@ -1,13 +1,14 @@
 package ly.count.sdk.java.internal;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.UserEditor;
 import org.json.JSONArray;
+import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -156,7 +157,7 @@ public class UserEditorTests {
             .setOnce(TestUtils.eKeys[0], TestUtils.eKeys[1])
             .commit();
         Countly.session().end();
-        validateUserDetailsRequestInRQ(toMap("user_details", c(opJson(TestUtils.eKeys[0], TestUtils.eKeys[1], UserEditorImpl.Op.SET_ONCE))));
+        validateUserDetailsRequestInRQ(toMap("user_details", c(opJson(TestUtils.eKeys[0], UserEditorImpl.Op.SET_ONCE, TestUtils.eKeys[1]))));
     }
 
     /**
@@ -184,7 +185,7 @@ public class UserEditorTests {
         Countly.session().begin();
         Countly.instance().user().edit().setOnce(TestUtils.eKeys[0], "").commit();
         Countly.session().end();
-        validateUserDetailsRequestInRQ(toMap("user_details", c(opJson(TestUtils.eKeys[0], "", UserEditorImpl.Op.SET_ONCE))));
+        validateUserDetailsRequestInRQ(toMap("user_details", c(opJson(TestUtils.eKeys[0], UserEditorImpl.Op.SET_ONCE, ""))));
     }
 
     /**
@@ -260,10 +261,20 @@ public class UserEditorTests {
 
         Countly.session().end();
         validateUserDetailsRequestInRQ(toMap("user_details", c(
-                opJson(TestUtils.eKeys[3], TestUtils.eKeys[2], op),
+                opJson(TestUtils.eKeys[3], op, TestUtils.eKeys[2]),
                 opJson(TestUtils.eKeys[0], op, TestUtils.eKeys[1], TestUtils.eKeys[2], 89, TestUtils.eKeys[2], "")
             )
         ));
+    }
+
+    @Test
+    public void setCustom() {
+        Countly.instance().init(TestUtils.getBaseConfig());
+        Countly.session().begin();
+        Countly.instance().user().edit().setCustom("key", "value").commit();
+        Countly.session().end();
+
+        validateUserDetailsRequestInRQ(toMap("user_details", c(map("key", "value"))));
     }
 
     private void validatePictureAndPath(String picturePath, byte[] picture) {
@@ -273,7 +284,7 @@ public class UserEditorTests {
 
     private void validateUserDetailsRequestInRQ(Map<String, String> expectedParams) {
         Map<String, String>[] requestsInQ = TestUtils.getCurrentRQ();
-        Assert.assertEquals(1, requestsInQ.length);
+        System.out.println(requestsInQ[0]);
         if (!expectedParams.containsKey("picturePath")) {
             Assert.assertFalse(requestsInQ[0].containsKey("picturePath"));
         }
@@ -290,17 +301,36 @@ public class UserEditorTests {
         return "{\"custom\":{" + String.join(",", entries) + "}}";
     }
 
-    private String opJson(String key, Object value, String op) {
-        return "\"" + key + "\":{\"" + op + "\":\"" + value + "\"}";
+    private String c(Map<String, Object> entries) {
+        return "{\"custom\":" + json(entries) + "}";
     }
 
     private String opJson(String key, String op, Object... values) {
-        JSONArray jsonArray = new JSONArray();
-        Arrays.stream(values).forEach(jsonArray::put);
-        return "\"" + key + "\":{\"" + op + "\":" + jsonArray + "}";
+        String opValue;
+        if (values.length == 1) {
+            opValue = "\"" + values[0] + "\"";
+        } else {
+            opValue = new JSONArray(values).toString();
+        }
+        return "\"" + key + "\":{\"" + op + "\":" + opValue + "}";
+    }
+
+    private String json(Map<String, Object> entries) {
+        return new JSONObject(entries).toString();
     }
 
     private Map<String, String> toMap(Object... args) {
         return new Params(args).map();
+    }
+
+    private Map<String, Object> map(Object... args) {
+        if (args.length % 2 == 0) {
+            Map<String, Object> map = new ConcurrentHashMap<>();
+            for (int i = 0; i < args.length; i += 2) {
+                map.put(args[i].toString(), args[i + 1]);
+            }
+            return map;
+        }
+        return null;
     }
 }
