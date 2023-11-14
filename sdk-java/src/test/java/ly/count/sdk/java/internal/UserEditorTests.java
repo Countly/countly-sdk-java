@@ -210,8 +210,6 @@ public class UserEditorTests {
     @Test
     public void pushUnique() {
         Countly.instance().init(TestUtils.getBaseConfig());
-        Countly.session().begin();
-
         pullPush_base(UserEditorImpl.Op.PUSH_UNIQUE, Countly.instance().user().edit()::pushUnique);
     }
 
@@ -223,8 +221,6 @@ public class UserEditorTests {
     @Test
     public void pull() {
         Countly.instance().init(TestUtils.getBaseConfig());
-        Countly.session().begin();
-
         pullPush_base(UserEditorImpl.Op.PULL, Countly.instance().user().edit()::pull);
     }
 
@@ -236,21 +232,20 @@ public class UserEditorTests {
     @Test
     public void push() {
         Countly.instance().init(TestUtils.getBaseConfig());
-        Countly.session().begin();
-
         pullPush_base(UserEditorImpl.Op.PUSH, Countly.instance().user().edit()::push);
     }
 
     private void pullPush_base(String op, BiFunction<String, Object, UserEditor> opFunction) {
-        opFunction.apply(TestUtils.eKeys[0], TestUtils.eKeys[1]);
-        opFunction.apply(TestUtils.eKeys[0], TestUtils.eKeys[2]);
-        opFunction.apply(TestUtils.eKeys[0], 89);
-        opFunction.apply(TestUtils.eKeys[0], TestUtils.eKeys[2]);
-        opFunction.apply(TestUtils.eKeys[3], TestUtils.eKeys[2]);
-        opFunction.apply(TestUtils.eKeys[0], null);
-        opFunction.apply(TestUtils.eKeys[0], "").commit();
+        sessionHandler(() -> {
+            opFunction.apply(TestUtils.eKeys[0], TestUtils.eKeys[1]);
+            opFunction.apply(TestUtils.eKeys[0], TestUtils.eKeys[2]);
+            opFunction.apply(TestUtils.eKeys[0], 89);
+            opFunction.apply(TestUtils.eKeys[0], TestUtils.eKeys[2]);
+            opFunction.apply(TestUtils.eKeys[3], TestUtils.eKeys[2]);
+            opFunction.apply(TestUtils.eKeys[0], null);
+            opFunction.apply(TestUtils.eKeys[0], "").commit();
+        });
 
-        Countly.session().end();
         validateUserDetailsRequestInRQ(toMap("user_details", c(
                 opJson(TestUtils.eKeys[3], op, TestUtils.eKeys[2]),
                 opJson(TestUtils.eKeys[0], op, TestUtils.eKeys[1], TestUtils.eKeys[2], 89, TestUtils.eKeys[2], "")
