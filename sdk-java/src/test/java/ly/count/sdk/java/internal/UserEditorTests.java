@@ -262,10 +262,6 @@ public class UserEditorTests {
     public void setCustom() {
         Countly.instance().init(TestUtils.getBaseConfig());
 
-        sessionHandler(() -> {
-
-        });
-
         sessionHandler(() -> Countly.instance().user().edit()
             .setCustom(TestUtils.eKeys[0], TestUtils.eKeys[1])
             .setCustom(TestUtils.eKeys[2], TestUtils.eKeys[3])
@@ -283,6 +279,30 @@ public class UserEditorTests {
             TestUtils.eKeys[6], 128.987,
             "tags", new Object[] { "tag1", "tag2", 34, 67.8, null, "" })
         )));
+    }
+
+    /**
+     * "max" with multiple calls
+     * Validating that multiple calls to max with same key will result in the request queue
+     * All added values must be form inside the "custom" json in the request
+     */
+    @Test
+    public void max() {
+        Countly.instance().init(TestUtils.getBaseConfig());
+        sessionHandler(() -> Countly.instance().user().edit()
+            .max(TestUtils.eKeys[0], 56)
+            .max(TestUtils.eKeys[1], -1)
+            .max(TestUtils.eKeys[2], 0)
+            .max(TestUtils.eKeys[0], 128) // this should override previous value
+            .max(TestUtils.eKeys[0], 45) // this should not override previous value because it is less than
+            .commit()
+        );
+
+        validateUserDetailsRequestInRQ(toMap("user_details", c(
+            opJson(TestUtils.eKeys[2], UserEditorImpl.Op.MAX, 0),
+            opJson(TestUtils.eKeys[1], UserEditorImpl.Op.MAX, -1),
+            opJson(TestUtils.eKeys[0], UserEditorImpl.Op.MAX, 128)))
+        );
     }
 
     private void validatePictureAndPath(String picturePath, byte[] picture) {
@@ -313,13 +333,13 @@ public class UserEditorTests {
     }
 
     private String opJson(String key, String op, Object... values) {
-        String opValue;
+        JSONObject obj = new JSONObject();
         if (values.length == 1) {
-            opValue = "\"" + values[0] + "\"";
+            obj.put(op, values[0]);
         } else {
-            opValue = new JSONArray(values).toString();
+            obj.put(op, new JSONArray(values));
         }
-        return "\"" + key + "\":{\"" + op + "\":" + opValue + "}";
+        return "\"" + key + "\":" + obj;
     }
 
     /**
