@@ -137,6 +137,36 @@ public class UserEditorTests {
         validatePictureInRQ("{\"picture\":null}", null);
     }
 
+    @Test
+    public void setOnce() {
+        Countly.instance().init(TestUtils.getBaseConfig());
+        Countly.session().begin();
+        Countly.instance().user().edit()
+            .setOnce(TestUtils.eKeys[0], 56)
+            .setOnce(TestUtils.eKeys[0], TestUtils.eKeys[1])
+            .commit();
+        Countly.session().end();
+        validatePictureInRQ(opJsonGenerator(TestUtils.eKeys[0], TestUtils.eKeys[1], UserEditorImpl.Op.SET_ONCE), null);
+    }
+
+    @Test
+    public void setOnce_null() {
+        Countly.instance().init(TestUtils.getBaseConfig());
+        Countly.session().begin();
+        Countly.instance().user().edit().setOnce("test", null).commit();
+        Countly.session().end();
+        validatePictureInRQ("{}", null);
+    }
+
+    @Test
+    public void setOnce_empty() {
+        Countly.instance().init(TestUtils.getBaseConfig());
+        Countly.session().begin();
+        Countly.instance().user().edit().setOnce("test", "").commit();
+        Countly.session().end();
+        validatePictureInRQ(opJsonGenerator("test", "", UserEditorImpl.Op.SET_ONCE), null);
+    }
+
     private void validatePictureAndPath(String picturePath, byte[] picture) {
         Assert.assertEquals(picturePath, Countly.instance().user().picturePath());
         Assert.assertEquals(picture, Countly.instance().user().picture());
@@ -151,5 +181,9 @@ public class UserEditorTests {
         TestUtils.validateRequiredParams(requestsInQ[0]);
         Assert.assertEquals(expectedPicturePath, requestsInQ[0].get("picturePath"));
         Assert.assertEquals(expectedUserDetails, requestsInQ[0].get("user_details"));
+    }
+
+    private String opJsonGenerator(String key, Object value, String op) {
+        return "{\"custom\":{\"" + key + "\":{\"" + op + "\":\"" + value + "\"}}}";
     }
 }
