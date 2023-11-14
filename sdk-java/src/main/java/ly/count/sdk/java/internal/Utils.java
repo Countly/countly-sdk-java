@@ -1,7 +1,6 @@
 package ly.count.sdk.java.internal;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -11,6 +10,7 @@ import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -53,12 +53,12 @@ public class Utils {
      * URLDecoder wrapper to remove try-catch
      *
      * @param str string to decode
-     * @return url-decoded {@code str}
+     * @return url-decoded {@code str}, empty string if decoding failed
      */
     public static String urldecode(String str) {
         try {
             return URLDecoder.decode(str, UTF8);
-        } catch (UnsupportedEncodingException e) {
+        } catch (UnsupportedEncodingException | IllegalArgumentException e) {
             return null;
         }
     }
@@ -72,7 +72,7 @@ public class Utils {
      * @return list of declared fields
      */
     public static List<Field> reflectiveGetDeclaredFields(Class<?> cls, boolean goUp) {
-        return reflectiveGetDeclaredFields(new ArrayList<Field>(), cls, goUp);
+        return reflectiveGetDeclaredFields(new ArrayList<>(), cls, goUp);
     }
 
     public static List<Field> reflectiveGetDeclaredFields(List<Field> list, Class<?> cls, boolean goUp) {
@@ -97,7 +97,7 @@ public class Utils {
      * @return true if null or empty string, false otherwise
      */
     public static boolean isEmptyOrNull(String str) {
-        return str == null || "".equals(str);
+        return str == null || str.isEmpty();
     }
 
     /**
@@ -133,19 +133,31 @@ public class Utils {
 
     /**
      * URLEncoder wrapper to remove try-catch
+     * this class is for the test purposes
+     *
+     * @param str string to encode
+     * @param encoding encoding to use (for testing)
+     * @return url-encoded {@code str}
+     */
+    protected static String urlencode(final String str, Log L, final String encoding) {
+        try {
+            return URLEncoder.encode(str, encoding);
+        } catch (UnsupportedEncodingException e) {
+            if (L != null) {
+                L.e("[Utils] urlencode, No " + encoding + " encoding?" + e);
+            }
+            return "";
+        }
+    }
+
+    /**
+     * URLEncoder wrapper to remove try-catch
      *
      * @param str string to encode
      * @return url-encoded {@code str}
      */
-    public static String urlencode(String str, Log L) {
-        try {
-            return URLEncoder.encode(str, UTF8);
-        } catch (UnsupportedEncodingException e) {
-            if (L != null) {
-                L.e("Utils No UTF-8 encoding?" + e);
-            }
-            return "";
-        }
+    public static String urlencode(final String str, Log L) {
+        return urlencode(str, L, UTF8);
     }
 
     /**
@@ -155,15 +167,15 @@ public class Utils {
      * @param string string to hash
      * @return hash of the string or null in case of error
      */
-    public static String digestHex(String digestName, String string, Log L) {
+    public static String digestHex(final String digestName, final String string, Log L) {
         try {
             MessageDigest digest = MessageDigest.getInstance(digestName);
-            byte[] bytes = string.getBytes(UTF8);
+            byte[] bytes = string.getBytes(StandardCharsets.UTF_8);
             digest.update(bytes, 0, bytes.length);
             return hex(digest.digest());
         } catch (Throwable e) {
             if (L != null) {
-                L.e("Utils Cannot calculate sha1" + " / " + e);
+                L.e("[Utils] digestHex, Cannot calculate sha1" + " / " + e);
             }
             return null;
         }
@@ -173,9 +185,12 @@ public class Utils {
      * Get hexadecimal string representation of a byte array
      *
      * @param bytes array of bytes to convert
-     * @return hex string of the byte array in lower case
+     * @return hex string of the byte array in lower case, if null or empty returns empty string
      */
     public static String hex(byte[] bytes) {
+        if (bytes == null || bytes.length == 0) {
+            return "";
+        }
         char[] hexChars = new char[bytes.length * 2];
         for (int j = 0; j < bytes.length; j++) {
             int v = bytes[j] & 0xFF;
@@ -199,14 +214,14 @@ public class Utils {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         try {
             byte[] buffer = new byte[1024];
-            int len = 0;
+            int len;
             while ((len = stream.read(buffer)) != -1) {
                 bytes.write(buffer, 0, len);
             }
             return bytes.toByteArray();
         } catch (IOException e) {
             if (L != null) {
-                L.e("Utils Couldn't read stream" + e.toString());
+                L.e("[Utils] readStream, Couldn't read stream" + e);
             }
             return null;
         } finally {
@@ -258,7 +273,7 @@ public class Utils {
         for (Map.Entry<String, String> entry : segments.entrySet()) {
             String k = entry.getKey();
             String v = entry.getValue();
-            if (k == null || k.length() == 0 || v == null) {
+            if (isEmptyOrNull(k) || v == null) {
                 continue;
             }
 
@@ -333,12 +348,7 @@ public class Utils {
         }
 
         public static String encode(String string) {
-            try {
-                return encode(string.getBytes(UTF8));
-            } catch (UnsupportedEncodingException e) {
-                // shouldn't happen
-                return null;
-            }
+            return encode(string.getBytes(StandardCharsets.UTF_8));
         }
 
         public static byte[] decode(String string, Log L) {
@@ -348,27 +358,26 @@ public class Utils {
             } catch (IllegalArgumentException e) {
                 //should not get here
                 if (L != null) {
-                    L.e("Utils Error while decoding base64 string, " + e);
+                    L.e("[Utils] [Base64] decode, Error while decoding base64 string, " + e);
                 }
             }
             return res;
         }
 
         public static String decodeToString(String string, Log L) {
-            try {
-                return new String(decode(string, L), UTF8);
-            } catch (UnsupportedEncodingException e) {
-                // shouldn't happen
+            byte[] result = decode(string, L);
+            if (result == null) {
                 return null;
             }
+            return new String(decode(string, L), StandardCharsets.UTF_8);
         }
     }
 
     /**
      * Check whether given string is a valid URL or not
      *
-     * @param url
-     * @return
+     * @param url to validate
+     * @return true if it is a valid url by RFC2396
      */
     public static boolean isValidURL(String url) {
         try {

@@ -233,7 +233,7 @@ public class Params {
         Map<String, String> map = new HashMap<>();
         List<String> pairs = new ArrayList<>(Arrays.asList(params.toString().split("&")));
         for (String pair : pairs) {
-            String comps[] = pair.split("=");
+            String[] comps = pair.split("=");
             if (comps.length == 2) {
                 map.put(comps[0], Utils.urldecode(comps[1]));
             }
