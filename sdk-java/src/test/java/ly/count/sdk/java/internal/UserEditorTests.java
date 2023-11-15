@@ -179,14 +179,14 @@ public class UserEditorTests {
             .setLocale("en")
             .setCountry("US")
             .setCity("New York")
-            .setLocation(40.7128, 74.0060)
+            .setLocation(40.7128, -74.0060)
             .commit());
 
         validateUserDetailsRequestInRQ(map(
-            "user_details", "{\"country\":\"US\",\"city\":\"New York\",\"location\":\"40.7128,74.006\",\"locale\":\"en\"}",
+            "user_details", "{\"country\":\"US\",\"city\":\"New York\",\"location\":\"40.7128,-74.006\",\"locale\":\"en\"}",
             "country_code", "US",
             "city", "New York",
-            "location", "40.7128,74.006",
+            "location", "40.7128,-74.006",
             "locale", "en"));
     }
 
@@ -389,6 +389,222 @@ public class UserEditorTests {
         );
     }
 
+    /**
+     * "setBirthyear", "setEmail", "setGender", "setName", "setOrg", "setPhone", "setUsername" with valid parameters
+     * Validating that all the methods are working properly
+     * Request should contain all the parameters in "user_details" json
+     */
+    @Test
+    public void setUserBasics() {
+        Countly.instance().init(TestUtils.getBaseConfig());
+        sessionHandler(() -> Countly.instance().user().edit()
+            .setBirthyear(1999)
+            .setEmail("test@test.test")
+            .setGender(User.Gender.MALE)
+            .setName("Test")
+            .setOrg("TestOrg")
+            .setPhone("123456789")
+            .setUsername("TestUsername")
+            .commit()
+        );
+
+        validateUserDetailsRequestInRQ(map("user_details", json(
+            "name", "Test",
+            "username", "TestUsername",
+            "email", "test@test.test",
+            "org", "TestOrg",
+            "phone", "123456789",
+            "byear", 1999,
+            "gender", "M"
+        )));
+    }
+
+    /**
+     * "setBirthyear", "setEmail", "setGender", "setName", "setOrg", "setPhone", "setUsername" with valid parameters
+     * Validating that all the methods are working properly with 'null' values
+     * Request should contain all the parameters in "user_details" json and all the values should be null
+     */
+    @Test
+    public void setUserBasics_null() {
+        Countly.instance().init(TestUtils.getBaseConfig());
+        sessionHandler(() -> Countly.instance().user().edit()
+            .setBirthyear(null)
+            .setEmail(null)
+            .setGender(null)
+            .setName(null)
+            .setOrg(null)
+            .setPhone(null)
+            .setUsername(null)
+            .commit()
+        );
+
+        validateUserDetailsRequestInRQ(map("user_details", json(
+            "name", JSONObject.NULL,
+            "username", JSONObject.NULL,
+            "email", JSONObject.NULL,
+            "org", JSONObject.NULL,
+            "phone", JSONObject.NULL,
+            "byear", JSONObject.NULL,
+            "gender", JSONObject.NULL
+        )));
+    }
+
+    /**
+     * "setBirthyear" with non integer value
+     * Validating that value is not added to the request,
+     * Request should not contain "byear" parameter in "user_details" json
+     */
+    @Test
+    public void setBirthYear_invalidParam() {
+        setBirthYear_base(TestUtils.eKeys[0], json());
+    }
+
+    /**
+     * "setBirthyear" with string integer
+     * Validating that value is parsed to integer and added to the request,
+     * Request should contain "byear" parameter in "user_details" json
+     */
+    @Test
+    public void setBirthYear_stringInteger() {
+        setBirthYear_base("1999", json("byear", 1999));
+    }
+
+    /**
+     * "setBirthyear" with number but not integer
+     * Validating that value is not added to the request,
+     * Request should not contain "byear" parameter in "user_details" json
+     */
+    @Test
+    public void setBirthYear_stringNotInteger() {
+        setBirthYear_base("1999.0", json());
+    }
+
+    private void setBirthYear_base(String value, String expectedValue) {
+        Countly.instance().init(TestUtils.getBaseConfig());
+        sessionHandler(() -> Countly.instance().user().edit().setBirthyear(value).commit());
+        validateUserDetailsRequestInRQ(map("user_details", expectedValue));
+    }
+
+    /**
+     * "setGender" with not supported gender
+     * Validating that value is not added to the request,
+     * Request should not contain "gender" parameter in "user_details" json
+     */
+    @Test
+    public void setGender_invalid() {
+        setGender_base("Non-Binary", json());
+    }
+
+    /**
+     * "setGender" with number
+     * Validating that value is not added to the request,
+     * Request should not contain "gender" parameter in "user_details" json
+     */
+    @Test
+    public void setGender_number() {
+        setGender_base(1, json());
+    }
+
+    /**
+     * "setGender" with string supported gender
+     * Validating that value is added to the request,
+     * Request should contain "gender" parameter in "user_details" json
+     */
+    @Test
+    public void setGender_string() {
+        setGender_base("M", json("gender", "M"));
+    }
+
+    private void setGender_base(Object gender, String expectedValue) {
+        Countly.instance().init(TestUtils.getBaseConfig());
+        sessionHandler(() -> Countly.instance().user().edit().setGender(gender).commit());
+        validateUserDetailsRequestInRQ(map("user_details", expectedValue));
+    }
+
+    /**
+     * "setLocation" from string
+     * Validating that values is correctly parsed to the long and added to the request,
+     * Request should contain "location" parameter in "user_details" json and "location" parameter in the request
+     */
+    @Test
+    public void setLocation_fromString() {
+        Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
+        sessionHandler(() -> Countly.instance().user().edit().setLocation("-40.7128, 74.0060").commit());
+        validateUserDetailsRequestInRQ(map("user_details", json("location", "-40.7128,74.006"), "location", "-40.7128,74.006"));
+    }
+
+    /**
+     * "setLocation" from string
+     * Validating that values is correctly parsed to the long and added to the request,
+     * Request should contain "location" parameter in "user_details" json and "location" parameter in the request
+     */
+    @Test
+    public void setLocation_fromString_noConsent() {
+        Countly.instance().init(TestUtils.getBaseConfig());
+        sessionHandler(() -> Countly.instance().user().edit().setLocation("32.78, 28.01").commit());
+        validateUserDetailsRequestInRQ(map("user_details", json("location", "32.78,28.01"), "location", "32.78,28.01"));
+    }
+
+    /**
+     * "setLocation" from string - invalid location pairs
+     * Validating that values is not exist inside the request,
+     * Request should not contain "location" parameter in "user_details" json
+     */
+    @Test
+    public void setLocation_fromString_invalid() {
+        Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
+        sessionHandler(() -> Countly.instance().user().edit().setLocation(",28.34").commit());
+        validateUserDetailsRequestInRQ(map("user_details", json()));
+    }
+
+    /**
+     * "setLocation" from string - invalid location pairs
+     * Validating that values is not exist inside the request,
+     * Request should not contain "location" parameter in "user_details" json
+     */
+    @Test
+    public void setLocation_fromString_onePair() {
+        Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
+        sessionHandler(() -> Countly.instance().user().edit().setLocation("61.32,").commit());
+        validateUserDetailsRequestInRQ(map("user_details", json()));
+    }
+
+    /**
+     * "setLocation" from string - null
+     * Validating that location is nullified
+     * Request should contain "location" parameter in "user_details" json and request body and should be null
+     */
+    @Test
+    public void setLocation_fromString_null() {
+        Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
+        sessionHandler(() -> Countly.instance().user().edit().setLocation(null).commit());
+        validateUserDetailsRequestInRQ(map("user_details", json("location", JSONObject.NULL), "location", JSONObject.NULL));
+    }
+
+    public void set_multipleCalls() {
+        Countly.instance().init(TestUtils.getBaseConfig());
+        sessionHandler(() -> Countly.instance().user().edit()
+            .setBirthyear(null)
+            .setEmail(null)
+            .setGender(null)
+            .setName(null)
+            .setOrg(null)
+            .setPhone(null)
+            .setUsername(null)
+            .commit()
+        );
+
+        validateUserDetailsRequestInRQ(map("user_details", json(
+            "name", JSONObject.NULL,
+            "username", JSONObject.NULL,
+            "email", JSONObject.NULL,
+            "org", JSONObject.NULL,
+            "phone", JSONObject.NULL,
+            "byear", JSONObject.NULL,
+            "gender", JSONObject.NULL
+        )));
+    }
+
     private void validatePictureAndPath(String picturePath, byte[] picture) {
         Assert.assertEquals(picturePath, Countly.instance().user().picturePath());
         Assert.assertEquals(picture, Countly.instance().user().picture());
@@ -449,6 +665,20 @@ public class UserEditorTests {
         JSONObject json = new JSONObject();
         entries.forEach(json::put);
         return json.toString();
+    }
+
+    /**
+     * Converts array of objects to json string
+     * Returns empty json if array is null or empty
+     *
+     * @param args array of objects
+     * @return json string
+     */
+    private String json(Object... args) {
+        if (args == null || args.length == 0) {
+            return "{}";
+        }
+        return json(map(args));
     }
 
     /**
