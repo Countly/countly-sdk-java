@@ -1,6 +1,6 @@
 ## 23.10.1
 
-* Fixed a bug where getting feedback widgets would not work.
+* Fixed a bug where getting the feedback widget list would fail if "salt" was enabled.
 
 ## 23.10.0
 
