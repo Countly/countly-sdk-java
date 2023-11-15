@@ -18,66 +18,6 @@ public class ModuleFeedback extends ModuleBase {
     ModuleFeedback() {
     }
 
-    @Override
-    public void init(InternalConfig config) {
-        super.init(config);
-        L.v("[ModuleFeedback] Initializing");
-
-        cachedAppVersion = config.getApplicationVersion();
-        feedbackInterface = new Feedback();
-    }
-
-    @Override
-    public Boolean onRequest(Request request) {
-        return true;
-    }
-
-    @Override
-    public void stop(InternalConfig config, boolean clear) {
-        super.stop(config, clear);
-        feedbackInterface = null;
-    }
-
-    private void getAvailableFeedbackWidgetsInternal(CallbackOnFinish<List<CountlyFeedbackWidget>> callback) {
-        L.d("[ModuleFeedback] getAvailableFeedbackWidgetsInternal, callback set:[" + (callback != null) + "]");
-
-        if (callback == null) {
-            L.e("[ModuleFeedback] getAvailableFeedbackWidgetsInternal, available feedback widget list can't be retrieved without a callback");
-            return;
-        }
-
-        // If someday we decide to support temporary device ID mode, this check will be needed
-        if (internalConfig.isTemporaryIdEnabled()) {
-            L.e("[ModuleFeedback] available feedback widget list can't be retrieved when in temporary device ID mode");
-            callback.onFinished(null, "[ModuleFeedback] available feedback widget list can't be retrieved when in temporary device ID mode");
-            return;
-        }
-
-        Transport transport = SDKCore.instance.networking.getTransport();
-        final boolean networkingIsEnabled = internalConfig.getNetworkingEnabled();
-
-        String params = ModuleRequests.prepareRequiredParamsAsString(internalConfig, "method", "feedback");
-        ImmediateRequestGenerator iRGenerator = internalConfig.immediateRequestGenerator;
-
-        iRGenerator.createImmediateRequestMaker().doWork("?" + params, "/o/sdk", transport, false, networkingIsEnabled, checkResponse -> {
-            if (checkResponse == null) {
-                L.d("[ModuleFeedback] getAvailableFeedbackWidgetsInternal, Not possible to retrieve widget list. Probably due to lack of connection to the server");
-                callback.onFinished(null, "Not possible to retrieve widget list. Probably due to lack of connection to the server");
-                return;
-            }
-
-            L.d("[ModuleFeedback] Retrieved request: [" + checkResponse + "]");
-
-            List<CountlyFeedbackWidget> feedbackEntries = new ArrayList<>();
-            String error = parseFeedbackList(checkResponse, feedbackEntries);
-            if (error != null) {
-                feedbackEntries = null;
-            }
-
-            callback.onFinished(feedbackEntries, error);
-        }, L);
-    }
-
     static String parseFeedbackList(JSONObject requestResponse, List<CountlyFeedbackWidget> parsedRes) {
         Log L = SDKCore.instance.L;
         L.d("[ModuleFeedback] parseFeedbackList, calling");
@@ -146,6 +86,67 @@ public class ModuleFeedback extends ModuleBase {
         }
 
         return null;
+    }
+
+    @Override
+    public void init(InternalConfig config) {
+        super.init(config);
+        L.v("[ModuleFeedback] Initializing");
+
+        cachedAppVersion = config.getApplicationVersion();
+        feedbackInterface = new Feedback();
+    }
+
+    @Override
+    public Boolean onRequest(Request request) {
+        return true;
+    }
+
+    @Override
+    public void stop(InternalConfig config, boolean clear) {
+        super.stop(config, clear);
+        feedbackInterface = null;
+    }
+
+    private void getAvailableFeedbackWidgetsInternal(CallbackOnFinish<List<CountlyFeedbackWidget>> callback) {
+        L.d("[ModuleFeedback] getAvailableFeedbackWidgetsInternal, callback set:[" + (callback != null) + "]");
+
+        if (callback == null) {
+            L.e("[ModuleFeedback] getAvailableFeedbackWidgetsInternal, available feedback widget list can't be retrieved without a callback");
+            return;
+        }
+
+        // If someday we decide to support temporary device ID mode, this check will be needed
+        if (internalConfig.isTemporaryIdEnabled()) {
+            L.e("[ModuleFeedback] available feedback widget list can't be retrieved when in temporary device ID mode");
+            callback.onFinished(null, "[ModuleFeedback] available feedback widget list can't be retrieved when in temporary device ID mode");
+            return;
+        }
+
+        Transport transport = SDKCore.instance.networking.getTransport();
+        final boolean networkingIsEnabled = internalConfig.getNetworkingEnabled();
+
+        Params params = ModuleRequests.prepareRequiredParams(internalConfig).add("method", "feedback");
+        ModuleRequests.prepareSaltedParams(internalConfig, params);
+        ImmediateRequestGenerator iRGenerator = internalConfig.immediateRequestGenerator;
+
+        iRGenerator.createImmediateRequestMaker().doWork(params.toString(), "/o/sdk?", transport, false, networkingIsEnabled, checkResponse -> {
+            if (checkResponse == null) {
+                L.d("[ModuleFeedback] getAvailableFeedbackWidgetsInternal, Not possible to retrieve widget list. Probably due to lack of connection to the server");
+                callback.onFinished(null, "Not possible to retrieve widget list. Probably due to lack of connection to the server");
+                return;
+            }
+
+            L.d("[ModuleFeedback] Retrieved request: [" + checkResponse + "]");
+
+            List<CountlyFeedbackWidget> feedbackEntries = new ArrayList<>();
+            String error = parseFeedbackList(checkResponse, feedbackEntries);
+            if (error != null) {
+                feedbackEntries = null;
+            }
+
+            callback.onFinished(feedbackEntries, error);
+        }, L);
     }
 
     private void reportFeedbackWidgetManuallyInternal(CountlyFeedbackWidget widgetInfo, JSONObject widgetData, Map<String, Object> widgetResult) {
@@ -287,6 +288,7 @@ public class ModuleFeedback extends ModuleBase {
             .add("platform", internalConfig.getSdkPlatform())
             .add("app_version", cachedAppVersion)
             .add("av", internalConfig.getApplicationVersion());
+        ModuleRequests.prepareSaltedParams(internalConfig, params);
 
         Transport cp = SDKCore.instance.networking.getTransport();
         final boolean networkingIsEnabled = internalConfig.getNetworkingEnabled();

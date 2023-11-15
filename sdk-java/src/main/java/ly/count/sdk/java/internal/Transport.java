@@ -52,17 +52,36 @@ import org.json.JSONObject;
 //class Network extends ModuleBase { - may be
 
 public class Transport implements X509TrustManager {
+    static final String PARAMETER_TAMPERING_DIGEST = "SHA-256";
+    static final String CHECKSUM = "checksum256";
     private Log L = null;
-    private static final String PARAMETER_TAMPERING_DIGEST = "SHA-256";
-    private static final String CHECKSUM = "checksum256";
     private InternalConfig config;
-
     private SSLContext sslContext;          // ssl context to use if pinning is enabled
     private List<byte[]> keyPins = null;    // list of parsed key pins
     private List<byte[]> certPins = null;   // list of parsed cert pins
     private X509TrustManager defaultTrustManager = null;    // default TrustManager to call along with Network one
 
     public Transport() {
+    }
+
+    private static String trimPem(String pem) {
+        pem = pem.trim();
+
+        final String beginPK = "-----BEGIN PUBLIC KEY-----";
+        if (pem.startsWith(beginPK)) {
+            pem = pem.substring(pem.indexOf(beginPK) + beginPK.length());
+        }
+
+        final String beginCert = "-----BEGIN CERTIFICATE-----";
+        if (pem.startsWith(beginCert)) {
+            pem = pem.substring(pem.indexOf(beginCert) + beginCert.length());
+        }
+
+        if (pem.contains("-----END ")) {
+            pem = pem.substring(0, pem.indexOf("-----END"));
+        }
+        String res = pem.replaceAll("\n", "");
+        return res;
     }
 
     /**
@@ -365,26 +384,6 @@ public class Transport implements X509TrustManager {
             L.w("[network] Fail: code :" + code + ", result: " + response);
             return false;
         }
-    }
-
-    private static String trimPem(String pem) {
-        pem = pem.trim();
-
-        final String beginPK = "-----BEGIN PUBLIC KEY-----";
-        if (pem.startsWith(beginPK)) {
-            pem = pem.substring(pem.indexOf(beginPK) + beginPK.length());
-        }
-
-        final String beginCert = "-----BEGIN CERTIFICATE-----";
-        if (pem.startsWith(beginCert)) {
-            pem = pem.substring(pem.indexOf(beginCert) + beginCert.length());
-        }
-
-        if (pem.contains("-----END ")) {
-            pem = pem.substring(0, pem.indexOf("-----END"));
-        }
-        String res = pem.replaceAll("\n", "");
-        return res;
     }
 
     private void setPins(Set<String> keys, Set<String> certs) throws CertificateException {

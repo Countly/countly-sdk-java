@@ -12,15 +12,6 @@ public class ModuleRequests extends ModuleBase {
 
     private static Params metrics;
 
-    public interface ParamsInjector {
-        void call(Params params);
-    }
-
-    @Override
-    public void initFinished(final InternalConfig config) {
-        ModuleRequests.metrics = Device.dev.buildMetrics();
-    }
-
     private static Request sessionRequest(InternalConfig config, SessionImpl session, String type, Long value) {
         Request request = Request.build();
 
@@ -185,6 +176,19 @@ public class ModuleRequests extends ModuleBase {
         }
     }
 
+    /**
+     * Add checksum to the request if needed.
+     *
+     * @param config InternalConfig to run in
+     * @param params Params to add checksum to
+     */
+    static void prepareSaltedParams(InternalConfig config, Params params) {
+        if (!Utils.isEmptyOrNull(config.getParameterTamperingProtectionSalt())) {
+            String calculatedChecksum = Utils.digestHex(Transport.PARAMETER_TAMPERING_DIGEST, params + config.getParameterTamperingProtectionSalt(), config.getLogger());
+            params.add(Transport.CHECKSUM, calculatedChecksum);
+        }
+    }
+
     public static Params prepareRequiredParams(InternalConfig config) {
         Params params = new Params();
 
@@ -192,10 +196,6 @@ public class ModuleRequests extends ModuleBase {
         addRequiredParametersToParams(config, params);
 
         return params;
-    }
-
-    public static String prepareRequiredParamsAsString(InternalConfig config, Object... paramsObj) {
-        return prepareRequiredParams(config).add(paramsObj).toString();
     }
 
     /**
@@ -240,5 +240,14 @@ public class ModuleRequests extends ModuleBase {
                 callback.call(param);
             }
         });
+    }
+
+    @Override
+    public void initFinished(final InternalConfig config) {
+        ModuleRequests.metrics = Device.dev.buildMetrics();
+    }
+
+    public interface ParamsInjector {
+        void call(Params params);
     }
 }

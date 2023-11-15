@@ -157,6 +157,7 @@ public class ModuleRemoteConfig extends ModuleBase {
             params.add("oi", "1");
         }
 
+        ModuleRequests.prepareSaltedParams(internalConfig, params);
         return params.toString();
     }
 
