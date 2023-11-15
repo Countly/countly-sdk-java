@@ -191,6 +191,29 @@ public class UserEditorTests {
     }
 
     /**
+     * "setLocale", "setCountry", "setCity", "setLocation" with null parameters
+     * Validating that all the methods are working properly
+     * Request should contain all the parameters directly also in "user_details" json and body
+     */
+    @Test
+    public void setLocationBasics_null() {
+        Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
+        sessionHandler(() -> Countly.instance().user().edit()
+            .setLocale(null)
+            .setCountry(null)
+            .setCity(null)
+            .setLocation(null)
+            .commit());
+
+        validateUserDetailsRequestInRQ(map(
+            "user_details", json(),
+            "country_code", JSONObject.NULL,
+            "city", JSONObject.NULL,
+            "location", JSONObject.NULL,
+            "locale", JSONObject.NULL));
+    }
+
+    /**
      * "setLocale", "setCountry", "setCity", "setLocation" with valid parameters
      * Validating that all the methods are working properly
      * Request should contain all the parameters directly also in "user_details" json and body
@@ -578,7 +601,7 @@ public class UserEditorTests {
     public void setLocation_fromString_null() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
         sessionHandler(() -> Countly.instance().user().edit().setLocation(null).commit());
-        validateUserDetailsRequestInRQ(map("user_details", json("location", JSONObject.NULL), "location", JSONObject.NULL));
+        validateUserDetailsRequestInRQ(map("user_details", json(), "location", JSONObject.NULL));
     }
 
     public void set_multipleCalls() {
@@ -612,6 +635,10 @@ public class UserEditorTests {
 
     private void validateUserDetailsRequestInRQ(Map<String, Object> expectedParams) {
         Map<String, String>[] requestsInQ = TestUtils.getCurrentRQ();
+        Assert.assertEquals(1, requestsInQ.length);
+        TestUtils.validateRequiredParams(requestsInQ[0]); // this validates 9 params
+        requestsInQ[0].forEach((key, value) -> System.out.println("key: " + key + " value: " + value));
+        Assert.assertEquals(9 + expectedParams.size(), requestsInQ[0].size()); // so we need to add expect 9 + params size
         if (!expectedParams.containsKey("picturePath")) {
             Assert.assertFalse(requestsInQ[0].containsKey("picturePath"));
         }

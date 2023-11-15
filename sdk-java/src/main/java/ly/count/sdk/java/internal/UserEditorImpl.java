@@ -559,20 +559,21 @@ public class UserEditorImpl implements UserEditor {
                         L.w("Won't send picturePath" + e);
                     }
                 }
-                if (changes.has(LOCALE) && user.locale != null) {
-                    params.add("locale", user.locale);
+                //todo these things are not send as a json null, currently sending as string null
+                if (changes.has(LOCALE)) {
+                    params.add("locale", changes.get(LOCALE));
                     changes.remove(LOCALE);
                 }
-                if (changes.has(COUNTRY) && user.country != null) {
-                    params.add("country_code", user.country);
+                if (changes.has(COUNTRY)) {
+                    params.add("country_code", changes.get(COUNTRY));
                     changes.remove(COUNTRY);
                 }
-                if (changes.has(CITY) && user.city != null) {
-                    params.add("city", user.city);
+                if (changes.has(CITY)) {
+                    params.add("city", changes.get(CITY));
                     changes.remove(CITY);
                 }
-                if (changes.has(LOCATION) && user.location != null) {
-                    params.add("location", user.location);
+                if (changes.has(LOCATION)) {
+                    params.add("location", changes.get(LOCATION));
                     changes.remove(LOCATION);
                 }
                 params.add("user_details", changes.toString());
