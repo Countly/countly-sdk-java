@@ -197,7 +197,7 @@ public class ModuleFeedbackTests {
         ImmediateRequestI requestMaker = (requestData, customEndpoint, cp, requestShouldBeDelayed, networkingIsEnabled, callback, log) -> {
             Map<String, String> params = TestUtils.parseQueryParams(requestData);
             Assert.assertEquals("feedback", params.get("method"));
-            TestUtils.validateRequestMakerRequiredParams("/o/sdk", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
+            TestUtils.validateRequestMakerRequiredParams("/o/sdk?", customEndpoint, requestShouldBeDelayed, networkingIsEnabled);
             TestUtils.validateRequiredParams(params);
             callback.callback(returnedResponse);
         };
