@@ -322,7 +322,7 @@ public class UserEditorImpl implements UserEditor {
     @Override
     public UserEditor setName(String value) {
         L.d("setName: value = " + value);
-        
+
         return set(NAME, value);
     }
 
