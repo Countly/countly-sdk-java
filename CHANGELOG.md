@@ -1,3 +1,7 @@
+## 23.10.1
+
+* Fixed a bug where getting feedback widgets would not work.
+
 ## 23.10.0
 
 * ! Minor breaking change ! Calling "init" twice will now not reinitialize the SDK. The call will be ignored
