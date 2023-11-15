@@ -1,3 +1,7 @@
+## 23.10.1
+
+* Fixed a bug where getting the feedback widget list would fail if "salt" was enabled.
+
 ## 23.10.0
 
 * ! Minor breaking change ! Calling "init" twice will now not reinitialize the SDK. The call will be ignored
