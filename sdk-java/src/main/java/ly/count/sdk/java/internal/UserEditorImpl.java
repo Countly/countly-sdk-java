@@ -561,15 +561,19 @@ public class UserEditorImpl implements UserEditor {
                 }
                 if (changes.has(LOCALE) && user.locale != null) {
                     params.add("locale", user.locale);
+                    changes.remove(LOCALE);
                 }
                 if (changes.has(COUNTRY) && user.country != null) {
                     params.add("country_code", user.country);
+                    changes.remove(COUNTRY);
                 }
                 if (changes.has(CITY) && user.city != null) {
                     params.add("city", user.city);
+                    changes.remove(CITY);
                 }
                 if (changes.has(LOCATION) && user.location != null) {
                     params.add("location", user.location);
+                    changes.remove(LOCATION);
                 }
                 params.add("user_details", changes.toString());
             });

@@ -183,7 +183,7 @@ public class UserEditorTests {
             .commit());
 
         validateUserDetailsRequestInRQ(map(
-            "user_details", "{\"country\":\"US\",\"city\":\"New York\",\"location\":\"40.7128,-74.006\",\"locale\":\"en\"}",
+            "user_details", json(),
             "country_code", "US",
             "city", "New York",
             "location", "40.7128,-74.006",
@@ -206,7 +206,7 @@ public class UserEditorTests {
             .commit());
 
         validateUserDetailsRequestInRQ(map(
-            "user_details", "{\"locale\":\"tr\"}",
+            "user_details", json(),
             "locale", "tr"));
     }
 
@@ -530,7 +530,7 @@ public class UserEditorTests {
     public void setLocation_fromString() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
         sessionHandler(() -> Countly.instance().user().edit().setLocation("-40.7128, 74.0060").commit());
-        validateUserDetailsRequestInRQ(map("user_details", json("location", "-40.7128,74.006"), "location", "-40.7128,74.006"));
+        validateUserDetailsRequestInRQ(map("user_details", json(), "location", "-40.7128,74.006"));
     }
 
     /**
@@ -542,7 +542,7 @@ public class UserEditorTests {
     public void setLocation_fromString_noConsent() {
         Countly.instance().init(TestUtils.getBaseConfig());
         sessionHandler(() -> Countly.instance().user().edit().setLocation("32.78, 28.01").commit());
-        validateUserDetailsRequestInRQ(map("user_details", json("location", "32.78,28.01"), "location", "32.78,28.01"));
+        validateUserDetailsRequestInRQ(map("user_details", json(), "location", "32.78,28.01"));
     }
 
     /**
