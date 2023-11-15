@@ -59,7 +59,7 @@ public class ModuleFeedback extends ModuleBase {
         String params = ModuleRequests.prepareRequiredParamsAsString(internalConfig, "method", "feedback");
         ImmediateRequestGenerator iRGenerator = internalConfig.immediateRequestGenerator;
 
-        iRGenerator.createImmediateRequestMaker().doWork("?" + params, "/o/sdk", transport, false, networkingIsEnabled, checkResponse -> {
+        iRGenerator.createImmediateRequestMaker().doWork(params, "/o/sdk?", transport, false, networkingIsEnabled, checkResponse -> {
             if (checkResponse == null) {
                 L.d("[ModuleFeedback] getAvailableFeedbackWidgetsInternal, Not possible to retrieve widget list. Probably due to lack of connection to the server");
                 callback.onFinished(null, "Not possible to retrieve widget list. Probably due to lack of connection to the server");
