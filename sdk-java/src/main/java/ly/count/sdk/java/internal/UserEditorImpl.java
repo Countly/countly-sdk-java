@@ -184,8 +184,10 @@ public class UserEditorImpl implements UserEditor {
                     }
                     break;
                 default:
-                    if (value instanceof Map) {
+                    if (value instanceof Map) { // custom property path via using "setCustom" function
                         ((Map<String, Object>) value).forEach((k, v) -> performCustomUpdate(k, v, changes));
+                    } else { // directly using "set" function
+                        performCustomUpdate(key, value, changes);
                     }
                     break;
             }
@@ -245,7 +247,6 @@ public class UserEditorImpl implements UserEditor {
     @Override
     public UserEditor setName(String value) {
         L.d("setName: value = " + value);
-
         return set(NAME, value);
     }
 

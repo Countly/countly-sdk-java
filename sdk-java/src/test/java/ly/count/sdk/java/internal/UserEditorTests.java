@@ -4,10 +4,11 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
+import java.util.function.Supplier;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
+import ly.count.sdk.java.User;
 import ly.count.sdk.java.UserEditor;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -43,12 +44,10 @@ public class UserEditorTests {
     @Test
     public void setPicturePath_webUrl() {
         Countly.instance().init(TestUtils.getBaseConfig());
-        sessionHandler(() -> {
-            //set profile picture url and commit it
-            Countly.instance().user().edit().setPicturePath(imgFileWebUrl).commit();
-            validatePictureAndPath(imgFileWebUrl, null);
-        });
-        validateUserDetailsRequestInRQ(toMap("user_details", "{\"picture\":\"" + imgFileWebUrl + "\"}"));
+        //set profile picture url and commit it
+        sessionHandler(() -> Countly.instance().user().edit().setPicturePath(imgFileWebUrl).commit());
+        validatePictureAndPath(imgFileWebUrl, null);
+        validateUserDetailsRequestInRQ(map("user_details", "{\"picture\":\"" + imgFileWebUrl + "\"}"));
     }
 
     /**
@@ -60,15 +59,11 @@ public class UserEditorTests {
     @Test
     public void setPicturePath_localPath() {
         Countly.instance().init(TestUtils.getBaseConfig());
-        AtomicReference<String> imgFilePath = new AtomicReference<>("test.jpeg");
-        sessionHandler(() -> {
-            File imgFile = TestUtils.createFile(imgFileName);
-            imgFilePath.set(imgFile.getAbsolutePath());
-            //set profile picture url and commit it
-            Countly.instance().user().edit().setPicturePath(imgFile.getAbsolutePath()).commit();
-            validatePictureAndPath(imgFile.getAbsolutePath(), null);
-        });
-        validateUserDetailsRequestInRQ(toMap("user_details", "{}", "picturePath", imgFilePath));
+        File imgFile = TestUtils.createFile(imgFileName);
+        //set profile picture url and commit it
+        sessionHandler(() -> Countly.instance().user().edit().setPicturePath(imgFile.getAbsolutePath()).commit());
+        validatePictureAndPath(imgFile.getAbsolutePath(), null);
+        validateUserDetailsRequestInRQ(map("user_details", "{}", "picturePath", imgFile.getAbsolutePath()));
     }
 
     /**
@@ -80,12 +75,10 @@ public class UserEditorTests {
     @Test
     public void setPicturePath_null() {
         Countly.instance().init(TestUtils.getBaseConfig());
-        sessionHandler(() -> {
-            //set profile picture url and commit it
-            Countly.instance().user().edit().setPicturePath(null).commit();
-            validatePictureAndPath(null, null);
-        });
-        validateUserDetailsRequestInRQ(toMap("user_details", "{\"picture\":null}"));
+        //set profile picture url and commit it
+        sessionHandler(() -> Countly.instance().user().edit().setPicturePath(null).commit());
+        validatePictureAndPath(null, null);
+        validateUserDetailsRequestInRQ(map("user_details", "{\"picture\":null}"));
     }
 
     /**
@@ -97,12 +90,10 @@ public class UserEditorTests {
     @Test
     public void setPicturePath_garbage() {
         Countly.instance().init(TestUtils.getBaseConfig());
-        sessionHandler(() -> {
-            //set profile picture url and commit it
-            Countly.instance().user().edit().setPicturePath("garbage_thing/.txt").commit();
-            validatePictureAndPath(null, null);
-        });
-        validateUserDetailsRequestInRQ(toMap("user_details", "{}"));
+        //set profile picture url and commit it
+        sessionHandler(() -> Countly.instance().user().edit().setPicturePath("garbage_thing/.txt").commit());
+        validatePictureAndPath(null, null);
+        validateUserDetailsRequestInRQ(map("user_details", "{}"));
     }
 
     /**
@@ -115,13 +106,11 @@ public class UserEditorTests {
     @Test
     public void setPicture_binaryData() {
         Countly.instance().init(TestUtils.getBaseConfig());
-        sessionHandler(() -> {
-            //set profile picture url and commit it
-            byte[] imgData = new byte[] { 10, 13, 34, 12 };
-            Countly.instance().user().edit().setPicture(imgData).commit();
-            validatePictureAndPath(null, imgData);
-        });
-        validateUserDetailsRequestInRQ(toMap("user_details", "{}", "picturePath", UserEditorImpl.PICTURE_IN_USER_PROFILE));
+        byte[] imgData = new byte[] { 10, 13, 34, 12 };
+        //set profile picture url and commit it
+        sessionHandler(() -> Countly.instance().user().edit().setPicture(imgData).commit());
+        validatePictureAndPath(null, imgData);
+        validateUserDetailsRequestInRQ(map("user_details", "{}", "picturePath", UserEditorImpl.PICTURE_IN_USER_PROFILE));
     }
 
     /**
@@ -133,12 +122,10 @@ public class UserEditorTests {
     @Test
     public void setPicture_null() {
         Countly.instance().init(TestUtils.getBaseConfig());
-        sessionHandler(() -> {
-            //set profile picture url and commit it
-            Countly.instance().user().edit().setPicture(null).commit();
-            validatePictureAndPath(null, null);
-        });
-        validateUserDetailsRequestInRQ(toMap("user_details", "{\"picture\":null}"));
+        //set profile picture url and commit it
+        sessionHandler(() -> Countly.instance().user().edit().setPicture(null).commit());
+        validatePictureAndPath(null, null);
+        validateUserDetailsRequestInRQ(map("user_details", "{\"picture\":null}"));
     }
 
     /**
@@ -153,7 +140,7 @@ public class UserEditorTests {
             .setOnce(TestUtils.eKeys[0], 56)
             .setOnce(TestUtils.eKeys[0], TestUtils.eKeys[1])
             .commit());
-        validateUserDetailsRequestInRQ(toMap("user_details", c(opJson(TestUtils.eKeys[0], UserEditorImpl.Op.SET_ONCE, TestUtils.eKeys[1]))));
+        validateUserDetailsRequestInRQ(map("user_details", c(opJson(TestUtils.eKeys[0], UserEditorImpl.Op.SET_ONCE, TestUtils.eKeys[1]))));
     }
 
     /**
@@ -165,7 +152,7 @@ public class UserEditorTests {
     public void setOnce_null() {
         Countly.instance().init(TestUtils.getBaseConfig());
         sessionHandler(() -> Countly.instance().user().edit().setOnce(TestUtils.eKeys[0], null).commit());
-        validateUserDetailsRequestInRQ(toMap("user_details", "{}"));
+        validateUserDetailsRequestInRQ(map("user_details", "{}"));
     }
 
     /**
@@ -177,16 +164,16 @@ public class UserEditorTests {
     public void setOnce_empty() {
         Countly.instance().init(TestUtils.getBaseConfig());
         sessionHandler(() -> Countly.instance().user().edit().setOnce(TestUtils.eKeys[0], "").commit());
-        validateUserDetailsRequestInRQ(toMap("user_details", c(opJson(TestUtils.eKeys[0], UserEditorImpl.Op.SET_ONCE, ""))));
+        validateUserDetailsRequestInRQ(map("user_details", c(opJson(TestUtils.eKeys[0], UserEditorImpl.Op.SET_ONCE, ""))));
     }
 
     /**
-     * "commit" with valid parameters
+     * "setLocale", "setCountry", "setCity", "setLocation" with valid parameters
      * Validating that all the methods are working properly
      * Request should contain all the parameters directly also in "user_details" json and body
      */
     @Test
-    public void commit() {
+    public void setLocationBasics() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
         sessionHandler(() -> Countly.instance().user().edit()
             .setLocale("en")
@@ -195,11 +182,32 @@ public class UserEditorTests {
             .setLocation(40.7128, 74.0060)
             .commit());
 
-        validateUserDetailsRequestInRQ(toMap(
+        validateUserDetailsRequestInRQ(map(
             "user_details", "{\"country\":\"US\",\"city\":\"New York\",\"location\":\"40.7128,74.006\",\"locale\":\"en\"}",
             "country_code", "US",
             "city", "New York",
-            "location", "40.7128,74.006"));
+            "location", "40.7128,74.006",
+            "locale", "en"));
+    }
+
+    /**
+     * "setLocale", "setCountry", "setCity", "setLocation" with valid parameters
+     * Validating that all the methods are working properly
+     * Request should contain all the parameters directly also in "user_details" json and body
+     */
+    @Test
+    public void setLocationBasics_noConsent() {
+        Countly.instance().init(TestUtils.getBaseConfig());
+        sessionHandler(() -> Countly.instance().user().edit()
+            .setLocale("tr")
+            .setCountry("TR")
+            .setCity("Izmir")
+            .setLocation(38.4237, 27.1428)
+            .commit());
+
+        validateUserDetailsRequestInRQ(map(
+            "user_details", "{\"locale\":\"tr\"}",
+            "locale", "tr"));
     }
 
     /**
@@ -243,10 +251,10 @@ public class UserEditorTests {
             opFunction.apply(TestUtils.eKeys[0], TestUtils.eKeys[2]);
             opFunction.apply(TestUtils.eKeys[3], TestUtils.eKeys[2]);
             opFunction.apply(TestUtils.eKeys[0], null);
-            opFunction.apply(TestUtils.eKeys[0], "").commit();
+            return opFunction.apply(TestUtils.eKeys[0], "").commit();
         });
 
-        validateUserDetailsRequestInRQ(toMap("user_details", c(
+        validateUserDetailsRequestInRQ(map("user_details", c(
                 opJson(TestUtils.eKeys[3], op, TestUtils.eKeys[2]),
                 opJson(TestUtils.eKeys[0], op, TestUtils.eKeys[1], TestUtils.eKeys[2], 89, TestUtils.eKeys[2], "")
             )
@@ -273,7 +281,7 @@ public class UserEditorTests {
             .setCustom("tags", new Object[] { "tag1", "tag2", 34, 67.8, null, "" })
             .commit());
 
-        validateUserDetailsRequestInRQ(toMap("user_details", c(map(
+        validateUserDetailsRequestInRQ(map("user_details", c(map(
             TestUtils.eKeys[0], TestUtils.eKeys[1],
             TestUtils.eKeys[5], "",
             TestUtils.eKeys[6], 128.987,
@@ -283,7 +291,7 @@ public class UserEditorTests {
 
     /**
      * "max" with multiple calls
-     * Validating that multiple calls to max with same key will result in the request queue
+     * Validating that multiple calls to "max" will result in the request queue
      * All added values must be form inside the "custom" json in the request
      */
     @Test
@@ -298,10 +306,86 @@ public class UserEditorTests {
             .commit()
         );
 
-        validateUserDetailsRequestInRQ(toMap("user_details", c(
+        validateUserDetailsRequestInRQ(map("user_details", c(
             opJson(TestUtils.eKeys[2], UserEditorImpl.Op.MAX, 0),
             opJson(TestUtils.eKeys[1], UserEditorImpl.Op.MAX, -1),
             opJson(TestUtils.eKeys[0], UserEditorImpl.Op.MAX, 128)))
+        );
+    }
+
+    /**
+     * "min" with multiple calls
+     * Validating that multiple calls to "min" will result in the request queue
+     * All added values must be form inside the "custom" json in the request
+     */
+    @Test
+    public void min() {
+        Countly.instance().init(TestUtils.getBaseConfig());
+        sessionHandler(() -> Countly.instance().user().edit()
+            .min(TestUtils.eKeys[0], 213)
+            .min(TestUtils.eKeys[1], -155.9)
+            .min(TestUtils.eKeys[2], 0)
+            .min(TestUtils.eKeys[0], 122) // this should override previous value
+            .min(TestUtils.eKeys[0], 122.0001) // this should not override previous value because it is greater than
+            .commit()
+        );
+
+        validateUserDetailsRequestInRQ(map("user_details", c(
+            opJson(TestUtils.eKeys[2], UserEditorImpl.Op.MIN, 0),
+            opJson(TestUtils.eKeys[1], UserEditorImpl.Op.MIN, -155.9),
+            opJson(TestUtils.eKeys[0], UserEditorImpl.Op.MIN, 122)))
+        );
+    }
+
+    /**
+     * "inc" with multiple calls
+     * Validating that multiple calls to "inc" will result in the request queue
+     * All added values must be form inside the "custom" json in the request
+     */
+    @Test
+    public void inc() {
+        Countly.instance().init(TestUtils.getBaseConfig());
+        sessionHandler(() -> Countly.instance().user().edit()
+            .inc(TestUtils.eKeys[0], 213)
+            .inc(TestUtils.eKeys[1], -155)
+            .inc(TestUtils.eKeys[2], 0)
+            .inc(TestUtils.eKeys[0], -214) // this should result in -1 for the key 'TestUtils.eKeys[0]'
+            .inc(TestUtils.eKeys[0], 1) // this should result in 0 for the key 'TestUtils.eKeys[0]'
+            .commit()
+        );
+
+        validateUserDetailsRequestInRQ(map("user_details", c(
+            opJson(TestUtils.eKeys[2], UserEditorImpl.Op.INC, 0),
+            opJson(TestUtils.eKeys[1], UserEditorImpl.Op.INC, -155),
+            opJson(TestUtils.eKeys[0], UserEditorImpl.Op.INC, 0)))
+        );
+    }
+
+    /**
+     * "mul" with multiple calls
+     * Validating that multiple calls to "mul" will result in the request queue
+     * All added values must be form inside the "custom" json in the request
+     */
+    @Test
+    public void mul() {
+        Countly.instance().init(TestUtils.getBaseConfig());
+        sessionHandler(() -> Countly.instance().user().edit()
+            .mul(TestUtils.eKeys[0], 3)
+            .mul(TestUtils.eKeys[1], -5.28)
+            .mul(TestUtils.eKeys[2], 0)
+            .mul(TestUtils.eKeys[3], 45)
+            .mul(TestUtils.eKeys[0], 0) // this should result in 0 for the key 'TestUtils.eKeys[0]'
+            .mul(TestUtils.eKeys[0], 1) // this should result in 0 for the key 'TestUtils.eKeys[0]'
+            .mul(TestUtils.eKeys[2], 45) // this shouldn't change anything because the value is 0
+            .mul(TestUtils.eKeys[3], -2) // this should result int -90 for the 'TestUtils.eKeys[3]'
+            .commit()
+        );
+
+        validateUserDetailsRequestInRQ(map("user_details", c(
+            opJson(TestUtils.eKeys[3], UserEditorImpl.Op.MUL, -90),
+            opJson(TestUtils.eKeys[2], UserEditorImpl.Op.MUL, 0),
+            opJson(TestUtils.eKeys[1], UserEditorImpl.Op.MUL, -5.28),
+            opJson(TestUtils.eKeys[0], UserEditorImpl.Op.MUL, 0)))
         );
     }
 
@@ -310,7 +394,7 @@ public class UserEditorTests {
         Assert.assertEquals(picture, Countly.instance().user().picture());
     }
 
-    private void validateUserDetailsRequestInRQ(Map<String, String> expectedParams) {
+    private void validateUserDetailsRequestInRQ(Map<String, Object> expectedParams) {
         Map<String, String>[] requestsInQ = TestUtils.getCurrentRQ();
         if (!expectedParams.containsKey("picturePath")) {
             Assert.assertFalse(requestsInQ[0].containsKey("picturePath"));
@@ -349,30 +433,38 @@ public class UserEditorTests {
      *
      * @param process to run
      */
-    private void sessionHandler(Runnable process) {
+    private void sessionHandler(Supplier<User> process) {
         Countly.session().begin();
-        process.run();
+        Assert.assertNotNull(process.get());
         Countly.session().end();
     }
 
+    /**
+     * Converts a map to json object
+     *
+     * @param entries map to convert
+     * @return json string
+     */
     private String json(Map<String, Object> entries) {
         JSONObject json = new JSONObject();
         entries.forEach(json::put);
         return json.toString();
     }
 
-    private Map<String, String> toMap(Object... args) {
-        return new Params(args).map();
-    }
-
+    /**
+     * Converts array of objects to a 'String, Object' map
+     *
+     * @param args array of objects
+     * @return map
+     */
     private Map<String, Object> map(Object... args) {
+        Map<String, Object> map = new ConcurrentHashMap<>();
         if (args.length % 2 == 0) {
-            Map<String, Object> map = new ConcurrentHashMap<>();
+            map = new ConcurrentHashMap<>();
             for (int i = 0; i < args.length; i += 2) {
                 map.put(args[i].toString(), args[i + 1]);
             }
-            return map;
         }
-        return null;
+        return map;
     }
 }
