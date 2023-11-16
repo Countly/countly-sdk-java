@@ -447,7 +447,7 @@ public class UserEditorImpl implements UserEditor {
     @Override
     public UserEditor optOutFromLocationServices() {
         L.d("optOutFromLocationServices");
-        return set(COUNTRY, "").set(CITY, "").set(LOCATION, "");
+        return set(COUNTRY, null).set(CITY, null).set(LOCATION, null);
     }
 
     @Override
@@ -549,7 +549,7 @@ public class UserEditorImpl implements UserEditor {
             perform(changes);
 
             Storage.push(SDKCore.instance.config, user);
-
+            
             ModuleRequests.injectParams(SDKCore.instance.config, params -> {
                 if (changes.has(PICTURE_PATH)) {
                     try {
@@ -575,7 +575,10 @@ public class UserEditorImpl implements UserEditor {
                     params.add("location", changes.get(LOCATION));
                     changes.remove(LOCATION);
                 }
-                params.add("user_details", changes.toString());
+
+                if (!changes.isEmpty() || user.picturePath != null || user.picture != null) {
+                    params.add("user_details", changes.toString());
+                }
             });
         } catch (JSONException e) {
             L.e("[UserEditorImpl] Exception while committing changes to User profile" + e);

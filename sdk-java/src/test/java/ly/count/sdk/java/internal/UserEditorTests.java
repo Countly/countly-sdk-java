@@ -93,7 +93,7 @@ public class UserEditorTests {
         //set profile picture url and commit it
         sessionHandler(() -> Countly.instance().user().edit().setPicturePath("garbage_thing/.txt").commit());
         validatePictureAndPath(null, null);
-        validateUserDetailsRequestInRQ(map("user_details", "{}"));
+        validateUserDetailsRequestInRQ(map());
     }
 
     /**
@@ -152,7 +152,7 @@ public class UserEditorTests {
     public void setOnce_null() {
         Countly.instance().init(TestUtils.getBaseConfig());
         sessionHandler(() -> Countly.instance().user().edit().setOnce(TestUtils.eKeys[0], null).commit());
-        validateUserDetailsRequestInRQ(map("user_details", "{}"));
+        validateUserDetailsRequestInRQ(map());
     }
 
     /**
@@ -183,7 +183,6 @@ public class UserEditorTests {
             .commit());
 
         validateUserDetailsRequestInRQ(map(
-            "user_details", json(),
             "country_code", "US",
             "city", "New York",
             "location", "40.7128,-74.006",
@@ -206,7 +205,6 @@ public class UserEditorTests {
             .commit());
 
         validateUserDetailsRequestInRQ(map(
-            "user_details", json(),
             "country_code", JSONObject.NULL,
             "city", JSONObject.NULL,
             "location", JSONObject.NULL,
@@ -228,9 +226,7 @@ public class UserEditorTests {
             .setLocation(38.4237, 27.1428)
             .commit());
 
-        validateUserDetailsRequestInRQ(map(
-            "user_details", json(),
-            "locale", "tr"));
+        validateUserDetailsRequestInRQ(map("locale", "tr"));
     }
 
     /**
@@ -479,7 +475,7 @@ public class UserEditorTests {
      */
     @Test
     public void setBirthYear_invalidParam() {
-        setBirthYear_base(TestUtils.eKeys[0], json());
+        setBirthYear_base(TestUtils.eKeys[0], map());
     }
 
     /**
@@ -489,7 +485,7 @@ public class UserEditorTests {
      */
     @Test
     public void setBirthYear_stringInteger() {
-        setBirthYear_base("1999", json("byear", 1999));
+        setBirthYear_base("1999", map("user_details", json("byear", 1999)));
     }
 
     /**
@@ -499,13 +495,13 @@ public class UserEditorTests {
      */
     @Test
     public void setBirthYear_stringNotInteger() {
-        setBirthYear_base("1999.0", json());
+        setBirthYear_base("1999.0", map());
     }
 
-    private void setBirthYear_base(String value, String expectedValue) {
+    private void setBirthYear_base(String value, Map<String, Object> expectedValues) {
         Countly.instance().init(TestUtils.getBaseConfig());
         sessionHandler(() -> Countly.instance().user().edit().setBirthyear(value).commit());
-        validateUserDetailsRequestInRQ(map("user_details", expectedValue));
+        validateUserDetailsRequestInRQ(expectedValues);
     }
 
     /**
@@ -515,7 +511,7 @@ public class UserEditorTests {
      */
     @Test
     public void setGender_invalid() {
-        setGender_base("Non-Binary", json());
+        setGender_base("Non-Binary", map());
     }
 
     /**
@@ -525,7 +521,7 @@ public class UserEditorTests {
      */
     @Test
     public void setGender_number() {
-        setGender_base(1, json());
+        setGender_base(1, map());
     }
 
     /**
@@ -535,13 +531,13 @@ public class UserEditorTests {
      */
     @Test
     public void setGender_string() {
-        setGender_base("M", json("gender", "M"));
+        setGender_base("M", map("user_details", json("gender", "M")));
     }
 
-    private void setGender_base(Object gender, String expectedValue) {
+    private void setGender_base(Object gender, Map<String, Object> expectedValues) {
         Countly.instance().init(TestUtils.getBaseConfig());
         sessionHandler(() -> Countly.instance().user().edit().setGender(gender).commit());
-        validateUserDetailsRequestInRQ(map("user_details", expectedValue));
+        validateUserDetailsRequestInRQ(expectedValues);
     }
 
     /**
@@ -553,7 +549,7 @@ public class UserEditorTests {
     public void setLocation_fromString() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
         sessionHandler(() -> Countly.instance().user().edit().setLocation("-40.7128, 74.0060").commit());
-        validateUserDetailsRequestInRQ(map("user_details", json(), "location", "-40.7128,74.006"));
+        validateUserDetailsRequestInRQ(map("location", "-40.7128,74.006"));
     }
 
     /**
@@ -565,7 +561,7 @@ public class UserEditorTests {
     public void setLocation_fromString_noConsent() {
         Countly.instance().init(TestUtils.getBaseConfig());
         sessionHandler(() -> Countly.instance().user().edit().setLocation("32.78, 28.01").commit());
-        validateUserDetailsRequestInRQ(map("user_details", json(), "location", "32.78,28.01"));
+        validateUserDetailsRequestInRQ(map("location", "32.78,28.01"));
     }
 
     /**
@@ -577,7 +573,7 @@ public class UserEditorTests {
     public void setLocation_fromString_invalid() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
         sessionHandler(() -> Countly.instance().user().edit().setLocation(",28.34").commit());
-        validateUserDetailsRequestInRQ(map("user_details", json()));
+        validateUserDetailsRequestInRQ(map());
     }
 
     /**
@@ -589,7 +585,7 @@ public class UserEditorTests {
     public void setLocation_fromString_onePair() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
         sessionHandler(() -> Countly.instance().user().edit().setLocation("61.32,").commit());
-        validateUserDetailsRequestInRQ(map("user_details", json()));
+        validateUserDetailsRequestInRQ(map());
     }
 
     /**
@@ -601,7 +597,7 @@ public class UserEditorTests {
     public void setLocation_fromString_null() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
         sessionHandler(() -> Countly.instance().user().edit().setLocation(null).commit());
-        validateUserDetailsRequestInRQ(map("user_details", json(), "location", JSONObject.NULL));
+        validateUserDetailsRequestInRQ(map("location", JSONObject.NULL));
     }
 
     /**
@@ -613,11 +609,7 @@ public class UserEditorTests {
     public void optOutFromLocationServices() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
         sessionHandler(() -> Countly.instance().user().edit().optOutFromLocationServices().commit());
-        validateUserDetailsRequestInRQ(map("user_details", json(),
-            "location", "",
-            "country_code", "",
-            "city", "")
-        );
+        validateUserDetailsRequestInRQ(map("location", JSONObject.NULL, "country_code", JSONObject.NULL, "city", JSONObject.NULL));
     }
 
     /**
@@ -701,6 +693,9 @@ public class UserEditorTests {
      * @param requestIndex index of the request in the request queue
      */
     private void validateUserDetailsRequestInRQ(Map<String, Object> expectedParams, final int requestIndex) {
+        if (expectedParams.isEmpty()) { // nothing to validate, just return
+            return;
+        }
         Map<String, String>[] requestsInQ = TestUtils.getCurrentRQ();
         Assert.assertEquals(requestIndex + 1, requestsInQ.length);
         TestUtils.validateRequiredParams(requestsInQ[requestIndex]); // this validates 9 params
