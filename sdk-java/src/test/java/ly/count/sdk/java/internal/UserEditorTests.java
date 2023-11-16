@@ -604,28 +604,50 @@ public class UserEditorTests {
         validateUserDetailsRequestInRQ(map("user_details", json(), "location", JSONObject.NULL));
     }
 
-    public void set_multipleCalls() {
-        Countly.instance().init(TestUtils.getBaseConfig());
-        sessionHandler(() -> Countly.instance().user().edit()
-            .setBirthyear(null)
-            .setEmail(null)
-            .setGender(null)
-            .setName(null)
-            .setOrg(null)
-            .setPhone(null)
-            .setUsername(null)
-            .commit()
+    /**
+     * "optOutFromLocationServices"
+     * Validating that calling the function will result in nullifying the location relates params
+     * Request should contain "location","country_code","city" parameters in the body and should be null
+     */
+    @Test
+    public void optOutFromLocationServices() {
+        Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
+        sessionHandler(() -> Countly.instance().user().edit().optOutFromLocationServices().commit());
+        validateUserDetailsRequestInRQ(map("user_details", json(),
+            "location", "",
+            "country_code", "",
+            "city", "")
         );
+    }
 
-        validateUserDetailsRequestInRQ(map("user_details", json(
-            "name", JSONObject.NULL,
-            "username", JSONObject.NULL,
-            "email", JSONObject.NULL,
-            "org", JSONObject.NULL,
-            "phone", JSONObject.NULL,
-            "byear", JSONObject.NULL,
-            "gender", JSONObject.NULL
-        )));
+    /**
+     * "set" with multiple calls to predefined keys
+     * Validating that predefined keys are added to the request and convert values to String
+     * There should be 1 request, and it should be a user details request. All key values must be a string
+     */
+    @Test
+    public void set_notAString() {
+        Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
+        sessionHandler(() -> Countly.instance().user().edit()
+            .set(UserEditorImpl.NAME, new TestUtils.AtomicString("Magical"))
+            .set(UserEditorImpl.USERNAME, new TestUtils.AtomicString("TestUsername"))
+            .set(UserEditorImpl.EMAIL, new TestUtils.AtomicString("test@test.ly"))
+            .set(UserEditorImpl.ORG, new TestUtils.AtomicString("Magical Org"))
+            .set(UserEditorImpl.PHONE, 123456789)
+            .set(UserEditorImpl.PICTURE, new TestUtils.AtomicString("Not a picture"))
+            .set(UserEditorImpl.PICTURE_PATH, new TestUtils.AtomicString("Not a picture path"))
+            .set(UserEditorImpl.BIRTHYEAR, new TestUtils.AtomicString("Not a birthyear"))
+            .set(UserEditorImpl.LOCATION, new TestUtils.AtomicString("Not a location"))
+            .set(UserEditorImpl.CITY, new TestUtils.AtomicString("Not a city"))
+            .set(UserEditorImpl.COUNTRY, new TestUtils.AtomicString("Not a country"))
+            .set(UserEditorImpl.LOCALE, new TestUtils.AtomicString("Not a locale"))
+            .commit());
+        validateUserDetailsRequestInRQ(map("user_details", json("name", "Magical",
+            "username", "TestUsername",
+            "email", "test@test.ly",
+            "org", "Magical Org",
+            "phone", "123456789"))
+        );
     }
 
     private void validatePictureAndPath(String picturePath, byte[] picture) {
@@ -637,12 +659,11 @@ public class UserEditorTests {
         Map<String, String>[] requestsInQ = TestUtils.getCurrentRQ();
         Assert.assertEquals(1, requestsInQ.length);
         TestUtils.validateRequiredParams(requestsInQ[0]); // this validates 9 params
-        requestsInQ[0].forEach((key, value) -> System.out.println("key: " + key + " value: " + value));
         Assert.assertEquals(9 + expectedParams.size(), requestsInQ[0].size()); // so we need to add expect 9 + params size
         if (!expectedParams.containsKey("picturePath")) {
             Assert.assertFalse(requestsInQ[0].containsKey("picturePath"));
         }
-        expectedParams.forEach((key, value) -> Assert.assertEquals(value, requestsInQ[0].get(key)));
+        expectedParams.forEach((key, value) -> Assert.assertEquals(value.toString(), requestsInQ[0].get(key)));
     }
 
     /**

@@ -559,7 +559,6 @@ public class UserEditorImpl implements UserEditor {
                         L.w("Won't send picturePath" + e);
                     }
                 }
-                //todo these things are not send as a json null, currently sending as string null
                 if (changes.has(LOCALE)) {
                     params.add("locale", changes.get(LOCALE));
                     changes.remove(LOCALE);

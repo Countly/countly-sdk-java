@@ -268,7 +268,7 @@ public class TestUtils {
             Map<String, String> paramMap = new HashMap<>();
             for (String param : params) {
                 String[] pair = param.split("=");
-                paramMap.put(pair[0], pair[1]);
+                paramMap.put(pair[0], pair.length == 1 ? "" : pair[1]);
             }
 
             return paramMap;
@@ -494,6 +494,11 @@ public class TestUtils {
 
         public AtomicString(String value) {
             this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return value;
         }
     }
 }
