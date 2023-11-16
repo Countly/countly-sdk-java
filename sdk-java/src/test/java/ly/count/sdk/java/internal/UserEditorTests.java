@@ -650,20 +650,86 @@ public class UserEditorTests {
         );
     }
 
+    /**
+     * Set various kind of user properties and validate that they are added to the request
+     * There should be 2 request, and it should be a session begin and end. End request should contain all the properties
+     */
+    @Test
+    public void set_multipleCalls_sessionsEnabled() {
+        Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Sessions, Config.Feature.Location).setUpdateSessionTimerDelay(1));
+        sessionHandler(() -> Countly.instance().user().edit()
+            .setName("SomeName")
+            .setEmail("SomeEmail")
+            .setCustom(TestUtils.eKeys[0], new TestUtils.AtomicString("WH")) // should not be added to request because not supported
+            .set("some_custom", 56)
+            .push(TestUtils.eKeys[0], 56)
+            .push(TestUtils.eKeys[0], "TW")
+            .setLocation(40.7128, -74.0060)
+            .setCity("New York")
+            .setCountry("US")
+            .setGender("F")
+            .setBirthyear("3000")
+            .setPicturePath("https://someurl.com")
+            .commit());
+        validateUserDetailsRequestInRQ(map("user_details", json("name", "SomeName",
+                "byear", 3000,
+                "gender", "F",
+                "picture", "https://someurl.com",
+                "email", "SomeEmail",
+                "custom", jsonObj(map(TestUtils.eKeys[0], map(UserEditorImpl.Op.PUSH, new Object[] { 56, "TW" }), "some_custom", 56))),
+            "country_code", "US",
+            "city", "New York",
+            "location", "40.7128,-74.006",
+            "session_id", "",
+            "end_session", "1"), 1);
+    }
+
     private void validatePictureAndPath(String picturePath, byte[] picture) {
         Assert.assertEquals(picturePath, Countly.instance().user().picturePath());
         Assert.assertEquals(picture, Countly.instance().user().picture());
     }
 
     private void validateUserDetailsRequestInRQ(Map<String, Object> expectedParams) {
+        validateUserDetailsRequestInRQ(expectedParams, 0);
+    }
+
+    /**
+     * Validates the user details request in the request queue
+     * Also validates that request queue size is requestIndex + 1
+     *
+     * @param expectedParams expected parameters in the request
+     * @param requestIndex index of the request in the request queue
+     */
+    private void validateUserDetailsRequestInRQ(Map<String, Object> expectedParams, final int requestIndex) {
         Map<String, String>[] requestsInQ = TestUtils.getCurrentRQ();
-        Assert.assertEquals(1, requestsInQ.length);
-        TestUtils.validateRequiredParams(requestsInQ[0]); // this validates 9 params
-        Assert.assertEquals(9 + expectedParams.size(), requestsInQ[0].size()); // so we need to add expect 9 + params size
-        if (!expectedParams.containsKey("picturePath")) {
-            Assert.assertFalse(requestsInQ[0].containsKey("picturePath"));
+        Assert.assertEquals(requestIndex + 1, requestsInQ.length);
+        TestUtils.validateRequiredParams(requestsInQ[requestIndex]); // this validates 9 params
+        Assert.assertEquals(9 + expectedParams.size(), requestsInQ[requestIndex].size()); // so we need to add expect 9 + params size
+        if (requestIndex > 0) { // validate begin session request
+            validateBeginSession(requestsInQ[0]);
         }
-        expectedParams.forEach((key, value) -> Assert.assertEquals(value.toString(), requestsInQ[0].get(key)));
+        if (!expectedParams.containsKey("picturePath")) {
+            Assert.assertFalse(requestsInQ[requestIndex].containsKey("picturePath"));
+        }
+        if (expectedParams.containsKey("session_id")) { // validation for session end request
+            Assert.assertTrue(Long.parseLong(requestsInQ[requestIndex].get("session_id")) > 0);
+            expectedParams.remove("session_id");
+        }
+        expectedParams.forEach((key, value) -> Assert.assertEquals(value.toString(), requestsInQ[requestIndex].get(key)));
+    }
+
+    /**
+     * Validates that the request is a began session request
+     * There should be 9 required params + metrics + begin_session + session_id = 12 params
+     *
+     * @param request request to validate
+     */
+    private void validateBeginSession(Map<String, String> request) {
+        TestUtils.validateRequiredParams(request);
+        TestUtils.validateMetrics(request.get("metrics"));
+        Assert.assertEquals("1", request.get("begin_session"));
+        Assert.assertTrue(Long.parseLong(request.get("session_id")) > 0);
+        Assert.assertEquals(12, request.size());
     }
 
     /**
@@ -676,10 +742,24 @@ public class UserEditorTests {
         return "{\"custom\":{" + String.join(",", entries) + "}}";
     }
 
+    /**
+     * "custom" json tag wrapper for a map of objects
+     *
+     * @param entries map of objects
+     * @return wrapped json
+     */
     private String c(Map<String, Object> entries) {
         return "{\"custom\":" + json(entries) + "}";
     }
 
+    /**
+     * Creates a json string for the given key, op and values
+     *
+     * @param key key
+     * @param op operation
+     * @param values values
+     * @return json string
+     */
     private String opJson(String key, String op, Object... values) {
         JSONObject obj = new JSONObject();
         if (values.length == 1) {
@@ -704,15 +784,25 @@ public class UserEditorTests {
     }
 
     /**
-     * Converts a map to json object
+     * Converts a map to json string
      *
      * @param entries map to convert
      * @return json string
      */
     private String json(Map<String, Object> entries) {
+        return jsonObj(entries).toString();
+    }
+
+    /**
+     * Converts a map to json object
+     *
+     * @param entries map to convert
+     * @return json string
+     */
+    private JSONObject jsonObj(Map<String, Object> entries) {
         JSONObject json = new JSONObject();
         entries.forEach(json::put);
-        return json.toString();
+        return json;
     }
 
     /**
@@ -738,7 +828,6 @@ public class UserEditorTests {
     private Map<String, Object> map(Object... args) {
         Map<String, Object> map = new ConcurrentHashMap<>();
         if (args.length % 2 == 0) {
-            map = new ConcurrentHashMap<>();
             for (int i = 0; i < args.length; i += 2) {
                 map.put(args[i].toString(), args[i + 1]);
             }
