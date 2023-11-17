@@ -62,6 +62,7 @@ public class SDKCore {
         moduleMappings.put(CoreFeature.Feedback.getIndex(), ModuleFeedback.class);
         moduleMappings.put(CoreFeature.Events.getIndex(), ModuleEvents.class);
         moduleMappings.put(CoreFeature.RemoteConfig.getIndex(), ModuleRemoteConfig.class);
+        moduleMappings.put(CoreFeature.UserProfiles.getIndex(), ModuleUserProfile.class);
     }
 
     /**
@@ -397,6 +398,16 @@ public class SDKCore {
         }
 
         return module(ModuleRemoteConfig.class).remoteConfigInterface;
+    }
+
+    public ModuleUserProfile.UserProfile userProfile() {
+        //todo is this needed?
+        //if (!hasConsentForFeature(CoreFeature.UserProfiles)) {
+        //    L.v("[SDKCore] remoteConfig, RemoteConfig feature has no consent, returning null");
+        //    return null;
+        //}
+
+        return module(ModuleUserProfile.class).userProfileInterface;
     }
 
     /**

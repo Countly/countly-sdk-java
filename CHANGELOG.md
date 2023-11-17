@@ -1,3 +1,38 @@
+## XX.XX.XX
+
+* !! Major breaking change !! The following methods and their functionality are deprecated from the "UserEditor" interface and will not function anymore:
+  * "picture(byte[])"
+  * "setLocale(String)"
+
+* Added the user profiles feature interface, and it is accessible through "Countly::instance()::userProfile()" call.
+
+* The following methods are deprecated from the "UserEditor" interface:
+  * "commit()" instead use "Countly::userProfile::save" via "instance()" call
+  * "pushUnique(String, Object)" instead use "Countly::userProfile::pushUnique" via "instance()" call
+  * "pull(String, Object)" instead use "Countly::userProfile::pull" via "instance()" call
+  * "push(String, Object)" instead use "Countly::userProfile::push" via "instance()" call
+  * "setOnce(String, Object)" instead use "Countly::userProfile::setOnce" via "instance()" call
+  * "max(String, double)" instead use "Countly::userProfile::saveMax" via "instance()" call
+  * "min(String, double)" instead use "Countly::userProfile::saveMin" via "instance()" call
+  * "mul(String, double)" instead use "Countly::userProfile::multiply" via "instance()" call
+  * "inc(String, int)" instead use "Countly::userProfile::incrementBy" via "instance()" call
+  * "optOutFromLocationServices()" todo add replacement func when location module added
+  * "setLocation(double, double)" todo add replacement func when location module added
+  * "setLocation(String)" todo add replacement func when location module added
+  * "setCountry(String)" todo add replacement func when location module added
+  * "setCity(String)" todo add replacement func when location module added
+  * "setGender(String)" instead use "Countly::userProfile::setProperty" via "instance()" call
+  * "setBirthyear(int)" instead use "Countly::userProfile::setProperty" via "instance()" call
+  * "setBirthyear(String)" instead use "Countly::userProfile::setProperty" via "instance()" call
+  * "setEmail(String)" instead use "Countly::userProfile::setProperty" via "instance()" call
+  * "setName(String)" instead use "Countly::userProfile::setProperty" via "instance()" call
+  * "setUsername(String)" instead use "Countly::userProfile::setProperty" via "instance()" call
+  * "setPhone(String)" instead use "Countly::userProfile::setProperty" via "instance()" call
+  * "setPicturePath(String)" instead use "Countly::userProfile::setProperty" via "instance()" call
+  * "setOrg(String)" instead use "Countly::userProfile::setProperty" via "instance()" call
+  * "setCustom(String, Object)" instead use "Countly::userProfile::setProperty" via "instance()" call
+  * "set(String, Object)" instead use "Countly::userProfile::setProperty" via "instance()" call
+
 ## 23.10.1
 
 * Fixed a bug where getting the feedback widget list would fail if "salt" was enabled.

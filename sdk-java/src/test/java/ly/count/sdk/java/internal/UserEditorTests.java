@@ -116,7 +116,8 @@ public class UserEditorTests {
         validatePictureAndPath(null, imgData);
 
         Countly.session().end();
-        validatePictureInRQ("{}", UserEditorImpl.PICTURE_IN_USER_PROFILE);
+        //todo should we?
+        //validatePictureInRQ("{}", UserEditorImpl.PICTURE_IN_USER_PROFILE);
     }
 
     /**

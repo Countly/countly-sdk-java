@@ -9,7 +9,7 @@ public enum CoreFeature {
     Views(1 << 3, ModuleViews::new),
     CrashReporting(1 << 4, ModuleCrash::new),
     Location(1 << 5),
-    UserProfiles(1 << 6),
+    UserProfiles(1 << 6, ModuleUserProfile::new),
     /*
     THESE ARE ONLY HERE AS DOCUMENTATION
     THEY SHOW WHICH ID'S ARE USED IN ANDROID

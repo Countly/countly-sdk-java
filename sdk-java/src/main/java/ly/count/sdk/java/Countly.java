@@ -11,6 +11,7 @@ import ly.count.sdk.java.internal.ModuleDeviceIdCore;
 import ly.count.sdk.java.internal.ModuleEvents;
 import ly.count.sdk.java.internal.ModuleFeedback;
 import ly.count.sdk.java.internal.ModuleRemoteConfig;
+import ly.count.sdk.java.internal.ModuleUserProfile;
 import ly.count.sdk.java.internal.SDKCore;
 
 /**
@@ -281,7 +282,7 @@ public class Countly implements Usage {
         return DeviceIdType.fromInt(sdk.config.getDeviceId().strategy, L);
     }
 
-  /**
+    /**
      * Change device id with merging
      *
      * @param id new user / device id string, cannot be empty
@@ -446,6 +447,21 @@ public class Countly implements Usage {
     public Event timedEvent(String key) {
         L.d("[Countly] timedEvent: key = " + key);
         return ((Session) sdk.session(null)).timedEvent(key);
+    }
+
+    /**
+     * <code>UserProfile</code> interface to use user profile feature.
+     *
+     * @return {@link ModuleUserProfile.UserProfile} instance.
+     */
+    public ModuleUserProfile.UserProfile userProfile() {
+        if (!isInitialized()) {
+            if (L != null) {
+                L.e("[Countly] userProfile, SDK is not initialized yet.");
+            }
+            return null;
+        }
+        return sdk.userProfile();
     }
 
     /**

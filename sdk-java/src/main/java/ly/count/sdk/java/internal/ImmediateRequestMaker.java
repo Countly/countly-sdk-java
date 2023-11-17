@@ -67,7 +67,7 @@ class ImmediateRequestMaker implements ImmediateRequestI {
             request.endpoint(customEndpoint);
             //getting connection ready
             try {
-                connection = cp.connection(request, null);
+                connection = cp.connection(request);
             } catch (IOException e) {
                 L.e("[ImmediateRequestMaker] IOException while preparing remote config update request :[" + e + "]");
                 return null;
@@ -82,7 +82,7 @@ class ImmediateRequestMaker implements ImmediateRequestI {
                 L.e("[ImmediateRequestMaker] Encountered problem while making a immediate server request, received result was null");
                 return null;
             }
-            
+
             if (code >= 200 && code < 300) {
                 L.d("[ImmediateRequestMaker] Received the following response, :[" + receivedBuffer + "]");
 
