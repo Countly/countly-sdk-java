@@ -1,6 +1,7 @@
 ## XX.XX.XX
 
 * Fixed a bug where setting custom user properties would not work.
+* Deprecated "Countly::backendMode()" call, use "Countly::backendM" instead via "instance()" call.
 
 ## 23.10.1
 
