@@ -1,3 +1,7 @@
+## XX.XX.XX
+
+* Deprecated "Countly::backendMode()" call, use "Countly::backendM" instead via "instance()" call.
+
 ## 23.10.1
 
 * Fixed a bug where getting the feedback widget list would fail if "salt" was enabled.

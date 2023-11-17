@@ -204,7 +204,22 @@ public class Countly implements Usage {
         return cly.sdk.session(null);
     }
 
+    /**
+     * Returns Backend Mode interface to use backend mode feature.
+     *
+     * @return {@link ModuleBackendMode.BackendMode} instance
+     * @deprecated use {@link #backendM()} instead via instance() call
+     */
     public static ModuleBackendMode.BackendMode backendMode() {
+        return Countly.instance().backendM();
+    }
+
+    /**
+     * Returns Backend Mode interface to use backend mode feature.
+     *
+     * @return {@link ModuleBackendMode.BackendMode} instance
+     */
+    public ModuleBackendMode.BackendMode backendM() {
         if (!isInitialized()) {
             if (cly.L != null) {
                 cly.L.e("[Countly] SDK is not initialized yet.");
@@ -281,7 +296,7 @@ public class Countly implements Usage {
         return DeviceIdType.fromInt(sdk.config.getDeviceId().strategy, L);
     }
 
-  /**
+    /**
      * Change device id with merging
      *
      * @param id new user / device id string, cannot be empty
