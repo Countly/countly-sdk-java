@@ -116,9 +116,10 @@ public class UserEditorImpl implements UserEditor {
     /**
      * Transforming changes in "sets" into a json contained in "changes"
      *
-     * @param changes
-     * @throws JSONException
+     * @param changes the json object that will contain the changes
+     * @throws JSONException if something goes wrong
      */
+    @SuppressWarnings("unchecked")
     void perform(JSONObject changes) throws JSONException {
         for (String key : sets.keySet()) {
             Object value = sets.get(key);
@@ -258,7 +259,11 @@ public class UserEditorImpl implements UserEditor {
                     }
                     break;
                 default:
-                    performCustomUpdate(key, value, changes);
+                    if (value instanceof Map) { // custom property path via using "setCustom" function
+                        ((Map<String, Object>) value).forEach((k, v) -> performCustomUpdate(k, v, changes));
+                    } else { // directly using "set" function
+                        performCustomUpdate(key, value, changes);
+                    }
                     break;
             }
         }
@@ -442,7 +447,7 @@ public class UserEditorImpl implements UserEditor {
     @Override
     public UserEditor optOutFromLocationServices() {
         L.d("optOutFromLocationServices");
-        return set(COUNTRY, "").set(CITY, "").set(LOCATION, "");
+        return set(COUNTRY, null).set(CITY, null).set(LOCATION, null);
     }
 
     @Override
@@ -544,7 +549,7 @@ public class UserEditorImpl implements UserEditor {
             perform(changes);
 
             Storage.push(SDKCore.instance.config, user);
-
+            
             ModuleRequests.injectParams(SDKCore.instance.config, params -> {
                 if (changes.has(PICTURE_PATH)) {
                     try {
@@ -554,19 +559,26 @@ public class UserEditorImpl implements UserEditor {
                         L.w("Won't send picturePath" + e);
                     }
                 }
-                if (changes.has(LOCALE) && user.locale != null) {
-                    params.add("locale", user.locale);
+                if (changes.has(LOCALE)) {
+                    params.add("locale", changes.get(LOCALE));
+                    changes.remove(LOCALE);
                 }
-                if (changes.has(COUNTRY) && user.country != null) {
-                    params.add("country_code", user.country);
+                if (changes.has(COUNTRY)) {
+                    params.add("country_code", changes.get(COUNTRY));
+                    changes.remove(COUNTRY);
                 }
-                if (changes.has(CITY) && user.city != null) {
-                    params.add("city", user.city);
+                if (changes.has(CITY)) {
+                    params.add("city", changes.get(CITY));
+                    changes.remove(CITY);
                 }
-                if (changes.has(LOCATION) && user.location != null) {
-                    params.add("location", user.location);
+                if (changes.has(LOCATION)) {
+                    params.add("location", changes.get(LOCATION));
+                    changes.remove(LOCATION);
                 }
-                params.add("user_details", changes.toString());
+
+                if (!changes.isEmpty() || user.picturePath != null || user.picture != null) {
+                    params.add("user_details", changes.toString());
+                }
             });
         } catch (JSONException e) {
             L.e("[UserEditorImpl] Exception while committing changes to User profile" + e);
