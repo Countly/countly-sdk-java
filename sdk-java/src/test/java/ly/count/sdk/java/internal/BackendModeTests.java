@@ -44,7 +44,7 @@ public class BackendModeTests {
 
     @Before
     public void start() {
-        moduleBackendMode = (ModuleBackendMode) Countly.backendMode().getModule();
+        moduleBackendMode = (ModuleBackendMode) Countly.instance().backendModule().getModule();
     }
 
     @After
