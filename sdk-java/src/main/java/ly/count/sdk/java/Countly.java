@@ -208,10 +208,10 @@ public class Countly implements Usage {
      * Returns Backend Mode interface to use backend mode feature.
      *
      * @return {@link ModuleBackendMode.BackendMode} instance
-     * @deprecated use {@link #backendModule()} instead via instance() call
+     * @deprecated use {@link #backendM()} instead via instance() call
      */
     public static ModuleBackendMode.BackendMode backendMode() {
-        return Countly.instance().backendModule();
+        return Countly.instance().backendM();
     }
 
     /**
@@ -219,7 +219,7 @@ public class Countly implements Usage {
      *
      * @return {@link ModuleBackendMode.BackendMode} instance
      */
-    public ModuleBackendMode.BackendMode backendModule() {
+    public ModuleBackendMode.BackendMode backendM() {
         if (!isInitialized()) {
             if (cly.L != null) {
                 cly.L.e("[Countly] SDK is not initialized yet.");
