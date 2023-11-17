@@ -1,6 +1,6 @@
 ## XX.XX.XX
 
-* Deprecated "Countly::backendMode()" call, use "Countly::backendModule" instead via "instance()" call.
+* Deprecated "Countly::backendMode()" call, use "Countly::backendM" instead via "instance()" call.
 
 ## 23.10.1
 
