@@ -694,6 +694,7 @@ public class UserEditorTests {
      */
     private void validateUserDetailsRequestInRQ(Map<String, Object> expectedParams, final int requestIndex) {
         if (expectedParams.isEmpty()) { // nothing to validate, just return
+            Assert.assertEquals(0, TestUtils.getCurrentRQ().length);
             return;
         }
         Map<String, String>[] requestsInQ = TestUtils.getCurrentRQ();
