@@ -100,7 +100,6 @@ public class UserEditorImpl implements UserEditor {
     @Override
     public UserEditor setLocale(String locale) {
         L.d("setLocale: locale = " + locale);
-        //todo this is not working on server side deprecate
         return this;
     }
 
@@ -174,13 +173,6 @@ public class UserEditorImpl implements UserEditor {
         return this;
     }
 
-    /**
-     * now value is mapped to int
-     *
-     * @param key
-     * @param value
-     * @return
-     */
     @Override
     public UserEditor mul(String key, double by) {
         L.d("mul: key " + key + " by " + by);
@@ -202,13 +194,6 @@ public class UserEditorImpl implements UserEditor {
         return this;
     }
 
-    /**
-     * now value is mapped to int
-     *
-     * @param key
-     * @param value
-     * @return
-     */
     @Override
     public UserEditor max(String key, double value) {
         L.d("max: key " + key + " value " + value);
@@ -216,13 +201,6 @@ public class UserEditorImpl implements UserEditor {
         return this;
     }
 
-    /**
-     * Now value is mapped to string
-     *
-     * @param key
-     * @param value
-     * @return
-     */
     @Override
     public UserEditor setOnce(String key, Object value) {
         L.d("setOnce: key " + key + " value " + value);
@@ -235,13 +213,6 @@ public class UserEditorImpl implements UserEditor {
         }
     }
 
-    /**
-     * Now value is mapped to string
-     *
-     * @param key
-     * @param value
-     * @return
-     */
     @Override
     public UserEditor pull(String key, Object value) {
         L.d("pull: key " + key + " value " + value);
@@ -254,13 +225,6 @@ public class UserEditorImpl implements UserEditor {
         }
     }
 
-    /**
-     * Now value is mapped to string
-     *
-     * @param key
-     * @param value
-     * @return
-     */
     @Override
     public UserEditor push(String key, Object value) {
         L.d("push: key " + key + " value " + value);
@@ -272,14 +236,7 @@ public class UserEditorImpl implements UserEditor {
             return this;
         }
     }
-
-    /**
-     * Now value is mapped to string
-     *
-     * @param key
-     * @param value
-     * @return
-     */
+    
     @Override
     public UserEditor pushUnique(String key, Object value) {
         L.d("pushUnique: key " + key + " value " + value);
