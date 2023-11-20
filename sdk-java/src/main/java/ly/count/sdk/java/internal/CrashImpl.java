@@ -1,8 +1,5 @@
 package ly.count.sdk.java.internal;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
@@ -11,16 +8,16 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
 import ly.count.sdk.java.Crash;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Crash-encapsulating class
  */
 
 public class CrashImpl implements Crash, Storable {
-    private Log L = null;
-
+    private final Log L;
     private Long id;
     private final JSONObject data;
     private Throwable throwable;
@@ -99,7 +96,7 @@ public class CrashImpl implements Crash, Storable {
     }
 
     @Override
-    public CrashImpl setSegments(Map<String, String> segments) {
+    public CrashImpl setSegments(Map<String, Object> segments) {
         if (segments != null && segments.size() > 0) {
             return add("_custom", new JSONObject(segments));
         }

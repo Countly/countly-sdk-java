@@ -7,6 +7,7 @@ import ly.count.sdk.java.internal.DeviceIdType;
 import ly.count.sdk.java.internal.InternalConfig;
 import ly.count.sdk.java.internal.Log;
 import ly.count.sdk.java.internal.ModuleBackendMode;
+import ly.count.sdk.java.internal.ModuleCrash;
 import ly.count.sdk.java.internal.ModuleDeviceIdCore;
 import ly.count.sdk.java.internal.ModuleEvents;
 import ly.count.sdk.java.internal.ModuleFeedback;
@@ -451,6 +452,21 @@ public class Countly implements Usage {
     }
 
     /**
+     * Crash module calls
+     *
+     * @return crash module otherwise null if SDK is not initialized
+     */
+    public ModuleCrash.Crashes crash() {
+        if (!isInitialized()) {
+            if (L != null) {
+                L.e("[Countly] SDK is not initialized yet.");
+            }
+            return null;
+        }
+        return sdk.crash();
+    }
+
+    /**
      * Get existing or create new timed event object, don't record it.
      *
      * @param key key for this event, cannot be null or empty
@@ -489,7 +505,7 @@ public class Countly implements Usage {
     }
 
     @Override
-    public Usage addCrashReport(Throwable t, boolean fatal, String name, Map<String, String> segments, String... logs) {
+    public Usage addCrashReport(Throwable t, boolean fatal, String name, Map<String, Object> segments, String... logs) {
         L.d("[Countly] addCrashReport: t = " + t + " fatal = " + fatal + " name = " + name + " segments = " + segments + " logs = " + logs);
         return ((Session) sdk.session(null)).addCrashReport(t, fatal, name, segments, logs);
     }

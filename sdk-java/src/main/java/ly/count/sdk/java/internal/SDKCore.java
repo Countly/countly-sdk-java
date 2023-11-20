@@ -386,6 +386,15 @@ public class SDKCore {
         return module(ModuleFeedback.class).feedbackInterface;
     }
 
+    public ModuleCrash.Crashes crash() {
+        if (!hasConsentForFeature(CoreFeature.CrashReporting)) {
+            L.v("[SDKCore] crash, Crash Reporting feature has no consent, returning null");
+            return null;
+        }
+
+        return module(ModuleCrash.class).crashInterface;
+    }
+
     public ModuleDeviceIdCore.DeviceId deviceId() {
         return module(ModuleDeviceIdCore.class).deviceIdInterface;
     }
@@ -579,7 +588,7 @@ public class SDKCore {
      * @param segments data
      * @param logs of crash
      */
-    public void onCrash(final InternalConfig config, Throwable t, boolean fatal, String name, Map<String, String> segments, String[] logs) {
+    public void onCrash(final InternalConfig config, Throwable t, boolean fatal, String name, Map<String, Object> segments, String[] logs) {
         L.i("[SDKCore] onCrash: t: " + t.toString() + " fatal: " + fatal + " name: " + name + " segments: " + segments);
         ModuleCrash module = (ModuleCrash) module(CoreFeature.CrashReporting.getIndex());
         if (module != null) {

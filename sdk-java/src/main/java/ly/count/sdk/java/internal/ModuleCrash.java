@@ -18,6 +18,8 @@ public class ModuleCrash extends ModuleBase {
     private Thread.UncaughtExceptionHandler previousHandler = null;
     protected CrashProcessor crashProcessor = null;
 
+    Crashes crashInterface;
+
     @Override
     public void init(InternalConfig config) {
         super.init(config);
@@ -30,6 +32,7 @@ public class ModuleCrash extends ModuleBase {
                 L.e("[ModuleCrash] Cannot instantiate CrashProcessor" + t);
             }
         }
+        crashInterface = new Crashes();
     }
 
     @Override
@@ -44,6 +47,7 @@ public class ModuleCrash extends ModuleBase {
         } catch (Throwable t) {
             L.e("[ModuleCrash] Exception while stopping crash reporting" + t);
         }
+        crashInterface = null;
     }
 
     @Override
@@ -65,7 +69,7 @@ public class ModuleCrash extends ModuleBase {
         started = System.nanoTime();
     }
 
-    public CrashImpl onCrash(InternalConfig config, Throwable t, boolean fatal, String name, Map<String, String> segments, String... logs) {
+    public CrashImpl onCrash(InternalConfig config, Throwable t, boolean fatal, String name, Map<String, Object> segments, String... logs) {
 
         if (config.isBackendModeEnabled()) {
             L.w("[ModuleCrash] onCrash: Skipping crash, backend mode is enabled!");
@@ -79,18 +83,18 @@ public class ModuleCrash extends ModuleBase {
         return onCrash(config, new CrashImpl(L).addThrowable(t).setFatal(fatal).setName(name).setSegments(segments).setLogs(logs));
     }
 
-    protected CrashImpl recordExceptionInternal(Throwable t, boolean fatal, Map<String, Object> segments) {
+    protected void recordExceptionInternal(Throwable t, boolean handled, Map<String, Object> segments) {
 
         if (config.isBackendModeEnabled()) {
-            L.w("[ModuleCrash] onCrash: Skipping crash, backend mode is enabled!");
-            return null;
+            L.w("[ModuleCrash] recordExceptionInternal, Skipping crash, backend mode is enabled!");
+            return;
         }
 
         if (t == null) {
-            L.e("[ModuleCrash] Throwable cannot be null");
-            return null;
+            L.e("[ModuleCrash] recordExceptionInternal, Throwable cannot be null");
+            return;
         }
-        return onCrash(config, new CrashImpl(L).addThrowable(t).setFatal(fatal).setSegments(segments));
+        onCrash(config, new CrashImpl(L).addThrowable(t).setFatal(!handled).setSegments(segments));
     }
 
     public CrashImpl onCrash(InternalConfig config, CrashImpl crash) {

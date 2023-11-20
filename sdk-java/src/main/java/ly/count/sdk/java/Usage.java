@@ -66,6 +66,7 @@ public interface Usage {
      * @param t {@link Throwable} to log
      * @param fatal whether this crash report should be displayed as fatal in dashboard or not
      * @return this instance for method chaining.
+     * @deprecated please use {@link Countly#crash()} instead via "instance()" call
      */
     Usage addCrashReport(Throwable t, boolean fatal);
 
@@ -78,8 +79,9 @@ public interface Usage {
      * @param segments (optional, can be {@code null}) additional crash segments map
      * @param logs (optional, can be {@code null}) additional log lines (separated by \n) or comment about this crash report
      * @return this instance for method chaining.
+     * @deprecated please use {@link Countly#crash()} instead via "instance()" call
      */
-    Usage addCrashReport(Throwable t, boolean fatal, String name, Map<String, String> segments, String... logs);
+    Usage addCrashReport(Throwable t, boolean fatal, String name, Map<String, Object> segments, String... logs);
 
     /**
      * Send location information to the server.

@@ -326,7 +326,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     }
 
     @Override
-    public Session addCrashReport(Throwable t, boolean fatal, String name, Map<String, String> segments, String... logs) {
+    public Session addCrashReport(Throwable t, boolean fatal, String name, Map<String, Object> segments, String... logs) {
         if (config.isBackendModeEnabled()) {
             L.w("[SessionImpl] addCrashReport: Skipping crash, backend mode is enabled!");
             return this;

@@ -58,7 +58,7 @@ public interface Crash {
      * @param segments crash segments
      * @return this instance for method chaining
      */
-    Crash setSegments(Map<String, String> segments);
+    Crash setSegments(Map<String, Object> segments);
 
     /**
      * Add logs to this crash.
