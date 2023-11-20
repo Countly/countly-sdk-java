@@ -32,7 +32,7 @@ import static org.mockito.Mockito.mock;
  * MV - migration version
  */
 public class TestUtils {
-    static String SERVER_URL = "https://test.count.ly";
+    static String SERVER_URL = "https://test.server.com";
     static String SERVER_APP_KEY = "COUNTLY_APP_KEY";
     static String DEVICE_ID = "some_random_test_device_id";
     static String SDK_NAME = "java-native";
@@ -268,7 +268,7 @@ public class TestUtils {
             Map<String, String> paramMap = new HashMap<>();
             for (String param : params) {
                 String[] pair = param.split("=");
-                paramMap.put(pair[0], pair[1]);
+                paramMap.put(pair[0], pair.length == 1 ? "" : pair[1]);
             }
 
             return paramMap;
@@ -381,7 +381,7 @@ public class TestUtils {
         Assert.assertEquals(SERVER_APP_KEY, params.get("app_key"));
         Assert.assertEquals(APPLICATION_VERSION, params.get("av"));
         Assert.assertTrue(Long.parseLong(params.get("timestamp")) > 0);
-        Assert.assertTrue(hour > 0 && hour < 24);
+        Assert.assertTrue(hour >= 0 && hour < 24);
         Assert.assertTrue(dow >= 0 && dow < 7);
         Assert.assertTrue(tz >= -720 && tz <= 840);
     }
@@ -494,6 +494,11 @@ public class TestUtils {
 
         public AtomicString(String value) {
             this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return value;
         }
     }
 }

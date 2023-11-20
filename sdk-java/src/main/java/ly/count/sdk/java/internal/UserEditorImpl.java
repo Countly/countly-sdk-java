@@ -279,7 +279,6 @@ public class UserEditorImpl implements UserEditor {
         } catch (JSONException e) {
             L.e("[UserEditorImpl] Exception while committing changes to User profile" + e);
         }
-
         return user;
     }
 }

@@ -28,7 +28,7 @@ public class BackendModeExample {
         userDetail.put("fav-colors", "{$push: black}");
         userDetail.put("marks", "{$inc: 1}");
 
-        Countly.backendMode().recordUserProperties(DEVICE_ID, userDetail, null);
+        Countly.instance().backendM().recordUserProperties(DEVICE_ID, userDetail, null);
     }
 
     private static void recordView() {
@@ -37,7 +37,7 @@ public class BackendModeExample {
         segmentation.put("segment", "Windows");
         segmentation.put("start", "1");
 
-        Countly.backendMode().recordView(DEVICE_ID, "SampleView", segmentation, 1646640780130L);
+        Countly.instance().backendM().recordView(DEVICE_ID, "SampleView", segmentation, 1646640780130L);
     }
 
     private static void recordEvent() {
@@ -46,7 +46,7 @@ public class BackendModeExample {
             put("Retry Attempts", 60);
         }};
 
-        Countly.backendMode().recordEvent(DEVICE_ID, "Event Key", 1, 0.1, 5.0, segment, null);
+        Countly.instance().backendM().recordEvent(DEVICE_ID, "Event Key", 1, 0.1, 5.0, segment, null);
     }
 
     private static void recordExceptionWithThrowableAndSegmentation() {
@@ -61,7 +61,7 @@ public class BackendModeExample {
         try {
             int a = 10 / 0;
         } catch (Exception e) {
-            Countly.backendMode().recordException(DEVICE_ID, e, segmentation, crashDetails, null);
+            Countly.instance().backendM().recordException(DEVICE_ID, e, segmentation, crashDetails, null);
         }
     }
 
@@ -78,7 +78,7 @@ public class BackendModeExample {
         try {
             int a = 10 / 0;
         } catch (Exception e) {
-            Countly.backendMode().recordException(DEVICE_ID, "Divided By Zero", "stack traces", segmentation, crashDetails, null);
+            Countly.instance().backendM().recordException(DEVICE_ID, "Divided By Zero", "stack traces", segmentation, crashDetails, null);
         }
     }
 
@@ -88,7 +88,7 @@ public class BackendModeExample {
         requestData.put("timestamp", "1646640780130");
         requestData.put("end_session", "1");
         requestData.put("session_duration", "20.5");
-        Countly.backendMode().recordDirectRequest(DEVICE_ID, requestData, null);
+        Countly.instance().backendM().recordDirectRequest(DEVICE_ID, requestData, null);
     }
 
     private static void startSession() {
@@ -105,7 +105,7 @@ public class BackendModeExample {
             put("location", "31.5204,74.3587");
         }};
 
-        Countly.backendMode().sessionBegin(DEVICE_ID, metrics, location, null);
+        Countly.instance().backendM().sessionBegin(DEVICE_ID, metrics, location, null);
     }
 
     static void testWithMultipleThreads() {
@@ -366,10 +366,10 @@ public class BackendModeExample {
                     break;
                 }
                 case 7: // update session
-                    Countly.backendMode().sessionUpdate(DEVICE_ID, 10, null);
+                    Countly.instance().backendM().sessionUpdate(DEVICE_ID, 10, null);
                     break;
                 case 8: // end session
-                    Countly.backendMode().sessionEnd(DEVICE_ID, 20, null);
+                    Countly.instance().backendM().sessionEnd(DEVICE_ID, 20, null);
                     break;
                 case 9: { // record a direct request
                     recordDirectRequest();
