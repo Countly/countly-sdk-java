@@ -175,7 +175,7 @@ public class UserEditorImpl implements UserEditor {
     @Override
     public UserEditor mul(String key, double by) {
         L.d("mul: key " + key + " by " + by);
-        Countly.instance().userProfile().multiply(key, Double.valueOf(by).intValue());
+        Countly.instance().userProfile().multiply(key, by);
         return this;
     }
 
@@ -189,14 +189,14 @@ public class UserEditorImpl implements UserEditor {
     @Override
     public UserEditor min(String key, double value) {
         L.d("min: key " + key + " value " + value);
-        Countly.instance().userProfile().saveMin(key, Double.valueOf(value).intValue());
+        Countly.instance().userProfile().saveMin(key, value);
         return this;
     }
 
     @Override
     public UserEditor max(String key, double value) {
         L.d("max: key " + key + " value " + value);
-        Countly.instance().userProfile().saveMax(key, Double.valueOf(value).intValue());
+        Countly.instance().userProfile().saveMax(key, value);
         return this;
     }
 
@@ -207,7 +207,7 @@ public class UserEditorImpl implements UserEditor {
             L.e("[UserEditorImpl] $setOnce operation operand cannot be null: key " + key);
             return this;
         } else {
-            Countly.instance().userProfile().setOnce(key, value.toString());
+            Countly.instance().userProfile().setOnce(key, value);
             return this;
         }
     }
@@ -219,7 +219,7 @@ public class UserEditorImpl implements UserEditor {
             L.e("[UserEditorImpl] $pull operation operand cannot be null: key " + key);
             return this;
         } else {
-            Countly.instance().userProfile().pull(key, value.toString());
+            Countly.instance().userProfile().pull(key, value);
             return this;
         }
     }
@@ -231,7 +231,7 @@ public class UserEditorImpl implements UserEditor {
             L.e("[UserEditorImpl] $push operation operand cannot be null: key " + key);
             return this;
         } else {
-            Countly.instance().userProfile().push(key, value.toString());
+            Countly.instance().userProfile().push(key, value);
             return this;
         }
     }
@@ -243,7 +243,7 @@ public class UserEditorImpl implements UserEditor {
             L.e("[UserEditorImpl] pushUnique / $addToSet operation operand cannot be null: key " + key);
             return this;
         } else {
-            Countly.instance().userProfile().pushUnique(key, value.toString());
+            Countly.instance().userProfile().pushUnique(key, value);
             return this;
         }
     }

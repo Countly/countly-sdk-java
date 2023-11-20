@@ -269,6 +269,7 @@ public class SDKCore {
         modules.put(-3, new ModuleDeviceIdCore());
         modules.put(-2, new ModuleRequests());
         modules.put(CoreFeature.Sessions.getIndex(), new ModuleSessions());
+        modules.put(CoreFeature.UserProfiles.getIndex(), new ModuleUserProfile());
 
         if (config.requiresConsent()) {
             consents = 0;
@@ -401,12 +402,6 @@ public class SDKCore {
     }
 
     public ModuleUserProfile.UserProfile userProfile() {
-        //todo is this needed?
-        //if (!hasConsentForFeature(CoreFeature.UserProfiles)) {
-        //    L.v("[SDKCore] remoteConfig, RemoteConfig feature has no consent, returning null");
-        //    return null;
-        //}
-
         return module(ModuleUserProfile.class).userProfileInterface;
     }
 

@@ -1,9 +1,9 @@
 package ly.count.sdk.java.internal;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nonnull;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.User;
@@ -23,7 +23,6 @@ public class ModuleUserProfile extends ModuleBase {
     static final String CUSTOM_KEY = "custom";
     static final String PICTURE_IN_USER_PROFILE = "[CLY]_USER_PROFILE_PICTURE";
     boolean isSynced = true;
-    Map<String, Object> custom;
     UserProfile userProfileInterface;
     private final Map<String, Object> sets;
     private final List<OpParams> ops;
@@ -77,7 +76,7 @@ public class ModuleUserProfile extends ModuleBase {
     }
 
     ModuleUserProfile() {
-        sets = new ConcurrentHashMap<>();
+        sets = new HashMap<>();  // keys should be nullable
         ops = new ArrayList<>();
     }
 
@@ -118,6 +117,8 @@ public class ModuleUserProfile extends ModuleBase {
                 case PICTURE_KEY:
                     if (value == null) {
                         changes.put(PICTURE_KEY, JSONObject.NULL);
+                        internalConfig.sdk.user().picturePath = null;
+                        internalConfig.sdk.user().picture = null;
                     } else if (value instanceof byte[]) {
                         internalConfig.sdk.user().picture = (byte[]) value;
                         //set a special value to indicate that the picture information is already stored in memory
@@ -127,6 +128,8 @@ public class ModuleUserProfile extends ModuleBase {
                 case PICTURE_PATH_KEY:
                     if (value == null || (value instanceof String && ((String) value).isEmpty())) {
                         changes.put(PICTURE_KEY, JSONObject.NULL);
+                        internalConfig.sdk.user().picturePath = null;
+                        internalConfig.sdk.user().picture = null;
                     } else if (value instanceof String) {
                         if (Utils.isValidURL((String) value)) {
                             //if it is a valid URL that means the picture is online, and we want to send the link to the server
@@ -135,6 +138,7 @@ public class ModuleUserProfile extends ModuleBase {
                             //if we get here then that means it is a local file path which we would send over as bytes to the server
                             changes.put(PICTURE_PATH_KEY, value);
                         }
+                        internalConfig.sdk.user().picturePath = value.toString();
                     } else {
                         L.e("[UserEditorImpl] Won't set user picturePath (must be String or null)");
                     }
@@ -189,7 +193,7 @@ public class ModuleUserProfile extends ModuleBase {
             if (!changes.has(CUSTOM_KEY)) {
                 changes.put(CUSTOM_KEY, new JSONObject());
             }
-            changes.getJSONObject(CUSTOM_KEY).put(key, value);
+            JSONObject custom = changes.getJSONObject(CUSTOM_KEY).put(key, value);
             if (value == null) {
                 custom.remove(key);
             } else {
@@ -210,8 +214,20 @@ public class ModuleUserProfile extends ModuleBase {
         Params params = new Params();
         final JSONObject json = new JSONObject();
         perform(json);
-        params.add("user_details", json.toString());
-        return params;
+        if (json.has(PICTURE_PATH_KEY)) {
+            try {
+                params.add(PICTURE_PATH_KEY, json.getString(PICTURE_PATH_KEY));
+                json.remove(PICTURE_PATH_KEY);
+            } catch (JSONException e) {
+                L.w("Won't send picturePath" + e);
+            }
+        }
+        if (!json.isEmpty() || internalConfig.sdk.user().picturePath != null || internalConfig.sdk.user().picture != null) {
+            params.add("user_details", json.toString());
+            return params;
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -248,6 +264,10 @@ public class ModuleUserProfile extends ModuleBase {
             return;
         }
         Params generatedParams = prepareRequestParamsForUserProfile();
+        if (generatedParams == null) {
+            L.d("[ModuleUserProfile] saveInternal, nothing to save returning");
+            return;
+        }
         L.d("[ModuleUserProfile] saveInternal, generated params [" + generatedParams + "]");
         ModuleRequests.pushAsync(internalConfig, new Request(generatedParams));
         clearInternal();
@@ -307,7 +327,7 @@ public class ModuleUserProfile extends ModuleBase {
          * @param key String with property name to multiply
          * @param value int value by which to multiply
          */
-        public void multiply(String key, int value) {
+        public void multiply(String key, double value) {
             synchronized (Countly.instance()) {
                 modifyCustomData(key, value, Op.MUL);
             }
@@ -319,7 +339,7 @@ public class ModuleUserProfile extends ModuleBase {
          * @param key String with property name to check for max
          * @param value int value to check for max
          */
-        public void saveMax(String key, int value) {
+        public void saveMax(String key, double value) {
             synchronized (Countly.instance()) {
                 modifyCustomData(key, value, Op.MAX);
             }
@@ -331,7 +351,7 @@ public class ModuleUserProfile extends ModuleBase {
          * @param key String with property name to check for min
          * @param value int value to check for min
          */
-        public void saveMin(String key, int value) {
+        public void saveMin(String key, double value) {
             synchronized (Countly.instance()) {
                 modifyCustomData(key, value, Op.MIN);
             }
@@ -343,40 +363,46 @@ public class ModuleUserProfile extends ModuleBase {
          * @param key String with property name to set
          * @param value String value to set
          */
-        public void setOnce(String key, String value) {
+        public void setOnce(String key, Object value) {
             synchronized (Countly.instance()) {
                 modifyCustomData(key, value, Op.SET_ONCE);
             }
         }
 
-        /* Create array property, if property does not exist and add value to array
+        /**
+         * Create array property, if property does not exist and add value to array
          * You can only use it on array properties or properties that do not exist yet
+         *
          * @param key String with property name for array property
          * @param value String with value to add to array
          */
-        public void push(String key, String value) {
+        public void push(String key, Object value) {
             synchronized (Countly.instance()) {
                 modifyCustomData(key, value, Op.PUSH);
             }
         }
 
-        /* Create array property, if property does not exist and add value to array, only if value is not yet in the array
+        /**
+         * Create array property, if property does not exist and add value to array, only if value is not yet in the array
          * You can only use it on array properties or properties that do not exist yet
+         *
          * @param key String with property name for array property
          * @param value String with value to add to array
          */
-        public void pushUnique(String key, String value) {
+        public void pushUnique(String key, Object value) {
             synchronized (Countly.instance()) {
                 modifyCustomData(key, value, Op.PUSH_UNIQUE);
             }
         }
 
-        /* Create array property, if property does not exist and remove value from array
+        /**
+         * Create array property, if property does not exist and remove value from array
          * You can only use it on array properties or properties that do not exist yet
+         *
          * @param key String with property name for array property
          * @param value String with value to remove from array
          */
-        public void pull(String key, String value) {
+        public void pull(String key, Object value) {
             synchronized (Countly.instance()) {
                 modifyCustomData(key, value, Op.PULL);
             }
@@ -392,7 +418,7 @@ public class ModuleUserProfile extends ModuleBase {
             synchronized (Countly.instance()) {
                 L.i("[UserProfile] Calling 'setProperty'");
 
-                Map<String, Object> data = new ConcurrentHashMap<>();
+                Map<String, Object> data = new HashMap<>(); // keys should be nullable
                 data.put(key, value);
 
                 setPropertiesInternal(data);
