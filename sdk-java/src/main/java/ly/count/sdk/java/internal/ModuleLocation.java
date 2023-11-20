@@ -37,13 +37,12 @@ public class ModuleLocation extends ModuleBase {
 
     void sendLocation(boolean locationDisabled) {
         L.d("[ModuleLocation] Calling 'sendLocation'");
-
+        //TODO when session module added, add sending location with begin session request
         Params params = prepareLocationParams(locationDisabled);
-        ModuleRequests.pushAsync(internalConfig, new Request(params));
+        ModuleRequests.pushAsync(internalConfig, new Request(params), true, null);
     }
 
     void setLocationInternal(@Nullable String countryCode, @Nullable String city, @Nullable String gpsCoordinates, @Nullable String ipAddress) {
-        L.d("[ModuleLocation] Calling 'setLocationInternal'");
         L.d("[ModuleLocation] setLocationInternal, Setting location parameters, cc[" + countryCode + "] cy[" + city + "] gps[" + gpsCoordinates + "] ip[" + ipAddress + "]");
 
         if ((countryCode == null && city != null) || (city == null && countryCode != null)) {
@@ -72,16 +71,16 @@ public class ModuleLocation extends ModuleBase {
         } else {
             //if we get here, location consent was given
             //location should be sent, add all the fields we have
-            if (Utils.isEmptyOrNull(location)) {
+            if (!Utils.isEmptyOrNull(location)) {
                 params.add("location", location);
             }
-            if (Utils.isEmptyOrNull(city)) {
+            if (!Utils.isEmptyOrNull(city)) {
                 params.add("city", city);
             }
-            if (Utils.isEmptyOrNull(country)) {
+            if (!Utils.isEmptyOrNull(country)) {
                 params.add("country_code", country);
             }
-            if (Utils.isEmptyOrNull(ip)) {
+            if (!Utils.isEmptyOrNull(ip)) {
                 params.add("ip", ip);
             }
         }
