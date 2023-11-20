@@ -682,7 +682,7 @@ public class UserEditorTests {
         Assert.assertEquals(picture, Countly.instance().user().picture());
     }
 
-    private void validateUserDetailsRequestInRQ(Map<String, Object> expectedParams) {
+    protected static void validateUserDetailsRequestInRQ(Map<String, Object> expectedParams) {
         validateUserDetailsRequestInRQ(expectedParams, 0);
     }
 
@@ -693,7 +693,7 @@ public class UserEditorTests {
      * @param expectedParams expected parameters in the request
      * @param requestIndex index of the request in the request queue
      */
-    private void validateUserDetailsRequestInRQ(Map<String, Object> expectedParams, final int requestIndex) {
+    protected static void validateUserDetailsRequestInRQ(Map<String, Object> expectedParams, final int requestIndex) {
         if (expectedParams.isEmpty()) { // nothing to validate, just return
             Assert.assertEquals(0, TestUtils.getCurrentRQ().length);
             return;
@@ -721,7 +721,7 @@ public class UserEditorTests {
      *
      * @param request request to validate
      */
-    private void validateBeginSession(Map<String, String> request) {
+    protected static void validateBeginSession(Map<String, String> request) {
         TestUtils.validateRequiredParams(request);
         TestUtils.validateMetrics(request.get("metrics"));
         Assert.assertEquals("1", request.get("begin_session"));
@@ -735,7 +735,7 @@ public class UserEditorTests {
      * @param entries json entries
      * @return wrapped json
      */
-    private String c(String... entries) {
+    protected static String c(String... entries) {
         return "{\"custom\":{" + String.join(",", entries) + "}}";
     }
 
@@ -757,7 +757,7 @@ public class UserEditorTests {
      * @param values values
      * @return json string
      */
-    private String opJson(String key, String op, Object... values) {
+    protected static String opJson(String key, String op, Object... values) {
         JSONObject obj = new JSONObject();
         if (values.length == 1) {
             obj.put(op, values[0]);
@@ -786,7 +786,7 @@ public class UserEditorTests {
      * @param entries map to convert
      * @return json string
      */
-    private String json(Map<String, Object> entries) {
+    protected static String json(Map<String, Object> entries) {
         return jsonObj(entries).toString();
     }
 
@@ -796,7 +796,7 @@ public class UserEditorTests {
      * @param entries map to convert
      * @return json string
      */
-    private JSONObject jsonObj(Map<String, Object> entries) {
+    protected static JSONObject jsonObj(Map<String, Object> entries) {
         JSONObject json = new JSONObject();
         entries.forEach(json::put);
         return json;
@@ -809,7 +809,7 @@ public class UserEditorTests {
      * @param args array of objects
      * @return json string
      */
-    private String json(Object... args) {
+    protected static String json(Object... args) {
         if (args == null || args.length == 0) {
             return "{}";
         }
@@ -822,7 +822,7 @@ public class UserEditorTests {
      * @param args array of objects
      * @return map
      */
-    private Map<String, Object> map(Object... args) {
+    protected static Map<String, Object> map(Object... args) {
         Map<String, Object> map = new ConcurrentHashMap<>();
         if (args.length % 2 == 0) {
             for (int i = 0; i < args.length; i += 2) {

@@ -232,12 +232,17 @@ public class ModuleUserProfile extends ModuleBase {
 
     /**
      * Atomic modifications on custom user property.
+     * If value null, call will be ignored
      *
      * @param key String with property name to modify
      * @param value String value to use in modification
      * @param mod String with modification command
      */
-    protected void modifyCustomData(String key, Object value, Op mod) {
+    private void modifyCustomData(String key, Object value, Op mod) {
+        if (value == null) {
+            L.w("[ModuleUserProfile] modifyCustomData, value is null, thus nothing to modify");
+            return;
+        }
         ops.add(new OpParams(key, value, mod));
         isSynced = false;
     }
@@ -298,6 +303,7 @@ public class ModuleUserProfile extends ModuleBase {
     }
 
     public class UserProfile {
+
         /**
          * Increment custom property value by 1.
          *
