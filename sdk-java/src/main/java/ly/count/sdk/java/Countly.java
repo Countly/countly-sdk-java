@@ -10,6 +10,7 @@ import ly.count.sdk.java.internal.ModuleBackendMode;
 import ly.count.sdk.java.internal.ModuleDeviceIdCore;
 import ly.count.sdk.java.internal.ModuleEvents;
 import ly.count.sdk.java.internal.ModuleFeedback;
+import ly.count.sdk.java.internal.ModuleLocation;
 import ly.count.sdk.java.internal.ModuleRemoteConfig;
 import ly.count.sdk.java.internal.ModuleUserProfile;
 import ly.count.sdk.java.internal.SDKCore;
@@ -477,6 +478,20 @@ public class Countly implements Usage {
             return null;
         }
         return sdk.userProfile();
+    }
+
+    /**
+     * <code>Location</code> interface to use location feature.
+     *
+     * @return {@link ModuleLocation.Location} instance.
+     */
+    public ModuleLocation.Location location() {
+        if (!isInitialized()) {
+            L.e("Countly.sharedInstance().init must be called before accessing location");
+            return null;
+        }
+
+        return sdk.location();
     }
 
     /**

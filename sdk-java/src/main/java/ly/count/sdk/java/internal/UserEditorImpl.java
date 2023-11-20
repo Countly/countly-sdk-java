@@ -5,6 +5,7 @@ import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.User;
 import ly.count.sdk.java.UserEditor;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 public class UserEditorImpl implements UserEditor {
     private final Log L;
@@ -105,23 +106,17 @@ public class UserEditorImpl implements UserEditor {
     @Override
     public UserEditor setCountry(String country) {
         L.d("setCountry: country = " + country);
-        if (SDKCore.enabled(CoreFeature.Location)) {
-            //todo when location module added add its function here
-            return this;
-        } else {
-            return this;
-        }
+        String countryLegacy = country == null ? JSONObject.NULL.toString() : country;
+        callLocationService(() -> Countly.instance().location().setLocationLegacy(countryLegacy, null, null));
+        return this;
     }
 
     @Override
     public UserEditor setCity(String city) {
         L.d("setCity: city = " + city);
-        if (SDKCore.enabled(CoreFeature.Location)) {
-            //todo when location module added add its function here
-            return this;
-        } else {
-            return this;
-        }
+        String cityLegacy = city == null ? JSONObject.NULL.toString() : city;
+        callLocationService(() -> Countly.instance().location().setLocationLegacy(null, cityLegacy, null));
+        return this;
     }
 
     @Override
@@ -131,7 +126,8 @@ public class UserEditorImpl implements UserEditor {
             String[] comps = location.split(",");
             if (comps.length == 2) {
                 try {
-                    //todo when location module added add its function here
+                    String locationString = Double.parseDouble(comps[0]) + "," + Double.parseDouble(comps[1]);
+                    callLocationService(() -> Countly.instance().location().setLocationLegacy(null, null, locationString));
                     return this;
                 } catch (Throwable t) {
                     L.e("[UserEditorImpl] Invalid location format: " + location + " " + t);
@@ -142,7 +138,7 @@ public class UserEditorImpl implements UserEditor {
                 return this;
             }
         } else {
-            //todo when location module added add its function here
+            callLocationService(() -> Countly.instance().location().setLocationLegacy(null, null, JSONObject.NULL));
             return this;
         }
     }
@@ -150,19 +146,22 @@ public class UserEditorImpl implements UserEditor {
     @Override
     public UserEditor setLocation(double latitude, double longitude) {
         L.d("setLocation: latitude = " + latitude + " longitude" + longitude);
-        if (SDKCore.enabled(CoreFeature.Location)) {
-            //todo when location module added add its function here
-            return this;
-        } else {
-            return this;
-        }
+        String locationString = latitude + "," + longitude;
+        callLocationService(() -> Countly.instance().location().setLocationLegacy(null, null, locationString));
+        return this;
     }
 
     @Override
     public UserEditor optOutFromLocationServices() {
         L.d("optOutFromLocationServices");
-        //todo when location module added add its function here
+        callLocationService(() -> Countly.instance().location().setLocationLegacy(JSONObject.NULL, JSONObject.NULL, JSONObject.NULL));
         return this;
+    }
+
+    private void callLocationService(Runnable runnable) {
+        if (Countly.instance().location() != null) {
+            runnable.run();
+        }
     }
 
     @Override

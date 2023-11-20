@@ -210,6 +210,10 @@ public class ModuleUserProfile extends ModuleBase {
      * @return a String user_details url part with provided user data
      */
     private Params prepareRequestParamsForUserProfile() {
+        if (isSynced) {
+            L.d("[ModuleUserProfile] prepareRequestParamsForUserProfile, nothing to save returning");
+            return new Params();
+        }
         isSynced = true;
         Params params = new Params();
         final JSONObject json = new JSONObject();
@@ -226,7 +230,7 @@ public class ModuleUserProfile extends ModuleBase {
             params.add("user_details", json.toString());
             return params;
         } else {
-            return null;
+            return new Params();
         }
     }
 
@@ -264,14 +268,9 @@ public class ModuleUserProfile extends ModuleBase {
     }
 
     protected void saveInternal() {
-        if (isSynced) {
-            L.d("[ModuleUserProfile] saveInternal, nothing to save returning");
-            return;
-        }
         Params generatedParams = prepareRequestParamsForUserProfile();
-        if (generatedParams == null) {
-            L.d("[ModuleUserProfile] saveInternal, nothing to save returning");
-            return;
+        if (internalConfig.sdk.location() != null) {
+            internalConfig.sdk.location().saveLocationToParamsLegacy(generatedParams);
         }
         L.d("[ModuleUserProfile] saveInternal, generated params [" + generatedParams + "]");
         ModuleRequests.pushAsync(internalConfig, new Request(generatedParams));

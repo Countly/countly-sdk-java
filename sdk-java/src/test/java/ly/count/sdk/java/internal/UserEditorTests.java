@@ -173,7 +173,7 @@ public class UserEditorTests {
      * Validating that all the methods are working properly
      * Request should contain all the parameters directly also in "user_details" json and body
      */
-    // @Test //todo this test will be needed rework with location module
+    @Test
     public void setLocationBasics() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
         sessionHandler(() -> Countly.instance().user().edit()
@@ -186,8 +186,7 @@ public class UserEditorTests {
         validateUserDetailsRequestInRQ(map(
             "country_code", "US",
             "city", "New York",
-            "location", "40.7128,-74.006",
-            "locale", "en"));
+            "location", "40.7128,-74.006"));
     }
 
     /**
@@ -195,7 +194,7 @@ public class UserEditorTests {
      * Validating that all the methods are working properly
      * Request should contain all the parameters directly also in "user_details" json and body
      */
-    // @Test //todo this test will be needed rework with location module
+    @Test
     public void setLocationBasics_null() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
         sessionHandler(() -> Countly.instance().user().edit()
@@ -208,8 +207,7 @@ public class UserEditorTests {
         validateUserDetailsRequestInRQ(map(
             "country_code", JSONObject.NULL,
             "city", JSONObject.NULL,
-            "location", JSONObject.NULL,
-            "locale", JSONObject.NULL));
+            "location", JSONObject.NULL));
     }
 
     /**
@@ -546,7 +544,7 @@ public class UserEditorTests {
      * Validating that values is correctly parsed to the long and added to the request,
      * Request should contain "location" parameter in "user_details" json and "location" parameter in the request
      */
-    // @Test //todo this test will be needed rework with location module
+    @Test
     public void setLocation_fromString() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
         sessionHandler(() -> Countly.instance().user().edit().setLocation("-40.7128, 74.0060").commit());
@@ -558,11 +556,11 @@ public class UserEditorTests {
      * Validating that values is correctly parsed to the long and added to the request,
      * Request should contain "location" parameter in "user_details" json and "location" parameter in the request
      */
-    // @Test //todo this test will be needed rework with location module
+    @Test
     public void setLocation_fromString_noConsent() {
         Countly.instance().init(TestUtils.getBaseConfig());
         sessionHandler(() -> Countly.instance().user().edit().setLocation("32.78, 28.01").commit());
-        validateUserDetailsRequestInRQ(map("location", "32.78,28.01"));
+        validateUserDetailsRequestInRQ(map());
     }
 
     /**
@@ -594,7 +592,7 @@ public class UserEditorTests {
      * Validating that location is nullified
      * Request should contain "location" parameter in "user_details" json and request body and should be null
      */
-    // @Test //todo this test will be needed rework with location module
+    @Test //todo this test will be needed rework with location module
     public void setLocation_fromString_null() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
         sessionHandler(() -> Countly.instance().user().edit().setLocation(null).commit());
@@ -606,7 +604,7 @@ public class UserEditorTests {
      * Validating that calling the function will result in nullifying the location relates params
      * Request should contain "location","country_code","city" parameters in the body and should be null
      */
-    // @Test //todo this test will be needed rework with location module
+    @Test //todo this test will be needed rework with location module
     public void optOutFromLocationServices() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
         sessionHandler(() -> Countly.instance().user().edit().optOutFromLocationServices().commit());
@@ -647,7 +645,7 @@ public class UserEditorTests {
      * Set various kind of user properties and validate that they are added to the request
      * There should be 2 request, and it should be a session begin and end. End request should contain all the properties
      */
-    // @Test //todo this test will be needed rework with location module
+    @Test
     public void set_multipleCalls_sessionsEnabled() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Sessions, Config.Feature.Location).setUpdateSessionTimerDelay(1));
         sessionHandler(() -> Countly.instance().user().edit()
@@ -669,12 +667,10 @@ public class UserEditorTests {
                 "gender", "F",
                 "picture", "https://someurl.com",
                 "email", "SomeEmail",
-                "custom", jsonObj(map(TestUtils.eKeys[0], map(ModuleUserProfile.Op.PUSH, new Object[] { 56, "TW" }), "some_custom", 56))),
+                "custom", jsonObj(map(TestUtils.eKeys[0], map("$push", new Object[] { 56, "TW" }), "some_custom", 56))),
             "country_code", "US",
             "city", "New York",
-            "location", "40.7128,-74.006",
-            "session_id", "",
-            "end_session", "1"), 1);
+            "location", "40.7128,-74.006"), 1, 3);
     }
 
     private void validatePictureAndPath(String picturePath, byte[] picture) {
@@ -683,7 +679,7 @@ public class UserEditorTests {
     }
 
     protected static void validateUserDetailsRequestInRQ(Map<String, Object> expectedParams) {
-        validateUserDetailsRequestInRQ(expectedParams, 0);
+        validateUserDetailsRequestInRQ(expectedParams, 0, 1);
     }
 
     /**
@@ -692,14 +688,16 @@ public class UserEditorTests {
      *
      * @param expectedParams expected parameters in the request
      * @param requestIndex index of the request in the request queue
+     * @param rqSize expected request queue size
      */
-    protected static void validateUserDetailsRequestInRQ(Map<String, Object> expectedParams, final int requestIndex) {
+    protected static void validateUserDetailsRequestInRQ(Map<String, Object> expectedParams, final int requestIndex, final int rqSize) {
         if (expectedParams.isEmpty()) { // nothing to validate, just return
             Assert.assertEquals(0, TestUtils.getCurrentRQ().length);
             return;
         }
         Map<String, String>[] requestsInQ = TestUtils.getCurrentRQ();
-        Assert.assertEquals(requestIndex + 1, requestsInQ.length);
+        Assert.assertEquals(rqSize, requestsInQ.length);
+
         TestUtils.validateRequiredParams(requestsInQ[requestIndex]); // this validates 9 params
         Assert.assertEquals(9 + expectedParams.size(), requestsInQ[requestIndex].size()); // so we need to add expect 9 + params size
         if (requestIndex > 0) { // validate begin session request

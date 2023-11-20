@@ -63,6 +63,7 @@ public class SDKCore {
         moduleMappings.put(CoreFeature.Events.getIndex(), ModuleEvents.class);
         moduleMappings.put(CoreFeature.RemoteConfig.getIndex(), ModuleRemoteConfig.class);
         moduleMappings.put(CoreFeature.UserProfiles.getIndex(), ModuleUserProfile.class);
+        moduleMappings.put(CoreFeature.Location.getIndex(), ModuleLocation.class);
     }
 
     /**
@@ -403,6 +404,18 @@ public class SDKCore {
 
     public ModuleUserProfile.UserProfile userProfile() {
         return module(ModuleUserProfile.class).userProfileInterface;
+    }
+
+    public ModuleLocation.Location location() {
+        if (!hasConsentForFeature(CoreFeature.Location)) {
+            L.v("[SDKCore] location, Location feature has no consent, returning null");
+            return null;
+        }
+        ModuleLocation module = module(ModuleLocation.class);
+        if (module == null) {
+            return null;
+        }
+        return module.locationInterface;
     }
 
     /**
