@@ -21,6 +21,7 @@ public class ModuleUserProfile extends ModuleBase {
     static final String GENDER_KEY = "gender";
     static final String BYEAR_KEY = "byear";
     static final String CUSTOM_KEY = "custom";
+    static final String PICTURE_IN_USER_PROFILE = "[CLY]_USER_PROFILE_PICTURE";
     boolean isSynced = true;
     Map<String, Object> custom;
     UserProfile userProfileInterface;
@@ -117,6 +118,10 @@ public class ModuleUserProfile extends ModuleBase {
                 case PICTURE_KEY:
                     if (value == null) {
                         changes.put(PICTURE_KEY, JSONObject.NULL);
+                    } else if (value instanceof byte[]) {
+                        internalConfig.sdk.user().picture = (byte[]) value;
+                        //set a special value to indicate that the picture information is already stored in memory
+                        changes.put(PICTURE_PATH_KEY, PICTURE_IN_USER_PROFILE);
                     }
                     break;
                 case PICTURE_PATH_KEY:

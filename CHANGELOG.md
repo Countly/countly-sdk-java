@@ -1,7 +1,6 @@
 ## XX.XX.XX
 
-* !! Major breaking change !! The following methods and their functionality are deprecated from the "UserEditor" interface and will not function anymore:
-  * "picture(byte[])"
+* !! Major breaking change !! The following method and its functionality is deprecated from the "UserEditor" interface and will not function anymore:
   * "setLocale(String)"
 
 * Added the user profiles feature interface, and it is accessible through "Countly::instance()::userProfile()" call.
@@ -32,6 +31,7 @@
   * "setOrg(String)" instead use "Countly::userProfile::setProperty" via "instance()" call
   * "setCustom(String, Object)" instead use "Countly::userProfile::setProperty" via "instance()" call
   * "set(String, Object)" instead use "Countly::userProfile::setProperty" via "instance()" call
+  * "picture(byte[])" instead use "Countly::userProfile::setProperty" via "instance()" call
 
 ## 23.10.1
 

@@ -35,6 +35,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+import ly.count.sdk.java.User;
 import org.json.JSONObject;
 
 /**
@@ -116,10 +117,11 @@ public class Transport implements X509TrustManager {
      * set SSL context, calculate and add checksum, load and send user picture if needed.
      *
      * @param request request to send
+     * @param user user to check for picture
      * @return connection, not {@link HttpURLConnection} yet
      * @throws IOException from {@link HttpURLConnection} in case of error
      */
-    HttpURLConnection connection(final Request request) throws IOException {
+    HttpURLConnection connection(final Request request, final User user) throws IOException {
         String endpoint = request.params.remove(Request.ENDPOINT);
 
         if (!request.params.has("device_id") && config.getDeviceId() != null) {
@@ -157,7 +159,7 @@ public class Transport implements X509TrustManager {
             PrintWriter writer = null;
             try {
                 L.d("[network] Picture path value " + picturePathValue);
-                byte[] pictureByteData = picturePathValue == null ? null : getPictureDataFromGivenValue(picturePathValue);
+                byte[] pictureByteData = picturePathValue == null ? null : getPictureDataFromGivenValue(user, picturePathValue);
 
                 if (pictureByteData != null) {
                     String boundary = Long.toHexString(System.currentTimeMillis());
@@ -234,22 +236,34 @@ public class Transport implements X509TrustManager {
 
     /**
      * Returns valid picture information
-     * Load the picture from disk
+     * If we have the bytes, give them
+     * Otherwise load them from disk
      *
-     * @param picturePath path to the picture
-     * @return byte array of the picture
+     * @param user
+     * @param picture
+     * @return
      */
-    byte[] getPictureDataFromGivenValue(String picturePath) {
+    byte[] getPictureDataFromGivenValue(User user, String picture) {
+        if (user == null) {
+            return null;
+        }
+
         byte[] data = null;
-        //we assume it is a local path, and we try to read it from disk
-        try {
-            File file = new File(picturePath);
-            if (!file.exists()) {
-                return null;
+        if (ModuleUserProfile.PICTURE_IN_USER_PROFILE.equals(picture)) {
+            //if the value is this special value then we know that we will send over bytes that are already provided by the integrator
+            //those stored bytes are already in a internal data structure, use them
+            data = user.picture();
+        } else {
+            //otherwise we assume it is a local path, and we try to read it from disk
+            try {
+                File file = new File(picture);
+                if (!file.exists()) {
+                    return null;
+                }
+                data = Files.readAllBytes(file.toPath());
+            } catch (Throwable t) {
+                L.w("[Transport] getPictureDataFromGivenValue, Error while reading picture from disk " + t);
             }
-            data = Files.readAllBytes(file.toPath());
-        } catch (Throwable t) {
-            L.w("[Transport] getPictureDataFromGivenValue, Error while reading picture from disk " + t);
         }
 
         return data;
@@ -304,7 +318,7 @@ public class Transport implements X509TrustManager {
                     Class requestOwner = request.owner();
                     request.params.remove(Request.MODULE);
 
-                    connection = connection(request);
+                    connection = connection(request, SDKCore.instance.user());
                     connection.connect();
 
                     int code = connection.getResponseCode();

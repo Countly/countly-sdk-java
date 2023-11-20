@@ -63,8 +63,7 @@ public class UserEditorImpl implements UserEditor {
     @Override
     public UserEditor setPicture(byte[] picture) {
         L.d("setPicture: picture = " + picture);
-        //this will deprecate
-        return this;
+        return set(ModuleUserProfile.PICTURE_KEY, picture);
     }
 
     //we set the url for either the online picture or a local path picture
@@ -236,7 +235,7 @@ public class UserEditorImpl implements UserEditor {
             return this;
         }
     }
-    
+
     @Override
     public UserEditor pushUnique(String key, Object value) {
         L.d("pushUnique: key " + key + " value " + value);
