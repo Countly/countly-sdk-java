@@ -59,7 +59,7 @@ public class ModuleCrash extends ModuleBase {
             crashed = true;
 
             if (isActive()) {
-                onCrash(config, throwable, true, null, null);
+                recordExceptionInternal(throwable, false, null);
             }
 
             if (handler != null) {
@@ -69,22 +69,7 @@ public class ModuleCrash extends ModuleBase {
         started = System.nanoTime();
     }
 
-    public CrashImpl onCrash(InternalConfig config, Throwable t, boolean fatal, String name, Map<String, Object> segments, String... logs) {
-
-        if (config.isBackendModeEnabled()) {
-            L.w("[ModuleCrash] onCrash: Skipping crash, backend mode is enabled!");
-            return null;
-        }
-
-        if (t == null) {
-            L.e("[ModuleCrash] Throwable cannot be null");
-            return null;
-        }
-        return onCrash(config, new CrashImpl(L).addThrowable(t).setFatal(fatal).setName(name).setSegments(segments).setLogs(logs));
-    }
-
     protected void recordExceptionInternal(Throwable t, boolean handled, Map<String, Object> segments) {
-
         if (config.isBackendModeEnabled()) {
             L.w("[ModuleCrash] recordExceptionInternal, Skipping crash, backend mode is enabled!");
             return;

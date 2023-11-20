@@ -578,24 +578,6 @@ public class SDKCore {
         return config;
     }
 
-    /**
-     * Report a crash
-     *
-     * @param config to configure
-     * @param t throwable
-     * @param fatal is fatal
-     * @param name of crash
-     * @param segments data
-     * @param logs of crash
-     */
-    public void onCrash(final InternalConfig config, Throwable t, boolean fatal, String name, Map<String, Object> segments, String[] logs) {
-        L.i("[SDKCore] onCrash: t: " + t.toString() + " fatal: " + fatal + " name: " + name + " segments: " + segments);
-        ModuleCrash module = (ModuleCrash) module(CoreFeature.CrashReporting.getIndex());
-        if (module != null) {
-            module.onCrash(config, t, fatal, name, segments, logs);
-        }
-    }
-
     public void notifyModulesDeviceIdChanged(@Nullable String old, final boolean withMerge) {
         L.d("[SDKCore] notifyModulesDeviceIdChanged, newDeviceId:[" + config.getDeviceId() + "], oldDeviceId:[ " + old + "]");
         Config.DID id = config.getDeviceId();
