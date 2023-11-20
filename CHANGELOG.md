@@ -4,6 +4,7 @@
   * "setLocale(String)"
 
 * Added the user profiles feature interface, and it is accessible through "Countly::instance()::userProfile()" call.
+* Added the location feature interface, and it is accessible through "Countly::instance()::location()" call.
 
 * Fixed a bug where setting custom user properties would not work.
 * Fixed a bug where setting organization of the user would not work.
@@ -19,11 +20,11 @@
   * "min(String, double)" instead use "Countly::userProfile::saveMin" via "instance()" call
   * "mul(String, double)" instead use "Countly::userProfile::multiply" via "instance()" call
   * "inc(String, int)" instead use "Countly::userProfile::incrementBy" via "instance()" call
-  * "optOutFromLocationServices()" todo add replacement func when location module added
-  * "setLocation(double, double)" todo add replacement func when location module added
-  * "setLocation(String)" todo add replacement func when location module added
-  * "setCountry(String)" todo add replacement func when location module added
-  * "setCity(String)" todo add replacement func when location module added
+  * "optOutFromLocationServices()" instead use "Countly::location::disableLocation" via "instance()" call
+  * "setLocation(double, double)" instead use "Countly::location::setLocation" via "instance()" call
+  * "setLocation(String)" instead use "Countly::location::setLocation" via "instance()" call
+  * "setCountry(String)" instead use "Countly::location::setLocation" via "instance()" call
+  * "setCity(String)" instead use "Countly::location::setLocation" via "instance()" call
   * "setGender(String)" instead use "Countly::userProfile::setProperty" via "instance()" call
   * "setBirthyear(int)" instead use "Countly::userProfile::setProperty" via "instance()" call
   * "setBirthyear(String)" instead use "Countly::userProfile::setProperty" via "instance()" call
