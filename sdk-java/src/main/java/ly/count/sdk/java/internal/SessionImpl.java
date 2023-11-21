@@ -327,16 +327,16 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     }
 
     @Override
-    public Session addCrashReport(Throwable t, boolean fatal, String name, Map<String, Object> segments, String... logs) {
+    public Session addCrashReport(Throwable t, boolean fatal, String name, Map<String, String> segments, String... logs) {
         if (!SDKCore.enabled(CoreFeature.CrashReporting)) {
             L.i("[SessionImpl] addCrashReport: Skipping event - feature is not enabled");
             return this;
         }
 
         if (fatal) {
-            Countly.instance().crash().recordUnhandledException(t, segments);
+            Countly.instance().crashes().recordUnhandledException(t, segments);
         } else {
-            Countly.instance().crash().recordHandledException(t, segments);
+            Countly.instance().crashes().recordHandledException(t, segments);
         }
         return this;
     }

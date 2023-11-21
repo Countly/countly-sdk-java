@@ -73,6 +73,7 @@ public class TestUtils {
         Device.dev.setOrientation("portrait");
         Device.dev.setResolution("100x100");
         Device.dev.setDevice("Device");
+        Device.dev.setAppVersion("1.0");
     }
 
     static Config getConfigRemoteConfigs() {

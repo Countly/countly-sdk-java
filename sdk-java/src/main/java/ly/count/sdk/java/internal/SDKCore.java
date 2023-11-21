@@ -57,7 +57,7 @@ public class SDKCore {
         //moduleMappings.put(CoreFeature.Logs.getIndex(), Log.class);
         moduleMappings.put(CoreFeature.Views.getIndex(), ModuleViews.class);
         moduleMappings.put(CoreFeature.Sessions.getIndex(), ModuleSessions.class);
-        moduleMappings.put(CoreFeature.CrashReporting.getIndex(), ModuleCrash.class);
+        moduleMappings.put(CoreFeature.CrashReporting.getIndex(), ModuleCrashes.class);
         moduleMappings.put(CoreFeature.BackendMode.getIndex(), ModuleBackendMode.class);
         moduleMappings.put(CoreFeature.Feedback.getIndex(), ModuleFeedback.class);
         moduleMappings.put(CoreFeature.Events.getIndex(), ModuleEvents.class);
@@ -386,13 +386,13 @@ public class SDKCore {
         return module(ModuleFeedback.class).feedbackInterface;
     }
 
-    public ModuleCrash.Crashes crash() {
+    public ModuleCrashes.Crashes crashes() {
         if (!hasConsentForFeature(CoreFeature.CrashReporting)) {
             L.v("[SDKCore] crash, Crash Reporting feature has no consent, returning null");
             return null;
         }
 
-        return module(ModuleCrash.class).crashInterface;
+        return module(ModuleCrashes.class).crashInterface;
     }
 
     public ModuleDeviceIdCore.DeviceId deviceId() {

@@ -18,7 +18,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class ModuleCrashTests {
+public class ModuleCrashesTests {
 
     @Before
     public void beforeTest() {
@@ -41,7 +41,7 @@ public class ModuleCrashTests {
         TestUtils.setAdditionalDeviceMetrics();
         Throwable testThrowable = new Exception("test");
         Thread.sleep(200);
-        Countly.instance().crash().recordHandledException(testThrowable);
+        Countly.instance().crashes().recordHandledException(testThrowable);
         validateCrashInRQ(testThrowable, false, null);
     }
 
@@ -57,7 +57,7 @@ public class ModuleCrashTests {
         TestUtils.setAdditionalDeviceMetrics();
         Throwable testThrowable = new Exception("test");
         Thread.sleep(200);
-        Countly.instance().crash().recordHandledException(testThrowable);
+        Countly.instance().crashes().recordHandledException(testThrowable);
         Assert.assertEquals(0, TestUtils.getCurrentRQ().length);
     }
 
@@ -69,7 +69,7 @@ public class ModuleCrashTests {
     @Test
     public void recordHandledException_withSegment() throws InterruptedException {
         recordExceptionWithSegment_base(false, (throwable, customSegment) ->
-            Countly.instance().crash().recordHandledException(throwable, customSegment));
+            Countly.instance().crashes().recordHandledException(throwable, customSegment));
     }
 
     /**
@@ -81,7 +81,7 @@ public class ModuleCrashTests {
     public void recordHandledException_null() {
         Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.CrashReporting));
         TestUtils.setAdditionalDeviceMetrics();
-        Countly.instance().crash().recordHandledException(null);
+        Countly.instance().crashes().recordHandledException(null);
         Assert.assertEquals(0, TestUtils.getCurrentRQ().length);
     }
 
@@ -94,7 +94,7 @@ public class ModuleCrashTests {
     public void recordUnhandledException_null() {
         Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.CrashReporting));
         TestUtils.setAdditionalDeviceMetrics();
-        Countly.instance().crash().recordUnhandledException(null);
+        Countly.instance().crashes().recordUnhandledException(null);
         Assert.assertEquals(0, TestUtils.getCurrentRQ().length);
     }
 
@@ -108,7 +108,7 @@ public class ModuleCrashTests {
         Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.CrashReporting));
         TestUtils.setAdditionalDeviceMetrics();
         Throwable testThrowable = new Exception("test");
-        Countly.instance().crash().recordUnhandledException(testThrowable);
+        Countly.instance().crashes().recordUnhandledException(testThrowable);
         validateCrashInRQ(testThrowable, true, null);
     }
 
@@ -120,7 +120,7 @@ public class ModuleCrashTests {
     @Test
     public void recordUnhandledException_withSegment() throws InterruptedException {
         recordExceptionWithSegment_base(true, (throwable, customSegment) ->
-            Countly.instance().crash().recordUnhandledException(throwable, customSegment));
+            Countly.instance().crashes().recordUnhandledException(throwable, customSegment));
     }
 
     /**
@@ -166,22 +166,15 @@ public class ModuleCrashTests {
         }
     }
 
-    private void recordExceptionWithSegment_base(boolean fatal, BiConsumer<Throwable, Map<String, Object>> crashReporter) throws InterruptedException {
+    private void recordExceptionWithSegment_base(boolean fatal, BiConsumer<Throwable, Map<String, String>> crashReporter) throws InterruptedException {
         Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.CrashReporting));
         TestUtils.setAdditionalDeviceMetrics();
         Throwable testThrowable = new RuntimeException("Someting Happened");
-        Map<String, Object> customSegment = new ConcurrentHashMap<>();
+        Map<String, String> customSegment = new ConcurrentHashMap<>();
         customSegment.put("test", "test");
-        customSegment.put("test2", 2);
-        customSegment.put("test3", 3.0);
-        customSegment.put("test4", true);
-        customSegment.put("test5", new JSONObject());
-        customSegment.put("test6", new String[] { "test" });
-        customSegment.put("test7", new int[] { 1 });
-        customSegment.put("test8", new double[] { 1.0 });
-        customSegment.put("test9", new boolean[] { true });
-        customSegment.put("test10", new JSONObject[] { new JSONObject() });
-        customSegment.put("test11", new String[][] { { "test" } });
+        customSegment.put("test2", "2");
+        customSegment.put("test3", "3.0");
+        customSegment.put("test4", "true");
         Thread.sleep(200); // wait for a time for the throwable
         crashReporter.accept(testThrowable, customSegment);
 

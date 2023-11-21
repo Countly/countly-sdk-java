@@ -7,7 +7,7 @@ public enum CoreFeature {
     Events(1 << 1, ModuleEvents::new),
     Sessions(1 << 2, ModuleSessions::new),
     Views(1 << 3, ModuleViews::new),
-    CrashReporting(1 << 4, ModuleCrash::new),
+    CrashReporting(1 << 4, ModuleCrashes::new),
     Location(1 << 5),
     UserProfiles(1 << 6),
     /*

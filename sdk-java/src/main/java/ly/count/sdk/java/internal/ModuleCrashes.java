@@ -9,7 +9,7 @@ import ly.count.sdk.java.CrashProcessor;
  * Crash reporting functionality
  */
 
-public class ModuleCrash extends ModuleBase {
+public class ModuleCrashes extends ModuleBase {
 
     protected long started = 0;
     private boolean crashed = false;
@@ -29,7 +29,6 @@ public class ModuleCrash extends ModuleBase {
                 Class cls = Class.forName(config.getCrashProcessorClass());
                 crashProcessor = (CrashProcessor) cls.getConstructors()[0].newInstance();
             } catch (Throwable t) {
-                t.printStackTrace();
                 L.e("[ModuleCrash] Cannot instantiate CrashProcessor" + t);
             }
         }
@@ -70,7 +69,7 @@ public class ModuleCrash extends ModuleBase {
         started = System.nanoTime();
     }
 
-    protected void recordExceptionInternal(Throwable t, boolean handled, Map<String, Object> segments) {
+    protected void recordExceptionInternal(Throwable t, boolean handled, Map<String, String> segments) {
         if (config.isBackendModeEnabled()) {
             L.w("[ModuleCrash] recordExceptionInternal, Skipping crash, backend mode is enabled!");
             return;
@@ -147,7 +146,7 @@ public class ModuleCrash extends ModuleBase {
          *
          * @param exception Throwable to log
          */
-        public void recordHandledException(final Throwable exception, final Map<String, Object> customSegmentation) {
+        public void recordHandledException(final Throwable exception, final Map<String, String> customSegmentation) {
             synchronized (Countly.instance()) {
                 recordExceptionInternal(exception, true, customSegmentation);
             }
@@ -158,7 +157,7 @@ public class ModuleCrash extends ModuleBase {
          *
          * @param exception Throwable to log
          */
-        public void recordUnhandledException(final Throwable exception, final Map<String, Object> customSegmentation) {
+        public void recordUnhandledException(final Throwable exception, final Map<String, String> customSegmentation) {
             synchronized (Countly.instance()) {
                 recordExceptionInternal(exception, false, customSegmentation);
             }
