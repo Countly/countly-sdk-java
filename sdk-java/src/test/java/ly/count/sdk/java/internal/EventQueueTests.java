@@ -34,7 +34,7 @@ public class EventQueueTests {
 
     private void init(Config cc) {
         Countly.instance().init(cc);
-        eventQueue = new EventQueue(L, cc.getEventsBufferSize());
+        eventQueue = new EventQueue(L);
     }
 
     @After

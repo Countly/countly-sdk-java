@@ -1,10 +1,11 @@
 package ly.count.sdk.java.internal;
 
-import ly.count.sdk.java.Countly;
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import javax.annotation.Nonnull;
 
 public class EventQueue {
 
@@ -15,9 +16,9 @@ public class EventQueue {
     protected EventQueue() {
     }
 
-    protected EventQueue(@Nonnull Log logger, int eventThreshold) {
+    protected EventQueue(@Nonnull Log logger) {
         L = logger;
-        eventQueueMemoryCache = new ArrayList<>(eventThreshold);
+        eventQueueMemoryCache = new CopyOnWriteArrayList<>();
     }
 
     /**
@@ -46,7 +47,7 @@ public class EventQueue {
             return;
         }
 
-        final String eventQueue = joinEvents(eventQueueMemoryCache);
+        final String eventQueue = joinEvents(Collections.unmodifiableList(eventQueueMemoryCache));
 
         L.d("[EventQueue] Setting event data: " + eventQueue);
         SDKCore.instance.sdkStorage.storeEventQueue(eventQueue);
