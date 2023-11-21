@@ -100,8 +100,8 @@ public class ModuleUserProfile extends ModuleBase {
     /**
      * Transforming changes in "sets" into a json contained in "changes"
      *
-     * @param changes
-     * @throws JSONException
+     * @param changes JSONObject to store changes
+     * @throws JSONException if something goes wrong
      */
     void perform(JSONObject changes) throws JSONException {
         for (String key : sets.keySet()) {
@@ -272,7 +272,7 @@ public class ModuleUserProfile extends ModuleBase {
     protected void saveInternal() {
         Params generatedParams = prepareRequestParamsForUserProfile();
         if (internalConfig.sdk.location() != null) {
-            internalConfig.sdk.location().saveLocationToParamsLegacy(generatedParams);
+            internalConfig.sdk.module(ModuleLocation.class).saveLocationToParamsLegacy(generatedParams);
         }
         L.d("[ModuleUserProfile] saveInternal, generated params [" + generatedParams + "]");
         ModuleRequests.pushAsync(internalConfig, new Request(generatedParams));

@@ -92,7 +92,7 @@ public class ModuleLocation extends ModuleBase {
         locationInterface = null;
     }
 
-    private void saveLocationToParamsLegacyInternal(Params params) {
+    protected void saveLocationToParamsLegacy(Params params) {
         if (countryLegacy != null) {
             params.add("country_code", countryLegacy);
         }
@@ -107,25 +107,20 @@ public class ModuleLocation extends ModuleBase {
         locationLegacy = null;
     }
 
+    protected void setLocationLegacy(@Nullable Object countryCode, @Nullable Object city, @Nullable Object gpsCoordinates) {
+        L.d("[Location] setLocationLegacy, calling legacy calls to send locations");
+        if (countryCode != null) {
+            countryLegacy = countryCode.toString();
+        }
+        if (city != null) {
+            cityLegacy = city.toString();
+        }
+        if (gpsCoordinates != null) {
+            locationLegacy = gpsCoordinates.toString();
+        }
+    }
+
     public class Location {
-
-        protected void setLocationLegacy(@Nullable Object countryCode, @Nullable Object city, @Nullable Object gpsCoordinates) {
-            L.d("[Location] setLocationLegacy, calling legacy calls to send locations");
-            if (countryCode != null) {
-                countryLegacy = countryCode.toString();
-            }
-            if (city != null) {
-                cityLegacy = city.toString();
-            }
-            if (gpsCoordinates != null) {
-                locationLegacy = gpsCoordinates.toString();
-            }
-        }
-
-        protected void saveLocationToParamsLegacy(Params params) {
-            L.d("[Location] saveLocationToParamsLegacy, calling legacy calls to send locations");
-            saveLocationToParamsLegacyInternal(params);
-        }
 
         /**
          * Disable sending of location data. Erases server side saved location information
