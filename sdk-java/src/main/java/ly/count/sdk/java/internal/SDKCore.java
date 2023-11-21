@@ -718,7 +718,7 @@ public class SDKCore {
         }
 
         Request request = ModuleRequests.nonSessionRequest(config);
-        ModuleCrash.putCrashIntoParams(crash, request.params);
+        request.params.add("crash", crash.getJSON());
 
         ModuleRequests.addRequiredParametersToParams(config, request.params);
         ModuleRequests.addRequiredTimeParametersToParams(request.params);

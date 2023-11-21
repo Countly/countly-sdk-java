@@ -1,7 +1,11 @@
 ## XX.XX.XX
 
 * Fixed a bug where setting custom user properties would not work.
+
+* Crash Reporting interface added and accessible through "Countly::instance()::crash()" call.
+
 * Deprecated "Countly::backendMode()" call, use "Countly::backendM" instead via "instance()" call.
+* Deprecated "Usage::addCrashReport" call, use "Countly::crash" instead via "instance()" call.
 
 ## 23.10.1
 

@@ -29,6 +29,7 @@ public class ModuleCrash extends ModuleBase {
                 Class cls = Class.forName(config.getCrashProcessorClass());
                 crashProcessor = (CrashProcessor) cls.getConstructors()[0].newInstance();
             } catch (Throwable t) {
+                t.printStackTrace();
                 L.e("[ModuleCrash] Cannot instantiate CrashProcessor" + t);
             }
         }
@@ -115,10 +116,6 @@ public class ModuleCrash extends ModuleBase {
             SDKCore.instance.onSignal(config, SDKCore.Signal.Crash.getIndex(), crash.storageId().toString());
         }
         return crash;
-    }
-
-    public static void putCrashIntoParams(CrashImpl crash, Params params) {
-        params.add("crash", crash.getJSON());
     }
 
     public class Crashes {

@@ -63,6 +63,18 @@ public class TestUtils {
         return config;
     }
 
+    static void setAdditionalDeviceMetrics() {
+        Device.dev.setCpu("CPU1.2");
+        Device.dev.setBatteryLevel(0.52f);
+        Device.dev.setManufacturer("Manufacturer");
+        Device.dev.setMuted(true);
+        Device.dev.setOpenGL("OpenGL2.3.1");
+        Device.dev.setOnline(true);
+        Device.dev.setOrientation("portrait");
+        Device.dev.setResolution("100x100");
+        Device.dev.setDevice("Device");
+    }
+
     static Config getConfigRemoteConfigs() {
         return getBaseConfig().enableFeatures(Config.Feature.RemoteConfig);
     }
