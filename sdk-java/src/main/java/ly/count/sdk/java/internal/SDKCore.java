@@ -62,6 +62,7 @@ public class SDKCore {
         moduleMappings.put(CoreFeature.Feedback.getIndex(), ModuleFeedback.class);
         moduleMappings.put(CoreFeature.Events.getIndex(), ModuleEvents.class);
         moduleMappings.put(CoreFeature.RemoteConfig.getIndex(), ModuleRemoteConfig.class);
+        moduleMappings.put(CoreFeature.UserProfiles.getIndex(), ModuleUserProfile.class);
     }
 
     /**
@@ -268,6 +269,7 @@ public class SDKCore {
         modules.put(-3, new ModuleDeviceIdCore());
         modules.put(-2, new ModuleRequests());
         modules.put(CoreFeature.Sessions.getIndex(), new ModuleSessions());
+        modules.put(CoreFeature.UserProfiles.getIndex(), new ModuleUserProfile());
 
         if (config.requiresConsent()) {
             consents = 0;
@@ -397,6 +399,10 @@ public class SDKCore {
         }
 
         return module(ModuleRemoteConfig.class).remoteConfigInterface;
+    }
+
+    public ModuleUserProfile.UserProfile userProfile() {
+        return module(ModuleUserProfile.class).userProfileInterface;
     }
 
     /**
