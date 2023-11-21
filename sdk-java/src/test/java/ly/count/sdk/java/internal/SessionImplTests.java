@@ -435,7 +435,7 @@ public class SessionImplTests {
         SessionImpl session = (SessionImpl) Countly.session();
         session.addLocation(1.0, 2.0);
 
-        Assert.assertEquals(expected, session.params.get("location"));
+        Assert.assertEquals(expected, TestUtils.getCurrentRQ()[0].get("location"));
     }
 
     /**

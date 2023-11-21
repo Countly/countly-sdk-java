@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.Event;
 import ly.count.sdk.java.Session;
 import ly.count.sdk.java.Usage;
@@ -354,7 +355,8 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             L.i("[SessionImpl] addLocation: Skipping event - feature is not enabled");
             return this;
         }
-        return (Session) addParam("location", latitude + "," + longitude);
+        Countly.instance().location().setLocation(null, null, latitude + "," + longitude, null);
+        return this;
     }
 
     public View view(String name, boolean start) {

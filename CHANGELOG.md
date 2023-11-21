@@ -10,6 +10,7 @@
 * Fixed a bug where setting organization of the user would not work.
 
 * Deprecated "Countly::backendMode()" call, use "Countly::backendM" instead via "instance()" call.
+* Deprecated "Usage::addLocation(double, double)" call, use "Countly::location::setLocation" instead via "instance()" call.
 * The following methods are deprecated from the "UserEditor" interface:
   * "commit()" instead use "Countly::userProfile::save" via "instance()" call
   * "pushUnique(String, Object)" instead use "Countly::userProfile::pushUnique" via "instance()" call
