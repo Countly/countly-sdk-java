@@ -134,7 +134,7 @@ public class Transport implements X509TrustManager {
         }
 
         String path = config.getServerURL().toString() + endpoint;
-        String picturePathValue = request.params.remove(UserEditorImpl.PICTURE_PATH);
+        String picturePathValue = request.params.remove(ModuleUserProfile.PICTURE_PATH_KEY);
         boolean usingGET = !config.isHTTPPostForced() && request.isGettable(config.getServerURL()) && Utils.isEmptyOrNull(picturePathValue);
 
         if (!usingGET && !Utils.isEmptyOrNull(picturePathValue)) {
@@ -249,7 +249,7 @@ public class Transport implements X509TrustManager {
         }
 
         byte[] data = null;
-        if (UserEditorImpl.PICTURE_IN_USER_PROFILE.equals(picture)) {
+        if (ModuleUserProfile.PICTURE_IN_USER_PROFILE.equals(picture)) {
             //if the value is this special value then we know that we will send over bytes that are already provided by the integrator
             //those stored bytes are already in a internal data structure, use them
             data = user.picture();

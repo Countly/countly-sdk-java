@@ -1,11 +1,44 @@
 ## XX.XX.XX
 
-* Fixed a bug where setting custom user properties would not work.
+* !! Major breaking change !! The following method and its functionality is deprecated from the "UserEditor" interface and will not function anymore:
+  * "setLocale(String)"
 
+* Added the user profiles feature interface, and it is accessible through "Countly::instance()::userProfile()" call.
 * Crash Reporting interface added and accessible through "Countly::instance()::crash()" call.
+* 
+* Fixed a bug where setting custom user properties would not work.
+* Fixed a bug where setting organization of the user would not work.
 
 * Deprecated "Countly::backendMode()" call, use "Countly::backendM" instead via "instance()" call.
 * Deprecated "Usage::addCrashReport" call, use "Countly::crash" instead via "instance()" call.
+* Deprecated "Countly::backendMode()" call, use "Countly::backendM" instead via "instance()" call.
+* The following methods are deprecated from the "UserEditor" interface:
+  * "commit()" instead use "Countly::userProfile::save" via "instance()" call
+  * "pushUnique(String, Object)" instead use "Countly::userProfile::pushUnique" via "instance()" call
+  * "pull(String, Object)" instead use "Countly::userProfile::pull" via "instance()" call
+  * "push(String, Object)" instead use "Countly::userProfile::push" via "instance()" call
+  * "setOnce(String, Object)" instead use "Countly::userProfile::setOnce" via "instance()" call
+  * "max(String, double)" instead use "Countly::userProfile::saveMax" via "instance()" call
+  * "min(String, double)" instead use "Countly::userProfile::saveMin" via "instance()" call
+  * "mul(String, double)" instead use "Countly::userProfile::multiply" via "instance()" call
+  * "inc(String, int)" instead use "Countly::userProfile::incrementBy" via "instance()" call
+  * "optOutFromLocationServices()" todo add replacement func when location module added
+  * "setLocation(double, double)" todo add replacement func when location module added
+  * "setLocation(String)" todo add replacement func when location module added
+  * "setCountry(String)" todo add replacement func when location module added
+  * "setCity(String)" todo add replacement func when location module added
+  * "setGender(String)" instead use "Countly::userProfile::setProperty" via "instance()" call
+  * "setBirthyear(int)" instead use "Countly::userProfile::setProperty" via "instance()" call
+  * "setBirthyear(String)" instead use "Countly::userProfile::setProperty" via "instance()" call
+  * "setEmail(String)" instead use "Countly::userProfile::setProperty" via "instance()" call
+  * "setName(String)" instead use "Countly::userProfile::setProperty" via "instance()" call
+  * "setUsername(String)" instead use "Countly::userProfile::setProperty" via "instance()" call
+  * "setPhone(String)" instead use "Countly::userProfile::setProperty" via "instance()" call
+  * "setPicturePath(String)" instead use "Countly::userProfile::setProperty" via "instance()" call
+  * "setOrg(String)" instead use "Countly::userProfile::setProperty" via "instance()" call
+  * "setCustom(String, Object)" instead use "Countly::userProfile::setProperty" via "instance()" call
+  * "set(String, Object)" instead use "Countly::userProfile::setProperty" via "instance()" call
+  * "picture(byte[])" instead use "Countly::userProfile::setProperty" via "instance()" call
 
 ## 23.10.1
 

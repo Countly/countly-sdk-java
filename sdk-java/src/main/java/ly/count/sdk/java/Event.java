@@ -1,11 +1,13 @@
 package ly.count.sdk.java;
 
-import ly.count.sdk.java.internal.ModuleEvents;
-import javax.annotation.Nonnull;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import ly.count.sdk.java.internal.ModuleEvents;
 
 /**
- * Event interface. By default event is created with count=1 and all other fields empty or 0.
+ * Event interface. By default, event is created with count=1 and all other fields empty or 0.
+ *
+ * @deprecated this class is deprecated, use {@link ModuleEvents.Events} instead
  */
 
 public interface Event {
@@ -13,7 +15,7 @@ public interface Event {
      * Add event to the buffer, send it to the server in case number of events in the session
      * is equal or bigger than {@link Config#eventQueueThreshold} or wait until next {@link Session#update()}.
      *
-     * @deprecated this function is deprecated, use {@link ModuleEvents.Events#recordEvent(String, int, double, Map, double)} instead
+     * @deprecated this function is deprecated, use {@link ModuleEvents.Events#recordEvent(String, Map, int, Double, Double)} instead
      */
     void record();
 
@@ -23,7 +25,7 @@ public interface Event {
      * send it to the server in case number of events in the session is equal or bigger
      * than {@link Config#eventQueueThreshold} or wait until next {@link Session#update()}.
      *
-     * @deprecated this function is deprecated, use {@link ModuleEvents.Events#endEvent(String, Map, int, double)} instead
+     * @deprecated this function is deprecated, use {@link ModuleEvents.Events#endEvent(String, Map, int, Double)} instead
      */
     void endAndRecord();
 
@@ -33,7 +35,7 @@ public interface Event {
      * @param key key of segment, must not be null or empty
      * @param value value of segment, must not be null or empty
      * @return this instance for method chaining
-     * @deprecated this function is deprecated, use {@link ModuleEvents.Events#recordEvent(String, int, double, Map, double)} instead
+     * @deprecated this function is deprecated, use {@link ModuleEvents.Events#recordEvent(String, Map, int, Double, Double)} instead
      */
     Event addSegment(@Nonnull String key, @Nonnull String value);
 
@@ -44,7 +46,7 @@ public interface Event {
      * segmentation from; cannot contain nulls or empty strings; must have
      * even length
      * @return this instance for method chaining
-     * @deprecated this function is deprecated, use {@link ModuleEvents.Events#recordEvent(String, int, double, Map, double)} instead
+     * @deprecated this function is deprecated, use {@link ModuleEvents.Events#recordEvent(String, Map, int, Double, Double)} instead
      */
     Event addSegments(@Nonnull String... segmentation);
 
@@ -53,7 +55,7 @@ public interface Event {
      *
      * @param segmentation map of segment pairs ({key1: value1, key2: value2}
      * @return this instance for method chaining
-     * @deprecated this function is deprecated, use {@link ModuleEvents.Events#recordEvent(String, int, double, Map, double)} instead
+     * @deprecated this function is deprecated, use {@link ModuleEvents.Events#recordEvent(String, Map, int, Double, Double)} instead
      */
     Event setSegmentation(@Nonnull Map<String, String> segmentation);
 
@@ -62,7 +64,7 @@ public interface Event {
      *
      * @param count event count, cannot be 0
      * @return this instance for method chaining
-     * @deprecated this function is deprecated, use {@link ModuleEvents.Events#recordEvent(String, int, double, Map, double)} instead
+     * @deprecated this function is deprecated, use {@link ModuleEvents.Events#recordEvent(String, Map, int, Double, Double)} instead
      */
     Event setCount(int count);
 
@@ -71,7 +73,7 @@ public interface Event {
      *
      * @param sum event sum
      * @return this instance for method chaining
-     * @deprecated this function is deprecated, use {@link ModuleEvents.Events#recordEvent(String, int, double, Map, double)} instead
+     * @deprecated this function is deprecated, use {@link ModuleEvents.Events#recordEvent(String, Map, int, Double, Double)} instead
      */
     Event setSum(double sum);
 
@@ -80,7 +82,7 @@ public interface Event {
      *
      * @param duration event duration
      * @return this instance for method chaining
-     * @deprecated this function is deprecated, use {@link ModuleEvents.Events#recordEvent(String, int, double, Map, double)} instead
+     * @deprecated this function is deprecated, use {@link ModuleEvents.Events#recordEvent(String, Map, int, Double, Double)} instead
      */
     Event setDuration(double duration);
 
