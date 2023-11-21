@@ -5,7 +5,6 @@ import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.User;
 import ly.count.sdk.java.UserEditor;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 public class UserEditorImpl implements UserEditor {
     private final Log L;

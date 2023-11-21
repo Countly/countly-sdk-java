@@ -210,10 +210,12 @@ public class ModuleUserProfile extends ModuleBase {
      * @return a String user_details url part with provided user data
      */
     private Params prepareRequestParamsForUserProfile() {
+
         if (isSynced) {
             L.d("[ModuleUserProfile] prepareRequestParamsForUserProfile, nothing to save returning");
             return new Params();
         }
+
         isSynced = true;
         Params params = new Params();
         final JSONObject json = new JSONObject();
