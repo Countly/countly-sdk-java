@@ -97,6 +97,10 @@ public class CrashImpl implements Crash, Storable {
 
     @Override
     public CrashImpl setSegments(Map<String, String> segments) {
+        return addSegments(new HashMap<>(segments));
+    }
+
+    protected CrashImpl addSegments(Map<String, Object> segments) {
         if (segments != null && !segments.isEmpty()) {
             return add("_custom", new JSONObject(segments));
         }

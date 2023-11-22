@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -334,9 +335,9 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         }
 
         if (fatal) {
-            Countly.instance().crashes().recordUnhandledException(t, segments);
+            Countly.instance().crashes().recordUnhandledException(t, new HashMap<>(segments));
         } else {
-            Countly.instance().crashes().recordHandledException(t, segments);
+            Countly.instance().crashes().recordHandledException(t, new HashMap<>(segments));
         }
         return this;
     }

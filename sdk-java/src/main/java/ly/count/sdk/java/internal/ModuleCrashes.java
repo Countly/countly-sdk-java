@@ -69,7 +69,7 @@ public class ModuleCrashes extends ModuleBase {
         started = System.nanoTime();
     }
 
-    protected void recordExceptionInternal(Throwable t, boolean handled, Map<String, String> segments) {
+    protected void recordExceptionInternal(Throwable t, boolean handled, Map<String, Object> segments) {
         if (config.isBackendModeEnabled()) {
             L.w("[ModuleCrash] recordExceptionInternal, Skipping crash, backend mode is enabled!");
             return;
@@ -79,7 +79,7 @@ public class ModuleCrashes extends ModuleBase {
             L.e("[ModuleCrash] recordExceptionInternal, Throwable cannot be null");
             return;
         }
-        onCrash(config, new CrashImpl(L).addThrowable(t).setFatal(!handled).setSegments(segments));
+        onCrash(config, new CrashImpl(L).addThrowable(t).setFatal(!handled).addSegments(segments));
     }
 
     public CrashImpl onCrash(InternalConfig config, CrashImpl crash) {
@@ -146,7 +146,7 @@ public class ModuleCrashes extends ModuleBase {
          *
          * @param exception Throwable to log
          */
-        public void recordHandledException(final Throwable exception, final Map<String, String> customSegmentation) {
+        public void recordHandledException(final Throwable exception, final Map<String, Object> customSegmentation) {
             synchronized (Countly.instance()) {
                 recordExceptionInternal(exception, true, customSegmentation);
             }
@@ -157,7 +157,7 @@ public class ModuleCrashes extends ModuleBase {
          *
          * @param exception Throwable to log
          */
-        public void recordUnhandledException(final Throwable exception, final Map<String, String> customSegmentation) {
+        public void recordUnhandledException(final Throwable exception, final Map<String, Object> customSegmentation) {
             synchronized (Countly.instance()) {
                 recordExceptionInternal(exception, false, customSegmentation);
             }

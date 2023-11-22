@@ -166,15 +166,22 @@ public class ModuleCrashesTests {
         }
     }
 
-    private void recordExceptionWithSegment_base(boolean fatal, BiConsumer<Throwable, Map<String, String>> crashReporter) throws InterruptedException {
+    private void recordExceptionWithSegment_base(boolean fatal, BiConsumer<Throwable, Map<String, Object>> crashReporter) throws InterruptedException {
         Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.CrashReporting));
         TestUtils.setAdditionalDeviceMetrics();
         Throwable testThrowable = new RuntimeException("Someting Happened");
-        Map<String, String> customSegment = new ConcurrentHashMap<>();
+        Map<String, Object> customSegment = new ConcurrentHashMap<>();
         customSegment.put("test", "test");
         customSegment.put("test2", "2");
         customSegment.put("test3", "3.0");
         customSegment.put("test4", "true");
+        customSegment.put("test5", new JSONObject());
+        customSegment.put("test6", new String[] { "test" });
+        customSegment.put("test7", new int[] { 1 });
+        customSegment.put("test8", new double[] { 1.0 });
+        customSegment.put("test9", new boolean[] { true });
+        customSegment.put("test10", new JSONObject[] { new JSONObject() });
+        customSegment.put("test11", new String[][] { { "test" } });
         Thread.sleep(200); // wait for a time for the throwable
         crashReporter.accept(testThrowable, customSegment);
 
