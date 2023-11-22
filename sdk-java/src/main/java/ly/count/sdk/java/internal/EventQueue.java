@@ -2,6 +2,7 @@ package ly.count.sdk.java.internal;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nonnull;
 
@@ -32,7 +33,9 @@ public class EventQueue {
 
     protected List<EventImpl> getEQ() {
         synchronized (lockEQ) {
-            return eventQueueMemoryCache;
+            List<EventImpl> copy = new ArrayList<>(eventQueueMemoryCache);
+            Collections.copy(copy, eventQueueMemoryCache);
+            return copy;
         }
     }
 
