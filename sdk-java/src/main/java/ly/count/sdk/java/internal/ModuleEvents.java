@@ -17,7 +17,7 @@ public class ModuleEvents extends ModuleBase {
     public void init(InternalConfig config) {
         super.init(config);
         L.d("[ModuleEvents] init: config = " + config);
-        eventQueue = new EventQueue(L, config.getEventsBufferSize());
+        eventQueue = new EventQueue(L);
         eventQueue.restoreFromDisk();
         eventsInterface = new Events();
     }
@@ -69,7 +69,7 @@ public class ModuleEvents extends ModuleBase {
     private synchronized void addEventsToRequestQ(String deviceId) {
         L.d("[ModuleEvents] addEventsToRequestQ");
 
-        if (eventQueue.eventQueueMemoryCache.isEmpty()) {
+        if (eventQueue.getEQ().isEmpty()) {
             L.d("[ModuleEvents] addEventsToRequestQ, eventQueueMemoryCache is empty, skipping");
             return;
         }
@@ -78,7 +78,7 @@ public class ModuleEvents extends ModuleBase {
         if (deviceId != null) {
             request.params.add("device_id", deviceId);
         }
-        request.params.arr("events").put(eventQueue.eventQueueMemoryCache).add();
+        request.params.arr("events").put(eventQueue.getEQ()).add();
         request.own(ModuleEvents.class);
 
         eventQueue.clear();

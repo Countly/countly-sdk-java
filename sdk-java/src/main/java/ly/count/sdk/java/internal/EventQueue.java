@@ -1,10 +1,9 @@
 package ly.count.sdk.java.internal;
 
-import ly.count.sdk.java.Countly;
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import javax.annotation.Nonnull;
 
 public class EventQueue {
 
@@ -12,19 +11,29 @@ public class EventQueue {
     Log L;
     List<EventImpl> eventQueueMemoryCache;
 
+    protected final Object lockEQ = new Object();
+
     protected EventQueue() {
     }
 
-    protected EventQueue(@Nonnull Log logger, int eventThreshold) {
+    protected EventQueue(@Nonnull Log logger) {
         L = logger;
-        eventQueueMemoryCache = new ArrayList<>(eventThreshold);
+        eventQueueMemoryCache = new ArrayList<>();
     }
 
     /**
      * Returns the number of events currently stored in the queue.
      */
     protected int eqSize() {
-        return eventQueueMemoryCache.size();
+        synchronized (lockEQ) {
+            return eventQueueMemoryCache.size();
+        }
+    }
+
+    protected List<EventImpl> getEQ() {
+        synchronized (lockEQ) {
+            return eventQueueMemoryCache;
+        }
     }
 
     void addEvent(@Nonnull final EventImpl event) {
@@ -33,8 +42,10 @@ public class EventQueue {
             return;
         }
         L.d("[EventQueue] Adding event: " + event.key);
-        eventQueueMemoryCache.add(event);
-        writeEventQueueToStorage();
+        synchronized (lockEQ) {
+            eventQueueMemoryCache.add(event);
+            writeEventQueueToStorage();
+        }
     }
 
     /**
@@ -56,20 +67,22 @@ public class EventQueue {
      * Restores events from disk
      */
     void restoreFromDisk() {
-        L.d("[EventQueue] Restoring events from disk");
-        eventQueueMemoryCache.clear();
+        synchronized (lockEQ) {
+            L.d("[EventQueue] Restoring events from disk");
+            eventQueueMemoryCache.clear();
 
-        final String[] array = getEvents();
-        for (String s : array) {
+            final String[] array = getEvents();
+            for (String s : array) {
 
-            final EventImpl event = EventImpl.fromJSON(s, (ev) -> {
-            }, L);
-            if (event != null) {
-                eventQueueMemoryCache.add(event);
+                final EventImpl event = EventImpl.fromJSON(s, (ev) -> {
+                }, L);
+                if (event != null) {
+                    eventQueueMemoryCache.add(event);
+                }
             }
+            // order the events from least to most recent
+            eventQueueMemoryCache.sort((e1, e2) -> (int) (e1.timestamp - e2.timestamp));
         }
-        // order the events from least to most recent
-        eventQueueMemoryCache.sort((e1, e2) -> (int) (e1.timestamp - e2.timestamp));
     }
 
     @Nonnull String joinEvents(@Nonnull final Collection<EventImpl> collection) {
@@ -91,6 +104,8 @@ public class EventQueue {
 
     public void clear() {
         SDKCore.instance.sdkStorage.storeEventQueue("");
-        eventQueueMemoryCache.clear();
+        synchronized (lockEQ) {
+            eventQueueMemoryCache.clear();
+        }
     }
 }
