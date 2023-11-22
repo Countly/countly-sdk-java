@@ -93,6 +93,9 @@ public class MultiThreadingTest {
         events.addAll(TestUtils.getCurrentEQ());
         //print(events);
 
+        Arrays.stream(TestUtils.getCurrentRQ()).filter(r -> r.containsKey("crash") && !r.get("crash").contains("java.lang.Exception")).forEach(r -> {
+            Assert.assertNull(r.get("crash")); // validate that there is no unhandled sdk crash occurs
+        });
         Assert.assertEquals(feedbackThreads, feedbackWidgetCounter.get());
         Assert.assertEquals(crashThreads, crashCounter.get());
         Assert.assertEquals(viewThreads, viewCounter.get());
