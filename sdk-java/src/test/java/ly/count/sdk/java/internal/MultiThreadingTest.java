@@ -12,6 +12,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mockito;
 
 @RunWith(JUnit4.class)
 public class MultiThreadingTest {
@@ -29,6 +30,7 @@ public class MultiThreadingTest {
     public void multiThread() throws BrokenBarrierException, InterruptedException {
         CountlyTimer.TIMER_DELAY_MS = 1;
         Countly.instance().init(getAllConfig());
+
         int eventThreads = 50;
         int viewThreads = 50;
         int locationThreads = 50;
@@ -48,6 +50,7 @@ public class MultiThreadingTest {
         }
 
         gate.await();
+        Storage.await(Mockito.mock(Log.class));
 
         for (Thread t : runs) {
             t.join();
@@ -64,7 +67,10 @@ public class MultiThreadingTest {
         System.out.println(events.stream().filter(e -> e.key.equals("[CLY]_survey")).count());
         System.out.println(events.stream().filter(e -> e.key.equals("[CLY]_view")).count());
         System.out.println(events.stream().filter(e -> !e.key.equals("[CLY]_view") && !e.key.equals("[CLY]_survey")).count());
-        System.out.println(Arrays.stream(TestUtils.getCurrentRQ()).filter(r -> r.containsKey("crash")).count());
+        System.out.println((int) Arrays.stream(TestUtils.getCurrentRQ()).filter(r -> r.containsKey("crash")).map(r -> {
+            System.out.println(r.get("crash"));
+            return r.get("crash");
+        }).count());
     }
 
     private void submitFeedbackWidget(int feedbackThreads, List<Thread> runs, CyclicBarrier gate) {
