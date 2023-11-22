@@ -16,9 +16,9 @@ public class EventQueue {
     protected EventQueue() {
     }
 
-    protected EventQueue(@Nonnull Log logger) {
+    protected EventQueue(@Nonnull Log logger, int eventThreshold) {
         L = logger;
-        eventQueueMemoryCache = new ArrayList<>();
+        eventQueueMemoryCache = new ArrayList<>(eventThreshold);
     }
 
     /**

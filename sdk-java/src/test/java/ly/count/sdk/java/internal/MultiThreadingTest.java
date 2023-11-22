@@ -5,9 +5,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.atomic.AtomicInteger;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -26,11 +28,36 @@ public class MultiThreadingTest {
         TestUtils.createCleanTestState();
     }
 
+    AtomicInteger feedbackWidgetCounter = new AtomicInteger(0);
+    AtomicInteger crashCounter = new AtomicInteger(0);
+    AtomicInteger viewCounter = new AtomicInteger(0);
+    AtomicInteger eventCounter = new AtomicInteger(0);
+    AtomicInteger locationCounter = new AtomicInteger(0);
+
+    /**
+     * Test that all modules are thread safe, and called at the desired count
+     *
+     * @throws BrokenBarrierException BrokenBarrierException
+     * @throws InterruptedException InterruptedException
+     */
     @Test
     public void multiThread() throws BrokenBarrierException, InterruptedException {
         CountlyTimer.TIMER_DELAY_MS = 1;
         Countly.instance().init(getAllConfig());
 
+        int rqSize = TestUtils.getCurrentRQ().length;
+        List<EventImpl> events = new ArrayList<>();
+        for (int rqIdx = 0; rqIdx < rqSize; rqIdx++) {
+            events.addAll(TestUtils.readEventsFromRequest(rqIdx, TestUtils.DEVICE_ID));
+        }
+        events.addAll(TestUtils.getCurrentEQ());
+
+        Assert.assertEquals(0, feedbackWidgetCounter.get());
+        Assert.assertEquals(0, crashCounter.get());
+        Assert.assertEquals(0, viewCounter.get());
+        Assert.assertEquals(0, eventCounter.get());
+        Assert.assertEquals(0, locationCounter.get());
+        //print(events);
         int eventThreads = 50;
         int viewThreads = 50;
         int locationThreads = 50;
@@ -48,7 +75,7 @@ public class MultiThreadingTest {
         for (Thread t : runs) {
             t.start();
         }
-        
+
         gate.await();
         Storage.await(Mockito.mock(Log.class));
 
@@ -56,14 +83,24 @@ public class MultiThreadingTest {
             t.join();
         }
 
-        int rqSize = TestUtils.getCurrentRQ().length;
-        List<EventImpl> events = new ArrayList<>();
+        rqSize = TestUtils.getCurrentRQ().length;
+        events = new ArrayList<>();
 
         for (int rqIdx = 0; rqIdx < rqSize; rqIdx++) {
             events.addAll(TestUtils.readEventsFromRequest(rqIdx, TestUtils.DEVICE_ID));
         }
 
         events.addAll(TestUtils.getCurrentEQ());
+        //print(events);
+
+        Assert.assertEquals(feedbackThreads, feedbackWidgetCounter.get());
+        Assert.assertEquals(crashThreads, crashCounter.get());
+        Assert.assertEquals(viewThreads, viewCounter.get());
+        Assert.assertEquals(eventThreads, eventCounter.get());
+        Assert.assertEquals(locationThreads, locationCounter.get());
+    }
+
+    private void print(List<EventImpl> events) {
         System.out.println(events.stream().filter(e -> e.key.equals("[CLY]_survey")).count());
         System.out.println(events.stream().filter(e -> e.key.equals("[CLY]_view")).count());
         System.out.println(events.stream().filter(e -> !e.key.equals("[CLY]_view") && !e.key.equals("[CLY]_survey")).count());
@@ -71,6 +108,12 @@ public class MultiThreadingTest {
         Arrays.stream(TestUtils.getCurrentRQ()).filter(r -> r.containsKey("crash") && !r.get("crash").contains("java.lang.Exception")).forEach(r -> {
             System.out.println(r.get("crash"));
         });
+        System.out.println("-------------------- CALL COUNTS -----------------");
+        System.out.println("feedbackWidgetCounter: " + feedbackWidgetCounter.get());
+        System.out.println("crashCounter: " + crashCounter.get());
+        System.out.println("viewCounter: " + viewCounter.get());
+        System.out.println("eventCounter: " + eventCounter.get());
+        System.out.println("locationCounter: " + locationCounter.get());
     }
 
     private void submitFeedbackWidget(int feedbackThreads, List<Thread> runs, CyclicBarrier gate) {
@@ -84,6 +127,7 @@ public class MultiThreadingTest {
                 feedbackWidget.name = "testThreadFeedbackWidget_" + finalA;
                 feedbackWidget.tags = new String[] { "testThreadFeedbackWidget_" + finalA };
                 Countly.instance().feedback().reportFeedbackWidgetManually(feedbackWidget, null, null);
+                feedbackWidgetCounter.incrementAndGet();
             }));
         }
     }
@@ -102,6 +146,7 @@ public class MultiThreadingTest {
             runs.add(new Thread(() -> {
                 gateAwait(gate);
                 Countly.instance().addLocation(finalA, finalA + 1);
+                locationCounter.incrementAndGet();
             }));
         }
     }
@@ -112,6 +157,7 @@ public class MultiThreadingTest {
             runs.add(new Thread(() -> {
                 gateAwait(gate);
                 Countly.instance().addCrashReport(new Exception("testThreadCrash_" + finalA), true);
+                crashCounter.incrementAndGet();
             }));
         }
     }
@@ -122,6 +168,7 @@ public class MultiThreadingTest {
             runs.add(new Thread(() -> {
                 gateAwait(gate);
                 Countly.instance().view("testThreadView_" + finalA).start(false);
+                viewCounter.incrementAndGet();
             }));
         }
     }
@@ -132,6 +179,7 @@ public class MultiThreadingTest {
             runs.add(new Thread(() -> {
                 gateAwait(gate);
                 Countly.instance().events().recordEvent("testThreadEvent_" + finalA, finalA);
+                eventCounter.incrementAndGet();
             }));
         }
     }

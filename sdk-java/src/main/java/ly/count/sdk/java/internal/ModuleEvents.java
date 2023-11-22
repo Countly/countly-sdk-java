@@ -17,7 +17,7 @@ public class ModuleEvents extends ModuleBase {
     public void init(InternalConfig config) {
         super.init(config);
         L.d("[ModuleEvents] init: config = " + config);
-        eventQueue = new EventQueue(L);
+        eventQueue = new EventQueue(L, config.getEventsBufferSize());
         eventQueue.restoreFromDisk();
         eventsInterface = new Events();
     }
