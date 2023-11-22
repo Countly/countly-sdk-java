@@ -324,8 +324,12 @@ public class TestUtils {
     static List<EventImpl> readEventsFromRequest(int requestIndex, String deviceId) {
         Map<String, String> request = getCurrentRQ()[requestIndex];
         validateRequiredParams(request, deviceId);
-        JSONArray array = new JSONArray(request.get("events"));
+        String events = request.get("events");
         List<EventImpl> result = new ArrayList<>();
+        if (events == null) {
+            return result;
+        }
+        JSONArray array = new JSONArray(events);
 
         array.forEach(value -> {
             result.add(EventImpl.fromJSON(value.toString(), (ev) -> {
