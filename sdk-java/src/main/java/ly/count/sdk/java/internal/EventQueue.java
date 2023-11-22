@@ -32,7 +32,7 @@ public class EventQueue {
 
     protected List<EventImpl> getEQ() {
         synchronized (lockEQ) {
-            return eventQueueMemoryCache;
+            return new ArrayList<>(eventQueueMemoryCache);
         }
     }
 

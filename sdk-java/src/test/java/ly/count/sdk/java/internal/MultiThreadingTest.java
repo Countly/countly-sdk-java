@@ -48,7 +48,7 @@ public class MultiThreadingTest {
         for (Thread t : runs) {
             t.start();
         }
-
+        
         gate.await();
         Storage.await(Mockito.mock(Log.class));
 
@@ -67,10 +67,10 @@ public class MultiThreadingTest {
         System.out.println(events.stream().filter(e -> e.key.equals("[CLY]_survey")).count());
         System.out.println(events.stream().filter(e -> e.key.equals("[CLY]_view")).count());
         System.out.println(events.stream().filter(e -> !e.key.equals("[CLY]_view") && !e.key.equals("[CLY]_survey")).count());
-        System.out.println((int) Arrays.stream(TestUtils.getCurrentRQ()).filter(r -> r.containsKey("crash")).map(r -> {
+        System.out.println((int) Arrays.stream(TestUtils.getCurrentRQ()).filter(r -> r.containsKey("crash")).count());
+        Arrays.stream(TestUtils.getCurrentRQ()).filter(r -> r.containsKey("crash") && !r.get("crash").contains("java.lang.Exception")).forEach(r -> {
             System.out.println(r.get("crash"));
-            return r.get("crash");
-        }).count());
+        });
     }
 
     private void submitFeedbackWidget(int feedbackThreads, List<Thread> runs, CyclicBarrier gate) {
