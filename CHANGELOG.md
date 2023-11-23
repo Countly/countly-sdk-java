@@ -10,7 +10,7 @@
 * Fixed a bug where setting organization of the user would not work.
 
 * Deprecated "Countly::backendMode()" call, use "Countly::backendM" instead via "instance()" call.
-* Deprecated "Usage::addCrashReport" call, use "Countly::crash" instead via "instance()" call.
+* Deprecated "Usage::addCrashReport()" call, use "Countly::crash" instead via "instance()" call.
 * Deprecated "Countly::backendMode()" call, use "Countly::backendM" instead via "instance()" call.
 * The following methods are deprecated from the "UserEditor" interface:
   * "commit()" instead use "Countly::userProfile::save" via "instance()" call
