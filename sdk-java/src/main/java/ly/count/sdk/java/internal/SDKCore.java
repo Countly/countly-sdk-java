@@ -57,7 +57,7 @@ public class SDKCore {
         //moduleMappings.put(CoreFeature.Logs.getIndex(), Log.class);
         moduleMappings.put(CoreFeature.Views.getIndex(), ModuleViews.class);
         moduleMappings.put(CoreFeature.Sessions.getIndex(), ModuleSessions.class);
-        moduleMappings.put(CoreFeature.CrashReporting.getIndex(), ModuleCrash.class);
+        moduleMappings.put(CoreFeature.CrashReporting.getIndex(), ModuleCrashes.class);
         moduleMappings.put(CoreFeature.BackendMode.getIndex(), ModuleBackendMode.class);
         moduleMappings.put(CoreFeature.Feedback.getIndex(), ModuleFeedback.class);
         moduleMappings.put(CoreFeature.Events.getIndex(), ModuleEvents.class);
@@ -388,6 +388,15 @@ public class SDKCore {
         return module(ModuleFeedback.class).feedbackInterface;
     }
 
+    public ModuleCrashes.Crashes crashes() {
+        if (!hasConsentForFeature(CoreFeature.CrashReporting)) {
+            L.v("[SDKCore] crash, Crash Reporting feature has no consent, returning null");
+            return null;
+        }
+
+        return module(ModuleCrashes.class).crashInterface;
+    }
+
     public ModuleDeviceIdCore.DeviceId deviceId() {
         return module(ModuleDeviceIdCore.class).deviceIdInterface;
     }
@@ -575,24 +584,6 @@ public class SDKCore {
         return config;
     }
 
-    /**
-     * Report a crash
-     *
-     * @param config to configure
-     * @param t throwable
-     * @param fatal is fatal
-     * @param name of crash
-     * @param segments data
-     * @param logs of crash
-     */
-    public void onCrash(final InternalConfig config, Throwable t, boolean fatal, String name, Map<String, String> segments, String[] logs) {
-        L.i("[SDKCore] onCrash: t: " + t.toString() + " fatal: " + fatal + " name: " + name + " segments: " + segments);
-        ModuleCrash module = (ModuleCrash) module(CoreFeature.CrashReporting.getIndex());
-        if (module != null) {
-            module.onCrash(config, t, fatal, name, segments, logs);
-        }
-    }
-
     public void notifyModulesDeviceIdChanged(@Nullable String old, final boolean withMerge) {
         L.d("[SDKCore] notifyModulesDeviceIdChanged, newDeviceId:[" + config.getDeviceId() + "], oldDeviceId:[ " + old + "]");
         Config.DID id = config.getDeviceId();
@@ -733,7 +724,7 @@ public class SDKCore {
         }
 
         Request request = ModuleRequests.nonSessionRequest(config);
-        ModuleCrash.putCrashIntoParams(crash, request.params);
+        request.params.add("crash", crash.getJSON());
 
         ModuleRequests.addRequiredParametersToParams(config, request.params);
         ModuleRequests.addRequiredTimeParametersToParams(request.params);

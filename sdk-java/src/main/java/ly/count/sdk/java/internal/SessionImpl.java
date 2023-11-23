@@ -6,10 +6,12 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.Event;
 import ly.count.sdk.java.Session;
 import ly.count.sdk.java.Usage;
@@ -327,17 +329,16 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     @Override
     public Session addCrashReport(Throwable t, boolean fatal, String name, Map<String, String> segments, String... logs) {
-        if (config.isBackendModeEnabled()) {
-            L.w("[SessionImpl] addCrashReport: Skipping crash, backend mode is enabled!");
-            return this;
-        }
-
         if (!SDKCore.enabled(CoreFeature.CrashReporting)) {
             L.i("[SessionImpl] addCrashReport: Skipping event - feature is not enabled");
             return this;
         }
 
-        SDKCore.instance.onCrash(config, t, fatal, name, segments, logs);
+        if (fatal) {
+            Countly.instance().crashes().recordUnhandledException(t, new HashMap<>(segments));
+        } else {
+            Countly.instance().crashes().recordHandledException(t, new HashMap<>(segments));
+        }
         return this;
     }
 
