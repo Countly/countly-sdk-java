@@ -10,6 +10,7 @@ import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.User;
 import ly.count.sdk.java.UserEditor;
+import ly.count.sdk.java.UserPropertyKeys;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.After;
@@ -622,14 +623,14 @@ public class UserEditorTests {
     public void set_notAString() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
         sessionHandler(() -> Countly.instance().user().edit()
-            .set(ModuleUserProfile.NAME_KEY, new TestUtils.AtomicString("Magical"))
-            .set(ModuleUserProfile.USERNAME_KEY, new TestUtils.AtomicString("TestUsername"))
-            .set(ModuleUserProfile.EMAIL_KEY, new TestUtils.AtomicString("test@test.ly"))
-            .set(ModuleUserProfile.ORG_KEY, new TestUtils.AtomicString("Magical Org"))
-            .set(ModuleUserProfile.PHONE_KEY, 123456789)
-            .set(ModuleUserProfile.PICTURE_KEY, new TestUtils.AtomicString("Not a picture"))
-            .set(ModuleUserProfile.PICTURE_PATH_KEY, new TestUtils.AtomicString("Not a picture path"))
-            .set(ModuleUserProfile.BYEAR_KEY, new TestUtils.AtomicString("Not a birthyear"))
+            .set(UserPropertyKeys.NAME, new TestUtils.AtomicString("Magical"))
+            .set(UserPropertyKeys.USERNAME, new TestUtils.AtomicString("TestUsername"))
+            .set(UserPropertyKeys.EMAIL, new TestUtils.AtomicString("test@test.ly"))
+            .set(UserPropertyKeys.ORGANIZATION, new TestUtils.AtomicString("Magical Org"))
+            .set(UserPropertyKeys.PHONE, 123456789)
+            .set(UserPropertyKeys.PICTURE, new TestUtils.AtomicString("Not a picture"))
+            .set(UserPropertyKeys.PICTURE_PATH, new TestUtils.AtomicString("Not a picture path"))
+            .set(UserPropertyKeys.BIRTHYEAR, new TestUtils.AtomicString("Not a birthyear"))
             //.set(ModuleUserProfile.LOCATION_KEY, new TestUtils.AtomicString("Not a location"))
             //.set(ModuleUserProfile.CITY_KEY, new TestUtils.AtomicString("Not a city"))
             //.set(ModuleUserProfile.COUNTRY_KEY, new TestUtils.AtomicString("Not a country"))

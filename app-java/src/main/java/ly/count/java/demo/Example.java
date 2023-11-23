@@ -8,53 +8,43 @@ import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
+import ly.count.sdk.java.UserPropertyKeys;
 import ly.count.sdk.java.internal.CountlyFeedbackWidget;
 import ly.count.sdk.java.internal.LogCallback;
 
 public class Example {
 
     static void basicEvent() {
-        Countly.api().event("Basic Event").record();
+        Countly.instance().events().recordEvent("Basic Event");
     }
 
     static void eventWithSumAndCount() {
-        Countly.api().event("Event With Sum And Count")
-            .setSum(23)
-            .setCount(2).record();
+        Countly.instance().events().recordEvent("Event With Sum And Count", 2, 23.0);
     }
 
     static void eventWithSegmentation() {
-
-        Map<String, String> segment = new ConcurrentHashMap<>();
+        Map<String, Object> segment = new ConcurrentHashMap<>();
         segment.put("Time Spent", "60");
         segment.put("Retry Attempts", "60");
 
-        Countly.api().event("Event With Sum")
-            .setSegmentation(segment).record();
+        Countly.instance().events().recordEvent("Event With Segmentation", segment);
     }
 
     static void eventWithSumAndSegmentation() {
-        Map<String, String> segment = new ConcurrentHashMap<String, String>() {{
-            put("Time Spent", "60");
-            put("Retry Attempts", "60");
-        }};
+        Map<String, Object> segment = new ConcurrentHashMap<>();
+        segment.put("Time Spent", "60");
+        segment.put("Retry Attempts", "60");
 
-        Countly.api().event("Event With Sum")
-            .setSum(23)
-            .setSegmentation(segment).record();
+        Countly.instance().events().recordEvent("Event With Sum And Segmentation", segment, 1, 23.8);
     }
 
     static void timedEventWithSumCountSegmentationAndDuration() {
-        Map<String, String> segment = new ConcurrentHashMap<String, String>() {{
-            put("Time Spent", "60");
-            put("Retry Attempts", "60");
-        }};
+        Map<String, Object> segment = new ConcurrentHashMap<>();
+        segment.put("Time Spent", "60");
+        segment.put("Retry Attempts", "60");
 
-        Countly.api().timedEvent("timed event")
-            .setCount(2)
-            .setSum(5)
-            .setSegmentation(segment)
-            .setDuration(5.3).record();
+        Countly.instance().events().startEvent("timed event");
+        Countly.instance().events().endEvent("timed event", segment, 2, 5.3);
     }
 
     static void setLocation() {
@@ -62,22 +52,23 @@ public class Example {
     }
 
     static void setUserProfile() {
-        Countly.api().user().edit()
-            .setName("Full name")
-            .setUsername("nickname")
-            .setEmail("test@test.com")
-            .setOrg("Tester")
-            .setPhone("+123456789")
-            .commit();
+        Countly.instance().userProfile().setProperty(UserPropertyKeys.NAME, "Full name");
+        Countly.instance().userProfile().setProperty(UserPropertyKeys.USERNAME, "nickname");
+        Countly.instance().userProfile().setProperty(UserPropertyKeys.EMAIL, "test@test.com");
+        Countly.instance().userProfile().setProperty(UserPropertyKeys.ORGANIZATION, "Tester");
+        Countly.instance().userProfile().setProperty(UserPropertyKeys.PHONE, "+123456789");
+        Countly.instance().userProfile().setProperty(UserPropertyKeys.PICTURE, new byte[] { 1, 2, 3, 4, 5 });
+        Countly.instance().userProfile().setProperty(UserPropertyKeys.PICTURE_PATH, "test.png");
+        Countly.instance().userProfile().setProperty(UserPropertyKeys.PICTURE_PATH, "https://someurl.com/test.png");
+        Countly.instance().userProfile().save();
     }
 
     static void setCustomProfile() {
-        Countly.api().user().edit()
-            .set("mostFavoritePet", "dog")
-            .inc("phoneCalls", 1)
-            .pushUnique("tags", "fan")
-            .pushUnique("skill", "singer")
-            .commit();
+        Countly.instance().userProfile().setProperty("mostFavoritePet", "dog");
+        Countly.instance().userProfile().increment("phoneCalls");
+        Countly.instance().userProfile().pushUnique("tags", "fan");
+        Countly.instance().userProfile().pushUnique("tags", "singer");
+        Countly.instance().userProfile().save();
     }
 
     static List<CountlyFeedbackWidget> getFeedbackWidgets() {
@@ -146,11 +137,11 @@ public class Example {
     }
 
     static void changeDeviceIdWithMerge() {
-        Countly.session().changeDeviceIdWithMerge(randomId());
+        Countly.instance().deviceId().changeWithMerge(randomId());
     }
 
     static void changeDeviceIdWithoutMerge() {
-        Countly.session().changeDeviceIdWithoutMerge(randomId());
+        Countly.instance().deviceId().changeWithoutMerge(randomId());
     }
 
     static void feedbackWidgets(Scanner scanner) {
@@ -326,7 +317,7 @@ public class Example {
 
         // Gracefully stop SDK to stop all SDK threads and allow this app to exit
         // Just in case, usually you don't want to clear data to reuse device id for next app runs
-        // and to send any requests which might not be sent
-        Countly.stop(false);
+        // and to send any requests which might not be sent use Countly.instance.stop()
+        Countly.instance().halt(); // this call clears all data, including device id, requests queue etc.
     }
 }

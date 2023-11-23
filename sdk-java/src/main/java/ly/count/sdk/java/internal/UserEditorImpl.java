@@ -4,6 +4,7 @@ import java.io.File;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.User;
 import ly.count.sdk.java.UserEditor;
+import ly.count.sdk.java.UserPropertyKeys;
 import org.json.JSONException;
 
 public class UserEditorImpl implements UserEditor {
@@ -32,38 +33,38 @@ public class UserEditorImpl implements UserEditor {
     @Override
     public UserEditor setName(String value) {
         L.d("setName: value = " + value);
-        return set(ModuleUserProfile.NAME_KEY, value);
+        return set(UserPropertyKeys.NAME, value);
     }
 
     @Override
     public UserEditor setUsername(String value) {
         L.d("setUsername: value = " + value);
-        return set(ModuleUserProfile.USERNAME_KEY, value);
+        return set(UserPropertyKeys.USERNAME, value);
     }
 
     @Override
     public UserEditor setEmail(String value) {
         L.d("setEmail: value = " + value);
-        return set(ModuleUserProfile.EMAIL_KEY, value);
+        return set(UserPropertyKeys.EMAIL, value);
     }
 
     @Override
     public UserEditor setOrg(String value) {
         L.d("setOrg: value = " + value);
-        return set(ModuleUserProfile.ORG_KEY, value);
+        return set(UserPropertyKeys.ORGANIZATION, value);
     }
 
     @Override
     public UserEditor setPhone(String value) {
         L.d("setPhone: value = " + value);
-        return set(ModuleUserProfile.PHONE_KEY, value);
+        return set(UserPropertyKeys.PHONE, value);
     }
 
     //we set the bytes for the local picture
     @Override
     public UserEditor setPicture(byte[] picture) {
         L.d("setPicture: picture = " + picture);
-        return set(ModuleUserProfile.PICTURE_KEY, picture);
+        return set(UserPropertyKeys.PICTURE, picture);
     }
 
     //we set the url for either the online picture or a local path picture
@@ -72,7 +73,7 @@ public class UserEditorImpl implements UserEditor {
         L.d("[UserEditorImpl] setPicturePath, picturePath = " + picturePath);
         if (picturePath == null || Utils.isValidURL(picturePath) || (new File(picturePath)).isFile()) {
             //if it is a thing we can use, continue
-            return set(ModuleUserProfile.PICTURE_PATH_KEY, picturePath);
+            return set(UserPropertyKeys.PICTURE_PATH, picturePath);
         }
         L.w("[UserEditorImpl] setPicturePath, picturePath is not a valid file path or url");
         return this;
@@ -81,19 +82,19 @@ public class UserEditorImpl implements UserEditor {
     @Override
     public UserEditor setGender(Object gender) {
         L.d("setGender: gender = " + gender);
-        return set(ModuleUserProfile.GENDER_KEY, gender);
+        return set(UserPropertyKeys.GENDER, gender);
     }
 
     @Override
     public UserEditor setBirthyear(int birthyear) {
         L.d("setBirthyear: birthyear = " + birthyear);
-        return set(ModuleUserProfile.BYEAR_KEY, birthyear);
+        return set(UserPropertyKeys.BIRTHYEAR, birthyear);
     }
 
     @Override
     public UserEditor setBirthyear(String birthyear) {
         L.d("setBirthyear: birthyear = " + birthyear);
-        return set(ModuleUserProfile.BYEAR_KEY, birthyear);
+        return set(UserPropertyKeys.BIRTHYEAR, birthyear);
     }
 
     @Override
