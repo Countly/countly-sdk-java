@@ -2,7 +2,6 @@ package ly.count.sdk.java.internal;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 
 public class ModuleLocation extends ModuleBase {
@@ -39,8 +38,8 @@ public class ModuleLocation extends ModuleBase {
 
     void sendLocation() {
         L.d("[ModuleLocation] Calling 'sendLocation'");
-        SessionImpl session = internalConfig.sdk.session(null);
-        if (!(internalConfig.isFeatureEnabled(Config.Feature.Sessions) && session != null && session.getBegan() == null)) {
+        SessionImpl session = internalConfig.sdk.getSession();
+        if (session == null || session.getBegan() != null) {
             ModuleRequests.pushAsync(internalConfig, new Request(prepareLocationParams()), true, null);
         } // else case, values are added to the session begin request
     }

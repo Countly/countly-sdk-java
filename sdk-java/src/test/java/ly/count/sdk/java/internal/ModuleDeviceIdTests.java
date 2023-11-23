@@ -242,18 +242,19 @@ public class ModuleDeviceIdTests {
      * SDK must generate an id first, then should change with developer supplied. Second call must not change anything
      */
     @Test
-    public void changeWithMerge_sameDeviceId() {
+    public void changeWithMerge_sameDeviceId() throws InterruptedException {
         AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(new TestUtils.AtomicString(TestUtils.DEVICE_ID), false, DeviceIdType.DEVELOPER_SUPPLIED);
         Countly.instance().init(TestUtils.getConfigDeviceId(null)); // to create sdk generated device id
         setupView_Event_Session();
+        Thread.sleep(200); // wait for session request to written to the disk
         validateBeganSessionRequest(); // also validates rq size is 1
 
         String oldDeviceId = Countly.instance().deviceId().getID();
         validateDeviceIdIsSdkGenerated();
         Assert.assertEquals(0, callCount.get());
-
         Assert.assertEquals(2, TestUtils.getCurrentEQ().size()); // one view and one casual event
         Countly.instance().deviceId().changeWithMerge(TestUtils.DEVICE_ID);
+        Thread.sleep(200); // wait for request to be written to the disk
         Assert.assertEquals(2, TestUtils.getCurrentEQ().size()); // size should not change because it is merge request
         Assert.assertEquals(1, callCount.get());
         validateDeviceIdWithMergeChange(oldDeviceId, 1, 2);
