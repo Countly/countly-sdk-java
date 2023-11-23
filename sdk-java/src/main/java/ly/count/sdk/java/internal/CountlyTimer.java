@@ -8,6 +8,7 @@ public class CountlyTimer {
 
     private final Log L;
     private ScheduledExecutorService timerService;
+    protected static int TIMER_DELAY_MS = 0; // for testing purposes
 
     protected CountlyTimer(Log logger) {
         L = logger;
@@ -34,11 +35,19 @@ public class CountlyTimer {
 
     protected void startTimer(long timerDelay, Runnable runnable) {
         L.i("[CountlyTimer] startTimer, Starting global timer timerDelay: [" + timerDelay + "]");
+        timerDelay = timerDelay * 1000;
 
-        if (timerDelay < 1) {
-            timerDelay = 1;
+        if (timerDelay < 1000) {
+            timerDelay = 1000;
         }
 
-        timerService.scheduleWithFixedDelay(runnable, timerDelay, timerDelay, TimeUnit.SECONDS);
+        long startTime = timerDelay;
+
+        if (TIMER_DELAY_MS > 0) {
+            timerDelay = TIMER_DELAY_MS;
+            startTime = 0;
+        }
+
+        timerService.scheduleWithFixedDelay(runnable, startTime, timerDelay, TimeUnit.MILLISECONDS);
     }
 }

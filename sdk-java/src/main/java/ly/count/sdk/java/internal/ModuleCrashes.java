@@ -1,6 +1,7 @@
 package ly.count.sdk.java.internal;
 
 import java.util.Map;
+import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.Crash;
 import ly.count.sdk.java.CrashProcessor;
 
@@ -8,7 +9,7 @@ import ly.count.sdk.java.CrashProcessor;
  * Crash reporting functionality
  */
 
-public class ModuleCrash extends ModuleBase {
+public class ModuleCrashes extends ModuleBase {
 
     protected long started = 0;
     private boolean crashed = false;
@@ -16,6 +17,8 @@ public class ModuleCrash extends ModuleBase {
     protected InternalConfig config;
     private Thread.UncaughtExceptionHandler previousHandler = null;
     protected CrashProcessor crashProcessor = null;
+
+    Crashes crashInterface;
 
     @Override
     public void init(InternalConfig config) {
@@ -29,6 +32,7 @@ public class ModuleCrash extends ModuleBase {
                 L.e("[ModuleCrash] Cannot instantiate CrashProcessor" + t);
             }
         }
+        crashInterface = new Crashes();
     }
 
     @Override
@@ -43,6 +47,7 @@ public class ModuleCrash extends ModuleBase {
         } catch (Throwable t) {
             L.e("[ModuleCrash] Exception while stopping crash reporting" + t);
         }
+        crashInterface = null;
     }
 
     @Override
@@ -54,7 +59,7 @@ public class ModuleCrash extends ModuleBase {
             crashed = true;
 
             if (isActive()) {
-                onCrash(config, throwable, true, null, null);
+                recordExceptionInternal(throwable, false, null);
             }
 
             if (handler != null) {
@@ -64,18 +69,17 @@ public class ModuleCrash extends ModuleBase {
         started = System.nanoTime();
     }
 
-    public CrashImpl onCrash(InternalConfig config, Throwable t, boolean fatal, String name, Map<String, String> segments, String... logs) {
-
+    protected void recordExceptionInternal(Throwable t, boolean handled, Map<String, Object> segments) {
         if (config.isBackendModeEnabled()) {
-            L.w("[ModuleCrash] onCrash: Skipping crash, backend mode is enabled!");
-            return null;
+            L.w("[ModuleCrash] recordExceptionInternal, Skipping crash, backend mode is enabled!");
+            return;
         }
 
         if (t == null) {
-            L.e("[ModuleCrash] Throwable cannot be null");
-            return null;
+            L.e("[ModuleCrash] recordExceptionInternal, Throwable cannot be null");
+            return;
         }
-        return onCrash(config, new CrashImpl(L).addThrowable(t).setFatal(fatal).setName(name).setSegments(segments).setLogs(logs));
+        onCrash(config, new CrashImpl(L).addThrowable(t).setFatal(!handled).addSegments(segments));
     }
 
     public CrashImpl onCrash(InternalConfig config, CrashImpl crash) {
@@ -113,7 +117,50 @@ public class ModuleCrash extends ModuleBase {
         return crash;
     }
 
-    public static void putCrashIntoParams(CrashImpl crash, Params params) {
-        params.add("crash", crash.getJSON());
+    public class Crashes {
+
+        /**
+         * Log handled exception to report it to server as non-fatal crash
+         *
+         * @param exception Throwable to log
+         */
+        public void recordHandledException(Throwable exception) {
+            synchronized (Countly.instance()) {
+                recordExceptionInternal(exception, true, null);
+            }
+        }
+
+        /**
+         * Log unhandled exception to report it to server as fatal crash
+         *
+         * @param exception Throwable to log
+         */
+        public void recordUnhandledException(Throwable exception) {
+            synchronized (Countly.instance()) {
+                recordExceptionInternal(exception, false, null);
+            }
+        }
+
+        /**
+         * Log handled exception to report it to server as non-fatal crash
+         *
+         * @param exception Throwable to log
+         */
+        public void recordHandledException(final Throwable exception, final Map<String, Object> customSegmentation) {
+            synchronized (Countly.instance()) {
+                recordExceptionInternal(exception, true, customSegmentation);
+            }
+        }
+
+        /**
+         * Log unhandled exception to report it to server as fatal crash
+         *
+         * @param exception Throwable to log
+         */
+        public void recordUnhandledException(final Throwable exception, final Map<String, Object> customSegmentation) {
+            synchronized (Countly.instance()) {
+                recordExceptionInternal(exception, false, customSegmentation);
+            }
+        }
     }
 }

@@ -7,6 +7,7 @@ import ly.count.sdk.java.internal.DeviceIdType;
 import ly.count.sdk.java.internal.InternalConfig;
 import ly.count.sdk.java.internal.Log;
 import ly.count.sdk.java.internal.ModuleBackendMode;
+import ly.count.sdk.java.internal.ModuleCrashes;
 import ly.count.sdk.java.internal.ModuleDeviceIdCore;
 import ly.count.sdk.java.internal.ModuleEvents;
 import ly.count.sdk.java.internal.ModuleFeedback;
@@ -450,6 +451,21 @@ public class Countly implements Usage {
             return null;
         }
         return sdk.events();
+    }
+
+    /**
+     * Crash module calls
+     *
+     * @return crash module otherwise null if SDK is not initialized
+     */
+    public ModuleCrashes.Crashes crashes() {
+        if (!isInitialized()) {
+            if (L != null) {
+                L.e("[Countly] SDK is not initialized yet.");
+            }
+            return null;
+        }
+        return sdk.crashes();
     }
 
     /**

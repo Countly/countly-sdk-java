@@ -4,16 +4,20 @@
   * "setLocale(String)"
 
 * Added the user profiles feature interface, and it is accessible through "Countly::instance()::userProfile()" call.
+
 * Added the location feature interface, and it is accessible through "Countly::instance()::location()" call.
 * Added init time configuration for the location parameters:
   * "setLocation(String countryCode, String city, String location, String ipAddress)"
   * "setDisableLocation()"
+* Crash Reporting interface added and accessible through "Countly::instance()::crash()" call.
 
 * Fixed a bug where setting custom user properties would not work.
 * Fixed a bug where setting organization of the user would not work.
 
 * Deprecated "Countly::backendMode()" call, use "Countly::backendM" instead via "instance()" call.
 * Deprecated "Usage::addLocation(double, double)" call, use "Countly::location::setLocation" instead via "instance()" call.
+* Deprecated "Usage::addCrashReport()" call, use "Countly::crash" instead via "instance()" call.
+* Deprecated "Countly::backendMode()" call, use "Countly::backendM" instead via "instance()" call.
 * The following methods are deprecated from the "UserEditor" interface:
   * "commit()" instead use "Countly::userProfile::save" via "instance()" call
   * "pushUnique(String, Object)" instead use "Countly::userProfile::pushUnique" via "instance()" call

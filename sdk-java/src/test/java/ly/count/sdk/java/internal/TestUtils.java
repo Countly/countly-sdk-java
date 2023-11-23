@@ -63,6 +63,19 @@ public class TestUtils {
         return config;
     }
 
+    static void setAdditionalDeviceMetrics() {
+        Device.dev.setCpu("CPU1.2");
+        Device.dev.setBatteryLevel(0.52f);
+        Device.dev.setManufacturer("Manufacturer");
+        Device.dev.setMuted(true);
+        Device.dev.setOpenGL("OpenGL2.3.1");
+        Device.dev.setOnline(true);
+        Device.dev.setOrientation("portrait");
+        Device.dev.setResolution("100x100");
+        Device.dev.setDevice("Device");
+        Device.dev.setAppVersion("1.0");
+    }
+
     static Config getConfigRemoteConfigs() {
         return getBaseConfig().enableFeatures(Config.Feature.RemoteConfig);
     }
@@ -324,8 +337,12 @@ public class TestUtils {
     static List<EventImpl> readEventsFromRequest(int requestIndex, String deviceId) {
         Map<String, String> request = getCurrentRQ()[requestIndex];
         validateRequiredParams(request, deviceId);
-        JSONArray array = new JSONArray(request.get("events"));
+        String events = request.get("events");
         List<EventImpl> result = new ArrayList<>();
+        if (events == null) {
+            return result;
+        }
+        JSONArray array = new JSONArray(events);
 
         array.forEach(value -> {
             result.add(EventImpl.fromJSON(value.toString(), (ev) -> {
