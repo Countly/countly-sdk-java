@@ -6,20 +6,12 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nonnull;
 import ly.count.sdk.java.Countly;
+import ly.count.sdk.java.PredefinedUserPropertyKeys;
 import ly.count.sdk.java.User;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 public class ModuleUserProfile extends ModuleBase {
-    static final String NAME_KEY = "name";
-    static final String USERNAME_KEY = "username";
-    static final String EMAIL_KEY = "email";
-    static final String ORG_KEY = "organization";
-    static final String PHONE_KEY = "phone";
-    static final String PICTURE_KEY = "picture";
-    static final String PICTURE_PATH_KEY = "picturePath";
-    static final String GENDER_KEY = "gender";
-    static final String BYEAR_KEY = "byear";
     static final String CUSTOM_KEY = "custom";
     static final String PICTURE_IN_USER_PROFILE = "[CLY]_USER_PROFILE_PICTURE";
     boolean isSynced = true;
@@ -107,62 +99,62 @@ public class ModuleUserProfile extends ModuleBase {
         for (String key : sets.keySet()) {
             Object value = sets.get(key);
             switch (key) {
-                case NAME_KEY:
-                case USERNAME_KEY:
-                case EMAIL_KEY:
-                case ORG_KEY:
-                case PHONE_KEY:
+                case PredefinedUserPropertyKeys.NAME:
+                case PredefinedUserPropertyKeys.USERNAME:
+                case PredefinedUserPropertyKeys.EMAIL:
+                case PredefinedUserPropertyKeys.ORGANIZATION:
+                case PredefinedUserPropertyKeys.PHONE:
                     changes.put(key, optString(key, value));
                     break;
-                case PICTURE_KEY:
+                case PredefinedUserPropertyKeys.PICTURE:
                     if (value == null) {
-                        changes.put(PICTURE_KEY, JSONObject.NULL);
+                        changes.put(PredefinedUserPropertyKeys.PICTURE, JSONObject.NULL);
                         internalConfig.sdk.user().picturePath = null;
                         internalConfig.sdk.user().picture = null;
                     } else if (value instanceof byte[]) {
                         internalConfig.sdk.user().picture = (byte[]) value;
                         //set a special value to indicate that the picture information is already stored in memory
-                        changes.put(PICTURE_PATH_KEY, PICTURE_IN_USER_PROFILE);
+                        changes.put(PredefinedUserPropertyKeys.PICTURE_PATH, PICTURE_IN_USER_PROFILE);
                     }
                     break;
-                case PICTURE_PATH_KEY:
+                case PredefinedUserPropertyKeys.PICTURE_PATH:
                     if (value == null || (value instanceof String && ((String) value).isEmpty())) {
-                        changes.put(PICTURE_KEY, JSONObject.NULL);
+                        changes.put(PredefinedUserPropertyKeys.PICTURE, JSONObject.NULL);
                         internalConfig.sdk.user().picturePath = null;
                         internalConfig.sdk.user().picture = null;
                     } else if (value instanceof String) {
                         if (Utils.isValidURL((String) value)) {
                             //if it is a valid URL that means the picture is online, and we want to send the link to the server
-                            changes.put(PICTURE_KEY, value);
+                            changes.put(PredefinedUserPropertyKeys.PICTURE, value);
                         } else {
                             //if we get here then that means it is a local file path which we would send over as bytes to the server
-                            changes.put(PICTURE_PATH_KEY, value);
+                            changes.put(PredefinedUserPropertyKeys.PICTURE_PATH, value);
                         }
                         internalConfig.sdk.user().picturePath = value.toString();
                     } else {
                         L.e("[UserEditorImpl] Won't set user picturePath (must be String or null)");
                     }
                     break;
-                case GENDER_KEY:
+                case PredefinedUserPropertyKeys.GENDER:
                     if (value == null || value instanceof User.Gender) {
-                        changes.put(GENDER_KEY, value == null ? JSONObject.NULL : value.toString());
+                        changes.put(PredefinedUserPropertyKeys.GENDER, value == null ? JSONObject.NULL : value.toString());
                     } else if (value instanceof String) {
                         User.Gender gender = User.Gender.fromString((String) value);
                         if (gender == null) {
                             L.e("[UserEditorImpl] Cannot parse gender string: " + value + " (must be one of 'F' & 'M')");
                         } else {
-                            changes.put(GENDER_KEY, gender.toString());
+                            changes.put(PredefinedUserPropertyKeys.GENDER, gender.toString());
                         }
                     } else {
                         L.e("[UserEditorImpl] Won't set user gender (must be of type User.Gender or one of following Strings: 'F', 'M')");
                     }
                     break;
-                case BYEAR_KEY:
+                case PredefinedUserPropertyKeys.BIRTH_YEAR:
                     if (value == null || value instanceof Integer) {
-                        changes.put(BYEAR_KEY, value == null ? JSONObject.NULL : value);
+                        changes.put(PredefinedUserPropertyKeys.BIRTH_YEAR, value == null ? JSONObject.NULL : value);
                     } else if (value instanceof String) {
                         try {
-                            changes.put(BYEAR_KEY, Integer.parseInt((String) value));
+                            changes.put(PredefinedUserPropertyKeys.BIRTH_YEAR, Integer.parseInt((String) value));
                         } catch (NumberFormatException e) {
                             L.e("[UserEditorImpl] user.birthyear must be either Integer or String which can be parsed to Integer" + e);
                         }
@@ -214,10 +206,10 @@ public class ModuleUserProfile extends ModuleBase {
         Params params = new Params();
         final JSONObject json = new JSONObject();
         perform(json);
-        if (json.has(PICTURE_PATH_KEY)) {
+        if (json.has(PredefinedUserPropertyKeys.PICTURE_PATH)) {
             try {
-                params.add(PICTURE_PATH_KEY, json.getString(PICTURE_PATH_KEY));
-                json.remove(PICTURE_PATH_KEY);
+                params.add(PredefinedUserPropertyKeys.PICTURE_PATH, json.getString(PredefinedUserPropertyKeys.PICTURE_PATH));
+                json.remove(PredefinedUserPropertyKeys.PICTURE_PATH);
             } catch (JSONException e) {
                 L.w("Won't send picturePath" + e);
             }
