@@ -2,7 +2,6 @@ package ly.count.sdk.java.internal;
 
 import java.util.Map;
 import java.util.concurrent.Future;
-import ly.count.sdk.java.User;
 
 /**
  * Centralized place for all requests construction & handling.
@@ -54,20 +53,6 @@ public class ModuleRequests extends ModuleBase {
 
         if (config.getDeviceId() != null) {
             request.params.add(Params.PARAM_DEVICE_ID, config.getDeviceId().id);
-        }
-
-        if (((session != null && session.hasConsent(CoreFeature.Location)) || (session == null && SDKCore.enabled(CoreFeature.Location)))
-            && request.params.has("begin_session")) {
-            User user = SDKCore.instance.user();
-            if (user.country() != null) {
-                request.params.add("country_code", user.country());
-            }
-            if (user.city() != null) {
-                request.params.add("city", user.city());
-            }
-            if (user.location() != null) {
-                request.params.add("location", user.location());
-            }
         }
 
         return request;

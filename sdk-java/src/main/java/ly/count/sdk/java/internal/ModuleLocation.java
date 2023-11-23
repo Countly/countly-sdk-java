@@ -34,18 +34,15 @@ public class ModuleLocation extends ModuleBase {
         location = null;
         ip = null;
         locationDisabled = true;
-        sendLocation(true);
+        sendLocation();
     }
 
-    void sendLocation(boolean locationDisabled) {
+    void sendLocation() {
         L.d("[ModuleLocation] Calling 'sendLocation'");
-        Params params = prepareLocationParams(locationDisabled);
         SessionImpl session = internalConfig.sdk.session(null);
-        if (internalConfig.isFeatureEnabled(Config.Feature.Sessions) && session != null && session.getBegan() == null) {
-            session.params.add(params);
-        } else {
-            ModuleRequests.pushAsync(internalConfig, new Request(params), true, null);
-        }
+        if (!(internalConfig.isFeatureEnabled(Config.Feature.Sessions) && session != null && session.getBegan() == null)) {
+            ModuleRequests.pushAsync(internalConfig, new Request(prepareLocationParams()), true, null);
+        } // else case, values are added to the session begin request
     }
 
     void setLocationInternal(@Nullable String countryCode, @Nullable String cityName, @Nullable String gpsCoordinates, @Nullable String ipAddress) {
@@ -62,10 +59,10 @@ public class ModuleLocation extends ModuleBase {
         if (countryCode != null || city != null || gpsCoordinates != null || ipAddress != null) {
             locationDisabled = false;
         }
-        sendLocation(locationDisabled);
+        sendLocation();
     }
 
-    private Params prepareLocationParams(boolean locationDisabled) {
+    Params prepareLocationParams() {
         Params params = new Params();
 
         if (locationDisabled) {

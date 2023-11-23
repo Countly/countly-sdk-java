@@ -434,11 +434,11 @@ public class SessionImplTests {
         Countly.instance().init(config);
         SessionImpl session = (SessionImpl) Countly.session();
         session.addLocation(1.0, 2.0);
-
+        session.begin(null);
         if (expected == null) {
-            Assert.assertNull(session.params.get("location"));
+            Assert.assertEquals(1, TestUtils.getCurrentRQ().length);
         } else {
-            Assert.assertEquals(expected, session.params.get("location"));
+            Assert.assertEquals(expected, TestUtils.getCurrentRQ()[0].get("location"));
         }
     }
 
