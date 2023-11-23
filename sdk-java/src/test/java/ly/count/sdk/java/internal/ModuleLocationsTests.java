@@ -30,6 +30,7 @@ public class ModuleLocationsTests {
     @Test
     public void disableLocation() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
+        Countly.session().begin();
         Countly.instance().location().disableLocation();
         validateLocationRequestInRQ(UserEditorTests.map("location", ""));
     }
@@ -54,6 +55,7 @@ public class ModuleLocationsTests {
     @Test
     public void setLocation() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
+        Countly.session().begin();
         Countly.instance().location().setLocation("US", "New York", "1,2", "1.1.1.1");
         validateLocationRequestInRQ(UserEditorTests.map("country_code", "US", "city", "New York", "location", "1,2", "ip", "1.1.1.1"));
     }
@@ -66,8 +68,22 @@ public class ModuleLocationsTests {
     @Test
     public void setLocation_cityOnly() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
+        Countly.session().begin();
         Countly.instance().location().setLocation(null, "New York", "1,2", "1.1.1.1");
         validateLocationRequestInRQ(UserEditorTests.map("city", "New York", "location", "1,2", "ip", "1.1.1.1"));
+    }
+
+    /**
+     * "setLocation" with not began session
+     * Validating that location parameters are added to the session
+     * Request queue size should be 1, and it should be a location request
+     */
+    @Test
+    public void setLocation_notBeganSession() {
+        Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location, Config.Feature.Sessions));
+        Countly.instance().location().setLocation("US", "New York", "1,2", "1.1.1.1");
+        Countly.session().begin();
+        validateLocationRequestInRQ(UserEditorTests.map("country_code", "US", "city", "New York", "location", "1,2", "ip", "1.1.1.1", "begin_session", "1"));
     }
 
     /**
@@ -85,7 +101,12 @@ public class ModuleLocationsTests {
         Assert.assertEquals(1, requestsInQ.length);
 
         TestUtils.validateRequiredParams(requestsInQ[0]); // this validates 9 params
-        Assert.assertEquals(9 + expectedParams.size(), requestsInQ[0].size()); // so we need to add expect 9 + params size
+        int expectedSessionParams = 0;
+        if (expectedParams.containsKey("begin_session")) {
+            TestUtils.validateMetrics(requestsInQ[0].get("metrics"));
+            expectedSessionParams += 2; // we need to add 2 more params for metrics and session_id
+        }
+        Assert.assertEquals(9 + expectedParams.size() + expectedSessionParams, requestsInQ[0].size()); // so we need to add expect 9 + params size
         expectedParams.forEach((key, value) -> Assert.assertEquals(value.toString(), requestsInQ[0].get(key)));
     }
 }

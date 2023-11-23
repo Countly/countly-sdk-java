@@ -1,6 +1,8 @@
 package ly.count.sdk.java.internal;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 
 public class ModuleLocation extends ModuleBase {
@@ -37,26 +39,28 @@ public class ModuleLocation extends ModuleBase {
 
     void sendLocation(boolean locationDisabled) {
         L.d("[ModuleLocation] Calling 'sendLocation'");
-        //TODO when session module added, add sending location with begin session request
         Params params = prepareLocationParams(locationDisabled);
-        ModuleRequests.pushAsync(internalConfig, new Request(params), true, null);
+        if (internalConfig.isFeatureEnabled(Config.Feature.Sessions) && Countly.session() != null && Countly.session().getBegan() == null) {
+            ((SessionImpl) Countly.session()).params.add(params);
+        } else {
+            ModuleRequests.pushAsync(internalConfig, new Request(params), true, null);
+        }
     }
 
-    void setLocationInternal(@Nullable String countryCode, @Nullable String city, @Nullable String gpsCoordinates, @Nullable String ipAddress) {
+    void setLocationInternal(@Nullable String countryCode, @Nullable String cityName, @Nullable String gpsCoordinates, @Nullable String ipAddress) {
         L.d("[ModuleLocation] setLocationInternal, Setting location parameters, cc[" + countryCode + "] cy[" + city + "] gps[" + gpsCoordinates + "] ip[" + ipAddress + "]");
 
         if ((countryCode == null && city != null) || (city == null && countryCode != null)) {
             L.w("[ModuleLocation] setLocationInternal, both city and country code need to be set at the same time to be sent");
         }
         country = countryCode;
-        this.city = city;
+        city = cityName;
         location = gpsCoordinates;
         ip = ipAddress;
 
         if (countryCode != null || city != null || gpsCoordinates != null || ipAddress != null) {
             locationDisabled = false;
         }
-
         sendLocation(locationDisabled);
     }
 
@@ -90,6 +94,20 @@ public class ModuleLocation extends ModuleBase {
     @Override
     public void stop(InternalConfig internalConfig, boolean clear) {
         locationInterface = null;
+    }
+
+    @Override
+    public void initFinished(@Nonnull InternalConfig config) {
+        if (config.isLocationDisabled()) {
+            //disable location if needed
+            disableLocationInternal();
+        } else {
+            //if we are not disabling location, check for other set values
+            String[] locParams = config.getLocationParams(); // country, city, location, ip
+            if (locParams[3] != null || locParams[2] != null || locParams[1] != null || locParams[0] != null) {
+                setLocationInternal(locParams[0], locParams[1], locParams[2], locParams[3]);
+            }
+        }
     }
 
     protected void saveLocationToParamsLegacy(Params params) {

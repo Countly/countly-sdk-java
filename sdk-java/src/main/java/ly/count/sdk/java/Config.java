@@ -349,6 +349,12 @@ public class Config {
      */
     protected String sdkPlatform = System.getProperty("os.name");
 
+    protected String location = null;
+    protected String ip = null;
+    protected String city = null;
+    protected String country = null;
+    protected boolean locationEnabled = true;
+
     //    /**
     //    * Maximum size of all string keys
     //    */
@@ -1477,6 +1483,37 @@ public class Config {
      */
     public Config remoteConfigRegisterGlobalCallback(RCDownloadCallback callback) {
         remoteConfigGlobalCallbacks.add(callback);
+        return this;
+    }
+
+    /**
+     * Set global location parameters
+     *
+     * @param countryCode ISO Country code
+     * @param cityName City name
+     * @param gpsCoordinates GPS coordinates in "lat,long" format
+     * @param ipAddress IP address
+     * @return {@code this} instance for method chaining
+     */
+    public Config setLocation(String countryCode, String cityName, String gpsCoordinates, String ipAddress) {
+        country = countryCode;
+        city = cityName;
+        location = gpsCoordinates;
+        ip = ipAddress;
+        return this;
+    }
+
+    /**
+     * Disable location tracking
+     *
+     * @return {@code this} instance for method chaining
+     */
+    public Config setLocationDisabled() {
+        country = null;
+        city = null;
+        location = null;
+        ip = null;
+        locationEnabled = false;
         return this;
     }
 }

@@ -436,9 +436,9 @@ public class SessionImplTests {
         session.addLocation(1.0, 2.0);
 
         if (expected == null) {
-            Assert.assertEquals(0, TestUtils.getCurrentRQ().length);
+            Assert.assertNull(session.params.get("location"));
         } else {
-            Assert.assertEquals(expected, TestUtils.getCurrentRQ()[0].get("location"));
+            Assert.assertEquals(expected, session.params.get("location"));
         }
     }
 

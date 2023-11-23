@@ -193,4 +193,12 @@ public class InternalConfig extends Config {
     Log getLogger() {
         return configLog;
     }
+
+    String[] getLocationParams() {
+        return new String[] { country, city, location, ip };
+    }
+
+    boolean isLocationDisabled() {
+        return !locationEnabled;
+    }
 }
