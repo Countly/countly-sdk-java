@@ -5,6 +5,9 @@
 
 * Added the user profiles feature interface, and it is accessible through "Countly::instance()::userProfile()" call.
 * Added the location feature interface, and it is accessible through "Countly::instance()::location()" call.
+* Added init time configuration for the location parameters:
+  * "setLocation(String countryCode, String city, String location, String ipAddress)"
+  * "setLocationDisabled()"
 
 * Fixed a bug where setting custom user properties would not work.
 * Fixed a bug where setting organization of the user would not work.

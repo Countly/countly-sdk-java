@@ -40,8 +40,9 @@ public class ModuleLocation extends ModuleBase {
     void sendLocation(boolean locationDisabled) {
         L.d("[ModuleLocation] Calling 'sendLocation'");
         Params params = prepareLocationParams(locationDisabled);
-        if (internalConfig.isFeatureEnabled(Config.Feature.Sessions) && Countly.session() != null && Countly.session().getBegan() == null) {
-            ((SessionImpl) Countly.session()).params.add(params);
+        SessionImpl session = internalConfig.sdk.session(null);
+        if (internalConfig.isFeatureEnabled(Config.Feature.Sessions) && session != null && session.getBegan() == null) {
+            session.params.add(params);
         } else {
             ModuleRequests.pushAsync(internalConfig, new Request(params), true, null);
         }

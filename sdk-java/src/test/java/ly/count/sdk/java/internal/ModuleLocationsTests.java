@@ -76,7 +76,7 @@ public class ModuleLocationsTests {
     /**
      * "setLocation" with not began session
      * Validating that location parameters are added to the session
-     * Request queue size should be 1, and it should be a location request
+     * Request queue size should be 1, and it should be a began session request
      */
     @Test
     public void setLocation_notBeganSession() {
@@ -84,6 +84,33 @@ public class ModuleLocationsTests {
         Countly.instance().location().setLocation("US", "New York", "1,2", "1.1.1.1");
         Countly.session().begin();
         validateLocationRequestInRQ(UserEditorTests.map("country_code", "US", "city", "New York", "location", "1,2", "ip", "1.1.1.1", "begin_session", "1"));
+    }
+
+    /**
+     * "setLocation" with not began session with config setup
+     * Validating that location parameters are added to the session
+     * Request queue size should be 1, and it should be a began session request
+     */
+    @Test
+    public void setLocation_notBeganSession_withConfig() {
+        Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location, Config.Feature.Sessions)
+            .setLocation("US", "New York", "1,2", "1.1.1.1"));
+        Countly.session().begin();
+        validateLocationRequestInRQ(UserEditorTests.map("country_code", "US", "city", "New York", "location", "1,2", "ip", "1.1.1.1", "begin_session", "1"));
+    }
+
+    /**
+     * "setLocation" with not began session with config disable location
+     * Validating that location parameters are not added to the session and only empty location is sent
+     * Request queue size should be 1, and it should be a began session request
+     */
+    @Test
+    public void disableLocation_notBeganSession_withConfig() {
+        Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location, Config.Feature.Sessions)
+            .setLocation("US", "New York", "1,2", "1.1.1.1")
+            .setLocationDisabled());
+        Countly.session().begin();
+        validateLocationRequestInRQ(UserEditorTests.map("location", "", "begin_session", "1"));
     }
 
     /**
