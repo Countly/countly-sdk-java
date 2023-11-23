@@ -8,7 +8,7 @@ import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
-import ly.count.sdk.java.UserPropertyKeys;
+import ly.count.sdk.java.PredefinedUserPropertyKeys;
 import ly.count.sdk.java.internal.CountlyFeedbackWidget;
 import ly.count.sdk.java.internal.LogCallback;
 
@@ -52,14 +52,14 @@ public class Example {
     }
 
     static void setUserProfile() {
-        Countly.instance().userProfile().setProperty(UserPropertyKeys.NAME, "Full name");
-        Countly.instance().userProfile().setProperty(UserPropertyKeys.USERNAME, "nickname");
-        Countly.instance().userProfile().setProperty(UserPropertyKeys.EMAIL, "test@test.com");
-        Countly.instance().userProfile().setProperty(UserPropertyKeys.ORGANIZATION, "Tester");
-        Countly.instance().userProfile().setProperty(UserPropertyKeys.PHONE, "+123456789");
-        Countly.instance().userProfile().setProperty(UserPropertyKeys.PICTURE, new byte[] { 1, 2, 3, 4, 5 });
-        Countly.instance().userProfile().setProperty(UserPropertyKeys.PICTURE_PATH, "test.png");
-        Countly.instance().userProfile().setProperty(UserPropertyKeys.PICTURE_PATH, "https://someurl.com/test.png");
+        Countly.instance().userProfile().setProperty(PredefinedUserPropertyKeys.NAME, "Full name");
+        Countly.instance().userProfile().setProperty(PredefinedUserPropertyKeys.USERNAME, "nickname");
+        Countly.instance().userProfile().setProperty(PredefinedUserPropertyKeys.EMAIL, "test@test.com");
+        Countly.instance().userProfile().setProperty(PredefinedUserPropertyKeys.ORGANIZATION, "Tester");
+        Countly.instance().userProfile().setProperty(PredefinedUserPropertyKeys.PHONE, "+123456789");
+        Countly.instance().userProfile().setProperty(PredefinedUserPropertyKeys.PICTURE, new byte[] { 1, 2, 3, 4, 5 });
+        //Countly.instance().userProfile().setProperty(UserPropertyKeys.PICTURE_PATH, "test.png"); to provide local path
+        Countly.instance().userProfile().setProperty(PredefinedUserPropertyKeys.PICTURE_PATH, "https://someurl.com/test.png");
         Countly.instance().userProfile().save();
     }
 
@@ -315,9 +315,9 @@ public class Example {
             }
         }
 
-        // Gracefully stop SDK to stop all SDK threads and allow this app to exit
+        // Stop the SDK. This call does not delete all sdk generated files
         // Just in case, usually you don't want to clear data to reuse device id for next app runs
-        // and to send any requests which might not be sent use Countly.instance.stop()
-        Countly.instance().halt(); // this call clears all data, including device id, requests queue etc.
+        // and to send any requests which might not be sent
+        Countly.instance().stop();
     }
 }

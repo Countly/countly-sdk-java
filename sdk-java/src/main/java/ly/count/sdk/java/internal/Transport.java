@@ -35,8 +35,8 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+import ly.count.sdk.java.PredefinedUserPropertyKeys;
 import ly.count.sdk.java.User;
-import ly.count.sdk.java.UserPropertyKeys;
 import org.json.JSONObject;
 
 /**
@@ -135,7 +135,7 @@ public class Transport implements X509TrustManager {
         }
 
         String path = config.getServerURL().toString() + endpoint;
-        String picturePathValue = request.params.remove(UserPropertyKeys.PICTURE_PATH);
+        String picturePathValue = request.params.remove(PredefinedUserPropertyKeys.PICTURE_PATH);
         boolean usingGET = !config.isHTTPPostForced() && request.isGettable(config.getServerURL()) && Utils.isEmptyOrNull(picturePathValue);
 
         if (!usingGET && !Utils.isEmptyOrNull(picturePathValue)) {
