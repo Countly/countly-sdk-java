@@ -1508,7 +1508,7 @@ public class Config {
      *
      * @return {@code this} instance for method chaining
      */
-    public Config setLocationDisabled() {
+    public Config setDisableLocation() {
         country = null;
         city = null;
         location = null;
