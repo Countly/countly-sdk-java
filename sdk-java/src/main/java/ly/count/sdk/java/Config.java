@@ -1500,6 +1500,7 @@ public class Config {
         city = cityName;
         location = gpsCoordinates;
         ip = ipAddress;
+        locationEnabled = true;
         return this;
     }
 
