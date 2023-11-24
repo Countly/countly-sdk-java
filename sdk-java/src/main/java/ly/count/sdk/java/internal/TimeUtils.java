@@ -24,20 +24,32 @@ public class TimeUtils {
     }
 
     /**
-     * Generates unique time in milliseconds.
+     * Generates time in milliseconds.
      * And extracts hour, day of week and timezone offset to time objects.
      *
      * @return time object
      */
     public static Instant getCurrentInstant() {
-        long timestamp = uniqueTimestampMs();
+        return getCurrentInstant(timestampMs());
+    }
 
+    private static Instant getCurrentInstant(long timestamp) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(timestamp);
         return new Instant(timestamp,
             calendar.get(Calendar.HOUR_OF_DAY),
             calendar.get(Calendar.DAY_OF_WEEK) - 1, // Calendar days are 1-based, Countly days are 0-based
             calendar.get(Calendar.ZONE_OFFSET) / 60000); //convert it to seconds
+    }
+
+    /**
+     * Generates unique time in milliseconds.
+     * And extracts hour, day of week and timezone offset to time objects.
+     *
+     * @return time object
+     */
+    public static Instant getCurrentInstantUnique() {
+        return getCurrentInstant(uniqueTimestampMs());
     }
 
     /**
@@ -48,6 +60,15 @@ public class TimeUtils {
      */
     public static synchronized long uniqueTimestampMs() {
         return uniqueTimer.timestamp();
+    }
+
+    /**
+     * Wraps {@link System#currentTimeMillis()} and returns it
+     *
+     * @return current time in ms
+     */
+    public static synchronized long timestampMs() {
+        return System.currentTimeMillis();
     }
 
     /**
