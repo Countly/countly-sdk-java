@@ -193,4 +193,12 @@ public class InternalConfig extends Config {
     Log getLogger() {
         return configLog;
     }
+
+    boolean isUnhandledCrashReportingEnabled() {
+        return unhandledCrashReportingEnabled;
+    }
+
+    int getTotalBreadcrumbsAllowed() {
+        return totalBreadcrumbsAllowed;
+    }
 }

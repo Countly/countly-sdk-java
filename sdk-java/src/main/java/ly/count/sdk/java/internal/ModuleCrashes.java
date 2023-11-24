@@ -1,5 +1,7 @@
 package ly.count.sdk.java.internal;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.Crash;
@@ -17,8 +19,10 @@ public class ModuleCrashes extends ModuleBase {
     protected InternalConfig config;
     private Thread.UncaughtExceptionHandler previousHandler = null;
     protected CrashProcessor crashProcessor = null;
+    protected List<String> logs = new ArrayList<>();
 
     Crashes crashInterface;
+    String legacyName = null;
 
     @Override
     public void init(InternalConfig config) {
@@ -47,25 +51,31 @@ public class ModuleCrashes extends ModuleBase {
         } catch (Throwable t) {
             L.e("[ModuleCrash] Exception while stopping crash reporting" + t);
         }
+        logs.clear();
+        legacyName = null;
         crashInterface = null;
     }
 
     @Override
     public void initFinished(final InternalConfig config) {
         previousHandler = Thread.getDefaultUncaughtExceptionHandler();
-        final Thread.UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
-        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
-            // needed since following UncaughtExceptionHandler can keep reference to this one
-            crashed = true;
 
-            if (isActive()) {
-                recordExceptionInternal(throwable, false, null);
-            }
+        if (internalConfig.sdk.hasConsentForFeature(CoreFeature.CrashReporting) && config.isUnhandledCrashReportingEnabled()) {
+            final Thread.UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
+            Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
+                // needed since following UncaughtExceptionHandler can keep reference to this one
+                crashed = true;
 
-            if (handler != null) {
-                handler.uncaughtException(thread, throwable);
-            }
-        });
+                if (isActive()) {
+                    recordExceptionInternal(throwable, false, null);
+                }
+
+                if (handler != null) {
+                    handler.uncaughtException(thread, throwable);
+                }
+            });
+        }
+
         started = System.nanoTime();
     }
 
@@ -94,6 +104,16 @@ public class ModuleCrashes extends ModuleBase {
             L.w("[ModuleCrash] onCrash, While recording an exception 'App version' was either null or empty");
         }
 
+        if (!logs.isEmpty()) {
+            crash.setLogs(logs.toArray(new String[0]));
+            logs.clear();
+        }
+
+        if (Utils.isEmptyOrNull(legacyName)) {
+            crash.setName(legacyName);
+            legacyName = null;
+        }
+
         L.i("[ModuleCrash] onCrash: " + crash.getJSON());
 
         if (crashProcessor != null) {
@@ -117,7 +137,32 @@ public class ModuleCrashes extends ModuleBase {
         return crash;
     }
 
+    private void addBreadcrumbInternal(String record) {
+        if (Utils.isEmptyOrNull(record)) {
+            L.e("[ModuleCrash] addBreadcrumbInternal, record cannot be null or empty");
+            return;
+        }
+
+        if (logs.size() >= config.getTotalBreadcrumbsAllowed()) {
+            logs.remove(0);
+        }
+
+        logs.add(record);
+    }
+
     public class Crashes {
+
+        /**
+         * Add crash breadcrumb like log record to the log that will be sent together with crash report
+         *
+         * @param record String a bread crumb for the crash report
+         */
+        public void addCrashBreadcrumb(String record) {
+            synchronized (Countly.instance()) {
+                L.i("[Crashes] Adding crash breadcrumb");
+                addBreadcrumbInternal(record);
+            }
+        }
 
         /**
          * Log handled exception to report it to server as non-fatal crash
