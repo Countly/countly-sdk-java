@@ -26,15 +26,8 @@ public class ModuleSessions extends ModuleBase {
 
     @Override
     public void initFinished(final InternalConfig config) {
-        try {
-            timedEvents = Storage.read(config, new TimedEvents());
-            if (timedEvents == null) {
-                timedEvents = new TimedEvents();
-            }
-        } catch (Throwable e) {
-            L.e("[ModuleSessions] initFinished,  Cannot happen" + e);
-            timedEvents = new TimedEvents();
-        }
+        L.v("[ModuleSessions] initFinished");
+        timedEvents = new TimedEvents();
     }
 
     @Override
@@ -47,9 +40,6 @@ public class ModuleSessions extends ModuleBase {
 
     @Override
     public void stop(InternalConfig config, boolean clear) {
-        if (!clear) {
-            Storage.pushAsync(config, timedEvents);
-        }
         timedEvents = null;
 
         if (clear) {
@@ -70,7 +60,7 @@ public class ModuleSessions extends ModuleBase {
             L.d("[ModuleSessions] deviceIdChanged, Ending session because device id was unset from [" + oldDeviceId + "]");
             session.end(null, null, oldDeviceId);
         }
-        
+
         if (deviceId != null && oldDeviceId != null && (session == null || !session.isActive()) && !withMerge) {
             session(internalConfig, null).begin();
         }

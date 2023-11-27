@@ -140,14 +140,37 @@ public class MigrationHelper {
         File userFile = new File(sdkPath, SDKStorage.FILE_NAME_PREFIX + SDKStorage.FILE_NAME_SEPARATOR + "user" + SDKStorage.FILE_NAME_SEPARATOR + 0);
 
         //delete user file
-        try {
-            Files.deleteIfExists(userFile.toPath());
+        deleteFileIfExist(userFile, "[MigrationHelper] migration_DeleteSessionImpl_TimedEvents_UserImplFiles_02, Cannot delete user file ");
+
+        List<EventImpl> events = new ArrayList<>();
+        //read timed events from file
+        File timedEventFile = new File(sdkPath, SDKStorage.FILE_NAME_PREFIX + SDKStorage.FILE_NAME_SEPARATOR + "timedEvent" + SDKStorage.FILE_NAME_SEPARATOR + 0);
+        try (ObjectInputStream stream = new ObjectInputStream(new ByteArrayInputStream(Files.readAllBytes(timedEventFile.toPath())))) {
+            int l = stream.readInt();
+            while (l-- > 0) {
+                stream.readUTF(); // event key
+                EventImpl event = EventImpl.fromJSON(stream.readUTF(), null, logger);
+                if (event != null) {
+                    events.add(event);
+                }
+            }
         } catch (IOException e) {
-            logger.e("[MigrationHelper] migration_DeleteSessionImpl_TimedEvents_UserImplFiles_02, Cannot delete user file " + e);
+            logger.e("[MigrationHelper] migration_DeleteSessionImpl_TimedEvents_UserImplFiles_02, Cannot read timed event file " + e);
         }
-        
-        //user_0
+
+        //delete timed event file
+        deleteFileIfExist(timedEventFile, "[MigrationHelper] migration_DeleteSessionImpl_TimedEvents_UserImplFiles_02, Cannot delete timed event file ");
+
+        migrationParams.put("events", events);
         return true;
+    }
+
+    private void deleteFileIfExist(File file, String log) {
+        try { // if we cannot delete the config file, we cannot continue
+            Files.deleteIfExists(file.toPath());
+        } catch (IOException e) {
+            logger.e("[MigrationHelper] " + log + e);
+        }
     }
 
     /**
