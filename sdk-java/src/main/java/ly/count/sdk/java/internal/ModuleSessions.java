@@ -41,10 +41,6 @@ public class ModuleSessions extends ModuleBase {
     @Override
     public void stop(InternalConfig config, boolean clear) {
         timedEvents = null;
-
-        if (clear) {
-            config.sdk.sdkStorage.storablePurge(config, SessionImpl.getStoragePrefix());
-        }
     }
 
     /**
@@ -58,7 +54,7 @@ public class ModuleSessions extends ModuleBase {
         L.d("[ModuleSessions] deviceIdChanged, " + deviceId + ", old " + oldDeviceId);
         if (!withMerge && session != null && session.isActive()) {
             L.d("[ModuleSessions] deviceIdChanged, Ending session because device id was unset from [" + oldDeviceId + "]");
-            session.end(null, null, oldDeviceId);
+            session.end(null, oldDeviceId);
         }
 
         if (deviceId != null && oldDeviceId != null && (session == null || !session.isActive()) && !withMerge) {

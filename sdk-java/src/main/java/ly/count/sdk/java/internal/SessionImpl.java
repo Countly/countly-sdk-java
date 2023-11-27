@@ -1,15 +1,9 @@
 package ly.count.sdk.java.internal;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.Event;
@@ -26,9 +20,9 @@ import ly.count.sdk.java.View;
  * correctness guarantees, so please avoid having parallel sessions.
  */
 
-public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
+public class SessionImpl implements Session, EventImpl.EventRecorder {
 
-    protected Log L = null;
+    protected Log L;
     /**
      * {@link System#nanoTime()} of time when {@link Session} object is created.
      */
@@ -64,20 +58,6 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
      * Affects how it's handled during recovery.
      */
     private int consents;
-
-    /**
-     * Whether to push changes to storage on every change automatically (false only for testing)
-     */
-    private boolean pushOnChange = true;
-
-    /**
-     * Create session with current time as id.
-     */
-    protected SessionImpl(final InternalConfig config) {
-        L = config.getLogger();
-        this.id = TimeUtils.uniqueTimestampMs();
-        this.config = config;
-    }
 
     /**
      * Deserialization constructor (use existing id).
@@ -119,14 +99,8 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
         this.consents = SDKCore.instance.consents;
 
-        if (pushOnChange) {
-            Storage.pushAsync(config, this);
-        }
-
         Future<Boolean> ret = ModuleRequests.sessionBegin(config, this);
-
         SDKCore.instance.onSessionBegan(config, this);
-
         return ret;
     }
 
@@ -157,11 +131,6 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         this.consents = SDKCore.instance.consents;
 
         Long duration = updateDuration(now);
-
-        if (pushOnChange) {
-            Storage.pushAsync(config, this);
-        }
-
         return ModuleRequests.sessionUpdate(config, this, duration);
     }
 
@@ -173,10 +142,10 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         }
 
         L.d("[SessionImpl] end");
-        end(null, null, null);
+        end(null, null);
     }
 
-    Future<Boolean> end(Long now, final Tasks.Callback<Boolean> callback, String did) {
+    Future<Boolean> end(Long now, String did) {
         if (SDKCore.instance == null) {
             L.e("[SessionImpl] Countly is not initialized");
             return null;
@@ -193,8 +162,6 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
         if (currentView != null) {
             currentView.stop(true);
-        } else {
-            Storage.pushAsync(config, this);
         }
 
         Long duration = updateDuration(now);
@@ -203,44 +170,11 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             if (!removed) {
                 L.i("[SessionImpl] No data in session end request");
             }
-            Storage.removeAsync(config, this, callback);
         });
 
         SDKCore.instance.onSessionEnded(config, this);
 
         return ret;
-    }
-
-    Boolean recover(InternalConfig config) {
-        Log L = config.getLogger();
-        if ((System.currentTimeMillis() - id) < 0) {
-            return null;
-        } else {
-            Future<Boolean> future;
-            if (began == null) {
-                return Storage.remove(config, this);
-            } else if (ended == null && updated == null) {
-                future = end(began, null, null);
-            } else if (ended == null) {
-                future = end(updated, null, null);
-            } else {
-                // began != null && ended != null
-                return Storage.remove(config, this);
-            }
-
-            if (future == null) {
-                return null;
-            }
-
-            try {
-                return future.get();
-            } catch (InterruptedException | ExecutionException e) {
-                if (L != null) {
-                    L.e("[SessionImpl] Interrupted while resolving session recovery future" + e);
-                }
-                return false;
-            }
-        }
     }
 
     @Override
@@ -292,7 +226,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     /**
      * Record event to session.
      *
-     * @param event
+     * @param event to record
      * @deprecated use {@link ModuleEvents.Events#recordEvent(String, Map, int, Double, Double)} instead
      */
     @Override
@@ -355,7 +289,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             L.i("[SessionImpl] addLocation: Skipping event - feature is not enabled");
             return this;
         }
-        return (Session) addParam("location", latitude + "," + longitude);
+        return addParam("location", latitude + "," + longitude);
     }
 
     public View view(String name, boolean start) {
@@ -431,9 +365,6 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     public Session addParam(String key, Object value) {
         params.add(key, value);
-        if (pushOnChange) {
-            Storage.pushAsync(config, this);
-        }
         return this;
     }
 
@@ -452,133 +383,6 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         return ended;
     }
 
-    public Long storageId() {
-        return this.id;
-    }
-
-    public String storagePrefix() {
-        return getStoragePrefix();
-    }
-
-    @Override
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public static String getStoragePrefix() {
-        return "session";
-    }
-
-    public byte[] store(Log L) {
-        ByteArrayOutputStream bytes = null;
-        ObjectOutputStream stream = null;
-        try {
-            bytes = new ByteArrayOutputStream();
-            stream = new ObjectOutputStream(bytes);
-            stream.writeLong(id);
-            stream.writeLong(began == null ? 0 : began);
-            stream.writeLong(updated == null ? 0 : updated);
-            stream.writeLong(ended == null ? 0 : ended);
-            stream.writeInt(events.size());
-            for (Event event : events) {
-                stream.writeUTF(event.toString());
-            }
-            stream.writeUTF(params.toString());
-            stream.writeInt(consents);
-            stream.close();
-            return bytes.toByteArray();
-        } catch (IOException e) {
-            if (L != null) {
-                L.e("[SessionImpl] Cannot serialize session" + e);
-            }
-        } finally {
-            if (stream != null) {
-                try {
-                    stream.close();
-                } catch (IOException e) {
-                    if (L != null) {
-                        L.e("[SessionImpl] Cannot happen" + e);
-                    }
-                }
-            }
-            if (bytes != null) {
-                try {
-                    bytes.close();
-                } catch (IOException e) {
-                    if (L != null) {
-                        L.e("[SessionImpl] Cannot happen" + e);
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
-    public boolean restore(byte[] data, Log L) {
-        ByteArrayInputStream bytes = null;
-        ObjectInputStream stream = null;
-
-        try {
-            bytes = new ByteArrayInputStream(data);
-            stream = new ObjectInputStream(bytes);
-            if (id != stream.readLong()) {
-                if (L != null) {
-                    L.e("[SessionImpl] Wrong file for session deserialization");
-                }
-            }
-
-            began = stream.readLong();
-            began = began == 0 ? null : began;
-            updated = stream.readLong();
-            updated = updated == 0 ? null : updated;
-            ended = stream.readLong();
-            ended = ended == 0 ? null : ended;
-
-            int count = stream.readInt();
-            for (int i = 0; i < count; i++) {
-                Event event = EventImpl.fromJSON(stream.readUTF(), null, L);
-                if (event != null) {
-                    events.add(event);
-                }
-            }
-
-            params.add(stream.readUTF());
-            consents = stream.readInt();
-
-            return true;
-        } catch (IOException e) {
-            if (L != null) {
-                L.e("[SessionImpl] Cannot deserialize session" + e);
-            }
-        } finally {
-            if (stream != null) {
-                try {
-                    stream.close();
-                } catch (IOException e) {
-                    if (L != null) {
-                        L.e("[SessionImpl] Cannot happen" + e);
-                    }
-                }
-            }
-            if (bytes != null) {
-                try {
-                    bytes.close();
-                } catch (IOException e) {
-                    if (L != null) {
-                        L.e("[SessionImpl] Cannot happen" + e);
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
-
-    SessionImpl setPushOnChange(boolean pushOnChange) {
-        this.pushOnChange = pushOnChange;
-        return this;
-    }
-
     boolean hasConsent(CoreFeature feature) {
         return hasConsent(feature.getIndex());
     }
@@ -589,7 +393,6 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
     void setConsents(final InternalConfig config, int features) {
         consents = features;
-        Storage.pushAsync(config, this);
     }
 
     @Override
@@ -614,10 +417,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         if (!params.equals(session.params)) {
             return false;
         }
-        if (!events.equals(session.events)) {
-            return false;
-        }
-        return true;
+        return events.equals(session.events);
     }
 
     @Override

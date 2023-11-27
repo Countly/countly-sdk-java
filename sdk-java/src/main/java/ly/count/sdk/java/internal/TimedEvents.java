@@ -1,17 +1,13 @@
 package ly.count.sdk.java.internal;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
 import java.util.Set;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.Event;
 
 class TimedEvents implements EventImpl.EventRecorder {
 
-    private final Map<String, EventImpl> events;
-
     protected TimedEvents() {
-        events = new HashMap<>();
     }
 
     /**
@@ -19,7 +15,7 @@ class TimedEvents implements EventImpl.EventRecorder {
      * @deprecated this will not function anymore
      */
     Set<String> keys() {
-        return events.keySet();
+        return new HashSet<>();
     }
 
     /**
@@ -32,11 +28,6 @@ class TimedEvents implements EventImpl.EventRecorder {
         EventImpl event = null;
         if (Countly.instance().events().startEvent(key)) {
             event = config.sdk.module(ModuleEvents.class).timedEvents.get(key);
-        } else {
-            if (events.containsKey(key)) {
-                event = events.remove(key);
-                SDKCore.instance.module(ModuleEvents.class).timedEvents.put(key, event);
-            }
         }
 
         return event;
@@ -46,9 +37,10 @@ class TimedEvents implements EventImpl.EventRecorder {
      * @param key key of event to check
      * @return true if event with given key is currently timed
      * @deprecated use {@link ModuleEvents.Events#startEvent(String)}} instead via <code>instance().events()</code> call
+     * this will return false always, because timed events are not stored now
      */
     boolean has(String key) {
-        return events.containsKey(key);
+        return false;
     }
 
     /**
@@ -60,14 +52,13 @@ class TimedEvents implements EventImpl.EventRecorder {
     @Override
     public void recordEvent(Event event) {
         EventImpl eventImpl = (EventImpl) event;
-        if (events.containsKey(eventImpl.key)) {
-            SDKCore.instance.module(ModuleEvents.class).timedEvents.put(eventImpl.key, eventImpl);
-            events.remove(eventImpl.key);
-        }
         Countly.instance().events().endEvent(eventImpl.key, eventImpl.segmentation, eventImpl.count, eventImpl.sum);
     }
 
+    /**
+     * @return this will return 0 always, because timed events are not stored now
+     */
     public int size() {
-        return events.size();
+        return 0;
     }
 }

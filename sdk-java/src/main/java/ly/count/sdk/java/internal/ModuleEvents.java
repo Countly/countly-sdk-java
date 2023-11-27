@@ -48,8 +48,6 @@ public class ModuleEvents extends ModuleBase {
                 View currentView = ((SessionImpl) session).currentView;
                 if (currentView != null) {
                     currentView.stop(true);
-                } else {
-                    Storage.pushAsync(internalConfig, ((SessionImpl) Countly.session()));
                 }
             }
 

@@ -211,7 +211,7 @@ public class SessionImplTests {
         Countly.instance().init(TestUtils.getConfigSessions());
         SessionImpl session = (SessionImpl) Countly.session();
 
-        Assert.assertNull(session.end(0L, null, null));
+        Assert.assertNull(session.end(0L, null));
     }
 
     /**
@@ -228,7 +228,7 @@ public class SessionImplTests {
         validateUpdatedSession((SessionImpl) session.update());
         session.end();
         validateEndedSession(session);
-        Assert.assertNull(session.end(0L, null, null));
+        Assert.assertNull(session.end(0L, null));
     }
 
     /**
@@ -242,7 +242,7 @@ public class SessionImplTests {
         SessionImpl session = (SessionImpl) Countly.session();
         SDKCore.instance = null;
 
-        Assert.assertNull(session.end(0L, null, null));
+        Assert.assertNull(session.end(0L, null));
         validateNotStarted(session);
     }
 
@@ -261,7 +261,7 @@ public class SessionImplTests {
 
         Assert.assertTrue(session.begin(0L).get());
         Assert.assertTrue(session.update(0L).get());
-        Assert.assertTrue(session.end(0L, Assert::assertTrue, null).get());
+        Assert.assertTrue(session.end(0L, null).get());
         Thread.sleep(200);
         validateEndedSession(session);
     }
