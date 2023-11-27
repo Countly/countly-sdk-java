@@ -490,8 +490,7 @@ public class SDKCore {
             modules.remove(feature);
         }
 
-        //recover from previous crashes and events, events are coming from the migration 02
-        recover(config, migrationParams.get("events"));
+        recover(config);
 
         if (config.isDefaultNetworking()) {
             networking = new DefaultNetworking();
@@ -667,22 +666,12 @@ public class SDKCore {
         }
     }
 
-    protected void recover(InternalConfig config, Object events) {
+    protected void recover(InternalConfig config) {
         List<Long> crashes = Storage.list(config, CrashImpl.getStoragePrefix());
 
         for (Long id : crashes) {
             L.i("[SDKCore] recover, Found unprocessed crash " + id);
             onSignal(config, Signal.Crash.getIndex(), id.toString());
-        }
-
-        if (events != null) {
-            L.i("[SDKCore] recover, Found unprocessed events");
-            if (hasConsentForFeature(CoreFeature.Events)) {
-                List<EventImpl> eventList = (List<EventImpl>) events;
-                for (EventImpl event : eventList) {
-                    events().recordEvent(event.key, event.segmentation, event.count, event.sum, event.duration);
-                }
-            }
         }
     }
 
