@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -41,7 +40,6 @@ public class MigrationHelper {
 
         // add migrations below
         migrations.add(this::migration_DeleteConfigFile_01);
-        migrations.add(this::migration_DeleteSessionImpl_TimedEvents_UserImplFiles_02);
         latestMigrationVersion = migrations.size();
     }
 
@@ -127,113 +125,6 @@ public class MigrationHelper {
         }
 
         return true;
-    }
-
-    /**
-     * Deletes the timed event file, the user impl file and the session files and extracts events
-     * stored inside the timed event file and the session files
-     *
-     * @param migrationParams parameters to pass to migrations
-     * @return true if the migration was successful, false otherwise
-     */
-    protected boolean migration_DeleteSessionImpl_TimedEvents_UserImplFiles_02(final Map<String, Object> migrationParams) {
-        if (currentDataModelVersion >= 2) {
-            logger.d("[MigrationHelper] migration_DeleteSessionImpl_TimedEvents_UserImplFiles_02, Migration already applied");
-            return true;
-        }
-        logger.i("[MigrationHelper] migration_DeleteSessionImpl_TimedEvents_UserImplFiles_02, Deleting session, timed events and user impl files migrating from 01 to 02");
-        currentDataModelVersion += 1;
-
-        File sdkPath = (File) migrationParams.get("sdk_path");
-        File[] sdkPathFiles = sdkPath.listFiles();
-        if (sdkPathFiles == null || sdkPathFiles.length == 0) {
-            logger.i("[MigrationHelper] migration_DeleteSessionImpl_TimedEvents_UserImplFiles_02, No files to read, returning");
-            return true;
-        }
-
-        File userFile = new File(sdkPath, SDKStorage.FILE_NAME_PREFIX + SDKStorage.FILE_NAME_SEPARATOR + "user" + SDKStorage.FILE_NAME_SEPARATOR + 0);
-        //delete user file
-        deleteFileIfExist(userFile, "[MigrationHelper] migration_DeleteSessionImpl_TimedEvents_UserImplFiles_02, Cannot delete user file ");
-
-        //read timed events from file
-        File timedEventFile = new File(sdkPath, SDKStorage.FILE_NAME_PREFIX + SDKStorage.FILE_NAME_SEPARATOR + "timedEvent" + SDKStorage.FILE_NAME_SEPARATOR + 0);
-        List<EventImpl> events = recoverEventsFromTimedEventsFile(timedEventFile);
-        //delete timed event file
-        deleteFileIfExist(timedEventFile, "[MigrationHelper] migration_DeleteSessionImpl_TimedEvents_UserImplFiles_02, Cannot delete timed event file ");
-
-        //read events from session files and delete them
-        Arrays.stream(sdkPathFiles).filter((file) -> file.getName().startsWith(SDKStorage.FILE_NAME_PREFIX + SDKStorage.FILE_NAME_SEPARATOR + "session" + SDKStorage.FILE_NAME_SEPARATOR)).forEach((file) -> {
-            List<EventImpl> sessionEvents = recoverEventsFromSessionFile(file);
-            events.addAll(sessionEvents);
-            //delete session file
-            deleteFileIfExist(file, "[MigrationHelper] migration_DeleteSessionImpl_TimedEvents_UserImplFiles_02, Cannot delete session file ");
-        });
-
-        migrationParams.put("events", events);
-        return true;
-    }
-
-    /**
-     * Recovers events from timed event file
-     *
-     * @param timedEventFile to recover events from
-     * @return list of events, if file is not found or there is a problem with reading the file, returns empty list
-     */
-    private List<EventImpl> recoverEventsFromTimedEventsFile(File timedEventFile) {
-        List<EventImpl> events = new ArrayList<>();
-        try (ObjectInputStream stream = new ObjectInputStream(new ByteArrayInputStream(Files.readAllBytes(timedEventFile.toPath())))) {
-            int l = stream.readInt();
-            while (l-- > 0) {
-                stream.readUTF(); // event key
-                EventImpl event = EventImpl.fromJSON(stream.readUTF(), null, logger);
-                if (event != null) {
-                    events.add(event);
-                }
-            }
-        } catch (IOException e) {
-            logger.e("[MigrationHelper] recoverEventsFromTimedEventsFile, Cannot read timed event file " + e);
-        }
-        return events;
-    }
-
-    /**
-     * Deletes the file if it exists, logs the error if it cannot be deleted
-     *
-     * @param file to delete
-     * @param log to log if the file cannot be deleted
-     */
-    private void deleteFileIfExist(File file, String log) {
-        try { // if we cannot delete the config file, we cannot continue
-            Files.deleteIfExists(file.toPath());
-        } catch (IOException e) {
-            logger.e("[MigrationHelper] " + log + e);
-        }
-    }
-
-    /**
-     * Recovers events from session file, if the file is not found or there is a problem with reading the file, returns empty list
-     *
-     * @param sessionFile to recover events from
-     * @return list of events
-     */
-    private List<EventImpl> recoverEventsFromSessionFile(File sessionFile) {
-        List<EventImpl> events = new ArrayList<>();
-        try (ObjectInputStream stream = new ObjectInputStream(new ByteArrayInputStream(Files.readAllBytes(sessionFile.toPath())))) {
-            stream.readLong(); // began
-            stream.readLong(); // updated
-            stream.readLong(); // ended
-
-            int count = stream.readInt();
-            for (int i = 0; i < count; i++) {
-                EventImpl event = EventImpl.fromJSON(stream.readUTF(), null, logger);
-                if (event != null) {
-                    events.add(event);
-                }
-            }
-        } catch (IOException e) {
-            logger.e("[MigrationHelper] recoverEventsFromSessionFile, Cannot read session file " + e);
-        }
-        return events;
     }
 
     /**
