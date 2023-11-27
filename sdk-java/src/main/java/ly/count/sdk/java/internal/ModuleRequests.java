@@ -37,14 +37,7 @@ public class ModuleRequests extends ModuleBase {
         }
 
         if (session != null) {
-            synchronized (session.storageId()) {
-                if (session.events.size() > 0 && session.hasConsent(CoreFeature.Events)) {
-                    request.params.arr("events").put(session.events).add();
-                    session.events.clear();
-                } else {
-                    session.events.clear();
-                }
-
+            synchronized (session.params) {
                 if (session.params.length() > 0) {
                     request.params.add(session.params);
                     session.params.clear();

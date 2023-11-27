@@ -276,7 +276,6 @@ public class UserEditorImpl implements UserEditor {
 
         try {
             Countly.instance().userProfile().save();
-            Storage.push(SDKCore.instance.config, user); // todo this is not need it is for another task
         } catch (JSONException e) {
             L.e("[UserEditorImpl] Exception while committing changes to User profile" + e);
         }
