@@ -40,6 +40,7 @@ public class MigrationHelper {
 
         // add migrations below
         migrations.add(this::migration_DeleteConfigFile_01);
+        migrations.add(this::migration_DeleteSessionImpl_TimedEvents_UserImplFiles_02);
         latestMigrationVersion = migrations.size();
     }
 
@@ -124,6 +125,28 @@ public class MigrationHelper {
             return false;
         }
 
+        return true;
+    }
+
+    protected boolean migration_DeleteSessionImpl_TimedEvents_UserImplFiles_02(final Map<String, Object> migrationParams) {
+        if (currentDataModelVersion >= 2) {
+            logger.d("[MigrationHelper] migration_DeleteSessionImpl_TimedEvents_UserImplFiles_02, Migration already applied");
+            return true;
+        }
+        logger.i("[MigrationHelper] migration_DeleteSessionImpl_TimedEvents_UserImplFiles_02, Deleting session, timed events and user impl files migrating from 01 to 02");
+        currentDataModelVersion += 1;
+
+        File sdkPath = (File) migrationParams.get("sdk_path");
+        File userFile = new File(sdkPath, SDKStorage.FILE_NAME_PREFIX + SDKStorage.FILE_NAME_SEPARATOR + "user" + SDKStorage.FILE_NAME_SEPARATOR + 0);
+
+        //delete user file
+        try {
+            Files.deleteIfExists(userFile.toPath());
+        } catch (IOException e) {
+            logger.e("[MigrationHelper] migration_DeleteSessionImpl_TimedEvents_UserImplFiles_02, Cannot delete user file " + e);
+        }
+        
+        //user_0
         return true;
     }
 
