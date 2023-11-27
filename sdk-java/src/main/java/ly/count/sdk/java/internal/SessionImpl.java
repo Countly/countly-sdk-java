@@ -6,9 +6,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import ly.count.sdk.java.Countly;
@@ -334,10 +334,14 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             return this;
         }
 
+        Map<String, Object> crashSegments = null;
+        if (segments != null && !segments.isEmpty()) {
+            crashSegments = new ConcurrentHashMap<>(segments);
+        }
         if (fatal) {
-            Countly.instance().crashes().recordUnhandledException(t, new HashMap<>(segments));
+            Countly.instance().crashes().recordUnhandledException(t, crashSegments);
         } else {
-            Countly.instance().crashes().recordHandledException(t, new HashMap<>(segments));
+            Countly.instance().crashes().recordHandledException(t, crashSegments);
         }
         return this;
     }

@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import ly.count.sdk.java.Countly;
 import org.junit.After;
 import org.junit.Assert;
@@ -20,7 +21,7 @@ import static org.mockito.Mockito.spy;
 
 @RunWith(JUnit4.class)
 public class MigrationHelperTests {
-    final int expectedLatestSchemaVersion = 1;
+    final int expectedLatestSchemaVersion = 2;
 
     //example config file contains old type of data
     //has 'SDK_GENERATED' device id type and id value of 'CLY_0c54e5e7-eb86-4c17-81f0-4d7910d8ab0es'
@@ -156,8 +157,10 @@ public class MigrationHelperTests {
         migrationHelper.setupMigrations(storageProvider);
         Assert.assertEquals(0, migrationHelper.currentDataModelVersion); //legacy state
 
+        Map<String, Object> migrationParams = new ConcurrentHashMap<>();
+        migrationParams.put("sdk_path", TestUtils.getTestSDirectory());
         //apply migrations
-        migrationHelper.applyMigrations(new HashMap<>());
+        migrationHelper.applyMigrations(migrationParams);
         //check migration version is 1 after apply both from class and file
         Assert.assertEquals(expectedLatestSchemaVersion, migrationHelper.currentDataModelVersion);
         Assert.assertEquals(expectedLatestSchemaVersion, TestUtils.getJsonStorageProperty(SDKStorage.key_migration_version));
