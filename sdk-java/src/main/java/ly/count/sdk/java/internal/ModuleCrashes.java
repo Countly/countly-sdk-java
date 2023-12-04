@@ -61,22 +61,26 @@ public class ModuleCrashes extends ModuleBase {
         previousHandler = Thread.getDefaultUncaughtExceptionHandler();
 
         if (internalConfig.sdk.hasConsentForFeature(CoreFeature.CrashReporting) && config.isUnhandledCrashReportingEnabled()) {
-            final Thread.UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
-            Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
-                // needed since following UncaughtExceptionHandler can keep reference to this one
-                crashed = true;
-
-                if (isActive()) {
-                    recordExceptionInternal(throwable, false, null);
-                }
-
-                if (handler != null) {
-                    handler.uncaughtException(thread, throwable);
-                }
-            });
+            registerUncaughtExceptionHandler();
         }
 
         started = System.nanoTime();
+    }
+
+    private void registerUncaughtExceptionHandler() {
+        final Thread.UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
+        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
+            // needed since following UncaughtExceptionHandler can keep reference to this one
+            crashed = true;
+
+            if (isActive()) {
+                recordExceptionInternal(throwable, false, null);
+            }
+
+            if (handler != null) {
+                handler.uncaughtException(thread, throwable);
+            }
+        });
     }
 
     protected void recordExceptionInternal(Throwable t, boolean handled, Map<String, Object> segments) {
