@@ -100,7 +100,7 @@ public class MigrationHelperTests {
     /**
      * "setupMigrations"
      * Fresh-install. That means nothing in storage
-     * Migration version should be 1 (the latest version), before calling "applyMigrations" because the SDK is already at the latest data schema version
+     * Migration version should be 2 (the latest version), before calling "applyMigrations" because the SDK is already at the latest data schema version
      */
     @Test
     public void setupMigrations_freshInstall() {
@@ -133,7 +133,7 @@ public class MigrationHelperTests {
     @Test
     public void setupMigrations_latestVersion() throws IOException {
         setDataVersionInConfigFile(expectedLatestSchemaVersion);
-        initStorage(); // to initialize json storage after data version is set to 1
+        initStorage(); // to initialize json storage after data version is set to 2
 
         MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
         migrationHelper.logger = spy(migrationHelper.logger);
@@ -146,7 +146,7 @@ public class MigrationHelperTests {
     /**
      * "applyMigrations" in a legacy state
      * Upgrading from legacy state to latest version, no new config object, just old type of data.
-     * Migration version should be 0 before applying migrations, and 1 after applying migrations.
+     * Migration version should be 0 before applying migrations, and 2 after applying migrations.
      */
     @Test
     public void applyMigrations_legacyToLatest() {
@@ -161,7 +161,7 @@ public class MigrationHelperTests {
         migrationParams.put("sdk_path", TestUtils.getTestSDirectory());
         //apply migrations
         migrationHelper.applyMigrations(migrationParams);
-        //check migration version is 1 after apply both from class and file
+        //check migration version is 2 after apply both from class and file
         Assert.assertEquals(expectedLatestSchemaVersion, migrationHelper.currentDataModelVersion);
         Assert.assertEquals(expectedLatestSchemaVersion, TestUtils.getJsonStorageProperty(SDKStorage.key_migration_version));
     }
@@ -169,12 +169,12 @@ public class MigrationHelperTests {
     /**
      * "applyMigrations" with already at the latest version
      * All migrations are already applied, setting data version to the latest
-     * Migration version should be 1 before applying migrations, and 1 after applying migrations and expected log must be logged.
+     * Migration version should be 2 before applying migrations, and 2 after applying migrations and expected log must be logged.
      */
     @Test
     public void applyMigrations_latestToLatest() throws IOException {
         setDataVersionInConfigFile(expectedLatestSchemaVersion); //set data version to latest
-        initStorage(); // to initialize json storage after data version is set to 1
+        initStorage(); // to initialize json storage after data version is set to 2
 
         MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
         migrationHelper.setupMigrations(storageProvider);
@@ -187,12 +187,12 @@ public class MigrationHelperTests {
     }
 
     /**
-     * "applyMigrations" from 0 to 1
+     * "applyMigrations" from 0 to 2
      * Upgrading from legacy state to the latest version, mock config file, just old type of data.
-     * Data version must be 1 after applying migrations and expected log must be logged. and expected device id type must match
+     * Data version must be 2 after applying migrations and expected log must be logged. and expected device id type must match
      */
     @Test
-    public void applyMigrations_0to1() throws IOException {
+    public void applyMigrations_0to2() throws IOException {
         Files.write(TestUtils.createFile("config_0").toPath(), MOCK_OLD_CONFIG_FILE_sdkGenId); //mock a sdk config file, to simulate storage is not empty
         initStorage(); // to initialize json storage after mock sdk file is created
 
@@ -207,13 +207,15 @@ public class MigrationHelperTests {
         Map<String, Object> migrationParams = new HashMap<>();
         migrationParams.put("sdk_path", TestUtils.getTestSDirectory());
         Assert.assertTrue(migrationHelper.migration_DeleteConfigFile_01(migrationParams));
+        Assert.assertTrue(migrationHelper.migration_DeleteSessionImpl_TimedEvents_UserImplFiles_02(migrationParams));
 
         Assert.assertEquals("CLY_0c54e5e7-eb86-4c17-81f0-4d7910d8ab0e", storageProvider.getDeviceID());
         Assert.assertEquals(DeviceIdType.SDK_GENERATED.name(), storageProvider.getDeviceIdType());
 
         //check migration version is at the latest after apply both from class and file
-        Assert.assertEquals(1, migrationHelper.currentDataModelVersion);
+        Assert.assertEquals(2, migrationHelper.currentDataModelVersion);
         Mockito.verify(migrationHelper.logger, Mockito.times(1)).i("[MigrationHelper] migration_DeleteConfigFile_01, Deleting config file migrating from 00 to 01");
+        Mockito.verify(migrationHelper.logger, Mockito.times(1)).i("[MigrationHelper] migration_DeleteSessionImpl_TimedEvents_UserImplFiles_02, Deleting session, timed events and user impl files migrating from 01 to 02");
     }
 
     /**
