@@ -334,9 +334,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             return this;
         }
 
-        if (Utils.isEmptyOrNull(name)) {
-            config.sdk.module(ModuleCrashes.class).legacyName = name;
-        }
+        ModuleCrashes crashesModule = config.sdk.module(ModuleCrashes.class);
 
         Map<String, Object> crashSegments = null;
         if (segments != null && !segments.isEmpty()) {
@@ -346,11 +344,8 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         for (String log : logs) {
             Countly.instance().crashes().addCrashBreadcrumb(log);
         }
-        if (fatal) {
-            Countly.instance().crashes().recordUnhandledException(t, crashSegments);
-        } else {
-            Countly.instance().crashes().recordHandledException(t, crashSegments);
-        }
+
+        crashesModule.recordExceptionInternal(t, fatal, crashSegments, name);
         return this;
     }
 

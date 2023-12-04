@@ -22,7 +22,6 @@ public class ModuleCrashes extends ModuleBase {
     protected List<String> logs = new ArrayList<>();
 
     Crashes crashInterface;
-    String legacyName = null;
 
     @Override
     public void init(InternalConfig config) {
@@ -52,7 +51,6 @@ public class ModuleCrashes extends ModuleBase {
             L.e("[ModuleCrash] Exception while stopping crash reporting" + t);
         }
         logs.clear();
-        legacyName = null;
         crashInterface = null;
     }
 
@@ -74,7 +72,7 @@ public class ModuleCrashes extends ModuleBase {
             crashed = true;
 
             if (isActive()) {
-                recordExceptionInternal(throwable, false, null);
+                recordExceptionInternal(throwable, false, null, null);
             }
 
             if (handler != null) {
@@ -83,7 +81,7 @@ public class ModuleCrashes extends ModuleBase {
         });
     }
 
-    protected void recordExceptionInternal(Throwable t, boolean handled, Map<String, Object> segments) {
+    protected void recordExceptionInternal(Throwable t, boolean handled, Map<String, Object> segments, String legacyCrashName) {
         if (config.isBackendModeEnabled()) {
             L.w("[ModuleCrash] recordExceptionInternal, Skipping crash, backend mode is enabled!");
             return;
@@ -93,7 +91,14 @@ public class ModuleCrashes extends ModuleBase {
             L.e("[ModuleCrash] recordExceptionInternal, Throwable cannot be null");
             return;
         }
-        onCrash(config, new CrashImpl(L).addThrowable(t).setFatal(!handled).addSegments(segments));
+
+        CrashImpl crash = new CrashImpl(L).addThrowable(t).setFatal(!handled).addSegments(segments);
+
+        if (Utils.isEmptyOrNull(legacyCrashName)) {
+            crash.setName(legacyCrashName);
+        }
+
+        onCrash(config, crash);
     }
 
     public CrashImpl onCrash(InternalConfig config, CrashImpl crash) {
@@ -111,11 +116,6 @@ public class ModuleCrashes extends ModuleBase {
         if (!logs.isEmpty()) {
             crash.setLogs(logs.toArray(new String[0]));
             logs.clear();
-        }
-
-        if (Utils.isEmptyOrNull(legacyName)) {
-            crash.setName(legacyName);
-            legacyName = null;
         }
 
         L.i("[ModuleCrash] onCrash: " + crash.getJSON());
@@ -175,7 +175,7 @@ public class ModuleCrashes extends ModuleBase {
          */
         public void recordHandledException(Throwable exception) {
             synchronized (Countly.instance()) {
-                recordExceptionInternal(exception, true, null);
+                recordExceptionInternal(exception, true, null, null);
             }
         }
 
@@ -186,7 +186,7 @@ public class ModuleCrashes extends ModuleBase {
          */
         public void recordUnhandledException(Throwable exception) {
             synchronized (Countly.instance()) {
-                recordExceptionInternal(exception, false, null);
+                recordExceptionInternal(exception, false, null, null);
             }
         }
 
@@ -197,7 +197,7 @@ public class ModuleCrashes extends ModuleBase {
          */
         public void recordHandledException(final Throwable exception, final Map<String, Object> customSegmentation) {
             synchronized (Countly.instance()) {
-                recordExceptionInternal(exception, true, customSegmentation);
+                recordExceptionInternal(exception, true, customSegmentation, null);
             }
         }
 
@@ -208,7 +208,7 @@ public class ModuleCrashes extends ModuleBase {
          */
         public void recordUnhandledException(final Throwable exception, final Map<String, Object> customSegmentation) {
             synchronized (Countly.instance()) {
-                recordExceptionInternal(exception, false, customSegmentation);
+                recordExceptionInternal(exception, false, customSegmentation, null);
             }
         }
     }
