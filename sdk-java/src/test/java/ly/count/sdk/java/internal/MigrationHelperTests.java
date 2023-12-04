@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import ly.count.sdk.java.Countly;
 import org.junit.After;
@@ -284,6 +285,47 @@ public class MigrationHelperTests {
 
         Assert.assertEquals(TestUtils.DEVICE_ID, Countly.instance().getDeviceId());
         Assert.assertEquals(DeviceIdType.DEVELOPER_SUPPLIED, Countly.instance().getDeviceIdType());
+    }
+
+    /**
+     * "applyMigrations" from 1 to 2 by init Countly with migration version as 1
+     * Upgrading from 1 to 2, empty storage
+     * Data version must be 2 after applying migrations and expected log must be logged
+     */
+    @Test
+    public void applyMigrations_1to2_nothingToMigrate() throws IOException {
+        setDataVersionInConfigFile(1); // set previous data version
+        initStorage();
+
+        Map<String, Object> migrationParams = new HashMap<>();
+        migrationParams.put("sdk_path", TestUtils.getTestSDirectory());
+
+        MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
+        migrationHelper.setupMigrations(storageProvider);
+        Assert.assertEquals(1, migrationHelper.currentDataModelVersion);
+        migrationHelper.logger = Mockito.spy(migrationHelper.logger);
+
+        migrationHelper.migration_DeleteSessionImpl_TimedEvents_UserImplFiles_02(migrationParams);
+        Assert.assertEquals(2, migrationHelper.currentDataModelVersion);
+        Mockito.verify(migrationHelper.logger, Mockito.times(1)).i("[MigrationHelper] migration_DeleteSessionImpl_TimedEvents_UserImplFiles_02, No files to read, returning");
+    }
+
+    /**
+     * "applyMigrations" from 1 to 2
+     * Upgrading from legacy state to the latest version, mock timedEvent, session and user file, just old type of data.
+     * Data version must be 2 after applying migrations
+     */
+    @Test
+    public void applyMigrations_0to2_mockFiles() {
+        TestUtils.createFile("user_0");
+        TestUtils.createFile("session_0");
+        TestUtils.createFile("timedEvent_0");
+
+        Countly.instance().init(TestUtils.getBaseConfig());
+
+        //check that files are deleted
+        Assert.assertNotNull(TestUtils.getTestSDirectory().listFiles());
+        Assert.assertEquals(1, Objects.requireNonNull(TestUtils.getTestSDirectory().listFiles()).length);
     }
 
     void setDataVersionInConfigFile(final int targetDataVersion) throws IOException {

@@ -146,27 +146,27 @@ public class MigrationHelper {
 
         File sdkPath = (File) migrationParams.get("sdk_path");
         File[] sdkPathFiles = sdkPath.listFiles();
-        if (sdkPathFiles == null || sdkPathFiles.length == 0) { // this is not expected, but just in case and for null safety
+        if (sdkPathFiles == null || sdkPathFiles.length < 2) { // this is not expected, but just in case and for null safety, why 2? because we expect 1 file to be the json config file
             logger.i("[MigrationHelper] migration_DeleteSessionImpl_TimedEvents_UserImplFiles_02, No files to read, returning");
             return true;
         }
 
         File userFile = new File(sdkPath, SDKStorage.FILE_NAME_PREFIX + SDKStorage.FILE_NAME_SEPARATOR + "user" + SDKStorage.FILE_NAME_SEPARATOR + 0);
         //delete user file
-        deleteFileIfExist(userFile, "[MigrationHelper] migration_DeleteSessionImpl_TimedEvents_UserImplFiles_02, Cannot delete user file ");
+        deleteFileIfExist(userFile, "migration_DeleteSessionImpl_TimedEvents_UserImplFiles_02, Cannot delete user file ");
 
         //read timed events from file
         File timedEventFile = new File(sdkPath, SDKStorage.FILE_NAME_PREFIX + SDKStorage.FILE_NAME_SEPARATOR + "timedEvent" + SDKStorage.FILE_NAME_SEPARATOR + 0);
         List<EventImpl> events = recoverEventsFromTimedEventsFile(timedEventFile);
         //delete timed event file
-        deleteFileIfExist(timedEventFile, "[MigrationHelper] migration_DeleteSessionImpl_TimedEvents_UserImplFiles_02, Cannot delete timed event file ");
+        deleteFileIfExist(timedEventFile, "migration_DeleteSessionImpl_TimedEvents_UserImplFiles_02, Cannot delete timed event file ");
 
         //read events from session files and delete them
         Arrays.stream(sdkPathFiles).filter((file) -> file.getName().startsWith(SDKStorage.FILE_NAME_PREFIX + SDKStorage.FILE_NAME_SEPARATOR + "session" + SDKStorage.FILE_NAME_SEPARATOR)).forEach((file) -> {
             List<EventImpl> sessionEvents = recoverEventsFromSessionFile(file);
             events.addAll(sessionEvents);
             //delete session file
-            deleteFileIfExist(file, "[MigrationHelper] migration_DeleteSessionImpl_TimedEvents_UserImplFiles_02, Cannot delete session file ");
+            deleteFileIfExist(file, "migration_DeleteSessionImpl_TimedEvents_UserImplFiles_02, Cannot delete session file ");
         });
 
         migrationParams.put("events", events);
