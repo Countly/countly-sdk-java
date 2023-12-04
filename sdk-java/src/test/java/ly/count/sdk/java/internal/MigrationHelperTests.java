@@ -55,6 +55,14 @@ public class MigrationHelperTests {
         0, 0, 1, 0, 0, 0, 15, -84, -19, 0, 5, 119, 8, 0, 0, 0, 0, 0, 0, 0, 10, 112
     };
 
+    static final byte[] MOCK_OLD_TIMED_EVENT_FILE_empty = {
+        -84, -19, 0, 5, 119, 4, 0, 0, 0, 0
+    };
+
+    static final byte[] MOCK_OLD_SESSION_FILE_emptyEvents = {
+        -84, -19, 0, 5, 119, 42, 0, 0, 1, -116, 52, 6, -73, -95, 0, 0, 8, 103, -116, 54, -12, -59, 0, 0, 8, 117, -128, 89, -101, 86, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -128, 0, 126
+    };
+
     SDKStorage storageProvider;
 
     /**
@@ -311,21 +319,22 @@ public class MigrationHelperTests {
     }
 
     /**
-     * "applyMigrations" from 1 to 2
+     * "applyMigrations" from 1 to 2 with mock files, timedEvent and session do not have any events
      * Upgrading from legacy state to the latest version, mock timedEvent, session and user file, just old type of data.
-     * Data version must be 2 after applying migrations
+     * Data version must be 2 after applying migrations and no request should be generated
      */
     @Test
-    public void applyMigrations_0to2_mockFiles() {
-        TestUtils.createFile("user_0");
-        TestUtils.createFile("session_0");
-        TestUtils.createFile("timedEvent_0");
-
-        Countly.instance().init(TestUtils.getBaseConfig());
+    public void applyMigrations_1to2_mockFiles() throws IOException {
+        TestUtils.createFile("user_0");  // empty user file
+        Files.write(TestUtils.createFile("session_0").toPath(), MOCK_OLD_SESSION_FILE_emptyEvents); //mock a session file, no events inside
+        Files.write(TestUtils.createFile("timedEvent_0").toPath(), MOCK_OLD_TIMED_EVENT_FILE_empty); //mock a timed event file, no events inside
+        Assert.assertEquals(3, Objects.requireNonNull(TestUtils.getTestSDirectory().listFiles()).length);
+        Countly.instance().init(TestUtils.getConfigEvents(1));
 
         //check that files are deleted
         Assert.assertNotNull(TestUtils.getTestSDirectory().listFiles());
         Assert.assertEquals(1, Objects.requireNonNull(TestUtils.getTestSDirectory().listFiles()).length);
+        Assert.assertEquals(0, TestUtils.getCurrentRQ().length); // no events to send
     }
 
     void setDataVersionInConfigFile(final int targetDataVersion) throws IOException {
