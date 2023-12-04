@@ -11,7 +11,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class ScenarioLocationSetTests {
+public class ScenarioLocationTests {
     @Before
     public void beforeTest() {
         TestUtils.createCleanTestState();
@@ -23,6 +23,7 @@ public class ScenarioLocationSetTests {
     }
 
     /**
+     * 1) dev sets location some time after init
      * init without location
      * begin_session (without location)
      * setLocation(gps) (location request with gps)
@@ -52,7 +53,7 @@ public class ScenarioLocationSetTests {
     }
 
     /**
-     * dev sets location during init and a separate call
+     * 2) dev sets location during init and a separate call
      * init with location (city, country)
      * begin_session (with location - city, country)
      * setLocation(gps) (location request with gps)
@@ -85,7 +86,7 @@ public class ScenarioLocationSetTests {
     }
 
     /**
-     * dev sets location during init and after begin_session calls
+     * 3) dev sets location during init and after begin_session calls
      * init with location (city, country)
      * begin_session (with location - city, country)
      * setLocation(gps) (location request with gps)
@@ -124,7 +125,7 @@ public class ScenarioLocationSetTests {
     }
 
     /**
-     * dev sets location before first begin_session
+     * 4) dev sets location before first begin_session
      * init with location (city, country)
      * setLocation(gps, ipAddress) (location request with gps, ipAddress)
      * begin_session (with location - gps, ipAddress)
