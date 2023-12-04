@@ -2,7 +2,6 @@ package ly.count.sdk.java.internal;
 
 import java.util.Map;
 import java.util.concurrent.Future;
-import ly.count.sdk.java.User;
 
 /**
  * Centralized place for all requests construction & handling.
@@ -56,20 +55,6 @@ public class ModuleRequests extends ModuleBase {
             request.params.add(Params.PARAM_DEVICE_ID, config.getDeviceId().id);
         }
 
-        if (((session != null && session.hasConsent(CoreFeature.Location)) || (session == null && SDKCore.enabled(CoreFeature.Location)))
-            && request.params.has("begin_session")) {
-            User user = SDKCore.instance.user();
-            if (user.country() != null) {
-                request.params.add("country_code", user.country());
-            }
-            if (user.city() != null) {
-                request.params.add("city", user.city());
-            }
-            if (user.location() != null) {
-                request.params.add("location", user.location());
-            }
-        }
-
         return request;
     }
 
@@ -105,7 +90,7 @@ public class ModuleRequests extends ModuleBase {
             }
             return null;
         } else {
-            return pushAsync(config, request, callback);
+            return pushAsync(config, request, false, callback);
         }
     }
 
@@ -206,7 +191,7 @@ public class ModuleRequests extends ModuleBase {
      * @return {@link Future} which resolves to {@code} true if stored successfully, false otherwise
      */
     public static Future<Boolean> pushAsync(InternalConfig config, Request request) {
-        return pushAsync(config, request, null);
+        return pushAsync(config, request, false, null);
     }
 
     /**
@@ -214,13 +199,14 @@ public class ModuleRequests extends ModuleBase {
      *
      * @param config InternalConfig to run in
      * @param request Request to store
+     * @param noControl do not check empty validity of the request
      * @param callback Callback (nullable) to call when storing is done, called in {@link Storage} {@link Thread}
      * @return {@link Future} which resolves to {@code} true if stored successfully, false otherwise
      */
-    public static Future<Boolean> pushAsync(final InternalConfig config, final Request request, final Tasks.Callback<Boolean> callback) {
+    public static Future<Boolean> pushAsync(final InternalConfig config, final Request request, final boolean noControl, final Tasks.Callback<Boolean> callback) {
         config.getLogger().d("New request " + request.storageId() + ": " + request);
 
-        if (request.isEmpty()) {
+        if (!noControl && request.isEmpty()) {
             if (callback != null) {
                 try {
                     callback.call(null);

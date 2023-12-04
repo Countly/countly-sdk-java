@@ -379,6 +379,12 @@ public class Config {
         this.unhandledCrashReportingEnabled = false;
         return this;
     }
+  
+    protected String location = null;
+    protected String ip = null;
+    protected String city = null;
+    protected String country = null;
+    protected boolean locationEnabled = true;
 
     // TODO: storage limits & configuration
     //    protected int maxRequestsStored = 0;
@@ -1420,6 +1426,38 @@ public class Config {
      */
     public Config remoteConfigRegisterGlobalCallback(RCDownloadCallback callback) {
         remoteConfigGlobalCallbacks.add(callback);
+        return this;
+    }
+
+    /**
+     * Set global location parameters
+     *
+     * @param countryCode ISO Country code
+     * @param cityName City name
+     * @param gpsCoordinates GPS coordinates in "lat,long" format
+     * @param ipAddress IP address
+     * @return {@code this} instance for method chaining
+     */
+    public Config setLocation(String countryCode, String cityName, String gpsCoordinates, String ipAddress) {
+        country = countryCode;
+        city = cityName;
+        location = gpsCoordinates;
+        ip = ipAddress;
+        locationEnabled = true;
+        return this;
+    }
+
+    /**
+     * Disable location tracking
+     *
+     * @return {@code this} instance for method chaining
+     */
+    public Config setDisableLocation() {
+        country = null;
+        city = null;
+        location = null;
+        ip = null;
+        locationEnabled = false;
         return this;
     }
 }

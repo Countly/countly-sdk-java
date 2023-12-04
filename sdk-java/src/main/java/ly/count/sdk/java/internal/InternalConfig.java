@@ -200,5 +200,12 @@ public class InternalConfig extends Config {
 
     int getMaxBreadcrumbCount() {
         return maxBreadcrumbCount;
+
+      String[] getLocationParams() {
+        return new String[] { country, city, location, ip };
+    }
+
+    boolean isLocationDisabled() {
+        return !locationEnabled;
     }
 }

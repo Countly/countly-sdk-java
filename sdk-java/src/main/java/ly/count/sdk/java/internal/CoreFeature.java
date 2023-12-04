@@ -8,7 +8,7 @@ public enum CoreFeature {
     Sessions(1 << 2, ModuleSessions::new),
     Views(1 << 3, ModuleViews::new),
     CrashReporting(1 << 4, ModuleCrashes::new),
-    Location(1 << 5),
+    Location(1 << 5, ModuleLocation::new),
     UserProfiles(1 << 6, ModuleUserProfile::new),
     /*
     THESE ARE ONLY HERE AS DOCUMENTATION
