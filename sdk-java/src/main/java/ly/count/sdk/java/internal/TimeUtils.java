@@ -51,6 +51,16 @@ public class TimeUtils {
     }
 
     /**
+     * Wraps {@link System#currentTimeMillis()} to always return different value, even within
+     * same millisecond and even when time changes. Works in a limited window of 10 timestamps for now.
+     *
+     * @return unique time in seconds
+     */
+    public static synchronized int uniqueTimestampS() {
+        return new Double(uniqueTimestampMs() / MS_IN_SECOND).intValue();
+    }
+
+    /**
      * Convert time in nanoseconds to milliseconds
      *
      * @param ns time in nanoseconds
