@@ -146,7 +146,7 @@ public class MigrationHelper {
 
         File sdkPath = (File) migrationParams.get("sdk_path");
         File[] sdkPathFiles = sdkPath.listFiles();
-        if (sdkPathFiles == null || sdkPathFiles.length == 0) {
+        if (sdkPathFiles == null || sdkPathFiles.length == 0) { // this is not expected, but just in case and for null safety
             logger.i("[MigrationHelper] migration_DeleteSessionImpl_TimedEvents_UserImplFiles_02, No files to read, returning");
             return true;
         }
