@@ -198,7 +198,7 @@ public class InternalConfig extends Config {
         return unhandledCrashReportingEnabled;
     }
 
-    int getTotalBreadcrumbsAllowed() {
-        return totalBreadcrumbsAllowed;
+    int getMaxBreadcrumbCount() {
+        return maxBreadcrumbCount;
     }
 }

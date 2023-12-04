@@ -143,7 +143,7 @@ public class ModuleCrashes extends ModuleBase {
             return;
         }
 
-        if (logs.size() >= config.getTotalBreadcrumbsAllowed()) {
+        if (logs.size() >= config.getMaxBreadcrumbCount()) {
             logs.remove(0);
         }
 

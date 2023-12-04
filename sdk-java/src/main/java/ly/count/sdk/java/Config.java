@@ -352,7 +352,7 @@ public class Config {
     /**
      * Set the maximum amount of breadcrumbs.
      */
-    protected int totalBreadcrumbsAllowed = 100;
+    protected int maxBreadcrumbCount = 100;
 
     /**
      * Enable automatic crash reporting for unhandled exceptions.
@@ -362,11 +362,11 @@ public class Config {
     /**
      * Get the maximum amount of breadcrumbs. Default is 100.
      *
-     * @param totalBreadcrumbsAllowed the maximum amount of breadcrumbs
+     * @param maxBreadcrumbCount the maximum amount of breadcrumbs
      * @return {@code this} instance for method chaining
      */
-    public Config setTotalBreadcrumbsAllowed(int totalBreadcrumbsAllowed) {
-        this.totalBreadcrumbsAllowed = totalBreadcrumbsAllowed;
+    public Config setMaxBreadcrumbCount(int maxBreadcrumbCount) {
+        this.maxBreadcrumbCount = maxBreadcrumbCount;
         return this;
     }
 

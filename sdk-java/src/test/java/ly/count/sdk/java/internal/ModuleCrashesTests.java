@@ -120,7 +120,7 @@ public class ModuleCrashesTests {
     @Test
     public void addCrashBreadcrumb() {
         Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.CrashReporting)
-            .setTotalBreadcrumbsAllowed(3));
+            .setMaxBreadcrumbCount(3));
         TestUtils.setAdditionalDeviceMetrics();
 
         Countly.instance().crashes().addCrashBreadcrumb("initial game state");
