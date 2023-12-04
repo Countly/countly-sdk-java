@@ -200,8 +200,9 @@ public class InternalConfig extends Config {
 
     int getMaxBreadcrumbCount() {
         return maxBreadcrumbCount;
+    }
 
-      String[] getLocationParams() {
+    String[] getLocationParams() {
         return new String[] { country, city, location, ip };
     }
 
