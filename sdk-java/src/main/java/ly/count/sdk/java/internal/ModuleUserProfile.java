@@ -13,7 +13,6 @@ import org.json.JSONObject;
 
 public class ModuleUserProfile extends ModuleBase {
     static final String CUSTOM_KEY = "custom";
-    static final String PICTURE_IN_USER_PROFILE = "[CLY]_USER_PROFILE_PICTURE";
     boolean isSynced = true;
     UserProfile userProfileInterface;
     private final Map<String, Object> sets;
@@ -114,7 +113,7 @@ public class ModuleUserProfile extends ModuleBase {
                     } else if (value instanceof byte[]) {
                         internalConfig.sdk.user().picture = (byte[]) value;
                         //set a special value to indicate that the picture information is already stored in memory
-                        changes.put(PredefinedUserPropertyKeys.PICTURE_PATH, PICTURE_IN_USER_PROFILE);
+                        changes.put(PredefinedUserPropertyKeys.PICTURE_PATH, Utils.Base64.encode((byte[]) value));
                     }
                     break;
                 case PredefinedUserPropertyKeys.PICTURE_PATH:
@@ -220,7 +219,7 @@ public class ModuleUserProfile extends ModuleBase {
                 L.w("Won't send picturePath" + e);
             }
         }
-        if (!json.isEmpty() || internalConfig.sdk.user().picturePath != null || internalConfig.sdk.user().picture != null) {
+        if (!json.isEmpty() || params.has(PredefinedUserPropertyKeys.PICTURE_PATH)) {
             params.add("user_details", json.toString());
             return params;
         } else {

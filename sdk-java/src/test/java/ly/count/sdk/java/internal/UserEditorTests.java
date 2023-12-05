@@ -112,7 +112,7 @@ public class UserEditorTests {
         sessionHandler(() -> Countly.instance().user().edit().setPicture(imgData).commit());
         validatePictureAndPath(null, imgData);
         Countly.session().end();
-        validateUserDetailsRequestInRQ(map("user_details", "{}", "picturePath", ModuleUserProfile.PICTURE_IN_USER_PROFILE));
+        validateUserDetailsRequestInRQ(map("user_details", "{}", "picturePath", Utils.Base64.encode(imgData)));
     }
 
     /**

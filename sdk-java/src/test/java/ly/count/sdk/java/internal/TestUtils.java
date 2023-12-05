@@ -270,18 +270,16 @@ public class TestUtils {
     private static Map<String, String> parseRequestParams(File file) throws IOException {
         try (Scanner scanner = new Scanner(file)) {
             String firstLine = scanner.nextLine();
-            String urlDecodedStr = Utils.urldecode(firstLine);
-
-            if (urlDecodedStr == null) {
+            if (Utils.isEmptyOrNull(firstLine)) {
                 return new HashMap<>();
             }
 
-            String[] params = urlDecodedStr.split("&");
+            String[] params = firstLine.split("&");
 
             Map<String, String> paramMap = new HashMap<>();
             for (String param : params) {
                 String[] pair = param.split("=");
-                paramMap.put(pair[0], pair.length == 1 ? "" : pair[1]);
+                paramMap.put(Utils.urldecode(pair[0]), pair.length == 1 ? "" : Utils.urldecode(pair[1]));
             }
 
             return paramMap;
