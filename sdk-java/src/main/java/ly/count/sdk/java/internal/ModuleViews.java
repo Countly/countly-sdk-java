@@ -12,26 +12,12 @@ import ly.count.sdk.java.Countly;
 public class ModuleViews extends ModuleBase {
     private String currentViewID = null;
     private String previousViewID = null;
-
     private boolean firstView = true;
-
     boolean autoViewTracker = false;
     boolean automaticTrackingShouldUseShortName = false;
-
-    //track orientation changes
-    boolean trackOrientationChanges;
-
-    int currentOrientation = -1;
-    final static String ORIENTATION_EVENT_KEY = "[CLY]_orientation";
-
     final static String VIEW_EVENT_KEY = "[CLY]_view";
-
-    Class[] autoTrackingActivityExceptions = null;//excluded activities from automatic view tracking
-
     Map<String, Object> automaticViewSegmentation = new HashMap<>();//automatic view segmentation
-
     Map<String, ViewData> viewDataMap = new HashMap<>(); // map viewIDs to its viewData
-
     String[] reservedSegmentationKeysViews = new String[] { "name", "visit", "start", "segment" };
 
     public @Nonnull String getCurrentViewId() {
@@ -47,7 +33,6 @@ public class ModuleViews extends ModuleBase {
         long viewStartTimeSeconds; // if this is 0 then the view is not started yet or was paused
         String viewName;
         boolean isAutoStoppedView = false;//views started with "startAutoStoppedView" would have this as "true". If set to "true" views should be automatically closed when another one is started.
-        boolean isAutoPaused = false;//this marks that this view automatically paused when going to the background
     }
 
     //interface for SDK users
@@ -61,19 +46,17 @@ public class ModuleViews extends ModuleBase {
         super.init(config);
         L.v("[ModuleViews] Initializing");
 
-        if (config.enableAutomaticViewTracking) {
+        if (config.isAutomaticViewTrackingEnabled()) {
             L.d("[ModuleViews] Enabling automatic view tracking");
-            autoViewTracker = config.enableAutomaticViewTracking;
+            autoViewTracker = config.isAutomaticViewTrackingEnabled();
         }
 
-        if (config.autoTrackingUseShortName) {
+        if (config.isAutoTrackingUseShortNameEnabled()) {
             L.d("[ModuleViews] Enabling automatic view tracking short names");
-            automaticTrackingShouldUseShortName = config.autoTrackingUseShortName;
+            automaticTrackingShouldUseShortName = config.isAutoTrackingUseShortNameEnabled();
         }
 
-        setGlobalViewSegmentationInternal(config.globalViewSegmentation);
-        trackOrientationChanges = config.trackOrientationChange;
-
+        setGlobalViewSegmentationInternal(config.getGlobalViewSegmentation());
         viewsInterface = new Views();
     }
 
@@ -128,7 +111,7 @@ public class ModuleViews extends ModuleBase {
         firstView = true;
     }
 
-    Map<String, Object> CreateViewEventSegmentation(@Nonnull ViewData vd, boolean firstView, boolean visit, Map<String, Object> customViewSegmentation) {
+    Map<String, Object> createViewEventSegmentation(@Nonnull ViewData vd, boolean firstView, boolean visit, Map<String, Object> customViewSegmentation) {
         Map<String, Object> viewSegmentation = new HashMap<>();
         if (customViewSegmentation != null) {
             viewSegmentation.putAll(customViewSegmentation);
@@ -209,7 +192,7 @@ public class ModuleViews extends ModuleBase {
             accumulatedEventSegm.putAll(customViewSegmentation);
         }
 
-        Map<String, Object> viewSegmentation = CreateViewEventSegmentation(currentViewData, firstView, true, accumulatedEventSegm);
+        Map<String, Object> viewSegmentation = createViewEventSegmentation(currentViewData, firstView, true, accumulatedEventSegm);
 
         if (firstView) {
             L.d("[ModuleViews] Recording view as the first one in the session. [" + viewName + "]");
@@ -291,12 +274,12 @@ public class ModuleViews extends ModuleBase {
         }
 
         long viewDurationSeconds = lastElapsedDurationSeconds;
-        Map<String, Object> segments = CreateViewEventSegmentation(vd, false, false, accumulatedEventSegm);
+        Map<String, Object> segments = createViewEventSegmentation(vd, false, false, accumulatedEventSegm);
         segments.put("_idv", vd.viewID);
         Countly.instance().events().recordEvent(VIEW_EVENT_KEY, segments, 1, 0.0, new Long(viewDurationSeconds).doubleValue());
     }
 
-    void pauseViewWithIDInternal(String viewID, boolean pausedAutomatically) {
+    void pauseViewWithIDInternal(String viewID) {
         if (viewID == null || viewID.isEmpty()) {
             L.e("[ModuleViews] pauseViewWithIDInternal, Trying to record view with null or empty view ID, ignoring request");
             return;
@@ -309,7 +292,7 @@ public class ModuleViews extends ModuleBase {
 
         ViewData vd = viewDataMap.get(viewID);
         if (vd == null) {
-            L.e("[ModuleViews] pauseViewWithIDInternal, view id:[" + viewID + "] has a 'null' value. This should not be happening, auto paused:[" + pausedAutomatically + "]");
+            L.e("[ModuleViews] pauseViewWithIDInternal, view id:[" + viewID + "] has a 'null' value. This should not be happening");
             return;
         }
 
@@ -319,8 +302,6 @@ public class ModuleViews extends ModuleBase {
             L.w("[ModuleViews] pauseViewWithIDInternal, pausing a view that is already paused. ID:[" + viewID + "], name:[" + vd.viewName + "]");
             return;
         }
-
-        vd.isAutoPaused = pausedAutomatically;
 
         recordViewEndEvent(vd, null, "pauseViewWithIDInternal");
 
@@ -352,7 +333,6 @@ public class ModuleViews extends ModuleBase {
         }
 
         vd.viewStartTimeSeconds = TimeUtils.uniqueTimestampS();
-        vd.isAutoPaused = false;
     }
 
     void stopAllViewsInternal(Map<String, Object> viewSegmentation) {
@@ -361,60 +341,12 @@ public class ModuleViews extends ModuleBase {
         autoCloseRequiredViews(true, viewSegmentation);
     }
 
-    void updateOrientation(int newOrientation) {
-        L.d("[ModuleViews] Calling [updateOrientation], new orientation:[" + newOrientation + "]");
-
-        if (!internalConfig.sdk.hasConsentForFeature(CoreFeature.UserProfiles)) {
-            //we don't have consent, just leave
-            return;
-        }
-
-        if (currentOrientation != newOrientation) {
-            currentOrientation = newOrientation;
-
-            Map<String, Object> segm = new HashMap<>();
-
-            if (currentOrientation == Configuration.ORIENTATION_PORTRAIT) {
-                segm.put("mode", "portrait");
-            } else {
-                segm.put("mode", "landscape");
-            }
-
-            Countly.instance().events().recordEvent(ORIENTATION_EVENT_KEY, segm);
-        }
-    }
-
-    void pauseRunningViewsAndSend() {
-        L.d("[ModuleViews] pauseRunningViewsAndSend, going to the background and pausing");
-        for (Map.Entry<String, ViewData> entry : viewDataMap.entrySet()) {
-            ViewData vd = entry.getValue();
-
-            if (vd.viewStartTimeSeconds > 0) {
-                //if the view is running
-                pauseViewWithIDInternal(vd.viewID, true);
-            }
-        }
-    }
-
-    void resumeAutoPausedViews() {
-        L.d("[ModuleViews] resumeAutoPausedViews, going to the foreground and resuming");
-        for (Map.Entry<String, ViewData> entry : viewDataMap.entrySet()) {
-            ViewData vd = entry.getValue();
-
-            if (vd.isAutoPaused) {
-                //if the view was automatically paused, resume it
-                resumeViewWithIDInternal(vd.viewID);
-            }
-        }
-    }
-
     @Override
     public void stop(InternalConfig config, boolean clear) {
         if (automaticViewSegmentation != null) {
             automaticViewSegmentation.clear();
             automaticViewSegmentation = null;
         }
-        autoTrackingActivityExceptions = null;
         viewsInterface = null;
     }
 
@@ -574,7 +506,7 @@ public class ModuleViews extends ModuleBase {
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling pauseViewWithID vi[" + viewID + "]");
 
-                pauseViewWithIDInternal(viewID, false);
+                pauseViewWithIDInternal(viewID);
             }
         }
 

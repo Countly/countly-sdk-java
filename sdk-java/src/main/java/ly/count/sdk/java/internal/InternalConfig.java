@@ -193,4 +193,16 @@ public class InternalConfig extends Config {
     Log getLogger() {
         return configLog;
     }
+
+    public boolean isAutomaticViewTrackingEnabled() {
+        return enableAutomaticViewTracking;
+    }
+
+    public boolean isAutoTrackingUseShortNameEnabled() {
+        return autoTrackingUseShortName;
+    }
+
+    public Map<String, Object> getGlobalViewSegmentation() {
+        return globalViewSegmentation;
+    }
 }

@@ -437,6 +437,10 @@ public class Config {
     //
     //    }
 
+    protected boolean enableAutomaticViewTracking = false;
+    protected boolean autoTrackingUseShortName = false;
+    protected Map<String, Object> globalViewSegmentation = null;
+
     // TODO: storage limits & configuration
     //    protected int maxRequestsStored = 0;
     //    protected int storageDirectory = "";
@@ -1477,6 +1481,35 @@ public class Config {
      */
     public Config remoteConfigRegisterGlobalCallback(RCDownloadCallback callback) {
         remoteConfigGlobalCallbacks.add(callback);
+        return this;
+    }
+
+    /**
+     * Enable automatic view tracking
+     *
+     * @return {@code this} instance for method chaining
+     */
+    public Config enableAutomaticViewTracking() {
+        this.enableAutomaticViewTracking = true;
+        return this;
+    }
+
+    /**
+     * Enable short names for automatic view tracking
+     *
+     * @return {@code this} instance for method chaining
+     */
+    public Config enableAutomaticViewShortNames() {
+        this.autoTrackingUseShortName = true;
+        return this;
+    }
+
+    /**
+     * @param segmentation segmentation values that will be added for all recorded views (manual and automatic)
+     * @return {@code this} instance for method chaining
+     */
+    public Config setGlobalViewSegmentation(Map<String, Object> segmentation) {
+        globalViewSegmentation = segmentation;
         return this;
     }
 }
