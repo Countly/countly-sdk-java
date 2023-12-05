@@ -201,8 +201,4 @@ public class InternalConfig extends Config {
     public boolean isAutoTrackingUseShortNameEnabled() {
         return autoTrackingUseShortName;
     }
-
-    public Map<String, Object> getGlobalViewSegmentation() {
-        return globalViewSegmentation;
-    }
 }
