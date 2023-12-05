@@ -397,6 +397,15 @@ public class SDKCore {
         return module(ModuleCrashes.class).crashInterface;
     }
 
+    public ModuleViews.Views views() {
+        if (!hasConsentForFeature(CoreFeature.Views)) {
+            L.v("[SDKCore] views, Views feature has no consent, returning null");
+            return null;
+        }
+
+        return module(ModuleViews.class).viewsInterface;
+    }
+
     public ModuleDeviceIdCore.DeviceId deviceId() {
         return module(ModuleDeviceIdCore.class).deviceIdInterface;
     }
