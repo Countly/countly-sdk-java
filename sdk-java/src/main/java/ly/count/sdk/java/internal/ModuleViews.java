@@ -17,7 +17,6 @@ public class ModuleViews extends ModuleBase {
     boolean autoViewTracker = false;
     boolean automaticTrackingShouldUseShortName = false;
     final static String VIEW_EVENT_KEY = "[CLY]_view";
-    Map<String, Object> automaticViewSegmentation = new HashMap<>();//automatic view segmentation
     Map<String, ViewData> viewDataMap = new HashMap<>(); // map viewIDs to its viewData
     String[] reservedSegmentationKeysViews = new String[] { "name", "visit", "start", "segment" };
     //interface for SDK users
@@ -48,7 +47,6 @@ public class ModuleViews extends ModuleBase {
             automaticTrackingShouldUseShortName = config.isAutoTrackingUseShortNameEnabled();
         }
 
-        setGlobalViewSegmentationInternal(config.getGlobalViewSegmentation());
         viewsInterface = new Views();
     }
 
@@ -77,26 +75,6 @@ public class ModuleViews extends ModuleBase {
     }
 
     /**
-     * Checks the provided Segmentation by the user. Sanitizes it
-     * and transfers the data into an internal Segmentation Object.
-     */
-    void setGlobalViewSegmentationInternal(@Nullable Map<String, Object> segmentation) {
-        L.d("[ModuleViews] Calling setGlobalViewSegmentationInternal with[" + (segmentation == null ? "null" : segmentation.size()) + "] entries");
-
-        automaticViewSegmentation.clear();
-
-        if (segmentation != null) {
-            removeReservedKeysAndUnsupportedTypesFromViewSegmentation(segmentation);
-            automaticViewSegmentation.putAll(segmentation);
-        }
-    }
-
-    public void updateGlobalViewSegmentationInternal(@Nonnull Map<String, Object> segmentation) {
-        removeReservedKeysAndUnsupportedTypesFromViewSegmentation(segmentation);
-        automaticViewSegmentation.putAll(segmentation);
-    }
-
-    /**
      * This should be called in case a new session starts so that we could identify the new "first view"
      */
     public void resetFirstView() {
@@ -119,12 +97,6 @@ public class ModuleViews extends ModuleBase {
         viewSegmentation.put("segment", internalConfig.getSdkPlatform());
 
         viewSegmentation.put("_idv", vd.viewID);
-        if (previousViewID != null) {
-            viewSegmentation.put("pvid", previousViewID);
-        }
-        if (currentViewID != null) {
-            viewSegmentation.put("cvid", currentViewID);
-        }
         return viewSegmentation;
     }
 
@@ -186,12 +158,7 @@ public class ModuleViews extends ModuleBase {
         previousViewID = currentViewID;
         currentViewID = currentViewData.viewID;
 
-        Map<String, Object> accumulatedEventSegm = new ConcurrentHashMap<>(automaticViewSegmentation);
-        if (customViewSegmentation != null) {
-            accumulatedEventSegm.putAll(customViewSegmentation);
-        }
-
-        Map<String, Object> viewSegmentation = createViewEventSegmentation(currentViewData, firstView, true, accumulatedEventSegm);
+        Map<String, Object> viewSegmentation = createViewEventSegmentation(currentViewData, firstView, true, customViewSegmentation);
 
         if (firstView) {
             L.d("[ModuleViews] Recording view as the first one in the session. [" + viewName + "]");
@@ -255,13 +222,8 @@ public class ModuleViews extends ModuleBase {
             return;
         }
 
-        Map<String, Object> accumulatedEventSegm = new ConcurrentHashMap<>(automaticViewSegmentation);
-        if (filteredCustomViewSegmentation != null) {
-            accumulatedEventSegm.putAll(filteredCustomViewSegmentation);
-        }
-
         long viewDurationSeconds = lastElapsedDurationSeconds;
-        Map<String, Object> segments = createViewEventSegmentation(vd, false, false, accumulatedEventSegm);
+        Map<String, Object> segments = createViewEventSegmentation(vd, false, false, filteredCustomViewSegmentation);
         Countly.instance().events().recordEvent(VIEW_EVENT_KEY, segments, 1, 0.0, new Long(viewDurationSeconds).doubleValue());
     }
 
@@ -326,10 +288,6 @@ public class ModuleViews extends ModuleBase {
 
     @Override
     public void stop(InternalConfig config, boolean clear) {
-        if (automaticViewSegmentation != null) {
-            automaticViewSegmentation.clear();
-            automaticViewSegmentation = null;
-        }
         viewsInterface = null;
     }
 
@@ -503,37 +461,6 @@ public class ModuleViews extends ModuleBase {
                 L.i("[Views] Calling resumeViewWithID vi[" + viewID + "]");
 
                 resumeViewWithIDInternal(viewID);
-            }
-        }
-
-        /**
-         * Set a segmentation to be recorded with all views
-         *
-         * @param segmentation Map<String, Object> - global view segmentation
-         */
-        public void setGlobalViewSegmentation(@Nullable Map<String, Object> segmentation) {
-            synchronized (Countly.instance()) {
-                L.i("[Views] Calling setGlobalViewSegmentation sg[" + segmentation + "]");
-
-                setGlobalViewSegmentationInternal(segmentation);
-            }
-        }
-
-        /**
-         * Updates the global segmentation for views
-         *
-         * @param segmentation Map<String, Object> - global view segmentation
-         */
-        public void updateGlobalViewSegmentation(@Nullable Map<String, Object> segmentation) {
-            synchronized (Countly.instance()) {
-                L.i("[Views] Calling updateGlobalViewSegmentation sg[" + segmentation + "]");
-
-                if (segmentation == null) {
-                    L.w("[View] When updating segmentation values, they can't be 'null'.");
-                    return;
-                }
-
-                updateGlobalViewSegmentationInternal(segmentation);
             }
         }
 

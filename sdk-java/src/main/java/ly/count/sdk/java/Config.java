@@ -439,7 +439,6 @@ public class Config {
 
     protected boolean enableAutomaticViewTracking = false;
     protected boolean autoTrackingUseShortName = false;
-    protected Map<String, Object> globalViewSegmentation = null;
 
     // TODO: storage limits & configuration
     //    protected int maxRequestsStored = 0;
@@ -1501,15 +1500,6 @@ public class Config {
      */
     public Config enableAutomaticViewShortNames() {
         this.autoTrackingUseShortName = true;
-        return this;
-    }
-
-    /**
-     * @param segmentation segmentation values that will be added for all recorded views (manual and automatic)
-     * @return {@code this} instance for method chaining
-     */
-    public Config setGlobalViewSegmentation(Map<String, Object> segmentation) {
-        globalViewSegmentation = segmentation;
         return this;
     }
 }
