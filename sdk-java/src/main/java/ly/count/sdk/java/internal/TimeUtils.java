@@ -49,7 +49,7 @@ public class TimeUtils {
      * @return time object
      */
     public static Instant getCurrentInstantUnique() {
-        return getCurrentInstant(uniqueTimer.timestamp());
+        return getCurrentInstant(uniqueTimestampMs());
     }
 
     /**
