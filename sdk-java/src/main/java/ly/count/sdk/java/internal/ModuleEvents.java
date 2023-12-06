@@ -176,7 +176,7 @@ public class ModuleEvents extends ModuleBase {
 
         L.d("[ModuleEvents] Ending event: [" + key + "]");
 
-        long currentTimestamp = TimeUtils.uniqueTimestampMs();
+        long currentTimestamp = TimeUtils.timestampMs();
         double duration = (currentTimestamp - event.timestamp) / 1000.0;
 
         recordEventInternal(key, count, sum, duration, segmentation);

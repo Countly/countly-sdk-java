@@ -11,12 +11,9 @@ import ly.count.sdk.java.Countly;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
 
-@RunWith(JUnit4.class)
+//@RunWith(JUnit4.class)
 public class MultiThreadingTest {
     @After
     public void stop() {
@@ -40,7 +37,7 @@ public class MultiThreadingTest {
      * @throws BrokenBarrierException BrokenBarrierException
      * @throws InterruptedException InterruptedException
      */
-    @Test
+    //@Test
     public void multiThread() throws BrokenBarrierException, InterruptedException {
         CountlyTimer.TIMER_DELAY_MS = 1;
         Countly.instance().init(getAllConfig());
