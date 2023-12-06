@@ -95,7 +95,7 @@ class EventImpl implements Event, JSONable {
             return;
         }
 
-        setDuration((TimeUtils.uniqueTimestampMs() - timestamp) / 1000);
+        setDuration((TimeUtils.timestampMs() - timestamp) / 1000);
         record();
     }
 
