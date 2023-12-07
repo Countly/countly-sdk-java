@@ -344,7 +344,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         }
 
         for (String log : logs) {
-            Countly.instance().crashes().addCrashBreadcrumb(log);
+            crashesModule.addBreadcrumbInternal(log);
         }
 
         crashesModule.recordExceptionInternal(t, fatal, crashSegments, name);

@@ -141,7 +141,7 @@ public class ModuleCrashes extends ModuleBase {
         return crash;
     }
 
-    private void addBreadcrumbInternal(String record) {
+    protected void addBreadcrumbInternal(String record) {
         if (Utils.isEmptyOrNull(record)) {
             L.e("[ModuleCrash] addBreadcrumbInternal, record cannot be null or empty");
             return;
