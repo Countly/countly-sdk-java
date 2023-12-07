@@ -133,10 +133,10 @@ public class Transport implements X509TrustManager {
         }
 
         String path = config.getServerURL().toString() + endpoint;
-        String picturePathValue = request.params.remove(PredefinedUserPropertyKeys.PICTURE_PATH);
-        boolean usingGET = !config.isHTTPPostForced() && request.isGettable(config.getServerURL()) && Utils.isEmptyOrNull(picturePathValue);
+        byte[] maybePictureData = getPictureDataFromRequest(request);
+        boolean usingGET = !config.isHTTPPostForced() && request.isGettable(config.getServerURL()) && maybePictureData == null;
 
-        if (!usingGET && !Utils.isEmptyOrNull(picturePathValue)) {
+        if (!usingGET && maybePictureData != null) {
             path = setProfilePicturePathRequestParams(path, request.params);
         }
 
@@ -157,10 +157,7 @@ public class Transport implements X509TrustManager {
             OutputStream output = null;
             PrintWriter writer = null;
             try {
-                L.d("[network] Picture path value " + picturePathValue);
-                byte[] pictureByteData = picturePathValue == null ? null : getPictureDataFromGivenValue(picturePathValue);
-
-                if (pictureByteData != null) {
+                if (maybePictureData != null) {
                     String boundary = Long.toHexString(System.currentTimeMillis());
 
                     connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
@@ -168,7 +165,7 @@ public class Transport implements X509TrustManager {
                     output = connection.getOutputStream();
                     writer = new PrintWriter(new OutputStreamWriter(output, Utils.UTF8), true);
 
-                    addMultipart(output, writer, boundary, "image/jpeg", "binaryFile", "image", pictureByteData);
+                    addMultipart(output, writer, boundary, "image/jpeg", "binaryFile", "image", maybePictureData);
 
                     StringBuilder salting = new StringBuilder();
                     Map<String, String> map = request.params.map();
@@ -238,21 +235,26 @@ public class Transport implements X509TrustManager {
      * If we have the bytes, give them
      * Otherwise load them from disk
      *
-     * @param picture picture path or base64 encoded byte array
+     * @param request picture path or base64 encoded byte array
      * @return picture data
      */
-    byte[] getPictureDataFromGivenValue(String picture) {
-        byte[] data;
-        //firstly, we assume it is a local path, and we try to read it from disk
-        try {
-            File file = new File(picture);
-            if (!file.exists()) {
-                return null;
+    byte[] getPictureDataFromRequest(Request request) {
+        String maybeLocalPath = request.params.remove(PredefinedUserPropertyKeys.PICTURE_PATH);
+        String maybePictureData = request.params.remove(ModuleUserProfile.PICTURE_BYTES);
+
+        byte[] data = null;
+
+        //first check for pure bytes
+        if (!Utils.isEmptyOrNull(maybePictureData)) {
+            data = Utils.Base64.decode(maybePictureData, L);
+        } else if (!Utils.isEmptyOrNull(maybeLocalPath)) {
+            //if no bytes, check for local path
+            File file = new File(maybeLocalPath);
+            try {
+                data = Files.readAllBytes(file.toPath());
+            } catch (IOException e) {
+                L.e("[Transport] getPictureDataFromRequest, Error while reading picture, wont send from path:[ " + maybeLocalPath + "], " + e);
             }
-            data = Files.readAllBytes(file.toPath());
-        } catch (Throwable t) {
-            //if we can't read it from disk, we assume it is a base64 encoded byte array
-            data = Utils.Base64.decode(picture, L);
         }
 
         return data;
