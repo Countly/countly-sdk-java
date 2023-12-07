@@ -147,6 +147,42 @@ public class ModuleCrashesTests {
     }
 
     /**
+     * "addCrashBreadcrumb" with default "maxBreadcrumbCount"
+     * Validating that handled exception is recorded correctly to request queue and has breadcrumbs,
+     * Request queue should contain one request with crash object with breadcrumbs
+     */
+    @Test
+    public void addCrashBreadcrumb_defaultSize() {
+        Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.CrashReporting));
+        TestUtils.setAdditionalDeviceMetrics();
+
+        Countly.instance().crashes().addCrashBreadcrumb(null); // test null, this will not add anything
+        Countly.instance().crashes().addCrashBreadcrumb(""); // test empty string, this will not add anything
+        Countly.instance().crashes().addCrashBreadcrumb("test1"); // test first, this will be removed
+        for (int i = 2; i < 150; i++) {
+            Countly.instance().crashes().addCrashBreadcrumb("test" + i);
+        }
+        Countly.instance().crashes().addCrashBreadcrumb("exit"); // test last, this will cause first one to be removed which is "test50"
+
+        String[] expectedBreadcrumbs = new String[100];
+        for (int i = 0; i < 99; i++) {
+            expectedBreadcrumbs[i] = "test" + (i + 51);
+        }
+        expectedBreadcrumbs[99] = "exit";
+
+        try {
+            throw new Exception("test");
+        } catch (Exception e) {
+            Countly.instance().crashes().recordUnhandledException(e);
+            validateCrashInRQ(e, true, null, expectedBreadcrumbs, 0);
+        }
+
+        Throwable testThrowable = new Exception("test");
+        Countly.instance().crashes().recordHandledException(testThrowable);
+        validateCrashInRQ(testThrowable, false, null, null, 1);
+    }
+
+    /**
      * "recordUnhandledException"
      * Validating that handled exception is recorded correctly to request queue with custom segment
      * Request queue should contain one request with crash object
