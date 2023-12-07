@@ -364,7 +364,8 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             L.i("[SessionImpl] addLocation: Skipping event - feature is not enabled");
             return this;
         }
-        return (Session) addParam("location", latitude + "," + longitude);
+        Countly.instance().location().setLocation(null, null, latitude + "," + longitude, null);
+        return this;
     }
 
     public View view(String name, boolean start) {
