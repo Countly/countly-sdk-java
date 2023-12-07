@@ -26,7 +26,6 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -253,19 +252,10 @@ public class Transport implements X509TrustManager {
             data = Files.readAllBytes(file.toPath());
         } catch (Throwable t) {
             //if we can't read it from disk, we assume it is a base64 encoded byte array
-            data = readBase64String(picture);
+            data = Utils.Base64.decode(picture, L);
         }
 
         return data;
-    }
-
-    private byte[] readBase64String(String string) {
-        try {
-            return Base64.getDecoder().decode(string);
-        } catch (IllegalArgumentException e) {
-            L.w("[Transport] readBase64String, Error while reading base64 string " + e);
-            return null;
-        }
     }
 
     String response(HttpURLConnection connection) {
