@@ -434,8 +434,12 @@ public class SessionImplTests {
         Countly.instance().init(config);
         SessionImpl session = (SessionImpl) Countly.session();
         session.addLocation(1.0, 2.0);
-
-        Assert.assertEquals(expected, session.params.get("location"));
+        session.begin(null);
+        if (expected == null) {
+            Assert.assertEquals(1, TestUtils.getCurrentRQ().length);
+        } else {
+            Assert.assertEquals(expected, TestUtils.getCurrentRQ()[0].get("location"));
+        }
     }
 
     /**
@@ -634,7 +638,7 @@ public class SessionImplTests {
 
     private void validateNotEquals(int idOffset, BiFunction<SessionImpl, SessionImpl, Consumer<Long>> setter) {
         Countly.instance().init(TestUtils.getConfigSessions());
-        long ts = TimeUtils.uniqueTimestampMs();
+        long ts = TimeUtils.timestampMs();
         SessionImpl session = createSessionImpl(12345L);
         SessionImpl session2 = createSessionImpl(12345L + idOffset);
         setter.apply(session, session).accept(ts);

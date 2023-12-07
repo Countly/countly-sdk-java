@@ -122,7 +122,9 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         if (pushOnChange) {
             Storage.pushAsync(config, this);
         }
-
+        if (hasConsent(CoreFeature.Location)) {
+            params.add(config.sdk.module(ModuleLocation.class).prepareLocationParams());
+        }
         Future<Boolean> ret = ModuleRequests.sessionBegin(config, this);
 
         SDKCore.instance.onSessionBegan(config, this);
@@ -334,10 +336,14 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             return this;
         }
 
+        Map<String, Object> segmentsMap = new HashMap<>();
+        if (segments != null) {
+            segmentsMap.putAll(segments);
+        }
         if (fatal) {
-            Countly.instance().crashes().recordUnhandledException(t, new HashMap<>(segments));
+            Countly.instance().crashes().recordUnhandledException(t, new HashMap<>(segmentsMap));
         } else {
-            Countly.instance().crashes().recordHandledException(t, new HashMap<>(segments));
+            Countly.instance().crashes().recordHandledException(t, new HashMap<>(segmentsMap));
         }
         return this;
     }
@@ -355,7 +361,8 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             L.i("[SessionImpl] addLocation: Skipping event - feature is not enabled");
             return this;
         }
-        return (Session) addParam("location", latitude + "," + longitude);
+        Countly.instance().location().setLocation(null, null, latitude + "," + longitude, null);
+        return this;
     }
 
     public View view(String name, boolean start) {

@@ -1,5 +1,6 @@
 package ly.count.sdk.java;
 
+import ly.count.sdk.java.internal.ModuleLocation;
 import ly.count.sdk.java.internal.ModuleUserProfile;
 
 /**
@@ -136,7 +137,7 @@ public interface UserEditor {
      *
      * @param country of the user
      * @return this instance for method chaining
-     * @deprecated todo add location module and its function here
+     * @deprecated use {@link ModuleLocation.Location#setLocation(String, String, String, String)} instead
      */
     UserEditor setCountry(String country);
 
@@ -145,7 +146,7 @@ public interface UserEditor {
      *
      * @param city of the user
      * @return this instance for method chaining
-     * @deprecated todo add location module and its function here
+     * @deprecated use {@link ModuleLocation.Location#setLocation(String, String, String, String)} instead
      */
     UserEditor setCity(String city);
 
@@ -154,7 +155,7 @@ public interface UserEditor {
      *
      * @param location of the user
      * @return this instance for method chaining
-     * @deprecated todo add location module and its function here
+     * @deprecated use {@link ModuleLocation.Location#setLocation(String, String, String, String)} instead
      */
     UserEditor setLocation(String location);
 
@@ -164,7 +165,7 @@ public interface UserEditor {
      * @param latitude of the user
      * @param longitude of the user
      * @return this instance for method chaining
-     * @deprecated todo add location module and its function here
+     * @deprecated use {@link ModuleLocation.Location#setLocation(String, String, String, String)} instead
      */
     UserEditor setLocation(double latitude, double longitude);
 
@@ -172,7 +173,7 @@ public interface UserEditor {
      * Clears location values from the user
      *
      * @return this instance for method chaining
-     * @deprecated todo add location module and its function here
+     * @deprecated use {@link ModuleLocation.Location#disableLocation()} instead
      */
     UserEditor optOutFromLocationServices();
 
@@ -188,7 +189,7 @@ public interface UserEditor {
      * Set a user profile property for the multiplied value
      *
      * @return UserEditor instance to chain calls
-     * @deprecated use {@link ModuleUserProfile.UserProfile#multiply(String, int)} instead
+     * @deprecated use {@link ModuleUserProfile.UserProfile#multiply(String, double)} instead
      */
     UserEditor mul(String key, double by);
 
@@ -196,7 +197,7 @@ public interface UserEditor {
      * Set a user profile property for the min value
      *
      * @return UserEditor instance to chain calls
-     * @deprecated use {@link ModuleUserProfile.UserProfile#saveMin(String, int)} instead
+     * @deprecated use {@link ModuleUserProfile.UserProfile#saveMin(String, double)} instead
      */
     UserEditor min(String key, double value);
 
@@ -204,7 +205,7 @@ public interface UserEditor {
      * Set a user profile property for the max value
      *
      * @return UserEditor instance to chain calls
-     * @deprecated use {@link ModuleUserProfile.UserProfile#saveMax(String, int)} instead
+     * @deprecated use {@link ModuleUserProfile.UserProfile#saveMax(String, double)} instead
      */
     UserEditor max(String key, double value);
 
@@ -212,7 +213,7 @@ public interface UserEditor {
      * Set a user profile property
      *
      * @return UserEditor instance to chain calls
-     * @deprecated use {@link ModuleUserProfile.UserProfile#setOnce(String, String)} instead
+     * @deprecated use {@link ModuleUserProfile.UserProfile#setOnce(String, Object)} instead
      */
     UserEditor setOnce(String key, Object value);
 
@@ -220,7 +221,7 @@ public interface UserEditor {
      * Pull a value from a user profile property
      *
      * @return UserEditor instance to chain calls
-     * @deprecated use {@link ModuleUserProfile.UserProfile#pull(String, String)} instead
+     * @deprecated use {@link ModuleUserProfile.UserProfile#pull(String, Object)} instead
      */
     UserEditor pull(String key, Object value);
 
@@ -228,7 +229,7 @@ public interface UserEditor {
      * Push a value to a user profile property
      *
      * @return UserEditor instance to chain calls
-     * @deprecated use {@link ModuleUserProfile.UserProfile#push(String, String)} instead
+     * @deprecated use {@link ModuleUserProfile.UserProfile#push(String, Object)} instead
      */
     UserEditor push(String key, Object value);
 
@@ -236,7 +237,7 @@ public interface UserEditor {
      * Push a unique value to a user profile property
      *
      * @return UserEditor instance to chain calls
-     * @deprecated use {@link ModuleUserProfile.UserProfile#pushUnique(String, String)} instead
+     * @deprecated use {@link ModuleUserProfile.UserProfile#pushUnique(String, Object)} instead
      */
     UserEditor pushUnique(String key, Object value);
 

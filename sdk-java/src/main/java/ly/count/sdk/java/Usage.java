@@ -89,6 +89,7 @@ public interface Usage {
      * @param latitude geographical latitude of the user
      * @param longitude geographical longitude of the user
      * @return this instance for method chaining.
+     * @deprecated use {@link Countly#location()} via "instance()" call
      */
     Usage addLocation(double latitude, double longitude);
 

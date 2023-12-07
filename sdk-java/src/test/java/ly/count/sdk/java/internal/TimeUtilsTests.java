@@ -16,7 +16,7 @@ public class TimeUtilsTests {
     @Test
     public void getInstant() {
 
-        TimeUtils.Instant time = TimeUtils.getCurrentInstant();
+        TimeUtils.Instant time = TimeUtils.getCurrentInstantUnique();
 
         Assert.assertTrue(time.timestamp > 0);
         Assert.assertTrue(time.hour >= 0 && time.hour <= 23);
