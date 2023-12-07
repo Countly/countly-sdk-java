@@ -70,7 +70,8 @@ public class TimeUtils {
      */
     public static synchronized int uniqueTimestampS() {
         return new Double(uniqueTimestampMs() / MS_IN_SECOND).intValue();
-    
+    }
+
     /**
      * Wraps {@link System#currentTimeMillis()} and returns it
      *

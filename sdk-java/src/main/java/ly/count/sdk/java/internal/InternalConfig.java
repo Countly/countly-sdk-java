@@ -200,6 +200,7 @@ public class InternalConfig extends Config {
 
     public boolean isAutoTrackingUseShortNameEnabled() {
         return autoTrackingUseShortName;
+    }
 
     String[] getLocationParams() {
         return new String[] { country, city, location, ip };

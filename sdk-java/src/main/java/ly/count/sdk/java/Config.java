@@ -1496,9 +1496,10 @@ public class Config {
      */
     public Config enableAutomaticViewTracking() {
         this.enableAutomaticViewTracking = true;
+        return this;
     }
-  
-     /**
+
+    /**
      * Set global location parameters
      *
      * @param countryCode ISO Country code
@@ -1525,7 +1526,7 @@ public class Config {
         this.autoTrackingUseShortName = true;
         return this;
     }
-    
+
     /**
      * Disable location tracking
      *
