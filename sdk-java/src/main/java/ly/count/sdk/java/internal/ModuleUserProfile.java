@@ -14,6 +14,7 @@ import org.json.JSONObject;
 public class ModuleUserProfile extends ModuleBase {
     static final String CUSTOM_KEY = "custom";
     boolean isSynced = true;
+    static final String PICTURE_BYTES = "[CLY]_picture_bytes";
     UserProfile userProfileInterface;
     private final Map<String, Object> sets;
     private final List<OpParams> ops;
@@ -92,9 +93,10 @@ public class ModuleUserProfile extends ModuleBase {
      * Transforming changes in "sets" into a json contained in "changes"
      *
      * @param changes JSONObject to store changes
+     * @param params Params to store changes
      * @throws JSONException if something goes wrong
      */
-    void perform(JSONObject changes) throws JSONException {
+    void perform(JSONObject changes, Params params) throws JSONException {
         for (String key : sets.keySet()) {
             Object value = sets.get(key);
             switch (key) {
@@ -113,7 +115,7 @@ public class ModuleUserProfile extends ModuleBase {
                     } else if (value instanceof byte[]) {
                         internalConfig.sdk.user().picture = (byte[]) value;
                         //set a special value to indicate that the picture information is already stored in memory
-                        changes.put(PredefinedUserPropertyKeys.PICTURE_PATH, Utils.Base64.encode((byte[]) value));
+                        params.add(PICTURE_BYTES, Utils.Base64.encode((byte[]) value));
                     }
                     break;
                 case PredefinedUserPropertyKeys.PICTURE_PATH:
@@ -127,7 +129,7 @@ public class ModuleUserProfile extends ModuleBase {
                             changes.put(PredefinedUserPropertyKeys.PICTURE, value);
                         } else {
                             //if we get here then that means it is a local file path which we would send over as bytes to the server
-                            changes.put(PredefinedUserPropertyKeys.PICTURE_PATH, value);
+                            params.add(PredefinedUserPropertyKeys.PICTURE_PATH, value);
                         }
                         internalConfig.sdk.user().picturePath = value.toString();
                     } else {
@@ -210,16 +212,8 @@ public class ModuleUserProfile extends ModuleBase {
         isSynced = true;
         Params params = new Params();
         final JSONObject json = new JSONObject();
-        perform(json);
-        if (json.has(PredefinedUserPropertyKeys.PICTURE_PATH)) {
-            try {
-                params.add(PredefinedUserPropertyKeys.PICTURE_PATH, json.getString(PredefinedUserPropertyKeys.PICTURE_PATH));
-                json.remove(PredefinedUserPropertyKeys.PICTURE_PATH);
-            } catch (JSONException e) {
-                L.w("Won't send picturePath" + e);
-            }
-        }
-        if (!json.isEmpty() || params.has(PredefinedUserPropertyKeys.PICTURE_PATH)) {
+        perform(json, params);
+        if (!json.isEmpty() || params.has(PredefinedUserPropertyKeys.PICTURE_PATH) || params.has(PICTURE_BYTES)) {
             params.add("user_details", json.toString());
             return params;
         } else {
