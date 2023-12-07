@@ -129,7 +129,7 @@ public class ModuleRequests extends ModuleBase {
     }
 
     static void addRequiredTimeParametersToParams(Params params) {
-        TimeUtils.Instant instant = TimeUtils.getCurrentInstant();
+        TimeUtils.Instant instant = TimeUtils.getCurrentInstantUnique();
         params.add("timestamp", instant.timestamp)
             .add("tz", instant.tz)
             .add("hour", instant.hour)

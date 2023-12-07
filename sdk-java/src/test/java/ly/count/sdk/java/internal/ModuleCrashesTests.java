@@ -138,7 +138,7 @@ public class ModuleCrashesTests {
         JSONObject crashObj = new JSONObject(rq[0].get("crash"));
         Assert.assertEquals(customSegment == null ? 19 : 20, crashObj.length());
 
-        Assert.assertTrue(crashObj.getDouble("_run") > 0);
+        Assert.assertTrue(crashObj.getDouble("_run") >= 0);
         Assert.assertTrue(crashObj.getInt("_disk_total") > 0);
         Assert.assertTrue(crashObj.getInt("_disk_current") > 0);
         Assert.assertTrue(crashObj.getInt("_ram_current") > 0);

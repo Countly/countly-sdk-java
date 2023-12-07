@@ -336,10 +336,14 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             return this;
         }
 
+        Map<String, Object> segmentsMap = new HashMap<>();
+        if (segments != null) {
+            segmentsMap.putAll(segments);
+        }
         if (fatal) {
-            Countly.instance().crashes().recordUnhandledException(t, new HashMap<>(segments));
+            Countly.instance().crashes().recordUnhandledException(t, new HashMap<>(segmentsMap));
         } else {
-            Countly.instance().crashes().recordHandledException(t, new HashMap<>(segments));
+            Countly.instance().crashes().recordHandledException(t, new HashMap<>(segmentsMap));
         }
         return this;
     }

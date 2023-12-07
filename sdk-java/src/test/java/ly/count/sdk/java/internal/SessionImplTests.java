@@ -638,7 +638,7 @@ public class SessionImplTests {
 
     private void validateNotEquals(int idOffset, BiFunction<SessionImpl, SessionImpl, Consumer<Long>> setter) {
         Countly.instance().init(TestUtils.getConfigSessions());
-        long ts = TimeUtils.uniqueTimestampMs();
+        long ts = TimeUtils.timestampMs();
         SessionImpl session = createSessionImpl(12345L);
         SessionImpl session2 = createSessionImpl(12345L + idOffset);
         setter.apply(session, session).accept(ts);
