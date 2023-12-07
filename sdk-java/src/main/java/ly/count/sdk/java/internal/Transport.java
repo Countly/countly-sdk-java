@@ -506,22 +506,24 @@ public class Transport implements X509TrustManager {
     private String setProfilePicturePathRequestParams(String path, Params params) {
         Params tempParams = new Params();
 
-        tempParams.add("device_id", params.get("device_id"));
-        tempParams.add("app_key", params.get("app_key"));
-        tempParams.add("timestamp", params.get("timestamp"));
-        tempParams.add("sdk_name", params.get("sdk_name"));
-        tempParams.add("sdk_version", params.get("sdk_version"));
-        tempParams.add("tz", params.get("tz"));
-        tempParams.add("hour", params.get("hour"));
-        tempParams.add("dow", params.get("dow"));
-        tempParams.add("rr", params.get("rr"));
+        tempParams.add("device_id", params.remove("device_id"));
+        tempParams.add("app_key", params.remove("app_key"));
+        tempParams.add("timestamp", params.remove("timestamp"));
+        tempParams.add("sdk_name", params.remove("sdk_name"));
+        tempParams.add("sdk_version", params.remove("sdk_version"));
+        tempParams.add("tz", params.remove("tz"));
+        tempParams.add("hour", params.remove("hour"));
+        tempParams.add("dow", params.remove("dow"));
+        tempParams.add("rr", params.remove("rr"));
 
         if (params.has("av")) {
-            tempParams.add("av", params.get("av"));
+            tempParams.add("av", params.remove("av"));
         }
         //if no user details, add empty user details to indicate that we are sending a picture
         if (!params.has("user_details")) {
             tempParams.add("user_details", "{}");
+        } else {
+            tempParams.add("user_details", params.remove("user_details"));
         }
 
         return path + tempParams;

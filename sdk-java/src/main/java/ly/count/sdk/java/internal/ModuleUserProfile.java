@@ -213,12 +213,11 @@ public class ModuleUserProfile extends ModuleBase {
         Params params = new Params();
         final JSONObject json = new JSONObject();
         perform(json, params);
-        if (!json.isEmpty() || params.has(PredefinedUserPropertyKeys.PICTURE_PATH) || params.has(PICTURE_BYTES)) {
+        if (!json.isEmpty()) {
             params.add("user_details", json.toString());
-            return params;
-        } else {
-            return new Params();
         }
+
+        return params;
     }
 
     /**

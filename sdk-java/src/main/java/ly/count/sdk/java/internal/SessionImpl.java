@@ -122,7 +122,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         if (pushOnChange) {
             Storage.pushAsync(config, this);
         }
-        if (hasConsent(CoreFeature.Location)) {
+        if (hasConsent(CoreFeature.Location) && config.sdk.module(ModuleLocation.class) != null) {
             params.add(config.sdk.module(ModuleLocation.class).prepareLocationParams());
         }
         Future<Boolean> ret = ModuleRequests.sessionBegin(config, this);

@@ -64,7 +64,7 @@ public class UserEditorTests {
         //set profile picture url and commit it
         sessionHandler(() -> Countly.instance().user().edit().setPicturePath(imgFile.getAbsolutePath()).commit());
         validatePictureAndPath(imgFile.getAbsolutePath(), null);
-        validateUserDetailsRequestInRQ(map("user_details", "{}", "picturePath", imgFile.getAbsolutePath()));
+        validateUserDetailsRequestInRQ(map("picturePath", imgFile.getAbsolutePath()));
     }
 
     /**
@@ -112,7 +112,7 @@ public class UserEditorTests {
         sessionHandler(() -> Countly.instance().user().edit().setPicture(imgData).commit());
         validatePictureAndPath(null, imgData);
         Countly.session().end();
-        validateUserDetailsRequestInRQ(map("user_details", "{}", ModuleUserProfile.PICTURE_BYTES, Utils.Base64.encode(imgData)));
+        validateUserDetailsRequestInRQ(map(ModuleUserProfile.PICTURE_BYTES, Utils.Base64.encode(imgData)));
     }
 
     /**
