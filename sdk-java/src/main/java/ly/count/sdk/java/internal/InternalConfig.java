@@ -194,6 +194,14 @@ public class InternalConfig extends Config {
         return configLog;
     }
 
+    boolean isUnhandledCrashReportingEnabled() {
+        return unhandledCrashReportingEnabled;
+    }
+
+    int getMaxBreadcrumbCount() {
+        return maxBreadcrumbCount;
+    }
+
     String[] getLocationParams() {
         return new String[] { country, city, location, ip };
     }
