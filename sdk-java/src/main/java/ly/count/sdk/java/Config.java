@@ -1509,11 +1509,7 @@ public class Config {
      *
      * @return {@code this} instance for method chaining
      */
-    public Config setDisableLocation() {
-        country = null;
-        city = null;
-        location = null;
-        ip = null;
+    public Config disableLocation() {
         locationEnabled = false;
         return this;
     }

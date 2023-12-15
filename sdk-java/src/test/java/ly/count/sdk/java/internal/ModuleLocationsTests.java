@@ -112,7 +112,7 @@ public class ModuleLocationsTests {
     public void disableLocation_notBeganSession_withConfig() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location, Config.Feature.Sessions)
             .setLocation("US", "New York", "1,2", "1.1.1.1")
-            .setDisableLocation());
+            .disableLocation());
         validateLocationRequestInRQ(UserEditorTests.map("location", ""), 0);
         Countly.session().begin();
         validateLocationRequestInRQ(UserEditorTests.map("location", "", "begin_session", "1"), 1);
