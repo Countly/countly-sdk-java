@@ -96,7 +96,6 @@ public class ModuleViews extends ModuleBase {
         }
         viewSegmentation.put("segment", internalConfig.getSdkPlatform());
 
-        viewSegmentation.put("_idv", vd.viewID);
         return viewSegmentation;
     }
 
