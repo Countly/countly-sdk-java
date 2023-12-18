@@ -27,6 +27,7 @@ public class ModuleViews extends ModuleBase {
         long viewStartTimeSeconds; // if this is 0 then the view is not started yet or was paused
         String viewName;
         boolean isAutoStoppedView = false;//views started with "startAutoStoppedView" would have this as "true". If set to "true" views should be automatically closed when another one is started.
+        Map<String, Object> viewSegmentation = new ConcurrentHashMap<>();
     }
 
     ModuleViews() {
@@ -86,6 +87,8 @@ public class ModuleViews extends ModuleBase {
         if (customViewSegmentation != null) {
             viewSegmentation.putAll(customViewSegmentation);
         }
+
+        viewSegmentation.putAll(vd.viewSegmentation);
 
         viewSegmentation.put("name", vd.viewName);
         if (visit) {
@@ -158,6 +161,7 @@ public class ModuleViews extends ModuleBase {
         currentViewID = currentViewData.viewID;
 
         Map<String, Object> viewSegmentation = createViewEventSegmentation(currentViewData, firstView, true, customViewSegmentation);
+        currentViewData.viewSegmentation = viewSegmentation;
 
         if (firstView) {
             L.d("[ModuleViews] Recording view as the first one in the session. [" + viewName + "]");
@@ -170,22 +174,8 @@ public class ModuleViews extends ModuleBase {
     }
 
     void stopViewWithNameInternal(@Nullable String viewName, @Nullable Map<String, Object> customViewSegmentation) {
-        if (viewName == null || viewName.isEmpty()) {
-            L.e("[ModuleViews] stopViewWithNameInternal, Trying to record view with null or empty view name, ignoring request");
-            return;
-        }
-
-        String viewID = null;
-
-        for (Map.Entry<String, ViewData> entry : viewDataMap.entrySet()) {
-            ViewData vd = entry.getValue();
-            if (vd != null && viewName.equals(vd.viewName)) {
-                viewID = entry.getKey();
-            }
-        }
-
+        String viewID = validateViewWithName(viewName, "stopViewWithNameInternal");
         if (viewID == null) {
-            L.e("[ModuleViews] stopViewWithNameInternal, No view entry found with the provided name :[" + viewName + "]");
             return;
         }
 
@@ -283,6 +273,50 @@ public class ModuleViews extends ModuleBase {
         }
 
         return vd;
+    }
+
+    private String validateViewWithName(String viewName, String function) {
+        if (viewName == null || viewName.isEmpty()) {
+            L.e("[ModuleViews] " + function + ", Trying to process the view with null or empty view name, ignoring request");
+            return null;
+        }
+
+        String viewID = null;
+
+        for (Map.Entry<String, ViewData> entry : viewDataMap.entrySet()) {
+            ViewData vd = entry.getValue();
+            if (vd != null && viewName.equals(vd.viewName)) {
+                viewID = entry.getKey();
+            }
+        }
+
+        if (viewID == null) {
+            L.e("[ModuleViews] " + function + ", No view entry found with the provided name :[" + viewName + "]");
+        }
+
+        return viewID;
+    }
+
+    void addSegmentationToViewWithNameInternal(@Nullable String viewName, @Nullable Map<String, Object> viewSegmentation) {
+        String viewID = validateViewWithName(viewName, "addSegmentationToViewWithNameInternal");
+        if (viewID == null) {
+            return;
+        }
+        addSegmentationToViewWithIDInternal(viewID, viewSegmentation);
+    }
+
+    private void addSegmentationToViewWithIDInternal(String viewID, Map<String, Object> viewSegmentation) {
+        ViewData vd = validateViewID(viewID, "addSegmentationToViewWithIdInternal");
+        if (vd == null) {
+            return;
+        }
+
+        if (viewSegmentation == null || viewSegmentation.isEmpty()) {
+            L.e("[ModuleViews] addSegmentationToViewWithIdInternal, Trying to record view with null or empty view segmentation, ignoring request");
+            return;
+        }
+        removeReservedKeysAndUnsupportedTypesFromViewSegmentation(viewSegmentation);
+        vd.viewSegmentation.putAll(viewSegmentation);
     }
 
     @Override
@@ -391,7 +425,6 @@ public class ModuleViews extends ModuleBase {
         public void stopViewWithName(@Nullable String viewName) {
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling stopViewWithName vn[" + viewName + "]");
-
                 stopViewWithNameInternal(viewName, null);
             }
         }
@@ -405,7 +438,6 @@ public class ModuleViews extends ModuleBase {
         public void stopViewWithName(@Nullable String viewName, @Nullable Map<String, Object> viewSegmentation) {
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling stopViewWithName vn[" + viewName + "] sg[" + viewSegmentation + "]");
-
                 stopViewWithNameInternal(viewName, viewSegmentation);
             }
         }
@@ -418,7 +450,6 @@ public class ModuleViews extends ModuleBase {
         public void stopViewWithID(@Nullable String viewID) {
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling stopViewWithID vi[" + viewID + "]");
-
                 stopViewWithIDInternal(viewID, null);
             }
         }
@@ -432,7 +463,6 @@ public class ModuleViews extends ModuleBase {
         public void stopViewWithID(@Nullable String viewID, @Nullable Map<String, Object> viewSegmentation) {
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling stopViewWithName vi[" + viewID + "] sg[" + viewSegmentation + "]");
-
                 stopViewWithIDInternal(viewID, viewSegmentation);
             }
         }
@@ -445,7 +475,6 @@ public class ModuleViews extends ModuleBase {
         public void pauseViewWithID(@Nullable String viewID) {
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling pauseViewWithID vi[" + viewID + "]");
-
                 pauseViewWithIDInternal(viewID);
             }
         }
@@ -458,7 +487,6 @@ public class ModuleViews extends ModuleBase {
         public void resumeViewWithID(@Nullable String viewID) {
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling resumeViewWithID vi[" + viewID + "]");
-
                 resumeViewWithIDInternal(viewID);
             }
         }
@@ -471,8 +499,33 @@ public class ModuleViews extends ModuleBase {
         public void stopAllViews(@Nullable Map<String, Object> viewSegmentation) {
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling stopAllViews sg[" + viewSegmentation + "]");
-
                 stopAllViewsInternal(viewSegmentation);
+            }
+        }
+
+        /**
+         * Adds segmentation to a view with the given name
+         *
+         * @param viewName String
+         * @param viewSegmentation Map<String, Object>
+         */
+        public void addSegmentationToViewWithName(@Nullable String viewName, @Nullable Map<String, Object> viewSegmentation) {
+            synchronized (Countly.instance()) {
+                L.i("[Views] Calling addSegmentationToViewWithName vn[" + viewName + "] sg[" + viewSegmentation + "]");
+                addSegmentationToViewWithNameInternal(viewName, viewSegmentation);
+            }
+        }
+
+        /**
+         * Adds segmentation to a view with the given ID
+         *
+         * @param viewId String
+         * @param viewSegmentation Map<String, Object>
+         */
+        public void addSegmentationToViewWithID(@Nullable String viewId, @Nullable Map<String, Object> viewSegmentation) {
+            synchronized (Countly.instance()) {
+                L.i("[Views] Calling addSegmentationToViewWithID vi[" + viewId + "] sg[" + viewSegmentation + "]");
+                addSegmentationToViewWithIDInternal(viewId, viewSegmentation);
             }
         }
     }
