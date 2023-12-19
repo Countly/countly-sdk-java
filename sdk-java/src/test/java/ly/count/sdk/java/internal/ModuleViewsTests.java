@@ -367,6 +367,30 @@ public class ModuleViewsTests {
         validateView("B", 0.0, 3, 4, false, false, allSegmentation);
     }
 
+    /**
+     * <h3> Validate segmentation does not override internal keys </h2>
+     * <pre>
+     * Internal keys: "name", "start", "visit", "segment"
+     *
+     * Set global segm to use internal keys
+     * Start view and provide segm with internal keys
+     * Stop view and provide segm with internal keys
+     * make sure that internal keys are not overridden at any point
+     * </pre>
+     */
+    @Test
+    public void validateSegmentation_internalKeys() {
+        Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.Views, Config.Feature.Events));
+        TestUtils.validateEQSize(0);
+
+        Map<String, Object> internalKeysSegmentation = TestUtils.map("start", "YES", "name", TestUtils.keysValues[0], "visit", "YES", "segment", TestUtils.keysValues[1]);
+
+        Countly.instance().views().startView("A", TestUtils.map(internalKeysSegmentation, "ultimate", "YES"));
+        Countly.instance().views().stopViewWithName("A", TestUtils.map(internalKeysSegmentation, "end", "Unfortunately", "time", 1234567890L));
+        validateView("A", 0.0, 0, 2, true, true, TestUtils.map("ultimate", "YES"));
+        validateView("A", 0.0, 1, 2, false, false, TestUtils.map("end", "Unfortunately", "time", BigDecimal.valueOf(1234567890L)));
+    }
+
     private void validateView(String viewName, Double viewDuration, int idx, int size, boolean start, boolean visit, Map<String, Object> customSegmentation) {
         Map<String, Object> viewSegmentation = TestUtils.map("name", viewName, "segment", TestUtils.getOS());
         if (start) {

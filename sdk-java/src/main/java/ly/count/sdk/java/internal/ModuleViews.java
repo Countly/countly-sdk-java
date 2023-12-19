@@ -187,6 +187,7 @@ public class ModuleViews extends ModuleBase {
         if (vd == null) {
             return;
         }
+        removeReservedKeysFromViewSegmentation(customViewSegmentation);
 
         L.d("[ModuleViews] View [" + vd.viewName + "], id:[" + vd.viewID + "] is getting closed, reporting duration: [" + (TimeUtils.uniqueTimestampS() - vd.viewStartTimeSeconds) + "] s, current timestamp: [" + TimeUtils.uniqueTimestampMs() + "]");
         recordViewEndEvent(vd, customViewSegmentation, "stopViewWithIDInternal");

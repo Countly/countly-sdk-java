@@ -571,4 +571,21 @@ public class TestUtils {
         }
         return map;
     }
+
+    /**
+     * Converts array of objects to a 'String, Object' map
+     *
+     * @param gonnaAddMap map to add to, creates a copy of the map
+     * @param args array of objects
+     * @return map
+     */
+    protected static Map<String, Object> map(Map<String, Object> gonnaAddMap, Object... args) {
+        Map<String, Object> map = new ConcurrentHashMap<>(gonnaAddMap);
+        if (args.length % 2 == 0) {
+            for (int i = 0; i < args.length; i += 2) {
+                map.put(args[i].toString(), args[i + 1]);
+            }
+        }
+        return map;
+    }
 }
