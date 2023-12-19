@@ -51,12 +51,10 @@ public class ModuleViews extends ModuleBase {
         viewsInterface = new Views();
     }
 
-    private void removeReservedKeysAndUnsupportedTypesFromViewSegmentation(Map<String, Object> segmentation) {
+    private void removeReservedKeysFromViewSegmentation(Map<String, Object> segmentation) {
         if (segmentation == null) {
             return;
         }
-
-        List<String> gonnaDeleteKeys = new ArrayList<>();
 
         for (String key : reservedSegmentationKeysViews) {
             if (segmentation.containsKey(key)) {
@@ -64,15 +62,6 @@ public class ModuleViews extends ModuleBase {
                 L.w("[ModuleViews] removeReservedKeysAndUnsupportedTypesFromViewSegmentation, You cannot use the key:[" + key + "] in your segmentation since it's reserved by the SDK");
             }
         }
-
-        for (String key : segmentation.keySet()) {
-            if (!Utils.isValidDataType(segmentation.get(key))) {
-                gonnaDeleteKeys.add(key);
-                L.w("[ModuleViews] removeReservedKeysAndUnsupportedTypesFromViewSegmentation, You have provided an unsupported data type in your View Segmentation. Removing the unsupported values.");
-            }
-        }
-
-        gonnaDeleteKeys.forEach(segmentation::remove);
     }
 
     /**
@@ -117,7 +106,7 @@ public class ModuleViews extends ModuleBase {
             L.d("[ModuleViews] autoCloseRequiredViews, about to close [" + viewsToRemove.size() + "] views");
         }
 
-        removeReservedKeysAndUnsupportedTypesFromViewSegmentation(customViewSegmentation);
+        removeReservedKeysFromViewSegmentation(customViewSegmentation);
         viewsToRemove.forEach(s -> stopViewWithIDInternal(s, customViewSegmentation));
     }
 
@@ -138,7 +127,7 @@ public class ModuleViews extends ModuleBase {
             return null;
         }
 
-        removeReservedKeysAndUnsupportedTypesFromViewSegmentation(customViewSegmentation);
+        removeReservedKeysFromViewSegmentation(customViewSegmentation);
 
         int segmCount = 0;
         if (customViewSegmentation != null) {
@@ -314,7 +303,7 @@ public class ModuleViews extends ModuleBase {
             L.e("[ModuleViews] addSegmentationToViewWithIdInternal, Trying to record view with null or empty view segmentation, ignoring request");
             return;
         }
-        removeReservedKeysAndUnsupportedTypesFromViewSegmentation(viewSegmentation);
+        removeReservedKeysFromViewSegmentation(viewSegmentation);
         vd.viewSegmentation.putAll(viewSegmentation);
     }
 
