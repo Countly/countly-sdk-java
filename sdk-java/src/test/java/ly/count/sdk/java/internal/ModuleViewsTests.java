@@ -388,7 +388,7 @@ public class ModuleViewsTests {
         Countly.instance().views().startView("A", TestUtils.map(internalKeysSegmentation, "ultimate", "YES"));
         Countly.instance().views().stopViewWithName("A", TestUtils.map(internalKeysSegmentation, "end", "Unfortunately", "time", 1234567890L));
         validateView("A", 0.0, 0, 2, true, true, TestUtils.map("ultimate", "YES"));
-        validateView("A", 0.0, 1, 2, false, false, TestUtils.map("end", "Unfortunately", "time", BigDecimal.valueOf(1234567890L)));
+        validateView("A", 0.0, 1, 2, false, false, TestUtils.map("end", "Unfortunately", "time", 1234567890));
     }
 
     private void validateView(String viewName, Double viewDuration, int idx, int size, boolean start, boolean visit, Map<String, Object> customSegmentation) {
