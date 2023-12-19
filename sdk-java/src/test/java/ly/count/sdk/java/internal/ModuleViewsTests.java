@@ -1,7 +1,6 @@
 package ly.count.sdk.java.internal;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import ly.count.sdk.java.Config;
@@ -204,7 +203,8 @@ public class ModuleViewsTests {
         Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.Views, Config.Feature.Events));
         TestUtils.validateEQSize(0);
 
-        String viewA = Countly.instance().views().startView("A");
+        Map<String, Object> customSegmentationA = TestUtils.map("count", 56, "start", "1", "visit", "1");
+        String viewA = Countly.instance().views().startView("A", customSegmentationA);
         TestUtils.validateEQSize(1);
         Countly.instance().views().startView("B");
         Thread.sleep(1000);
@@ -222,10 +222,8 @@ public class ModuleViewsTests {
     }
 
     private void validateView(String viewName, Double viewDuration, int idx, int size, boolean start, boolean visit) {
-        Map<String, Object> viewSegmentation = new ConcurrentHashMap<>();
+        Map<String, Object> viewSegmentation = TestUtils.map("name", viewName, "segment", TestUtils.getOS());
 
-        viewSegmentation.put("name", viewName);
-        viewSegmentation.put("segment", TestUtils.getOS());
         if (start) {
             viewSegmentation.put("start", "1");
         }
