@@ -1,6 +1,7 @@
 package ly.count.sdk.java.internal;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import ly.count.sdk.java.Config;
@@ -182,5 +183,54 @@ public class ModuleViewsTests {
             idNameSegmentViewFunction.accept("", null);
             TestUtils.validateEQSize(0);
         }
+    }
+
+    // A simple flow
+
+    /**
+     * Make sure all the basic functions are working correctly and we are keeping time correctly
+     * 1- start view A
+     * 2- start view B
+     * 3- wait a moment
+     * 4- pause view A
+     * 5- wait a moment
+     * 6- resume view A
+     * 7- stop view with stopViewWithName/stopViewWithID/stopAllViews
+     * 8- Stop view B if needed
+     * 9- make sure the summary time is correct and two events are recorded
+     */
+    @Test
+    public void simpleFlow() throws InterruptedException {
+        Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.Views, Config.Feature.Events));
+        TestUtils.validateEQSize(0);
+
+        String viewA = Countly.instance().views().startView("A");
+        TestUtils.validateEQSize(1);
+        Countly.instance().views().startView("B");
+        Thread.sleep(1000);
+        Countly.instance().views().pauseViewWithID(viewA);
+        Thread.sleep(1000);
+        Countly.instance().views().resumeViewWithID(viewA);
+        Countly.instance().views().stopAllViews(null);
+        TestUtils.validateEQSize(5);
+
+        validateView("A", 0.0, 0, 5, true);
+        validateView("B", 0.0, 1, 5, false);
+        validateView("A", 1.0, 2, 5, true);
+        validateView("A", 0.0, 3, 5, true);
+        validateView("B", 2.0, 4, 5, false);
+    }
+
+    private void validateView(String viewName, Double viewDuration, int idx, int size, boolean start) {
+        Map<String, Object> viewSegmentation = new ConcurrentHashMap<>();
+
+        viewSegmentation.put("name", viewName);
+        viewSegmentation.put("segment", TestUtils.getOS());
+        viewSegmentation.put("visit", "1");
+        if (start) {
+            viewSegmentation.put("start", "1");
+        }
+
+        TestUtils.validateEventInEQ(ModuleViews.VIEW_EVENT_KEY, viewSegmentation, 1, 0.0, viewDuration, idx, size);
     }
 }
