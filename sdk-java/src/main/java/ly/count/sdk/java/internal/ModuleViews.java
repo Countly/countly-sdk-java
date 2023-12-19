@@ -86,11 +86,6 @@ public class ModuleViews extends ModuleBase {
 
     Map<String, Object> createViewEventSegmentation(@Nonnull ViewData vd, boolean firstView, boolean visit, Map<String, Object> customViewSegmentation) {
         Map<String, Object> viewSegmentation = new ConcurrentHashMap<>();
-        if (customViewSegmentation != null) {
-            viewSegmentation.putAll(customViewSegmentation);
-        }
-
-        viewSegmentation.putAll(vd.viewSegmentation);
 
         viewSegmentation.put("name", vd.viewName);
         if (visit) {
@@ -100,6 +95,10 @@ public class ModuleViews extends ModuleBase {
             viewSegmentation.put("start", "1");
         }
         viewSegmentation.put("segment", internalConfig.getSdkPlatform());
+        if (customViewSegmentation != null) {
+            viewSegmentation.putAll(customViewSegmentation);
+        }
+        viewSegmentation.putAll(vd.viewSegmentation);
 
         return viewSegmentation;
     }

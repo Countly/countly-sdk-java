@@ -1,5 +1,6 @@
 package ly.count.sdk.java.internal;
 
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -203,10 +204,11 @@ public class ModuleViewsTests {
         Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.Views, Config.Feature.Events));
         TestUtils.validateEQSize(0);
 
-        Map<String, Object> customSegmentationA = TestUtils.map("count", 56, "start", "1", "visit", "1");
+        Map<String, Object> customSegmentationA = TestUtils.map("count", 56, "start", "1", "visit", "1", "name", TestUtils.keysValues[0], "segment", TestUtils.keysValues[1]);
         String viewA = Countly.instance().views().startView("A", customSegmentationA);
         TestUtils.validateEQSize(1);
-        Countly.instance().views().startView("B");
+        Map<String, Object> customSegmentationB = TestUtils.map("gone", true, "lev", 78.91, "map", TestUtils.map("a", 1, "b", 2));
+        Countly.instance().views().startView("B", customSegmentationB);
         Thread.sleep(1000);
         Countly.instance().views().pauseViewWithID(viewA);
         Thread.sleep(1000);
@@ -214,15 +216,18 @@ public class ModuleViewsTests {
         Countly.instance().views().stopAllViews(null);
         TestUtils.validateEQSize(5);
 
-        validateView("A", 0.0, 0, 5, true, true);
-        validateView("B", 0.0, 1, 5, false, true);
-        validateView("A", 1.0, 2, 5, false, false);
-        validateView("A", 0.0, 3, 5, false, false);
-        validateView("B", 2.0, 4, 5, false, false);
+        validateView("A", 0.0, 0, 5, true, true, TestUtils.map("count", 56));
+        validateView("B", 0.0, 1, 5, false, true, TestUtils.map("gone", true, "lev", BigDecimal.valueOf(78.91)));
+        validateView("A", 1.0, 2, 5, false, false, null);
+        validateView("A", 0.0, 3, 5, false, false, null);
+        validateView("B", 2.0, 4, 5, false, false, null);
     }
 
-    private void validateView(String viewName, Double viewDuration, int idx, int size, boolean start, boolean visit) {
+    private void validateView(String viewName, Double viewDuration, int idx, int size, boolean start, boolean visit, Map<String, Object> customSegmentation) {
         Map<String, Object> viewSegmentation = TestUtils.map("name", viewName, "segment", TestUtils.getOS());
+        if (customSegmentation != null) {
+            viewSegmentation.putAll(customSegmentation);
+        }
 
         if (start) {
             viewSegmentation.put("start", "1");
