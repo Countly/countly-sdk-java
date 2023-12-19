@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import ly.count.sdk.java.Countly;
+import ly.count.sdk.java.Session;
 
 public class ModuleViews extends ModuleBase {
     String currentViewID = null;
@@ -51,6 +52,18 @@ public class ModuleViews extends ModuleBase {
         viewsInterface = new Views();
     }
 
+    @Override
+    public void onSessionBegan(Session session, InternalConfig config) {
+        super.onSessionBegan(session, config);
+        resetFirstView();
+    }
+
+    @Override
+    public void stop(InternalConfig config, boolean clear) {
+        viewsInterface = null;
+        viewDataMap.clear();
+    }
+
     private void removeReservedKeysFromViewSegmentation(Map<String, Object> segmentation) {
         if (segmentation == null) {
             return;
@@ -73,11 +86,6 @@ public class ModuleViews extends ModuleBase {
 
     Map<String, Object> createViewEventSegmentation(@Nonnull ViewData vd, boolean firstView, boolean visit, Map<String, Object> customViewSegmentation) {
         Map<String, Object> viewSegmentation = new ConcurrentHashMap<>();
-        if (customViewSegmentation != null) {
-            viewSegmentation.putAll(customViewSegmentation);
-        }
-
-        viewSegmentation.putAll(vd.viewSegmentation);
 
         viewSegmentation.put("name", vd.viewName);
         if (visit) {
@@ -87,6 +95,10 @@ public class ModuleViews extends ModuleBase {
             viewSegmentation.put("start", "1");
         }
         viewSegmentation.put("segment", internalConfig.getSdkPlatform());
+        if (customViewSegmentation != null) {
+            viewSegmentation.putAll(customViewSegmentation);
+        }
+        viewSegmentation.putAll(vd.viewSegmentation);
 
         return viewSegmentation;
     }
@@ -305,11 +317,6 @@ public class ModuleViews extends ModuleBase {
         }
         removeReservedKeysFromViewSegmentation(viewSegmentation);
         vd.viewSegmentation.putAll(viewSegmentation);
-    }
-
-    @Override
-    public void stop(InternalConfig config, boolean clear) {
-        viewsInterface = null;
     }
 
     /**
