@@ -300,6 +300,45 @@ public class ModuleViewsTests {
         validateView("A", 0.0, 2, 3, false, false, null); // closing
     }
 
+    /**
+     * <pre>
+     * Validate segmentation
+     * Just make sure the values are used
+     *
+     * startView A with segmentation
+     * make sure the correct things are added
+     *
+     * startView B with segmentation
+     * make sure the correct things are added
+     *
+     * Stop A with no segmentation
+     *
+     * Stop B with segmentation
+     *
+     * again make sure that segmentation is correctly applied
+     * </pre>
+     */
+    @Test
+    public void validateSegmentation1() {
+        Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.Views, Config.Feature.Events));
+        TestUtils.validateEQSize(0);
+
+        Map<String, Object> customSegmentationA = TestUtils.map("FigmaId", "YXNkOThhZnM=", "start", "1", "visit", "1", "name", TestUtils.keysValues[0], "segment", TestUtils.keysValues[1]);
+        Map<String, Object> customSegmentationB = TestUtils.map("FigmaId", "OWE4cZdkOWFz", "start", "1", "end", "1", "name", TestUtils.keysValues[2], "segment", TestUtils.keysValues[3]);
+
+        String viewA = Countly.instance().views().startView("A", customSegmentationA);
+        validateView("A", 0.0, 0, 1, true, true, TestUtils.map("FigmaId", "YXNkOThhZnM=")); // starting
+
+        Countly.instance().views().startView("B", customSegmentationB);
+        validateView("B", 0.0, 1, 2, false, true, TestUtils.map("FigmaId", "OWE4cZdkOWFz", "end", "1")); // starting
+
+        Countly.instance().views().stopViewWithID(viewA, null);
+        validateView("A", 0.0, 2, 3, false, false, null); // closing
+
+        Countly.instance().views().stopViewWithName("B", TestUtils.map("ClickCount", 45));
+        validateView("B", 0.0, 3, 4, false, false, TestUtils.map("ClickCount", 45)); // closing
+    }
+
     private void validateView(String viewName, Double viewDuration, int idx, int size, boolean start, boolean visit, Map<String, Object> customSegmentation) {
         Map<String, Object> viewSegmentation = TestUtils.map("name", viewName, "segment", TestUtils.getOS());
         if (start) {
