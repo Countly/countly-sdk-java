@@ -188,7 +188,9 @@ public class ModuleViewsTests {
     // A simple flow
 
     /**
+     * <pre>
      * Make sure all the basic functions are working correctly and we are keeping time correctly
+     *
      * 1- start view A
      * 2- start view B
      * 3- wait a moment
@@ -198,6 +200,7 @@ public class ModuleViewsTests {
      * 7- stop view with stopViewWithName/stopViewWithID/stopAllViews
      * 8- Stop view B if needed
      * 9- make sure the summary time is correct and two events are recorded
+     * </pre>
      */
     @Test
     public void simpleFlow() throws InterruptedException {
@@ -223,17 +226,57 @@ public class ModuleViewsTests {
         validateView("B", 2.0, 4, 5, false, false, null);
     }
 
+    /**
+     * <pre>
+     * Validate the interaction of "startView" and "startAutoStoppedView". "startAutoStoppedView" should be automatically stopped when calling "startView", but not the other way around
+     *
+     * startView A
+     * startAutoStoppedView
+     * startView B
+     * make sure that at this point there are 4 events, 3 starting and 1 closing.
+     *
+     * stopViewWithName A
+     * stopViewWithID B
+     * </pre>
+     */
+    @Test
+    public void mixedTestFlow1() throws InterruptedException {
+        Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.Views, Config.Feature.Events));
+        TestUtils.validateEQSize(0);
+
+        Map<String, Object> customSegmentationA = TestUtils.map("money", 238746798234739L, "start", "1", "visit", "1", "name", TestUtils.keysValues[0], "segment", TestUtils.keysValues[1]);
+        Map<String, Object> customSegmentationB = TestUtils.map("gone_to", "Wall Sina", "map", TestUtils.map("titan", true, "level", 65));
+
+        Countly.instance().views().startView("A", customSegmentationA);
+        Countly.instance().views().startAutoStoppedView("AutoStopped", customSegmentationB);
+        Thread.sleep(1000);
+        String viewB = Countly.instance().views().startView("B");
+
+        TestUtils.validateEQSize(4);
+
+        validateView("A", 0.0, 0, 4, true, true, TestUtils.map("money", 238746798234739L)); // starting
+        validateView("AutoStopped", 0.0, 1, 4, false, true, TestUtils.map("gone_to", "Wall Sina")); // starting
+        validateView("AutoStopped", 1.0, 2, 4, false, false, null); // closing
+        validateView("B", 0.0, 3, 4, false, true, null); // starting
+
+        Countly.instance().views().stopViewWithName("A");
+        Countly.instance().views().stopViewWithID(viewB);
+        TestUtils.validateEQSize(6);
+
+        validateView("A", 1.0, 4, 6, false, false, null); // closing
+        validateView("B", 0.0, 5, 6, false, false, null); // closing
+    }
+
     private void validateView(String viewName, Double viewDuration, int idx, int size, boolean start, boolean visit, Map<String, Object> customSegmentation) {
         Map<String, Object> viewSegmentation = TestUtils.map("name", viewName, "segment", TestUtils.getOS());
-        if (customSegmentation != null) {
-            viewSegmentation.putAll(customSegmentation);
-        }
-
         if (start) {
             viewSegmentation.put("start", "1");
         }
         if (visit) {
             viewSegmentation.put("visit", "1");
+        }
+        if (customSegmentation != null) {
+            viewSegmentation.putAll(customSegmentation);
         }
 
         TestUtils.validateEventInEQ(ModuleViews.VIEW_EVENT_KEY, viewSegmentation, 1, 0.0, viewDuration, idx, size);
