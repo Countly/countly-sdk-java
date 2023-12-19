@@ -339,6 +339,34 @@ public class ModuleViewsTests {
         validateView("B", 0.0, 3, 4, false, false, TestUtils.map("ClickCount", 45)); // closing
     }
 
+    /**
+     * <pre>
+     * Validate segmentation 2
+     *
+     * - startView A
+     * - startView B
+     * - stopAllViews with segmentation
+     *
+     * make sure that the stop segmentation was added to all views
+     * </pre>
+     */
+    @Test
+    public void validateSegmentation2() {
+        Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.Views, Config.Feature.Events));
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().startView("A");
+        Countly.instance().views().startView("B");
+        validateView("A", 0.0, 0, 2, true, true, null);
+        validateView("B", 0.0, 1, 2, false, true, null);
+
+        Map<String, Object> allSegmentation = TestUtils.map("Copyright", "Countly", "AppExit", true, "DestroyToken", false, "ExitedAt", 1702975890000L);
+        Countly.instance().views().stopAllViews(allSegmentation);
+
+        validateView("A", 0.0, 2, 4, false, false, allSegmentation);
+        validateView("B", 0.0, 3, 4, false, false, allSegmentation);
+    }
+
     private void validateView(String viewName, Double viewDuration, int idx, int size, boolean start, boolean visit, Map<String, Object> customSegmentation) {
         Map<String, Object> viewSegmentation = TestUtils.map("name", viewName, "segment", TestUtils.getOS());
         if (start) {
