@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
@@ -517,5 +518,57 @@ public class TestUtils {
         public String toString() {
             return value;
         }
+    }
+
+    /**
+     * Converts a map to json string
+     *
+     * @param entries map to convert
+     * @return json string
+     */
+    protected static String json(Map<String, Object> entries) {
+        return jsonObj(entries).toString();
+    }
+
+    /**
+     * Converts a map to json object
+     *
+     * @param entries map to convert
+     * @return json string
+     */
+    protected static JSONObject jsonObj(Map<String, Object> entries) {
+        JSONObject json = new JSONObject();
+        entries.forEach(json::put);
+        return json;
+    }
+
+    /**
+     * Converts array of objects to json string
+     * Returns empty json if array is null or empty
+     *
+     * @param args array of objects
+     * @return json string
+     */
+    protected static String json(Object... args) {
+        if (args == null || args.length == 0) {
+            return "{}";
+        }
+        return json(map(args));
+    }
+
+    /**
+     * Converts array of objects to a 'String, Object' map
+     *
+     * @param args array of objects
+     * @return map
+     */
+    protected static Map<String, Object> map(Object... args) {
+        Map<String, Object> map = new ConcurrentHashMap<>();
+        if (args.length % 2 == 0) {
+            for (int i = 0; i < args.length; i += 2) {
+                map.put(args[i].toString(), args[i + 1]);
+            }
+        }
+        return map;
     }
 }
