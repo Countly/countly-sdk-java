@@ -173,7 +173,6 @@ public class ModuleViews extends ModuleBase {
         currentViewID = currentViewData.viewID;
 
         Map<String, Object> viewSegmentation = createViewEventSegmentation(currentViewData, firstView, true, customViewSegmentation);
-        currentViewData.viewSegmentation = viewSegmentation;
 
         if (firstView) {
             L.d("[ModuleViews] Recording view as the first one in the session. [" + viewName + "]");
