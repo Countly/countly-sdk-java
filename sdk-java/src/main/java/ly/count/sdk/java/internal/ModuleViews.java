@@ -15,8 +15,6 @@ public class ModuleViews extends ModuleBase {
     String currentViewID = null;
     String previousViewID = null;
     private boolean firstView = true;
-    boolean autoViewTracker = false;
-    boolean automaticTrackingShouldUseShortName = false;
     final static String VIEW_EVENT_KEY = "[CLY]_view";
     Map<String, ViewData> viewDataMap = new LinkedHashMap<>(); // map viewIDs to its viewData
     String[] reservedSegmentationKeysViews = new String[] { "name", "visit", "start", "segment" };
@@ -38,17 +36,6 @@ public class ModuleViews extends ModuleBase {
     public void init(InternalConfig config) {
         super.init(config);
         L.v("[ModuleViews] Initializing");
-
-        if (config.isAutomaticViewTrackingEnabled()) {
-            L.d("[ModuleViews] Enabling automatic view tracking");
-            autoViewTracker = config.isAutomaticViewTrackingEnabled();
-        }
-
-        if (config.isAutoTrackingUseShortNameEnabled()) {
-            L.d("[ModuleViews] Enabling automatic view tracking short names");
-            automaticTrackingShouldUseShortName = config.isAutoTrackingUseShortNameEnabled();
-        }
-
         viewsInterface = new Views();
     }
 
@@ -187,6 +174,7 @@ public class ModuleViews extends ModuleBase {
         if (vd == null) {
             return;
         }
+        removeReservedKeysFromViewSegmentation(customViewSegmentation);
 
         L.d("[ModuleViews] View [" + vd.viewName + "], id:[" + vd.viewID + "] is getting closed, reporting duration: [" + (TimeUtils.uniqueTimestampS() - vd.viewStartTimeSeconds) + "] s, current timestamp: [" + TimeUtils.uniqueTimestampMs() + "]");
         recordViewEndEvent(vd, customViewSegmentation, "stopViewWithIDInternal");
@@ -363,12 +351,6 @@ public class ModuleViews extends ModuleBase {
         public String startAutoStoppedView(@Nullable String viewName, @Nullable Map<String, Object> viewSegmentation) {
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling startAutoStoppedView [" + viewName + "]");
-
-                if (autoViewTracker) {
-                    L.e("[Views] startAutoStoppedView, manual view call will be ignored since automatic tracking is enabled.");
-                    return null;
-                }
-
                 return startViewInternal(viewName, viewSegmentation, true);
             }
         }
@@ -382,12 +364,6 @@ public class ModuleViews extends ModuleBase {
         public @Nullable String startView(@Nullable String viewName) {
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling startView vn[" + viewName + "]");
-
-                if (autoViewTracker) {
-                    L.e("[Views] startView, manual view call will be ignored since automatic tracking is enabled.");
-                    return null;
-                }
-
                 return startViewInternal(viewName, null, false);
             }
         }
@@ -402,12 +378,6 @@ public class ModuleViews extends ModuleBase {
         public @Nullable String startView(@Nullable String viewName, @Nullable Map<String, Object> viewSegmentation) {
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling startView vn[" + viewName + "] sg[" + viewSegmentation + "]");
-
-                if (autoViewTracker) {
-                    L.e("[Views] startView, manual view call will be ignored since automatic tracking is enabled.");
-                    return null;
-                }
-
                 return startViewInternal(viewName, viewSegmentation, false);
             }
         }

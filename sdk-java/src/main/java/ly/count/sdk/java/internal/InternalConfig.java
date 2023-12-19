@@ -194,14 +194,6 @@ public class InternalConfig extends Config {
         return configLog;
     }
 
-    public boolean isAutomaticViewTrackingEnabled() {
-        return enableAutomaticViewTracking;
-    }
-
-    public boolean isAutoTrackingUseShortNameEnabled() {
-        return autoTrackingUseShortName;
-    }
-
     boolean isUnhandledCrashReportingEnabled() {
         return unhandledCrashReportingEnabled;
     }
