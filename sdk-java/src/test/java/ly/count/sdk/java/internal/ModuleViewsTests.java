@@ -214,21 +214,23 @@ public class ModuleViewsTests {
         Countly.instance().views().stopAllViews(null);
         TestUtils.validateEQSize(5);
 
-        validateView("A", 0.0, 0, 5, true);
-        validateView("B", 0.0, 1, 5, false);
-        validateView("A", 1.0, 2, 5, true);
-        validateView("A", 0.0, 3, 5, true);
-        validateView("B", 2.0, 4, 5, false);
+        validateView("A", 0.0, 0, 5, true, true);
+        validateView("B", 0.0, 1, 5, false, true);
+        validateView("A", 1.0, 2, 5, false, false);
+        validateView("A", 0.0, 3, 5, false, false);
+        validateView("B", 2.0, 4, 5, false, false);
     }
 
-    private void validateView(String viewName, Double viewDuration, int idx, int size, boolean start) {
+    private void validateView(String viewName, Double viewDuration, int idx, int size, boolean start, boolean visit) {
         Map<String, Object> viewSegmentation = new ConcurrentHashMap<>();
 
         viewSegmentation.put("name", viewName);
         viewSegmentation.put("segment", TestUtils.getOS());
-        viewSegmentation.put("visit", "1");
         if (start) {
             viewSegmentation.put("start", "1");
+        }
+        if (visit) {
+            viewSegmentation.put("visit", "1");
         }
 
         TestUtils.validateEventInEQ(ModuleViews.VIEW_EVENT_KEY, viewSegmentation, 1, 0.0, viewDuration, idx, size);

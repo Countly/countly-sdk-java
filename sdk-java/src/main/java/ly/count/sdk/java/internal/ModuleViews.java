@@ -2,6 +2,7 @@ package ly.count.sdk.java.internal;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,7 +18,7 @@ public class ModuleViews extends ModuleBase {
     boolean autoViewTracker = false;
     boolean automaticTrackingShouldUseShortName = false;
     final static String VIEW_EVENT_KEY = "[CLY]_view";
-    Map<String, ViewData> viewDataMap = new ConcurrentHashMap<>(); // map viewIDs to its viewData
+    Map<String, ViewData> viewDataMap = new LinkedHashMap<>(); // map viewIDs to its viewData
     String[] reservedSegmentationKeysViews = new String[] { "name", "visit", "start", "segment" };
     //interface for SDK users
     Views viewsInterface;
