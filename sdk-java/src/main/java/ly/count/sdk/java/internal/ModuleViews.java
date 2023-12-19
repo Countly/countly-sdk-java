@@ -16,7 +16,6 @@ public class ModuleViews extends ModuleBase {
     String previousViewID = null;
     private boolean firstView = true;
     boolean autoViewTracker = false;
-    boolean automaticTrackingShouldUseShortName = false;
     final static String VIEW_EVENT_KEY = "[CLY]_view";
     Map<String, ViewData> viewDataMap = new LinkedHashMap<>(); // map viewIDs to its viewData
     String[] reservedSegmentationKeysViews = new String[] { "name", "visit", "start", "segment" };
@@ -42,11 +41,6 @@ public class ModuleViews extends ModuleBase {
         if (config.isAutomaticViewTrackingEnabled()) {
             L.d("[ModuleViews] Enabling automatic view tracking");
             autoViewTracker = config.isAutomaticViewTrackingEnabled();
-        }
-
-        if (config.isAutoTrackingUseShortNameEnabled()) {
-            L.d("[ModuleViews] Enabling automatic view tracking short names");
-            automaticTrackingShouldUseShortName = config.isAutoTrackingUseShortNameEnabled();
         }
 
         viewsInterface = new Views();

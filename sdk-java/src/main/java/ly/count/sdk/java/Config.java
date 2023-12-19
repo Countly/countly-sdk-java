@@ -379,16 +379,13 @@ public class Config {
         this.unhandledCrashReportingEnabled = false;
         return this;
     }
-  
+
     protected String location = null;
     protected String ip = null;
     protected String city = null;
     protected String country = null;
     protected boolean locationEnabled = true;
-
-
     protected boolean enableAutomaticViewTracking = false;
-    protected boolean autoTrackingUseShortName = false;
 
     // TODO: storage limits & configuration
     //    protected int maxRequestsStored = 0;
@@ -1458,16 +1455,6 @@ public class Config {
         location = gpsCoordinates;
         ip = ipAddress;
         locationEnabled = true;
-        return this;
-    }
-
-    /**
-     * Enable short names for automatic view tracking
-     *
-     * @return {@code this} instance for method chaining
-     */
-    public Config enableAutomaticViewShortNames() {
-        this.autoTrackingUseShortName = true;
         return this;
     }
 
