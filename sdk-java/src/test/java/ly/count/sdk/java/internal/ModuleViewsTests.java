@@ -267,6 +267,39 @@ public class ModuleViewsTests {
         validateView("B", 0.0, 5, 6, false, false, null); // closing
     }
 
+    /**
+     * <pre>
+     * Make sure we can use view actions with the auto stopped ones
+     *
+     * startAutoStoppedView A
+     * wait a moment
+     * pause view
+     * wait a moment
+     * resume view
+     * stop view with stopViewWithName/stopViewWithID
+     * </pre>
+     */
+    @Test
+    public void useWithAutoStoppedOnes() throws InterruptedException {
+        Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.Views, Config.Feature.Events));
+        TestUtils.validateEQSize(0);
+
+        Map<String, Object> customSegmentationA = TestUtils.map("power_percent", 56.7f, "start", "1", "visit", "1", "name", TestUtils.keysValues[0], "segment", TestUtils.keysValues[1]);
+
+        String viewA = Countly.instance().views().startAutoStoppedView("A", customSegmentationA);
+        Thread.sleep(1000);
+        Countly.instance().views().pauseViewWithID(viewA);
+        Thread.sleep(1000);
+        Countly.instance().views().resumeViewWithID(viewA);
+        Countly.instance().views().stopViewWithName("A", null);
+
+        TestUtils.validateEQSize(3);
+
+        validateView("A", 0.0, 0, 3, true, true, TestUtils.map("power_percent", BigDecimal.valueOf(56.7))); // starting
+        validateView("A", 1.0, 1, 3, false, false, null); // starting
+        validateView("A", 0.0, 2, 3, false, false, null); // closing
+    }
+
     private void validateView(String viewName, Double viewDuration, int idx, int size, boolean start, boolean visit, Map<String, Object> customSegmentation) {
         Map<String, Object> viewSegmentation = TestUtils.map("name", viewName, "segment", TestUtils.getOS());
         if (start) {
