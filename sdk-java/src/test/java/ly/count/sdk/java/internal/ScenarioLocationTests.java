@@ -43,7 +43,7 @@ public class ScenarioLocationTests {
 
         Countly.instance().location().setLocation(null, null, "1,2", null);
         Thread.sleep(200); // wait for location req to be written
-        validateLocationRequestInRQ(UserEditorTests.map("location", "1,2"), 1);
+        validateLocationRequestInRQ(TestUtils.map("location", "1,2"), 1);
 
         endAndValidateEndSessionRequest(2);
         beginAndValidateSessionRequest(3, "begin_session", "1", "location", "1,2");
@@ -70,13 +70,13 @@ public class ScenarioLocationTests {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location, Config.Feature.Sessions)
             .setLocation("TR", "Izmir", null, null));
         Thread.sleep(200); // wait for first init location req to be written
-        validateLocationRequestInRQ(UserEditorTests.map("city", "Izmir", "country_code", "TR"), 0);
+        validateLocationRequestInRQ(TestUtils.map("city", "Izmir", "country_code", "TR"), 0);
 
         beginAndValidateSessionRequest(1, "begin_session", "1", "city", "Izmir", "country_code", "TR");
 
         Countly.instance().location().setLocation(null, null, "1,2", null);
         Thread.sleep(200); // wait for location req to be written
-        validateLocationRequestInRQ(UserEditorTests.map("location", "1,2"), 2);
+        validateLocationRequestInRQ(TestUtils.map("location", "1,2"), 2);
 
         endAndValidateEndSessionRequest(3);
         beginAndValidateSessionRequest(4, "begin_session", "1", "location", "1,2");
@@ -104,20 +104,20 @@ public class ScenarioLocationTests {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location, Config.Feature.Sessions)
             .setLocation("TR", "Izmir", null, null));
         Thread.sleep(200); // wait for first init location req to be written
-        validateLocationRequestInRQ(UserEditorTests.map("city", "Izmir", "country_code", "TR"), 0);
+        validateLocationRequestInRQ(TestUtils.map("city", "Izmir", "country_code", "TR"), 0);
 
         beginAndValidateSessionRequest(1, "begin_session", "1", "city", "Izmir", "country_code", "TR");
 
         Countly.instance().location().setLocation(null, null, "1,2", null);
         Thread.sleep(200); // wait for location req to be written
-        validateLocationRequestInRQ(UserEditorTests.map("location", "1,2"), 2);
+        validateLocationRequestInRQ(TestUtils.map("location", "1,2"), 2);
 
         endAndValidateEndSessionRequest(3);
         beginAndValidateSessionRequest(4, "begin_session", "1", "location", "1,2");
 
         Countly.instance().location().setLocation(null, null, null, "1.1.1.1");
         Thread.sleep(200); // wait for location req to be written
-        validateLocationRequestInRQ(UserEditorTests.map("ip", "1.1.1.1"), 5);
+        validateLocationRequestInRQ(TestUtils.map("ip", "1.1.1.1"), 5);
 
         endAndValidateEndSessionRequest(6);
         beginAndValidateSessionRequest(7, "begin_session", "1", "ip", "1.1.1.1");
@@ -141,17 +141,17 @@ public class ScenarioLocationTests {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location, Config.Feature.Sessions)
             .setLocation("TR", "Izmir", null, null));
         Thread.sleep(200); // wait for first location req to be written
-        validateLocationRequestInRQ(UserEditorTests.map("country_code", "TR", "city", "Izmir"), 0);
+        validateLocationRequestInRQ(TestUtils.map("country_code", "TR", "city", "Izmir"), 0);
 
         Countly.instance().location().setLocation(null, null, "1,2", "1.1.1.1");
         Thread.sleep(200); // wait for location req to be written
-        validateLocationRequestInRQ(UserEditorTests.map("ip", "1.1.1.1", "location", "1,2"), 1);
+        validateLocationRequestInRQ(TestUtils.map("ip", "1.1.1.1", "location", "1,2"), 1);
 
         beginAndValidateSessionRequest(2, "begin_session", "1", "ip", "1.1.1.1", "location", "1,2");
 
         Countly.instance().location().setLocation("TR", "Izmir", "3,4", null);
         Thread.sleep(200); // wait for location req to be written
-        validateLocationRequestInRQ(UserEditorTests.map("country_code", "TR", "location", "3,4", "city", "Izmir"), 3);
+        validateLocationRequestInRQ(TestUtils.map("country_code", "TR", "location", "3,4", "city", "Izmir"), 3);
 
         endAndValidateEndSessionRequest(4);
         beginAndValidateSessionRequest(5, "begin_session", "1", "country_code", "TR", "location", "3,4", "city", "Izmir");
@@ -161,13 +161,13 @@ public class ScenarioLocationTests {
     private void beginAndValidateSessionRequest(int rqIdx, Object... params) throws InterruptedException {
         Countly.session().begin();
         Thread.sleep(200); // wait for begin_session req to be written
-        validateLocationRequestInRQ(UserEditorTests.map(params), rqIdx);
+        validateLocationRequestInRQ(TestUtils.map(params), rqIdx);
     }
 
     private void endAndValidateEndSessionRequest(int rqIdx) throws InterruptedException {
         Countly.session().end();
         Thread.sleep(200); // wait for end_session req to be written
-        validateLocationRequestInRQ(UserEditorTests.map("end_session", "1"), rqIdx);
+        validateLocationRequestInRQ(TestUtils.map("end_session", "1"), rqIdx);
     }
 
     /**
