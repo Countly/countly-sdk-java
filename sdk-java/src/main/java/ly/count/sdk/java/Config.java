@@ -385,7 +385,6 @@ public class Config {
     protected String city = null;
     protected String country = null;
     protected boolean locationEnabled = true;
-    protected boolean enableAutomaticViewTracking = false;
 
     // TODO: storage limits & configuration
     //    protected int maxRequestsStored = 0;
@@ -1427,16 +1426,6 @@ public class Config {
      */
     public Config remoteConfigRegisterGlobalCallback(RCDownloadCallback callback) {
         remoteConfigGlobalCallbacks.add(callback);
-        return this;
-    }
-
-    /**
-     * Enable automatic view tracking
-     *
-     * @return {@code this} instance for method chaining
-     */
-    public Config enableAutomaticViewTracking() {
-        this.enableAutomaticViewTracking = true;
         return this;
     }
 

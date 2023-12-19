@@ -193,11 +193,7 @@ public class InternalConfig extends Config {
     Log getLogger() {
         return configLog;
     }
-
-    public boolean isAutomaticViewTrackingEnabled() {
-        return enableAutomaticViewTracking;
-    }
-
+    
     boolean isUnhandledCrashReportingEnabled() {
         return unhandledCrashReportingEnabled;
     }
