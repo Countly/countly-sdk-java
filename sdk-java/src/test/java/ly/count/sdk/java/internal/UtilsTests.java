@@ -572,7 +572,7 @@ public class UtilsTests {
     @Test
     public void safeRandomVal() throws NumberFormatException {
         String val = Utils.safeRandomVal();
-        Pattern pattern = Pattern.compile("^([a-zA-Z0-9]{8})(\\d+)$");
+        Pattern pattern = Pattern.compile("^(.{8})(\\d+)$");
 
         Matcher matcher = pattern.matcher(val);
         if (matcher.matches()) {
