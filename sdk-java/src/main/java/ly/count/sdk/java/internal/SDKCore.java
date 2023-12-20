@@ -379,63 +379,6 @@ public class SDKCore {
         return null;
     }
 
-    public ModuleFeedback.Feedback feedback() {
-
-        if (!hasConsentForFeature(CoreFeature.Feedback)) {
-            L.v("[SDKCore] feedback, Feedback feature has no consent, returning null");
-            return null;
-        }
-
-        return module(ModuleFeedback.class).feedbackInterface;
-    }
-
-    public ModuleCrashes.Crashes crashes() {
-        if (!hasConsentForFeature(CoreFeature.CrashReporting)) {
-            L.v("[SDKCore] crash, Crash Reporting feature has no consent, returning null");
-            return null;
-        }
-
-        return module(ModuleCrashes.class).crashInterface;
-    }
-
-    public ModuleViews.Views views() {
-        if (!hasConsentForFeature(CoreFeature.Views)) {
-            L.v("[SDKCore] views, Views feature has no consent, returning null");
-            return null;
-        }
-
-        return module(ModuleViews.class).viewsInterface;
-    }
-
-    public ModuleDeviceIdCore.DeviceId deviceId() {
-        return module(ModuleDeviceIdCore.class).deviceIdInterface;
-    }
-
-    public ModuleRemoteConfig.RemoteConfig remoteConfig() {
-        if (!hasConsentForFeature(CoreFeature.RemoteConfig)) {
-            L.v("[SDKCore] remoteConfig, RemoteConfig feature has no consent, returning null");
-            return null;
-        }
-
-        return module(ModuleRemoteConfig.class).remoteConfigInterface;
-    }
-
-    public ModuleUserProfile.UserProfile userProfile() {
-        return module(ModuleUserProfile.class).userProfileInterface;
-    }
-
-    public ModuleLocation.Location location() {
-        if (!hasConsentForFeature(CoreFeature.Location)) {
-            L.v("[SDKCore] location, Location feature has no consent, returning null");
-            return null;
-        }
-        ModuleLocation module = module(ModuleLocation.class);
-        if (module == null) {
-            return null;
-        }
-        return module.locationInterface;
-    }
-
     /**
      * Get current {@link SessionImpl} or create new one if current is {@code null}.
      *
@@ -588,18 +531,6 @@ public class SDKCore {
 
     public UserImpl user() {
         return user;
-    }
-
-    /**
-     * @return timedEvents interface
-     * @deprecated use {@link ModuleEvents.Events#startEvent(String)} instead via <code>instance().events()</code> call
-     */
-    TimedEvents timedEvents() {
-        return ((ModuleSessions) module(CoreFeature.Sessions.getIndex())).timedEvents();
-    }
-
-    public ModuleEvents.Events events() {
-        return ((ModuleEvents) module(CoreFeature.Events.getIndex())).eventsInterface;
     }
 
     public InternalConfig config() {
@@ -765,5 +696,80 @@ public class SDKCore {
     //transferred from original subclass
     public void onRequest(InternalConfig config, Request request) {
         onSignal(config, SDKCore.Signal.Ping.getIndex(), null);
+    }
+
+    //Module functions
+
+    /**
+     * @return timedEvents interface
+     * @deprecated use {@link ModuleEvents.Events#startEvent(String)} instead via <code>instance().events()</code> call
+     */
+    TimedEvents timedEvents() {
+        return ((ModuleSessions) module(CoreFeature.Sessions.getIndex())).timedEvents();
+    }
+
+    public ModuleEvents.Events events() {
+        if (!hasConsentForFeature(CoreFeature.Events)) {
+            L.v("[SDKCore] events, Events feature has no consent, returning null");
+            return null;
+        }
+        return module(ModuleEvents.class).eventsInterface;
+    }
+
+    public ModuleFeedback.Feedback feedback() {
+
+        if (!hasConsentForFeature(CoreFeature.Feedback)) {
+            L.v("[SDKCore] feedback, Feedback feature has no consent, returning null");
+            return null;
+        }
+
+        return module(ModuleFeedback.class).feedbackInterface;
+    }
+
+    public ModuleCrashes.Crashes crashes() {
+        if (!hasConsentForFeature(CoreFeature.CrashReporting)) {
+            L.v("[SDKCore] crash, Crash Reporting feature has no consent, returning null");
+            return null;
+        }
+
+        return module(ModuleCrashes.class).crashInterface;
+    }
+
+    public ModuleViews.Views views() {
+        if (!hasConsentForFeature(CoreFeature.Views)) {
+            L.v("[SDKCore] views, Views feature has no consent, returning null");
+            return null;
+        }
+
+        return module(ModuleViews.class).viewsInterface;
+    }
+
+    public ModuleDeviceIdCore.DeviceId deviceId() {
+        return module(ModuleDeviceIdCore.class).deviceIdInterface;
+    }
+
+    public ModuleRemoteConfig.RemoteConfig remoteConfig() {
+        if (!hasConsentForFeature(CoreFeature.RemoteConfig)) {
+            L.v("[SDKCore] remoteConfig, RemoteConfig feature has no consent, returning null");
+            return null;
+        }
+
+        return module(ModuleRemoteConfig.class).remoteConfigInterface;
+    }
+
+    public ModuleUserProfile.UserProfile userProfile() {
+        return module(ModuleUserProfile.class).userProfileInterface;
+    }
+
+    public ModuleLocation.Location location() {
+        if (!hasConsentForFeature(CoreFeature.Location)) {
+            L.v("[SDKCore] location, Location feature has no consent, returning null");
+            return null;
+        }
+        ModuleLocation module = module(ModuleLocation.class);
+        if (module == null) {
+            return null;
+        }
+        return module.locationInterface;
     }
 }

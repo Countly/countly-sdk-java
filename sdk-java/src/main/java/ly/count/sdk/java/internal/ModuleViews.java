@@ -15,7 +15,13 @@ public class ModuleViews extends ModuleBase {
     String currentViewID = null;
     String previousViewID = null;
     private boolean firstView = true;
-    final static String VIEW_EVENT_KEY = "[CLY]_view";
+    static final String KEY_VIEW_EVENT = "[CLY]_view";
+    static final String KEY_NAME = "name";
+    static final String KEY_VISIT = "visit";
+    static final String KEY_VISIT_VALUE = "1";
+    static final String KEY_SEGMENT = "segment";
+    static final String KEY_START = "start";
+    static final String KEY_START_VALUE = "1";
     Map<String, ViewData> viewDataMap = new LinkedHashMap<>(); // map viewIDs to its viewData
     String[] reservedSegmentationKeysViews = new String[] { "name", "visit", "start", "segment" };
     //interface for SDK users
@@ -40,8 +46,9 @@ public class ModuleViews extends ModuleBase {
     }
 
     @Override
-    public void onSessionBegan(Session session, InternalConfig config) {
-        super.onSessionBegan(session, config);
+    public void onSessionEnded(Session session, InternalConfig config) {
+        super.onSessionEnded(session, config);
+        stopAllViewsInternal(null);
         resetFirstView();
     }
 
@@ -74,14 +81,14 @@ public class ModuleViews extends ModuleBase {
     Map<String, Object> createViewEventSegmentation(@Nonnull ViewData vd, boolean firstView, boolean visit, Map<String, Object> customViewSegmentation) {
         Map<String, Object> viewSegmentation = new ConcurrentHashMap<>();
 
-        viewSegmentation.put("name", vd.viewName);
+        viewSegmentation.put(KEY_NAME, vd.viewName);
         if (visit) {
-            viewSegmentation.put("visit", "1");
+            viewSegmentation.put(KEY_VISIT, KEY_VISIT_VALUE);
         }
         if (firstView) {
-            viewSegmentation.put("start", "1");
+            viewSegmentation.put(KEY_START, KEY_START_VALUE);
         }
-        viewSegmentation.put("segment", internalConfig.getSdkPlatform());
+        viewSegmentation.put(KEY_SEGMENT, internalConfig.getSdkPlatform());
         if (customViewSegmentation != null) {
             viewSegmentation.putAll(customViewSegmentation);
         }
@@ -155,8 +162,7 @@ public class ModuleViews extends ModuleBase {
             firstView = false;
         }
 
-        Countly.instance().events().recordEvent(VIEW_EVENT_KEY, viewSegmentation, 1, 0.0, 0.0);
-
+        recordView(0.0, viewSegmentation);
         return currentViewData.viewID;
     }
 
@@ -182,6 +188,16 @@ public class ModuleViews extends ModuleBase {
         viewDataMap.remove(vd.viewID);
     }
 
+    void recordView(Double duration, Map<String, Object> segmentation) {
+        ModuleEvents.Events events = Countly.instance().events();
+        if (events == null) {
+            L.e("[ModuleViews] recordView, events module is not initialized");
+            return;
+        }
+
+        events.recordEvent(KEY_VIEW_EVENT, segmentation, 1, 0.0, duration);
+    }
+
     void recordViewEndEvent(ViewData vd, @Nullable Map<String, Object> filteredCustomViewSegmentation, String viewRecordingSource) {
         long lastElapsedDurationSeconds = 0;
         //we do sanity check the time component and print error in case of problem
@@ -201,7 +217,7 @@ public class ModuleViews extends ModuleBase {
 
         long viewDurationSeconds = lastElapsedDurationSeconds;
         Map<String, Object> segments = createViewEventSegmentation(vd, false, false, filteredCustomViewSegmentation);
-        Countly.instance().events().recordEvent(VIEW_EVENT_KEY, segments, 1, 0.0, new Long(viewDurationSeconds).doubleValue());
+        recordView(new Long(viewDurationSeconds).doubleValue(), segments);
     }
 
     void pauseViewWithIDInternal(String viewID) {
