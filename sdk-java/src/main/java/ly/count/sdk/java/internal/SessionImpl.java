@@ -364,6 +364,14 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         return this;
     }
 
+    /**
+     * Start view
+     *
+     * @param name String representing name of this View
+     * @param start whether this view is first in current application launch
+     * @return View instance
+     * @deprecated use {@link ModuleViews.Views#startView(String)} instead via {@link Countly#views()}
+     */
     public View view(String name, boolean start) {
         L.d("[SessionImpl] view: name = " + name + " start = " + start);
         if (!SDKCore.enabled(CoreFeature.Views)) {
@@ -381,6 +389,13 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         return currentView;
     }
 
+    /**
+     * Start view
+     *
+     * @param name String representing name of this View
+     * @return View instance
+     * @deprecated use {@link ModuleViews.Views#startView(String)} instead via {@link Countly#views()}
+     */
     public View view(String name) {
         return view(name, startView);
     }
