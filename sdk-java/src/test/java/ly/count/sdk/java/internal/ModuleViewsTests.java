@@ -1,6 +1,7 @@
 package ly.count.sdk.java.internal;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -33,7 +34,7 @@ public class ModuleViewsTests {
      * No event should be generated
      */
     @Test
-    public void stopViewWithName() {
+    public void stopViewWithName_nonExisting() {
         Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.Views, Config.Feature.Events));
         TestUtils.validateEQSize(0);
         Countly.instance().views().stopViewWithName(TestUtils.keysValues[0]);
@@ -46,7 +47,7 @@ public class ModuleViewsTests {
      * No event should be generated
      */
     @Test
-    public void stopViewWithID() {
+    public void stopViewWithID_nonExisting() {
         Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.Views, Config.Feature.Events));
         TestUtils.validateEQSize(0);
         Countly.instance().views().stopViewWithID(TestUtils.keysValues[0]);
@@ -59,7 +60,7 @@ public class ModuleViewsTests {
      * No event should be generated
      */
     @Test
-    public void pauseViewWithID() {
+    public void pauseViewWithID_nonExisting() {
         Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.Views, Config.Feature.Events));
         TestUtils.validateEQSize(0);
         Countly.instance().views().pauseViewWithID(TestUtils.keysValues[0]);
@@ -72,10 +73,25 @@ public class ModuleViewsTests {
      * No event should be generated
      */
     @Test
-    public void resumeViewWithID() {
+    public void resumeViewWithID_nonExisting() {
         Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.Views, Config.Feature.Events));
         TestUtils.validateEQSize(0);
         Countly.instance().views().resumeViewWithID(TestUtils.keysValues[0]);
+        TestUtils.validateEQSize(0);
+    }
+
+    /**
+     * "addSegmentationToView" with non-existing view
+     * Validating that "addSegmentationToView" with non-existing view doesn't generate any event
+     * No event should be generated
+     */
+    @Test
+    public void addSegmentationToView_nonExisting() {
+        Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.Views, Config.Feature.Events));
+        TestUtils.validateEQSize(0);
+        Countly.instance().views().addSegmentationToViewWithName(TestUtils.keysValues[0], TestUtils.map("a", 1, "b", 2));
+        TestUtils.validateEQSize(0);
+        Countly.instance().views().addSegmentationToViewWithID(TestUtils.keysValues[0], TestUtils.map("a", 1, "b", 2));
         TestUtils.validateEQSize(0);
     }
 
@@ -372,9 +388,8 @@ public class ModuleViewsTests {
      * <pre>
      * Internal keys: "name", "start", "visit", "segment"
      *
-     * Set global segm to use internal keys
-     * Start view and provide segm with internal keys
-     * Stop view and provide segm with internal keys
+     * - Start view and provide segmentation with internal keys
+     * - Stop view and provide segmentation with internal keys
      * make sure that internal keys are not overridden at any point
      * </pre>
      */
@@ -389,6 +404,202 @@ public class ModuleViewsTests {
         Countly.instance().views().stopViewWithName("A", TestUtils.map(internalKeysSegmentation, "end", "Unfortunately", "time", 1234567890L));
         validateView("A", 0.0, 0, 2, true, true, TestUtils.map("ultimate", "YES"));
         validateView("A", 0.0, 1, 2, false, false, TestUtils.map("end", "Unfortunately", "time", 1234567890));
+    }
+
+    /**
+     * <pre>
+     * Try add segmentation to view functions with internal keys
+     *
+     * - start view A with segmentation - validate that event is created
+     * - Add segmentation to view with name A - with internal keys + valid param
+     * - pause view A - validate that segmentation is not empty and only valid segmentation is added and internal keys are not overridden
+     * - Add segmentation to view A with ID - with internal keys + valid param
+     * - stop view with ID A - validate that segmentation is not empty and only valid segmentation is added and internal keys are not overridden
+     *
+     * </pre>
+     */
+    @Test
+    public void addSegmentationToView_internalKeys() {
+        Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.Views, Config.Feature.Events));
+        TestUtils.validateEQSize(0);
+
+        Map<String, Object> internalKeysSegmentation = TestUtils.map("start", "YES", "name", TestUtils.keysValues[0], "visit", "YES", "segment", TestUtils.keysValues[1]);
+
+        String viewIDA = Countly.instance().views().startView("A");
+        validateView("A", 0.0, 0, 1, true, true, null);
+        Countly.instance().views().addSegmentationToViewWithName("A", TestUtils.map(internalKeysSegmentation, "aniki", "HAVE"));
+        Countly.instance().views().pauseViewWithID(viewIDA);
+        validateView("A", 0.0, 1, 2, false, false, TestUtils.map("aniki", "HAVE"));
+
+        Countly.instance().views().addSegmentationToViewWithID(viewIDA, TestUtils.map(internalKeysSegmentation, "oni-chan", "HAVE"));
+        Countly.instance().views().stopViewWithID(viewIDA);
+        validateView("A", 0.0, 2, 3, false, false, TestUtils.map("aniki", "HAVE", "oni-chan", "HAVE"));
+    }
+
+    /**
+     * <pre>
+     * Try add segmentation to view functions with null and empty values
+     *
+     * - start view A with segmentation + some internal keys - validate event is created and only valid segmentation is added
+     * - Add segmentation to view with name A - with a param
+     * - Add segmentation to view with name A - null
+     * - pause view A - validate that segmentation is not empty and first call added the segmentation
+     * - Add segmentation to view with ID A - with a param
+     * - Add segmentation to view with ID A - empty
+     * - stop view A - validate that segmentation is not empty and added segmentations are exists and not overridden by null and empty values
+     *
+     * </pre>
+     */
+    @Test
+    public void addSegmentationToView_nullEmpty() {
+        Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.Views, Config.Feature.Events));
+        TestUtils.validateEQSize(0);
+
+        Map<String, Object> viewSegmentation = TestUtils.map("name", "A", "segment", TestUtils.getOS(), "arr", new ArrayList<>(), "done", true);
+
+        String viewIDA = Countly.instance().views().startView("A", viewSegmentation);
+        validateView("A", 0.0, 0, 1, true, true, TestUtils.map("done", true));
+        Countly.instance().views().addSegmentationToViewWithName("A", TestUtils.map("a", 1));
+        Countly.instance().views().addSegmentationToViewWithName("A", null);
+        Countly.instance().views().pauseViewWithID(viewIDA);
+        validateView("A", 0.0, 1, 2, false, false, TestUtils.map("a", 1));
+
+        Countly.instance().views().addSegmentationToViewWithID(viewIDA, TestUtils.map("b", 2));
+        Countly.instance().views().addSegmentationToViewWithID(viewIDA, TestUtils.map());
+        Countly.instance().views().stopViewWithID(viewIDA);
+        validateView("A", 0.0, 2, 3, false, false, TestUtils.map("a", 1, "b", 2));
+    }
+
+    /**
+     * <pre>
+     * Add segmentation to view
+     *
+     * - start view A with none segmentation
+     * - Add segmentation to view A
+     * - pause view A - validate that segmentation is added
+     * - stop view A - validate that segmentation is also added to stop view event
+     *
+     * </pre>
+     */
+    @Test
+    public void addSegmentationToView() {
+        Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.Views, Config.Feature.Events));
+        TestUtils.validateEQSize(0);
+        String viewIDA = Countly.instance().views().startView("A");
+        validateView("A", 0.0, 0, 1, true, true, null);
+        Countly.instance().views().addSegmentationToViewWithName("A", TestUtils.map("a", 1, "b", 2));
+        Countly.instance().views().pauseViewWithID(viewIDA);
+        validateView("A", 0.0, 1, 2, false, false, TestUtils.map("a", 1, "b", 2));
+        Countly.instance().views().stopViewWithID(viewIDA);
+        validateView("A", 0.0, 2, 3, false, false, TestUtils.map("a", 1, "b", 2));
+    }
+
+    /**
+     * <pre>
+     * Resume already running view
+     *
+     * - start view A
+     * - wait a moment
+     * - pause view A
+     * - wait a moment
+     * - pause view A again
+     * - wait a moment
+     * - stop view A
+     *
+     * Total time should be 1 seconds because it was paused already
+     *
+     * </pre>
+     *
+     * @throws InterruptedException to wait
+     */
+    @Test
+    public void pauseViewWithId_pausePaused() throws InterruptedException {
+        Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.Views, Config.Feature.Events));
+        TestUtils.validateEQSize(0);
+        String viewIDA = Countly.instance().views().startView("A");
+
+        Thread.sleep(1000);
+        Countly.instance().views().pauseViewWithID(viewIDA);
+        Thread.sleep(1000);
+        Countly.instance().views().pauseViewWithID(viewIDA);
+        Thread.sleep(1000);
+
+        Countly.instance().views().stopViewWithID(viewIDA);
+        validateView("A", 0.0, 0, 3, true, true, null);
+        validateView("A", 1.0, 1, 3, false, false, null);
+        validateView("A", 0.0, 2, 3, false, false, null);
+    }
+
+    /**
+     * <pre>
+     * Resume already running view
+     *
+     * - start view A
+     * - wait a moment
+     * - resume view A
+     * - wait a moment
+     * - stop view A
+     *
+     * Total time should be 2 seconds because it was not paused
+     *
+     * </pre>
+     *
+     * @throws InterruptedException to wait
+     */
+    @Test
+    public void resumeViewWithId_resumeRunning() throws InterruptedException {
+        Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.Views, Config.Feature.Events));
+        TestUtils.validateEQSize(0);
+        String viewIDA = Countly.instance().views().startView("A");
+
+        Thread.sleep(1000);
+        Countly.instance().views().resumeViewWithID(viewIDA);
+        Thread.sleep(1000);
+
+        Countly.instance().views().stopViewWithID(viewIDA);
+        validateView("A", 0.0, 0, 2, true, true, null);
+        validateView("A", 2.0, 1, 2, false, false, null);
+    }
+
+    /**
+     * <pre>
+     * A mixed flow of sessions and views
+     *
+     * - start session
+     * - start view A - firstView true- event is created
+     * - wait a moment
+     * - end session
+     * - start view B - firstView false - event is created
+     * - start session
+     * - stop view A - event is created
+     * - start view C - firstView true - event is created
+     *
+     * There should be 4 events, 2 for first start views, 1 for start view and one for stop view
+     * </pre>
+     *
+     * @throws InterruptedException for wait
+     */
+    @Test
+    public void mixedFlow_sessions() throws InterruptedException {
+        Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.Views, Config.Feature.Events, Config.Feature.Sessions));
+        TestUtils.validateEQSize(0);
+        Countly.session().begin();
+
+        String viewIDA = Countly.instance().views().startView("A");
+
+        Thread.sleep(1000);
+        Countly.session().end();
+
+        Countly.instance().views().startView("B");
+        Countly.session().begin();
+
+        Countly.instance().views().stopViewWithID(viewIDA);
+        Countly.instance().views().startView("C");
+
+        validateView("A", 0.0, 0, 4, true, true, null);
+        validateView("B", 0.0, 1, 4, false, true, null);
+        validateView("A", 1.0, 2, 4, false, false, null);
+        validateView("C", 0.0, 3, 4, true, true, null);
     }
 
     private void validateView(String viewName, Double viewDuration, int idx, int size, boolean start, boolean visit, Map<String, Object> customSegmentation) {
