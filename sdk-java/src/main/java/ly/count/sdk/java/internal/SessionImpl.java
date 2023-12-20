@@ -193,11 +193,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
         this.consents = SDKCore.instance.consents;
 
-        if (currentView != null) {
-            currentView.stop(true);
-        } else {
-            Storage.pushAsync(config, this);
-        }
+        Storage.pushAsync(config, this);
 
         Long duration = updateDuration(now);
 

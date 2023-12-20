@@ -599,7 +599,11 @@ public class SDKCore {
     }
 
     public ModuleEvents.Events events() {
-        return ((ModuleEvents) module(CoreFeature.Events.getIndex())).eventsInterface;
+        ModuleBase module = module(CoreFeature.Events.getIndex());
+        if (module == null) {
+            return null;
+        }
+        return ((ModuleEvents) module).eventsInterface;
     }
 
     public InternalConfig config() {

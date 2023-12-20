@@ -568,11 +568,10 @@ public class ModuleViewsTests {
      * - start session
      * - start view A - firstView true- event is created
      * - wait a moment
-     * - end session
-     * - start view B - firstView false - event is created
+     * - end session - this call ends existing views so it stops A
+     * - start view B - firstView true - event is created
      * - start session
-     * - stop view A - event is created
-     * - start view C - firstView true - event is created
+     * - start view C - firstView false - event is created
      *
      * There should be 4 events, 2 for first start views, 1 for start view and one for stop view
      * </pre>
@@ -597,12 +596,12 @@ public class ModuleViewsTests {
         Countly.instance().views().startView("C");
 
         validateView("A", 0.0, 0, 4, true, true, null);
-        validateView("B", 0.0, 1, 4, false, true, null);
-        validateView("A", 1.0, 2, 4, false, false, null);
-        validateView("C", 0.0, 3, 4, true, true, null);
+        validateView("A", 1.0, 1, 4, false, false, null);
+        validateView("B", 0.0, 2, 4, true, true, null);
+        validateView("C", 0.0, 3, 4, false, true, null);
     }
 
-    private void validateView(String viewName, Double viewDuration, int idx, int size, boolean start, boolean visit, Map<String, Object> customSegmentation) {
+    static void validateView(String viewName, Double viewDuration, int idx, int size, boolean start, boolean visit, Map<String, Object> customSegmentation) {
         Map<String, Object> viewSegmentation = TestUtils.map("name", viewName, "segment", TestUtils.getOS());
         if (start) {
             viewSegmentation.put("start", "1");
@@ -614,6 +613,6 @@ public class ModuleViewsTests {
             viewSegmentation.putAll(customSegmentation);
         }
 
-        TestUtils.validateEventInEQ(ModuleViews.VIEW_EVENT_KEY, viewSegmentation, 1, 0.0, viewDuration, idx, size);
+        TestUtils.validateEventInEQ(ModuleViews.KEY_VIEW_EVENT, viewSegmentation, 1, 0.0, viewDuration, idx, size);
     }
 }

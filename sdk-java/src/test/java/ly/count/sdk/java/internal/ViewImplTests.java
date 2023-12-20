@@ -34,18 +34,15 @@ public class ViewImplTests {
     @Test
     public void constructor_defaults() {
         ViewImpl view = new ViewImpl(null, TestUtils.keysValues[0], Mockito.mock(Log.class));
-        Assert.assertNull(view.start);
-        Assert.assertFalse(view.ended);
-        Assert.assertFalse(view.started);
         Assert.assertNull(view.session);
         Assert.assertEquals(TestUtils.keysValues[0], view.name);
-        Assert.assertEquals("start", ViewImpl.START);
-        Assert.assertEquals("1", ViewImpl.START_VALUE);
-        Assert.assertEquals("visit", ViewImpl.VISIT);
-        Assert.assertEquals("1", ViewImpl.VISIT_VALUE);
-        Assert.assertEquals("segment", ViewImpl.SEGMENT);
-        Assert.assertEquals("[CLY]_view", ViewImpl.EVENT);
-        Assert.assertEquals("name", ViewImpl.NAME);
+        Assert.assertEquals("start", ModuleViews.KEY_START);
+        Assert.assertEquals("1", ModuleViews.KEY_START_VALUE);
+        Assert.assertEquals("visit", ModuleViews.KEY_VISIT);
+        Assert.assertEquals("1", ModuleViews.KEY_VISIT_VALUE);
+        Assert.assertEquals("segment", ModuleViews.KEY_SEGMENT);
+        Assert.assertEquals("[CLY]_view", ModuleViews.KEY_VIEW_EVENT);
+        Assert.assertEquals("name", ModuleViews.KEY_NAME);
         Assert.assertFalse(view.toString().isEmpty());
     }
 
@@ -65,7 +62,7 @@ public class ViewImplTests {
         segmentations.put("visit", "1");
         segmentations.put("segment", TestUtils.getOS());
         segmentations.put("start", "1");
-        TestUtils.validateEventInEQ("[CLY]_view", segmentations, 1, null, null, 0, 1);
+        TestUtils.validateEventInEQ("[CLY]_view", segmentations, 1, 0.0, null, 0, 1);
     }
 
     /**
@@ -127,13 +124,13 @@ public class ViewImplTests {
         segmentations.put("visit", "1");
         segmentations.put("segment", TestUtils.getOS());
         segmentations.put("start", "1");
-        TestUtils.validateEventInEQ("[CLY]_view", segmentations, 1, null, null, 0, 1);
+        TestUtils.validateEventInEQ("[CLY]_view", segmentations, 1, 0.0, null, 0, 1);
 
         segmentations.remove("start");
         segmentations.remove("visit");
         Thread.sleep(1000);
         view.stop(false);
-        TestUtils.validateEventInEQ("[CLY]_view", segmentations, 1, null, 1.0, 1, 2);
+        TestUtils.validateEventInEQ("[CLY]_view", segmentations, 1, 0.0, 1.0, 1, 2);
     }
 
     /**
@@ -154,13 +151,13 @@ public class ViewImplTests {
         segmentations.put("visit", "1");
         segmentations.put("segment", TestUtils.getOS());
         segmentations.put("start", "1");
-        TestUtils.validateEventInEQ("[CLY]_view", segmentations, 1, null, null, 0, 1);
+        TestUtils.validateEventInEQ("[CLY]_view", segmentations, 1, 0.0, null, 0, 1);
 
         segmentations.remove("start");
         segmentations.remove("visit");
         Thread.sleep(1000);
         Countly.instance().view(TestUtils.keysValues[0]).stop(false); // this call stop previous view and creates new one and stops it
-        TestUtils.validateEventInEQ("[CLY]_view", segmentations, 1, null, 0.0, 3, 4);
+        TestUtils.validateEventInEQ("[CLY]_view", segmentations, 1, 0.0, null, 3, 4);
     }
 
     /**
