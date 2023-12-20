@@ -188,13 +188,12 @@ public class ModuleViews extends ModuleBase {
     }
 
     void recordView(Double duration, Map<String, Object> segmentation) {
-        ModuleEvents.Events events = Countly.instance().events();
-        if (events == null) {
-            L.e("[ModuleViews] recordView, events module is not initialized");
+        if (!internalConfig.sdk.hasConsentForFeature(CoreFeature.Events)) {
+            L.e("[ModuleViews] recordView, not consent for events");
             return;
         }
 
-        events.recordEvent(KEY_VIEW_EVENT, segmentation, 1, 0.0, duration);
+        Countly.instance().events().recordEvent(KEY_VIEW_EVENT, segmentation, 1, 0.0, duration);
     }
 
     void recordViewEndEvent(ViewData vd, @Nullable Map<String, Object> filteredCustomViewSegmentation, String viewRecordingSource) {
