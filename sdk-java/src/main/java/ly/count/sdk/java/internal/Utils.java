@@ -13,6 +13,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.MessageDigest;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -386,5 +387,19 @@ public class Utils {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    /**
+     * Creates a crypto-safe SHA-256 hashed random value
+     *
+     * @return returns a random string value
+     */
+    public static String safeRandomVal() {
+        long timestamp = System.currentTimeMillis();
+        SecureRandom random = new SecureRandom();
+        byte[] value = new byte[6];
+        random.nextBytes(value);
+        String b64Value = Utils.Base64.encode(value);
+        return b64Value + timestamp;
     }
 }

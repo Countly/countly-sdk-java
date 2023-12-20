@@ -1,6 +1,5 @@
 package ly.count.sdk.java.internal;
 
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -146,7 +145,7 @@ public class ModuleViews extends ModuleBase {
         autoCloseRequiredViews(false, null);
 
         ViewData currentViewData = new ViewData();
-        currentViewData.viewID = safeRandomVal();
+        currentViewData.viewID = Utils.safeRandomVal();
         currentViewData.viewName = viewName;
         currentViewData.viewStartTimeSeconds = TimeUtils.uniqueTimestampS();
         currentViewData.isAutoStoppedView = viewShouldBeAutomaticallyStopped;
@@ -321,20 +320,6 @@ public class ModuleViews extends ModuleBase {
         }
         removeReservedKeysFromViewSegmentation(viewSegmentation);
         vd.viewSegmentation.putAll(viewSegmentation);
-    }
-
-    /**
-     * Creates a crypto-safe SHA-256 hashed random value
-     *
-     * @return returns a random string value
-     */
-    public static String safeRandomVal() {
-        long timestamp = System.currentTimeMillis();
-        SecureRandom random = new SecureRandom();
-        byte[] value = new byte[6];
-        random.nextBytes(value);
-        String b64Value = Utils.Base64.encode(value);
-        return b64Value + timestamp;
     }
 
     public class Views {
