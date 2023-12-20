@@ -713,7 +713,13 @@ public class SDKCore {
             L.v("[SDKCore] events, Events feature has no consent, returning null");
             return null;
         }
-        return module(ModuleEvents.class).eventsInterface;
+
+        ModuleEvents module = module(ModuleEvents.class);
+        if (module == null) {
+            return null;
+        }
+
+        return module.eventsInterface;
     }
 
     public ModuleFeedback.Feedback feedback() {
