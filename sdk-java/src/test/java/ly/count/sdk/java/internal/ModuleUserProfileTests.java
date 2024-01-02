@@ -45,7 +45,7 @@ public class ModuleUserProfileTests {
 
         Countly.instance().userProfile().save();
 
-        UserEditorTests.validateUserDetailsRequestInRQ(UserEditorTests.map("user_details", UserEditorTests.json(
+        UserEditorTests.validateUserDetailsRequestInRQ(TestUtils.map("user_details", TestUtils.json(
             "name", "Test",
             "username", "TestUsername",
             "email", "test@test.test",
@@ -77,10 +77,10 @@ public class ModuleUserProfileTests {
         Countly.instance().userProfile().clear();
         Countly.instance().userProfile().save();
 
-        UserEditorTests.validateUserDetailsRequestInRQ(UserEditorTests.map("user_details", UserEditorTests.json(
+        UserEditorTests.validateUserDetailsRequestInRQ(TestUtils.map("user_details", TestUtils.json(
             "name", "Test",
             "username", "TestUsername",
-            "custom", UserEditorTests.map("level", 56)
+            "custom", TestUtils.map("level", 56)
         )));
     }
 
@@ -95,7 +95,7 @@ public class ModuleUserProfileTests {
         Countly.instance().userProfile().setProperties(null);
         Countly.instance().userProfile().setProperties(new ConcurrentHashMap<>());
         Countly.instance().userProfile().save();
-        UserEditorTests.validateUserDetailsRequestInRQ(UserEditorTests.map());
+        UserEditorTests.validateUserDetailsRequestInRQ(TestUtils.map());
     }
 
     /**
@@ -109,7 +109,7 @@ public class ModuleUserProfileTests {
         Countly.instance().userProfile().increment("test");
         Countly.instance().userProfile().incrementBy("test", 2);
         Countly.instance().userProfile().save();
-        UserEditorTests.validateUserDetailsRequestInRQ(UserEditorTests.map("user_details",
+        UserEditorTests.validateUserDetailsRequestInRQ(TestUtils.map("user_details",
             UserEditorTests.c(UserEditorTests.opJson("test", "$inc", 3))
         ));
     }
@@ -128,7 +128,7 @@ public class ModuleUserProfileTests {
         Countly.instance().userProfile().saveMin(TestUtils.eKeys[1], 2);
         Countly.instance().userProfile().saveMin(TestUtils.eKeys[1], 0.002);
         Countly.instance().userProfile().save();
-        UserEditorTests.validateUserDetailsRequestInRQ(UserEditorTests.map("user_details", UserEditorTests.c(
+        UserEditorTests.validateUserDetailsRequestInRQ(TestUtils.map("user_details", UserEditorTests.c(
             UserEditorTests.opJson(TestUtils.eKeys[1], "$min", 0.002),
             UserEditorTests.opJson(TestUtils.eKeys[0], "$max", 9.62)
         )));
@@ -144,7 +144,7 @@ public class ModuleUserProfileTests {
         Countly.instance().init(TestUtils.getBaseConfig());
         Countly.instance().userProfile().multiply("test", 2);
         Countly.instance().userProfile().save();
-        UserEditorTests.validateUserDetailsRequestInRQ(UserEditorTests.map("user_details",
+        UserEditorTests.validateUserDetailsRequestInRQ(TestUtils.map("user_details",
             UserEditorTests.c(UserEditorTests.opJson("test", "$mul", 2))
         ));
     }
@@ -193,7 +193,7 @@ public class ModuleUserProfileTests {
 
         Countly.instance().userProfile().save();
 
-        UserEditorTests.validateUserDetailsRequestInRQ(UserEditorTests.map("user_details", UserEditorTests.c(
+        UserEditorTests.validateUserDetailsRequestInRQ(TestUtils.map("user_details", UserEditorTests.c(
                 UserEditorTests.opJson(TestUtils.eKeys[3], op, TestUtils.eKeys[2]),
                 UserEditorTests.opJson(TestUtils.eKeys[0], op, TestUtils.eKeys[1], TestUtils.eKeys[2], 89, TestUtils.eKeys[2], "")
             )
@@ -211,7 +211,7 @@ public class ModuleUserProfileTests {
         Countly.instance().userProfile().setOnce(TestUtils.eKeys[0], 56);
         Countly.instance().userProfile().setOnce(TestUtils.eKeys[0], TestUtils.eKeys[1]);
         Countly.instance().userProfile().save();
-        UserEditorTests.validateUserDetailsRequestInRQ(UserEditorTests.map("user_details", UserEditorTests.c(
+        UserEditorTests.validateUserDetailsRequestInRQ(TestUtils.map("user_details", UserEditorTests.c(
             UserEditorTests.opJson(TestUtils.eKeys[0], "$setOnce", TestUtils.eKeys[1]))));
     }
 }
