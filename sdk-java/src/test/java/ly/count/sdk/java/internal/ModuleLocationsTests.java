@@ -32,7 +32,7 @@ public class ModuleLocationsTests {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
         Countly.session().begin();
         Countly.instance().location().disableLocation();
-        validateLocationRequestInRQ(UserEditorTests.map("location", ""), 0);
+        validateLocationRequestInRQ(TestUtils.map("location", ""), 0);
     }
 
     /**
@@ -57,7 +57,7 @@ public class ModuleLocationsTests {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
         Countly.session().begin();
         Countly.instance().location().setLocation("US", "New York", "1,2", "1.1.1.1");
-        validateLocationRequestInRQ(UserEditorTests.map("country_code", "US", "city", "New York", "location", "1,2", "ip", "1.1.1.1"), 0);
+        validateLocationRequestInRQ(TestUtils.map("country_code", "US", "city", "New York", "location", "1,2", "ip", "1.1.1.1"), 0);
     }
 
     /**
@@ -70,7 +70,7 @@ public class ModuleLocationsTests {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
         Countly.session().begin();
         Countly.instance().location().setLocation(null, "New York", "1,2", "1.1.1.1");
-        validateLocationRequestInRQ(UserEditorTests.map("city", "New York", "location", "1,2", "ip", "1.1.1.1"), 0);
+        validateLocationRequestInRQ(TestUtils.map("city", "New York", "location", "1,2", "ip", "1.1.1.1"), 0);
     }
 
     /**
@@ -82,9 +82,9 @@ public class ModuleLocationsTests {
     public void setLocation_notBeganSession() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location, Config.Feature.Sessions));
         Countly.instance().location().setLocation("US", "New York", "1,2", "1.1.1.1");
-        validateLocationRequestInRQ(UserEditorTests.map("country_code", "US", "city", "New York", "location", "1,2", "ip", "1.1.1.1"), 0);
+        validateLocationRequestInRQ(TestUtils.map("country_code", "US", "city", "New York", "location", "1,2", "ip", "1.1.1.1"), 0);
         Countly.session().begin();
-        validateLocationRequestInRQ(UserEditorTests.map("country_code", "US", "city", "New York", "location", "1,2", "ip", "1.1.1.1", "begin_session", "1"), 1);
+        validateLocationRequestInRQ(TestUtils.map("country_code", "US", "city", "New York", "location", "1,2", "ip", "1.1.1.1", "begin_session", "1"), 1);
     }
 
     /**
@@ -97,10 +97,10 @@ public class ModuleLocationsTests {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location, Config.Feature.Sessions)
             .setLocation("US", "New York", "1,2", "1.1.1.1"));
         Thread.sleep(100);
-        validateLocationRequestInRQ(UserEditorTests.map("country_code", "US", "city", "New York", "location", "1,2", "ip", "1.1.1.1"), 0);
+        validateLocationRequestInRQ(TestUtils.map("country_code", "US", "city", "New York", "location", "1,2", "ip", "1.1.1.1"), 0);
         Countly.session().begin();
         Thread.sleep(100);
-        validateLocationRequestInRQ(UserEditorTests.map("country_code", "US", "city", "New York", "location", "1,2", "ip", "1.1.1.1", "begin_session", "1"), 1);
+        validateLocationRequestInRQ(TestUtils.map("country_code", "US", "city", "New York", "location", "1,2", "ip", "1.1.1.1", "begin_session", "1"), 1);
     }
 
     /**
@@ -112,10 +112,10 @@ public class ModuleLocationsTests {
     public void disableLocation_notBeganSession_withConfig() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location, Config.Feature.Sessions)
             .setLocation("US", "New York", "1,2", "1.1.1.1")
-            .setDisableLocation());
-        validateLocationRequestInRQ(UserEditorTests.map("location", ""), 0);
+            .disableLocation());
+        validateLocationRequestInRQ(TestUtils.map("location", ""), 0);
         Countly.session().begin();
-        validateLocationRequestInRQ(UserEditorTests.map("location", "", "begin_session", "1"), 1);
+        validateLocationRequestInRQ(TestUtils.map("location", "", "begin_session", "1"), 1);
     }
 
     /**

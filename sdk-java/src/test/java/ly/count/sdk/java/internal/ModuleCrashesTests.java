@@ -42,7 +42,7 @@ public class ModuleCrashesTests {
         Throwable testThrowable = new Exception("test");
         Thread.sleep(200);
         Countly.instance().crashes().recordHandledException(testThrowable);
-        validateCrashInRQ(testThrowable, false, null);
+        validateCrashInRQ(testThrowable, false, null, null, 0);
     }
 
     /**
@@ -109,7 +109,77 @@ public class ModuleCrashesTests {
         TestUtils.setAdditionalDeviceMetrics();
         Throwable testThrowable = new Exception("test");
         Countly.instance().crashes().recordUnhandledException(testThrowable);
-        validateCrashInRQ(testThrowable, true, null);
+        validateCrashInRQ(testThrowable, true, null, null, 0);
+    }
+
+    /**
+     * "addCrashBreadcrumb"
+     * Validating that handled exception is recorded correctly to request queue and has breadcrumbs,
+     * Request queue should contain one request with crash object with breadcrumbs
+     */
+    @Test
+    public void addCrashBreadcrumb() {
+        Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.CrashReporting)
+            .setMaxBreadcrumbCount(3));
+        TestUtils.setAdditionalDeviceMetrics();
+
+        Countly.instance().crashes().addCrashBreadcrumb("initial game state");
+        // doing something
+        Countly.instance().crashes().addCrashBreadcrumb("player leveled up");
+        // doing something
+        Countly.instance().crashes().addCrashBreadcrumb("player killed the boss");
+        // doing something
+        Countly.instance().crashes().addCrashBreadcrumb("player wanted to exit from the game");
+        try {
+            throw new Exception("test");
+        } catch (Exception e) {
+            Countly.instance().crashes().recordUnhandledException(e);
+            validateCrashInRQ(e, true, null, new String[] {
+                "player leveled up",
+                "player killed the boss",
+                "player wanted to exit from the game"
+            }, 0);
+        }
+
+        Throwable testThrowable = new Exception("test");
+        Countly.instance().crashes().recordHandledException(testThrowable);
+        validateCrashInRQ(testThrowable, false, null, null, 1);
+    }
+
+    /**
+     * "addCrashBreadcrumb" with default "maxBreadcrumbCount"
+     * Validating that handled exception is recorded correctly to request queue and has breadcrumbs,
+     * Request queue should contain one request with crash object with breadcrumbs
+     */
+    @Test
+    public void addCrashBreadcrumb_defaultSize() {
+        Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.CrashReporting));
+        TestUtils.setAdditionalDeviceMetrics();
+
+        Countly.instance().crashes().addCrashBreadcrumb(null); // test null, this will not add anything
+        Countly.instance().crashes().addCrashBreadcrumb(""); // test empty string, this will not add anything
+        Countly.instance().crashes().addCrashBreadcrumb("test1"); // test first, this will be removed
+        for (int i = 2; i < 150; i++) {
+            Countly.instance().crashes().addCrashBreadcrumb("test" + i);
+        }
+        Countly.instance().crashes().addCrashBreadcrumb("exit"); // test last, this will cause first one to be removed which is "test50"
+
+        String[] expectedBreadcrumbs = new String[100];
+        for (int i = 0; i < 99; i++) {
+            expectedBreadcrumbs[i] = "test" + (i + 51);
+        }
+        expectedBreadcrumbs[99] = "exit";
+
+        try {
+            throw new Exception("test");
+        } catch (Exception e) {
+            Countly.instance().crashes().recordUnhandledException(e);
+            validateCrashInRQ(e, true, null, expectedBreadcrumbs, 0);
+        }
+
+        Throwable testThrowable = new Exception("test");
+        Countly.instance().crashes().recordHandledException(testThrowable);
+        validateCrashInRQ(testThrowable, false, null, null, 1);
     }
 
     /**
@@ -130,13 +200,22 @@ public class ModuleCrashesTests {
      * @param fatal is fatal
      * @param customSegment custom segment to validate
      */
-    private void validateCrashInRQ(Throwable expectedError, boolean fatal, JSONObject customSegment) {
+    private void validateCrashInRQ(Throwable expectedError, boolean fatal, JSONObject customSegment, String[] logs, int rqIdx) {
         Map<String, String>[] rq = TestUtils.getCurrentRQ();
-        Assert.assertEquals(1, rq.length);
-        Assert.assertEquals(10, rq[0].size());
-        TestUtils.validateRequiredParams(rq[0]);
-        JSONObject crashObj = new JSONObject(rq[0].get("crash"));
-        Assert.assertEquals(customSegment == null ? 19 : 20, crashObj.length());
+        Assert.assertEquals(rqIdx + 1, rq.length);
+        Assert.assertEquals(10, rq[rqIdx].size());
+        TestUtils.validateRequiredParams(rq[rqIdx]);
+        JSONObject crashObj = new JSONObject(rq[rqIdx].get("crash"));
+
+        int paramSize = 19;
+        if (logs != null) {
+            paramSize += 1;
+        }
+        if (customSegment != null) {
+            paramSize += 1;
+        }
+
+        Assert.assertEquals(paramSize, crashObj.length());
 
         Assert.assertTrue(crashObj.getDouble("_run") >= 0);
         Assert.assertTrue(crashObj.getInt("_disk_total") > 0);
@@ -164,6 +243,9 @@ public class ModuleCrashesTests {
         if (customSegment != null) {
             Assert.assertEquals(customSegment.toString(), crashObj.getJSONObject("_custom").toString());
         }
+        if (logs != null) {
+            Assert.assertEquals(String.join("\n", logs), crashObj.get("_logs"));
+        }
     }
 
     private void recordExceptionWithSegment_base(boolean fatal, BiConsumer<Throwable, Map<String, Object>> crashReporter) throws InterruptedException {
@@ -185,7 +267,7 @@ public class ModuleCrashesTests {
         Thread.sleep(200); // wait for a time for the throwable
         crashReporter.accept(testThrowable, customSegment);
 
-        validateCrashInRQ(testThrowable, fatal, new JSONObject(customSegment));
+        validateCrashInRQ(testThrowable, fatal, new JSONObject(customSegment), null, 0);
     }
 
     public static class TestCrashProcessor implements CrashProcessor {

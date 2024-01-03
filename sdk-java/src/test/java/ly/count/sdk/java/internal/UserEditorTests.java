@@ -3,7 +3,6 @@ package ly.count.sdk.java.internal;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import ly.count.sdk.java.Config;
@@ -48,7 +47,7 @@ public class UserEditorTests {
         //set profile picture url and commit it
         sessionHandler(() -> Countly.instance().user().edit().setPicturePath(imgFileWebUrl).commit());
         validatePictureAndPath(imgFileWebUrl, null);
-        validateUserDetailsRequestInRQ(map("user_details", "{\"picture\":\"" + imgFileWebUrl + "\"}"));
+        validateUserDetailsRequestInRQ(TestUtils.map("user_details", "{\"picture\":\"" + imgFileWebUrl + "\"}"));
     }
 
     /**
@@ -64,7 +63,7 @@ public class UserEditorTests {
         //set profile picture url and commit it
         sessionHandler(() -> Countly.instance().user().edit().setPicturePath(imgFile.getAbsolutePath()).commit());
         validatePictureAndPath(imgFile.getAbsolutePath(), null);
-        validateUserDetailsRequestInRQ(map("picturePath", imgFile.getAbsolutePath()));
+        validateUserDetailsRequestInRQ(TestUtils.map("user_details", "{}", "picturePath", imgFile.getAbsolutePath()));
     }
 
     /**
@@ -79,7 +78,7 @@ public class UserEditorTests {
         //set profile picture url and commit it
         sessionHandler(() -> Countly.instance().user().edit().setPicturePath(null).commit());
         validatePictureAndPath(null, null);
-        validateUserDetailsRequestInRQ(map("user_details", "{\"picture\":null}"));
+        validateUserDetailsRequestInRQ(TestUtils.map("user_details", "{\"picture\":null}"));
     }
 
     /**
@@ -94,7 +93,7 @@ public class UserEditorTests {
         //set profile picture url and commit it
         sessionHandler(() -> Countly.instance().user().edit().setPicturePath("garbage_thing/.txt").commit());
         validatePictureAndPath(null, null);
-        validateUserDetailsRequestInRQ(map());
+        validateUserDetailsRequestInRQ(TestUtils.map());
     }
 
     /**
@@ -112,7 +111,7 @@ public class UserEditorTests {
         sessionHandler(() -> Countly.instance().user().edit().setPicture(imgData).commit());
         validatePictureAndPath(null, imgData);
         Countly.session().end();
-        validateUserDetailsRequestInRQ(map(ModuleUserProfile.PICTURE_BYTES, Utils.Base64.encode(imgData)));
+        validateUserDetailsRequestInRQ(TestUtils.map("user_details", "{}", "picturePath", ModuleUserProfile.PICTURE_IN_USER_PROFILE));
     }
 
     /**
@@ -127,7 +126,7 @@ public class UserEditorTests {
         //set profile picture url and commit it
         sessionHandler(() -> Countly.instance().user().edit().setPicture(null).commit());
         validatePictureAndPath(null, null);
-        validateUserDetailsRequestInRQ(map("user_details", "{\"picture\":null}"));
+        validateUserDetailsRequestInRQ(TestUtils.map("user_details", "{\"picture\":null}"));
     }
 
     /**
@@ -142,7 +141,7 @@ public class UserEditorTests {
             .setOnce(TestUtils.eKeys[0], 56)
             .setOnce(TestUtils.eKeys[0], TestUtils.eKeys[1])
             .commit());
-        validateUserDetailsRequestInRQ(map("user_details", c(opJson(TestUtils.eKeys[0], "$setOnce", TestUtils.eKeys[1]))));
+        validateUserDetailsRequestInRQ(TestUtils.map("user_details", c(opJson(TestUtils.eKeys[0], "$setOnce", TestUtils.eKeys[1]))));
     }
 
     /**
@@ -154,7 +153,7 @@ public class UserEditorTests {
     public void setOnce_null() {
         Countly.instance().init(TestUtils.getBaseConfig());
         sessionHandler(() -> Countly.instance().user().edit().setOnce(TestUtils.eKeys[0], null).commit());
-        validateUserDetailsRequestInRQ(map());
+        validateUserDetailsRequestInRQ(TestUtils.map());
     }
 
     /**
@@ -166,7 +165,7 @@ public class UserEditorTests {
     public void setOnce_empty() {
         Countly.instance().init(TestUtils.getBaseConfig());
         sessionHandler(() -> Countly.instance().user().edit().setOnce(TestUtils.eKeys[0], "").commit());
-        validateUserDetailsRequestInRQ(map("user_details", c(opJson(TestUtils.eKeys[0], "$setOnce", ""))));
+        validateUserDetailsRequestInRQ(TestUtils.map("user_details", c(opJson(TestUtils.eKeys[0], "$setOnce", ""))));
     }
 
     /**
@@ -184,7 +183,7 @@ public class UserEditorTests {
             .setLocation(40.7128, -74.0060)
             .commit());
 
-        validateUserDetailsRequestInRQ(map(
+        validateUserDetailsRequestInRQ(TestUtils.map(
             "country_code", "US",
             "city", "New York",
             "location", "40.7128,-74.006"));
@@ -205,7 +204,7 @@ public class UserEditorTests {
             .setLocation(null)
             .commit());
 
-        validateUserDetailsRequestInRQ(map(
+        validateUserDetailsRequestInRQ(TestUtils.map(
             "country_code", JSONObject.NULL,
             "city", JSONObject.NULL,
             "location", JSONObject.NULL));
@@ -226,7 +225,7 @@ public class UserEditorTests {
             .setLocation(38.4237, 27.1428)
             .commit());
 
-        validateUserDetailsRequestInRQ(map("locale", "tr"));
+        validateUserDetailsRequestInRQ(TestUtils.map("locale", "tr"));
     }
 
     /**
@@ -273,7 +272,7 @@ public class UserEditorTests {
             return opFunction.apply(TestUtils.eKeys[0], "").commit();
         });
 
-        validateUserDetailsRequestInRQ(map("user_details", c(
+        validateUserDetailsRequestInRQ(TestUtils.map("user_details", c(
                 opJson(TestUtils.eKeys[3], op, TestUtils.eKeys[2]),
                 opJson(TestUtils.eKeys[0], op, TestUtils.eKeys[1], TestUtils.eKeys[2], 89, TestUtils.eKeys[2], "")
             )
@@ -300,7 +299,7 @@ public class UserEditorTests {
             .setCustom("tags", new Object[] { "tag1", "tag2", 34, 67.8, null, "" })
             .commit());
 
-        validateUserDetailsRequestInRQ(map("user_details", c(map(
+        validateUserDetailsRequestInRQ(TestUtils.map("user_details", c(TestUtils.map(
             TestUtils.eKeys[0], TestUtils.eKeys[1],
             TestUtils.eKeys[5], "",
             TestUtils.eKeys[6], 128.987,
@@ -325,7 +324,7 @@ public class UserEditorTests {
             .commit()
         );
 
-        validateUserDetailsRequestInRQ(map("user_details", c(
+        validateUserDetailsRequestInRQ(TestUtils.map("user_details", c(
             opJson(TestUtils.eKeys[2], "$max", 0),
             opJson(TestUtils.eKeys[1], "$max", -1),
             opJson(TestUtils.eKeys[0], "$max", 128)))
@@ -349,7 +348,7 @@ public class UserEditorTests {
             .commit()
         );
 
-        validateUserDetailsRequestInRQ(map("user_details", c(
+        validateUserDetailsRequestInRQ(TestUtils.map("user_details", c(
             opJson(TestUtils.eKeys[2], "$min", 0),
             opJson(TestUtils.eKeys[1], "$min", -155.9),
             opJson(TestUtils.eKeys[0], "$min", 122)))
@@ -373,7 +372,7 @@ public class UserEditorTests {
             .commit()
         );
 
-        validateUserDetailsRequestInRQ(map("user_details", c(
+        validateUserDetailsRequestInRQ(TestUtils.map("user_details", c(
             opJson(TestUtils.eKeys[2], "$inc", 0),
             opJson(TestUtils.eKeys[1], "$inc", -155),
             opJson(TestUtils.eKeys[0], "$inc", 0)))
@@ -400,7 +399,7 @@ public class UserEditorTests {
             .commit()
         );
 
-        validateUserDetailsRequestInRQ(map("user_details", c(
+        validateUserDetailsRequestInRQ(TestUtils.map("user_details", c(
             opJson(TestUtils.eKeys[3], "$mul", -90),
             opJson(TestUtils.eKeys[2], "$mul", 0),
             opJson(TestUtils.eKeys[1], "$mul", -5.28),
@@ -427,7 +426,7 @@ public class UserEditorTests {
             .commit()
         );
 
-        validateUserDetailsRequestInRQ(map("user_details", json(
+        validateUserDetailsRequestInRQ(TestUtils.map("user_details", TestUtils.json(
             "name", "Test",
             "username", "TestUsername",
             "email", "test@test.test",
@@ -457,7 +456,7 @@ public class UserEditorTests {
             .commit()
         );
 
-        validateUserDetailsRequestInRQ(map("user_details", json(
+        validateUserDetailsRequestInRQ(TestUtils.map("user_details", TestUtils.json(
             "name", JSONObject.NULL,
             "username", JSONObject.NULL,
             "email", JSONObject.NULL,
@@ -475,7 +474,7 @@ public class UserEditorTests {
      */
     @Test
     public void setBirthYear_invalidParam() {
-        setBirthYear_base(TestUtils.eKeys[0], map());
+        setBirthYear_base(TestUtils.eKeys[0], TestUtils.map());
     }
 
     /**
@@ -485,7 +484,7 @@ public class UserEditorTests {
      */
     @Test
     public void setBirthYear_stringInteger() {
-        setBirthYear_base("1999", map("user_details", json("byear", 1999)));
+        setBirthYear_base("1999", TestUtils.map("user_details", TestUtils.json("byear", 1999)));
     }
 
     /**
@@ -495,7 +494,7 @@ public class UserEditorTests {
      */
     @Test
     public void setBirthYear_stringNotInteger() {
-        setBirthYear_base("1999.0", map());
+        setBirthYear_base("1999.0", TestUtils.map());
     }
 
     private void setBirthYear_base(String value, Map<String, Object> expectedValues) {
@@ -511,7 +510,7 @@ public class UserEditorTests {
      */
     @Test
     public void setGender_invalid() {
-        setGender_base("Non-Binary", map());
+        setGender_base("Non-Binary", TestUtils.map());
     }
 
     /**
@@ -521,7 +520,7 @@ public class UserEditorTests {
      */
     @Test
     public void setGender_number() {
-        setGender_base(1, map());
+        setGender_base(1, TestUtils.map());
     }
 
     /**
@@ -531,7 +530,7 @@ public class UserEditorTests {
      */
     @Test
     public void setGender_string() {
-        setGender_base("M", map("user_details", json("gender", "M")));
+        setGender_base("M", TestUtils.map("user_details", TestUtils.json("gender", "M")));
     }
 
     private void setGender_base(Object gender, Map<String, Object> expectedValues) {
@@ -549,7 +548,7 @@ public class UserEditorTests {
     public void setLocation_fromString() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
         sessionHandler(() -> Countly.instance().user().edit().setLocation("-40.7128, 74.0060").commit());
-        validateUserDetailsRequestInRQ(map("location", "-40.7128,74.006"));
+        validateUserDetailsRequestInRQ(TestUtils.map("location", "-40.7128,74.006"));
     }
 
     /**
@@ -561,7 +560,7 @@ public class UserEditorTests {
     public void setLocation_fromString_noConsent() {
         Countly.instance().init(TestUtils.getBaseConfig());
         sessionHandler(() -> Countly.instance().user().edit().setLocation("32.78, 28.01").commit());
-        validateUserDetailsRequestInRQ(map());
+        validateUserDetailsRequestInRQ(TestUtils.map());
     }
 
     /**
@@ -573,7 +572,7 @@ public class UserEditorTests {
     public void setLocation_fromString_invalid() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
         sessionHandler(() -> Countly.instance().user().edit().setLocation(",28.34").commit());
-        validateUserDetailsRequestInRQ(map());
+        validateUserDetailsRequestInRQ(TestUtils.map());
     }
 
     /**
@@ -585,7 +584,7 @@ public class UserEditorTests {
     public void setLocation_fromString_onePair() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
         sessionHandler(() -> Countly.instance().user().edit().setLocation("61.32,").commit());
-        validateUserDetailsRequestInRQ(map());
+        validateUserDetailsRequestInRQ(TestUtils.map());
     }
 
     /**
@@ -597,7 +596,7 @@ public class UserEditorTests {
     public void setLocation_fromString_null() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
         sessionHandler(() -> Countly.instance().user().edit().setLocation(null).commit());
-        validateUserDetailsRequestInRQ(map("location", JSONObject.NULL));
+        validateUserDetailsRequestInRQ(TestUtils.map("location", JSONObject.NULL));
     }
 
     /**
@@ -609,7 +608,7 @@ public class UserEditorTests {
     public void optOutFromLocationServices() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Location));
         sessionHandler(() -> Countly.instance().user().edit().optOutFromLocationServices().commit());
-        validateUserDetailsRequestInRQ(map("location", JSONObject.NULL, "country_code", JSONObject.NULL, "city", JSONObject.NULL));
+        validateUserDetailsRequestInRQ(TestUtils.map("location", JSONObject.NULL, "country_code", JSONObject.NULL, "city", JSONObject.NULL));
     }
 
     /**
@@ -634,7 +633,7 @@ public class UserEditorTests {
             //.set(ModuleUserProfile.COUNTRY_KEY, new TestUtils.AtomicString("Not a country"))
             //.set(ModuleUserProfile.LOCALE_KEY, new TestUtils.AtomicString("Not a locale"))
             .commit());
-        validateUserDetailsRequestInRQ(map("user_details", json("name", "Magical",
+        validateUserDetailsRequestInRQ(TestUtils.map("user_details", TestUtils.json("name", "Magical",
             "username", "TestUsername",
             "email", "test@test.ly",
             "organization", "Magical Org",
@@ -663,12 +662,12 @@ public class UserEditorTests {
             .setBirthyear("3000")
             .setPicturePath("https://someurl.com")
             .commit());
-        validateUserDetailsRequestInRQ(map("user_details", json("name", "SomeName",
+        validateUserDetailsRequestInRQ(TestUtils.map("user_details", TestUtils.json("name", "SomeName",
                 "byear", 3000,
                 "gender", "F",
                 "picture", "https://someurl.com",
                 "email", "SomeEmail",
-                "custom", jsonObj(map(TestUtils.eKeys[0], map("$push", new Object[] { 56, "TW" }), "some_custom", 56))),
+                "custom", TestUtils.jsonObj(TestUtils.map(TestUtils.eKeys[0], TestUtils.map("$push", new Object[] { 56, "TW" }), "some_custom", 56))),
             "country_code", "US",
             "city", "New York",
             "location", "40.7128,-74.006"), 1, 3);
@@ -745,7 +744,7 @@ public class UserEditorTests {
      * @return wrapped json
      */
     private String c(Map<String, Object> entries) {
-        return "{\"custom\":" + json(entries) + "}";
+        return "{\"custom\":" + TestUtils.json(entries) + "}";
     }
 
     /**
@@ -777,57 +776,5 @@ public class UserEditorTests {
         Countly.session().begin();
         Assert.assertNotNull(process.get());
         Countly.session().end();
-    }
-
-    /**
-     * Converts a map to json string
-     *
-     * @param entries map to convert
-     * @return json string
-     */
-    protected static String json(Map<String, Object> entries) {
-        return jsonObj(entries).toString();
-    }
-
-    /**
-     * Converts a map to json object
-     *
-     * @param entries map to convert
-     * @return json string
-     */
-    protected static JSONObject jsonObj(Map<String, Object> entries) {
-        JSONObject json = new JSONObject();
-        entries.forEach(json::put);
-        return json;
-    }
-
-    /**
-     * Converts array of objects to json string
-     * Returns empty json if array is null or empty
-     *
-     * @param args array of objects
-     * @return json string
-     */
-    protected static String json(Object... args) {
-        if (args == null || args.length == 0) {
-            return "{}";
-        }
-        return json(map(args));
-    }
-
-    /**
-     * Converts array of objects to a 'String, Object' map
-     *
-     * @param args array of objects
-     * @return map
-     */
-    protected static Map<String, Object> map(Object... args) {
-        Map<String, Object> map = new ConcurrentHashMap<>();
-        if (args.length % 2 == 0) {
-            for (int i = 0; i < args.length; i += 2) {
-                map.put(args[i].toString(), args[i + 1]);
-            }
-        }
-        return map;
     }
 }

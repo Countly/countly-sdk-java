@@ -858,6 +858,7 @@ public class BackendModeTests {
         Request request = SDKCore.instance.requestQueueMemory.remove();
         Assert.assertEquals("value1", request.params.get("data1"));
         Assert.assertEquals("value3", request.params.get("data3"));
+        Assert.assertEquals("1", request.params.get("dr"));
         validateRequestTimeFields("device-id-2", 1647938191782L, request);
 
         // Direct request without timestamp and device id
@@ -873,6 +874,8 @@ public class BackendModeTests {
         request = SDKCore.instance.requestQueueMemory.remove();
         Assert.assertEquals("value2", request.params.get("data2"));
         Assert.assertEquals("value4", request.params.get("data4"));
+        Assert.assertEquals("1", request.params.get("dr"));
+
         validateRequestTimeFields("device-id-2", 987654321L, request);
     }
 
