@@ -6,7 +6,7 @@ public class TimeUtils {
 
     protected static final Double NS_IN_SECOND = 1000000000.0d;
     protected static final Double NS_IN_MS = 1000000.0d;
-    protected static final Double MS_IN_SECOND = 1000d;
+    protected static final long MS_IN_SECOND = 1000;
     private static final UniqueTimeGenerator uniqueTimer = new UniqueTimeGenerator();
 
     public static class Instant {
@@ -60,6 +60,16 @@ public class TimeUtils {
      */
     public static synchronized long uniqueTimestampMs() {
         return uniqueTimer.timestamp();
+    }
+
+    /**
+     * Wraps {@link System#currentTimeMillis()} to always return different value, even within
+     * same millisecond and even when time changes. Works in a limited window of 10 timestamps for now.
+     *
+     * @return unique time in seconds
+     */
+    public static synchronized long uniqueTimestampS() {
+        return uniqueTimestampMs() / MS_IN_SECOND;
     }
 
     /**
