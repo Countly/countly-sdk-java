@@ -144,6 +144,10 @@ public class MigrationHelper {
         currentDataModelVersion += 1;
 
         File sdkPath = (File) migrationParams.get("sdk_path");
+        if (sdkPath == null) { // this is not expected, but just in case and for null safety, why 2? because we expect 1 file to be the json config file
+            logger.d("[MigrationHelper] migration_UserImplFile_02, No files to delete, returning");
+            return false;
+        }
 
         //SDK_FOLDER/[CLY]_user_0
         File userFile = new File(sdkPath, SDKStorage.FILE_NAME_PREFIX + SDKStorage.FILE_NAME_SEPARATOR + "user" + SDKStorage.FILE_NAME_SEPARATOR + 0);

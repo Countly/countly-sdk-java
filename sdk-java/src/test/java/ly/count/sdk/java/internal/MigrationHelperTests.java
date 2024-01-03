@@ -305,6 +305,26 @@ public class MigrationHelperTests {
     }
 
     /**
+     * "applyMigrations" from 1 to 2 by init Countly with migration version as 1
+     * Upgrading from 1 to 2, empty storage
+     * Data version must be 1 and migration should fail because sdk path is null
+     */
+    @Test
+    public void applyMigrations_1to2_nullMigrationParams() throws IOException {
+        setDataVersionInConfigFile(1); // set previous data version
+        initStorage();
+
+        MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
+        migrationHelper.setupMigrations(storageProvider);
+        Assert.assertEquals(1, migrationHelper.currentDataModelVersion);
+        migrationHelper.logger = Mockito.spy(migrationHelper.logger);
+
+        Assert.assertFalse(migrationHelper.migration_UserImplFile_02(new HashMap<>()));
+        Assert.assertEquals(2, migrationHelper.currentDataModelVersion);
+        Mockito.verify(migrationHelper.logger, Mockito.times(1)).d("[MigrationHelper] migration_UserImplFile_02, No files to delete, returning");
+    }
+
+    /**
      * "applyMigrations" from 1 to 2 with mock user file
      * Upgrading from legacy state to the latest version, mock user file, just old type of data.
      * Data version must be 2 after applying migrations and no request should be generated
