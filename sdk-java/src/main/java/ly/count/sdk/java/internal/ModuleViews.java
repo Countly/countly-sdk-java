@@ -334,7 +334,6 @@ public class ModuleViews extends ModuleBase {
          */
         public String startAutoStoppedView(@Nullable String viewName) {
             synchronized (Countly.instance()) {
-                // call the general function that has two parameters
                 return startAutoStoppedView(viewName, null);
             }
         }
@@ -351,7 +350,7 @@ public class ModuleViews extends ModuleBase {
          */
         public String startAutoStoppedView(@Nullable String viewName, @Nullable Map<String, Object> viewSegmentation) {
             synchronized (Countly.instance()) {
-                L.i("[Views] Calling startAutoStoppedView [" + viewName + "]");
+                L.i("[Views] Calling startAutoStoppedView [" + viewName + "] sg[" + viewSegmentation + "]");
                 return startViewInternal(viewName, viewSegmentation, true);
             }
         }
