@@ -40,6 +40,7 @@ public class MigrationHelper {
 
         // add migrations below
         migrations.add(this::migration_DeleteConfigFile_01);
+        migrations.add(this::migration_UserImplFile_02);
         latestMigrationVersion = migrations.size();
     }
 
@@ -125,6 +126,48 @@ public class MigrationHelper {
         }
 
         return true;
+    }
+
+    /**
+     * Deletes the timed event file, the user impl file and the session files and extracts events
+     * stored inside the timed event file and the session files
+     *
+     * @param migrationParams parameters to pass to migrations
+     * @return true if the migration was successful, false otherwise
+     */
+    protected boolean migration_UserImplFile_02(final Map<String, Object> migrationParams) {
+        if (currentDataModelVersion >= 2) {
+            logger.d("[MigrationHelper] migration_UserImplFile_02, Migration already applied");
+            return true;
+        }
+        logger.i("[MigrationHelper] migration_UserImplFile_02, Deleting user impl file migrating from 01 to 02");
+        currentDataModelVersion += 1;
+
+        File sdkPath = (File) migrationParams.get("sdk_path");
+        if (sdkPath == null) { // this is not expected, but just in case and for null safety, why 2? because we expect 1 file to be the json config file
+            logger.d("[MigrationHelper] migration_UserImplFile_02, No files to delete, returning");
+            return false;
+        }
+
+        //SDK_FOLDER/[CLY]_user_0
+        File userFile = new File(sdkPath, SDKStorage.FILE_NAME_PREFIX + SDKStorage.FILE_NAME_SEPARATOR + "user" + SDKStorage.FILE_NAME_SEPARATOR + 0);
+        //delete user file
+        deleteFileIfExist(userFile, "migration_UserImplFile_02, Cannot delete user file ");
+        return true;
+    }
+
+    /**
+     * Deletes the file if it exists, logs the error if it cannot be deleted
+     *
+     * @param file to delete
+     * @param log to log if the file cannot be deleted
+     */
+    private void deleteFileIfExist(File file, String log) {
+        try { // if we cannot delete the config file, we cannot continue
+            Files.deleteIfExists(file.toPath());
+        } catch (IOException e) {
+            logger.e("[MigrationHelper] " + log + e);
+        }
     }
 
     /**

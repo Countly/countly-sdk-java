@@ -223,6 +223,7 @@ public class ModuleBackendMode extends ModuleBase {
 
         Request request = new Request();
         request.params.add("device_id", deviceID);
+        request.params.add("dr", "1");
         addTimeInfoIntoRequest(request, timestamp);
 
         //remove checksum, will add before sending request to server
