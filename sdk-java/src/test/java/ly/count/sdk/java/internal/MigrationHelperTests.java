@@ -301,7 +301,7 @@ public class MigrationHelperTests {
 
         migrationHelper.migration_UserImplFile_02(migrationParams);
         Assert.assertEquals(2, migrationHelper.currentDataModelVersion);
-        Mockito.verify(migrationHelper.logger, Mockito.times(1)).d("[MigrationHelper] migration_UserImplFile_02, No files to delete, returning");
+        Mockito.verify(migrationHelper.logger, Mockito.times(0)).d("[MigrationHelper] migration_UserImplFile_02, No files to delete, returning");
     }
 
     /**
