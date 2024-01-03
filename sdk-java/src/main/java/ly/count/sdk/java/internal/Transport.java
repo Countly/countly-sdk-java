@@ -36,7 +36,6 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 import ly.count.sdk.java.PredefinedUserPropertyKeys;
-import ly.count.sdk.java.User;
 import org.json.JSONObject;
 
 /**
@@ -118,11 +117,10 @@ public class Transport implements X509TrustManager {
      * set SSL context, calculate and add checksum, load and send user picture if needed.
      *
      * @param request request to send
-     * @param user user to check for picture
      * @return connection, not {@link HttpURLConnection} yet
      * @throws IOException from {@link HttpURLConnection} in case of error
      */
-    HttpURLConnection connection(final Request request, final User user) throws IOException {
+    HttpURLConnection connection(final Request request) throws IOException {
         String endpoint = request.params.remove(Request.ENDPOINT);
 
         if (!request.params.has("device_id") && config.getDeviceId() != null) {
@@ -135,10 +133,10 @@ public class Transport implements X509TrustManager {
         }
 
         String path = config.getServerURL().toString() + endpoint;
-        String picturePathValue = request.params.remove(PredefinedUserPropertyKeys.PICTURE_PATH);
-        boolean usingGET = !config.isHTTPPostForced() && request.isGettable(config.getServerURL()) && Utils.isEmptyOrNull(picturePathValue);
+        byte[] maybePictureData = getPictureDataFromRequest(request);
+        boolean usingGET = !config.isHTTPPostForced() && request.isGettable(config.getServerURL()) && maybePictureData == null;
 
-        if (!usingGET && !Utils.isEmptyOrNull(picturePathValue)) {
+        if (!usingGET && maybePictureData != null) {
             path = setProfilePicturePathRequestParams(path, request.params);
         }
 
@@ -159,10 +157,7 @@ public class Transport implements X509TrustManager {
             OutputStream output = null;
             PrintWriter writer = null;
             try {
-                L.d("[network] Picture path value " + picturePathValue);
-                byte[] pictureByteData = picturePathValue == null ? null : getPictureDataFromGivenValue(user, picturePathValue);
-
-                if (pictureByteData != null) {
+                if (maybePictureData != null) {
                     String boundary = Long.toHexString(System.currentTimeMillis());
 
                     connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
@@ -170,7 +165,7 @@ public class Transport implements X509TrustManager {
                     output = connection.getOutputStream();
                     writer = new PrintWriter(new OutputStreamWriter(output, Utils.UTF8), true);
 
-                    addMultipart(output, writer, boundary, "image/jpeg", "binaryFile", "image", pictureByteData);
+                    addMultipart(output, writer, boundary, "image/jpeg", "binaryFile", "image", maybePictureData);
 
                     StringBuilder salting = new StringBuilder();
                     Map<String, String> map = request.params.map();
@@ -240,30 +235,25 @@ public class Transport implements X509TrustManager {
      * If we have the bytes, give them
      * Otherwise load them from disk
      *
-     * @param user
-     * @param picture
-     * @return
+     * @param request picture path or base64 encoded byte array
+     * @return picture data
      */
-    byte[] getPictureDataFromGivenValue(User user, String picture) {
-        if (user == null) {
-            return null;
-        }
+    byte[] getPictureDataFromRequest(Request request) {
+        String maybeLocalPath = request.params.remove(PredefinedUserPropertyKeys.PICTURE_PATH);
+        String maybePictureData = request.params.remove(ModuleUserProfile.PICTURE_BYTES);
 
         byte[] data = null;
-        if (ModuleUserProfile.PICTURE_IN_USER_PROFILE.equals(picture)) {
-            //if the value is this special value then we know that we will send over bytes that are already provided by the integrator
-            //those stored bytes are already in a internal data structure, use them
-            data = user.picture();
-        } else {
-            //otherwise we assume it is a local path, and we try to read it from disk
+
+        //first check for pure bytes
+        if (!Utils.isEmptyOrNull(maybePictureData)) {
+            data = Utils.Base64.decode(maybePictureData, L);
+        } else if (!Utils.isEmptyOrNull(maybeLocalPath)) {
+            //if no bytes, check for local path
+            File file = new File(maybeLocalPath);
             try {
-                File file = new File(picture);
-                if (!file.exists()) {
-                    return null;
-                }
                 data = Files.readAllBytes(file.toPath());
-            } catch (Throwable t) {
-                L.w("[Transport] getPictureDataFromGivenValue, Error while reading picture from disk " + t);
+            } catch (IOException e) {
+                L.e("[Transport] getPictureDataFromRequest, Error while reading picture, wont send from path:[ " + maybeLocalPath + "], " + e);
             }
         }
 
@@ -319,7 +309,7 @@ public class Transport implements X509TrustManager {
                     Class requestOwner = request.owner();
                     request.params.remove(Request.MODULE);
 
-                    connection = connection(request, SDKCore.instance.user());
+                    connection = connection(request);
                     connection.connect();
 
                     int code = connection.getResponseCode();
@@ -516,22 +506,24 @@ public class Transport implements X509TrustManager {
     private String setProfilePicturePathRequestParams(String path, Params params) {
         Params tempParams = new Params();
 
-        tempParams.add("device_id", params.get("device_id"));
-        tempParams.add("app_key", params.get("app_key"));
-        tempParams.add("timestamp", params.get("timestamp"));
-        tempParams.add("sdk_name", params.get("sdk_name"));
-        tempParams.add("sdk_version", params.get("sdk_version"));
-        tempParams.add("tz", params.get("tz"));
-        tempParams.add("hour", params.get("hour"));
-        tempParams.add("dow", params.get("dow"));
-        tempParams.add("rr", params.get("rr"));
+        tempParams.add("device_id", params.remove("device_id"));
+        tempParams.add("app_key", params.remove("app_key"));
+        tempParams.add("timestamp", params.remove("timestamp"));
+        tempParams.add("sdk_name", params.remove("sdk_name"));
+        tempParams.add("sdk_version", params.remove("sdk_version"));
+        tempParams.add("tz", params.remove("tz"));
+        tempParams.add("hour", params.remove("hour"));
+        tempParams.add("dow", params.remove("dow"));
+        tempParams.add("rr", params.remove("rr"));
 
         if (params.has("av")) {
-            tempParams.add("av", params.get("av"));
+            tempParams.add("av", params.remove("av"));
         }
         //if no user details, add empty user details to indicate that we are sending a picture
         if (!params.has("user_details")) {
             tempParams.add("user_details", "{}");
+        } else {
+            tempParams.add("user_details", params.remove("user_details"));
         }
 
         return path + tempParams;

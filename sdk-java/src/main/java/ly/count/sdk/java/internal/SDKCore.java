@@ -509,16 +509,7 @@ public class SDKCore {
             }
         }
 
-        try {
-            user = Storage.read(config, new UserImpl(config));
-            if (user == null) {
-                user = new UserImpl(config);
-            }
-        } catch (Throwable e) {
-            L.e("[SDKCore] Cannot happen" + e);
-            user = new UserImpl(config);
-        }
-
+        user = new UserImpl(config);
         initFinished(config);
     }
 
