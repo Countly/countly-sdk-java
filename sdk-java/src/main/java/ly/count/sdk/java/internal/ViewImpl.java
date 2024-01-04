@@ -1,5 +1,6 @@
 package ly.count.sdk.java.internal;
 
+import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.Session;
 import ly.count.sdk.java.View;
 
@@ -9,18 +10,10 @@ import ly.count.sdk.java.View;
 
 class ViewImpl implements View {
     private Log L = null;
-    static final String EVENT = "[CLY]_view";
-    static final String NAME = "name";
-    static final String VISIT = "visit";
-    static final String VISIT_VALUE = "1";
-    static final String SEGMENT = "segment";
-    static final String START = "start";
-    static final String START_VALUE = "1";
-
     final String name;
     final Session session;
-    EventImpl start;
-    boolean started, ended;
+    boolean start = false;
+    boolean stop = false;
 
     ViewImpl(Session session, String name, Log logger) {
         this.L = logger;
@@ -35,19 +28,13 @@ class ViewImpl implements View {
             return;
         }
 
-        L.d("[ViewImpl] start: firstView = " + firstView);
-        if (started) {
+        if (start) {
+            L.w("[ViewImpl] start: View already started!");
             return;
         }
-        this.started = true;
 
-        start = (EventImpl) session.event(EVENT).addSegments(NAME, this.name, VISIT, VISIT_VALUE, SEGMENT, SDKCore.instance.config.getSdkPlatform());
-
-        if (firstView) {
-            start.addSegment(START, START_VALUE);
-        }
-
-        start.record();
+        start = true;
+        Countly.instance().views().startView(name);
     }
 
     @Override
@@ -57,27 +44,12 @@ class ViewImpl implements View {
             return;
         }
 
-        if (start == null) {
-            L.e("[ViewImpl] stop: We are trying to end a view that has not been started.");
+        if (stop) {
+            L.w("[ViewImpl] stop: View already stopped!");
             return;
         }
-
-        L.d("[ViewImpl] stop: lastView = " + lastView);
-
-        if (ended) {
-            return;
-        }
-        ended = true;
-        EventImpl event = (EventImpl) session.event(EVENT).addSegments(NAME, this.name, SEGMENT, SDKCore.instance.config.getSdkPlatform());
-
-        long startTs = start.getTimestamp();
-        long endTs = TimeUtils.timestampMs();
-
-        long viewDurationSeconds = (endTs - startTs) / 1000;
-
-        event.setDuration(viewDurationSeconds);
-
-        event.record();
+        stop = true;
+        Countly.instance().views().stopViewWithName(name);
     }
 
     @Override
@@ -85,9 +57,6 @@ class ViewImpl implements View {
         return "ViewImpl{" +
             "name='" + name + '\'' +
             ", session=" + session +
-            ", start=" + start +
-            ", started=" + started +
-            ", ended=" + ended +
             '}';
     }
 }

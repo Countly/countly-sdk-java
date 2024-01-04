@@ -6,7 +6,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.Session;
-import ly.count.sdk.java.View;
 
 public class ModuleEvents extends ModuleBase {
     protected EventQueue eventQueue = null;
@@ -45,12 +44,8 @@ public class ModuleEvents extends ModuleBase {
             // this part is to end and record the current view if exists
             Session session = Countly.session();
             if ((session != null && session.isActive())) {
-                View currentView = ((SessionImpl) session).currentView;
-                if (currentView != null) {
-                    currentView.stop(true);
-                } else {
-                    Storage.pushAsync(internalConfig, ((SessionImpl) Countly.session()));
-                }
+                Countly.instance().views().stopAllViews(null);
+                Storage.pushAsync(internalConfig, ((SessionImpl) Countly.session()));
             }
 
             addEventsToRequestQ(oldDeviceId);
