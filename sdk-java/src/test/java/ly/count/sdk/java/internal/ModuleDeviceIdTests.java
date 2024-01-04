@@ -458,10 +458,10 @@ public class ModuleDeviceIdTests {
                 viewSegmentation.put("name", TestUtils.keysValues[1]);
                 viewSegmentation.put("start", "1");
                 viewSegmentation.put("visit", "1");
-                TestUtils.validateEvent(existingEvents.get(1), "[CLY]_view", viewSegmentation, 1, null, null); // view start event
+                TestUtils.validateEvent(existingEvents.get(1), "[CLY]_view", viewSegmentation, 1, 0.0, null); // view start event
                 viewSegmentation.remove("start");
                 viewSegmentation.remove("visit");
-                TestUtils.validateEvent(existingEvents.get(3), "[CLY]_view", viewSegmentation, 1, null, 1.0); // view stop event
+                TestUtils.validateEvent(existingEvents.get(3), "[CLY]_view", viewSegmentation, 1, 0.0, 1.0); // view stop event
                 remainingRequestIndex++;
             }
         } catch (NullPointerException ignored) {

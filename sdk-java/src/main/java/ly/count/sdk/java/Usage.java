@@ -3,6 +3,7 @@ package ly.count.sdk.java;
 import java.util.Map;
 import ly.count.sdk.java.internal.ModuleDeviceIdCore;
 import ly.count.sdk.java.internal.ModuleEvents;
+import ly.count.sdk.java.internal.ModuleViews;
 
 /**
  * This interface represents session concept, that is one indivisible usage occasion of your application.
@@ -17,7 +18,7 @@ public interface Usage {
 
     /**
      * Create event object, don't record it yet. Creates begin request if this session
-     * hasn't yet been began.
+     * hasn't yet been begun.
      *
      * @param key key for this event, cannot be null or empty
      * @return Event instance.
@@ -28,7 +29,7 @@ public interface Usage {
 
     /**
      * Get existing or create new timed event object, don't record it. Creates begin request if this session
-     * hasn't yet been began.
+     * hasn't yet been begun.
      *
      * @param key key for this event, cannot be null or empty
      * @return timed Event instance.
@@ -97,21 +98,23 @@ public interface Usage {
      * Start new view.
      * In case previous view in this session is not ended yet, it will be ended automatically.
      * In case session ends and last view haven't been ended yet, it will be ended automatically.
-     * Creates begin request if this session hasn't yet been began.
+     * Creates begin request if this session hasn't yet been begun.
      *
      * @param name String representing name of this View
      * @param start whether this view is first in current application launch
      * @return new but already started {@link View}, you're responsible for its ending by calling {@link View#stop(boolean)}
+     * @deprecated use {@link ModuleViews.Views#startView(String)} instead via {@link Countly#views()}
      */
     View view(String name, boolean start);
 
     /**
      * Identical to {@link #view(String, boolean)}, but without {@code start} parameter which
      * is determined automatically based on whether this view is first in this session.
-     * Creates begin request if this session hasn't yet been began.
+     * Creates begin request if this session hasn't yet been begun.
      *
      * @param name String representing name of this View
      * @return new but already started {@link View}, you're responsible for its ending by calling {@link View#stop(boolean)}
+     * @deprecated use {@link ModuleViews.Views#startView(String)} instead via {@link Countly#views()}
      */
     View view(String name);
 

@@ -4,7 +4,6 @@
   * "setLocale(String)"
 
 * Added the user profiles feature interface, and it is accessible through "Countly::instance()::userProfile()" call.
-
 * Added the location feature interface, and it is accessible through "Countly::instance()::location()" call.
 * Added init time configuration for the location parameters:
   * "setLocation(String countryCode, String city, String location, String ipAddress)"
@@ -12,6 +11,7 @@
 * Crash Reporting interface added and accessible through "Countly::instance()::crash()" call.
 * Added "disableUnhandledCrashReporting" function to the "Config" class to disable automatic uncaught crash reporting.
 * Added "setMaxBreadcrumbCount(int)" function to the "Config" class to change allowed max breadcrumb count.
+* Added the views feature interface, and it is accessible through "Countly::instance()::views()" call.
 
 * Fixed a bug where setting custom user properties would not work.
 * Fixed a bug where setting organization of the user would not work.
@@ -46,6 +46,12 @@
   * "setCustom(String, Object)" instead use "Countly::userProfile::setProperty" via "instance()" call
   * "set(String, Object)" instead use "Countly::userProfile::setProperty" via "instance()" call
   * "picture(byte[])" instead use "Countly::userProfile::setProperty" via "instance()" call
+* Deprecated "View::start(bool)" call, use "Countly::views::startView" instead via "instance()" call.
+* Deprecated "View::stop(bool)" call, use "Countly::views::stopViewWithName" or "Countly::views::stopViewWithID" instead via "instance()" call.
+* Deprecated "Usage::view(String)" call, use "Countly::views::startView" instead via "instance()" call.
+* Deprecated "Usage::view(String, bool)" call, use "Countly::views::startView" instead via "instance()" call.
+* Deprecated "Countly::view(String)" call, use "Countly::views::startView" instead via "instance()" call.
+* Deprecated "Countly::view(String, bool)" call, use "Countly::views::startView" instead via "instance()" call.
 
 ## 23.10.1
 

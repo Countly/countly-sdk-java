@@ -1,6 +1,5 @@
 package ly.count.sdk.java.internal;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.function.BiFunction;
@@ -605,7 +604,8 @@ public class SessionImplTests {
         Countly.instance().init(TestUtils.getConfigSessions(Config.Feature.Views, Config.Feature.Events).setEventQueueSizeToSend(4));
         SessionImpl session = (SessionImpl) Countly.session();
         TestUtils.validateEQSize(0);
-        validateViewInEQ((ViewImpl) session.view("view"), 0, 1);
+        session.view("view");
+        ModuleViewsTests.validateView("view", 0.0, 0, 1, true, true, null);
     }
 
     /**
@@ -620,20 +620,10 @@ public class SessionImplTests {
         TestUtils.validateEQSize(0);
         session.view("start");
         TestUtils.validateEQSize(1);
-        validateViewInEQ((ViewImpl) session.view("next"), 2, 3);
-    }
-
-    private void validateViewInEQ(ViewImpl view, int eqIdx, int eqSize) {
-        List<EventImpl> eventList = TestUtils.getCurrentEQ();
-        assertEquals(eqSize, eventList.size());
-        EventImpl event = eventList.get(eqIdx);
-        assertEquals(event.sum, view.start.sum);
-        assertEquals(event.count, view.start.count);
-        assertEquals(event.key, view.start.key);
-        assertEquals(event.segmentation, view.start.segmentation);
-        assertEquals(event.hour, view.start.hour);
-        assertEquals(event.dow, view.start.dow);
-        assertEquals(event.duration, view.start.duration);
+        session.view("next");
+        ModuleViewsTests.validateView("start", 0.0, 0, 3, true, true, null);
+        ModuleViewsTests.validateView("start", 0.0, 1, 3, false, false, null);
+        ModuleViewsTests.validateView("next", 0.0, 2, 3, false, true, null);
     }
 
     private void validateNotEquals(int idOffset, BiFunction<SessionImpl, SessionImpl, Consumer<Long>> setter) {
