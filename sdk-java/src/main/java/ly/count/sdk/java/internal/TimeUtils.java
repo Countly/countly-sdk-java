@@ -6,7 +6,7 @@ public class TimeUtils {
 
     protected static final Double NS_IN_SECOND = 1000000000.0d;
     protected static final Double NS_IN_MS = 1000000.0d;
-    protected static final Double MS_IN_SECOND = 1000d;
+    protected static final long MS_IN_SECOND = 1000;
     private static final UniqueTimeGenerator uniqueTimer = new UniqueTimeGenerator();
 
     public static class Instant {
@@ -68,8 +68,8 @@ public class TimeUtils {
      *
      * @return unique time in seconds
      */
-    public static synchronized int uniqueTimestampS() {
-        return new Double(uniqueTimestampMs() / MS_IN_SECOND).intValue();
+    public static synchronized long uniqueTimestampS() {
+        return uniqueTimestampMs() / MS_IN_SECOND;
     }
 
     /**
