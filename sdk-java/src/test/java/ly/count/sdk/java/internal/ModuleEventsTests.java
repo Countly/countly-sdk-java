@@ -51,7 +51,7 @@ public class ModuleEventsTests {
         Countly.instance().events().recordEvent(eKeys[0], segmentation, 1, 45.9, 32.0);
 
         //check if event was recorded correctly and size of event queue is equal to size of events in queue
-        TestUtils.validateEventInEQ(eKeys[0], segmentation, 1, 45.9, 32.0, 0, 1);
+        TestUtils.validateEventInEQ(eKeys[0], segmentation, 1, 45.9, 32.0, 0, 1, "_CLY_", null, "", null);
     }
 
     /**
@@ -248,7 +248,7 @@ public class ModuleEventsTests {
         endEvent(eKeys[0], null, 1, null);
 
         Assert.assertEquals(0, moduleEvents.timedEvents.size());
-        TestUtils.validateEventInEQ(eKeys[0], null, 1, null, 0.0, 0, 1);
+        TestUtils.validateEventInEQ(eKeys[0], null, 1, null, 0.0, 0, 1, "_CLY_", null, "", null);
     }
 
     /**
@@ -318,7 +318,7 @@ public class ModuleEventsTests {
         endEvent(eKeys[0], segmentation, 1, 5.0);
 
         Assert.assertEquals(0, moduleEvents.timedEvents.size());
-        TestUtils.validateEventInEQ(eKeys[0], segmentation, 1, 5.0, 0.0, 0, 1);
+        TestUtils.validateEventInEQ(eKeys[0], segmentation, 1, 5.0, 0.0, 0, 1, "_CLY_", null, "", null);
     }
 
     /**

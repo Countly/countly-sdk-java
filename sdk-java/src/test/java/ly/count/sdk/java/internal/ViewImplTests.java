@@ -53,7 +53,10 @@ public class ViewImplTests {
      */
     @Test
     public void start() {
-        Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Views, Config.Feature.Events));
+        InternalConfig config = new InternalConfig(TestUtils.getBaseConfig().setFeatures(Config.Feature.Views, Config.Feature.Events));
+        config.viewIdGenerator = TestUtils.idGenerator();
+        Countly.instance().init(config);
+
         TestUtils.validateEQSize(0);
         Countly.instance().view(TestUtils.keysValues[0]); // this calls start automatically
         TestUtils.validateEQSize(1);
@@ -62,7 +65,7 @@ public class ViewImplTests {
         segmentations.put("visit", "1");
         segmentations.put("segment", TestUtils.getOS());
         segmentations.put("start", "1");
-        TestUtils.validateEventInEQ("[CLY]_view", segmentations, 1, 0.0, null, 0, 1);
+        TestUtils.validateEventInEQ("[CLY]_view", segmentations, 1, 0.0, null, 0, 1, TestUtils.keysValues[0], "", null, null);
     }
 
     /**
@@ -115,7 +118,10 @@ public class ViewImplTests {
      */
     @Test
     public void stop() throws InterruptedException {
-        Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Views, Config.Feature.Events));
+        InternalConfig config = new InternalConfig(TestUtils.getBaseConfig().setFeatures(Config.Feature.Views, Config.Feature.Events));
+        config.viewIdGenerator = TestUtils.idGenerator();
+        Countly.instance().init(config);
+
         TestUtils.validateEQSize(0);
         View view = Countly.instance().view(TestUtils.keysValues[0]); // this calls start automatically
         TestUtils.validateEQSize(1);
@@ -124,13 +130,13 @@ public class ViewImplTests {
         segmentations.put("visit", "1");
         segmentations.put("segment", TestUtils.getOS());
         segmentations.put("start", "1");
-        TestUtils.validateEventInEQ("[CLY]_view", segmentations, 1, 0.0, null, 0, 1);
+        TestUtils.validateEventInEQ("[CLY]_view", segmentations, 1, 0.0, null, 0, 1, TestUtils.keysValues[0], "", null, null);
 
         segmentations.remove("start");
         segmentations.remove("visit");
         Thread.sleep(1000);
         view.stop(false);
-        TestUtils.validateEventInEQ("[CLY]_view", segmentations, 1, 0.0, 1.0, 1, 2);
+        TestUtils.validateEventInEQ("[CLY]_view", segmentations, 1, 0.0, 1.0, 1, 2, TestUtils.keysValues[0], "", null, null);
     }
 
     /**
@@ -142,7 +148,10 @@ public class ViewImplTests {
      */
     @Test
     public void stop_sdkCall() throws InterruptedException {
-        Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Views, Config.Feature.Events));
+        InternalConfig config = new InternalConfig(TestUtils.getBaseConfig().setFeatures(Config.Feature.Views, Config.Feature.Events));
+        config.viewIdGenerator = TestUtils.idGenerator();
+        Countly.instance().init(config);
+
         TestUtils.validateEQSize(0);
         Countly.instance().view(TestUtils.keysValues[0]); // this calls start automatically
         TestUtils.validateEQSize(1);
@@ -151,13 +160,13 @@ public class ViewImplTests {
         segmentations.put("visit", "1");
         segmentations.put("segment", TestUtils.getOS());
         segmentations.put("start", "1");
-        TestUtils.validateEventInEQ("[CLY]_view", segmentations, 1, 0.0, null, 0, 1);
+        TestUtils.validateEventInEQ("[CLY]_view", segmentations, 1, 0.0, null, 0, 1, TestUtils.keysValues[0], "", null, null);
 
         segmentations.remove("start");
         segmentations.remove("visit");
         Thread.sleep(1000);
         Countly.instance().view(TestUtils.keysValues[0]).stop(false); // this call stop previous view and creates new one and stops it
-        TestUtils.validateEventInEQ("[CLY]_view", segmentations, 1, 0.0, null, 3, 4);
+        TestUtils.validateEventInEQ("[CLY]_view", segmentations, 1, 0.0, null, 3, 4, TestUtils.keysValues[1], TestUtils.keysValues[0], null, null);
     }
 
     /**
