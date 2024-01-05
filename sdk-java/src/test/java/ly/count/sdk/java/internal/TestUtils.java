@@ -637,4 +637,11 @@ public class TestUtils {
             Assert.fail("No match for " + val);
         }
     }
+
+    private static int idGeneratorCounter = 0;
+
+    static IdGenerator idGenerator() {
+        idGeneratorCounter = 0;
+        return () -> TestUtils.keysValues[idGeneratorCounter++ % TestUtils.keysValues.length];
+    }
 }

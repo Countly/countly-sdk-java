@@ -186,7 +186,7 @@ public class ModuleEventsTests {
         validateTimedEventSize(0, 1);
 
         EventImpl timedEvent = moduleEvents.timedEvents.get(eKeys[0]);
-        validateEvent(timedEvent, eKeys[0], null, 1, null, null, "_CLY_", null, "", null);
+        validateEvent(timedEvent, eKeys[0], null, 1, null, null);
 
         endEvent(eKeys[0], null, 1, null);
 
@@ -414,7 +414,9 @@ public class ModuleEventsTests {
 
     @Test
     public void timedEventFlow() throws InterruptedException {
-        init(TestUtils.getConfigEvents(4));
+        InternalConfig config = new InternalConfig(TestUtils.getConfigEvents(4));
+        config.eventIdGenerator = TestUtils.idGenerator();
+        init(config);
         validateTimedEventSize(0, 0);
 
         startEvent(eKeys[0]); // start event to end it
@@ -428,12 +430,12 @@ public class ModuleEventsTests {
         endEvent(eKeys[1], null, 3, 15.0);
 
         Assert.assertEquals(1, moduleEvents.timedEvents.size());
-        TestUtils.validateEventInEQ(eKeys[1], null, 3, 15.0, 1.0, 0, 1);
+        TestUtils.validateEventInEQ(eKeys[1], null, 3, 15.0, 1.0, 0, 1, TestUtils.keysValues[0], null, "", null);
 
         endEvent(eKeys[0], null, 2, 4.0);
 
         Assert.assertEquals(0, moduleEvents.timedEvents.size());
-        TestUtils.validateEventInEQ(eKeys[0], null, 2, 4.0, 2.0, 1, 2);
+        TestUtils.validateEventInEQ(eKeys[0], null, 2, 4.0, 2.0, 1, 2, TestUtils.keysValues[1], null, "", TestUtils.keysValues[0]);
     }
 
     private void validateTimedEventSize(int expectedQueueSize, int expectedTimedEventSize) {

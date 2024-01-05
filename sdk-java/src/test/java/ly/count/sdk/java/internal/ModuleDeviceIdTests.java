@@ -591,8 +591,12 @@ public class ModuleDeviceIdTests {
     private List<EventImpl> validateEvents(int requestIndex, String deviceId, int timedEventIdx) {
         List<EventImpl> existingEvents = TestUtils.readEventsFromRequest(requestIndex, deviceId);
         if (!existingEvents.isEmpty()) {
+            String expectedCVId = "";
+            if (existingEvents.size() > 2) {
+                expectedCVId = existingEvents.get(3).id;
+            }
             TestUtils.validateEvent(existingEvents.get(0), TestUtils.keysValues[2], null, 1, null, null, "_CLY_", null, "", null); // casual event
-            TestUtils.validateEvent(existingEvents.get(timedEventIdx), TestUtils.keysValues[0], null, 1, null, 1.0, "_CLY_", null, existingEvents.get(3).id, existingEvents.get(0).id); // timed event
+            TestUtils.validateEvent(existingEvents.get(timedEventIdx), TestUtils.keysValues[0], null, 1, null, 1.0, "_CLY_", null, expectedCVId, existingEvents.get(0).id); // timed event
         }
 
         return existingEvents;
