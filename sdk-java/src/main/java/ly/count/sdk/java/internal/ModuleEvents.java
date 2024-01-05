@@ -137,19 +137,20 @@ public class ModuleEvents extends ModuleBase {
             cvid = viewIdProvider.getCurrentViewId();
         }
 
-        boolean forceSend = false;
         String previousEventIdToSend = this.previousEventId;
-        if (key.equals(FeedbackWidgetType.nps.eventKey) || key.equals(FeedbackWidgetType.survey.eventKey)) {
-            forceSend = true;
-            previousEventIdToSend = null;
-        } else if (key.equals(ModuleViews.KEY_VIEW_EVENT) || key.equals(FeedbackWidgetType.rating.eventKey)) {
+        if (key.equals(FeedbackWidgetType.nps.eventKey) || key.equals(FeedbackWidgetType.survey.eventKey) || key.equals(ModuleViews.KEY_VIEW_EVENT) || key.equals(FeedbackWidgetType.rating.eventKey)) {
             previousEventIdToSend = null;
         } else {
             this.previousEventId = eventId;
         }
 
-        eventQueue.addEvent(new EventImpl(key, count, sum, dur, segmentation, L, eventId, pvid, cvid, previousEventIdToSend));
-        checkEventQueueToSend(forceSend);
+        addEventToQueue(new EventImpl(key, count, sum, dur, segmentation, L, eventId, pvid, cvid, previousEventIdToSend));
+    }
+
+    private void addEventToQueue(EventImpl event) {
+        L.d("[ModuleEvents] addEventToQueue");
+        eventQueue.addEvent(event);
+        checkEventQueueToSend(false);
     }
 
     private void checkEventQueueToSend(boolean forceSend) {
