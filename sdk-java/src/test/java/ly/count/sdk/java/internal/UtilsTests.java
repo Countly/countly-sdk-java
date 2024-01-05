@@ -13,8 +13,6 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import ly.count.sdk.java.Config;
 import org.junit.Assert;
 import org.junit.Before;
@@ -583,23 +581,7 @@ public class UtilsTests {
 
         Assert.assertNotEquals(val2, val1);
 
-        validateSafeRandomVal(val1);
-        validateSafeRandomVal(val2);
-    }
-
-    private void validateSafeRandomVal(String val) {
-        Assert.assertEquals(21, val.length());
-
-        Pattern base64Pattern = Pattern.compile("^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{4})$");
-
-        String timestampStr = val.substring(val.length() - 13);
-        String base64Str = val.substring(0, val.length() - 13);
-
-        Matcher matcher = base64Pattern.matcher(base64Str);
-        if (matcher.matches()) {
-            Assert.assertTrue(Long.parseLong(timestampStr) > 0);
-        } else {
-            Assert.fail("No match for " + val);
-        }
+        TestUtils.validateSafeRandomVal(val1);
+        TestUtils.validateSafeRandomVal(val2);
     }
 }
