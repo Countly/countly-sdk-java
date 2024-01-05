@@ -601,6 +601,235 @@ public class ModuleViewsTests {
         validateView("C", 0.0, 3, 4, false, true, null, TestUtils.keysValues[2], TestUtils.keysValues[1]);
     }
 
+    //(1XX) Value sanitation, wrong usage, simple tests
+
+    /**
+     * startAutoStoppedView(x2), startView(x2), pauseViewWithID, resumeViewWithID, stopViewWithName(x2),
+     * stopViewWithID(x2), addSegmentationToViewWithID, addSegmentationToViewWithName
+     * <p>
+     * called with "null" values. versions with and without segmentation. nothing should crash, no events should be recorded
+     */
+    @Test
+    public void _100_badValues_null() {
+        Countly.instance().init(getConfig());
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().startAutoStoppedView(null);
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().startAutoStoppedView(null, TestUtils.map());
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().startView(null);
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().startView(null, TestUtils.map());
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().pauseViewWithID(null);
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().resumeViewWithID(null);
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().stopViewWithName(null);
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().stopViewWithName(null, TestUtils.map());
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().stopViewWithID(null);
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().stopViewWithID(null, TestUtils.map());
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().addSegmentationToViewWithID(null, TestUtils.map());
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().addSegmentationToViewWithName(null, TestUtils.map());
+        TestUtils.validateEQSize(0);
+    }
+
+    /**
+     * startAutoStoppedView(x2), startView(x2), pauseViewWithID, resumeViewWithID, stopViewWithName(x2),
+     * stopViewWithID(x2), addSegmentationToViewWithID, addSegmentationToViewWithName
+     * <p>
+     * called with empty string values
+     * <p>
+     * versions with and without segmentation
+     * <p>
+     * nothing should crash, no events should be recorded
+     */
+    @Test
+    public void _101_badValues_emptyString() {
+        Countly.instance().init(getConfig());
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().startAutoStoppedView("");
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().startAutoStoppedView("", TestUtils.map());
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().startView("");
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().startView("", TestUtils.map());
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().pauseViewWithID("");
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().resumeViewWithID("");
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().stopViewWithName("");
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().stopViewWithName("", TestUtils.map());
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().stopViewWithID("");
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().stopViewWithID("", TestUtils.map());
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().addSegmentationToViewWithID("", TestUtils.map());
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().addSegmentationToViewWithName("", TestUtils.map());
+        TestUtils.validateEQSize(0);
+    }
+
+    /**
+     * pauseViewWithID, resumeViewWithID, stopViewWithName(x2),
+     * stopViewWithID(x2), addSegmentationToViewWithID, addSegmentationToViewWithName
+     * <p>
+     * called with empty string values
+     * <p>
+     * versions with and without segmentation
+     * <p>
+     * nothing should crash, no events should be recorded
+     */
+    @Test
+    public void _102_badValues_nonExistingViews() {
+        Countly.instance().init(getConfig());
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().pauseViewWithID(TestUtils.keysValues[0]);
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().resumeViewWithID(TestUtils.keysValues[1]);
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().stopViewWithName(TestUtils.keysValues[2]);
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().stopViewWithName(TestUtils.keysValues[3], TestUtils.map());
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().stopViewWithID(TestUtils.keysValues[4]);
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().stopViewWithID(TestUtils.keysValues[5], TestUtils.map());
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().addSegmentationToViewWithID(TestUtils.keysValues[6], TestUtils.map());
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().addSegmentationToViewWithName(TestUtils.keysValues[7], TestUtils.map());
+        TestUtils.validateEQSize(0);
+    }
+
+    //(2XX) Usage flows
+
+    /**
+     * Make sure auto closing views behave correctly
+     * <p>
+     * start view A with segmentation
+     * startAutoStoppedView B
+     * startAutoStoppedView C
+     * start view D
+     * startAutoStoppedView E
+     * start view F
+     */
+    @Test
+    public void _200_autostartView_autoClose() {
+        Countly.instance().init(getConfig());
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().startView("A", TestUtils.map("a", 1));
+        TestUtils.validateEQSize(1);
+
+        Countly.instance().views().startAutoStoppedView("B");
+        TestUtils.validateEQSize(2);
+
+        Countly.instance().views().startAutoStoppedView("C");
+        TestUtils.validateEQSize(4);
+
+        Countly.instance().views().startView("D");
+        TestUtils.validateEQSize(6);
+
+        Countly.instance().views().startAutoStoppedView("E");
+        TestUtils.validateEQSize(7);
+
+        Countly.instance().views().startView("F");
+        TestUtils.validateEQSize(9);
+
+        validateView("A", 0.0, 0, 9, true, true, TestUtils.map("a", 1), TestUtils.keysValues[0], "");
+        validateView("B", 0.0, 1, 9, false, true, null, TestUtils.keysValues[1], TestUtils.keysValues[0]);
+        validateView("B", 0.0, 2, 9, false, false, null, TestUtils.keysValues[1], TestUtils.keysValues[0]);
+        validateView("C", 0.0, 3, 9, false, true, null, TestUtils.keysValues[2], TestUtils.keysValues[1]);
+        validateView("C", 0.0, 4, 9, false, false, null, TestUtils.keysValues[2], TestUtils.keysValues[1]);
+        validateView("D", 0.0, 5, 9, false, true, null, TestUtils.keysValues[3], TestUtils.keysValues[2]);
+        validateView("E", 0.0, 6, 9, false, true, null, TestUtils.keysValues[4], TestUtils.keysValues[3]);
+        validateView("E", 0.0, 7, 9, false, false, null, TestUtils.keysValues[4], TestUtils.keysValues[3]);
+        validateView("F", 0.0, 8, 9, false, true, null, TestUtils.keysValues[5], TestUtils.keysValues[4]);
+    }
+
+    /**
+     * Make sure all the basic functions are working correctly and we are keeping time correctly
+     * <p>
+     * start view A (sE_A)
+     * start view B (sE_B)
+     * wait 1 sec
+     * pause view A (eE_A_1)
+     * wait 1 sec
+     * resume view A
+     * stop view with stopViewWithName/stopViewWithID/stopAllViews (eE_1, eE_2)
+     * Stop view B if needed
+     */
+    @Test
+    public void _201_simpleFlowMultipleViews() throws InterruptedException {
+        Countly.instance().init(getConfig());
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().startView("A", TestUtils.map("a", 1));
+        TestUtils.validateEQSize(1);
+
+        Countly.instance().views().startView("B", TestUtils.map("b", 2));
+        TestUtils.validateEQSize(2);
+
+        Thread.sleep(1000);
+
+        Countly.instance().views().pauseViewWithID(TestUtils.keysValues[0]);
+
+        Thread.sleep(1000);
+
+        Countly.instance().views().resumeViewWithID(TestUtils.keysValues[0]);
+        TestUtils.validateEQSize(3);
+        Countly.instance().views().stopAllViews(null);
+        TestUtils.validateEQSize(5);
+
+        validateView("A", 0.0, 0, 5, true, true, TestUtils.map("a", 1), TestUtils.keysValues[0], "");
+        validateView("B", 0.0, 1, 5, false, true, TestUtils.map("b", 2), TestUtils.keysValues[1], TestUtils.keysValues[0]);
+        validateView("A", 1.0, 2, 5, false, false, null, TestUtils.keysValues[0], TestUtils.keysValues[0]);
+        validateView("A", 0.0, 3, 5, false, false, null, TestUtils.keysValues[0], TestUtils.keysValues[0]);
+        validateView("B", 2.0, 4, 5, false, false, null, TestUtils.keysValues[1], TestUtils.keysValues[0]);
+    }
+
     static void validateView(String viewName, Double viewDuration, int idx, int size, boolean start, boolean visit, Map<String, Object> customSegmentation, String id, String pvid) {
         Map<String, Object> viewSegmentation = TestUtils.map("name", viewName, "segment", TestUtils.getOS());
         if (start) {
