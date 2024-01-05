@@ -75,8 +75,8 @@ public class ModuleEventsTests {
         Assert.assertEquals(1, TestUtils.getCurrentRQ().length);
 
         List<EventImpl> eventsInRequest = TestUtils.readEventsFromRequest();
-        validateEvent(eventsInRequest.get(0), eKeys[0], null, 1, 45.9, 32.0);
-        validateEvent(eventsInRequest.get(1), eKeys[1], null, 1, 45.9, 32.0);
+        validateEvent(eventsInRequest.get(0), eKeys[0], null, 1, 45.9, 32.0, "_CLY_", null, "", null);
+        validateEvent(eventsInRequest.get(1), eKeys[1], null, 1, 45.9, 32.0, "_CLY_", null, "", eventsInRequest.get(0).id);
     }
 
     /**
@@ -98,7 +98,7 @@ public class ModuleEventsTests {
         List<EventImpl> eventsInRequest = TestUtils.readEventsFromRequest();
         validateEvent(eventsInRequest.get(0), "test-joinEvents-1", null, 5, null, null);
         validateEvent(eventsInRequest.get(1), "test-joinEvents-2", null, 1, null, null);
-        validateEvent(eventsInRequest.get(2), eKeys[0], null, 1, 45.9, 32.0);
+        validateEvent(eventsInRequest.get(2), eKeys[0], null, 1, 45.9, 32.0, "_CLY_", null, "", null);
     }
 
     /**
@@ -168,7 +168,7 @@ public class ModuleEventsTests {
         //record event with key segmentation
         Countly.instance().events().recordEvent(eKeys[0], segmentation);
 
-        TestUtils.validateEventInEQ(eKeys[0], expectedSegmentation, 1, null, null, 0, 1);
+        TestUtils.validateEventInEQ(eKeys[0], expectedSegmentation, 1, null, null, 0, 1, "_CLY_", null, "", null);
     }
 
     /**
@@ -186,12 +186,12 @@ public class ModuleEventsTests {
         validateTimedEventSize(0, 1);
 
         EventImpl timedEvent = moduleEvents.timedEvents.get(eKeys[0]);
-        validateEvent(timedEvent, eKeys[0], null, 1, null, null);
+        validateEvent(timedEvent, eKeys[0], null, 1, null, null, "_CLY_", null, "", null);
 
         endEvent(eKeys[0], null, 1, null);
 
         Assert.assertEquals(0, moduleEvents.timedEvents.size());
-        TestUtils.validateEventInEQ(eKeys[0], null, 1, null, 0.0, 0, 1);
+        TestUtils.validateEventInEQ(eKeys[0], null, 1, null, 0.0, 0, 1, "_CLY_", null, "", null);
     }
 
     /**

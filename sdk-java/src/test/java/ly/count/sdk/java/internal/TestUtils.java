@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
@@ -321,10 +323,19 @@ public class TestUtils {
         Assert.assertTrue(gonnaValidate.dow >= 0 && gonnaValidate.dow < 7);
         Assert.assertTrue(gonnaValidate.hour >= 0 && gonnaValidate.hour < 24);
         Assert.assertTrue(gonnaValidate.timestamp >= 0);
-        Assert.assertEquals(id, gonnaValidate.id);
-        Assert.assertEquals(pvid, gonnaValidate.pvid);
-        Assert.assertEquals(cvid, gonnaValidate.cvid);
-        Assert.assertEquals(peid, gonnaValidate.peid);
+        validateId(id, gonnaValidate.id, "Event ID");
+        validateId(pvid, gonnaValidate.pvid, "Previous View ID");
+        validateId(cvid, gonnaValidate.cvid, "Current View ID");
+        validateId(peid, gonnaValidate.peid, "Previous Event ID");
+    }
+
+    // if id null
+    private static void validateId(String id, String gonnaValidate, String name) {
+        if (id != null && id.equals("_CLY_")) {
+            validateSafeRandomVal(gonnaValidate);
+        } else {
+            Assert.assertEquals(name + " is not validated", id, gonnaValidate);
+        }
     }
 
     static void validateEvent(EventImpl gonnaValidate, String key, Map<String, Object> segmentation, int count, Double sum, Double duration) {
@@ -597,5 +608,33 @@ public class TestUtils {
             }
         }
         return map;
+    }
+
+    /**
+     * Validates a random generated safe value,
+     * Value length should be 21
+     * Value should contain a timestamp at the end
+     * Value should be base64 encoded and first 8 should be it
+     *
+     * @param val
+     */
+    static void validateSafeRandomVal(String val) {
+        Assert.assertEquals(21, val.length());
+
+        Pattern base64Pattern = Pattern.compile("^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{4})$");
+
+        String timestampStr = val.substring(val.length() - 13);
+        String base64Str = val.substring(0, val.length() - 13);
+
+        Matcher matcher = base64Pattern.matcher(base64Str);
+        if (matcher.matches()) {
+            TimeUtils.Instant instant = TimeUtils.getCurrentInstant(Long.parseLong(timestampStr));
+            Assert.assertTrue(instant.dow >= 0 && instant.dow < 7);
+            Assert.assertTrue(instant.hour >= 0 && instant.hour < 24);
+            Assert.assertTrue(instant.timestamp > 0);
+            Assert.assertTrue(instant.tz >= -720 && instant.tz <= 840);
+        } else {
+            Assert.fail("No match for " + val);
+        }
     }
 }

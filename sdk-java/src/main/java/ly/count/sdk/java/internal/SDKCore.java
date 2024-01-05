@@ -447,11 +447,11 @@ public class SDKCore {
         if (config.viewIdProvider == null) {
             config.viewIdProvider = new ViewIdProvider() {
                 @Nonnull public String getCurrentViewId() {
-                    return null;
+                    return "";
                 }
 
                 @Nonnull public String getPreviousViewId() {
-                    return null;
+                    return "";
                 }
             };
         }

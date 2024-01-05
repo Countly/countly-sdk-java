@@ -458,10 +458,10 @@ public class ModuleDeviceIdTests {
                 viewSegmentation.put("name", TestUtils.keysValues[1]);
                 viewSegmentation.put("start", "1");
                 viewSegmentation.put("visit", "1");
-                TestUtils.validateEvent(existingEvents.get(1), "[CLY]_view", viewSegmentation, 1, 0.0, null); // view start event
+                TestUtils.validateEvent(existingEvents.get(1), "[CLY]_view", viewSegmentation, 1, 0.0, null, "_CLY_", "", null, null); // view start event
                 viewSegmentation.remove("start");
                 viewSegmentation.remove("visit");
-                TestUtils.validateEvent(existingEvents.get(3), "[CLY]_view", viewSegmentation, 1, 0.0, 1.0); // view stop event
+                TestUtils.validateEvent(existingEvents.get(3), "[CLY]_view", viewSegmentation, 1, 0.0, 1.0, "_CLY_", "", null, null); // view stop event
                 remainingRequestIndex++;
             }
         } catch (NullPointerException ignored) {
@@ -591,8 +591,8 @@ public class ModuleDeviceIdTests {
     private List<EventImpl> validateEvents(int requestIndex, String deviceId, int timedEventIdx) {
         List<EventImpl> existingEvents = TestUtils.readEventsFromRequest(requestIndex, deviceId);
         if (!existingEvents.isEmpty()) {
-            TestUtils.validateEvent(existingEvents.get(0), TestUtils.keysValues[2], null, 1, null, null); // casual event
-            TestUtils.validateEvent(existingEvents.get(timedEventIdx), TestUtils.keysValues[0], null, 1, null, 1.0); // timed event
+            TestUtils.validateEvent(existingEvents.get(0), TestUtils.keysValues[2], null, 1, null, null, "_CLY_", null, "", null); // casual event
+            TestUtils.validateEvent(existingEvents.get(timedEventIdx), TestUtils.keysValues[0], null, 1, null, 1.0, "_CLY_", null, existingEvents.get(3).id, existingEvents.get(0).id); // timed event
         }
 
         return existingEvents;
