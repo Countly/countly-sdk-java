@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.TreeMap;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import ly.count.sdk.java.Config;
 
@@ -434,6 +435,27 @@ public class SDKCore {
         setDeviceIdFromStorageIfExist(config);
 
         requestQueueMemory = new ArrayDeque<>(config.getRequestQueueMaxSize());
+
+        if (config.viewIdGenerator == null) {
+            config.viewIdGenerator = Utils::safeRandomVal;
+        }
+
+        if (config.eventIdGenerator == null) {
+            config.eventIdGenerator = Utils::safeRandomVal;
+        }
+
+        if (config.viewIdProvider == null) {
+            config.viewIdProvider = new ViewIdProvider() {
+                @Nonnull public String getCurrentViewId() {
+                    return null;
+                }
+
+                @Nonnull public String getPreviousViewId() {
+                    return null;
+                }
+            };
+        }
+
         // ModuleSessions is always enabled, even without consent
         int consents = config.getFeatures1() | CoreFeature.Sessions.getIndex();
         // build modules
