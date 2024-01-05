@@ -736,10 +736,10 @@ public class ModuleViewsTests {
         Countly.instance().views().stopViewWithID(TestUtils.keysValues[5], TestUtils.map());
         TestUtils.validateEQSize(0);
 
-        Countly.instance().views().addSegmentationToViewWithID(TestUtils.keysValues[6], TestUtils.map());
+        Countly.instance().views().addSegmentationToViewWithID(TestUtils.keysValues[0], TestUtils.map());
         TestUtils.validateEQSize(0);
 
-        Countly.instance().views().addSegmentationToViewWithName(TestUtils.keysValues[7], TestUtils.map());
+        Countly.instance().views().addSegmentationToViewWithName(TestUtils.keysValues[1], TestUtils.map());
         TestUtils.validateEQSize(0);
     }
 
