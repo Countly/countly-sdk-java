@@ -247,7 +247,7 @@ public class EventQueueTests {
     }
 
     private EventImpl createEvent(String key, Map<String, Object> segmentation, int count, Double sum, Double dur) {
-        return new EventImpl(key, count, sum, dur, segmentation, L);
+        return new EventImpl(key, count, sum, dur, segmentation, L, null, null, null, null);
     }
 
     public static void validateEventInQueue(String key, Map<String, Object> segmentation,

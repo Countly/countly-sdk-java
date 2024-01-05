@@ -10,7 +10,7 @@ import javax.annotation.Nullable;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.Session;
 
-public class ModuleViews extends ModuleBase {
+public class ModuleViews extends ModuleBase implements ViewIdProvider {
     String currentViewID = null;
     String previousViewID = null;
     private boolean firstView = true;
@@ -25,6 +25,7 @@ public class ModuleViews extends ModuleBase {
     String[] reservedSegmentationKeysViews = new String[] { "name", "visit", "start", "segment" };
     //interface for SDK users
     Views viewsInterface;
+    IdGenerator idGenerator;
 
     static class ViewData {
         String viewID;
@@ -42,6 +43,9 @@ public class ModuleViews extends ModuleBase {
         super.init(config);
         L.v("[ModuleViews] Initializing");
         viewsInterface = new Views();
+
+        idGenerator = config.viewIdGenerator;
+        config.viewIdProvider = this;
     }
 
     @Override
@@ -145,7 +149,7 @@ public class ModuleViews extends ModuleBase {
         autoCloseRequiredViews(false, null);
 
         ViewData currentViewData = new ViewData();
-        currentViewData.viewID = Utils.safeRandomVal();
+        currentViewData.viewID = idGenerator.generateId();
         currentViewData.viewName = viewName;
         currentViewData.viewStartTimeSeconds = TimeUtils.uniqueTimestampS();
         currentViewData.isAutoStoppedView = viewShouldBeAutomaticallyStopped;
@@ -320,6 +324,14 @@ public class ModuleViews extends ModuleBase {
         }
         removeReservedKeysFromViewSegmentation(viewSegmentation);
         vd.viewSegmentation.putAll(viewSegmentation);
+    }
+
+    public @Nonnull String getCurrentViewId() {
+        return currentViewID == null ? "" : currentViewID;
+    }
+
+    public @Nonnull String getPreviousViewId() {
+        return previousViewID == null ? "" : previousViewID;
     }
 
     public class Views {
