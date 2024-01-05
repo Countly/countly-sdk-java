@@ -165,7 +165,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
             firstView = false;
         }
 
-        recordView(0.0, viewSegmentation);
+        recordView(currentViewID, 0.0, viewSegmentation);
         return currentViewData.viewID;
     }
 
@@ -191,14 +191,14 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
         viewDataMap.remove(vd.viewID);
     }
 
-    void recordView(Double duration, Map<String, Object> segmentation) {
-        ModuleEvents.Events events = Countly.instance().events();
+    void recordView(String id, Double duration, Map<String, Object> segmentation) {
+        ModuleEvents events = internalConfig.sdk.module(ModuleEvents.class);
         if (events == null) {
             L.e("[ModuleViews] recordView, events module is not initialized");
             return;
         }
 
-        events.recordEvent(KEY_VIEW_EVENT, segmentation, 1, 0.0, duration);
+        events.recordEventInternal(KEY_VIEW_EVENT, 1, 0.0, duration, segmentation, id);
     }
 
     void recordViewEndEvent(ViewData vd, @Nullable Map<String, Object> filteredCustomViewSegmentation, String viewRecordingSource) {
@@ -220,7 +220,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
 
         long viewDurationSeconds = lastElapsedDurationSeconds;
         Map<String, Object> segments = createViewEventSegmentation(vd, false, false, filteredCustomViewSegmentation);
-        recordView(new Long(viewDurationSeconds).doubleValue(), segments);
+        recordView(vd.viewID, new Long(viewDurationSeconds).doubleValue(), segments);
     }
 
     void pauseViewWithIDInternal(String viewID) {
