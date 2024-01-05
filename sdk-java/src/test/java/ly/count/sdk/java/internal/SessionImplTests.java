@@ -605,7 +605,7 @@ public class SessionImplTests {
         SessionImpl session = (SessionImpl) Countly.session();
         TestUtils.validateEQSize(0);
         session.view("view");
-        ModuleViewsTests.validateView("view", 0.0, 0, 1, true, true, null);
+        ModuleViewsTests.validateView("view", 0.0, 0, 1, true, true, null, "_CLY_", "");
     }
 
     /**
@@ -615,15 +615,18 @@ public class SessionImplTests {
      */
     @Test
     public void view_stopStartedAndNext() {
-        Countly.instance().init(TestUtils.getConfigSessions(Config.Feature.Views, Config.Feature.Events).setEventQueueSizeToSend(4));
+        InternalConfig config = new InternalConfig(TestUtils.getConfigSessions(Config.Feature.Views, Config.Feature.Events).setEventQueueSizeToSend(4));
+        config.viewIdGenerator = TestUtils.idGenerator();
+        Countly.instance().init(config);
+
         SessionImpl session = (SessionImpl) Countly.session();
         TestUtils.validateEQSize(0);
         session.view("start");
         TestUtils.validateEQSize(1);
         session.view("next");
-        ModuleViewsTests.validateView("start", 0.0, 0, 3, true, true, null);
-        ModuleViewsTests.validateView("start", 0.0, 1, 3, false, false, null);
-        ModuleViewsTests.validateView("next", 0.0, 2, 3, false, true, null);
+        ModuleViewsTests.validateView("start", 0.0, 0, 3, true, true, null, TestUtils.keysValues[0], "");
+        ModuleViewsTests.validateView("start", 0.0, 1, 3, false, false, null, TestUtils.keysValues[0], "");
+        ModuleViewsTests.validateView("next", 0.0, 2, 3, false, true, null, TestUtils.keysValues[1], TestUtils.keysValues[0]);
     }
 
     private void validateNotEquals(int idOffset, BiFunction<SessionImpl, SessionImpl, Consumer<Long>> setter) {

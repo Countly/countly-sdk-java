@@ -70,6 +70,6 @@ public class TimedEventsTests {
             tEvent.endAndRecord();
         }
 
-        TestUtils.validateEventInEQ("key", targetSegm, 5, 133.0, targetDuration, 0, 1);
+        TestUtils.validateEventInEQ("key", targetSegm, 5, 133.0, targetDuration, 0, 1, "_CLY_", null, "", null);
     }
 }
