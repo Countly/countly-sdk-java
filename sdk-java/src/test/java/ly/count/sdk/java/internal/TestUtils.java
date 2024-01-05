@@ -307,7 +307,7 @@ public class TestUtils {
         return paramMap;
     }
 
-    static void validateEvent(EventImpl gonnaValidate, String key, Map<String, Object> segmentation, int count, Double sum, Double duration) {
+    static void validateEvent(EventImpl gonnaValidate, String key, Map<String, Object> segmentation, int count, Double sum, Double duration, String id, String pvid, String cvid, String peid) {
         Assert.assertEquals(key, gonnaValidate.key);
         Assert.assertEquals(segmentation, gonnaValidate.segmentation);
         Assert.assertEquals(count, gonnaValidate.count);
@@ -321,12 +321,24 @@ public class TestUtils {
         Assert.assertTrue(gonnaValidate.dow >= 0 && gonnaValidate.dow < 7);
         Assert.assertTrue(gonnaValidate.hour >= 0 && gonnaValidate.hour < 24);
         Assert.assertTrue(gonnaValidate.timestamp >= 0);
+        Assert.assertEquals(id, gonnaValidate.id);
+        Assert.assertEquals(pvid, gonnaValidate.pvid);
+        Assert.assertEquals(cvid, gonnaValidate.cvid);
+        Assert.assertEquals(peid, gonnaValidate.peid);
+    }
+
+    static void validateEvent(EventImpl gonnaValidate, String key, Map<String, Object> segmentation, int count, Double sum, Double duration) {
+        validateEvent(gonnaValidate, key, segmentation, count, sum, duration, null, null, null, null);
+    }
+
+    static void validateEventInEQ(String key, Map<String, Object> segmentation, int count, Double sum, Double duration, int index, int size, String id, String pvid, String cvid, String peid) {
+        List<EventImpl> events = getCurrentEQ();
+        validateEvent(events.get(index), key, segmentation, count, sum, duration, id, pvid, cvid, peid);
+        validateEQSize(size);
     }
 
     static void validateEventInEQ(String key, Map<String, Object> segmentation, int count, Double sum, Double duration, int index, int size) {
-        List<EventImpl> events = getCurrentEQ();
-        validateEvent(events.get(index), key, segmentation, count, sum, duration);
-        validateEQSize(size);
+        validateEventInEQ(key, segmentation, count, sum, duration, index, size, null, null, null, null);
     }
 
     static List<EventImpl> readEventsFromRequest() {

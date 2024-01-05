@@ -177,12 +177,12 @@ public class EventQueueTests {
         init(TestUtils.getConfigEvents(2));
 
         TestUtils.validateEQSize(0, eventQueue);
-        writeToEventQueue("{\"hour\":10,\"count\":1,\"dow\":4,\"key\":\"test-joinEvents-1\",\"timestamp\":1695887006647}:::{\"hour\":10,\"count\":1,\"dow\":4,\"key\":\"test-joinEvents-2\",\"timestamp\":1695887006657}", false);
+        writeToEventQueue("{\"id\":\"id\",\"cvid\":\"cvid\",\"hour\":10,\"count\":1,\"dow\":4,\"key\":\"test-joinEvents-1\",\"timestamp\":1695887006647}:::{\"hour\":10,\"count\":1,\"dow\":4,\"key\":\"test-joinEvents-2\",\"timestamp\":1695887006657}", false);
 
         eventQueue.restoreFromDisk();
         TestUtils.validateEQSize(2, eventQueue);
-        validateEvent(eventQueue.eventQueueMemoryCache.get(0), "test-joinEvents-1", null, 1, null, null);
-        validateEvent(eventQueue.eventQueueMemoryCache.get(1), "test-joinEvents-2", null, 1, null, null);
+        validateEvent(eventQueue.eventQueueMemoryCache.get(0), "test-joinEvents-1", null, 1, null, null, "id", "pvid", null, null);
+        validateEvent(eventQueue.eventQueueMemoryCache.get(1), "test-joinEvents-2", null, 1, null, null, null, null, null, null);
     }
 
     /**
