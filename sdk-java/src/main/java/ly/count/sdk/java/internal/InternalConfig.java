@@ -29,6 +29,8 @@ public class InternalConfig extends Config {
     ImmediateRequestGenerator immediateRequestGenerator = null;
     public SDKCore sdk;
     public StorageProvider storageProvider;
+    protected IdGenerator viewIdGenerator;
+    protected IdGenerator eventIdGenerator;
 
     /**
      * Shouldn't be used!

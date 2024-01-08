@@ -33,7 +33,7 @@ public class TimeUtils {
         return getCurrentInstant(timestampMs());
     }
 
-    private static Instant getCurrentInstant(long timestamp) {
+    protected static Instant getCurrentInstant(long timestamp) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(timestamp);
         return new Instant(timestamp,

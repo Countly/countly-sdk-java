@@ -482,6 +482,15 @@ public class SDKCore {
         setDeviceIdFromStorageIfExist(config);
 
         requestQueueMemory = new ArrayDeque<>(config.getRequestQueueMaxSize());
+
+        if (config.viewIdGenerator == null) {
+            config.viewIdGenerator = Utils::safeRandomVal;
+        }
+
+        if (config.eventIdGenerator == null) {
+            config.eventIdGenerator = Utils::safeRandomVal;
+        }
+
         // ModuleSessions is always enabled, even without consent
         int consents = config.getFeatures1() | CoreFeature.Sessions.getIndex();
         // build modules
