@@ -318,7 +318,7 @@ public class TestUtils {
 
         if (duration != null) {
             double delta = 0.5;
-            Assert.assertTrue(Math.abs(duration - gonnaValidate.duration) < delta);
+            Assert.assertTrue(duration + " expected duration, got " + gonnaValidate.duration, Math.abs(duration - gonnaValidate.duration) < delta);
         }
 
         Assert.assertTrue(gonnaValidate.dow >= 0 && gonnaValidate.dow < 7);
@@ -647,5 +647,11 @@ public class TestUtils {
     static IdGenerator incrementalIdGenerator() {
         AtomicInteger counter = new AtomicInteger(0);
         return () -> "idv" + counter.incrementAndGet();
+    }
+
+    static InternalConfig getConfigViews() {
+        InternalConfig config = new InternalConfig(TestUtils.getBaseConfig().enableFeatures(Config.Feature.Views, Config.Feature.Events));
+        config.viewIdGenerator = TestUtils.incrementalIdGenerator();
+        return config;
     }
 }
