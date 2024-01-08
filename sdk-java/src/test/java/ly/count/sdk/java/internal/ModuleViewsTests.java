@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -235,11 +236,11 @@ public class ModuleViewsTests {
         Countly.instance().views().stopAllViews(null);
         TestUtils.validateEQSize(5);
 
-        validateView("A", 0.0, 0, 5, true, true, TestUtils.map("count", 56), TestUtils.keysValues[0], "");
-        validateView("B", 0.0, 1, 5, false, true, TestUtils.map("gone", true, "lev", BigDecimal.valueOf(78.91)), TestUtils.keysValues[1], TestUtils.keysValues[0]);
-        validateView("A", 1.0, 2, 5, false, false, null, TestUtils.keysValues[0], TestUtils.keysValues[0]);
-        validateView("A", 0.0, 3, 5, false, false, null, TestUtils.keysValues[0], TestUtils.keysValues[0]);
-        validateView("B", 2.0, 4, 5, false, false, null, TestUtils.keysValues[1], TestUtils.keysValues[0]);
+        validateView("A", 0.0, 0, 5, true, true, TestUtils.map("count", 56), "idv1", "");
+        validateView("B", 0.0, 1, 5, false, true, TestUtils.map("gone", true, "lev", BigDecimal.valueOf(78.91)), "idv2", "idv1");
+        validateView("A", 1.0, 2, 5, false, false, null, "idv1", "idv1");
+        validateView("A", 0.0, 3, 5, false, false, null, "idv1", "idv1");
+        validateView("B", 2.0, 4, 5, false, false, null, "idv2", "idv1");
     }
 
     /**
@@ -270,17 +271,17 @@ public class ModuleViewsTests {
 
         TestUtils.validateEQSize(4);
 
-        validateView("A", 0.0, 0, 4, true, true, TestUtils.map("money", 238746798234739L), TestUtils.keysValues[0], ""); // starting
-        validateView("AutoStopped", 0.0, 1, 4, false, true, TestUtils.map("gone_to", "Wall Sina"), TestUtils.keysValues[1], TestUtils.keysValues[0]); // starting
-        validateView("AutoStopped", 1.0, 2, 4, false, false, null, TestUtils.keysValues[1], TestUtils.keysValues[0]); // closing
-        validateView("B", 0.0, 3, 4, false, true, null, TestUtils.keysValues[2], TestUtils.keysValues[1]); // starting
+        validateView("A", 0.0, 0, 4, true, true, TestUtils.map("money", 238746798234739L), "idv1", ""); // starting
+        validateView("AutoStopped", 0.0, 1, 4, false, true, TestUtils.map("gone_to", "Wall Sina"), "idv2", "idv1"); // starting
+        validateView("AutoStopped", 1.0, 2, 4, false, false, null, "idv2", "idv1"); // closing
+        validateView("B", 0.0, 3, 4, false, true, null, "idv3", "idv2"); // starting
 
         Countly.instance().views().stopViewWithName("A");
         Countly.instance().views().stopViewWithID(viewB);
         TestUtils.validateEQSize(6);
 
-        validateView("A", 1.0, 4, 6, false, false, null, TestUtils.keysValues[0], TestUtils.keysValues[1]); // closing
-        validateView("B", 0.0, 5, 6, false, false, null, TestUtils.keysValues[2], TestUtils.keysValues[1]); // closing
+        validateView("A", 1.0, 4, 6, false, false, null, "idv1", "idv2"); // closing
+        validateView("B", 0.0, 5, 6, false, false, null, "idv3", "idv2"); // closing
     }
 
     /**
@@ -311,9 +312,9 @@ public class ModuleViewsTests {
 
         TestUtils.validateEQSize(3);
 
-        validateView("A", 0.0, 0, 3, true, true, TestUtils.map("power_percent", BigDecimal.valueOf(56.7)), TestUtils.keysValues[0], ""); // starting
-        validateView("A", 1.0, 1, 3, false, false, null, TestUtils.keysValues[0], ""); // starting
-        validateView("A", 0.0, 2, 3, false, false, null, TestUtils.keysValues[0], ""); // closing
+        validateView("A", 0.0, 0, 3, true, true, TestUtils.map("power_percent", BigDecimal.valueOf(56.7)), "idv1", ""); // starting
+        validateView("A", 1.0, 1, 3, false, false, null, "idv1", ""); // starting
+        validateView("A", 0.0, 2, 3, false, false, null, "idv1", ""); // closing
     }
 
     /**
@@ -343,16 +344,16 @@ public class ModuleViewsTests {
         Map<String, Object> customSegmentationB = TestUtils.map("FigmaId", "OWE4cZdkOWFz", "start", "1", "end", "1", "name", TestUtils.keysValues[2], "segment", TestUtils.keysValues[3]);
 
         String viewA = Countly.instance().views().startView("A", customSegmentationA);
-        validateView("A", 0.0, 0, 1, true, true, TestUtils.map("FigmaId", "YXNkOThhZnM="), TestUtils.keysValues[0], ""); // starting
+        validateView("A", 0.0, 0, 1, true, true, TestUtils.map("FigmaId", "YXNkOThhZnM="), "idv1", ""); // starting
 
         Countly.instance().views().startView("B", customSegmentationB);
-        validateView("B", 0.0, 1, 2, false, true, TestUtils.map("FigmaId", "OWE4cZdkOWFz", "end", "1"), TestUtils.keysValues[1], TestUtils.keysValues[0]); // starting
+        validateView("B", 0.0, 1, 2, false, true, TestUtils.map("FigmaId", "OWE4cZdkOWFz", "end", "1"), "idv2", "idv1"); // starting
 
         Countly.instance().views().stopViewWithID(viewA, null);
-        validateView("A", 0.0, 2, 3, false, false, null, TestUtils.keysValues[0], TestUtils.keysValues[0]); // closing
+        validateView("A", 0.0, 2, 3, false, false, null, "idv1", "idv1"); // closing
 
         Countly.instance().views().stopViewWithName("B", TestUtils.map("ClickCount", 45));
-        validateView("B", 0.0, 3, 4, false, false, TestUtils.map("ClickCount", 45), TestUtils.keysValues[1], TestUtils.keysValues[0]); // closing
+        validateView("B", 0.0, 3, 4, false, false, TestUtils.map("ClickCount", 45), "idv2", "idv1"); // closing
     }
 
     /**
@@ -373,14 +374,14 @@ public class ModuleViewsTests {
 
         Countly.instance().views().startView("A");
         Countly.instance().views().startView("B");
-        validateView("A", 0.0, 0, 2, true, true, null, TestUtils.keysValues[0], "");
-        validateView("B", 0.0, 1, 2, false, true, null, TestUtils.keysValues[1], TestUtils.keysValues[0]);
+        validateView("A", 0.0, 0, 2, true, true, null, "idv1", "");
+        validateView("B", 0.0, 1, 2, false, true, null, "idv2", "idv1");
 
         Map<String, Object> allSegmentation = TestUtils.map("Copyright", "Countly", "AppExit", true, "DestroyToken", false, "ExitedAt", 1702975890000L);
         Countly.instance().views().stopAllViews(allSegmentation);
 
-        validateView("A", 0.0, 2, 4, false, false, allSegmentation, TestUtils.keysValues[0], TestUtils.keysValues[0]);
-        validateView("B", 0.0, 3, 4, false, false, allSegmentation, TestUtils.keysValues[1], TestUtils.keysValues[0]);
+        validateView("A", 0.0, 2, 4, false, false, allSegmentation, "idv1", "idv1");
+        validateView("B", 0.0, 3, 4, false, false, allSegmentation, "idv2", "idv1");
     }
 
     /**
@@ -402,8 +403,8 @@ public class ModuleViewsTests {
 
         Countly.instance().views().startView("A", TestUtils.map(internalKeysSegmentation, "ultimate", "YES"));
         Countly.instance().views().stopViewWithName("A", TestUtils.map(internalKeysSegmentation, "end", "Unfortunately", "time", 1234567890L));
-        validateView("A", 0.0, 0, 2, true, true, TestUtils.map("ultimate", "YES"), TestUtils.keysValues[0], "");
-        validateView("A", 0.0, 1, 2, false, false, TestUtils.map("end", "Unfortunately", "time", 1234567890), TestUtils.keysValues[0], "");
+        validateView("A", 0.0, 0, 2, true, true, TestUtils.map("ultimate", "YES"), "idv1", "");
+        validateView("A", 0.0, 1, 2, false, false, TestUtils.map("end", "Unfortunately", "time", 1234567890), "idv1", "");
     }
 
     /**
@@ -426,14 +427,14 @@ public class ModuleViewsTests {
         Map<String, Object> internalKeysSegmentation = TestUtils.map("start", "YES", "name", TestUtils.keysValues[0], "visit", "YES", "segment", TestUtils.keysValues[1]);
 
         String viewIDA = Countly.instance().views().startView("A");
-        validateView("A", 0.0, 0, 1, true, true, null, TestUtils.keysValues[0], "");
+        validateView("A", 0.0, 0, 1, true, true, null, "idv1", "");
         Countly.instance().views().addSegmentationToViewWithName("A", TestUtils.map(internalKeysSegmentation, "aniki", "HAVE"));
         Countly.instance().views().pauseViewWithID(viewIDA);
-        validateView("A", 0.0, 1, 2, false, false, TestUtils.map("aniki", "HAVE"), TestUtils.keysValues[0], "");
+        validateView("A", 0.0, 1, 2, false, false, TestUtils.map("aniki", "HAVE"), "idv1", "");
 
         Countly.instance().views().addSegmentationToViewWithID(viewIDA, TestUtils.map(internalKeysSegmentation, "oni-chan", "HAVE"));
         Countly.instance().views().stopViewWithID(viewIDA);
-        validateView("A", 0.0, 2, 3, false, false, TestUtils.map("aniki", "HAVE", "oni-chan", "HAVE"), TestUtils.keysValues[0], "");
+        validateView("A", 0.0, 2, 3, false, false, TestUtils.map("aniki", "HAVE", "oni-chan", "HAVE"), "idv1", "");
     }
 
     /**
@@ -458,16 +459,16 @@ public class ModuleViewsTests {
         Map<String, Object> viewSegmentation = TestUtils.map("name", "A", "segment", TestUtils.getOS(), "arr", new ArrayList<>(), "done", true);
 
         String viewIDA = Countly.instance().views().startView("A", viewSegmentation);
-        validateView("A", 0.0, 0, 1, true, true, TestUtils.map("done", true), TestUtils.keysValues[0], "");
+        validateView("A", 0.0, 0, 1, true, true, TestUtils.map("done", true), "idv1", "");
         Countly.instance().views().addSegmentationToViewWithName("A", TestUtils.map("a", 1));
         Countly.instance().views().addSegmentationToViewWithName("A", null);
         Countly.instance().views().pauseViewWithID(viewIDA);
-        validateView("A", 0.0, 1, 2, false, false, TestUtils.map("a", 1), TestUtils.keysValues[0], "");
+        validateView("A", 0.0, 1, 2, false, false, TestUtils.map("a", 1), "idv1", "");
 
         Countly.instance().views().addSegmentationToViewWithID(viewIDA, TestUtils.map("b", 2));
         Countly.instance().views().addSegmentationToViewWithID(viewIDA, TestUtils.map());
         Countly.instance().views().stopViewWithID(viewIDA);
-        validateView("A", 0.0, 2, 3, false, false, TestUtils.map("a", 1, "b", 2), TestUtils.keysValues[0], "");
+        validateView("A", 0.0, 2, 3, false, false, TestUtils.map("a", 1, "b", 2), "idv1", "");
     }
 
     /**
@@ -486,12 +487,12 @@ public class ModuleViewsTests {
         Countly.instance().init(getConfig());
         TestUtils.validateEQSize(0);
         String viewIDA = Countly.instance().views().startView("A");
-        validateView("A", 0.0, 0, 1, true, true, null, TestUtils.keysValues[0], "");
+        validateView("A", 0.0, 0, 1, true, true, null, "idv1", "");
         Countly.instance().views().addSegmentationToViewWithName("A", TestUtils.map("a", 1, "b", 2));
         Countly.instance().views().pauseViewWithID(viewIDA);
-        validateView("A", 0.0, 1, 2, false, false, TestUtils.map("a", 1, "b", 2), TestUtils.keysValues[0], "");
+        validateView("A", 0.0, 1, 2, false, false, TestUtils.map("a", 1, "b", 2), "idv1", "");
         Countly.instance().views().stopViewWithID(viewIDA);
-        validateView("A", 0.0, 2, 3, false, false, TestUtils.map("a", 1, "b", 2), TestUtils.keysValues[0], "");
+        validateView("A", 0.0, 2, 3, false, false, TestUtils.map("a", 1, "b", 2), "idv1", "");
     }
 
     /**
@@ -525,9 +526,9 @@ public class ModuleViewsTests {
         Thread.sleep(1000);
 
         Countly.instance().views().stopViewWithID(viewIDA);
-        validateView("A", 0.0, 0, 3, true, true, null, TestUtils.keysValues[0], "");
-        validateView("A", 1.0, 1, 3, false, false, null, TestUtils.keysValues[0], "");
-        validateView("A", 0.0, 2, 3, false, false, null, TestUtils.keysValues[0], "");
+        validateView("A", 0.0, 0, 3, true, true, null, "idv1", "");
+        validateView("A", 1.0, 1, 3, false, false, null, "idv1", "");
+        validateView("A", 0.0, 2, 3, false, false, null, "idv1", "");
     }
 
     /**
@@ -557,8 +558,8 @@ public class ModuleViewsTests {
         Thread.sleep(1000);
 
         Countly.instance().views().stopViewWithID(viewIDA);
-        validateView("A", 0.0, 0, 2, true, true, null, TestUtils.keysValues[0], "");
-        validateView("A", 2.0, 1, 2, false, false, null, TestUtils.keysValues[0], "");
+        validateView("A", 0.0, 0, 2, true, true, null, "idv1", "");
+        validateView("A", 2.0, 1, 2, false, false, null, "idv1", "");
     }
 
     /**
@@ -595,16 +596,16 @@ public class ModuleViewsTests {
         Countly.instance().views().stopViewWithID(viewIDA);
         Countly.instance().views().startView("C");
 
-        validateView("A", 0.0, 0, 4, true, true, null, TestUtils.keysValues[0], "");
-        validateView("A", 1.0, 1, 4, false, false, null, TestUtils.keysValues[0], "");
-        validateView("B", 0.0, 2, 4, true, true, null, TestUtils.keysValues[1], TestUtils.keysValues[0]);
-        validateView("C", 0.0, 3, 4, false, true, null, TestUtils.keysValues[2], TestUtils.keysValues[1]);
+        validateView("A", 0.0, 0, 4, true, true, null, "idv1", "");
+        validateView("A", 1.0, 1, 4, false, false, null, "idv1", "");
+        validateView("B", 0.0, 2, 4, true, true, null, "idv2", "idv1");
+        validateView("C", 0.0, 3, 4, false, true, null, "idv3", "idv2");
     }
 
     //(1XX) Value sanitation, wrong usage, simple tests
 
     /**
-     * startAutoStoppedView(x2), startView(x2), pauseViewWithID, resumeViewWithID, stopViewWithName(x2),
+     * recordView(x2), startAutoStoppedView(x2), startView(x2), pauseViewWithID, resumeViewWithID, stopViewWithName(x2),
      * stopViewWithID(x2), addSegmentationToViewWithID, addSegmentationToViewWithName
      * <p>
      * called with "null" values. versions with and without segmentation. nothing should crash, no events should be recorded
@@ -612,6 +613,12 @@ public class ModuleViewsTests {
     @Test
     public void _100_badValues_null() {
         Countly.instance().init(getConfig());
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().view(null);
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().view(null, false);
         TestUtils.validateEQSize(0);
 
         Countly.instance().views().startAutoStoppedView(null);
@@ -652,7 +659,7 @@ public class ModuleViewsTests {
     }
 
     /**
-     * startAutoStoppedView(x2), startView(x2), pauseViewWithID, resumeViewWithID, stopViewWithName(x2),
+     * recordView(x2), startAutoStoppedView(x2), startView(x2), pauseViewWithID, resumeViewWithID, stopViewWithName(x2),
      * stopViewWithID(x2), addSegmentationToViewWithID, addSegmentationToViewWithName
      * <p>
      * called with empty string values
@@ -664,6 +671,12 @@ public class ModuleViewsTests {
     @Test
     public void _101_badValues_emptyString() {
         Countly.instance().init(getConfig());
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().view("");
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().view("", false);
         TestUtils.validateEQSize(0);
 
         Countly.instance().views().startAutoStoppedView("");
@@ -718,7 +731,7 @@ public class ModuleViewsTests {
         Countly.instance().init(getConfig());
         TestUtils.validateEQSize(0);
 
-        Countly.instance().views().pauseViewWithID(TestUtils.keysValues[0]);
+        Countly.instance().views().pauseViewWithID("idv1");
         TestUtils.validateEQSize(0);
 
         Countly.instance().views().resumeViewWithID(TestUtils.keysValues[1]);
@@ -736,7 +749,7 @@ public class ModuleViewsTests {
         Countly.instance().views().stopViewWithID(TestUtils.keysValues[5], TestUtils.map());
         TestUtils.validateEQSize(0);
 
-        Countly.instance().views().addSegmentationToViewWithID(TestUtils.keysValues[0], TestUtils.map());
+        Countly.instance().views().addSegmentationToViewWithID("idv1", TestUtils.map());
         TestUtils.validateEQSize(0);
 
         Countly.instance().views().addSegmentationToViewWithName(TestUtils.keysValues[1], TestUtils.map());
@@ -746,47 +759,74 @@ public class ModuleViewsTests {
     //(2XX) Usage flows
 
     /**
+     * <pre>
      * Make sure auto closing views behave correctly
-     * <p>
-     * start view A with segmentation
-     * startAutoStoppedView B
-     * startAutoStoppedView C
-     * start view D
-     * startAutoStoppedView E
-     * start view F
+     *
+     * - recordView view A (sE_A id=idv1 pvid="" segm={visit="1" start="1"})
+     *   wait 1 sec
+     * - recordView view B (eE_A d=1 id=idv1 pvid="", segm={}) (sE_B id=idv2 pvid=idv1 segm={visit="1"})
+     *   wait 1 sec
+     * - start view C (eE_B d=1 id=idv2 pvid=idv1, segm={}) (sE_C id=idv3 pvid=idv2 segm={visit="1"})
+     *   wait 1 sec
+     * - startAutoStoppedView D (sE_D id=idv4 pvid=idv3 segm={visit="1"})
+     *   wait 1 sec
+     * - startAutoStoppedView E (eE_D d=1 id=idv4 pvid=idv3, segm={}) (sE_E id=idv5 pvid=idv4 segm={visit="1"})
+     *   wait 1 sec
+     * - start view F (eE_E d=1 id=idv5 pvid=idv4, segm={}) (sE_F id=idv6 pvid=idv5 segm={visit="1"})
+     *   wait 1 sec
+     * - recordView view G (sE_G id=idv7 pvid=idv6 segm={visit="1"})
+     *   wait 1 sec
+     * - startAutoStoppedView H (sE_H id=idv8 pvid=idv7 segm={visit="1"})
+     *   wait 1 sec
+     * - recordView view I (eE_H d=1 id=idv8 pvid=idv7, segm={}) (sE_I id=idv8 pvid=idv8 segm={visit="1"})
+     * </pre>
      */
     @Test
-    public void _200_autostartView_autoClose() {
-        Countly.instance().init(getConfig());
+    public void _200_autostartView_autoClose() throws InterruptedException {
+        Countly.instance().init(getConfig().setEventQueueSizeToSend(20));
         TestUtils.validateEQSize(0);
 
-        Countly.instance().views().startView("A", TestUtils.map("a", 1));
-        TestUtils.validateEQSize(1);
+        Countly.instance().view("A");
+        Thread.sleep(1000);
+        validateView("A", 0.0, 0, 1, true, true, null, "idv1", "");
 
-        Countly.instance().views().startAutoStoppedView("B");
-        TestUtils.validateEQSize(2);
+        Countly.instance().view("B");
+        Thread.sleep(1000);
+        validateView("A", 1.0, 1, 3, false, false, null, "idv1", "");
+        validateView("B", 0.0, 2, 3, false, true, null, "idv2", "idv1");
 
-        Countly.instance().views().startAutoStoppedView("C");
-        TestUtils.validateEQSize(4);
+        Countly.instance().views().startView("C", TestUtils.map("a", 1));
+        Thread.sleep(1000);
+        validateView("B", 1.0, 3, 5, false, false, null, "idv2", "idv1");
+        validateView("C", 0.0, 4, 5, false, true, TestUtils.map("a", 1), "idv3", "idv2");
 
-        Countly.instance().views().startView("D");
-        TestUtils.validateEQSize(6);
+        Countly.instance().views().startAutoStoppedView("D");
+        Thread.sleep(1000);
+        validateView("D", 0.0, 5, 6, false, true, null, "idv4", "idv3");
 
         Countly.instance().views().startAutoStoppedView("E");
-        TestUtils.validateEQSize(7);
+        Thread.sleep(1000);
+        validateView("D", 1.0, 6, 8, false, false, null, "idv4", "idv3");
+        validateView("E", 0.0, 7, 8, false, true, null, "idv5", "idv4");
 
         Countly.instance().views().startView("F");
-        TestUtils.validateEQSize(9);
+        Thread.sleep(1000);
+        validateView("E", 1.0, 8, 10, false, false, null, "idv5", "idv4");
+        validateView("F", 0.0, 9, 10, false, true, null, "idv6", "idv5");
 
-        validateView("A", 0.0, 0, 9, true, true, TestUtils.map("a", 1), TestUtils.keysValues[0], "");
-        validateView("B", 0.0, 1, 9, false, true, null, TestUtils.keysValues[1], TestUtils.keysValues[0]);
-        validateView("B", 0.0, 2, 9, false, false, null, TestUtils.keysValues[1], TestUtils.keysValues[0]);
-        validateView("C", 0.0, 3, 9, false, true, null, TestUtils.keysValues[2], TestUtils.keysValues[1]);
-        validateView("C", 0.0, 4, 9, false, false, null, TestUtils.keysValues[2], TestUtils.keysValues[1]);
-        validateView("D", 0.0, 5, 9, false, true, null, TestUtils.keysValues[3], TestUtils.keysValues[2]);
-        validateView("E", 0.0, 6, 9, false, true, null, TestUtils.keysValues[4], TestUtils.keysValues[3]);
-        validateView("E", 0.0, 7, 9, false, false, null, TestUtils.keysValues[4], TestUtils.keysValues[3]);
-        validateView("F", 0.0, 8, 9, false, true, null, TestUtils.keysValues[5], TestUtils.keysValues[4]);
+        Countly.instance().view("G");
+        Thread.sleep(1000);
+        validateView("G", 0.0, 10, 11, false, true, null, "idv7", "idv6");
+
+        Countly.instance().views().startAutoStoppedView("H");
+        Thread.sleep(1000);
+        validateView("G", 1.0, 11, 13, false, false, null, "idv7", "idv6");
+        validateView("H", 0.0, 12, 13, false, true, null, "idv8", "idv7");
+
+        Countly.instance().views().startView("I");
+        Thread.sleep(1000);
+        validateView("H", 1.0, 13, 15, false, false, null, "idv8", "idv7");
+        validateView("I", 0.0, 14, 15, false, true, null, "idv9", "idv8");
     }
 
     /**
@@ -814,20 +854,39 @@ public class ModuleViewsTests {
 
         Thread.sleep(1000);
 
-        Countly.instance().views().pauseViewWithID(TestUtils.keysValues[0]);
+        Countly.instance().views().pauseViewWithID("idv1");
 
         Thread.sleep(1000);
 
-        Countly.instance().views().resumeViewWithID(TestUtils.keysValues[0]);
+        Countly.instance().views().resumeViewWithID("idv1");
         TestUtils.validateEQSize(3);
         Countly.instance().views().stopAllViews(null);
         TestUtils.validateEQSize(5);
 
-        validateView("A", 0.0, 0, 5, true, true, TestUtils.map("a", 1), TestUtils.keysValues[0], "");
-        validateView("B", 0.0, 1, 5, false, true, TestUtils.map("b", 2), TestUtils.keysValues[1], TestUtils.keysValues[0]);
-        validateView("A", 1.0, 2, 5, false, false, null, TestUtils.keysValues[0], TestUtils.keysValues[0]);
-        validateView("A", 0.0, 3, 5, false, false, null, TestUtils.keysValues[0], TestUtils.keysValues[0]);
-        validateView("B", 2.0, 4, 5, false, false, null, TestUtils.keysValues[1], TestUtils.keysValues[0]);
+        validateView("A", 0.0, 0, 5, true, true, TestUtils.map("a", 1), "idv1", "");
+        validateView("B", 0.0, 1, 5, false, true, TestUtils.map("b", 2), "idv2", "idv1");
+        validateView("A", 1.0, 2, 5, false, false, null, "idv1", "idv1");
+        validateView("A", 0.0, 3, 5, false, false, null, "idv1", "idv1");
+        validateView("B", 2.0, 4, 5, false, false, null, "idv2", "idv1");
+    }
+
+    /**
+     * recordView(x2), startAutoStoppedView(x2), startView(x2), pauseViewWithID, resumeViewWithID, stopViewWithName(x2),
+     * stopViewWithID(x2), addSegmentationToViewWithID, addSegmentationToViewWithName,
+     * <p>
+     * calling these with valid values should not cord anything in EQ
+     */
+    @Test
+    public void _300_callingWithNoConsent() {
+        Countly.instance().init(TestUtils.getBaseConfig());
+
+        Countly.instance().view("A");
+        TestUtils.validateEQSize(0);
+        
+        Countly.instance().view("B", false);
+        TestUtils.validateEQSize(0);
+        //In Java SDK, if consent not given interface returns as null
+        Assert.assertNull(Countly.instance().views());
     }
 
     static void validateView(String viewName, Double viewDuration, int idx, int size, boolean start, boolean visit, Map<String, Object> customSegmentation, String id, String pvid) {
@@ -851,7 +910,7 @@ public class ModuleViewsTests {
 
     private InternalConfig getConfig() {
         InternalConfig config = new InternalConfig(TestUtils.getBaseConfig().enableFeatures(Config.Feature.Views, Config.Feature.Events));
-        config.viewIdGenerator = TestUtils.idGenerator();
+        config.viewIdGenerator = TestUtils.incrementalIdGenerator();
         return config;
     }
 }

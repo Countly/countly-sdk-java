@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -638,10 +639,13 @@ public class TestUtils {
         }
     }
 
-    private static int idGeneratorCounter = 0;
-
     static IdGenerator idGenerator() {
-        idGeneratorCounter = 0;
-        return () -> TestUtils.keysValues[idGeneratorCounter++ % TestUtils.keysValues.length];
+        AtomicInteger counter = new AtomicInteger(0);
+        return () -> TestUtils.keysValues[counter.getAndIncrement() % TestUtils.keysValues.length];
+    }
+
+    static IdGenerator incrementalIdGenerator() {
+        AtomicInteger counter = new AtomicInteger(0);
+        return () -> "idv" + counter.incrementAndGet();
     }
 }
