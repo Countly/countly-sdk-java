@@ -547,12 +547,22 @@ public class Countly implements Usage {
         return ((Session) sdk.session(null)).addLocation(latitude, longitude);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @deprecated use {@link ModuleViews.Views#startView(String)} instead via {@link Countly#views()} instance() call
+     */
     @Override
     public View view(String name, boolean start) {
         L.d("[Countly] view: name = " + name + " start = " + start);
         return ((Session) sdk.session(null)).view(name, start);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @deprecated use {@link ModuleViews.Views#startView(String)} instead via {@link Countly#views()} instance() call
+     */
     @Override
     public View view(String name) {
         L.d("[Countly] view: name = " + name);
