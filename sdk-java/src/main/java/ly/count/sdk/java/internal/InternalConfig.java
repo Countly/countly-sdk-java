@@ -32,7 +32,6 @@ public class InternalConfig extends Config {
     protected IdGenerator viewIdGenerator;
     protected IdGenerator eventIdGenerator;
     protected ViewIdProvider viewIdProvider;
-
     /**
      * Shouldn't be used!
      */
