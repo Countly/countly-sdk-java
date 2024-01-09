@@ -2,6 +2,7 @@ package ly.count.sdk.java.internal;
 
 import ly.count.sdk.java.Countly;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,48 +32,25 @@ public class ScMVManuelViewTests {
     public void MV_100_badValues_null() {
         Countly.instance().init(TestUtils.getConfigViews());
         TestUtils.validateEQSize(0);
+        Assert.assertEquals(0, TestUtils.getCurrentRQ().length);
 
         Countly.instance().view(null);
-        TestUtils.validateEQSize(0);
-
         Countly.instance().view(null, false);
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().startAutoStoppedView(null);
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().startAutoStoppedView(null, TestUtils.map());
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().startView(null);
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().startView(null, TestUtils.map());
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().pauseViewWithID(null);
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().resumeViewWithID(null);
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().stopViewWithName(null);
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().stopViewWithName(null, TestUtils.map());
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().stopViewWithID(null);
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().stopViewWithID(null, TestUtils.map());
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().addSegmentationToViewWithID(null, TestUtils.map());
-        TestUtils.validateEQSize(0);
 
         Countly.instance().views().addSegmentationToViewWithName(null, TestUtils.map());
         TestUtils.validateEQSize(0);
+        Assert.assertEquals(0, TestUtils.getCurrentRQ().length);
     }
 
     /**
@@ -89,48 +67,25 @@ public class ScMVManuelViewTests {
     public void MV_101_badValues_emptyString() {
         Countly.instance().init(TestUtils.getConfigViews());
         TestUtils.validateEQSize(0);
+        Assert.assertEquals(0, TestUtils.getCurrentRQ().length);
 
         Countly.instance().view("");
-        TestUtils.validateEQSize(0);
-
         Countly.instance().view("", false);
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().startAutoStoppedView("");
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().startAutoStoppedView("", TestUtils.map());
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().startView("");
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().startView("", TestUtils.map());
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().pauseViewWithID("");
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().resumeViewWithID("");
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().stopViewWithName("");
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().stopViewWithName("", TestUtils.map());
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().stopViewWithID("");
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().stopViewWithID("", TestUtils.map());
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().addSegmentationToViewWithID("", TestUtils.map());
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().addSegmentationToViewWithName("", TestUtils.map());
+
         TestUtils.validateEQSize(0);
+        Assert.assertEquals(0, TestUtils.getCurrentRQ().length);
     }
 
     /**
@@ -147,30 +102,19 @@ public class ScMVManuelViewTests {
     public void MV_102_badValues_nonExistingViews() {
         Countly.instance().init(TestUtils.getConfigViews());
         TestUtils.validateEQSize(0);
+        Assert.assertEquals(0, TestUtils.getCurrentRQ().length);
 
         Countly.instance().views().pauseViewWithID("idv1");
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().resumeViewWithID(TestUtils.keysValues[1]);
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().stopViewWithName(TestUtils.keysValues[2]);
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().stopViewWithName(TestUtils.keysValues[3], TestUtils.map());
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().stopViewWithID(TestUtils.keysValues[4]);
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().stopViewWithID(TestUtils.keysValues[5], TestUtils.map());
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().addSegmentationToViewWithID("idv1", TestUtils.map());
-        TestUtils.validateEQSize(0);
-
         Countly.instance().views().addSegmentationToViewWithName(TestUtils.keysValues[1], TestUtils.map());
+
         TestUtils.validateEQSize(0);
+        Assert.assertEquals(0, TestUtils.getCurrentRQ().length);
     }
 
     //(2XX) Usage flows

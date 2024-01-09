@@ -644,14 +644,14 @@ public class TestUtils {
         return () -> TestUtils.keysValues[counter.getAndIncrement() % TestUtils.keysValues.length];
     }
 
-    static IdGenerator incrementalIdGenerator() {
+    static IdGenerator incrementalViewIdGenerator() {
         AtomicInteger counter = new AtomicInteger(0);
         return () -> "idv" + counter.incrementAndGet();
     }
 
     static InternalConfig getConfigViews() {
         InternalConfig config = new InternalConfig(TestUtils.getBaseConfig().enableFeatures(Config.Feature.Views, Config.Feature.Events));
-        config.viewIdGenerator = TestUtils.incrementalIdGenerator();
+        config.viewIdGenerator = TestUtils.incrementalViewIdGenerator();
         return config;
     }
 }
