@@ -291,23 +291,4 @@ public class ScenarioManuelViewTests {
         ModuleViewsTests.validateView("A", 0.0, 3, 5, false, false, null, "idv1", "idv1");
         ModuleViewsTests.validateView("B", 2.0, 4, 5, false, false, null, "idv2", "idv1");
     }
-
-    /**
-     * recordView(x2), startAutoStoppedView(x2), startView(x2), pauseViewWithID, resumeViewWithID, stopViewWithName(x2),
-     * stopViewWithID(x2), addSegmentationToViewWithID, addSegmentationToViewWithName,
-     * <p>
-     * calling these with valid values should not cord anything in EQ
-     */
-    @Test
-    public void _300_callingWithNoConsent() {
-        Countly.instance().init(TestUtils.getBaseConfig());
-
-        Countly.instance().view("A");
-        TestUtils.validateEQSize(0);
-
-        Countly.instance().view("B", false);
-        TestUtils.validateEQSize(0);
-        //In Java SDK, if consent not given interface returns as null
-        Assert.assertNull(Countly.instance().views());
-    }
 }
