@@ -6,7 +6,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class ScenarioUtilsTests {
+public class ScUAUtilsTests {
 
     /**
      * <pre>
@@ -21,7 +21,7 @@ public class ScenarioUtilsTests {
      * </pre>
      */
     @Test
-    public void _001_validatingIDGenerator() throws NumberFormatException {
+    public void UA_001_validatingIDGenerator() throws NumberFormatException {
         String val1 = Utils.safeRandomVal();
         String val2 = Utils.safeRandomVal();
 

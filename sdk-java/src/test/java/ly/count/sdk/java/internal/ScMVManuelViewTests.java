@@ -2,14 +2,13 @@ package ly.count.sdk.java.internal;
 
 import ly.count.sdk.java.Countly;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class ScenarioManuelViewTests {
+public class ScMVManuelViewTests {
     @Before
     public void beforeTest() {
         TestUtils.createCleanTestState();
@@ -29,7 +28,7 @@ public class ScenarioManuelViewTests {
      * called with "null" values. versions with and without segmentation. nothing should crash, no events should be recorded
      */
     @Test
-    public void _100_badValues_null() {
+    public void MV_100_badValues_null() {
         Countly.instance().init(TestUtils.getConfigViews());
         TestUtils.validateEQSize(0);
 
@@ -87,7 +86,7 @@ public class ScenarioManuelViewTests {
      * nothing should crash, no events should be recorded
      */
     @Test
-    public void _101_badValues_emptyString() {
+    public void MV_101_badValues_emptyString() {
         Countly.instance().init(TestUtils.getConfigViews());
         TestUtils.validateEQSize(0);
 
@@ -145,7 +144,7 @@ public class ScenarioManuelViewTests {
      * nothing should crash, no events should be recorded
      */
     @Test
-    public void _102_badValues_nonExistingViews() {
+    public void MV_102_badValues_nonExistingViews() {
         Countly.instance().init(TestUtils.getConfigViews());
         TestUtils.validateEQSize(0);
 
@@ -200,7 +199,7 @@ public class ScenarioManuelViewTests {
      * </pre>
      */
     @Test
-    public void _200A_autostartView_autoClose() throws InterruptedException {
+    public void MV_200A_autostartView_autoClose() throws InterruptedException {
         Countly.instance().init(TestUtils.getConfigViews().setEventQueueSizeToSend(20));
         TestUtils.validateEQSize(0);
 
@@ -264,7 +263,7 @@ public class ScenarioManuelViewTests {
      * Stop view B if needed
      */
     @Test
-    public void _201_simpleFlowMultipleViews() throws InterruptedException {
+    public void MV_201_simpleFlowMultipleViews() throws InterruptedException {
         Countly.instance().init(TestUtils.getConfigViews());
         TestUtils.validateEQSize(0);
 
