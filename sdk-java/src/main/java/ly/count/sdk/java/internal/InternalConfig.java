@@ -72,7 +72,6 @@ public class InternalConfig extends Config {
                         }
                     } catch (IllegalAccessException | IllegalArgumentException iae) {
                         if (configLog != null) {
-                            System.out.println("[InternalConfig] Cannot access field " + r.getName() + " " + iae);
                             configLog.e("[InternalConfig] Cannot access field " + r.getName() + " " + iae);
                         }
                     }
