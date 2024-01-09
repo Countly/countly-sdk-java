@@ -31,6 +31,7 @@ public class InternalConfig extends Config {
     public StorageProvider storageProvider;
     protected IdGenerator viewIdGenerator;
     protected IdGenerator eventIdGenerator;
+    protected ViewIdProvider viewIdProvider;
 
     /**
      * Shouldn't be used!
@@ -58,6 +59,7 @@ public class InternalConfig extends Config {
             if (priva.contains(r)) {
                 continue;
             }
+
             for (Field l : local) {
                 if (r.getName().equals(l.getName())) {
                     try {
@@ -71,6 +73,7 @@ public class InternalConfig extends Config {
                         }
                     } catch (IllegalAccessException | IllegalArgumentException iae) {
                         if (configLog != null) {
+                            System.out.println("[InternalConfig] Cannot access field " + r.getName() + " " + iae);
                             configLog.e("[InternalConfig] Cannot access field " + r.getName() + " " + iae);
                         }
                     }

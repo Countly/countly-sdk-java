@@ -177,12 +177,12 @@ public class EventQueueTests {
         init(TestUtils.getConfigEvents(2));
 
         TestUtils.validateEQSize(0, eventQueue);
-        writeToEventQueue("{\"hour\":10,\"count\":1,\"dow\":4,\"key\":\"test-joinEvents-1\",\"timestamp\":1695887006647}:::{\"hour\":10,\"count\":1,\"dow\":4,\"key\":\"test-joinEvents-2\",\"timestamp\":1695887006657}", false);
+        writeToEventQueue("{\"id\":\"id\",\"cvid\":\"cvid\",\"pvid\":\"pvid\",\"peid\":\"peid\",\"hour\":10,\"count\":1,\"dow\":4,\"key\":\"test-joinEvents-1\",\"timestamp\":1695887006647}:::{\"hour\":10,\"count\":1,\"dow\":4,\"key\":\"test-joinEvents-2\",\"timestamp\":1695887006657}", false);
 
         eventQueue.restoreFromDisk();
         TestUtils.validateEQSize(2, eventQueue);
-        validateEvent(eventQueue.eventQueueMemoryCache.get(0), "test-joinEvents-1", null, 1, null, null);
-        validateEvent(eventQueue.eventQueueMemoryCache.get(1), "test-joinEvents-2", null, 1, null, null);
+        validateEvent(eventQueue.eventQueueMemoryCache.get(0), "test-joinEvents-1", null, 1, null, null, "id", "pvid", "cvid", "peid");
+        validateEvent(eventQueue.eventQueueMemoryCache.get(1), "test-joinEvents-2", null, 1, null, null, null, null, null, null);
     }
 
     /**
@@ -247,7 +247,7 @@ public class EventQueueTests {
     }
 
     private EventImpl createEvent(String key, Map<String, Object> segmentation, int count, Double sum, Double dur) {
-        return new EventImpl(key, count, sum, dur, segmentation, L);
+        return new EventImpl(key, count, sum, dur, segmentation, L, null, null, null, null);
     }
 
     public static void validateEventInQueue(String key, Map<String, Object> segmentation,

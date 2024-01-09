@@ -193,11 +193,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
         this.consents = SDKCore.instance.consents;
 
-        if (currentView != null) {
-            currentView.stop(true);
-        } else {
-            Storage.pushAsync(config, this);
-        }
+        Storage.pushAsync(config, this);
 
         Long duration = updateDuration(now);
 
@@ -311,7 +307,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
 
         ModuleEvents eventsModule = (ModuleEvents) SDKCore.instance.module(CoreFeature.Events.getIndex());
         EventImpl eventImpl = (EventImpl) event;
-        eventsModule.recordEventInternal(eventImpl.key, eventImpl.count, eventImpl.sum, eventImpl.duration, eventImpl.segmentation);
+        eventsModule.recordEventInternal(eventImpl.key, eventImpl.count, eventImpl.sum, eventImpl.duration, eventImpl.segmentation, eventImpl.id);
     }
 
     @Override
@@ -368,6 +364,14 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         return this;
     }
 
+    /**
+     * Start view
+     *
+     * @param name String representing name of this View
+     * @param start whether this view is first in current application launch
+     * @return View instance
+     * @deprecated use {@link ModuleViews.Views#startView(String)} instead via {@link Countly#views()}
+     */
     public View view(String name, boolean start) {
         L.d("[SessionImpl] view: name = " + name + " start = " + start);
         if (!SDKCore.enabled(CoreFeature.Views)) {
@@ -385,6 +389,13 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         return currentView;
     }
 
+    /**
+     * Start view
+     *
+     * @param name String representing name of this View
+     * @return View instance
+     * @deprecated use {@link ModuleViews.Views#startView(String)} instead via {@link Countly#views()}
+     */
     public View view(String name) {
         return view(name, startView);
     }

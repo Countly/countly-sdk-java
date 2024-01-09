@@ -14,6 +14,7 @@ import ly.count.sdk.java.internal.ModuleFeedback;
 import ly.count.sdk.java.internal.ModuleLocation;
 import ly.count.sdk.java.internal.ModuleRemoteConfig;
 import ly.count.sdk.java.internal.ModuleUserProfile;
+import ly.count.sdk.java.internal.ModuleViews;
 import ly.count.sdk.java.internal.SDKCore;
 
 /**
@@ -73,7 +74,14 @@ public class Countly implements Usage {
             return;
         }
 
-        InternalConfig internalConfig = new InternalConfig(config);
+        InternalConfig internalConfig;
+
+        if (config instanceof InternalConfig) {
+            internalConfig = (InternalConfig) config;
+        } else {
+            internalConfig = new InternalConfig(config);
+        }
+
         Log L = new Log(internalConfig.loggingLevel, internalConfig.logListener);
         internalConfig.setLogger(L);
 
@@ -469,6 +477,21 @@ public class Countly implements Usage {
     }
 
     /**
+     * <code>Views</code> interface to use views feature.
+     *
+     * @return {@link ModuleViews.Views} instance.
+     */
+    public ModuleViews.Views views() {
+        if (!isInitialized()) {
+            if (L != null) {
+                L.e("[Countly] SDK is not initialized yet.");
+            }
+            return null;
+        }
+        return sdk.views();
+    }
+
+    /**
      * Get existing or create new timed event object, don't record it.
      *
      * @param key key for this event, cannot be null or empty
@@ -547,12 +570,22 @@ public class Countly implements Usage {
         return ((Session) sdk.session(null)).addLocation(latitude, longitude);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @deprecated use {@link ModuleViews.Views#startView(String)} instead via {@link Countly#views()} instance() call
+     */
     @Override
     public View view(String name, boolean start) {
         L.d("[Countly] view: name = " + name + " start = " + start);
         return ((Session) sdk.session(null)).view(name, start);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @deprecated use {@link ModuleViews.Views#startView(String)} instead via {@link Countly#views()} instance() call
+     */
     @Override
     public View view(String name) {
         L.d("[Countly] view: name = " + name);

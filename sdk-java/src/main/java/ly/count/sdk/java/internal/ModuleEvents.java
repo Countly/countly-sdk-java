@@ -6,12 +6,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.Session;
-import ly.count.sdk.java.View;
 
 public class ModuleEvents extends ModuleBase {
     protected EventQueue eventQueue = null;
     final Map<String, EventImpl> timedEvents = new ConcurrentHashMap<>();
     protected Events eventsInterface = null;
+    ViewIdProvider viewIdProvider = null;
+    IdGenerator idGenerator = null;
+    String previousEventId = null;
 
     @Override
     public void init(InternalConfig config) {
@@ -20,6 +22,14 @@ public class ModuleEvents extends ModuleBase {
         eventQueue = new EventQueue(L, config.getEventsBufferSize());
         eventQueue.restoreFromDisk();
         eventsInterface = new Events();
+
+        idGenerator = config.eventIdGenerator;
+    }
+
+    @Override
+    public void initFinished(InternalConfig config) {
+        super.initFinished(config);
+        viewIdProvider = config.viewIdProvider;
     }
 
     @Override
@@ -45,12 +55,8 @@ public class ModuleEvents extends ModuleBase {
             // this part is to end and record the current view if exists
             Session session = Countly.session();
             if ((session != null && session.isActive())) {
-                View currentView = ((SessionImpl) session).currentView;
-                if (currentView != null) {
-                    currentView.stop(true);
-                } else {
-                    Storage.pushAsync(internalConfig, ((SessionImpl) Countly.session()));
-                }
+                Countly.instance().views().stopAllViews(null);
+                Storage.pushAsync(internalConfig, ((SessionImpl) Countly.session()));
             }
 
             addEventsToRequestQ(oldDeviceId);
@@ -102,20 +108,43 @@ public class ModuleEvents extends ModuleBase {
         });
     }
 
-    protected void recordEventInternal(String key, int count, Double sum, Double dur, Map<String, Object> segmentation) {
+    protected void recordEventInternal(String key, int count, Double sum, Double dur, Map<String, Object> segmentation, String eventIdOverride) {
         if (count <= 0) {
-            L.w("[ModuleEvents] recordEventInternal: Count can't be less than 1, ignoring this event.");
+            L.w("[ModuleEvents] recordEventInternal, Count can't be less than 1, ignoring this event.");
             return;
         }
 
         if (key == null || key.isEmpty()) {
-            L.w("[ModuleEvents] recordEventInternal: Key can't be null or empty, ignoring this event.");
+            L.w("[ModuleEvents] recordEventInternal, Key can't be null or empty, ignoring this event.");
             return;
         }
 
+        L.d("[ModuleEvents] recordEventInternal, Recording event with key: [" + key + "] and provided event ID of:[" + eventIdOverride + "] and segmentation with:[" + (segmentation == null ? "null" : segmentation.size()) + "] keys");
+
         removeInvalidDataFromSegments(segmentation);
-        EventImpl event = new EventImpl(key, count, sum, dur, segmentation, L);
-        addEventToQueue(event);
+
+        String eventId, pvid = null, cvid = null;
+        if (Utils.isEmptyOrNull(eventIdOverride)) {
+            L.d("[ModuleEvents] recordEventInternal, Generating new event id because it was null or empty");
+            eventId = idGenerator.generateId();
+        } else {
+            eventId = eventIdOverride;
+        }
+
+        if (key.equals(ModuleViews.KEY_VIEW_EVENT)) {
+            pvid = viewIdProvider.getPreviousViewId();
+        } else {
+            cvid = viewIdProvider.getCurrentViewId();
+        }
+
+        String previousEventIdToSend = this.previousEventId;
+        if (key.equals(FeedbackWidgetType.nps.eventKey) || key.equals(FeedbackWidgetType.survey.eventKey) || key.equals(ModuleViews.KEY_VIEW_EVENT) || key.equals(FeedbackWidgetType.rating.eventKey)) {
+            previousEventIdToSend = null;
+        } else {
+            this.previousEventId = eventId;
+        }
+
+        addEventToQueue(new EventImpl(key, count, sum, dur, segmentation, L, eventId, pvid, cvid, previousEventIdToSend));
     }
 
     private void addEventToQueue(EventImpl event) {
@@ -148,7 +177,7 @@ public class ModuleEvents extends ModuleBase {
                 L.w("startEventInternal, eventRecorder, No timed event with the name [" + key + "] is started, nothing to end. Will ignore call.");
                 return;
             }
-            recordEventInternal(eventImpl.key, eventImpl.count, eventImpl.sum, eventImpl.duration, eventImpl.segmentation);
+            recordEventInternal(eventImpl.key, eventImpl.count, eventImpl.sum, eventImpl.duration, eventImpl.segmentation, eventImpl.id);
         }, key, L));
 
         return true;
@@ -179,7 +208,7 @@ public class ModuleEvents extends ModuleBase {
         long currentTimestamp = TimeUtils.timestampMs();
         double duration = (currentTimestamp - event.timestamp) / 1000.0;
 
-        recordEventInternal(key, count, sum, duration, segmentation);
+        recordEventInternal(key, count, sum, duration, segmentation, null);
         return true;
     }
 
@@ -207,7 +236,7 @@ public class ModuleEvents extends ModuleBase {
          */
         public void recordEvent(String key, Map<String, Object> segmentation, int count, Double sum, Double dur) {
             L.i("[Events] recordEvent: key = " + key + ", count = " + count + ", sum = " + sum + ", segmentation = " + segmentation + ", dur = " + dur);
-            recordEventInternal(key, count, sum, dur, segmentation);
+            recordEventInternal(key, count, sum, dur, segmentation, null);
         }
 
         /**

@@ -51,7 +51,7 @@ public class ModuleEventsTests {
         Countly.instance().events().recordEvent(eKeys[0], segmentation, 1, 45.9, 32.0);
 
         //check if event was recorded correctly and size of event queue is equal to size of events in queue
-        TestUtils.validateEventInEQ(eKeys[0], segmentation, 1, 45.9, 32.0, 0, 1);
+        TestUtils.validateEventInEQ(eKeys[0], segmentation, 1, 45.9, 32.0, 0, 1, "_CLY_", null, "", null);
     }
 
     /**
@@ -75,8 +75,8 @@ public class ModuleEventsTests {
         Assert.assertEquals(1, TestUtils.getCurrentRQ().length);
 
         List<EventImpl> eventsInRequest = TestUtils.readEventsFromRequest();
-        validateEvent(eventsInRequest.get(0), eKeys[0], null, 1, 45.9, 32.0);
-        validateEvent(eventsInRequest.get(1), eKeys[1], null, 1, 45.9, 32.0);
+        validateEvent(eventsInRequest.get(0), eKeys[0], null, 1, 45.9, 32.0, "_CLY_", null, "", null);
+        validateEvent(eventsInRequest.get(1), eKeys[1], null, 1, 45.9, 32.0, "_CLY_", null, "", eventsInRequest.get(0).id);
     }
 
     /**
@@ -98,7 +98,7 @@ public class ModuleEventsTests {
         List<EventImpl> eventsInRequest = TestUtils.readEventsFromRequest();
         validateEvent(eventsInRequest.get(0), "test-joinEvents-1", null, 5, null, null);
         validateEvent(eventsInRequest.get(1), "test-joinEvents-2", null, 1, null, null);
-        validateEvent(eventsInRequest.get(2), eKeys[0], null, 1, 45.9, 32.0);
+        validateEvent(eventsInRequest.get(2), eKeys[0], null, 1, 45.9, 32.0, "_CLY_", null, "", null);
     }
 
     /**
@@ -168,7 +168,7 @@ public class ModuleEventsTests {
         //record event with key segmentation
         Countly.instance().events().recordEvent(eKeys[0], segmentation);
 
-        TestUtils.validateEventInEQ(eKeys[0], expectedSegmentation, 1, null, null, 0, 1);
+        TestUtils.validateEventInEQ(eKeys[0], expectedSegmentation, 1, null, null, 0, 1, "_CLY_", null, "", null);
     }
 
     /**
@@ -191,7 +191,7 @@ public class ModuleEventsTests {
         endEvent(eKeys[0], null, 1, null);
 
         Assert.assertEquals(0, moduleEvents.timedEvents.size());
-        TestUtils.validateEventInEQ(eKeys[0], null, 1, null, 0.0, 0, 1);
+        TestUtils.validateEventInEQ(eKeys[0], null, 1, null, 0.0, 0, 1, "_CLY_", null, "", null);
     }
 
     /**
@@ -248,7 +248,7 @@ public class ModuleEventsTests {
         endEvent(eKeys[0], null, 1, null);
 
         Assert.assertEquals(0, moduleEvents.timedEvents.size());
-        TestUtils.validateEventInEQ(eKeys[0], null, 1, null, 0.0, 0, 1);
+        TestUtils.validateEventInEQ(eKeys[0], null, 1, null, 0.0, 0, 1, "_CLY_", null, "", null);
     }
 
     /**
@@ -318,7 +318,7 @@ public class ModuleEventsTests {
         endEvent(eKeys[0], segmentation, 1, 5.0);
 
         Assert.assertEquals(0, moduleEvents.timedEvents.size());
-        TestUtils.validateEventInEQ(eKeys[0], segmentation, 1, 5.0, 0.0, 0, 1);
+        TestUtils.validateEventInEQ(eKeys[0], segmentation, 1, 5.0, 0.0, 0, 1, "_CLY_", null, "", null);
     }
 
     /**
@@ -414,7 +414,9 @@ public class ModuleEventsTests {
 
     @Test
     public void timedEventFlow() throws InterruptedException {
-        init(TestUtils.getConfigEvents(4));
+        InternalConfig config = new InternalConfig(TestUtils.getConfigEvents(4));
+        config.eventIdGenerator = TestUtils.idGenerator();
+        init(config);
         validateTimedEventSize(0, 0);
 
         startEvent(eKeys[0]); // start event to end it
@@ -428,12 +430,12 @@ public class ModuleEventsTests {
         endEvent(eKeys[1], null, 3, 15.0);
 
         Assert.assertEquals(1, moduleEvents.timedEvents.size());
-        TestUtils.validateEventInEQ(eKeys[1], null, 3, 15.0, 1.0, 0, 1);
+        TestUtils.validateEventInEQ(eKeys[1], null, 3, 15.0, 1.0, 0, 1, TestUtils.keysValues[0], null, "", null);
 
         endEvent(eKeys[0], null, 2, 4.0);
 
         Assert.assertEquals(0, moduleEvents.timedEvents.size());
-        TestUtils.validateEventInEQ(eKeys[0], null, 2, 4.0, 2.0, 1, 2);
+        TestUtils.validateEventInEQ(eKeys[0], null, 2, 4.0, 2.0, 1, 2, TestUtils.keysValues[1], null, "", TestUtils.keysValues[0]);
     }
 
     private void validateTimedEventSize(int expectedQueueSize, int expectedTimedEventSize) {

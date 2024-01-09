@@ -590,10 +590,10 @@ public class ModuleFeedbackTests {
     }
 
     void feedbackValidateManualResultEQ(String eventKey, String widgetID, Map<String, Object> feedbackWidgetResult, int eqIndex) {
-        validateEvent(TestUtils.getCurrentEQ().get(eqIndex), eventKey, requiredWidgetSegmentation(widgetID, feedbackWidgetResult), 1, null, null);
+        validateEvent(TestUtils.getCurrentEQ().get(eqIndex), eventKey, requiredWidgetSegmentation(widgetID, feedbackWidgetResult), 1, null, null, "_CLY_", null, "", null);
     }
 
     void feedbackValidateManualResultRQ(String eventKey, String widgetID, Map<String, Object> feedbackWidgetResult, int eqIndex) {
-        validateEvent(TestUtils.readEventsFromRequest().get(eqIndex), eventKey, requiredWidgetSegmentation(widgetID, feedbackWidgetResult), 1, null, null);
+        validateEvent(TestUtils.readEventsFromRequest().get(eqIndex), eventKey, requiredWidgetSegmentation(widgetID, feedbackWidgetResult), 1, null, null, "_CLY_", null, "", null);
     }
 }
