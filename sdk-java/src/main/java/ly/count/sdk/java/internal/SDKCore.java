@@ -447,11 +447,11 @@ public class SDKCore {
         if (config.viewIdProvider == null) {
             config.viewIdProvider = new ViewIdProvider() {
                 @Nonnull public String getCurrentViewId() {
-                    return null;
+                    return "";
                 }
 
                 @Nonnull public String getPreviousViewId() {
-                    return null;
+                    return "";
                 }
             };
         }
@@ -755,12 +755,13 @@ public class SDKCore {
     }
 
     public ModuleViews.Views views() {
-        if (!hasConsentForFeature(CoreFeature.Views)) {
+        ModuleViews module = module(ModuleViews.class);
+        if (module == null) {
             L.v("[SDKCore] views, Views feature has no consent, returning null");
             return null;
         }
 
-        return module(ModuleViews.class).viewsInterface;
+        return module.viewsInterface;
     }
 
     public ModuleDeviceIdCore.DeviceId deviceId() {

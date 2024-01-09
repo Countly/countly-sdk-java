@@ -34,7 +34,7 @@ class ViewImpl implements View {
         }
 
         start = true;
-        Countly.instance().views().startView(name);
+        Countly.instance().views().startAutoStoppedView(name);
     }
 
     @Override
