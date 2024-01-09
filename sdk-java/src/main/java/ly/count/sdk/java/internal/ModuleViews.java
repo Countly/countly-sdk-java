@@ -344,7 +344,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
          * @param viewName String - name of the view
          * @return Returns View ID
          */
-        public String startAutoStoppedView(@Nullable String viewName) {
+        public String startAutoStoppedView(@Nonnull String viewName) {
             synchronized (Countly.instance()) {
                 return startAutoStoppedView(viewName, null);
             }
@@ -360,7 +360,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
          * @param viewSegmentation Map<String, Object> - segmentation that will be added to the view, set 'null' if none should be added
          * @return String - view ID
          */
-        public String startAutoStoppedView(@Nullable String viewName, @Nullable Map<String, Object> viewSegmentation) {
+        public String startAutoStoppedView(@Nonnull String viewName, @Nullable Map<String, Object> viewSegmentation) {
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling startAutoStoppedView [" + viewName + "] sg[" + viewSegmentation + "]");
                 return startViewInternal(viewName, viewSegmentation, true);
@@ -373,7 +373,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
          * @param viewName - String
          * @return String - View ID
          */
-        public @Nullable String startView(@Nullable String viewName) {
+        public @Nullable String startView(@Nonnull String viewName) {
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling startView vn[" + viewName + "]");
                 return startViewInternal(viewName, null, false);
@@ -387,7 +387,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
          * @param viewSegmentation Map<String, Object> - segmentation that will be added to the view, set 'null' if none should be added
          * @return String - View ID
          */
-        public @Nullable String startView(@Nullable String viewName, @Nullable Map<String, Object> viewSegmentation) {
+        public @Nullable String startView(@Nonnull String viewName, @Nullable Map<String, Object> viewSegmentation) {
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling startView vn[" + viewName + "] sg[" + viewSegmentation + "]");
                 return startViewInternal(viewName, viewSegmentation, false);
@@ -399,7 +399,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
          *
          * @param viewName String - view name
          */
-        public void stopViewWithName(@Nullable String viewName) {
+        public void stopViewWithName(@Nonnull String viewName) {
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling stopViewWithName vn[" + viewName + "]");
                 stopViewWithNameInternal(viewName, null);
@@ -412,7 +412,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
          * @param viewName String - view name
          * @param viewSegmentation Map<String, Object> - view segmentation
          */
-        public void stopViewWithName(@Nullable String viewName, @Nullable Map<String, Object> viewSegmentation) {
+        public void stopViewWithName(@Nonnull String viewName, @Nullable Map<String, Object> viewSegmentation) {
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling stopViewWithName vn[" + viewName + "] sg[" + viewSegmentation + "]");
                 stopViewWithNameInternal(viewName, viewSegmentation);
@@ -424,7 +424,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
          *
          * @param viewID String - view ID
          */
-        public void stopViewWithID(@Nullable String viewID) {
+        public void stopViewWithID(@Nonnull String viewID) {
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling stopViewWithID vi[" + viewID + "]");
                 stopViewWithIDInternal(viewID, null);
@@ -437,7 +437,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
          * @param viewID String - view ID
          * @param viewSegmentation Map<String, Object> - view segmentation
          */
-        public void stopViewWithID(@Nullable String viewID, @Nullable Map<String, Object> viewSegmentation) {
+        public void stopViewWithID(@Nonnull String viewID, @Nullable Map<String, Object> viewSegmentation) {
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling stopViewWithName vi[" + viewID + "] sg[" + viewSegmentation + "]");
                 stopViewWithIDInternal(viewID, viewSegmentation);
@@ -449,7 +449,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
          *
          * @param viewID String - view ID
          */
-        public void pauseViewWithID(@Nullable String viewID) {
+        public void pauseViewWithID(@Nonnull String viewID) {
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling pauseViewWithID vi[" + viewID + "]");
                 pauseViewWithIDInternal(viewID);
@@ -461,7 +461,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
          *
          * @param viewID String - view ID
          */
-        public void resumeViewWithID(@Nullable String viewID) {
+        public void resumeViewWithID(@Nonnull String viewID) {
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling resumeViewWithID vi[" + viewID + "]");
                 resumeViewWithIDInternal(viewID);
@@ -486,7 +486,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
          * @param viewName String
          * @param viewSegmentation Map<String, Object>
          */
-        public void addSegmentationToViewWithName(@Nullable String viewName, @Nullable Map<String, Object> viewSegmentation) {
+        public void addSegmentationToViewWithName(@Nonnull String viewName, @Nullable Map<String, Object> viewSegmentation) {
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling addSegmentationToViewWithName vn[" + viewName + "] sg[" + viewSegmentation + "]");
                 addSegmentationToViewWithNameInternal(viewName, viewSegmentation);
@@ -499,7 +499,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
          * @param viewId String
          * @param viewSegmentation Map<String, Object>
          */
-        public void addSegmentationToViewWithID(@Nullable String viewId, @Nullable Map<String, Object> viewSegmentation) {
+        public void addSegmentationToViewWithID(@Nonnull String viewId, @Nullable Map<String, Object> viewSegmentation) {
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling addSegmentationToViewWithID vi[" + viewId + "] sg[" + viewSegmentation + "]");
                 addSegmentationToViewWithIDInternal(viewId, viewSegmentation);
