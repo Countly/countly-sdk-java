@@ -58,7 +58,6 @@ public class InternalConfig extends Config {
             if (priva.contains(r)) {
                 continue;
             }
-
             for (Field l : local) {
                 if (r.getName().equals(l.getName())) {
                     try {
