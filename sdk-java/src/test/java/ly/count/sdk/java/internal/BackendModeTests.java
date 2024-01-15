@@ -75,7 +75,6 @@ public class BackendModeTests {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
         Map<String, Object> segmentation = new ConcurrentHashMap<>();
-        segmentation.put("name", "SampleView1");
         segmentation.put("visit", "1");
         segmentation.put("segment", "Windows");
         segmentation.put("start", "1");
@@ -130,8 +129,8 @@ public class BackendModeTests {
 
         /* Invalid Device ID */
         Assert.assertEquals(0L, moduleBackendMode.eventQSize);
-        backendMode.recordView("", "SampleView1", segmentation, 1646640780130L);
-        backendMode.recordView(null, "SampleView1", segmentation, 1646640780130L);
+        backendMode.recordView("", "SampleView3", segmentation, 1646640780130L);
+        backendMode.recordView(null, "SampleView4", segmentation, 1646640780130L);
 
         Assert.assertTrue(moduleBackendMode.eventQueues.isEmpty());
         Assert.assertEquals(0L, moduleBackendMode.eventQSize);
@@ -423,7 +422,7 @@ public class BackendModeTests {
         metrics.put("app-version", "0.1");
 
         Map<String, String> location = new ConcurrentHashMap<>();
-        location.put("ip_address", "0.0.0.0");
+        location.put("ip_address", "IP_ADDR");
         location.put("city", "Lahore");
         location.put("country_code", "PK");
         location.put("location", "31.5204,74.3587");
@@ -438,7 +437,7 @@ public class BackendModeTests {
 
         Assert.assertEquals("Lahore", request.params.get("city"));
         Assert.assertEquals("PK", request.params.get("country_code"));
-        Assert.assertEquals("0.0.0.0", request.params.get("ip_address"));
+        Assert.assertEquals("IP_ADDR", request.params.get("ip_address"));
         Assert.assertEquals("31.5204,74.3587", request.params.get("location"));
 
         Assert.assertEquals("windows", sessionJson.get("os"));

@@ -99,7 +99,7 @@ public final class BackendModePerformanceTests {
             metrics.put("_app_version", "1.3");
 
             Map<String, String> location = DemoUtils.mapS();
-            location.put("ip_address", "0.0.0.0");
+            location.put("ip_address", "IP_ADDR");
             location.put("city", "Lahore");
             location.put("country_code", "PK");
             location.put("location", "31.5204,74.3587");

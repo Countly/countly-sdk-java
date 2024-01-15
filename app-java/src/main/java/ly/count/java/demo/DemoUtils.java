@@ -27,7 +27,7 @@ public final class DemoUtils {
         System.out.printf(message, args);
     }
 
-    static Map<String, Object> map(Object... args) {
+    static Map<String, Object> map(final Object... args) {
         Map<String, Object> map = new ConcurrentHashMap<>();
         for (int i = 0; i < args.length; i += 2) {
             map.put(args[i].toString(), args[i + 1]);
@@ -35,7 +35,7 @@ public final class DemoUtils {
         return map;
     }
 
-    static Map<String, String> mapS(String... args) {
+    static Map<String, String> mapS(final String... args) {
         Map<String, String> map = new ConcurrentHashMap<>();
         for (int i = 0; i < args.length; i += 2) {
             map.put(args[i], args[i + 1]);
