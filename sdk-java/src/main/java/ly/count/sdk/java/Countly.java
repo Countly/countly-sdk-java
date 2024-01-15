@@ -74,7 +74,14 @@ public class Countly implements Usage {
             return;
         }
 
-        InternalConfig internalConfig = new InternalConfig(config);
+        InternalConfig internalConfig;
+
+        if (config instanceof InternalConfig) {
+            internalConfig = (InternalConfig) config;
+        } else {
+            internalConfig = new InternalConfig(config);
+        }
+
         Log L = new Log(internalConfig.loggingLevel, internalConfig.logListener);
         internalConfig.setLogger(L);
 
