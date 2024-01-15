@@ -1,9 +1,9 @@
 package ly.count.java.demo;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
@@ -14,7 +14,7 @@ public class BackendModeExample {
     final static String COUNTLY_SERVER_URL = "https://xxx.server.ly/";
 
     private static void recordUserDetailAndProperties() {
-        Map<String, Object> userDetail = new HashMap<>();
+        Map<String, Object> userDetail = new ConcurrentHashMap<>();
         userDetail.put("name", "Full Name");
         userDetail.put("username", "username1");
         userDetail.put("email", "user@gmail.com");
@@ -32,7 +32,7 @@ public class BackendModeExample {
     }
 
     private static void recordView() {
-        Map<String, Object> segmentation = new HashMap<>();
+        Map<String, Object> segmentation = new ConcurrentHashMap<>();
         segmentation.put("visit", "1");
         segmentation.put("segment", "Windows");
         segmentation.put("start", "1");
@@ -41,23 +41,20 @@ public class BackendModeExample {
     }
 
     private static void recordEvent() {
-        Map<String, Object> segment = new HashMap<String, Object>() {{
-            put("Time Spent", 60);
-            put("Retry Attempts", 60);
-        }};
-
+        Map<String, Object> segment = new ConcurrentHashMap<>();
+        segment.put("Time Spent", 60);
+        segment.put("Retry Attempts", 60);
         Countly.instance().backendM().recordEvent(DEVICE_ID, "Event Key", 1, 0.1, 5.0, segment, null);
     }
 
     private static void recordExceptionWithThrowableAndSegmentation() {
-        Map<String, Object> segmentation = new HashMap<String, Object>() {{
-            put("login page", "authenticate request");
-        }};
-        Map<String, String> crashDetails = new HashMap<String, String>() {{
-            put("_os", "Windows 11");
-            put("_os_version", "11.202");
-            put("_logs", "main page");
-        }};
+        Map<String, Object> segmentation = new ConcurrentHashMap<>();
+        segmentation.put("logout page", "authenticate request");
+
+        Map<String, String> crashDetails = new ConcurrentHashMap<>();
+        crashDetails.put("_os", "Windows 10");
+        crashDetails.put("_os_version", "10.202");
+        crashDetails.put("_logs", "logout page");
         try {
             int a = 10 / 0;
         } catch (Exception e) {
@@ -66,15 +63,13 @@ public class BackendModeExample {
     }
 
     private static void recordExceptionWithMessageAndSegmentation() {
-        Map<String, Object> segmentation = new HashMap<String, Object>() {{
-            put("login page", "authenticate request");
-        }};
+        Map<String, Object> segmentation = new ConcurrentHashMap<>();
+        segmentation.put("login page", "authenticate request");
 
-        Map<String, String> crashDetails = new HashMap<String, String>() {{
-            put("_os", "Windows 11");
-            put("_os_version", "11.202");
-            put("_logs", "main page");
-        }};
+        Map<String, String> crashDetails = new ConcurrentHashMap<>();
+        crashDetails.put("_os", "Windows 11");
+        crashDetails.put("_os_version", "11.202");
+        crashDetails.put("_logs", "main page");
         try {
             int a = 10 / 0;
         } catch (Exception e) {
@@ -83,7 +78,7 @@ public class BackendModeExample {
     }
 
     private static void recordDirectRequest() {
-        Map<String, String> requestData = new HashMap<>();
+        Map<String, String> requestData = new ConcurrentHashMap<>();
         requestData.put("device_id", "id");
         requestData.put("timestamp", "1646640780130");
         requestData.put("end_session", "1");
@@ -92,18 +87,16 @@ public class BackendModeExample {
     }
 
     private static void startSession() {
-        Map<String, String> metrics = new HashMap<String, String>() {{
-            put("_os", "Android");
-            put("_os_version", "10");
-            put("_app_version", "1.2");
-        }};
+        Map<String, String> metrics = new ConcurrentHashMap<>();
+        metrics.put("_os", "Android");
+        metrics.put("_os_version", "10");
+        metrics.put("_app_version", "1.2");
 
-        Map<String, String> location = new HashMap<String, String>() {{
-            put("ip_address", "192.168.1.1");
-            put("city", "Lahore");
-            put("country_code", "PK");
-            put("location", "31.5204,74.3587");
-        }};
+        Map<String, String> location = new ConcurrentHashMap<>();
+        location.put("ip_address", "192.168.1.1");
+        location.put("city", "Lahore");
+        location.put("country_code", "PK");
+        location.put("location", "31.5204,74.3587");
 
         Countly.instance().backendM().sessionBegin(DEVICE_ID, metrics, location, null);
     }

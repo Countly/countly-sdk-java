@@ -1,8 +1,8 @@
 package ly.count.sdk.java.internal;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 
@@ -44,7 +44,7 @@ public class ModuleDeviceIdCore extends ModuleBase {
         }
     }
 
-    private static final Map<Integer, DeviceIdGenerator> generators = new HashMap<>();
+    private static final Map<Integer, DeviceIdGenerator> generators = new ConcurrentHashMap<>();
 
     protected DeviceId deviceIdInterface;
 

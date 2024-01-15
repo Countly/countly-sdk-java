@@ -1,7 +1,7 @@
 package ly.count.sdk.java.internal;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public enum CoreFeature {
     Events(1 << 1, ModuleEvents::new),
@@ -47,21 +47,23 @@ public enum CoreFeature {
         return index;
     }
 
-    private static final Map<Integer, CoreFeature> featureMap = new HashMap<Integer, CoreFeature>() {{
-        put(Sessions.index, Sessions);
-        put(Events.index, Events);
-        put(Views.index, Views);
-        put(CrashReporting.index, CrashReporting);
-        put(Location.index, Location);
-        put(UserProfiles.index, UserProfiles);
-        put(BackendMode.index, BackendMode);
-        put(RemoteConfig.index, RemoteConfig);
-        put(TestDummy.index, TestDummy);
-        put(DeviceId.index, DeviceId);
-        put(Requests.index, Requests);
-        put(Logs.index, Logs);
-        put(Feedback.index, Feedback);
-    }};
+    private static final Map<Integer, CoreFeature> featureMap = new ConcurrentHashMap<>();
+
+    static void prepareModuleIndices() {
+        featureMap.put(Sessions.index, Sessions);
+        featureMap.put(Events.index, Events);
+        featureMap.put(Views.index, Views);
+        featureMap.put(CrashReporting.index, CrashReporting);
+        featureMap.put(Location.index, Location);
+        featureMap.put(UserProfiles.index, UserProfiles);
+        featureMap.put(BackendMode.index, BackendMode);
+        featureMap.put(RemoteConfig.index, RemoteConfig);
+        featureMap.put(TestDummy.index, TestDummy);
+        featureMap.put(DeviceId.index, DeviceId);
+        featureMap.put(Requests.index, Requests);
+        featureMap.put(Logs.index, Logs);
+        featureMap.put(Feedback.index, Feedback);
+    }
 
     static CoreFeature byIndex(int index) {
         return featureMap.get(index);

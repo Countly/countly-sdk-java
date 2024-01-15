@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import org.json.JSONArray;
@@ -73,12 +74,11 @@ public class BackendModeTests {
     public void testMethodRecordView() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
-        Map<String, Object> segmentation = new HashMap<String, Object>() {{
-            put("name", "SampleView");
-            put("visit", "1");
-            put("segment", "Windows");
-            put("start", "1");
-        }};
+        Map<String, Object> segmentation = new ConcurrentHashMap<>();
+        segmentation.put("name", "SampleView");
+        segmentation.put("visit", "1");
+        segmentation.put("segment", "Windows");
+        segmentation.put("start", "1");
 
         Assert.assertEquals(0L, moduleBackendMode.eventQSize);
         backendMode.recordView("device-id-1", "SampleView", segmentation, 1646640780130L);
@@ -122,12 +122,11 @@ public class BackendModeTests {
     public void testMethodRecordViewWithInvalidData() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
-        Map<String, Object> segmentation = new HashMap<String, Object>() {{
-            put("name", "SampleView");
-            put("visit", "1");
-            put("segment", "Windows");
-            put("start", "1");
-        }};
+        Map<String, Object> segmentation = new ConcurrentHashMap<>();
+        segmentation.put("name", "SampleView");
+        segmentation.put("visit", "1");
+        segmentation.put("segment", "Windows");
+        segmentation.put("start", "1");
 
         /* Invalid Device ID */
         Assert.assertEquals(0L, moduleBackendMode.eventQSize);
@@ -154,7 +153,7 @@ public class BackendModeTests {
     public void testMethodRecordEventWithSingleDeviceID() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
-        Map<String, Object> segmentation = new HashMap<>();
+        Map<String, Object> segmentation = new ConcurrentHashMap<>();
         segmentation.put("key1", "value1");
         segmentation.put("key2", "value2");
 
@@ -185,7 +184,7 @@ public class BackendModeTests {
     public void testMethodRecordEventWithInvalidData() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
-        Map<String, Object> segmentation = new HashMap<>();
+        Map<String, Object> segmentation = new ConcurrentHashMap<>();
         segmentation.put("key1", "value1");
         segmentation.put("key2", "value2");
 
@@ -216,11 +215,11 @@ public class BackendModeTests {
     public void testMethodRecordEventWithMultipleDeviceID() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
-        Map<String, Object> segmentation = new HashMap<>();
+        Map<String, Object> segmentation = new ConcurrentHashMap<>();
         segmentation.put("key1", "value1");
         segmentation.put("key2", "value2");
 
-        Map<String, Object> segmentation1 = new HashMap<>();
+        Map<String, Object> segmentation1 = new ConcurrentHashMap<>();
         segmentation1.put("key3", "value3");
         segmentation1.put("key4", "value4");
 
@@ -282,11 +281,11 @@ public class BackendModeTests {
     public void TestEventThreshHoldWithSingleAndMultiple() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
-        Map<String, Object> segmentation = new HashMap<>();
+        Map<String, Object> segmentation = new ConcurrentHashMap<>();
         segmentation.put("key1", "value1");
         segmentation.put("key2", "value2");
 
-        Map<String, Object> segmentation1 = new HashMap<>();
+        Map<String, Object> segmentation1 = new ConcurrentHashMap<>();
         segmentation1.put("key3", "value3");
         segmentation1.put("key4", "value4");
 
@@ -342,11 +341,11 @@ public class BackendModeTests {
     public void testFunctionalityAddEventsIntoRequestQueueOnSessionUpdate() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
-        Map<String, Object> segmentation = new HashMap<>();
+        Map<String, Object> segmentation = new ConcurrentHashMap<>();
         segmentation.put("key1", "value1");
         segmentation.put("key2", "value2");
 
-        Map<String, Object> segmentation1 = new HashMap<>();
+        Map<String, Object> segmentation1 = new ConcurrentHashMap<>();
         segmentation1.put("key3", "value3");
         segmentation1.put("key4", "value4");
 
@@ -378,11 +377,11 @@ public class BackendModeTests {
     public void testFunctionalityAddEventsIntoRequestQueueOnSessionEnd() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
-        Map<String, Object> segmentation = new HashMap<>();
+        Map<String, Object> segmentation = new ConcurrentHashMap<>();
         segmentation.put("key1", "value1");
         segmentation.put("key2", "value2");
 
-        Map<String, Object> segmentation1 = new HashMap<>();
+        Map<String, Object> segmentation1 = new ConcurrentHashMap<>();
         segmentation1.put("key3", "value3");
         segmentation1.put("key4", "value4");
 
@@ -419,16 +418,15 @@ public class BackendModeTests {
     @Test
     public void testMethodSessionBegin() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
-        Map<String, String> metrics = new HashMap<>();
+        Map<String, String> metrics = new ConcurrentHashMap<>();
         metrics.put("os", "windows");
         metrics.put("app-version", "0.1");
 
-        Map<String, String> location = new HashMap<String, String>() {{
-            put("ip_address", "192.168.1.1");
-            put("city", "Lahore");
-            put("country_code", "PK");
-            put("location", "31.5204,74.3587");
-        }};
+        Map<String, String> location = new ConcurrentHashMap<>();
+        location.put("ip_address", "192.168.1.1");
+        location.put("city", "Lahore");
+        location.put("country_code", "PK");
+        location.put("location", "31.5204,74.3587");
 
         backendMode.sessionBegin("device-id-1", metrics, location, 1646640780130L);
 
@@ -455,7 +453,7 @@ public class BackendModeTests {
     @Test
     public void testMethodSessionBeginWithInvalidData() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
-        Map<String, String> metrics = new HashMap<>();
+        Map<String, String> metrics = new ConcurrentHashMap<>();
         metrics.put("os", "windows");
         metrics.put("app-version", "0.1");
 
@@ -526,16 +524,13 @@ public class BackendModeTests {
     @Test
     public void testMethodRecordException() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
-        Map<String, Object> segmentation = new HashMap<String, Object>() {{
-            put("key1", "value1");
-        }};
+        Map<String, Object> segmentation = new ConcurrentHashMap<>();
+        segmentation.put("key1", "value1");
 
-        Map<String, String> crashDetails = new HashMap<String, String>() {{
-            put("_error", "Custom Error");
-            put("_logs", "Logs");
-            put("_os", "Operating System");
-        }};
-
+        Map<String, String> crashDetails = new ConcurrentHashMap<>();
+        crashDetails.put("_error", "Custom Error");
+        crashDetails.put("_logs", "Logs");
+        crashDetails.put("_os", "Operating System");
         try {
             int a = 10 / 0;
         } catch (Exception e) {
@@ -583,9 +578,8 @@ public class BackendModeTests {
     @Test
     public void testMethodRecordExceptionWithInvalidData() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
-        Map<String, Object> segmentation = new HashMap<String, Object>() {{
-            put("key1", "value1");
-        }};
+        Map<String, Object> segmentation = new ConcurrentHashMap<>();
+        segmentation.put("key1", "value1");
 
         backendMode.recordException("", null, segmentation, null, 1646640780130L);
         Assert.assertTrue(SDKCore.instance.requestQueueMemory.isEmpty());
@@ -841,7 +835,7 @@ public class BackendModeTests {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
         // Direct request with timestamp and device id
-        Map<String, String> requestData = new HashMap<>();
+        Map<String, String> requestData = new ConcurrentHashMap<>();
         requestData.put("data1", "value1");
         requestData.put("device_id", "device-id-1");
         requestData.put("timestamp", "1647938191782");
@@ -862,7 +856,7 @@ public class BackendModeTests {
         validateRequestTimeFields("device-id-2", 1647938191782L, request);
 
         // Direct request without timestamp and device id
-        requestData = new HashMap<>();
+        requestData = new ConcurrentHashMap<>();
         requestData.put("data2", "value2");
         requestData.put("data4", "value4");
 
@@ -880,7 +874,7 @@ public class BackendModeTests {
     }
 
     private Map<String, Object> populateUserProperties(boolean addUserDetail, boolean addCustomDetail, boolean addOperation) {
-        Map<String, Object> userDetail = new HashMap<>();
+        Map<String, Object> userDetail = new ConcurrentHashMap<>();
         if (addUserDetail) {
             userDetail.put("name", "Full Name");
             userDetail.put("username", "username1");

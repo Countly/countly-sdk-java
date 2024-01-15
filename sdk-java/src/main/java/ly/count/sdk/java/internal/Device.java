@@ -1,15 +1,15 @@
 package ly.count.sdk.java.internal;
 
 import com.sun.management.OperatingSystemMXBean;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.concurrent.ConcurrentHashMap;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Class encapsulating most of device-specific logic: metrics, info, etc.
@@ -31,7 +31,7 @@ public class Device {
 
     private Log L;
 
-    private final Map<String, String> metricOverride = new HashMap<>();
+    private final Map<String, String> metricOverride = new ConcurrentHashMap<>();
 
     protected Device() {
         dev = this;
