@@ -213,9 +213,7 @@ public class ModuleUserProfile extends ModuleBase {
         Params params = new Params();
         final JSONObject json = new JSONObject();
         perform(json, params);
-        if (!json.isEmpty()) {
-            params.add("user_details", json.toString());
-        }
+        params.add("user_details", json.toString());
 
         return params;
     }

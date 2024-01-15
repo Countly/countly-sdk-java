@@ -57,9 +57,9 @@ public class Example {
         Countly.instance().userProfile().setProperty(PredefinedUserPropertyKeys.EMAIL, "test@test.com");
         Countly.instance().userProfile().setProperty(PredefinedUserPropertyKeys.ORGANIZATION, "Tester");
         Countly.instance().userProfile().setProperty(PredefinedUserPropertyKeys.PHONE, "+123456789");
-        Countly.instance().userProfile().setProperty(PredefinedUserPropertyKeys.PICTURE, new byte[] { 1, 2, 3, 4, 5 });
+        //Countly.instance().userProfile().setProperty(PredefinedUserPropertyKeys.PICTURE, new byte[] { 1, 2, 3, 4, 5 });
         //Countly.instance().userProfile().setProperty(UserPropertyKeys.PICTURE_PATH, "test.png"); to provide local path
-        Countly.instance().userProfile().setProperty(PredefinedUserPropertyKeys.PICTURE_PATH, "https://someurl.com/test.png");
+        Countly.instance().userProfile().setProperty(PredefinedUserPropertyKeys.PICTURE_PATH, "/Users/euxinos/Documents/Images/frog.png");
         Countly.instance().userProfile().save();
     }
 
@@ -186,8 +186,8 @@ public class Example {
 
         Scanner scanner = new Scanner(System.in);
 
-        String COUNTLY_SERVER_URL = "https://xxx.server.ly/";
-        String COUNTLY_APP_KEY = "COUNTLY_APP_KEY";
+        String COUNTLY_SERVER_URL = "https://master.count.ly/";
+        String COUNTLY_APP_KEY = "a2a8861870b31fa2e73e5d1deeb57ac5866cca8d";
 
         Map<String, String> metricOverride = new ConcurrentHashMap<>();
         metricOverride.put("aa", "11");
@@ -211,7 +211,8 @@ public class Example {
             .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
             .enableFeatures(Config.Feature.Events, Config.Feature.Sessions, Config.Feature.CrashReporting, Config.Feature.Views, Config.Feature.UserProfiles, Config.Feature.Location, Config.Feature.Feedback)
             .setRequiresConsent(true)
-            //.enableParameterTamperingProtection("test-salt-checksum")
+            .enableForcedHTTPPost()
+            .enableParameterTamperingProtection("checksum")
             .setLogListener(new LogCallback() {
                 @Override
                 public void LogHappened(String logMessage, Config.LoggingLevel logLevel) {

@@ -2,6 +2,7 @@ package ly.count.sdk.java.internal;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -136,10 +137,6 @@ public class Transport implements X509TrustManager {
         byte[] maybePictureData = getPictureDataFromRequest(request);
         boolean usingGET = !config.isHTTPPostForced() && request.isGettable(config.getServerURL()) && maybePictureData == null;
 
-        if (!usingGET && maybePictureData != null) {
-            path = setProfilePicturePathRequestParams(path, request.params);
-        }
-
         if (usingGET && config.getParameterTamperingProtectionSalt() != null) {
             request.params.add(CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, request.params + config.getParameterTamperingProtectionSalt(), L));
         }
@@ -158,38 +155,42 @@ public class Transport implements X509TrustManager {
             PrintWriter writer = null;
             try {
                 if (maybePictureData != null) {
+                    StringBuilder stringBuilder = new StringBuilder();
                     String boundary = Long.toHexString(System.currentTimeMillis());
 
-                    connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
+                    addMultipart(stringBuilder, boundary, "image/jpeg", "file", "image", maybePictureData);
 
-                    output = connection.getOutputStream();
-                    writer = new PrintWriter(new OutputStreamWriter(output, Utils.UTF8), true);
-
-                    addMultipart(output, writer, boundary, "image/jpeg", "binaryFile", "image", maybePictureData);
-
-                    StringBuilder salting = new StringBuilder();
                     Map<String, String> map = request.params.map();
-                    for (String key : map.keySet()) {
-                        String value = Utils.urldecode(map.get(key));
-                        salting.append(key).append('=').append(value).append('&');
-                        addMultipart(output, writer, boundary, "text/plain", key, value, null);
+                    for (Map.Entry<String, String> kv : map.entrySet()) {
+                        addMultipart(stringBuilder, boundary, "text/plain", kv.getKey(), kv.getValue(), null);
                     }
 
-                    if (config.getParameterTamperingProtectionSalt() != null) {
-                        addMultipart(output, writer, boundary, "text/plain", CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, salting.substring(0, salting.length() - 1) + config.getParameterTamperingProtectionSalt(), L), null);
-                    }
+                    stringBuilder.append("--").append(boundary).append("--").append(Utils.CRLF);
+                    System.out.println(stringBuilder);
 
-                    writer.append(Utils.CRLF).append("--").append(boundary).append("--").append(Utils.CRLF).flush();
+                    connection = openConnection(path + "checksum256=" + Utils.digestHex(PARAMETER_TAMPERING_DIGEST, stringBuilder + config.getParameterTamperingProtectionSalt(), L), request.params.toString(), usingGET);
+                    connection.setConnectTimeout(1000 * config.getNetworkConnectionTimeout());
+                    connection.setReadTimeout(1000 * config.getNetworkReadTimeout());
+
+                    if (connection instanceof HttpsURLConnection && sslContext != null) {
+                        HttpsURLConnection https = (HttpsURLConnection) connection;
+                        https.setSSLSocketFactory(sslContext.getSocketFactory());
+                    }
+                    connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
+                    output = connection.getOutputStream();
+                    writer = new PrintWriter(new OutputStreamWriter(output, StandardCharsets.UTF_8), true);
+
+                    writer.append(stringBuilder.toString()).flush();
                 } else {
                     //picture data is "null". If it was sent, we send "null" to server to clear the image there
                     //we send a normal request in HTTP POST
                     if (config.getParameterTamperingProtectionSalt() != null) {
-                        request.params.add(CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, request.params.toString() + config.getParameterTamperingProtectionSalt(), L));
+                        request.params.add(CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, request.params + config.getParameterTamperingProtectionSalt(), L));
                     }
                     connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 
                     output = connection.getOutputStream();
-                    writer = new PrintWriter(new OutputStreamWriter(output, Utils.UTF8), true);
+                    writer = new PrintWriter(new OutputStreamWriter(output, StandardCharsets.UTF_8), true);
 
                     writer.write(request.params.toString());
                     writer.flush();
@@ -213,20 +214,19 @@ public class Transport implements X509TrustManager {
         return connection;
     }
 
-    void addMultipart(OutputStream output, PrintWriter writer, String boundary, String contentType, String name, String value, Object file) throws IOException {
-        writer.append("--").append(boundary).append(Utils.CRLF);
+    void addMultipart(StringBuilder stringBuilder, String boundary, String contentType, String name, String value, byte[] file) throws IOException {
+        stringBuilder.append("--").append(boundary).append(Utils.CRLF);
         if (file != null) {
-            writer.append("Content-Disposition: form-data; name=\"").append(name).append("\"; filename=\"").append(value).append("\"").append(Utils.CRLF);
-            writer.append("Content-Type: ").append(contentType).append(Utils.CRLF);
-            writer.append("Content-Transfer-Encoding: binary").append(Utils.CRLF);
-            writer.append(Utils.CRLF).flush();
-            output.write((byte[]) file);
-            output.flush();
-            writer.append(Utils.CRLF).flush();
+            stringBuilder.append("Content-Disposition: form-data; name=\"").append(name).append("\"; filename=\"").append(value).append("\"").append(Utils.CRLF);
+            stringBuilder.append("Content-Type: ").append(contentType).append(Utils.CRLF);
+            stringBuilder.append(Utils.CRLF);
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(file.length);
+            byteArrayOutputStream.write(file);
+            stringBuilder.append(byteArrayOutputStream.toString());
+            stringBuilder.append(Utils.CRLF);
         } else {
-            writer.append("Content-Disposition: form-data; name=\"").append(name).append("\"").append(Utils.CRLF);
-            writer.append("Content-Type: ").append(contentType).append("; charset=").append(Utils.UTF8).append(Utils.CRLF);
-            writer.append(Utils.CRLF).append(value).append(Utils.CRLF).flush();
+            stringBuilder.append("Content-Disposition: form-data; name=\"").append(name).append("\"").append(Utils.CRLF);
+            stringBuilder.append(Utils.CRLF).append(value).append(Utils.CRLF);
         }
     }
 
