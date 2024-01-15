@@ -3,7 +3,6 @@ package ly.count.java.demo;
 import java.io.File;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.concurrent.ConcurrentHashMap;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.internal.Device;
@@ -50,7 +49,7 @@ public final class BackendModePerformanceTests {
         DemoUtils.printf("Adding %d requests(events) into request Queue%n", batchSize);
         for (int i = 1; i < batchSize; ++i) {
 
-            Map<String, Object> segment = new ConcurrentHashMap<>();
+            Map<String, Object> segment = DemoUtils.map();
             segment.put("Time Spent", 60);
             segment.put("Retry Attempts", 60);
 
@@ -60,10 +59,10 @@ public final class BackendModePerformanceTests {
         DemoUtils.printf("Adding %d requests(crash) into request Queue%n", batchSize);
         for (int i = 1; i < batchSize; ++i) {
 
-            Map<String, Object> segmentation = new ConcurrentHashMap<>();
+            Map<String, Object> segmentation = DemoUtils.map();
             segmentation.put("signup page", "authenticate request");
 
-            Map<String, String> crashDetails = new ConcurrentHashMap<>();
+            Map<String, String> crashDetails = DemoUtils.mapS();
             crashDetails.put("_os", "Windows 8");
             crashDetails.put("_os_version", "8.202");
             crashDetails.put("_logs", "main page");
@@ -75,7 +74,7 @@ public final class BackendModePerformanceTests {
         for (int i = 1; i < batchSize; ++i) {
 
             // User detail
-            Map<String, Object> userDetail = new ConcurrentHashMap<>();
+            Map<String, Object> userDetail = DemoUtils.map();
             userDetail.put("name", "Full Name");
             userDetail.put("username", "username1");
             userDetail.put("email", "user@gmail.com");
@@ -94,13 +93,13 @@ public final class BackendModePerformanceTests {
 
         DemoUtils.printf("Adding %d requests(sessions) into request Queue%n", batchSize);
         for (int i = 1; i < batchSize; ++i) {
-            Map<String, String> metrics = new ConcurrentHashMap<>();
+            Map<String, String> metrics = DemoUtils.mapS();
             metrics.put("_os", "MacOs");
             metrics.put("_os_version", "13");
             metrics.put("_app_version", "1.3");
 
-            Map<String, String> location = new ConcurrentHashMap<>();
-            location.put("ip_address", "192.168.1.1");
+            Map<String, String> location = DemoUtils.mapS();
+            location.put("ip_address", "0.0.0.0");
             location.put("city", "Lahore");
             location.put("country_code", "PK");
             location.put("location", "31.5204,74.3587");
@@ -124,7 +123,7 @@ public final class BackendModePerformanceTests {
             DemoUtils.printf("Adding %d events into event Queue against deviceID = %s%n", 1_000_00, "device-id-" + d);
             for (int i = 1; i <= noOfEvents; ++i) {
 
-                Map<String, Object> segment = new ConcurrentHashMap<>();
+                Map<String, Object> segment = DemoUtils.map();
                 segment.put("Time Spent", 60);
                 segment.put("Retry Attempts", 60);
 
@@ -151,7 +150,7 @@ public final class BackendModePerformanceTests {
                 Thread.sleep(secondsToSleep * 1000);
             } else {
                 if (remaining > 0) {
-                    Map<String, Object> segment = new ConcurrentHashMap<>();
+                    Map<String, Object> segment = DemoUtils.map();
                     segment.put("Time Spent", 60);
                     segment.put("Retry Attempts", 60);
 

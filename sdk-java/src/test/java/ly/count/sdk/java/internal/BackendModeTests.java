@@ -75,13 +75,13 @@ public class BackendModeTests {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
         Map<String, Object> segmentation = new ConcurrentHashMap<>();
-        segmentation.put("name", "SampleView");
+        segmentation.put("name", "SampleView1");
         segmentation.put("visit", "1");
         segmentation.put("segment", "Windows");
         segmentation.put("start", "1");
 
         Assert.assertEquals(0L, moduleBackendMode.eventQSize);
-        backendMode.recordView("device-id-1", "SampleView", segmentation, 1646640780130L);
+        backendMode.recordView("device-id-1", "SampleView1", segmentation, 1646640780130L);
 
         JSONArray events = moduleBackendMode.eventQueues.get("device-id-1");
         Assert.assertEquals(1L, events.length());
@@ -96,7 +96,7 @@ public class BackendModeTests {
         validateEventFields("[CLY]_view", 1, null, null, 1, expectedHour, expectedTimestamp, event);
 
         JSONObject segments = event.getJSONObject("segmentation");
-        Assert.assertEquals("SampleView", segments.get("name"));
+        Assert.assertEquals("SampleView1", segments.get("name"));
         Assert.assertEquals("1", segments.get("visit"));
         Assert.assertEquals("Windows", segments.get("segment"));
         Assert.assertEquals("1", segments.get("start"));
@@ -123,7 +123,7 @@ public class BackendModeTests {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
         Map<String, Object> segmentation = new ConcurrentHashMap<>();
-        segmentation.put("name", "SampleView");
+        segmentation.put("name", "SampleView3");
         segmentation.put("visit", "1");
         segmentation.put("segment", "Windows");
         segmentation.put("start", "1");
@@ -423,7 +423,7 @@ public class BackendModeTests {
         metrics.put("app-version", "0.1");
 
         Map<String, String> location = new ConcurrentHashMap<>();
-        location.put("ip_address", "192.168.1.1");
+        location.put("ip_address", "0.0.0.0");
         location.put("city", "Lahore");
         location.put("country_code", "PK");
         location.put("location", "31.5204,74.3587");
@@ -438,7 +438,7 @@ public class BackendModeTests {
 
         Assert.assertEquals("Lahore", request.params.get("city"));
         Assert.assertEquals("PK", request.params.get("country_code"));
-        Assert.assertEquals("192.168.1.1", request.params.get("ip_address"));
+        Assert.assertEquals("0.0.0.0", request.params.get("ip_address"));
         Assert.assertEquals("31.5204,74.3587", request.params.get("location"));
 
         Assert.assertEquals("windows", sessionJson.get("os"));

@@ -29,6 +29,7 @@ public enum CoreFeature {
     private final int index;
 
     private ModuleBaseCreator creator;
+    private static final Map<Integer, CoreFeature> featureMap = new ConcurrentHashMap<>();
 
     CoreFeature(int index) {
         this.index = index;
@@ -46,8 +47,6 @@ public enum CoreFeature {
     public int getIndex() {
         return index;
     }
-
-    private static final Map<Integer, CoreFeature> featureMap = new ConcurrentHashMap<>();
 
     static void prepareModuleIndices() {
         featureMap.put(Sessions.index, Sessions);
