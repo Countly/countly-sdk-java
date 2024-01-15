@@ -379,7 +379,7 @@ public class Config {
         this.unhandledCrashReportingEnabled = false;
         return this;
     }
-
+  
     protected String location = null;
     protected String ip = null;
     protected String city = null;
