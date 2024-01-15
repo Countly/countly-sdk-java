@@ -238,7 +238,6 @@ public class SDKCore {
         }
 
         moduleMappings.clear();
-        CoreFeature.prepareModuleIndices();
         registerDefaultModuleMappings();
 
         for (int feature : config.getModuleOverrides()) {

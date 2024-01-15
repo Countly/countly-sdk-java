@@ -80,7 +80,7 @@ public class BackendModeTests {
         segmentation.put("start", "1");
 
         Assert.assertEquals(0L, moduleBackendMode.eventQSize);
-        backendMode.recordView("device-id-1", "SampleView1", segmentation, 1646640780130L);
+        backendMode.recordView("device-id-1", TestUtils.keysValues[0], segmentation, 1646640780130L);
 
         JSONArray events = moduleBackendMode.eventQueues.get("device-id-1");
         Assert.assertEquals(1L, events.length());
@@ -95,12 +95,12 @@ public class BackendModeTests {
         validateEventFields("[CLY]_view", 1, null, null, 1, expectedHour, expectedTimestamp, event);
 
         JSONObject segments = event.getJSONObject("segmentation");
-        Assert.assertEquals("SampleView1", segments.get("name"));
+        Assert.assertEquals(TestUtils.keysValues[0], segments.get("name"));
         Assert.assertEquals("1", segments.get("visit"));
         Assert.assertEquals("Windows", segments.get("segment"));
         Assert.assertEquals("1", segments.get("start"));
 
-        backendMode.recordView("device-id-2", "SampleView2", null, 1646640780130L);
+        backendMode.recordView("device-id-2", TestUtils.keysValues[1], null, 1646640780130L);
 
         events = moduleBackendMode.eventQueues.get("device-id-2");
         Assert.assertEquals(1L, events.length());
@@ -111,7 +111,7 @@ public class BackendModeTests {
         validateEventFields("[CLY]_view", 1, null, null, 1, expectedHour, expectedTimestamp, event);
 
         segments = event.getJSONObject("segmentation");
-        Assert.assertEquals("SampleView2", segments.get("name"));
+        Assert.assertEquals(TestUtils.keysValues[1], segments.get("name"));
     }
 
     /**
@@ -122,15 +122,15 @@ public class BackendModeTests {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
         Map<String, Object> segmentation = new ConcurrentHashMap<>();
-        segmentation.put("name", "SampleView3");
+        segmentation.put("name", TestUtils.keysValues[0]);
         segmentation.put("visit", "1");
         segmentation.put("segment", "Windows");
         segmentation.put("start", "1");
 
         /* Invalid Device ID */
         Assert.assertEquals(0L, moduleBackendMode.eventQSize);
-        backendMode.recordView("", "SampleView3", segmentation, 1646640780130L);
-        backendMode.recordView(null, "SampleView4", segmentation, 1646640780130L);
+        backendMode.recordView("", TestUtils.keysValues[0], segmentation, 1646640780130L);
+        backendMode.recordView(null, TestUtils.keysValues[1], segmentation, 1646640780130L);
 
         Assert.assertTrue(moduleBackendMode.eventQueues.isEmpty());
         Assert.assertEquals(0L, moduleBackendMode.eventQSize);
