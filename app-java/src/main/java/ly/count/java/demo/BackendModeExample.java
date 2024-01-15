@@ -87,8 +87,16 @@ public class BackendModeExample {
     }
 
     private static void startSession() {
-        Map<String, String> metrics = DemoUtils.mapS("_os", "Windows", "_os_version", "10", "_app_version", "1.2");
-        Map<String, String> location = DemoUtils.mapS("ip_address", "IP_ADDR", "city", "Lahore", "country_code", "PK", "location", "31.5204,74.3587");
+        Map<String, String> metrics = new ConcurrentHashMap<>();
+        metrics.put("_os", "Windows");
+        metrics.put("_os_version", "10");
+        metrics.put("_app_version", "1.2");
+
+        Map<String, String> location = new ConcurrentHashMap<>();
+        location.put("ip_address", "IP_ADDR");
+        location.put("city", "Lahore");
+        location.put("country_code", "PK");
+        location.put("location", "31.5204,74.3587");
 
         Countly.instance().backendM().sessionBegin(DEVICE_ID, metrics, location, null);
     }
