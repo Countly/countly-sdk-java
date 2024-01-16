@@ -56,7 +56,7 @@ public class ModuleUserProfile extends ModuleBase {
             object.put("$max", Math.max(object.optDouble("$max", (Double) value), (Double) value));
             json.put(key, object);
         }),
-        SET_ONCE(((json, key, value) -> json.put(key, json.optJSONObject(key, new JSONObject()).put("$setOnce", value)))),
+        SET_ONCE((json, key, value) -> json.put(key, json.optJSONObject(key, new JSONObject()).put("$setOnce", value))),
         PULL((json, key, value) -> json.put(key, json.optJSONObject(key, new JSONObject()).accumulate("$pull", value))),
         PUSH((json, key, value) -> json.put(key, json.optJSONObject(key, new JSONObject()).accumulate("$push", value))),
         PUSH_UNIQUE((json, key, value) -> json.put(key, json.optJSONObject(key, new JSONObject()).accumulate("$addToSet", value)));

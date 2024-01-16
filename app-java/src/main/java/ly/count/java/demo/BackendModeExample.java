@@ -312,7 +312,7 @@ public class BackendModeExample {
         String[] sdkStorageRootPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };
         File sdkStorageRootDirectory = new File(String.join(File.separator, sdkStorageRootPath));
 
-        if ((!(sdkStorageRootDirectory.exists() && sdkStorageRootDirectory.isDirectory())) && !sdkStorageRootDirectory.mkdirs()) {
+        if (!(sdkStorageRootDirectory.exists() && sdkStorageRootDirectory.isDirectory()) && !sdkStorageRootDirectory.mkdirs()) {
             DemoUtils.println("Directory creation failed");
         }
 

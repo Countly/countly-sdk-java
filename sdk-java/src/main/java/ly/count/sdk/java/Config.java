@@ -138,7 +138,7 @@ public class Config {
                 return false;
             }
             DID did = (DID) obj;
-            return did.strategy == strategy && (Objects.equals(did.id, id));
+            return did.strategy == strategy && Objects.equals(did.id, id);
         }
 
         @Override
@@ -379,7 +379,7 @@ public class Config {
         this.unhandledCrashReportingEnabled = false;
         return this;
     }
-  
+
     protected String location = null;
     protected String ip = null;
     protected String city = null;

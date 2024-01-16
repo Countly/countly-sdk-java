@@ -334,13 +334,12 @@ public class ModuleBackendMode extends ModuleBase {
         for (Map.Entry<String, Object> item : segments.entrySet()) {
             Object type = item.getValue();
 
-            boolean isValidDataType = (type instanceof Boolean
+            boolean isValidDataType = type instanceof Boolean
                 || type instanceof Integer
                 || type instanceof Long
                 || type instanceof String
                 || type instanceof Double
-                || type instanceof Float
-            );
+                || type instanceof Float;
 
             if (!isValidDataType) {
                 toRemove.add(item.getKey());

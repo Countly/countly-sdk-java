@@ -219,13 +219,13 @@ class EventImpl implements Event, JSONable {
         if (count != event.count) {
             return false;
         }
-        if ((sum != null && !sum.equals(event.sum) || (event.sum != null && !event.sum.equals(sum)))) {
+        if (sum != null && !sum.equals(event.sum) || (event.sum != null && !event.sum.equals(sum))) {
             return false;
         }
-        if ((duration != null && !duration.equals(event.duration) || (event.duration != null && !event.duration.equals(duration)))) {
+        if (duration != null && !duration.equals(event.duration) || (event.duration != null && !event.duration.equals(duration))) {
             return false;
         }
-        if ((segmentation != null && !segmentation.equals(event.segmentation) || (event.segmentation != null && !event.segmentation.equals(segmentation)))) {
+        if (segmentation != null && !segmentation.equals(event.segmentation) || (event.segmentation != null && !event.segmentation.equals(segmentation))) {
             return false;
         }
         return true;
