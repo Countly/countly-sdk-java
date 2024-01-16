@@ -209,7 +209,7 @@ public class Transport implements X509TrustManager {
         return connection;
     }
 
-    void addMultipart(OutputStream output, PrintWriter writer, final String boundary, final String contentType, String name, String value, byte[] file) throws IOException {
+    void addMultipart(OutputStream output, PrintWriter writer, final String boundary, final String contentType, final String name, final String value, final byte[] file) throws IOException {
         writer.append("--").append(boundary).append(Utils.CRLF);
         if (file != null) {
             writer.append("Content-Disposition: form-data; name=\"").append(name).append("\"; filename=\"").append(value).append("\"").append(Utils.CRLF);
