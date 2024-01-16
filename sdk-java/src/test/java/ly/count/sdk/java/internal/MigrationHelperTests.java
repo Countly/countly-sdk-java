@@ -72,7 +72,7 @@ public class MigrationHelperTests {
     private void initStorage() {
         InternalConfig config = (new InternalConfig(TestUtils.getBaseConfig()));
         config.setLogger(mock(Log.class));
-        storageProvider = (new SDKStorage()).init(config);
+        storageProvider = new SDKStorage().init(config);
     }
 
     /**

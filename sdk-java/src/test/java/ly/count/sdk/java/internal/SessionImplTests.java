@@ -531,8 +531,8 @@ public class SessionImplTests {
      */
     @Test
     public void equals_differentId() {
-        validateNotEquals(1, ((session, session2) -> ts -> {
-        }));
+        validateNotEquals(1, (session, session2) -> ts -> {
+        });
     }
 
     /**

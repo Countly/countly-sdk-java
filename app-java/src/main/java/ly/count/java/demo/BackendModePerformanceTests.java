@@ -199,13 +199,13 @@ public final class BackendModePerformanceTests {
                     case 2:
                         performLargeEventQueueTest();
                         running = false;
-                        DemoUtils.printf("Time spent: %dms%n", (System.currentTimeMillis() - startTime));
+                        DemoUtils.printf("Time spent: %dms%n", System.currentTimeMillis() - startTime);
                         break;
                     case 3:
                         startTime = System.currentTimeMillis();
                         recordBulkDataAndSendToServer();
                         running = false;
-                        DemoUtils.printf("Time spent: %dms%n", (System.currentTimeMillis() - startTime));
+                        DemoUtils.printf("Time spent: %dms%n", System.currentTimeMillis() - startTime);
                         break;
                     default:
                         break;

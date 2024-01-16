@@ -44,12 +44,12 @@ public class ModuleEvents extends ModuleBase {
 
             // this part is to end and record the current view if exists
             Session session = Countly.session();
-            if ((session != null && session.isActive())) {
+            if (session != null && session.isActive()) {
                 View currentView = ((SessionImpl) session).currentView;
                 if (currentView != null) {
                     currentView.stop(true);
                 } else {
-                    Storage.pushAsync(internalConfig, ((SessionImpl) Countly.session()));
+                    Storage.pushAsync(internalConfig, (SessionImpl) Countly.session());
                 }
             }
 
@@ -126,7 +126,7 @@ public class ModuleEvents extends ModuleBase {
 
     private void checkEventQueueToSend(boolean forceSend) {
         L.d("[ModuleEvents] queue size:[" + eventQueue.eqSize() + "] || forceSend: " + forceSend);
-        if (forceSend || (eventQueue.eqSize() >= internalConfig.getEventsBufferSize())) {
+        if (forceSend || eventQueue.eqSize() >= internalConfig.getEventsBufferSize()) {
             addEventsToRequestQ(null);
         }
     }
