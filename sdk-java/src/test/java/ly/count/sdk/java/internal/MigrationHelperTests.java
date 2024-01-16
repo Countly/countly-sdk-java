@@ -4,9 +4,9 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import ly.count.sdk.java.Countly;
 import org.junit.After;
 import org.junit.Assert;
@@ -156,7 +156,7 @@ public class MigrationHelperTests {
         MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
         migrationHelper.setupMigrations(storageProvider);
         Assert.assertEquals(0, migrationHelper.currentDataModelVersion); //legacy state
-        Map<String, Object> migrationParams = new HashMap<>();
+        Map<String, Object> migrationParams = new ConcurrentHashMap<>();
         migrationParams.put("sdk_path", TestUtils.getTestSDirectory());
         //apply migrations
         migrationHelper.applyMigrations(migrationParams);
@@ -179,7 +179,7 @@ public class MigrationHelperTests {
         migrationHelper.setupMigrations(storageProvider);
         Assert.assertEquals(expectedLatestSchemaVersion, migrationHelper.currentDataModelVersion); //latest state
         //run migration helper apply
-        migrationHelper.applyMigrations(new HashMap<>());
+        migrationHelper.applyMigrations(new ConcurrentHashMap<>());
         //check migration version is at the latest after apply both from class and file
         Assert.assertEquals(expectedLatestSchemaVersion, migrationHelper.currentDataModelVersion);
         Assert.assertEquals(expectedLatestSchemaVersion, TestUtils.getJsonStorageProperty(SDKStorage.key_migration_version));
@@ -203,7 +203,7 @@ public class MigrationHelperTests {
         //run migration helper
         Assert.assertNull(storageProvider.getDeviceID());
         Assert.assertNull(storageProvider.getDeviceIdType());
-        Map<String, Object> migrationParams = new HashMap<>();
+        Map<String, Object> migrationParams = new ConcurrentHashMap<>();
         migrationParams.put("sdk_path", TestUtils.getTestSDirectory());
         Assert.assertTrue(migrationHelper.migration_DeleteConfigFile_01(migrationParams));
 
@@ -291,7 +291,7 @@ public class MigrationHelperTests {
         setDataVersionInConfigFile(1); // set previous data version
         initStorage();
 
-        Map<String, Object> migrationParams = new HashMap<>();
+        Map<String, Object> migrationParams = new ConcurrentHashMap<>();
         migrationParams.put("sdk_path", TestUtils.getTestSDirectory());
 
         MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
@@ -319,7 +319,7 @@ public class MigrationHelperTests {
         Assert.assertEquals(1, migrationHelper.currentDataModelVersion);
         migrationHelper.logger = Mockito.spy(migrationHelper.logger);
 
-        Assert.assertFalse(migrationHelper.migration_UserImplFile_02(new HashMap<>()));
+        Assert.assertFalse(migrationHelper.migration_UserImplFile_02(new ConcurrentHashMap<>()));
         Assert.assertEquals(2, migrationHelper.currentDataModelVersion);
         Mockito.verify(migrationHelper.logger, Mockito.times(1)).d("[MigrationHelper] migration_UserImplFile_02, No files to delete, returning");
     }

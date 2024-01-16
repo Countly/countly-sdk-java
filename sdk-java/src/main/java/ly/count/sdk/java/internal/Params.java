@@ -3,9 +3,9 @@ package ly.count.sdk.java.internal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -230,7 +230,7 @@ public class Params {
      * @return map of the Params object
      */
     public Map<String, String> map() {
-        Map<String, String> map = new HashMap<>();
+        Map<String, String> map = new ConcurrentHashMap<>();
         List<String> pairs = new ArrayList<>(Arrays.asList(params.toString().split("&")));
         for (String pair : pairs) {
             String[] comps = pair.split("=");

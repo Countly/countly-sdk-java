@@ -13,6 +13,7 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import ly.count.sdk.java.Config;
 import org.junit.Assert;
 import org.junit.Before;
@@ -75,7 +76,7 @@ public class UtilsTests {
      */
     @Test
     public void fixSegmentKeysAndValues() {
-        Map<String, String> segmentation = new HashMap<>();
+        Map<String, String> segmentation = new ConcurrentHashMap<>();
         segmentation.put("key_10", "value1_");
         segmentation.put("key_20", "value2_");
 
@@ -354,7 +355,7 @@ public class UtilsTests {
         Assert.assertFalse(Utils.isValidDataType(null));
         Assert.assertFalse(Utils.isValidDataType(new Object()));
         Assert.assertFalse(Utils.isValidDataType(new ArrayList<>()));
-        Assert.assertFalse(Utils.isValidDataType(new HashMap<>()));
+        Assert.assertFalse(Utils.isValidDataType(new ConcurrentHashMap<>()));
     }
 
     /**

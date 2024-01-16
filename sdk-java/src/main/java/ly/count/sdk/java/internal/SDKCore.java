@@ -2,11 +2,11 @@ package ly.count.sdk.java.internal;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 import ly.count.sdk.java.Config;
 
@@ -74,7 +74,7 @@ public class SDKCore {
     /**
      * Selected by config map of module mappings
      */
-    private static final Map<Integer, Class<? extends ModuleBase>> moduleMappings = new HashMap<>();
+    private static final Map<Integer, Class<? extends ModuleBase>> moduleMappings = new ConcurrentHashMap<>();
 
     protected static void registerModuleMapping(int feature, Class<? extends ModuleBase> cls) {
         if (cls != null) {
@@ -427,7 +427,7 @@ public class SDKCore {
         //setup and perform migrations
         MigrationHelper migrationHelper = new MigrationHelper(L);
         migrationHelper.setupMigrations(config.storageProvider);
-        Map<String, Object> migrationParams = new HashMap<>();
+        Map<String, Object> migrationParams = new ConcurrentHashMap<>();
         migrationParams.put("sdk_path", config.getSdkStorageRootDirectory());
         migrationHelper.applyMigrations(migrationParams);
 

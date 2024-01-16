@@ -1,8 +1,8 @@
 package ly.count.sdk.java.internal;
 
 import java.net.URL;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import ly.count.sdk.java.Config;
 import org.junit.Assert;
 import org.junit.Test;
@@ -126,7 +126,7 @@ public class ConfigTests {
         Map<String, String> initialVals = internalConfig.getMetricOverride();
         Assert.assertEquals(0, initialVals.size());
 
-        Map<String, String> newVals = new HashMap<>();
+        Map<String, String> newVals = new ConcurrentHashMap<>();
         newVals.put("a", "1");
         newVals.put("b", "2");
 
