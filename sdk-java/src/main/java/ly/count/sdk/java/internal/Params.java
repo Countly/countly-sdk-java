@@ -3,9 +3,9 @@ package ly.count.sdk.java.internal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -91,12 +91,12 @@ public class Params {
 
     public Params(Object... objects) {
         params = new StringBuilder();
-        if (objects != null && objects.length == 1 && (objects[0] instanceof Object[])) {
+        if (objects != null && objects.length == 1 && objects[0] instanceof Object[]) {
             addObjects((Object[]) objects[0]);
-        } else if (objects != null && objects.length == 1 && (objects[0] instanceof Params)) {
-            params.append(objects[0].toString());
-        } else if (objects != null && objects.length == 1 && (objects[0] instanceof String)) {
-            params.append(objects[0].toString());
+        } else if (objects != null && objects.length == 1 && objects[0] instanceof Params) {
+            params.append(objects[0]);
+        } else if (objects != null && objects.length == 1 && objects[0] instanceof String) {
+            params.append(objects[0]);
         } else {
             addObjects(objects);
         }
@@ -230,7 +230,7 @@ public class Params {
      * @return map of the Params object
      */
     public Map<String, String> map() {
-        Map<String, String> map = new HashMap<>();
+        Map<String, String> map = new ConcurrentHashMap<>();
         List<String> pairs = new ArrayList<>(Arrays.asList(params.toString().split("&")));
         for (String pair : pairs) {
             String[] comps = pair.split("=");
@@ -276,7 +276,7 @@ public class Params {
             L.e("Bad number of parameters");
         } else {
             for (int i = 0; i < objects.length; i += 2) {
-                add(objects[i] == null ? ("unknown" + i) : objects[i].toString(), objects.length > i + 1 ? objects[i + 1] : null);
+                add(objects[i] == null ? "unknown" + i : objects[i].toString(), objects.length > i + 1 ? objects[i + 1] : null);
             }
         }
         return this;

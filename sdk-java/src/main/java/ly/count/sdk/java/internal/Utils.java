@@ -17,10 +17,10 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Utility class
@@ -269,7 +269,7 @@ public class Utils {
             return segments;
         }
 
-        Map<String, String> segmentation = new HashMap<>();
+        Map<String, String> segmentation = new ConcurrentHashMap<>();
 
         for (Map.Entry<String, String> entry : segments.entrySet()) {
             String k = entry.getKey();

@@ -623,13 +623,13 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         if (!id.equals(session.id)) {
             return false;
         }
-        if ((began != null && !began.equals(session.began) || (session.began != null && !session.began.equals(began)))) {
+        if (began != null && !began.equals(session.began) || (session.began != null && !session.began.equals(began))) {
             return false;
         }
-        if ((updated != null && !updated.equals(session.updated) || (session.updated != null && !session.updated.equals(updated)))) {
+        if (updated != null && !updated.equals(session.updated) || (session.updated != null && !session.updated.equals(updated))) {
             return false;
         }
-        if ((ended != null && !ended.equals(session.ended) || (session.ended != null && !session.ended.equals(ended)))) {
+        if (ended != null && !ended.equals(session.ended) || (session.ended != null && !session.ended.equals(ended))) {
             return false;
         }
         if (!params.equals(session.params)) {

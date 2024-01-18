@@ -1,9 +1,9 @@
 package ly.count.java.demo;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.concurrent.ConcurrentHashMap;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.internal.Device;
@@ -50,10 +50,9 @@ public final class BackendModePerformanceTests {
         DemoUtils.printf("Adding %d requests(events) into request Queue%n", batchSize);
         for (int i = 1; i < batchSize; ++i) {
 
-            Map<String, Object> segment = new HashMap<String, Object>() {{
-                put("Time Spent", 60);
-                put("Retry Attempts", 60);
-            }};
+            Map<String, Object> segment = new ConcurrentHashMap<>();
+            segment.put("Time Spent", 60);
+            segment.put("Retry Attempts", 60);
 
             Countly.backendMode().recordEvent(DEVICE_ID, "Event Key " + i, 1, 0.1, 5.0, segment, null);
         }
@@ -61,16 +60,13 @@ public final class BackendModePerformanceTests {
         DemoUtils.printf("Adding %d requests(crash) into request Queue%n", batchSize);
         for (int i = 1; i < batchSize; ++i) {
 
-            Map<String, Object> segmentation = new HashMap<String, Object>() {{
-                put("login page", "authenticate request");
-            }};
+            Map<String, Object> segmentation = new ConcurrentHashMap<>();
+            segmentation.put("signup page", "authenticate request");
 
-            Map<String, String> crashDetails = new HashMap<String, String>() {{
-                put("_os", "Windows 11");
-                put("_os_version", "11.202");
-                put("_logs", "main page");
-            }};
-
+            Map<String, String> crashDetails = new ConcurrentHashMap<>();
+            crashDetails.put("_os", "Windows 8");
+            crashDetails.put("_os_version", "8.202");
+            crashDetails.put("_logs", "main page");
             Countly.backendMode().recordException(DEVICE_ID, "Message: " + i, "stack traces " + 1, segmentation, crashDetails,
                 null);
         }
@@ -79,7 +75,7 @@ public final class BackendModePerformanceTests {
         for (int i = 1; i < batchSize; ++i) {
 
             // User detail
-            Map<String, Object> userDetail = new HashMap<>();
+            Map<String, Object> userDetail = new ConcurrentHashMap<>();
             userDetail.put("name", "Full Name");
             userDetail.put("username", "username1");
             userDetail.put("email", "user@gmail.com");
@@ -98,19 +94,16 @@ public final class BackendModePerformanceTests {
 
         DemoUtils.printf("Adding %d requests(sessions) into request Queue%n", batchSize);
         for (int i = 1; i < batchSize; ++i) {
-            Map<String, String> metrics = new HashMap<String, String>() {{
-                put("_os", "Android");
-                put("_os_version", "10");
-                put("_app_version", "1.2");
-            }};
+            Map<String, String> metrics = new ConcurrentHashMap<>();
+            metrics.put("_os", "MacOs");
+            metrics.put("_os_version", "13");
+            metrics.put("_app_version", "1.3");
 
-            Map<String, String> location = new HashMap<String, String>() {{
-                put("ip_address", "192.168.1.1");
-                put("city", "Lahore");
-                put("country_code", "PK");
-                put("location", "31.5204,74.3587");
-            }};
-
+            Map<String, String> location = new ConcurrentHashMap<>();
+            location.put("ip_address", "IP_ADDR");
+            location.put("city", "Lahore");
+            location.put("country_code", "PK");
+            location.put("location", "31.5204,74.3587");
             Countly.backendMode().sessionBegin(DEVICE_ID, metrics, location, null);
         }
 
@@ -131,10 +124,9 @@ public final class BackendModePerformanceTests {
             DemoUtils.printf("Adding %d events into event Queue against deviceID = %s%n", 1_000_00, "device-id-" + d);
             for (int i = 1; i <= noOfEvents; ++i) {
 
-                Map<String, Object> segment = new HashMap<String, Object>() {{
-                    put("Time Spent", 60);
-                    put("Retry Attempts", 60);
-                }};
+                Map<String, Object> segment = new ConcurrentHashMap<>();
+                segment.put("Time Spent", 60);
+                segment.put("Retry Attempts", 60);
 
                 Countly.backendMode().recordEvent("device-id-" + d, "Event Key " + i, 1, 0.1, 5.0, segment, null);
             }
@@ -159,10 +151,9 @@ public final class BackendModePerformanceTests {
                 Thread.sleep(secondsToSleep * 1000);
             } else {
                 if (remaining > 0) {
-                    Map<String, Object> segment = new HashMap<String, Object>() {{
-                        put("Time Spent", 60);
-                        put("Retry Attempts", 60);
-                    }};
+                    Map<String, Object> segment = new ConcurrentHashMap<>();
+                    segment.put("Time Spent", 60);
+                    segment.put("Retry Attempts", 60);
 
                     Countly.backendMode().recordEvent("device-id", "Event Key " + remaining, 1, 0.1, 5.0, segment, null);
                     --remaining;
@@ -199,13 +190,13 @@ public final class BackendModePerformanceTests {
                     case 2:
                         performLargeEventQueueTest();
                         running = false;
-                        DemoUtils.printf("Time spent: %dms%n", (System.currentTimeMillis() - startTime));
+                        DemoUtils.printf("Time spent: %dms%n", System.currentTimeMillis() - startTime);
                         break;
                     case 3:
                         startTime = System.currentTimeMillis();
                         recordBulkDataAndSendToServer();
                         running = false;
-                        DemoUtils.printf("Time spent: %dms%n", (System.currentTimeMillis() - startTime));
+                        DemoUtils.printf("Time spent: %dms%n", System.currentTimeMillis() - startTime);
                         break;
                     default:
                         break;

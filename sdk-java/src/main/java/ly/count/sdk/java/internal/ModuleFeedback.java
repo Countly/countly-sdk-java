@@ -1,10 +1,10 @@
 package ly.count.sdk.java.internal;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 import ly.count.sdk.java.Countly;
 import org.json.JSONArray;
@@ -243,7 +243,7 @@ public class ModuleFeedback extends ModuleBase {
             }
         }
 
-        Map<String, Object> segm = new HashMap<>();
+        Map<String, Object> segm = new ConcurrentHashMap<>();
         segm.put("platform", internalConfig.getSdkPlatform());
         segm.put("app_version", cachedAppVersion);
         segm.put("widget_id", widgetInfo.widgetId);
