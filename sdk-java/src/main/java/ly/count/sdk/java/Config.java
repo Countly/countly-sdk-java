@@ -4,12 +4,12 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import ly.count.sdk.java.internal.CoreFeature;
 import ly.count.sdk.java.internal.Log;
 import ly.count.sdk.java.internal.LogCallback;
@@ -138,7 +138,7 @@ public class Config {
                 return false;
             }
             DID did = (DID) obj;
-            return did.strategy == strategy && (Objects.equals(did.id, id));
+            return did.strategy == strategy && Objects.equals(did.id, id);
         }
 
         @Override
@@ -214,7 +214,7 @@ public class Config {
      */
     protected boolean enableBackendMode = false;
 
-    protected final Map<String, String> metricOverride = new HashMap<>();
+    protected final Map<String, String> metricOverride = new ConcurrentHashMap<>();
 
     /**
      * Salt string for parameter tampering protection
@@ -379,7 +379,7 @@ public class Config {
         this.unhandledCrashReportingEnabled = false;
         return this;
     }
-  
+
     protected String location = null;
     protected String ip = null;
     protected String city = null;

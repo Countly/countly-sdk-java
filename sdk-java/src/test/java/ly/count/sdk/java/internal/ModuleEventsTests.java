@@ -1,9 +1,9 @@
 package ly.count.sdk.java.internal;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import org.junit.After;
@@ -42,7 +42,7 @@ public class ModuleEventsTests {
         TestUtils.validateEQSize(0, moduleEvents.eventQueue);
 
         //create segmentation
-        Map<String, Object> segmentation = new HashMap<>();
+        Map<String, Object> segmentation = new ConcurrentHashMap<>();
         segmentation.put("name", "Johny");
         segmentation.put("weight", 67);
         segmentation.put("bald", true);
@@ -154,13 +154,13 @@ public class ModuleEventsTests {
 
         TestUtils.validateEQSize(0, moduleEvents.eventQueue);
         //create segmentation
-        Map<String, Object> segmentation = new HashMap<>();
+        Map<String, Object> segmentation = new ConcurrentHashMap<>();
         segmentation.put("exam_name", "CENG 101");
         segmentation.put("score", 67);
         segmentation.put("cheated", false);
-        segmentation.put("invalid", new HashMap<>());
+        segmentation.put("invalid", new ConcurrentHashMap<>());
 
-        Map<String, Object> expectedSegmentation = new HashMap<>();
+        Map<String, Object> expectedSegmentation = new ConcurrentHashMap<>();
         expectedSegmentation.put("exam_name", "CENG 101");
         expectedSegmentation.put("score", 67);
         expectedSegmentation.put("cheated", false);
@@ -310,7 +310,7 @@ public class ModuleEventsTests {
         EventImpl timedEvent = moduleEvents.timedEvents.get(eKeys[0]);
         validateEvent(timedEvent, eKeys[0], null, 1, null, null);
 
-        Map<String, Object> segmentation = new HashMap<>();
+        Map<String, Object> segmentation = new ConcurrentHashMap<>();
         segmentation.put("hair_color", "red");
         segmentation.put("hair_length", "short");
         segmentation.put("chauffeur", "g3chauffeur"); //
@@ -338,7 +338,7 @@ public class ModuleEventsTests {
         EventImpl timedEvent = moduleEvents.timedEvents.get(eKeys[0]);
         validateEvent(timedEvent, eKeys[0], null, 1, null, null);
 
-        Map<String, Object> segmentation = new HashMap<>();
+        Map<String, Object> segmentation = new ConcurrentHashMap<>();
         segmentation.put("horse_name", "Alice");
         segmentation.put("bet_amount", 300);
         segmentation.put("currency", "Dollar"); //

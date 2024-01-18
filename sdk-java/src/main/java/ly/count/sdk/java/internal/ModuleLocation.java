@@ -47,7 +47,7 @@ public class ModuleLocation extends ModuleBase {
     void setLocationInternal(@Nullable String countryCode, @Nullable String cityName, @Nullable String gpsCoordinates, @Nullable String ipAddress) {
         L.d("[ModuleLocation] setLocationInternal, Setting location parameters, cc[" + countryCode + "] cy[" + city + "] gps[" + gpsCoordinates + "] ip[" + ipAddress + "]");
 
-        if ((countryCode == null && city != null) || (city == null && countryCode != null)) {
+        if (countryCode != null ^ city != null) {
             L.w("[ModuleLocation] setLocationInternal, both city and country code need to be set at the same time to be sent");
         }
         country = countryCode;

@@ -8,6 +8,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -21,7 +22,7 @@ public class ModuleBackendMode extends ModuleBase {
     protected boolean disabledModule = false;
 
     protected int eventQSize = 0;
-    protected final Map<String, JSONArray> eventQueues = new HashMap<>();
+    protected final Map<String, JSONArray> eventQueues = new ConcurrentHashMap<>();
 
     final String[] userPredefinedKeys = { "name", "username", "email", "organization", "phone", "gender", "byear" };
 
@@ -181,8 +182,8 @@ public class ModuleBackendMode extends ModuleBase {
 
         removeInvalidDataFromSegments(userProperties);
 
-        Map<String, Object> userDetail = new HashMap<>();
-        Map<String, Object> customDetail = new HashMap<>();
+        Map<String, Object> userDetail = new ConcurrentHashMap<>();
+        Map<String, Object> customDetail = new ConcurrentHashMap<>();
         for (Map.Entry<String, Object> item : userProperties.entrySet()) {
             if (Arrays.stream(userPredefinedKeys).anyMatch(item.getKey()::equalsIgnoreCase)) {
                 userDetail.put(item.getKey(), item.getValue());
@@ -334,13 +335,12 @@ public class ModuleBackendMode extends ModuleBase {
         for (Map.Entry<String, Object> item : segments.entrySet()) {
             Object type = item.getValue();
 
-            boolean isValidDataType = (type instanceof Boolean
+            boolean isValidDataType = type instanceof Boolean
                 || type instanceof Integer
                 || type instanceof Long
                 || type instanceof String
                 || type instanceof Double
-                || type instanceof Float
-            );
+                || type instanceof Float;
 
             if (!isValidDataType) {
                 toRemove.add(item.getKey());
