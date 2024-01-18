@@ -74,7 +74,7 @@ public class SDKCore {
     /**
      * Selected by config map of module mappings
      */
-    private static final Map<CoreFeature, Class<? extends ModuleBase>> moduleMappings = new HashMap<>();
+    private static final Map<CoreFeature, Class<? extends ModuleBase>> moduleMappings = new ConcurrentHashMap<>();
 
     // TreeMap to keep modules sorted by their feature indexes
     protected final Map<Integer, ModuleBase> modules;
