@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -156,14 +155,14 @@ public class TestUtils {
         //check whether target folder is a directory or not
         if (!targetFolder.isDirectory()) {
             logger.e("[TestUtils] " + targetFolder.getAbsolutePath() + " is not a directory");
-            return new HashMap[0];
+            return new ConcurrentHashMap[0];
         }
 
         //get all request files from target folder
         File[] requestFiles = getRequestFiles(targetFolder);
 
         //create array of request params
-        Map<String, String>[] resultMapArray = new HashMap[requestFiles.length];
+        Map<String, String>[] resultMapArray = new ConcurrentHashMap[requestFiles.length];
 
         for (int i = 0; i < requestFiles.length; i++) {
             File file = requestFiles[i];
@@ -275,12 +274,12 @@ public class TestUtils {
         try (Scanner scanner = new Scanner(file)) {
             String firstLine = scanner.nextLine();
             if (Utils.isEmptyOrNull(firstLine)) {
-                return new HashMap<>();
+                return new ConcurrentHashMap<>();
             }
 
             String[] params = firstLine.split("&");
 
-            Map<String, String> paramMap = new HashMap<>();
+            Map<String, String> paramMap = new ConcurrentHashMap<>();
             for (String param : params) {
                 String[] pair = param.split("=");
                 paramMap.put(Utils.urldecode(pair[0]), pair.length == 1 ? "" : Utils.urldecode(pair[1]));
@@ -302,7 +301,7 @@ public class TestUtils {
             data = data.replace("?", "");
         }
         String[] params = data.split("&");
-        Map<String, String> paramMap = new HashMap<>();
+        Map<String, String> paramMap = new ConcurrentHashMap<>();
         for (String param : params) {
             String[] pair = param.split("=");
             paramMap.put(pair[0], pair[1]);

@@ -1,7 +1,7 @@
 package ly.count.sdk.java.internal;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.Event;
 import org.junit.After;
@@ -47,11 +47,11 @@ public class TimedEventsTests {
         Event tEvent = Countly.instance().timedEvent("key");
         tEvent.setCount(5).setSum(133).setDuration(456);
 
-        Map<String, String> segm = new HashMap<>();
+        Map<String, String> segm = new ConcurrentHashMap<>();
         segm.put("1", "a");
         segm.put("5", "b");
 
-        Map<String, Object> targetSegm = new HashMap<>();
+        Map<String, Object> targetSegm = new ConcurrentHashMap<>();
         targetSegm.put("1", "a");
         targetSegm.put("5", "b");
 

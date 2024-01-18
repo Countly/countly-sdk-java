@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import org.json.JSONArray;
@@ -411,7 +412,7 @@ public class ModuleFeedbackTests {
         widgetResult.put("accepted", true);
         widgetResult.put("rating", 6);
 
-        Map<String, Object> expectedWidgetResult = new HashMap<>();
+        Map<String, Object> expectedWidgetResult = new ConcurrentHashMap<>();
         expectedWidgetResult.put("accepted", true);
         expectedWidgetResult.put("rating", 6);
 
@@ -429,7 +430,7 @@ public class ModuleFeedbackTests {
     public void reportFeedbackWidgetManually_nonExistingRatingField() {
         init(TestUtils.getConfigFeedback(Config.Feature.Events));
 
-        Map<String, Object> widgetResult = new HashMap<>();
+        Map<String, Object> widgetResult = new ConcurrentHashMap<>();
         widgetResult.put("accepted", true);
 
         validateRecordingWidgetsManually(createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "sa" }), null, widgetResult, 0, false);
@@ -445,7 +446,7 @@ public class ModuleFeedbackTests {
     public void reportFeedbackWidgetManually_invalidRatingField() {
         init(TestUtils.getConfigFeedback(Config.Feature.Events));
 
-        Map<String, Object> widgetResult = new HashMap<>();
+        Map<String, Object> widgetResult = new ConcurrentHashMap<>();
         widgetResult.put("rating", true);
 
         validateRecordingWidgetsManually(createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "sa" }), null, widgetResult, 0, false);
@@ -461,7 +462,7 @@ public class ModuleFeedbackTests {
     public void reportFeedbackWidgetManually_validRatingField() {
         init(TestUtils.getConfigFeedback(Config.Feature.Events));
 
-        Map<String, Object> widgetResult = new HashMap<>();
+        Map<String, Object> widgetResult = new ConcurrentHashMap<>();
         widgetResult.put("rating", 11);
 
         validateRecordingWidgetsManually(createFeedbackWidget(FeedbackWidgetType.nps, "nps1", "npsID1", new String[] { "sa" }), null, widgetResult, 0, true);
@@ -577,7 +578,7 @@ public class ModuleFeedbackTests {
     }
 
     private Map<String, Object> requiredWidgetSegmentation(String widgetId, Map<String, Object> widgetResult) {
-        Map<String, Object> segm = new HashMap<>();
+        Map<String, Object> segm = new ConcurrentHashMap<>();
         segm.put("platform", getOS());
         segm.put("app_version", SDKCore.instance.config.getApplicationVersion());
         segm.put("widget_id", widgetId);

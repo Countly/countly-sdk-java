@@ -72,7 +72,7 @@ public class UserEditorImpl implements UserEditor {
     @Override
     public UserEditor setPicturePath(String picturePath) {
         L.d("[UserEditorImpl] setPicturePath, picturePath = " + picturePath);
-        if (picturePath == null || Utils.isValidURL(picturePath) || (new File(picturePath)).isFile()) {
+        if (picturePath == null || Utils.isValidURL(picturePath) || new File(picturePath).isFile()) {
             //if it is a thing we can use, continue
             return set(PredefinedUserPropertyKeys.PICTURE_PATH, picturePath);
         }

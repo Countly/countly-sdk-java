@@ -3,6 +3,7 @@ package ly.count.sdk.java.internal;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
@@ -110,7 +111,7 @@ public class EventImplTests {
             Assert.assertEquals(true, eventImpl1.getSegment("test"));
         }, "test_event", L);
 
-        Map<String, Object> segmentation = new HashMap<>();
+        Map<String, Object> segmentation = new ConcurrentHashMap<>();
         segmentation.put("test", true);
 
         event.count = 5;
@@ -130,7 +131,7 @@ public class EventImplTests {
         EventImpl event = new EventImpl((event1) -> {
         }, "test_buy_event", L);
 
-        Map<String, Object> segmentation = new HashMap<>();
+        Map<String, Object> segmentation = new ConcurrentHashMap<>();
         segmentation.put("valid", false);
 
         event.duration = 34.0;
@@ -161,7 +162,7 @@ public class EventImplTests {
         EventImpl event = new EventImpl((event1) -> {
         }, "test_sell_event", L);
 
-        Map<String, Object> segmentation = new HashMap<>();
+        Map<String, Object> segmentation = new ConcurrentHashMap<>();
         segmentation.put("sold", true);
 
         event.count = 3;
@@ -214,7 +215,7 @@ public class EventImplTests {
         segmentation.put("divisor", 0.2f);
         event.segmentation = segmentation;
 
-        Map<String, Object> expectedSegmentation = new HashMap<>();
+        Map<String, Object> expectedSegmentation = new ConcurrentHashMap<>();
         expectedSegmentation.put("sold", true);
         expectedSegmentation.put("price", BigDecimal.valueOf(9.43));
         expectedSegmentation.put("quantity", 3);
@@ -242,7 +243,7 @@ public class EventImplTests {
         EventImpl event = new EventImpl((event1) -> {
         }, "test_getter_event", L);
 
-        Map<String, Object> segmentation = new HashMap<>();
+        Map<String, Object> segmentation = new ConcurrentHashMap<>();
         segmentation.put("get_func", 90);
 
         event.count = 47;
@@ -270,7 +271,7 @@ public class EventImplTests {
         event.setDuration(78);
         event.setSum(46);
 
-        Map<String, String> segmentation = new HashMap<>();
+        Map<String, String> segmentation = new ConcurrentHashMap<>();
         segmentation.put("donated_amount", "37656387");
         event.setSegmentation(segmentation);
 

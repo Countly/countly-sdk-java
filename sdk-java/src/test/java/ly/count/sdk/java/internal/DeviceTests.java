@@ -1,10 +1,9 @@
 package ly.count.sdk.java.internal;
 
-import org.json.JSONObject;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.junit.Assert;
 import org.junit.Test;
-import java.util.HashMap;
-import java.util.Map;
 
 public class DeviceTests {
 
@@ -13,7 +12,7 @@ public class DeviceTests {
      */
     @Test
     public void metricOverride_1() {
-        Map<String, String> newVals = new HashMap<>();
+        Map<String, String> newVals = new ConcurrentHashMap<>();
         newVals.put("a12345", "1qwer");
         newVals.put("b5678", "2sdfg");
 

@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import ly.count.sdk.java.Crash;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -150,7 +151,7 @@ public class CrashImpl implements Crash, Storable {
                 return null;
             }
             JSONObject object = this.data.getJSONObject("_custom");
-            Map<String, String> map = new HashMap<>();
+            Map<String, String> map = new ConcurrentHashMap<>();
             Iterator<String> iterator = object.keys();
             while (iterator.hasNext()) {
                 String key = iterator.next();

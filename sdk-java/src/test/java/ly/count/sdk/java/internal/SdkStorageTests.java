@@ -30,7 +30,7 @@ public class SdkStorageTests {
         //doing all of this just to stop the Task
         //todo eliminate this
         InternalConfig config = TestUtils.getInternalConfigWithLogger(TestUtils.getBaseConfig());
-        SDKStorage storageProvider = (new SDKStorage()).init(config);
+        SDKStorage storageProvider = new SDKStorage().init(config);
         storageProvider.stop(config, true);
     }
 
@@ -41,7 +41,7 @@ public class SdkStorageTests {
      */
     @Test
     public void getDeviceID() {
-        SDKStorage storageProvider = (new SDKStorage()).init(TestUtils.getInternalConfigWithLogger(TestUtils.getBaseConfig()));
+        SDKStorage storageProvider = new SDKStorage().init(TestUtils.getInternalConfigWithLogger(TestUtils.getBaseConfig()));
         Assert.assertNull(storageProvider.getDeviceID());
     }
 
