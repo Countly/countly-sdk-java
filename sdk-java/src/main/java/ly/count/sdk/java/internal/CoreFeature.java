@@ -1,8 +1,5 @@
 package ly.count.sdk.java.internal;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 public enum CoreFeature {
     Events(1 << 1, ModuleEvents::new),
     Sessions(1 << 2, ModuleSessions::new),
@@ -30,8 +27,6 @@ public enum CoreFeature {
 
     private ModuleBaseCreator creator;
 
-    private static final Map<Integer, CoreFeature> featureMap = new ConcurrentHashMap<>();
-
     CoreFeature(int index) {
         this.index = index;
     }
@@ -47,25 +42,5 @@ public enum CoreFeature {
 
     public int getIndex() {
         return index;
-    }
-
-    static void setupFeatureIndices() {
-        featureMap.put(Sessions.index, Sessions);
-        featureMap.put(Events.index, Events);
-        featureMap.put(Views.index, Views);
-        featureMap.put(CrashReporting.index, CrashReporting);
-        featureMap.put(Location.index, Location);
-        featureMap.put(UserProfiles.index, UserProfiles);
-        featureMap.put(BackendMode.index, BackendMode);
-        featureMap.put(RemoteConfig.index, RemoteConfig);
-        featureMap.put(TestDummy.index, TestDummy);
-        featureMap.put(DeviceId.index, DeviceId);
-        featureMap.put(Requests.index, Requests);
-        featureMap.put(Logs.index, Logs);
-        featureMap.put(Feedback.index, Feedback);
-    }
-
-    static CoreFeature byIndex(int index) {
-        return featureMap.get(index);
     }
 }
