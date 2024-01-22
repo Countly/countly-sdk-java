@@ -1,8 +1,5 @@
 package ly.count.sdk.java.internal;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public enum CoreFeature {
     Events(1 << 1, ModuleEvents::new),
     Sessions(1 << 2, ModuleSessions::new),
@@ -45,25 +42,5 @@ public enum CoreFeature {
 
     public int getIndex() {
         return index;
-    }
-
-    private static final Map<Integer, CoreFeature> featureMap = new HashMap<Integer, CoreFeature>() {{
-        put(Sessions.index, Sessions);
-        put(Events.index, Events);
-        put(Views.index, Views);
-        put(CrashReporting.index, CrashReporting);
-        put(Location.index, Location);
-        put(UserProfiles.index, UserProfiles);
-        put(BackendMode.index, BackendMode);
-        put(RemoteConfig.index, RemoteConfig);
-        put(TestDummy.index, TestDummy);
-        put(DeviceId.index, DeviceId);
-        put(Requests.index, Requests);
-        put(Logs.index, Logs);
-        put(Feedback.index, Feedback);
-    }};
-
-    static CoreFeature byIndex(int index) {
-        return featureMap.get(index);
     }
 }

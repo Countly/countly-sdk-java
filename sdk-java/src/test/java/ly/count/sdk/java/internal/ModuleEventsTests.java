@@ -22,7 +22,7 @@ public class ModuleEventsTests {
 
     private void init(Config cc) {
         Countly.instance().init(cc);
-        moduleEvents = (ModuleEvents) SDKCore.instance.module(CoreFeature.Events.getIndex());
+        moduleEvents = (ModuleEvents) SDKCore.instance.module(CoreFeature.Events);
     }
 
     @After

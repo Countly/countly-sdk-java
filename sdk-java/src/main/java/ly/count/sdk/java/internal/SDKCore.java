@@ -52,18 +52,18 @@ public class SDKCore {
     protected static ModuleBase testDummyModule = null;//set during testing when trying to check the SDK's lifecycle
 
     protected static void registerDefaultModuleMappings() {
-        moduleMappings.put(CoreFeature.DeviceId.getIndex(), ModuleDeviceIdCore.class);
-        moduleMappings.put(CoreFeature.Requests.getIndex(), ModuleRequests.class);
+        moduleMappings.put(CoreFeature.DeviceId, ModuleDeviceIdCore.class);
+        moduleMappings.put(CoreFeature.Requests, ModuleRequests.class);
         //moduleMappings.put(CoreFeature.Logs.getIndex(), Log.class);
-        moduleMappings.put(CoreFeature.Views.getIndex(), ModuleViews.class);
-        moduleMappings.put(CoreFeature.Sessions.getIndex(), ModuleSessions.class);
-        moduleMappings.put(CoreFeature.CrashReporting.getIndex(), ModuleCrashes.class);
-        moduleMappings.put(CoreFeature.BackendMode.getIndex(), ModuleBackendMode.class);
-        moduleMappings.put(CoreFeature.Feedback.getIndex(), ModuleFeedback.class);
-        moduleMappings.put(CoreFeature.Events.getIndex(), ModuleEvents.class);
-        moduleMappings.put(CoreFeature.RemoteConfig.getIndex(), ModuleRemoteConfig.class);
-        moduleMappings.put(CoreFeature.UserProfiles.getIndex(), ModuleUserProfile.class);
-        moduleMappings.put(CoreFeature.Location.getIndex(), ModuleLocation.class);
+        moduleMappings.put(CoreFeature.Views, ModuleViews.class);
+        moduleMappings.put(CoreFeature.Sessions, ModuleSessions.class);
+        moduleMappings.put(CoreFeature.CrashReporting, ModuleCrashes.class);
+        moduleMappings.put(CoreFeature.BackendMode, ModuleBackendMode.class);
+        moduleMappings.put(CoreFeature.Feedback, ModuleFeedback.class);
+        moduleMappings.put(CoreFeature.Events, ModuleEvents.class);
+        moduleMappings.put(CoreFeature.RemoteConfig, ModuleRemoteConfig.class);
+        moduleMappings.put(CoreFeature.UserProfiles, ModuleUserProfile.class);
+        moduleMappings.put(CoreFeature.Location, ModuleLocation.class);
     }
 
     /**
@@ -74,13 +74,7 @@ public class SDKCore {
     /**
      * Selected by config map of module mappings
      */
-    private static final Map<Integer, Class<? extends ModuleBase>> moduleMappings = new ConcurrentHashMap<>();
-
-    protected static void registerModuleMapping(int feature, Class<? extends ModuleBase> cls) {
-        if (cls != null) {
-            moduleMappings.put(feature, cls);
-        }
-    }
+    private static final Map<CoreFeature, Class<? extends ModuleBase>> moduleMappings = new ConcurrentHashMap<>();
 
     // TreeMap to keep modules sorted by their feature indexes
     protected final Map<Integer, ModuleBase> modules;
@@ -92,7 +86,7 @@ public class SDKCore {
      * @return {@code true} if consent has been given
      */
     public boolean isTracking(Integer feat) {
-        return modules != null && modules.containsKey(feat);
+        return modules.containsKey(feat);
     }
 
     private void onTimer() {
@@ -175,7 +169,7 @@ public class SDKCore {
 
         consents = consents | (consent & config.getFeatures1());
 
-        for (Integer feature : moduleMappings.keySet()) {
+        for (CoreFeature feature : moduleMappings.keySet()) {
             ModuleBase existing = module(moduleMappings.get(feature));
             if (SDKCore.enabled(feature) && existing == null) {
                 ModuleBase module = instantiateModule(feature);
@@ -184,7 +178,7 @@ public class SDKCore {
                 } else {
                     module.init(config);
                     module.initFinished(config);
-                    modules.put(feature, module);
+                    modules.put(feature.getIndex(), module);
                 }
             }
         }
@@ -214,11 +208,11 @@ public class SDKCore {
 
         consents = consents & ~noConsent;
 
-        for (Integer feature : moduleMappings.keySet()) {
+        for (CoreFeature feature : moduleMappings.keySet()) {
             ModuleBase existing = module(moduleMappings.get(feature));
-            if (feature != CoreFeature.Sessions.getIndex() && existing != null) {
+            if (feature.getIndex() != CoreFeature.Sessions.getIndex() && existing != null) {
                 existing.stop(config, true);
-                modules.remove(feature);
+                modules.remove(feature.getIndex());
             }
         }
     }
@@ -228,21 +222,16 @@ public class SDKCore {
      * Uses {@link #moduleMappings} for {@code Config.Feature} / {@link CoreFeature}
      * - Class&lt;ModuleBase&gt; mapping to enable overriding by app developer.
      *
-     * @param config {@link InternalConfig} object containing config with mapping overrides
      * @throws IllegalArgumentException in case some {@link ModuleBase} finds {@link #config} inconsistent.
      * @throws IllegalStateException when this module is run second time on the same {@code Core} instance.
      */
-    protected void prepareMappings(InternalConfig config) throws IllegalStateException {
+    protected void prepareMappings() throws IllegalStateException {
         if (!modules.isEmpty()) {
             throw new IllegalStateException("Modules can only be built once");
         }
 
         moduleMappings.clear();
         registerDefaultModuleMappings();
-
-        for (int feature : config.getModuleOverrides()) {
-            registerModuleMapping(feature, config.getModuleOverride(feature));
-        }
     }
 
     /**
@@ -279,16 +268,16 @@ public class SDKCore {
         }
 
         if (!config.requiresConsent()) {
-            for (int feature : moduleMappings.keySet()) {
+            for (CoreFeature feature : moduleMappings.keySet()) {
                 Class<? extends ModuleBase> cls = moduleMappings.get(feature);
                 if (cls == null) {
                     continue;
                 }
                 ModuleBase existing = module(cls);
-                if ((features & feature) > 0 && existing == null) {
+                if ((features & feature.getIndex()) > 0 && existing == null) {
                     ModuleBase m = instantiateModule(feature);
                     if (m != null) {
-                        modules.put(feature, m);
+                        modules.put(feature.getIndex(), m);
                     }
                 }
             }
@@ -304,12 +293,10 @@ public class SDKCore {
     /**
      * Create {@link ModuleBase} by executing its default constructor.
      *
-     * @param feature int value of feature
+     * @param coreFeature int value of feature
      * @return {@link ModuleBase} instance or null if {@link ModuleBaseCreator} is not set for {@code feature}
      */
-    private ModuleBase instantiateModule(int feature) {
-        CoreFeature coreFeature = CoreFeature.byIndex(feature);
-
+    private ModuleBase instantiateModule(CoreFeature coreFeature) {
         if (coreFeature.getCreator() == null) {
             return null;
         }
@@ -322,7 +309,7 @@ public class SDKCore {
      * @param feature to get a {@link ModuleBase} instance for
      * @return {@link ModuleBase} instance or null if no such module is instantiated
      */
-    protected ModuleBase module(int feature) {
+    protected ModuleBase module(CoreFeature feature) {
         return module(moduleMappings.get(feature));
     }
 
@@ -364,7 +351,7 @@ public class SDKCore {
         for (ModuleBase m : modules.values()) {
             m.onSessionEnded(session, config);
         }
-        ModuleSessions sessions = (ModuleSessions) module(CoreFeature.Sessions.getIndex());
+        ModuleSessions sessions = (ModuleSessions) module(CoreFeature.Sessions);
         if (sessions != null) {
             sessions.forgetSession();
         }
@@ -372,7 +359,7 @@ public class SDKCore {
     }
 
     public SessionImpl getSession() {
-        ModuleSessions sessions = (ModuleSessions) module(CoreFeature.Sessions.getIndex());
+        ModuleSessions sessions = (ModuleSessions) module(CoreFeature.Sessions);
         if (sessions != null) {
             return sessions.getSession();
         }
@@ -386,7 +373,7 @@ public class SDKCore {
      * @return current {@link SessionImpl} instance
      */
     public SessionImpl session(final Long id) {
-        ModuleSessions sessions = (ModuleSessions) module(CoreFeature.Sessions.getIndex());
+        ModuleSessions sessions = (ModuleSessions) module(CoreFeature.Sessions);
         if (sessions != null) {
             return sessions.session(config, id);
         }
@@ -418,7 +405,7 @@ public class SDKCore {
         }
 
         //setup module mapping
-        prepareMappings(config);
+        prepareMappings();
 
         //create internal timer
         countlyTimer = new CountlyTimer(L);
@@ -549,11 +536,11 @@ public class SDKCore {
     }
 
     public void login(String id) {
-        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).login(id);
+        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId)).login(id);
     }
 
     public void logout() {
-        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId.getIndex())).logout();
+        ((ModuleDeviceIdCore) module(CoreFeature.DeviceId)).logout();
     }
 
     /**
@@ -705,7 +692,7 @@ public class SDKCore {
      * @deprecated use {@link ModuleEvents.Events#startEvent(String)} instead via <code>instance().events()</code> call
      */
     TimedEvents timedEvents() {
-        return ((ModuleSessions) module(CoreFeature.Sessions.getIndex())).timedEvents();
+        return ((ModuleSessions) module(CoreFeature.Sessions)).timedEvents();
     }
 
     public ModuleEvents.Events events() {
