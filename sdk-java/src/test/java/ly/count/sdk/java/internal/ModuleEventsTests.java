@@ -75,7 +75,10 @@ public class ModuleEventsTests {
         Assert.assertEquals(1, TestUtils.getCurrentRQ().length);
 
         List<EventImpl> eventsInRequest = TestUtils.readEventsFromRequest();
+
+        // check first event has no peid and has an SDK generated id by giving "_CLY_" flag to the function
         validateEvent(eventsInRequest.get(0), eKeys[0], null, 1, 45.9, 32.0, "_CLY_", null, "", null);
+        // check second event has peid of first event and has an SDK generated id by giving "_CLY_" flag to the function
         validateEvent(eventsInRequest.get(1), eKeys[1], null, 1, 45.9, 32.0, "_CLY_", null, "", eventsInRequest.get(0).id);
     }
 
@@ -313,11 +316,12 @@ public class ModuleEventsTests {
         Map<String, Object> segmentation = new ConcurrentHashMap<>();
         segmentation.put("hair_color", "red");
         segmentation.put("hair_length", "short");
-        segmentation.put("chauffeur", "g3chauffeur"); //
+        segmentation.put("chauffeur", "g3chauffeur");
 
         endEvent(eKeys[0], segmentation, 1, 5.0);
 
         Assert.assertEquals(0, moduleEvents.timedEvents.size());
+        // check event has desired segmentation, no peid and a sdk generated id by giving "_CLY_" flag to the function
         TestUtils.validateEventInEQ(eKeys[0], segmentation, 1, 5.0, 0.0, 0, 1, "_CLY_", null, "", null);
     }
 

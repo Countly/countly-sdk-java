@@ -8,8 +8,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+/**
+ * Tests for manual view tracking
+ * Notes:
+ * - setGlobalViewSegmentation, updateGlobalViewSegmentation are not exists in the Java SDK
+ * - legacy call recordView is view() call in the Java SDK
+ */
 @RunWith(JUnit4.class)
-public class sc_MV_ManuelViewTests {
+public class sc_MV_ManualViewTests {
     @Before
     public void beforeTest() {
         TestUtils.createCleanTestState();
@@ -23,10 +29,12 @@ public class sc_MV_ManuelViewTests {
     //(1XX) Value sanitation, wrong usage, simple tests
 
     /**
-     * recordView(x2), startAutoStoppedView(x2), startView(x2), pauseViewWithID, resumeViewWithID, stopViewWithName(x2),
-     * stopViewWithID(x2), addSegmentationToViewWithID, addSegmentationToViewWithName
-     * <p>
+     * recordView(x2), startAutoStoppedView(x2), startView(x2), pauseViewWithID, resumeViewWithID, stopViewWithName(x2), stopViewWithID(x2),
+     * addSegmentationToViewWithID, addSegmentationToViewWithName, setGlobalViewSegmentation, updateGlobalViewSegmentation
+     * ----
      * called with "null" values. versions with and without segmentation. nothing should crash, no events should be recorded
+     * ----
+     * Note: legacy call is called with "true" version of it additionally
      */
     @Test
     public void MV_100_badValues_null() {
@@ -34,21 +42,33 @@ public class sc_MV_ManuelViewTests {
         TestUtils.validateEQSize(0);
         Assert.assertEquals(0, TestUtils.getCurrentRQ().length);
 
+        // recordView(x2) + true version
         Countly.instance().view(null);
         Countly.instance().view(null, false);
+        Countly.instance().view(null, true);
+
+        // startAutoStoppedView(x2)
         Countly.instance().views().startAutoStoppedView(null);
         Countly.instance().views().startAutoStoppedView(null, TestUtils.map());
+
+        // startView(x2)
         Countly.instance().views().startView(null);
         Countly.instance().views().startView(null, TestUtils.map());
+
+        // pauseViewWithID, resumeViewWithID
         Countly.instance().views().pauseViewWithID(null);
         Countly.instance().views().resumeViewWithID(null);
+
+        // stopViewWithName(x2), stopViewWithID(x2)
         Countly.instance().views().stopViewWithName(null);
         Countly.instance().views().stopViewWithName(null, TestUtils.map());
         Countly.instance().views().stopViewWithID(null);
         Countly.instance().views().stopViewWithID(null, TestUtils.map());
-        Countly.instance().views().addSegmentationToViewWithID(null, TestUtils.map());
 
+        // addSegmentationToViewWithID, addSegmentationToViewWithName
+        Countly.instance().views().addSegmentationToViewWithID(null, TestUtils.map());
         Countly.instance().views().addSegmentationToViewWithName(null, TestUtils.map());
+
         TestUtils.validateEQSize(0);
         Assert.assertEquals(0, TestUtils.getCurrentRQ().length);
     }
@@ -56,12 +76,12 @@ public class sc_MV_ManuelViewTests {
     /**
      * recordView(x2), startAutoStoppedView(x2), startView(x2), pauseViewWithID, resumeViewWithID, stopViewWithName(x2),
      * stopViewWithID(x2), addSegmentationToViewWithID, addSegmentationToViewWithName
-     * <p>
+     * ----
      * called with empty string values
-     * <p>
      * versions with and without segmentation
-     * <p>
      * nothing should crash, no events should be recorded
+     * ----
+     * Note: legacy call is called with "true" version of it additionally
      */
     @Test
     public void MV_101_badValues_emptyString() {
@@ -69,18 +89,30 @@ public class sc_MV_ManuelViewTests {
         TestUtils.validateEQSize(0);
         Assert.assertEquals(0, TestUtils.getCurrentRQ().length);
 
+        // recordView(x2) + true version
         Countly.instance().view("");
         Countly.instance().view("", false);
+        Countly.instance().view("", true);
+
+        // startAutoStoppedView(x2)
         Countly.instance().views().startAutoStoppedView("");
         Countly.instance().views().startAutoStoppedView("", TestUtils.map());
+
+        // startView(x2)
         Countly.instance().views().startView("");
         Countly.instance().views().startView("", TestUtils.map());
+
+        // pauseViewWithID, resumeViewWithID
         Countly.instance().views().pauseViewWithID("");
         Countly.instance().views().resumeViewWithID("");
+
+        // stopViewWithName(x2), stopViewWithID(x2)
         Countly.instance().views().stopViewWithName("");
         Countly.instance().views().stopViewWithName("", TestUtils.map());
         Countly.instance().views().stopViewWithID("");
         Countly.instance().views().stopViewWithID("", TestUtils.map());
+
+        // addSegmentationToViewWithID, addSegmentationToViewWithName
         Countly.instance().views().addSegmentationToViewWithID("", TestUtils.map());
         Countly.instance().views().addSegmentationToViewWithName("", TestUtils.map());
 
@@ -91,11 +123,9 @@ public class sc_MV_ManuelViewTests {
     /**
      * pauseViewWithID, resumeViewWithID, stopViewWithName(x2),
      * stopViewWithID(x2), addSegmentationToViewWithID, addSegmentationToViewWithName
-     * <p>
+     * ----
      * called with empty string values
-     * <p>
      * versions with and without segmentation
-     * <p>
      * nothing should crash, no events should be recorded
      */
     @Test
@@ -120,30 +150,29 @@ public class sc_MV_ManuelViewTests {
     //(2XX) Usage flows
 
     /**
-     * <pre>
      * Make sure auto closing views behave correctly
-     *
-     * - recordView view A (sE_A id=idv1 pvid="" segm={visit="1" start="1"})
-     *   wait 1 sec
-     * - recordView view B (eE_A d=1 id=idv1 pvid="", segm={}) (sE_B id=idv2 pvid=idv1 segm={visit="1"})
-     *   wait 1 sec
-     * - start view C (eE_B d=1 id=idv2 pvid=idv1, segm={}) (sE_C id=idv3 pvid=idv2 segm={visit="1"})
-     *   wait 1 sec
-     * - startAutoStoppedView D (sE_D id=idv4 pvid=idv3 segm={visit="1"})
-     *   wait 1 sec
-     * - startAutoStoppedView E (eE_D d=1 id=idv4 pvid=idv3, segm={}) (sE_E id=idv5 pvid=idv4 segm={visit="1"})
-     *   wait 1 sec
-     * - start view F (eE_E d=1 id=idv5 pvid=idv4, segm={}) (sE_F id=idv6 pvid=idv5 segm={visit="1"})
-     *   wait 1 sec
-     * - recordView view G (sE_G id=idv7 pvid=idv6 segm={visit="1"})
-     *   wait 1 sec
-     * - startAutoStoppedView H (sE_H id=idv8 pvid=idv7 segm={visit="1"})
-     *   wait 1 sec
-     * - recordView view I (eE_H d=1 id=idv8 pvid=idv7, segm={}) (sE_I id=idv8 pvid=idv8 segm={visit="1"})
-     * </pre>
+     * Steps:
+     * ----------
+     * recordView view A (sE_A id=idv1 pvid="" segm={visit="1" start="1"})
+     * wait 1 sec
+     * recordView view B (eE_A d=1 id=idv1 pvid="", segm={}) (sE_B id=idv2 pvid=idv1 segm={visit="1"})
+     * wait 1 sec
+     * start view C (eE_B d=1 id=idv2 pvid=idv1, segm={}) (sE_C id=idv3 pvid=idv2 segm={visit="1"})
+     * wait 1 sec
+     * startAutoStoppedView D (sE_D id=idv4 pvid=idv3 segm={visit="1"})
+     * wait 1 sec
+     * startAutoStoppedView E (eE_D d=1 id=idv4 pvid=idv3, segm={}) (sE_E id=idv5 pvid=idv4 segm={visit="1"})
+     * wait 1 sec
+     * start view F (eE_E d=1 id=idv5 pvid=idv4, segm={}) (sE_F id=idv6 pvid=idv5 segm={visit="1"})
+     * wait 1 sec
+     * recordView view G (sE_G id=idv7 pvid=idv6 segm={visit="1"})
+     * wait 1 sec
+     * startAutoStoppedView H (sE_H id=idv8 pvid=idv7 segm={visit="1"})
+     * wait 1 sec
+     * recordView view I (eE_H d=1 id=idv8 pvid=idv7, segm={}) (sE_I id=idv8 pvid=idv8 segm={visit="1"})
      */
     @Test
-    public void MV_200A_autostartView_autoClose() throws InterruptedException {
+    public void MV_200A_autostartView_autoClose_legacy() throws InterruptedException {
         Countly.instance().init(TestUtils.getConfigViews().setEventQueueSizeToSend(20));
         TestUtils.validateEQSize(0);
 
@@ -196,7 +225,8 @@ public class sc_MV_ManuelViewTests {
 
     /**
      * Make sure all the basic functions are working correctly and we are keeping time correctly
-     * <p>
+     * Steps:
+     * ------------
      * start view A (sE_A)
      * start view B (sE_B)
      * wait 1 sec
