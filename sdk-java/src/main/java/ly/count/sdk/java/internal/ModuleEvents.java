@@ -95,7 +95,7 @@ public class ModuleEvents extends ModuleBase {
         ModuleRequests.pushAsync(internalConfig, request);
     }
 
-    protected void removeInvalidDataFromSegments(Map<String, Object> segments) {
+    protected static void removeInvalidDataFromSegments(Map<String, Object> segments) {
 
         if (segments == null || segments.isEmpty()) {
             return;

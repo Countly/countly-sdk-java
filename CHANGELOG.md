@@ -12,6 +12,8 @@
 * Added "disableUnhandledCrashReporting" function to the "Config" class to disable automatic uncaught crash reporting.
 * Added "setMaxBreadcrumbCount(int)" function to the "Config" class to change allowed max breadcrumb count.
 * Added the views feature interface, and it is accessible through "Countly::instance()::views()" call.
+* Added a configuration function to set global view segmentation to the "Config" class:
+  * "views.setGlobalViewSegmentation(Map<String, Object>)"
 
 * Fixed a bug where setting custom user properties would not work.
 * Fixed a bug where setting organization of the user would not work.
