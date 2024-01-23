@@ -136,10 +136,6 @@ public class Transport implements X509TrustManager {
         byte[] maybePictureData = getPictureDataFromRequest(request);
         boolean usingGET = !config.isHTTPPostForced() && request.isGettable(config.getServerURL()) && maybePictureData == null;
 
-        if (!usingGET && maybePictureData != null) {
-            path = setProfilePicturePathRequestParams(path, request.params);
-        }
-
         if (usingGET && config.getParameterTamperingProtectionSalt() != null) {
             request.params.add(CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, request.params + config.getParameterTamperingProtectionSalt(), L));
         }
@@ -179,17 +175,17 @@ public class Transport implements X509TrustManager {
                         addMultipart(output, writer, boundary, "text/plain", CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, salting.substring(0, salting.length() - 1) + config.getParameterTamperingProtectionSalt(), L), null);
                     }
 
-                    writer.append(Utils.CRLF).append("--").append(boundary).append("--").append(Utils.CRLF).flush();
+                    writer.append("--").append(boundary).append("--").append(Utils.CRLF).flush();
                 } else {
                     //picture data is "null". If it was sent, we send "null" to server to clear the image there
                     //we send a normal request in HTTP POST
                     if (config.getParameterTamperingProtectionSalt() != null) {
-                        request.params.add(CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, request.params.toString() + config.getParameterTamperingProtectionSalt(), L));
+                        request.params.add(CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, request.params + config.getParameterTamperingProtectionSalt(), L));
                     }
                     connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 
                     output = connection.getOutputStream();
-                    writer = new PrintWriter(new OutputStreamWriter(output, Utils.UTF8), true);
+                    writer = new PrintWriter(new OutputStreamWriter(output, StandardCharsets.UTF_8), true);
 
                     writer.write(request.params.toString());
                     writer.flush();
@@ -213,19 +209,17 @@ public class Transport implements X509TrustManager {
         return connection;
     }
 
-    void addMultipart(OutputStream output, PrintWriter writer, String boundary, String contentType, String name, String value, Object file) throws IOException {
+    void addMultipart(OutputStream output, PrintWriter writer, final String boundary, final String contentType, final String name, final String value, final byte[] file) throws IOException {
         writer.append("--").append(boundary).append(Utils.CRLF);
         if (file != null) {
             writer.append("Content-Disposition: form-data; name=\"").append(name).append("\"; filename=\"").append(value).append("\"").append(Utils.CRLF);
             writer.append("Content-Type: ").append(contentType).append(Utils.CRLF);
-            writer.append("Content-Transfer-Encoding: binary").append(Utils.CRLF);
             writer.append(Utils.CRLF).flush();
-            output.write((byte[]) file);
+            output.write(file);
             output.flush();
             writer.append(Utils.CRLF).flush();
         } else {
             writer.append("Content-Disposition: form-data; name=\"").append(name).append("\"").append(Utils.CRLF);
-            writer.append("Content-Type: ").append(contentType).append("; charset=").append(Utils.UTF8).append(Utils.CRLF);
             writer.append(Utils.CRLF).append(value).append(Utils.CRLF).flush();
         }
     }
@@ -501,31 +495,5 @@ public class Transport implements X509TrustManager {
     @Override
     public X509Certificate[] getAcceptedIssuers() {
         return new X509Certificate[0];
-    }
-
-    private String setProfilePicturePathRequestParams(String path, Params params) {
-        Params tempParams = new Params();
-
-        tempParams.add("device_id", params.remove("device_id"));
-        tempParams.add("app_key", params.remove("app_key"));
-        tempParams.add("timestamp", params.remove("timestamp"));
-        tempParams.add("sdk_name", params.remove("sdk_name"));
-        tempParams.add("sdk_version", params.remove("sdk_version"));
-        tempParams.add("tz", params.remove("tz"));
-        tempParams.add("hour", params.remove("hour"));
-        tempParams.add("dow", params.remove("dow"));
-        tempParams.add("rr", params.remove("rr"));
-
-        if (params.has("av")) {
-            tempParams.add("av", params.remove("av"));
-        }
-        //if no user details, add empty user details to indicate that we are sending a picture
-        if (!params.has("user_details")) {
-            tempParams.add("user_details", "{}");
-        } else {
-            tempParams.add("user_details", params.remove("user_details"));
-        }
-
-        return path + tempParams;
     }
 }
