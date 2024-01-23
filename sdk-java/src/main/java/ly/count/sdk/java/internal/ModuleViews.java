@@ -26,6 +26,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
     //interface for SDK users
     Views viewsInterface;
     IdGenerator idGenerator;
+    Map<String, Object> globalViewSegmentation = new ConcurrentHashMap<>();//automatic view segmentation
 
     static class ViewData {
         String viewID;
@@ -44,6 +45,8 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
         L.v("[ModuleViews] Initializing");
         viewsInterface = new Views();
 
+        setGlobalViewSegmentationInternal(config.views.globalViewSegmentation);
+
         idGenerator = config.viewIdGenerator;
         config.viewIdProvider = this;
     }
@@ -59,6 +62,10 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
     public void stop(InternalConfig config, boolean clear) {
         viewsInterface = null;
         viewDataMap.clear();
+        if (globalViewSegmentation != null) {
+            globalViewSegmentation.clear();
+            globalViewSegmentation = null;
+        }
     }
 
     private void removeReservedKeysFromViewSegmentation(Map<String, Object> segmentation) {
@@ -72,6 +79,29 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
                 L.w("[ModuleViews] removeReservedKeysAndUnsupportedTypesFromViewSegmentation, You cannot use the key:[" + key + "] in your segmentation since it's reserved by the SDK");
             }
         }
+    }
+
+    /**
+     * Checks the provided Segmentation by the user. Sanitizes it
+     * and transfers the data into an internal Segmentation Object.
+     */
+    void setGlobalViewSegmentationInternal(@Nullable Map<String, Object> segmentation) {
+        L.d("[ModuleViews] setGlobalViewSegmentationInternal, with[" + (segmentation == null ? "null" : segmentation.size()) + "] entries");
+
+        globalViewSegmentation.clear();
+
+        if (segmentation != null) {
+            removeReservedKeysFromViewSegmentation(segmentation);
+            ModuleEvents.removeInvalidDataFromSegments(segmentation);
+            globalViewSegmentation.putAll(segmentation);
+        }
+    }
+
+    public void updateGlobalViewSegmentationInternal(@Nonnull Map<String, Object> segmentation) {
+        removeReservedKeysFromViewSegmentation(segmentation);
+        ModuleEvents.removeInvalidDataFromSegments(segmentation);
+
+        globalViewSegmentation.putAll(segmentation);
     }
 
     /**
@@ -96,6 +126,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
             viewSegmentation.putAll(customViewSegmentation);
         }
         viewSegmentation.putAll(vd.viewSegmentation);
+        viewSegmentation.putAll(globalViewSegmentation);
 
         return viewSegmentation;
     }
@@ -503,6 +534,37 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling addSegmentationToViewWithID vi[" + viewId + "] sg[" + viewSegmentation + "]");
                 addSegmentationToViewWithIDInternal(viewId, viewSegmentation);
+            }
+        }
+
+        /**
+         * Set a segmentation to be recorded with all views
+         *
+         * @param segmentation Map<String, Object> - global view segmentation
+         */
+        public void setGlobalViewSegmentation(@Nullable Map<String, Object> segmentation) {
+            synchronized (Countly.instance()) {
+                L.i("[Views] Calling setGlobalViewSegmentation sg[" + (segmentation == null ? null : segmentation.size()) + "]");
+
+                setGlobalViewSegmentationInternal(segmentation);
+            }
+        }
+
+        /**
+         * Updates the global segmentation for views
+         *
+         * @param segmentation Map<String, Object> - global view segmentation
+         */
+        public void updateGlobalViewSegmentation(@Nullable Map<String, Object> segmentation) {
+            synchronized (Countly.instance()) {
+                L.i("[Views] Calling updateGlobalViewSegmentation sg[" + (segmentation == null ? null : segmentation.size()) + "]");
+
+                if (segmentation == null) {
+                    L.w("[View] When updating segmentation values, they can't be 'null'.");
+                    return;
+                }
+
+                updateGlobalViewSegmentationInternal(segmentation);
             }
         }
     }
