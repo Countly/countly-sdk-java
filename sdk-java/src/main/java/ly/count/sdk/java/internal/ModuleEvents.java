@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.Session;
+import ly.count.sdk.java.View;
 
 public class ModuleEvents extends ModuleBase {
     protected EventQueue eventQueue = null;
@@ -95,7 +96,7 @@ public class ModuleEvents extends ModuleBase {
         ModuleRequests.pushAsync(internalConfig, request);
     }
 
-    protected static void removeInvalidDataFromSegments(Map<String, Object> segments) {
+    protected static void removeInvalidDataFromSegments(Map<String, Object> segments, Log L) {
 
         if (segments == null || segments.isEmpty()) {
             return;
@@ -125,7 +126,7 @@ public class ModuleEvents extends ModuleBase {
 
         L.d("[ModuleEvents] recordEventInternal, Recording event with key: [" + key + "] and provided event ID of:[" + eventIdOverride + "] and segmentation with:[" + (segmentation == null ? "null" : segmentation.size()) + "] keys");
 
-        removeInvalidDataFromSegments(segmentation);
+        removeInvalidDataFromSegments(segmentation, L);
 
         String eventId, pvid = null, cvid = null;
         if (Utils.isEmptyOrNull(eventIdOverride)) {

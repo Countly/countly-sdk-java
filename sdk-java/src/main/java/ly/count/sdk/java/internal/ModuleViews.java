@@ -92,14 +92,14 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
 
         if (segmentation != null) {
             removeReservedKeysFromViewSegmentation(segmentation);
-            ModuleEvents.removeInvalidDataFromSegments(segmentation);
+            ModuleEvents.removeInvalidDataFromSegments(segmentation, L);
             globalViewSegmentation.putAll(segmentation);
         }
     }
 
     public void updateGlobalViewSegmentationInternal(@Nonnull Map<String, Object> segmentation) {
         removeReservedKeysFromViewSegmentation(segmentation);
-        ModuleEvents.removeInvalidDataFromSegments(segmentation);
+        ModuleEvents.removeInvalidDataFromSegments(segmentation, L);
 
         globalViewSegmentation.putAll(segmentation);
     }
