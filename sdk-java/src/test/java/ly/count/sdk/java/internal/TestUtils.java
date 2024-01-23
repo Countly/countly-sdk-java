@@ -653,4 +653,11 @@ public class TestUtils {
         config.viewIdGenerator = TestUtils.incrementalViewIdGenerator();
         return config;
     }
+
+    static InternalConfig getConfigViews(Map<String, Object> segmentation) {
+        InternalConfig config = new InternalConfig(TestUtils.getBaseConfig().enableFeatures(Config.Feature.Views, Config.Feature.Events));
+        config.viewIdGenerator = TestUtils.incrementalViewIdGenerator();
+        config.views.setGlobalViewSegmentation(segmentation);
+        return config;
+    }
 }

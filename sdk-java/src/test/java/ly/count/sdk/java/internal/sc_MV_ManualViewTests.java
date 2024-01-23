@@ -11,7 +11,6 @@ import org.junit.runners.JUnit4;
 /**
  * Tests for manual view tracking
  * Notes:
- * - setGlobalViewSegmentation, updateGlobalViewSegmentation are not exists in the Java SDK
  * - legacy call recordView is view() call in the Java SDK
  */
 @RunWith(JUnit4.class)
@@ -68,6 +67,10 @@ public class sc_MV_ManualViewTests {
         // addSegmentationToViewWithID, addSegmentationToViewWithName
         Countly.instance().views().addSegmentationToViewWithID(null, TestUtils.map());
         Countly.instance().views().addSegmentationToViewWithName(null, TestUtils.map());
+
+        // setGlobalViewSegmentation, updateGlobalViewSegmentation
+        Countly.instance().views().setGlobalViewSegmentation(null);
+        Countly.instance().views().updateGlobalViewSegmentation(null);
 
         TestUtils.validateEQSize(0);
         Assert.assertEquals(0, TestUtils.getCurrentRQ().length);

@@ -472,7 +472,7 @@ public class ModuleViewsTests {
 
     /**
      * <pre>
-     * Add segmentation to view
+     * Add segmentation to view with init given global segmentation
      *
      * - start view A with none segmentation
      * - Add segmentation to view A
@@ -483,15 +483,15 @@ public class ModuleViewsTests {
      */
     @Test
     public void addSegmentationToView() {
-        Countly.instance().init(TestUtils.getConfigViews());
+        Countly.instance().init(TestUtils.getConfigViews(TestUtils.map("glob", "al")));
         TestUtils.validateEQSize(0);
         String viewIDA = Countly.instance().views().startView("A");
-        validateView("A", 0.0, 0, 1, true, true, null, "idv1", "");
+        validateView("A", 0.0, 0, 1, true, true, TestUtils.map("glob", "al"), "idv1", "");
         Countly.instance().views().addSegmentationToViewWithName("A", TestUtils.map("a", 1, "b", 2));
         Countly.instance().views().pauseViewWithID(viewIDA);
-        validateView("A", 0.0, 1, 2, false, false, TestUtils.map("a", 1, "b", 2), "idv1", "");
+        validateView("A", 0.0, 1, 2, false, false, TestUtils.map("a", 1, "b", 2, "glob", "al"), "idv1", "");
         Countly.instance().views().stopViewWithID(viewIDA);
-        validateView("A", 0.0, 2, 3, false, false, TestUtils.map("a", 1, "b", 2), "idv1", "");
+        validateView("A", 0.0, 2, 3, false, false, TestUtils.map("a", 1, "b", 2, "glob", "al"), "idv1", "");
     }
 
     /**
