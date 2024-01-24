@@ -227,44 +227,309 @@ public class sc_MV_ManualViewTests {
     }
 
     /**
-     * Make sure all the basic functions are working correctly and we are keeping time correctly
-     * Steps:
-     * ------------
-     * start view A (sE_A)
-     * start view B (sE_B)
+     * without the deprecated "recordViewCall" After every action, the EQ should be validated so make sure that the correct event is recorded
+     * ----------
+     * startAutoStoppedView view A (sE_A id=idv1 pvid="" segm={visit="1" start="1"})
      * wait 1 sec
-     * pause view A (eE_A_1)
+     * startAutoStoppedView view B (eE_A d=1 id=idv1 pvid="", segm={}) (sE_B id=idv2 pvid=idv1 segm={visit="1"})
      * wait 1 sec
-     * resume view A
-     * stop view with stopViewWithName/stopViewWithID/stopAllViews (eE_1, eE_2)
-     * Stop view B if needed
+     * start view C (eE_B d=1 id=idv2 pvid=idv1, segm={}) (sE_C id=idv3 pvid=idv2 segm={visit="1"})
+     * stopAllViews (eE_X d=0 id=idv3 pvid=idv2, segm={})
      */
     @Test
-    public void MV_201_simpleFlowMultipleViews() throws InterruptedException {
-        Countly.instance().init(TestUtils.getConfigViews());
+    public void MV_200B_autoStoppedView_autoClose() throws InterruptedException {
+        Countly.instance().init(TestUtils.getConfigViews().setEventQueueSizeToSend(20));
         TestUtils.validateEQSize(0);
 
-        Countly.instance().views().startView("A", TestUtils.map("a", 1));
-        TestUtils.validateEQSize(1);
-
-        Countly.instance().views().startView("B", TestUtils.map("b", 2));
-        TestUtils.validateEQSize(2);
-
+        Countly.instance().views().startAutoStoppedView("A");
         Thread.sleep(1000);
+        ModuleViewsTests.validateView("A", 0.0, 0, 1, true, true, null, "idv1", "");
+
+        Countly.instance().views().startAutoStoppedView("B");
+        Thread.sleep(1000);
+        ModuleViewsTests.validateView("A", 1.0, 1, 3, false, false, null, "idv1", "");
+        ModuleViewsTests.validateView("B", 0.0, 2, 3, false, true, null, "idv2", "idv1");
+
+        Countly.instance().views().startView("C", TestUtils.map("a", 1));
+        Thread.sleep(1000);
+        ModuleViewsTests.validateView("B", 1.0, 3, 5, false, false, null, "idv2", "idv1");
+        ModuleViewsTests.validateView("C", 0.0, 4, 5, false, true, TestUtils.map("a", 1), "idv3", "idv2");
+
+        Countly.instance().views().stopAllViews(null);
+        ModuleViewsTests.validateView("C", 1.0, 5, 6, false, false, null, "idv3", "idv2");
+    }
+
+    /**
+     * Steps:
+     * ----------
+     * start view A
+     * startAutoStoppedView B
+     * wait 1 sec
+     * pause view B
+     * wait 1 sec
+     * resume view B
+     * wait 1 sec
+     * RecordView C
+     * wait 1 sec
+     * pause view C
+     * wait 1 sec
+     * resume view C
+     * stopAllViews
+     * should record 8 events
+     */
+    @Test
+    public void MV_201A_autoStopped_pausedResumed_Legacy() throws InterruptedException {
+        Countly.instance().init(TestUtils.getConfigViews().setEventQueueSizeToSend(20));
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().startView("A");
+        ModuleViewsTests.validateView("A", 0.0, 0, 1, true, true, null, "idv1", "");
+
+        Countly.instance().views().startAutoStoppedView("B");
+        Thread.sleep(1000);
+        ModuleViewsTests.validateView("B", 0.0, 1, 2, false, true, null, "idv2", "idv1");
+
+        Countly.instance().views().pauseViewWithID("idv2");
+        Thread.sleep(1000);
+        ModuleViewsTests.validateView("B", 1.0, 2, 3, false, false, null, "idv2", "idv1");
+
+        Countly.instance().views().resumeViewWithID("idv2");
+        Thread.sleep(1000);
+
+        Countly.instance().view("C");
+        Thread.sleep(1000);
+        ModuleViewsTests.validateView("B", 1.0, 3, 5, false, false, null, "idv2", "idv1");
+        ModuleViewsTests.validateView("C", 0.0, 4, 5, false, true, null, "idv3", "idv2");
+
+        Countly.instance().views().pauseViewWithID("idv3");
+        Thread.sleep(1000);
+        ModuleViewsTests.validateView("C", 1.0, 5, 6, false, false, null, "idv3", "idv2");
+
+        Countly.instance().views().resumeViewWithID("idv3");
+
+        Countly.instance().views().stopAllViews(null);
+        ModuleViewsTests.validateView("A", 5.0, 6, 8, false, false, null, "idv1", "idv2");
+        ModuleViewsTests.validateView("C", 0.0, 7, 8, false, false, null, "idv3", "idv2");
+    }
+
+    /**
+     * Steps:
+     * ----------
+     * start view A
+     * start startAutoStoppedView B
+     * wait 1 sec
+     * pause view B
+     * wait 1 sec
+     * resume view B
+     * stopAllViews
+     * should record 5 events
+     */
+    @Test
+    public void MV_201B_autoStopped_pausedResumed() throws InterruptedException {
+        Countly.instance().init(TestUtils.getConfigViews().setEventQueueSizeToSend(20));
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().startView("A");
+        ModuleViewsTests.validateView("A", 0.0, 0, 1, true, true, null, "idv1", "");
+
+        Countly.instance().views().startAutoStoppedView("B");
+        Thread.sleep(1000);
+        ModuleViewsTests.validateView("B", 0.0, 1, 2, false, true, null, "idv2", "idv1");
+
+        Countly.instance().views().pauseViewWithID("idv2");
+        Thread.sleep(1000);
+        ModuleViewsTests.validateView("B", 1.0, 2, 3, false, false, null, "idv2", "idv1");
+
+        Countly.instance().views().resumeViewWithID("idv2");
+        Thread.sleep(1000);
+
+        Countly.instance().views().stopAllViews(null);
+        ModuleViewsTests.validateView("A", 3.0, 3, 5, false, false, null, "idv1", "idv1");
+        ModuleViewsTests.validateView("B", 1.0, 4, 5, false, false, null, "idv2", "idv1");
+    }
+
+    /**
+     * Steps:
+     * ----------
+     * startAutoStoppedView A
+     * wait 1 sec
+     * stop by name
+     * startAutoStoppedView B
+     * wait 1 sec
+     * stop by ID
+     * startAutoStoppedView C
+     * wait 1 sec
+     * stopAllViews
+     * record view D
+     * wait 1 sec
+     * stop by name
+     * record view E
+     * wait 1 sec
+     * stop by ID
+     * record view F
+     * wait 1 sec
+     * stopAllViews
+     * should record 12 events
+     */
+    @Test
+    public void MV_202A_autoStopped_stopped_legacy() throws InterruptedException {
+        Countly.instance().init(TestUtils.getConfigViews().setEventQueueSizeToSend(20));
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().startAutoStoppedView("A");
+        Thread.sleep(1000);
+        ModuleViewsTests.validateView("A", 0.0, 0, 1, true, true, null, "idv1", "");
+
+        Countly.instance().views().stopViewWithName("A");
+        ModuleViewsTests.validateView("A", 1.0, 1, 2, false, false, null, "idv1", "");
+
+        Countly.instance().views().startAutoStoppedView("B");
+        Thread.sleep(1000);
+        ModuleViewsTests.validateView("B", 0.0, 2, 3, false, true, null, "idv2", "idv1");
+
+        Countly.instance().views().stopViewWithID("idv2");
+        ModuleViewsTests.validateView("B", 1.0, 3, 4, false, false, null, "idv2", "idv1");
+
+        Countly.instance().views().startAutoStoppedView("C");
+        Thread.sleep(1000);
+        ModuleViewsTests.validateView("C", 0.0, 4, 5, false, true, null, "idv3", "idv2");
+
+        Countly.instance().views().stopAllViews(null);
+        ModuleViewsTests.validateView("C", 1.0, 5, 6, false, false, null, "idv3", "idv2");
+
+        Countly.instance().view("D");
+        Thread.sleep(1000);
+        ModuleViewsTests.validateView("D", 0.0, 6, 7, false, true, null, "idv4", "idv3");
+
+        Countly.instance().views().stopViewWithName("D");
+        ModuleViewsTests.validateView("D", 1.0, 7, 8, false, false, null, "idv4", "idv3");
+
+        Countly.instance().view("E");
+        Thread.sleep(1000);
+        ModuleViewsTests.validateView("E", 0.0, 8, 9, false, true, null, "idv5", "idv4");
+
+        Countly.instance().views().stopViewWithID("idv5");
+        ModuleViewsTests.validateView("E", 1.0, 9, 10, false, false, null, "idv5", "idv4");
+
+        Countly.instance().view("F");
+        Thread.sleep(1000);
+        ModuleViewsTests.validateView("F", 0.0, 10, 11, false, true, null, "idv6", "idv5");
+
+        Countly.instance().views().stopAllViews(null);
+        ModuleViewsTests.validateView("F", 1.0, 11, 12, false, false, null, "idv6", "idv5");
+    }
+
+    /**
+     * Steps:
+     * ----------
+     * startAutoStoppedView A
+     * wait 1 sec
+     * stop by name
+     * startAutoStoppedView B
+     * wait 1 sec
+     * stop by ID
+     * startAutoStoppedView C
+     * wait 1 sec
+     * stopAllViews
+     * should record 6 events
+     */
+    @Test
+    public void MV_202B_autoStopped_stopped() throws InterruptedException {
+        Countly.instance().init(TestUtils.getConfigViews().setEventQueueSizeToSend(20));
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().startAutoStoppedView("A");
+        Thread.sleep(1000);
+        ModuleViewsTests.validateView("A", 0.0, 0, 1, true, true, null, "idv1", "");
+
+        Countly.instance().views().stopViewWithName("A");
+        ModuleViewsTests.validateView("A", 1.0, 1, 2, false, false, null, "idv1", "");
+
+        Countly.instance().views().startAutoStoppedView("B");
+        Thread.sleep(1000);
+        ModuleViewsTests.validateView("B", 0.0, 2, 3, false, true, null, "idv2", "idv1");
+
+        Countly.instance().views().stopViewWithID("idv2");
+        ModuleViewsTests.validateView("B", 1.0, 3, 4, false, false, null, "idv2", "idv1");
+
+        Countly.instance().views().startAutoStoppedView("C");
+        Thread.sleep(1000);
+        ModuleViewsTests.validateView("C", 0.0, 4, 5, false, true, null, "idv3", "idv2");
+
+        Countly.instance().views().stopAllViews(null);
+        ModuleViewsTests.validateView("C", 1.0, 5, 6, false, false, null, "idv3", "idv2");
+    }
+
+    /**
+     * Steps:
+     * ----------
+     * start view A
+     * wait 1 sec
+     * pause view A
+     * wait 1 sec
+     * resume view A
+     * wait 1 sec
+     * stopAllViews
+     * 3 events
+     */
+    @Test
+    public void MV_203_startView_PausedResumed() throws InterruptedException {
+        Countly.instance().init(TestUtils.getConfigViews().setEventQueueSizeToSend(20));
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().startView("A");
+        Thread.sleep(1000);
+        ModuleViewsTests.validateView("A", 0.0, 0, 1, true, true, null, "idv1", "");
 
         Countly.instance().views().pauseViewWithID("idv1");
-
         Thread.sleep(1000);
+        ModuleViewsTests.validateView("A", 1.0, 1, 2, false, false, null, "idv1", "");
 
         Countly.instance().views().resumeViewWithID("idv1");
-        TestUtils.validateEQSize(3);
-        Countly.instance().views().stopAllViews(null);
-        TestUtils.validateEQSize(5);
+        Thread.sleep(1000);
 
-        ModuleViewsTests.validateView("A", 0.0, 0, 5, true, true, TestUtils.map("a", 1), "idv1", "");
-        ModuleViewsTests.validateView("B", 0.0, 1, 5, false, true, TestUtils.map("b", 2), "idv2", "idv1");
-        ModuleViewsTests.validateView("A", 1.0, 2, 5, false, false, null, "idv1", "idv1");
-        ModuleViewsTests.validateView("A", 0.0, 3, 5, false, false, null, "idv1", "idv1");
-        ModuleViewsTests.validateView("B", 2.0, 4, 5, false, false, null, "idv2", "idv1");
+        Countly.instance().views().stopAllViews(null);
+        ModuleViewsTests.validateView("A", 1.0, 2, 3, false, false, null, "idv1", "");
+    }
+
+    /**
+     * Steps:
+     * ----------
+     * start view A
+     * wait 1 sec
+     * stop by name
+     * start view B
+     * wait 1 sec
+     * stop by ID
+     * start view c
+     * wait 1 sec
+     * stopAllViews
+     * should record 6 events
+     */
+    @Test
+    public void MV_203_startView_stopped() throws InterruptedException {
+        Countly.instance().init(TestUtils.getConfigViews().setEventQueueSizeToSend(20));
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().startView("A");
+        Thread.sleep(1000);
+        ModuleViewsTests.validateView("A", 0.0, 0, 1, true, true, null, "idv1", "");
+
+        Countly.instance().views().stopViewWithName("A");
+        ModuleViewsTests.validateView("A", 1.0, 1, 2, false, false, null, "idv1", "");
+
+        Countly.instance().views().startView("B");
+        Thread.sleep(1000);
+        ModuleViewsTests.validateView("B", 0.0, 2, 3, false, true, null, "idv2", "idv1");
+
+        Countly.instance().views().stopViewWithID("idv2");
+        ModuleViewsTests.validateView("B", 1.0, 3, 4, false, false, null, "idv2", "idv1");
+
+        Countly.instance().views().startView("C");
+        Thread.sleep(1000);
+        ModuleViewsTests.validateView("C", 0.0, 4, 5, false, true, null, "idv3", "idv2");
+
+        Countly.instance().views().stopAllViews(null);
+        ModuleViewsTests.validateView("C", 1.0, 5, 6, false, false, null, "idv3", "idv2");
     }
 }
