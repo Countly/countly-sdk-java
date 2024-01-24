@@ -601,6 +601,18 @@ public class ModuleViewsTests {
         validateView("C", 0.0, 3, 4, false, true, null, "idv3", "idv2");
     }
 
+    /**
+     * "setGlobalSegmentation" flow
+     * - set global segmentation to different one that has all accepted data types and an invalid data type in init
+     * - start view A
+     * - sleep for 1 sec
+     * - pause view A
+     * - start view B that has new segmentation
+     * - sleep for 1 sec
+     * - stop all views with segmentation
+     * ------
+     * Validate that all events are created and segmentation is correct, and init given segmentation should exist in all events
+     */
     @Test
     public void setGlobalSegmentation_initGiven() throws InterruptedException {
         Countly.instance().init(TestUtils.getConfigViews(TestUtils.map("glob", "al", "int", Integer.MAX_VALUE, "float", BigDecimal.valueOf(Float.MAX_VALUE), "bool", true, "arr", new ArrayList<>(), "double", Double.MAX_VALUE, "long", Long.MAX_VALUE)));
@@ -620,6 +632,19 @@ public class ModuleViewsTests {
         validateView("B", 1.0, 4, 5, false, false, TestUtils.map(clearedSegmentation, "e", 5, "f", 6), "idv2", "idv1");
     }
 
+    /**
+     * "setGlobalSegmentation" flow
+     * - init countly with global segmentation
+     * - start view A that overrides one of the global segmentation
+     * - set global segmentation to different one that has all accepted data types and an invalid data type
+     * - sleep for 1 sec
+     * - pause view A
+     * - start view B that has new segmentation
+     * - sleep for 1 sec
+     * - stop all views with segmentation
+     * ------
+     * Validate that all events are created and segmentation is correct, and things should be overridden correctly
+     */
     @Test
     public void setGlobalSegmentation() throws InterruptedException {
         Countly.instance().init(TestUtils.getConfigViews(TestUtils.map("ab", 5, "a", 5)));
@@ -640,6 +665,20 @@ public class ModuleViewsTests {
         validateView("B", 1.0, 4, 5, false, false, TestUtils.map(clearedSegmentation, "e", 5, "f", 6), "idv2", "idv1");
     }
 
+    /**
+     * "updateGlobalViewSegmentation" flow
+     * - init countly with global segmentation
+     * - start view A that overrides one of the global segmentation
+     * - set global segmentation to different one that has all accepted data types and an invalid data type
+     * - sleep for 1 sec
+     * - pause view A
+     * - update global segmentation with new values and override one of the old values
+     * - start view B that has new segmentation
+     * - sleep for 1 sec
+     * - stop all views with segmentation
+     * ------
+     * Validate that all events are created and segmentation is correct, and things should be overridden correctly
+     */
     @Test
     public void updateGlobalSegmentation() throws InterruptedException {
         Countly.instance().init(TestUtils.getConfigViews(TestUtils.map("ab", 5, "a", 5)));
@@ -663,6 +702,11 @@ public class ModuleViewsTests {
         validateView("B", 1.0, 4, 5, false, false, TestUtils.map(clearedSegmentation, "e", 5, "f", 6), "idv2", "idv1");
     }
 
+    /**
+     * "setGlobalViewSegmentation" init empty null
+     * should not override global segmentation with empty map given
+     * Global segmentation should stay as it is
+     */
     @Test
     public void setGlobalSegmentation_initGiven_empty() {
         Countly.instance().init(TestUtils.getConfigViews(TestUtils.map()));
@@ -672,6 +716,11 @@ public class ModuleViewsTests {
         validateView("A", 0.0, 0, 1, true, true, TestUtils.map("a", 1, "b", 2), "idv1", "");
     }
 
+    /**
+     * "setGlobalViewSegmentation" init given null
+     * should not override global segmentation with null map given
+     * Global segmentation should stay as it is
+     */
     @Test
     public void setGlobalSegmentation_initGiven_null() {
         Countly.instance().init(TestUtils.getConfigViews(null));
@@ -681,6 +730,11 @@ public class ModuleViewsTests {
         validateView("A", 0.0, 0, 1, true, true, TestUtils.map("a", 1, "b", 2), "idv1", "");
     }
 
+    /**
+     * "setGlobalViewSegmentation"
+     * should not override global segmentation with empty map given
+     * Global segmentation should stay as it is
+     */
     @Test
     public void setGlobalSegmentation_empty() {
         Countly.instance().init(TestUtils.getConfigViews());
@@ -692,6 +746,11 @@ public class ModuleViewsTests {
         validateView("A", 0.0, 0, 1, true, true, TestUtils.map("a", 1, "b", 2), "idv1", "");
     }
 
+    /**
+     * "setGlobalViewSegmentation"
+     * should not override global segmentation with null map given
+     * Global segmentation should stay as it is
+     */
     @Test
     public void setGlobalSegmentation_null() {
         Countly.instance().init(TestUtils.getConfigViews());
@@ -703,6 +762,11 @@ public class ModuleViewsTests {
         validateView("A", 0.0, 0, 1, true, true, TestUtils.map("a", 1, "b", 2), "idv1", "");
     }
 
+    /**
+     * "updateGlobalSegmentation"
+     * should not override global segmentation with empty map given
+     * Global segmentation should stay as it is
+     */
     @Test
     public void updateGlobalSegmentation_empty() {
         Countly.instance().init(TestUtils.getConfigViews(TestUtils.map("glob", "all")));
@@ -714,6 +778,11 @@ public class ModuleViewsTests {
         validateView("A", 0.0, 0, 1, true, true, TestUtils.map("glob", "all", "a", 1, "b", 2), "idv1", "");
     }
 
+    /**
+     * "updateGlobalSegmentation"
+     * should not override global segmentation with null given
+     * Global segmentation should stay as it is
+     */
     @Test
     public void updateGlobalSegmentation_null() {
         Countly.instance().init(TestUtils.getConfigViews(TestUtils.map("glob", "all")));
@@ -723,6 +792,53 @@ public class ModuleViewsTests {
         Countly.instance().views().startView("A", TestUtils.map("a", 1, "b", 2));
 
         validateView("A", 0.0, 0, 1, true, true, TestUtils.map("glob", "all", "a", 1, "b", 2), "idv1", "");
+    }
+
+    /**
+     * We make sure that "setGlobalSegmentation" and "updateGlobalSegmentation" updates/sets global segmentation
+     * ------
+     * initialize countly with init given global segmentation that includes all accepted data types and couple of incorrect ones (like arr=list())
+     * start view A with segmentation that overrides one of the global segmentations
+     * validate start view event is recorded for A with correct segmentation
+     * setGlobalViewSegmentation with all accepted data types and couple of not accepted data types
+     * sleep for 1 second
+     * pause view A
+     * validate pause view event, and setGlobalViewSegmentation values are exists
+     * call updateGlobalViewSegmentation that overrides some of the globalSegmentation and also add couple of incorrect data types
+     * start view B with segment that overrides couple of not overridden global segmentation values
+     * validate start view event for B is recorded and global segmentation values are overwridden and incorrect data types removed
+     * sleep for 1 second
+     * stopAllViews with segmentation that has incorrect data types, 1 global segm override and new segm values
+     * validate 2 stop view event is recorded in order of A,B and correct segm values are existed
+     * ------
+     *
+     * @throws InterruptedException for wait
+     */
+    @Test
+    public void updateGlobalSegmentation_flow() throws InterruptedException {
+        Countly.instance().init(TestUtils.getConfigViews(TestUtils.map("glob", "al", "int", Integer.MAX_VALUE, "float", BigDecimal.valueOf(Float.MAX_VALUE), "bool", true, "double", BigDecimal.valueOf(Double.MAX_VALUE), "long", Long.MAX_VALUE, "arr", new ArrayList<>(), "map", TestUtils.map())));
+
+        Map<String, Object> clearedSegmentation = TestUtils.map("glob", "al", "int", Integer.MAX_VALUE, "float", BigDecimal.valueOf(Float.MAX_VALUE), "bool", true, "double", BigDecimal.valueOf(Double.MAX_VALUE), "long", Long.MAX_VALUE);
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().startView("A", TestUtils.map("glob", "no"));
+        validateView("A", 0.0, 0, 1, true, true, TestUtils.map(clearedSegmentation, "glob", "no"), "idv1", "");
+
+        Countly.instance().views().setGlobalViewSegmentation(TestUtils.map("glob", "al", "int", Integer.MAX_VALUE, "float", BigDecimal.valueOf(Float.MAX_VALUE), "bool", true, "arr", new ArrayList<>(), "double", Double.MAX_VALUE, "long", Long.MAX_VALUE));
+        Thread.sleep(1000);
+
+        Countly.instance().views().pauseViewWithID("idv1");
+        validateView("A", 1.0, 1, 2, false, false, clearedSegmentation, "idv1", "");
+
+        Countly.instance().views().updateGlobalViewSegmentation(TestUtils.map("int", Integer.MIN_VALUE, "arr", new ArrayList<>(), "all", "glob"));
+
+        Countly.instance().views().startView("B", TestUtils.map("float", BigDecimal.valueOf(Float.MIN_VALUE), "in", "case"));
+        validateView("B", 0.0, 2, 3, false, true, TestUtils.map(clearedSegmentation, "all", "glob", "int", Integer.MIN_VALUE, "float", BigDecimal.valueOf(Float.MIN_VALUE), "in", "case"), "idv2", "idv1");
+
+        Thread.sleep(1000);
+        Countly.instance().views().stopAllViews(TestUtils.map("bool", false));
+        validateView("A", 0.0, 3, 5, false, false, TestUtils.map(clearedSegmentation, "all", "glob", "int", Integer.MIN_VALUE, "bool", false), "idv1", "idv1");
+        validateView("B", 1.0, 4, 5, false, false, TestUtils.map(clearedSegmentation, "all", "glob", "int", Integer.MIN_VALUE, "bool", false), "idv2", "idv1");
     }
 
     static void validateView(String viewName, Double viewDuration, int idx, int size, boolean start, boolean visit, Map<String, Object> customSegmentation, String id, String pvid) {
