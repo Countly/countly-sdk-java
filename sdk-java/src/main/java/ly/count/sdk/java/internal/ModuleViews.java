@@ -113,6 +113,12 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
 
     Map<String, Object> createViewEventSegmentation(@Nonnull ViewData vd, boolean firstView, boolean visit, Map<String, Object> customViewSegmentation) {
         Map<String, Object> viewSegmentation = new ConcurrentHashMap<>();
+        viewSegmentation.putAll(globalViewSegmentation);
+        viewSegmentation.putAll(vd.viewSegmentation);
+
+        if (customViewSegmentation != null) {
+            viewSegmentation.putAll(customViewSegmentation);
+        }
 
         viewSegmentation.put(KEY_NAME, vd.viewName);
         if (visit) {
@@ -121,13 +127,8 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
         if (firstView) {
             viewSegmentation.put(KEY_START, KEY_START_VALUE);
         }
+        
         viewSegmentation.put(KEY_SEGMENT, internalConfig.getSdkPlatform());
-        if (customViewSegmentation != null) {
-            viewSegmentation.putAll(customViewSegmentation);
-        }
-        viewSegmentation.putAll(vd.viewSegmentation);
-        viewSegmentation.putAll(globalViewSegmentation);
-
         return viewSegmentation;
     }
 

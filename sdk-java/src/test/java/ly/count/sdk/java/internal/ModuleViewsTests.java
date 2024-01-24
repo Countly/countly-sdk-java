@@ -601,6 +601,130 @@ public class ModuleViewsTests {
         validateView("C", 0.0, 3, 4, false, true, null, "idv3", "idv2");
     }
 
+    @Test
+    public void setGlobalSegmentation_initGiven() throws InterruptedException {
+        Countly.instance().init(TestUtils.getConfigViews(TestUtils.map("glob", "al", "int", Integer.MAX_VALUE, "float", BigDecimal.valueOf(Float.MAX_VALUE), "bool", true, "arr", new ArrayList<>(), "double", Double.MAX_VALUE, "long", Long.MAX_VALUE)));
+        Map<String, Object> clearedSegmentation = TestUtils.map("glob", "al", "int", Integer.MAX_VALUE, "float", BigDecimal.valueOf(Float.MAX_VALUE), "bool", true, "double", BigDecimal.valueOf(Double.MAX_VALUE), "long", Long.MAX_VALUE);
+        TestUtils.validateEQSize(0);
+        Countly.instance().views().startView("A", TestUtils.map("a", 1, "b", 2));
+        Thread.sleep(1000);
+        Countly.instance().views().pauseViewWithID("idv1");
+        Countly.instance().views().startView("B", TestUtils.map("c", 3, "d", 4));
+        Thread.sleep(1000);
+        Countly.instance().views().stopAllViews(TestUtils.map("e", 5, "f", 6));
+
+        validateView("A", 0.0, 0, 5, true, true, TestUtils.map(clearedSegmentation, "a", 1, "b", 2), "idv1", "");
+        validateView("A", 1.0, 1, 5, false, false, clearedSegmentation, "idv1", "");
+        validateView("B", 0.0, 2, 5, false, true, TestUtils.map(clearedSegmentation, "c", 3, "d", 4), "idv2", "idv1");
+        validateView("A", 0.0, 3, 5, false, false, TestUtils.map(clearedSegmentation, "e", 5, "f", 6), "idv1", "idv1");
+        validateView("B", 1.0, 4, 5, false, false, TestUtils.map(clearedSegmentation, "e", 5, "f", 6), "idv2", "idv1");
+    }
+
+    @Test
+    public void setGlobalSegmentation() throws InterruptedException {
+        Countly.instance().init(TestUtils.getConfigViews(TestUtils.map("ab", 5, "a", 5)));
+        Map<String, Object> clearedSegmentation = TestUtils.map("glob", "al", "int", Integer.MAX_VALUE, "float", BigDecimal.valueOf(Float.MAX_VALUE), "bool", true, "double", BigDecimal.valueOf(Double.MAX_VALUE), "long", Long.MAX_VALUE);
+        TestUtils.validateEQSize(0);
+        Countly.instance().views().startView("A", TestUtils.map("a", 1, "b", 2));
+        Countly.instance().views().setGlobalViewSegmentation(TestUtils.map("glob", "al", "int", Integer.MAX_VALUE, "float", BigDecimal.valueOf(Float.MAX_VALUE), "bool", true, "arr", new ArrayList<>(), "double", Double.MAX_VALUE, "long", Long.MAX_VALUE));
+        Thread.sleep(1000);
+        Countly.instance().views().pauseViewWithID("idv1");
+        Countly.instance().views().startView("B", TestUtils.map("c", 3, "d", 4));
+        Thread.sleep(1000);
+        Countly.instance().views().stopAllViews(TestUtils.map("e", 5, "f", 6));
+
+        validateView("A", 0.0, 0, 5, true, true, TestUtils.map("ab", 5, "a", 1, "b", 2), "idv1", "");
+        validateView("A", 1.0, 1, 5, false, false, clearedSegmentation, "idv1", "");
+        validateView("B", 0.0, 2, 5, false, true, TestUtils.map(clearedSegmentation, "c", 3, "d", 4), "idv2", "idv1");
+        validateView("A", 0.0, 3, 5, false, false, TestUtils.map(clearedSegmentation, "e", 5, "f", 6), "idv1", "idv1");
+        validateView("B", 1.0, 4, 5, false, false, TestUtils.map(clearedSegmentation, "e", 5, "f", 6), "idv2", "idv1");
+    }
+
+    @Test
+    public void updateGlobalSegmentation() throws InterruptedException {
+        Countly.instance().init(TestUtils.getConfigViews(TestUtils.map("ab", 5, "a", 5)));
+        Map<String, Object> clearedSegmentation = TestUtils.map("glob", "al", "int", Integer.MAX_VALUE, "float", BigDecimal.valueOf(Float.MAX_VALUE), "bool", true, "double", BigDecimal.valueOf(Double.MAX_VALUE), "long", Long.MAX_VALUE);
+        TestUtils.validateEQSize(0);
+        Countly.instance().views().startView("A", TestUtils.map("a", 1, "b", 2));
+        Countly.instance().views().setGlobalViewSegmentation(TestUtils.map("glob", "al", "int", Integer.MAX_VALUE, "float", BigDecimal.valueOf(Float.MAX_VALUE), "bool", true, "arr", new ArrayList<>(), "double", Double.MAX_VALUE, "long", Long.MAX_VALUE));
+        Thread.sleep(1000);
+        Countly.instance().views().pauseViewWithID("idv1");
+        Countly.instance().views().updateGlobalViewSegmentation(TestUtils.map("int", Integer.MIN_VALUE, "all", "glob"));
+        Countly.instance().views().startView("B", TestUtils.map("c", 3, "d", 4));
+        Thread.sleep(1000);
+        Countly.instance().views().stopAllViews(TestUtils.map("e", 5, "f", 6));
+
+        validateView("A", 0.0, 0, 5, true, true, TestUtils.map("ab", 5, "a", 1, "b", 2), "idv1", "");
+        validateView("A", 1.0, 1, 5, false, false, clearedSegmentation, "idv1", "");
+        clearedSegmentation.put("int", Integer.MIN_VALUE);
+        clearedSegmentation.put("all", "glob");
+        validateView("B", 0.0, 2, 5, false, true, TestUtils.map(clearedSegmentation, "c", 3, "d", 4), "idv2", "idv1");
+        validateView("A", 0.0, 3, 5, false, false, TestUtils.map(clearedSegmentation, "e", 5, "f", 6), "idv1", "idv1");
+        validateView("B", 1.0, 4, 5, false, false, TestUtils.map(clearedSegmentation, "e", 5, "f", 6), "idv2", "idv1");
+    }
+
+    @Test
+    public void setGlobalSegmentation_initGiven_empty() {
+        Countly.instance().init(TestUtils.getConfigViews(TestUtils.map()));
+        TestUtils.validateEQSize(0);
+        Countly.instance().views().startView("A", TestUtils.map("a", 1, "b", 2));
+
+        validateView("A", 0.0, 0, 1, true, true, TestUtils.map("a", 1, "b", 2), "idv1", "");
+    }
+
+    @Test
+    public void setGlobalSegmentation_initGiven_null() {
+        Countly.instance().init(TestUtils.getConfigViews(null));
+        TestUtils.validateEQSize(0);
+        Countly.instance().views().startView("A", TestUtils.map("a", 1, "b", 2));
+
+        validateView("A", 0.0, 0, 1, true, true, TestUtils.map("a", 1, "b", 2), "idv1", "");
+    }
+
+    @Test
+    public void setGlobalSegmentation_empty() {
+        Countly.instance().init(TestUtils.getConfigViews());
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().setGlobalViewSegmentation(TestUtils.map());
+        Countly.instance().views().startView("A", TestUtils.map("a", 1, "b", 2));
+
+        validateView("A", 0.0, 0, 1, true, true, TestUtils.map("a", 1, "b", 2), "idv1", "");
+    }
+
+    @Test
+    public void setGlobalSegmentation_null() {
+        Countly.instance().init(TestUtils.getConfigViews());
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().setGlobalViewSegmentation(null);
+        Countly.instance().views().startView("A", TestUtils.map("a", 1, "b", 2));
+
+        validateView("A", 0.0, 0, 1, true, true, TestUtils.map("a", 1, "b", 2), "idv1", "");
+    }
+
+    @Test
+    public void updateGlobalSegmentation_empty() {
+        Countly.instance().init(TestUtils.getConfigViews(TestUtils.map("glob", "all")));
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().updateGlobalViewSegmentation(TestUtils.map());
+        Countly.instance().views().startView("A", TestUtils.map("a", 1, "b", 2));
+
+        validateView("A", 0.0, 0, 1, true, true, TestUtils.map("glob", "all", "a", 1, "b", 2), "idv1", "");
+    }
+
+    @Test
+    public void updateGlobalSegmentation_null() {
+        Countly.instance().init(TestUtils.getConfigViews(TestUtils.map("glob", "all")));
+        TestUtils.validateEQSize(0);
+
+        Countly.instance().views().updateGlobalViewSegmentation(null);
+        Countly.instance().views().startView("A", TestUtils.map("a", 1, "b", 2));
+
+        validateView("A", 0.0, 0, 1, true, true, TestUtils.map("glob", "all", "a", 1, "b", 2), "idv1", "");
+    }
+
     static void validateView(String viewName, Double viewDuration, int idx, int size, boolean start, boolean visit, Map<String, Object> customSegmentation, String id, String pvid) {
         Map<String, Object> viewSegmentation = TestUtils.map("name", viewName, "segment", TestUtils.getOS());
         if (start) {

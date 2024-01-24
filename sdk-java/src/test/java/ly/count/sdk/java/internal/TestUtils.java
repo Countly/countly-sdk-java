@@ -311,7 +311,14 @@ public class TestUtils {
 
     static void validateEvent(EventImpl gonnaValidate, String key, Map<String, Object> segmentation, int count, Double sum, Double duration, String id, String pvid, String cvid, String peid) {
         Assert.assertEquals(key, gonnaValidate.key);
-        Assert.assertEquals(segmentation, gonnaValidate.segmentation);
+
+        if (segmentation != null) {
+            Assert.assertEquals("Event segmentation size are not equal", segmentation.size(), gonnaValidate.segmentation.size());
+            for (Map.Entry<String, Object> entry : segmentation.entrySet()) {
+                Assert.assertEquals(entry.getValue(), gonnaValidate.segmentation.get(entry.getKey()));
+            }
+        }
+
         Assert.assertEquals(count, gonnaValidate.count);
         Assert.assertEquals(sum, gonnaValidate.sum);
 
