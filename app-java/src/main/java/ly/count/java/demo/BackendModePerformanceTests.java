@@ -10,8 +10,8 @@ import ly.count.sdk.java.internal.Device;
 
 public final class BackendModePerformanceTests {
     final static String DEVICE_ID = "device-id";
-    final static String COUNTLY_APP_KEY = "COUNTLY_APP_KEY";
-    final static String COUNTLY_SERVER_URL = "https://xxx.server.ly/";
+    final static String COUNTLY_SERVER_URL = "https://your.server.ly";
+    final static String COUNTLY_APP_KEY = "YOUR_APP_KEY";
 
     private BackendModePerformanceTests() {
     }
@@ -170,6 +170,12 @@ public final class BackendModePerformanceTests {
     public static void main(String[] args) throws Exception {
         boolean running = true;
         long startTime = 0;
+
+        if (COUNTLY_SERVER_URL.equals("https://your.server.ly") || COUNTLY_APP_KEY.equals("YOUR_APP_KEY")) {
+            DemoUtils.println("Please provide correct COUNTLY_SERVER_URL and COUNTLY_APP_KEY");
+            return;
+        }
+
         try (Scanner scanner = new Scanner(System.in)) {
             while (running) {
 
