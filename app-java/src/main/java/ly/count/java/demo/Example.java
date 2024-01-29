@@ -186,8 +186,13 @@ public class Example {
 
         Scanner scanner = new Scanner(System.in);
 
-        String COUNTLY_SERVER_URL = "https://xxx.server.ly/";
-        String COUNTLY_APP_KEY = "COUNTLY_APP_KEY";
+        String COUNTLY_SERVER_URL = "https://your.server.ly";
+        String COUNTLY_APP_KEY = "YOUR_APP_KEY";
+
+        if (COUNTLY_SERVER_URL.equals("https://your.server.ly") || COUNTLY_APP_KEY.equals("YOUR_APP_KEY")) {
+            DemoUtils.println("Please provide correct COUNTLY_SERVER_URL and COUNTLY_APP_KEY");
+            return;
+        }
 
         Map<String, String> metricOverride = new ConcurrentHashMap<>();
         metricOverride.put("aa", "11");

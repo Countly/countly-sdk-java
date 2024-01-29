@@ -10,8 +10,8 @@ import ly.count.sdk.java.Countly;
 
 public class BackendModeExample {
     final static String DEVICE_ID = "device-id";
-    final static String COUNTLY_APP_KEY = "COUNTLY_APP_KEY";
-    final static String COUNTLY_SERVER_URL = "https://xxx.server.ly/";
+    final static String COUNTLY_SERVER_URL = "https://your.server.ly";
+    final static String COUNTLY_APP_KEY = "YOUR_APP_KEY";
 
     private static void recordUserDetailAndProperties() {
         Map<String, Object> userDetail = new ConcurrentHashMap<>();
@@ -287,6 +287,11 @@ public class BackendModeExample {
     }
 
     public static void main(String[] args) throws Exception {
+
+        if (COUNTLY_SERVER_URL.equals("https://your.server.ly") || COUNTLY_APP_KEY.equals("YOUR_APP_KEY")) {
+            DemoUtils.println("Please provide correct COUNTLY_SERVER_URL and COUNTLY_APP_KEY");
+            return;
+        }
 
         Scanner scanner = new Scanner(System.in);
 
