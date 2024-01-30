@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * Utility class
@@ -401,5 +402,28 @@ public class Utils {
         random.nextBytes(value);
         String b64Value = Utils.Base64.encode(value);
         return b64Value + timestamp;
+    }
+
+    /**
+     * Removes invalid data types from segments
+     *
+     * @param segments to check
+     * @param L logger
+     */
+    public static void removeInvalidDataFromSegments(Map<String, Object> segments, Log L) {
+
+        if (segments == null || segments.isEmpty()) {
+            return;
+        }
+
+        List<String> toRemove = segments.entrySet().stream()
+            .filter(entry -> !Utils.isValidDataType(entry.getValue()))
+            .map(Map.Entry::getKey)
+            .collect(Collectors.toList());
+
+        toRemove.forEach(key -> {
+            L.w("[Utils] removeInvalidDataFromSegments, In segmentation Data type '" + segments.get(key) + "' of item '" + key + "' isn't valid.");
+            segments.remove(key);
+        });
     }
 }
