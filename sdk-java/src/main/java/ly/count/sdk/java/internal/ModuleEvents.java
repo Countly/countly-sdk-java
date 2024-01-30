@@ -1,9 +1,7 @@
 package ly.count.sdk.java.internal;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.Session;
 import ly.count.sdk.java.View;
@@ -96,23 +94,6 @@ public class ModuleEvents extends ModuleBase {
         ModuleRequests.pushAsync(internalConfig, request);
     }
 
-    protected static void removeInvalidDataFromSegments(Map<String, Object> segments, Log L) {
-
-        if (segments == null || segments.isEmpty()) {
-            return;
-        }
-
-        List<String> toRemove = segments.entrySet().stream()
-            .filter(entry -> !Utils.isValidDataType(entry.getValue()))
-            .map(Map.Entry::getKey)
-            .collect(Collectors.toList());
-
-        toRemove.forEach(key -> {
-            L.w("[ModuleEvents] RemoveSegmentInvalidDataTypes: In segmentation Data type '" + segments.get(key) + "' of item '" + key + "' isn't valid.");
-            segments.remove(key);
-        });
-    }
-
     protected void recordEventInternal(String key, int count, Double sum, Double dur, Map<String, Object> segmentation, String eventIdOverride) {
         if (count <= 0) {
             L.w("[ModuleEvents] recordEventInternal, Count can't be less than 1, ignoring this event.");
@@ -126,7 +107,7 @@ public class ModuleEvents extends ModuleBase {
 
         L.d("[ModuleEvents] recordEventInternal, Recording event with key: [" + key + "] and provided event ID of:[" + eventIdOverride + "] and segmentation with:[" + (segmentation == null ? "null" : segmentation.size()) + "] keys");
 
-        removeInvalidDataFromSegments(segmentation, L);
+        Utils.removeInvalidDataFromSegments(segmentation, L);
 
         String eventId, pvid = null, cvid = null;
         if (Utils.isEmptyOrNull(eventIdOverride)) {

@@ -22,11 +22,11 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
     static final String KEY_START = "start";
     static final String KEY_START_VALUE = "1";
     Map<String, ViewData> viewDataMap = new LinkedHashMap<>(); // map viewIDs to its viewData
-    String[] reservedSegmentationKeysViews = new String[] { "name", "visit", "start", "segment" };
+    String[] reservedSegmentationKeysViews = new String[] { KEY_NAME, KEY_VISIT, KEY_START, KEY_SEGMENT };
     //interface for SDK users
     Views viewsInterface;
     IdGenerator idGenerator;
-    Map<String, Object> globalViewSegmentation = new ConcurrentHashMap<>();//automatic view segmentation
+    Map<String, Object> globalViewSegmentation = new ConcurrentHashMap<>();
 
     static class ViewData {
         String viewID;
@@ -56,6 +56,15 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
         super.onSessionEnded(session, config);
         stopAllViewsInternal(null);
         resetFirstView();
+    }
+
+    @Override
+    public void deviceIdChanged(String oldDeviceId, boolean withMerge) {
+        super.deviceIdChanged(oldDeviceId, withMerge);
+        L.d("[ModuleViews] deviceIdChanged: oldDeviceId = " + oldDeviceId + ", withMerge = " + withMerge);
+        if (!withMerge) {
+            stopAllViewsInternal(null);
+        }
     }
 
     @Override
@@ -92,14 +101,14 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
 
         if (segmentation != null && !segmentation.isEmpty()) {
             removeReservedKeysFromViewSegmentation(segmentation);
-            ModuleEvents.removeInvalidDataFromSegments(segmentation, L);
+            Utils.removeInvalidDataFromSegments(segmentation, L);
             globalViewSegmentation.putAll(segmentation);
         }
     }
 
     public void updateGlobalViewSegmentationInternal(@Nonnull Map<String, Object> segmentation) {
         removeReservedKeysFromViewSegmentation(segmentation);
-        ModuleEvents.removeInvalidDataFromSegments(segmentation, L);
+        Utils.removeInvalidDataFromSegments(segmentation, L);
 
         globalViewSegmentation.putAll(segmentation);
     }
@@ -111,7 +120,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
         firstView = true;
     }
 
-    Map<String, Object> createViewEventSegmentation(@Nonnull ViewData vd, boolean firstView, boolean visit, Map<String, Object> customViewSegmentation) {
+    private Map<String, Object> createViewEventSegmentation(@Nonnull ViewData vd, boolean firstView, boolean visit, Map<String, Object> customViewSegmentation) {
         Map<String, Object> viewSegmentation = new ConcurrentHashMap<>();
 
         viewSegmentation.put(KEY_NAME, vd.viewName);
@@ -131,9 +140,9 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
         return viewSegmentation;
     }
 
-    void autoCloseRequiredViews(boolean closeAllViews, Map<String, Object> customViewSegmentation) {
+    private void autoCloseRequiredViews(boolean closeAllViews, Map<String, Object> customViewSegmentation) {
         L.d("[ModuleViews] autoCloseRequiredViews");
-        List<String> viewsToRemove = new ArrayList<>(1);
+        List<String> viewsToRemove = new ArrayList<>();
 
         for (Map.Entry<String, ViewData> entry : viewDataMap.entrySet()) {
             ViewData vd = entry.getValue();
@@ -222,7 +231,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
         viewDataMap.remove(vd.viewID);
     }
 
-    void recordView(String id, Double duration, Map<String, Object> segmentation) {
+    private void recordView(String id, Double duration, Map<String, Object> segmentation) {
         ModuleEvents events = internalConfig.sdk.module(ModuleEvents.class);
         if (events == null) {
             L.e("[ModuleViews] recordView, events module is not initialized");
@@ -232,26 +241,25 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
         events.recordEventInternal(KEY_VIEW_EVENT, 1, 0.0, duration, segmentation, id);
     }
 
-    void recordViewEndEvent(ViewData vd, @Nullable Map<String, Object> filteredCustomViewSegmentation, String viewRecordingSource) {
-        long lastElapsedDurationSeconds = 0;
+    private void recordViewEndEvent(ViewData vd, @Nullable Map<String, Object> filteredCustomViewSegmentation, String viewRecordingSource) {
+        double lastElapsedDurationSeconds = 0.0;
         //we do sanity check the time component and print error in case of problem
         if (vd.viewStartTimeSeconds < 0) {
             L.e("[ModuleViews] " + viewRecordingSource + ", view start time value is not normal: [" + vd.viewStartTimeSeconds + "], ignoring that duration");
         } else if (vd.viewStartTimeSeconds == 0) {
             L.i("[ModuleViews] " + viewRecordingSource + ", view is either paused or didn't run, ignoring start timestamp");
         } else {
-            lastElapsedDurationSeconds = TimeUtils.uniqueTimestampS() - vd.viewStartTimeSeconds;
+            lastElapsedDurationSeconds = (double) (TimeUtils.uniqueTimestampS() - vd.viewStartTimeSeconds);
         }
 
         //only record view if the view name is not null
         if (vd.viewName == null) {
-            L.e("[ModuleViews] stopViewWithIDInternal, view has no internal name, ignoring it");
+            L.e("[ModuleViews] " + viewRecordingSource + " , view has no internal name, ignoring it");
             return;
         }
 
-        long viewDurationSeconds = lastElapsedDurationSeconds;
         Map<String, Object> segments = createViewEventSegmentation(vd, false, false, filteredCustomViewSegmentation);
-        recordView(vd.viewID, new Long(viewDurationSeconds).doubleValue(), segments);
+        recordView(vd.viewID, lastElapsedDurationSeconds, segments);
     }
 
     void pauseViewWithIDInternal(String viewID) {
@@ -350,7 +358,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
         }
 
         if (viewSegmentation == null || viewSegmentation.isEmpty()) {
-            L.e("[ModuleViews] addSegmentationToViewWithIdInternal, Trying to record view with null or empty view segmentation, ignoring request");
+            L.e("[ModuleViews] addSegmentationToViewWithIdInternal, Trying to add segmentation with null or empty view segmentation, ignoring request");
             return;
         }
         removeReservedKeysFromViewSegmentation(viewSegmentation);
@@ -470,7 +478,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
          */
         public void stopViewWithID(@Nonnull String viewID, @Nullable Map<String, Object> viewSegmentation) {
             synchronized (Countly.instance()) {
-                L.i("[Views] Calling stopViewWithName vi[" + viewID + "] sg[" + viewSegmentation + "]");
+                L.i("[Views] Calling stopViewWithID vi[" + viewID + "] sg[" + viewSegmentation + "]");
                 stopViewWithIDInternal(viewID, viewSegmentation);
             }
         }
