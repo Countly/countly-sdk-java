@@ -1,4 +1,4 @@
-## XX.XX.XX
+## 24.1.0
 
 * !! Major breaking change !! The following method and its functionality is deprecated from the "UserEditor" interface and will not function anymore:
   * "setLocale(String)"
