@@ -573,7 +573,7 @@ public class ModuleViewsTests {
      * - start session
      * - start view C - firstView false - event is created
      *
-     * There should be 4 events, 2 for first start views, 1 for start view and one for stop view
+     * There should be 5 events
      * </pre>
      *
      * @throws InterruptedException for wait
@@ -584,21 +584,21 @@ public class ModuleViewsTests {
         TestUtils.validateEQSize(0);
         Countly.session().begin();
 
-        String viewIDA = Countly.instance().views().startView("A");
+        Countly.instance().view("A");
 
         Thread.sleep(1000);
-        Countly.session().end();
+        Countly.session().end(); // A will auto stop
 
-        Countly.instance().views().startView("B");
+        Countly.instance().view("B");
         Countly.session().begin();
 
-        Countly.instance().views().stopViewWithID(viewIDA);
         Countly.instance().views().startView("C");
 
-        validateView("A", 0.0, 0, 4, true, true, null, "idv1", "");
-        validateView("A", 1.0, 1, 4, false, false, null, "idv1", "");
-        validateView("B", 0.0, 2, 4, true, true, null, "idv2", "idv1");
-        validateView("C", 0.0, 3, 4, false, true, null, "idv3", "idv2");
+        validateView("A", 0.0, 0, 5, true, true, null, "idv1", "");
+        validateView("A", 1.0, 1, 5, false, false, null, "idv1", "");
+        validateView("B", 0.0, 2, 5, true, true, null, "idv2", "idv1");
+        validateView("B", 0.0, 3, 5, false, false, null, "idv2", "idv1");
+        validateView("C", 0.0, 4, 5, false, true, null, "idv3", "idv2");
     }
 
     /**

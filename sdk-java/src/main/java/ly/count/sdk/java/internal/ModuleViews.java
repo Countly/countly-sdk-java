@@ -121,7 +121,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
         if (firstView) {
             viewSegmentation.put(KEY_START, KEY_START_VALUE);
         }
-        
+
         viewSegmentation.put(KEY_SEGMENT, internalConfig.getSdkPlatform());
         return viewSegmentation;
     }
@@ -193,6 +193,10 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
 
         recordView(currentViewID, 0.0, viewSegmentation);
         return currentViewData.viewID;
+    }
+
+    protected void setFirstViewInternal(boolean firstView) {
+        this.firstView = firstView;
     }
 
     void stopViewWithNameInternal(@Nullable String viewName, @Nullable Map<String, Object> customViewSegmentation) {
