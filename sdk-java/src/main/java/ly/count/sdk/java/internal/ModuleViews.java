@@ -8,7 +8,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import ly.count.sdk.java.Countly;
-import ly.count.sdk.java.Session;
 
 public class ModuleViews extends ModuleBase implements ViewIdProvider {
     String currentViewID = null;
@@ -49,13 +48,6 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
 
         idGenerator = config.viewIdGenerator;
         config.viewIdProvider = this;
-    }
-
-    @Override
-    public void onSessionEnded(Session session, InternalConfig config) {
-        super.onSessionEnded(session, config);
-        stopAllViewsInternal(null);
-        resetFirstView();
     }
 
     @Override
@@ -111,13 +103,6 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
         Utils.removeInvalidDataFromSegments(segmentation, L);
 
         globalViewSegmentation.putAll(segmentation);
-    }
-
-    /**
-     * This should be called in case a new session starts so that we could identify the new "first view"
-     */
-    public void resetFirstView() {
-        firstView = true;
     }
 
     private Map<String, Object> createViewEventSegmentation(@Nonnull ViewData vd, boolean firstView, boolean visit, Map<String, Object> customViewSegmentation) {
