@@ -117,11 +117,6 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
         }
 
         viewSegmentation.put(KEY_SEGMENT, internalConfig.getSdkPlatform());
-        if (customViewSegmentation != null) {
-            viewSegmentation.putAll(customViewSegmentation);
-        }
-        viewSegmentation.putAll(vd.viewSegmentation);
-        viewSegmentation.putAll(globalViewSegmentation);
         return viewSegmentation;
     }
 
