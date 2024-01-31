@@ -50,6 +50,10 @@ class ViewImpl implements View {
         }
         stop = true;
         Countly.instance().views().stopViewWithName(name);
+        ModuleViews viewsModule = (ModuleViews) SDKCore.instance.module(CoreFeature.Views.getIndex());
+        if (viewsModule != null) {
+            viewsModule.setFirstViewInternal(lastView);
+        }
     }
 
     @Override
