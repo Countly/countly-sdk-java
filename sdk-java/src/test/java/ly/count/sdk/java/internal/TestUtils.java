@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -308,26 +309,54 @@ public class TestUtils {
         return paramMap;
     }
 
-    static void validateEvent(EventImpl gonnaValidate, String key, Map<String, Object> segmentation, int count, Double sum, Double duration) {
+    static void validateEvent(EventImpl gonnaValidate, String key, Map<String, Object> segmentation, int count, Double sum, Double duration, String id, String pvid, String cvid, String peid) {
         Assert.assertEquals(key, gonnaValidate.key);
-        Assert.assertEquals(segmentation, gonnaValidate.segmentation);
+
+        if (segmentation != null) {
+            Assert.assertEquals("Event segmentation size are not equal", segmentation.size(), gonnaValidate.segmentation.size());
+            for (Map.Entry<String, Object> entry : segmentation.entrySet()) {
+                Assert.assertEquals(entry.getValue(), gonnaValidate.segmentation.get(entry.getKey()));
+            }
+        }
+
         Assert.assertEquals(count, gonnaValidate.count);
         Assert.assertEquals(sum, gonnaValidate.sum);
 
         if (duration != null) {
             double delta = 0.5;
-            Assert.assertTrue(Math.abs(duration - gonnaValidate.duration) < delta);
+            Assert.assertTrue(duration + " expected duration, got " + gonnaValidate.duration, Math.abs(duration - gonnaValidate.duration) < delta);
         }
 
         Assert.assertTrue(gonnaValidate.dow >= 0 && gonnaValidate.dow < 7);
         Assert.assertTrue(gonnaValidate.hour >= 0 && gonnaValidate.hour < 24);
         Assert.assertTrue(gonnaValidate.timestamp >= 0);
+        validateId(id, gonnaValidate.id, "Event ID");
+        validateId(pvid, gonnaValidate.pvid, "Previous View ID");
+        validateId(cvid, gonnaValidate.cvid, "Current View ID");
+        validateId(peid, gonnaValidate.peid, "Previous Event ID");
+    }
+
+    // if id null
+    private static void validateId(String id, String gonnaValidate, String name) {
+        if (id != null && id.equals("_CLY_")) {
+            validateSafeRandomVal(gonnaValidate);
+        } else {
+            Assert.assertEquals(name + " is not validated", id, gonnaValidate);
+        }
+    }
+
+    static void validateEvent(EventImpl gonnaValidate, String key, Map<String, Object> segmentation, int count, Double sum, Double duration) {
+        validateEvent(gonnaValidate, key, segmentation, count, sum, duration, null, null, null, null);
+    }
+
+    static void validateEventInEQ(String key, Map<String, Object> segmentation, int count, Double sum, Double duration, int index, int size, String id, String pvid, String cvid, String peid) {
+        List<EventImpl> events = getCurrentEQ();
+        validateEvent(events.get(index), key, segmentation, count, sum, duration, id, pvid, cvid, peid);
+        validateEQSize(size);
     }
 
     static void validateEventInEQ(String key, Map<String, Object> segmentation, int count, Double sum, Double duration, int index, int size) {
-        List<EventImpl> events = getCurrentEQ();
-        validateEvent(events.get(index), key, segmentation, count, sum, duration);
-        validateEQSize(size);
+        validateEventInEQ(key, segmentation, count, sum, duration, index, size, null, null, null, null);
     }
 
     static List<EventImpl> readEventsFromRequest() {
@@ -614,5 +643,28 @@ public class TestUtils {
         } else {
             Assert.fail("No match for " + val);
         }
+    }
+
+    static IdGenerator idGenerator() {
+        AtomicInteger counter = new AtomicInteger(0);
+        return () -> TestUtils.keysValues[counter.getAndIncrement() % TestUtils.keysValues.length];
+    }
+
+    static IdGenerator incrementalViewIdGenerator() {
+        AtomicInteger counter = new AtomicInteger(0);
+        return () -> "idv" + counter.incrementAndGet();
+    }
+
+    static InternalConfig getConfigViews() {
+        InternalConfig config = new InternalConfig(TestUtils.getBaseConfig().enableFeatures(Config.Feature.Views, Config.Feature.Events));
+        config.viewIdGenerator = TestUtils.incrementalViewIdGenerator();
+        return config;
+    }
+
+    static InternalConfig getConfigViews(Map<String, Object> segmentation) {
+        InternalConfig config = new InternalConfig(TestUtils.getBaseConfig().enableFeatures(Config.Feature.Views, Config.Feature.Events));
+        config.viewIdGenerator = TestUtils.incrementalViewIdGenerator();
+        config.views.setGlobalViewSegmentation(segmentation);
+        return config;
     }
 }
