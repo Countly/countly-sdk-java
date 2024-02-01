@@ -14,6 +14,7 @@ import ly.count.sdk.java.internal.ModuleFeedback;
 import ly.count.sdk.java.internal.ModuleLocation;
 import ly.count.sdk.java.internal.ModuleRemoteConfig;
 import ly.count.sdk.java.internal.ModuleUserProfile;
+import ly.count.sdk.java.internal.ModuleViews;
 import ly.count.sdk.java.internal.SDKCore;
 
 /**
@@ -473,6 +474,21 @@ public class Countly implements Usage {
             return null;
         }
         return sdk.crashes();
+    }
+
+    /**
+     * <code>Views</code> interface to use views feature.
+     *
+     * @return {@link ModuleViews.Views} instance.
+     */
+    public ModuleViews.Views views() {
+        if (!isInitialized()) {
+            if (L != null) {
+                L.e("[Countly] SDK is not initialized yet.");
+            }
+            return null;
+        }
+        return sdk.views();
     }
 
     /**

@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import ly.count.sdk.java.internal.ConfigViews;
 import ly.count.sdk.java.internal.CoreFeature;
 import ly.count.sdk.java.internal.Log;
 import ly.count.sdk.java.internal.LogCallback;
@@ -1456,4 +1457,6 @@ public class Config {
         locationEnabled = false;
         return this;
     }
+
+    public ConfigViews views = new ConfigViews(this);
 }

@@ -26,6 +26,11 @@ class EventImpl implements Event, JSONable {
     protected int hour;
     protected int dow;
 
+    protected String id;
+    protected String pvid;
+    protected String cvid;
+    protected String peid;
+
     final Log L;
 
     public interface EventRecorder {
@@ -38,7 +43,7 @@ class EventImpl implements Event, JSONable {
      */
     private boolean invalid = false;
 
-    EventImpl(@Nonnull String key, int count, Double sum, Double duration, @Nonnull Map<String, Object> segmentation, @Nonnull Log givenL) {
+    EventImpl(@Nonnull String key, int count, Double sum, Double duration, @Nonnull Map<String, Object> segmentation, @Nonnull Log givenL, String id, String pvid, String cvid, String peid) {
         L = givenL;
 
         this.recorder = null;
@@ -51,6 +56,10 @@ class EventImpl implements Event, JSONable {
         this.timestamp = instant.timestamp;
         this.hour = instant.hour;
         this.dow = instant.dow;
+        this.id = id;
+        this.pvid = pvid;
+        this.cvid = cvid;
+        this.peid = peid;
     }
 
     EventImpl(@Nonnull EventRecorder recorder, @Nonnull String key, @Nonnull Log givenL) {
@@ -239,6 +248,10 @@ class EventImpl implements Event, JSONable {
     protected static final String TIMESTAMP_KEY = "timestamp";
     protected static final String DAY_OF_WEEK = "dow";
     protected static final String HOUR = "hour";
+    protected static final String ID_KEY = "id";
+    protected static final String PV_ID_KEY = "pvid";
+    protected static final String CV_ID_KEY = "cvid";
+    protected static final String PE_ID_KEY = "peid";
 
     /**
      * Serialize to JSON format according to Countly server requirements
@@ -265,6 +278,23 @@ class EventImpl implements Event, JSONable {
 
             if (duration != null) {
                 json.put(DUR_KEY, duration);
+            }
+
+            //set the ID's only if they are not 'null'
+            if (id != null) {
+                json.put(ID_KEY, id);
+            }
+
+            if (pvid != null) {
+                json.put(PV_ID_KEY, pvid);
+            }
+
+            if (cvid != null) {
+                json.put(CV_ID_KEY, cvid);
+            }
+
+            if (peid != null) {
+                json.put(PE_ID_KEY, peid);
             }
         } catch (JSONException e) {
             log.e("[EventImpl] Cannot serialize event to JSON " + e);
@@ -303,6 +333,20 @@ class EventImpl implements Event, JSONable {
             event.timestamp = json.optLong(TIMESTAMP_KEY);
             event.hour = json.optInt(HOUR);
             event.dow = json.optInt(DAY_OF_WEEK);
+
+            // the parsed ID's might not be set, or it might be set as null
+            if (!json.isNull(ID_KEY)) {
+                event.id = json.getString(ID_KEY);
+            }
+            if (!json.isNull(PV_ID_KEY)) {
+                event.pvid = json.getString(PV_ID_KEY);
+            }
+            if (!json.isNull(CV_ID_KEY)) {
+                event.cvid = json.getString(CV_ID_KEY);
+            }
+            if (!json.isNull(PE_ID_KEY)) {
+                event.peid = json.getString(PE_ID_KEY);
+            }
 
             if (!json.isNull(SEGMENTATION_KEY)) {
                 final JSONObject segm = json.getJSONObject(SEGMENTATION_KEY);

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.TreeMap;
+import javax.annotation.Nonnull;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 import ly.count.sdk.java.Config;
@@ -430,6 +431,18 @@ public class SDKCore {
             config.eventIdGenerator = Utils::safeRandomVal;
         }
 
+        if (config.viewIdProvider == null) {
+            config.viewIdProvider = new ViewIdProvider() {
+                @Nonnull public String getCurrentViewId() {
+                    return "";
+                }
+
+                @Nonnull public String getPreviousViewId() {
+                    return "";
+                }
+            };
+        }
+
         // ModuleSessions is always enabled, even without consent
         int consents = config.getFeatures1() | CoreFeature.Sessions.getIndex();
         // build modules
@@ -726,6 +739,16 @@ public class SDKCore {
         }
 
         return module(ModuleCrashes.class).crashInterface;
+    }
+
+    public ModuleViews.Views views() {
+        ModuleViews module = module(ModuleViews.class);
+        if (module == null) {
+            L.v("[SDKCore] views, Views feature has no consent, returning null");
+            return null;
+        }
+
+        return module.viewsInterface;
     }
 
     public ModuleDeviceIdCore.DeviceId deviceId() {

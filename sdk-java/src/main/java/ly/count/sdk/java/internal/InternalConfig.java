@@ -31,7 +31,7 @@ public class InternalConfig extends Config {
     public StorageProvider storageProvider;
     protected IdGenerator viewIdGenerator;
     protected IdGenerator eventIdGenerator;
-
+    protected ViewIdProvider viewIdProvider;
     /**
      * Shouldn't be used!
      */
