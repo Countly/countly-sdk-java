@@ -103,7 +103,7 @@ public class ModuleCrashes extends ModuleBase {
 
     public CrashImpl onCrash(InternalConfig config, CrashImpl crash) {
         long running = started == 0 ? 0 : TimeUtils.nsToMs(System.nanoTime() - started);
-        crash.putMetrics(running);
+        crash.putMetrics(running / TimeUtils.MS_IN_SECOND);
 
         if (!crash.getData().has("_os")) {
             L.w("[ModuleCrash] onCrash, While recording an exception 'OS name' was either null or empty");
