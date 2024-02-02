@@ -18,7 +18,7 @@
 * Fixed a bug where setting custom user properties would not work.
 * Fixed a bug where setting organization of the user would not work.
 * Fixed a bug where sending a user profile picture with checksum was not possible.
-* Fixed a bug where running time calculation was sending as a milliseconds but shoul be in seconds.
+* Fixed a bug where running time calculation was sent as a milliseconds but should have been in seconds.
 
 * Deprecated "Countly::backendMode()" call, use "Countly::backendM" instead via "instance()" call.
 * Deprecated "Usage::addLocation(double, double)" call, use "Countly::location::setLocation" instead via "instance()" call.
