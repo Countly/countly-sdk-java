@@ -2,12 +2,14 @@ name: Publish the Java SDK
 on:
   workflow_dispatch:
     inputs:
-      required: true
-      description: 'Deploy'
-      type: boolean
+      deploy:
+        description: 'Deploy?'
+        required: true
+        type: boolean
 jobs:
   build:
     name: Build and Test
+    if:  ${{ inputs.deploy }} 
     runs-on: ubuntu-latest
 
     steps:
