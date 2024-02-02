@@ -48,7 +48,7 @@ public class Example {
     }
 
     static void setLocation() {
-        Countly.api().addLocation(31.5204, 74.3587);
+        Countly.instance().location().setLocation("UK", "London", "31.5204, 74.3587", null);
     }
 
     static void setUserProfile() {
@@ -58,7 +58,7 @@ public class Example {
         Countly.instance().userProfile().setProperty(PredefinedUserPropertyKeys.ORGANIZATION, "Tester");
         Countly.instance().userProfile().setProperty(PredefinedUserPropertyKeys.PHONE, "+123456789");
         Countly.instance().userProfile().setProperty(PredefinedUserPropertyKeys.PICTURE, new byte[] { 1, 2, 3, 4, 5 });
-        //Countly.instance().userProfile().setProperty(UserPropertyKeys.PICTURE_PATH, "test.png"); to provide local path
+        //Countly.instance().userProfile().setProperty(PredefinedUserPropertyKeys.PICTURE_PATH, "test.png"); //to provide local path
         Countly.instance().userProfile().setProperty(PredefinedUserPropertyKeys.PICTURE_PATH, "https://someurl.com/test.png");
         Countly.instance().userProfile().save();
     }
@@ -116,19 +116,18 @@ public class Example {
     }
 
     static void recordStartView() {
-        Countly.api().view("Start view");
+        Countly.instance().views().startView("Start view");
     }
 
     static void recordAnotherView() {
-        Countly.api().view("Another view");
+        Countly.instance().views().startView("Another view");
     }
 
     static void recordCrash() {
         try {
             throw new ArithmeticException("/ by zero");
         } catch (Exception e) {
-            e.printStackTrace();
-            Countly.api().addCrashReport(e, false, "Divided by zero", null, "sample app");
+            Countly.instance().crashes().recordHandledException(e);
         }
     }
 
@@ -301,10 +300,10 @@ public class Example {
                     recordCrash();
                     break;
                 case 12:
-                    Countly.session().view("example_view").start(true);
+                    Countly.instance().views().startView("example_view");
                     break;
                 case 13:
-                    Countly.session().view("example_view").stop(false);
+                    Countly.instance().views().stopViewWithName("example_view");
                     break;
                 case 14:
                     changeDeviceIdWithMerge();
