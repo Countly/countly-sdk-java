@@ -228,7 +228,7 @@ public class BackendModeTests {
         Assert.assertEquals(1, moduleBackendMode.eventQSize);
         Assert.assertEquals(1, backendMode.getQueueSize());
         backendMode.recordEvent("device-id-2", "key-2", 1, 0.1, 10.0, segmentation, 1_646_640_780_130L);
-        backendMode.recordEvent("device-id-2", "key-3", 2, 0.2, 20.0, segmentation1, 1_646_640_780_130L);
+        backendMode.recordEvent("device-id-2", "key-3", 2, 0.2, 20.0, segmentation1, 1_646_644_457_826L);
 
         Assert.assertEquals(3, moduleBackendMode.eventQSize);
         Assert.assertEquals(2, backendMode.getQueueSize());
@@ -239,7 +239,7 @@ public class BackendModeTests {
 
         JSONObject event = events.getJSONObject(0);
 
-        long expectedTimestamp = 1646640780130L;
+        long expectedTimestamp = 1_646_640_780_130L;
         int expectedHour = getHourFromTimeStamp(expectedTimestamp);
 
         validateEventFields("key-2", 1, 0.1, 10.0, 1, expectedHour, expectedTimestamp, event);
@@ -263,7 +263,7 @@ public class BackendModeTests {
         event = events.getJSONObject(1);
         Assert.assertEquals("key-3", event.get("key"));
 
-        expectedTimestamp = 1646644457826L;
+        expectedTimestamp = 1_646_644_457_826L;
         expectedHour = getHourFromTimeStamp(expectedTimestamp);
 
         validateEventFields("key-3", 2, 0.2, 20.0, 1, expectedHour, expectedTimestamp, event);
