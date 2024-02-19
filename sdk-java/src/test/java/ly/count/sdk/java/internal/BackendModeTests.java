@@ -80,7 +80,7 @@ public class BackendModeTests {
         segmentation.put("start", "1");
 
         Assert.assertEquals(0L, moduleBackendMode.eventQSize);
-        backendMode.recordView("device-id-1", TestUtils.keysValues[0], segmentation, 1_646_640_780_130L);
+        backendMode.recordView("device-id-1", TestUtils.keysValues[0], segmentation, 1646640780130L);
 
         JSONArray events = moduleBackendMode.eventQueues.get("device-id-1");
         Assert.assertEquals(1L, events.length());
@@ -100,7 +100,7 @@ public class BackendModeTests {
         Assert.assertEquals("Windows", segments.get("segment"));
         Assert.assertEquals("1", segments.get("start"));
 
-        backendMode.recordView("device-id-2", TestUtils.keysValues[1], null, 1_646_640_780_130L);
+        backendMode.recordView("device-id-2", TestUtils.keysValues[1], null, 1646640780130L);
 
         events = moduleBackendMode.eventQueues.get("device-id-2");
         Assert.assertEquals(1L, events.length());
@@ -129,16 +129,16 @@ public class BackendModeTests {
 
         /* Invalid Device ID */
         Assert.assertEquals(0L, moduleBackendMode.eventQSize);
-        backendMode.recordView("", TestUtils.keysValues[0], segmentation, 1_646_640_780_130L);
-        backendMode.recordView(null, TestUtils.keysValues[1], segmentation, 1_646_640_780_130L);
+        backendMode.recordView("", TestUtils.keysValues[0], segmentation, 1646640780130L);
+        backendMode.recordView(null, TestUtils.keysValues[1], segmentation, 1646640780130L);
 
         Assert.assertTrue(moduleBackendMode.eventQueues.isEmpty());
         Assert.assertEquals(0L, moduleBackendMode.eventQSize);
 
         /* Invalid view name */
         Assert.assertEquals(0L, moduleBackendMode.eventQSize);
-        backendMode.recordView("device-id-1", "", segmentation, 1_646_640_780_130L);
-        backendMode.recordView("device-id-2", null, segmentation, 1_646_640_780_130L);
+        backendMode.recordView("device-id-1", "", segmentation, 1646640780130L);
+        backendMode.recordView("device-id-2", null, segmentation, 1646640780130L);
 
         Assert.assertTrue(moduleBackendMode.eventQueues.isEmpty());
         Assert.assertEquals(0L, moduleBackendMode.eventQSize);
@@ -157,7 +157,7 @@ public class BackendModeTests {
         segmentation.put("key2", "value2");
 
         Assert.assertEquals(0, moduleBackendMode.eventQSize);
-        backendMode.recordEvent("device-id-1", "key-1", 1, 0.1, 10.0, segmentation, 1_646_640_780_130L);
+        backendMode.recordEvent("device-id-1", "key-1", 1, 0.1, 10.0, segmentation, 1646640780130L);
 
         JSONArray events = moduleBackendMode.eventQueues.get("device-id-1");
         Assert.assertEquals(1, events.length());
@@ -190,15 +190,15 @@ public class BackendModeTests {
         Assert.assertEquals(0, moduleBackendMode.eventQSize);
 
         /* Invalid Device ID */
-        backendMode.recordEvent("", "key-1", 1, 0.1, 10.0, segmentation, 1_646_640_780_130L);
-        backendMode.recordEvent(null, "key-2", 1, 0.1, 10.0, segmentation, 1_646_640_780_130L);
+        backendMode.recordEvent("", "key-1", 1, 0.1, 10.0, segmentation, 1646640780130L);
+        backendMode.recordEvent(null, "key-2", 1, 0.1, 10.0, segmentation, 1646640780130L);
 
         Assert.assertTrue(moduleBackendMode.eventQueues.isEmpty());
         Assert.assertEquals(0L, moduleBackendMode.eventQSize);
 
         /* Invalid view name */
-        backendMode.recordEvent("device-id-1", "", 1, 0.1, 10.0, segmentation, 1_646_640_780_130L);
-        backendMode.recordEvent("device-id-1", null, 1, 0.1, 10.0, segmentation, 1_646_640_780_130L);
+        backendMode.recordEvent("device-id-1", "", 1, 0.1, 10.0, segmentation, 1646640780130L);
+        backendMode.recordEvent("device-id-1", null, 1, 0.1, 10.0, segmentation, 1646640780130L);
 
         Assert.assertTrue(moduleBackendMode.eventQueues.isEmpty());
         Assert.assertEquals(0L, moduleBackendMode.eventQSize);
@@ -223,12 +223,12 @@ public class BackendModeTests {
         segmentation1.put("key4", "value4");
 
         Assert.assertEquals(0, moduleBackendMode.eventQSize);
-        backendMode.recordEvent("device-id-1", "key-1", 1, 0.1, 10.0, segmentation, 1_646_640_780_130L);
+        backendMode.recordEvent("device-id-1", "key-1", 1, 0.1, 10.0, segmentation, 1646640780130L);
 
         Assert.assertEquals(1, moduleBackendMode.eventQSize);
         Assert.assertEquals(1, backendMode.getQueueSize());
-        backendMode.recordEvent("device-id-2", "key-2", 1, 0.1, 10.0, segmentation, 1_646_640_780_130L);
-        backendMode.recordEvent("device-id-2", "key-3", 2, 0.2, 20.0, segmentation1, 1_646_640_780_130L);
+        backendMode.recordEvent("device-id-2", "key-2", 1, 0.1, 10.0, segmentation, 1646640780130L);
+        backendMode.recordEvent("device-id-2", "key-3", 2, 0.2, 20.0, segmentation1, 1646644457826L);
 
         Assert.assertEquals(3, moduleBackendMode.eventQSize);
         Assert.assertEquals(2, backendMode.getQueueSize());
@@ -290,43 +290,43 @@ public class BackendModeTests {
 
         Assert.assertEquals(0, moduleBackendMode.eventQSize);
 
-        backendMode.recordEvent("device-id-1", "key-1", 1, 0.1, 10.0, segmentation, 1_646_640_780_130L);
+        backendMode.recordEvent("device-id-1", "key-1", 1, 0.1, 10.0, segmentation, 1646640780130L);
         Assert.assertEquals(1, moduleBackendMode.eventQSize);
         Assert.assertEquals(1, moduleBackendMode.eventQueues.get("device-id-1").length());
         Assert.assertEquals(1, backendMode.getQueueSize());
 
-        backendMode.recordEvent("device-id-1", "key-2", 1, 0.1, 10.0, segmentation, 1_646_640_780_130L);
+        backendMode.recordEvent("device-id-1", "key-2", 1, 0.1, 10.0, segmentation, 1646640780130L);
         Assert.assertEquals(2, moduleBackendMode.eventQSize);
         Assert.assertEquals(2, moduleBackendMode.eventQueues.get("device-id-1").length());
         Assert.assertEquals(1, backendMode.getQueueSize());
 
-        backendMode.recordEvent("device-id-1", "key-3", 1, 0.1, 10.0, segmentation, 1_646_640_780_130L);
+        backendMode.recordEvent("device-id-1", "key-3", 1, 0.1, 10.0, segmentation, 1646640780130L);
         Assert.assertEquals(3, moduleBackendMode.eventQSize);
         Assert.assertEquals(1, backendMode.getQueueSize());
 
-        backendMode.recordEvent("device-id-1", "key-3", 1, 0.1, 10.0, segmentation, 1_646_640_780_130L);
+        backendMode.recordEvent("device-id-1", "key-3", 1, 0.1, 10.0, segmentation, 1646640780130L);
         Assert.assertEquals(0, moduleBackendMode.eventQSize);
         Assert.assertNull(moduleBackendMode.eventQueues.get("device-id-1"));
         Assert.assertEquals(1, backendMode.getQueueSize());
 
-        backendMode.recordEvent("device-id-1", "key-1", 1, 0.1, 10.0, segmentation, 1_646_640_780_130L);
+        backendMode.recordEvent("device-id-1", "key-1", 1, 0.1, 10.0, segmentation, 1646640780130L);
         Assert.assertEquals(1, moduleBackendMode.eventQSize);
         Assert.assertEquals(1, moduleBackendMode.eventQueues.get("device-id-1").length());
         Assert.assertEquals(2, backendMode.getQueueSize());
 
-        backendMode.recordEvent("device-id-2", "key-2", 1, 0.1, 10.0, segmentation, 1_646_640_780_130L);
+        backendMode.recordEvent("device-id-2", "key-2", 1, 0.1, 10.0, segmentation, 1646640780130L);
         Assert.assertEquals(2, moduleBackendMode.eventQSize);
         Assert.assertEquals(1, moduleBackendMode.eventQueues.get("device-id-1").length());
         Assert.assertEquals(1, moduleBackendMode.eventQueues.get("device-id-2").length());
         Assert.assertEquals(3, backendMode.getQueueSize());
 
-        backendMode.recordEvent("device-id-2", "key-3", 1, 0.1, 10.0, segmentation, 1_646_640_780_130L);
+        backendMode.recordEvent("device-id-2", "key-3", 1, 0.1, 10.0, segmentation, 1646640780130L);
         Assert.assertEquals(3, moduleBackendMode.eventQSize);
         Assert.assertEquals(1, moduleBackendMode.eventQueues.get("device-id-1").length());
         Assert.assertEquals(2, moduleBackendMode.eventQueues.get("device-id-2").length());
         Assert.assertEquals(3, backendMode.getQueueSize());
 
-        backendMode.recordEvent("device-id-2", "key-4", 2, 0.2, 20.0, segmentation1, 1_646_644_457_826L);
+        backendMode.recordEvent("device-id-2", "key-4", 2, 0.2, 20.0, segmentation1, 1646644457826L);
         Assert.assertEquals(0, moduleBackendMode.eventQSize);
         Assert.assertEquals(3, backendMode.getQueueSize());
         Assert.assertNull(moduleBackendMode.eventQueues.get("device-id-1"));
@@ -351,18 +351,18 @@ public class BackendModeTests {
         Assert.assertEquals(0, moduleBackendMode.eventQSize);
         Assert.assertEquals(0, SDKCore.instance.requestQueueMemory.size());
 
-        backendMode.recordEvent("device-id-1", "key-1", 1, 0.1, 10.0, segmentation, 1_646_640_780_130L);
+        backendMode.recordEvent("device-id-1", "key-1", 1, 0.1, 10.0, segmentation, 1646640780130L);
         Assert.assertEquals(1, moduleBackendMode.eventQSize);
         Assert.assertEquals(0, SDKCore.instance.requestQueueMemory.size());
         Assert.assertEquals(1, moduleBackendMode.eventQueues.get("device-id-1").length());
 
-        backendMode.recordEvent("device-id-2", "key-3", 1, 0.1, 10.0, segmentation, 1_646_640_780_130L);
+        backendMode.recordEvent("device-id-2", "key-3", 1, 0.1, 10.0, segmentation, 1646640780130L);
         Assert.assertEquals(2, moduleBackendMode.eventQSize);
         Assert.assertEquals(0, SDKCore.instance.requestQueueMemory.size());
         Assert.assertEquals(1, moduleBackendMode.eventQueues.get("device-id-1").length());
         Assert.assertEquals(1, moduleBackendMode.eventQueues.get("device-id-2").length());
 
-        backendMode.recordEvent("device-id-2", "key-4", 2, 0.2, 20.0, segmentation1, 1_646_644_457_826L);
+        backendMode.recordEvent("device-id-2", "key-4", 2, 0.2, 20.0, segmentation1, 1646644457826L);
         Assert.assertEquals(3, moduleBackendMode.eventQSize);
         Assert.assertEquals(0, SDKCore.instance.requestQueueMemory.size());
         Assert.assertEquals(1, moduleBackendMode.eventQueues.get("device-id-1").length());
@@ -387,18 +387,18 @@ public class BackendModeTests {
         Assert.assertEquals(0, moduleBackendMode.eventQSize);
         Assert.assertEquals(0, SDKCore.instance.requestQueueMemory.size());
 
-        backendMode.recordEvent("device-id-1", "key-1", 1, 0.1, 10.0, segmentation, 1_646_640_780_130L);
+        backendMode.recordEvent("device-id-1", "key-1", 1, 0.1, 10.0, segmentation, 1646640780130L);
         Assert.assertEquals(1, moduleBackendMode.eventQSize);
         Assert.assertEquals(0, SDKCore.instance.requestQueueMemory.size());
         Assert.assertEquals(1, moduleBackendMode.eventQueues.get("device-id-1").length());
 
-        backendMode.recordEvent("device-id-2", "key-3", 1, 0.1, 10.0, segmentation, 1_646_640_780_130L);
+        backendMode.recordEvent("device-id-2", "key-3", 1, 0.1, 10.0, segmentation, 1646640780130L);
         Assert.assertEquals(2, moduleBackendMode.eventQSize);
         Assert.assertEquals(0, SDKCore.instance.requestQueueMemory.size());
         Assert.assertEquals(1, moduleBackendMode.eventQueues.get("device-id-1").length());
         Assert.assertEquals(1, moduleBackendMode.eventQueues.get("device-id-2").length());
 
-        backendMode.recordEvent("device-id-2", "key-4", 2, 0.2, 20.0, segmentation1, 1_646_644_457_826L);
+        backendMode.recordEvent("device-id-2", "key-4", 2, 0.2, 20.0, segmentation1, 1646644457826L);
         Assert.assertEquals(3, moduleBackendMode.eventQSize);
         Assert.assertEquals(0, SDKCore.instance.requestQueueMemory.size());
         Assert.assertEquals(1, moduleBackendMode.eventQueues.get("device-id-1").length());
@@ -427,7 +427,7 @@ public class BackendModeTests {
         location.put("country_code", "PK");
         location.put("location", "31.5204,74.3587");
 
-        backendMode.sessionBegin("device-id-1", metrics, location, 1_646_640_780_130L);
+        backendMode.sessionBegin("device-id-1", metrics, location, 1646640780130L);
 
         Assert.assertEquals(1, SDKCore.instance.requestQueueMemory.size());
         Request request = SDKCore.instance.requestQueueMemory.remove();
@@ -443,7 +443,7 @@ public class BackendModeTests {
         Assert.assertEquals("windows", sessionJson.get("os"));
         Assert.assertEquals("0.1", sessionJson.get("app-version"));
         Assert.assertEquals("1", request.params.get("begin_session"));
-        validateRequestTimeFields("device-id-1", 1_646_640_780_130L, request);
+        validateRequestTimeFields("device-id-1", 1646640780130L, request);
     }
 
     /**
@@ -456,8 +456,8 @@ public class BackendModeTests {
         metrics.put("os", "windows");
         metrics.put("app-version", "0.1");
 
-        backendMode.sessionBegin("", metrics, null, 1_646_640_780_130L);
-        backendMode.sessionBegin(null, metrics, null, 1_646_640_780_130L);
+        backendMode.sessionBegin("", metrics, null, 1646640780130L);
+        backendMode.sessionBegin(null, metrics, null, 1646640780130L);
 
         Assert.assertTrue(SDKCore.instance.requestQueueMemory.isEmpty());
     }
@@ -468,7 +468,7 @@ public class BackendModeTests {
     @Test
     public void testMethodSessionUpdate() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
-        backendMode.sessionUpdate("device-id-1", 10.5, 1_646_640_780_130L);
+        backendMode.sessionUpdate("device-id-1", 10.5, 1646640780130L);
 
         Assert.assertEquals(1, SDKCore.instance.requestQueueMemory.size());
         Request request = SDKCore.instance.requestQueueMemory.remove();
@@ -483,8 +483,8 @@ public class BackendModeTests {
     @Test
     public void testMethodSessionUpdateWithInvalidData() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
-        backendMode.sessionUpdate("", 10.5, 1_646_640_780_130L);
-        backendMode.sessionUpdate(null, 10.5, 1_646_640_780_130L);
+        backendMode.sessionUpdate("", 10.5, 1646640780130L);
+        backendMode.sessionUpdate(null, 10.5, 1646640780130L);
 
         Assert.assertTrue(SDKCore.instance.requestQueueMemory.isEmpty());
     }
@@ -495,14 +495,14 @@ public class BackendModeTests {
     @Test
     public void testSessionEnd() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
-        backendMode.sessionEnd("device-id-1", 10.5, 1_646_640_780_130L);
+        backendMode.sessionEnd("device-id-1", 10.5, 1646640780130L);
 
         Assert.assertEquals(1, SDKCore.instance.requestQueueMemory.size());
         Request request = SDKCore.instance.requestQueueMemory.remove();
 
         Assert.assertEquals("1", request.params.get("end_session"));
         Assert.assertEquals("10.5", request.params.get("session_duration"));
-        validateRequestTimeFields("device-id-1", 1_646_640_780_130L, request);
+        validateRequestTimeFields("device-id-1", 1646640780130L, request);
     }
 
     /**
@@ -511,8 +511,8 @@ public class BackendModeTests {
     @Test
     public void testMethodSessionEndWithInvalidData() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
-        backendMode.sessionEnd("", 10.5, 1_646_640_780_130L);
-        backendMode.sessionEnd(null, 20.5, 1_646_640_780_130L);
+        backendMode.sessionEnd("", 10.5, 1646640780130L);
+        backendMode.sessionEnd(null, 20.5, 1646640780130L);
 
         Assert.assertTrue(SDKCore.instance.requestQueueMemory.isEmpty());
     }
@@ -533,8 +533,8 @@ public class BackendModeTests {
         try {
             int a = 10 / 0;
         } catch (Exception e) {
-            backendMode.recordException("device-id-1", e, segmentation, crashDetails, 1_646_640_780_130L);
-            backendMode.recordException("device-id-2", "Divided By Zero", "stack traces", null, null, 1_646_640_780_130L);
+            backendMode.recordException("device-id-1", e, segmentation, crashDetails, 1646640780130L);
+            backendMode.recordException("device-id-2", "Divided By Zero", "stack traces", null, null, 1646640780130L);
 
             Assert.assertEquals(2, SDKCore.instance.requestQueueMemory.size());
             Request request = SDKCore.instance.requestQueueMemory.remove();
@@ -550,7 +550,7 @@ public class BackendModeTests {
             Assert.assertEquals("Custom Error", crashJson.get("_error"));
             Assert.assertEquals("Logs", crashJson.get("_logs"));
             Assert.assertEquals("Operating System", crashJson.get("_os"));
-            validateRequestTimeFields("device-id-1", 1_646_640_780_130L, request);
+            validateRequestTimeFields("device-id-1", 1646640780130L, request);
 
             JSONObject segments = crashJson.getJSONObject("_custom");
             Assert.assertEquals("value1", segments.get("key1"));
@@ -564,7 +564,7 @@ public class BackendModeTests {
             Assert.assertEquals("Divided By Zero", crashJson.get("_name"));
             Assert.assertEquals("stack traces", crashJson.get("_error"));
 
-            validateRequestTimeFields("device-id-2", 1_646_640_780_130L, request);
+            validateRequestTimeFields("device-id-2", 1646640780130L, request);
 
             segments = crashJson.getJSONObject("_custom");
             Assert.assertTrue(segments.isEmpty());
@@ -580,25 +580,25 @@ public class BackendModeTests {
         Map<String, Object> segmentation = new ConcurrentHashMap<>();
         segmentation.put("key1", "value1");
 
-        backendMode.recordException("", null, segmentation, null, 1_646_640_780_130L);
+        backendMode.recordException("", null, segmentation, null, 1646640780130L);
         Assert.assertTrue(SDKCore.instance.requestQueueMemory.isEmpty());
 
-        backendMode.recordException(null, null, segmentation, null, 1_646_640_780_130L);
+        backendMode.recordException(null, null, segmentation, null, 1646640780130L);
         Assert.assertTrue(SDKCore.instance.requestQueueMemory.isEmpty());
 
-        backendMode.recordException("device-id-1", null, segmentation, null, 1_646_640_780_130L);
+        backendMode.recordException("device-id-1", null, segmentation, null, 1646640780130L);
         Assert.assertTrue(SDKCore.instance.requestQueueMemory.isEmpty());
 
-        backendMode.recordException("device-id-2", "", "stack traces", null, null, 1_646_640_780_130L);
+        backendMode.recordException("device-id-2", "", "stack traces", null, null, 1646640780130L);
         Assert.assertTrue(SDKCore.instance.requestQueueMemory.isEmpty());
 
-        backendMode.recordException("device-id-2", "device-id", "", null, null, 1_646_640_780_130L);
+        backendMode.recordException("device-id-2", "device-id", "", null, null, 1646640780130L);
         Assert.assertTrue(SDKCore.instance.requestQueueMemory.isEmpty());
 
-        backendMode.recordException("device-id-2", null, "stack traces", null, null, 1_646_640_780_130L);
+        backendMode.recordException("device-id-2", null, "stack traces", null, null, 1646640780130L);
         Assert.assertTrue(SDKCore.instance.requestQueueMemory.isEmpty());
 
-        backendMode.recordException("device-id-2", "device-id", null, null, null, 1_646_640_780_130L);
+        backendMode.recordException("device-id-2", "device-id", null, null, null, 1646640780130L);
         Assert.assertTrue(SDKCore.instance.requestQueueMemory.isEmpty());
     }
 
@@ -612,11 +612,11 @@ public class BackendModeTests {
         // User detail
         Map<String, Object> userDetail = populateUserProperties(true, true, false);
 
-        backendMode.recordUserProperties("device-id-1", userDetail, 1_646_640_780_130L);
+        backendMode.recordUserProperties("device-id-1", userDetail, 1646640780130L);
 
         Assert.assertEquals(1, SDKCore.instance.requestQueueMemory.size());
         Request request = SDKCore.instance.requestQueueMemory.remove();
-        validateRequestTimeFields("device-id-1", 1_646_640_780_130L, request);
+        validateRequestTimeFields("device-id-1", 1646640780130L, request);
 
         String userDetails = request.params.get("user_details");
         validateUserProperties(userDetails, true, true, false);
@@ -632,11 +632,11 @@ public class BackendModeTests {
 
         // User detail
         Map<String, Object> userDetail = populateUserProperties(true, true, true);
-        backendMode.recordUserProperties("device-id-1", userDetail, 1_646_640_780_130L);
+        backendMode.recordUserProperties("device-id-1", userDetail, 1646640780130L);
 
         Assert.assertEquals(1, SDKCore.instance.requestQueueMemory.size());
         Request request = SDKCore.instance.requestQueueMemory.remove();
-        validateRequestTimeFields("device-id-1", 1_646_640_780_130L, request);
+        validateRequestTimeFields("device-id-1", 1646640780130L, request);
 
         String userDetails = request.params.get("user_details");
         validateUserProperties(userDetails, true, true, true);
@@ -652,11 +652,11 @@ public class BackendModeTests {
 
         Map<String, Object> userDetail = populateUserProperties(false, true, false);
 
-        backendMode.recordUserProperties("device-id-1", userDetail, 1_646_640_780_130L);
+        backendMode.recordUserProperties("device-id-1", userDetail, 1646640780130L);
 
         Assert.assertEquals(1, SDKCore.instance.requestQueueMemory.size());
         Request request = SDKCore.instance.requestQueueMemory.remove();
-        validateRequestTimeFields("device-id-1", 1_646_640_780_130L, request);
+        validateRequestTimeFields("device-id-1", 1646640780130L, request);
 
         String userDetails = request.params.get("user_details");
         validateUserProperties(userDetails, false, true, false);
@@ -672,11 +672,11 @@ public class BackendModeTests {
 
         Map<String, Object> userDetail = populateUserProperties(false, false, true);
 
-        backendMode.recordUserProperties("device-id-1", userDetail, 1_646_640_780_130L);
+        backendMode.recordUserProperties("device-id-1", userDetail, 1646640780130L);
 
         Assert.assertEquals(1, SDKCore.instance.requestQueueMemory.size());
         Request request = SDKCore.instance.requestQueueMemory.remove();
-        validateRequestTimeFields("device-id-1", 1_646_640_780_130L, request);
+        validateRequestTimeFields("device-id-1", 1646640780130L, request);
 
         String userDetails = request.params.get("user_details");
         validateUserProperties(userDetails, false, false, true);
@@ -690,17 +690,17 @@ public class BackendModeTests {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
         Map<String, Object> userDetail = populateUserProperties(true, false, false);
 
-        backendMode.recordUserProperties("", userDetail, 1_646_640_780_130L);
+        backendMode.recordUserProperties("", userDetail, 1646640780130L);
         Assert.assertTrue(SDKCore.instance.requestQueueMemory.isEmpty());
 
-        backendMode.recordUserProperties(null, userDetail, 1_646_640_780_130L);
+        backendMode.recordUserProperties(null, userDetail, 1646640780130L);
         Assert.assertTrue(SDKCore.instance.requestQueueMemory.isEmpty());
 
-        backendMode.recordUserProperties("device-id", null, 1_646_640_780_130L);
+        backendMode.recordUserProperties("device-id", null, 1646640780130L);
         Assert.assertTrue(SDKCore.instance.requestQueueMemory.isEmpty());
 
         userDetail.clear();
-        backendMode.recordUserProperties("device-id", userDetail, 1_646_640_780_130L);
+        backendMode.recordUserProperties("device-id", userDetail, 1646640780130L);
         Assert.assertTrue(SDKCore.instance.requestQueueMemory.isEmpty());
     }
 
@@ -721,7 +721,7 @@ public class BackendModeTests {
         segmentation.put("key7", 10L);
 
         Assert.assertEquals(0, moduleBackendMode.eventQSize);
-        backendMode.recordEvent("device-id-1", "key-1", 1, 0.1, 10.0, segmentation, 1_646_640_780_130L);
+        backendMode.recordEvent("device-id-1", "key-1", 1, 0.1, 10.0, segmentation, 1646640780130L);
 
         JSONArray events = moduleBackendMode.eventQueues.get("device-id-1");
         Assert.assertEquals(1, events.length());
@@ -729,7 +729,7 @@ public class BackendModeTests {
 
         JSONObject event = events.getJSONObject(0);
 
-        long expectedTimestamp = 1_646_640_780_130L;
+        long expectedTimestamp = 1646640780130L;
         int expectedHour = getHourFromTimeStamp(expectedTimestamp);
 
         validateEventFields("key-1", 1, 0.1, 10.0, 1, expectedHour, expectedTimestamp, event);
@@ -763,7 +763,7 @@ public class BackendModeTests {
         segmentation.put("key7", 10L);
 
         Assert.assertEquals(0, moduleBackendMode.eventQSize);
-        backendMode.recordView("device-id-1", "view-1", segmentation, 1_646_640_780_130L);
+        backendMode.recordView("device-id-1", "view-1", segmentation, 1646640780130L);
 
         JSONArray events = moduleBackendMode.eventQueues.get("device-id-1");
         Assert.assertEquals(1, events.length());
@@ -804,7 +804,7 @@ public class BackendModeTests {
         crashDetails.put("K2", "V2");
 
         Assert.assertEquals(0, moduleBackendMode.eventQSize);
-        backendMode.recordException("device-id-1", "key-1", "stacktrace", segmentation, crashDetails, 1_646_640_780_130L);
+        backendMode.recordException("device-id-1", "key-1", "stacktrace", segmentation, crashDetails, 1646640780130L);
 
         Request request = SDKCore.instance.requestQueueMemory.remove();
         String crash = request.params.get("crash");
@@ -845,14 +845,14 @@ public class BackendModeTests {
 
         Assert.assertEquals(0, moduleBackendMode.eventQSize);
         Assert.assertTrue(SDKCore.instance.requestQueueMemory.isEmpty());
-        backendMode.recordDirectRequest("device-id-2", requestData, 1_647_938_191_782L);
+        backendMode.recordDirectRequest("device-id-2", requestData, 1647938191782L);
         Assert.assertEquals(1, SDKCore.instance.requestQueueMemory.size());
 
         Request request = SDKCore.instance.requestQueueMemory.remove();
         Assert.assertEquals("value1", request.params.get("data1"));
         Assert.assertEquals("value3", request.params.get("data3"));
         Assert.assertEquals("1", request.params.get("dr"));
-        validateRequestTimeFields("device-id-2", 1_647_938_191_782L, request);
+        validateRequestTimeFields("device-id-2", 1647938191782L, request);
 
         // Direct request without timestamp and device id
         requestData = new ConcurrentHashMap<>();
@@ -861,7 +861,7 @@ public class BackendModeTests {
 
         Assert.assertEquals(0, moduleBackendMode.eventQSize);
         Assert.assertTrue(SDKCore.instance.requestQueueMemory.isEmpty());
-        backendMode.recordDirectRequest("device-id-2", requestData, 987_654_321L);
+        backendMode.recordDirectRequest("device-id-2", requestData, 987654321L);
         Assert.assertEquals(1, SDKCore.instance.requestQueueMemory.size());
 
         request = SDKCore.instance.requestQueueMemory.remove();
@@ -869,7 +869,7 @@ public class BackendModeTests {
         Assert.assertEquals("value4", request.params.get("data4"));
         Assert.assertEquals("1", request.params.get("dr"));
 
-        validateRequestTimeFields("device-id-2", 987_654_321L, request);
+        validateRequestTimeFields("device-id-2", 987654321L, request);
     }
 
     private Map<String, Object> populateUserProperties(boolean addUserDetail, boolean addCustomDetail, boolean addOperation) {
