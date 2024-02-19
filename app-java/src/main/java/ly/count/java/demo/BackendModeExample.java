@@ -37,7 +37,7 @@ public class BackendModeExample {
         segmentation.put("segment", "Windows");
         segmentation.put("start", "1");
 
-        Countly.instance().backendM().recordView(DEVICE_ID, "SampleView", segmentation, 1646640780130L);
+        Countly.instance().backendM().recordView(DEVICE_ID, "SampleView", segmentation, 1_646_640_780_130L);
     }
 
     private static void recordEvent() {
@@ -298,7 +298,7 @@ public class BackendModeExample {
         Config config = new Config(COUNTLY_SERVER_URL, COUNTLY_APP_KEY)
             .setLoggingLevel(Config.LoggingLevel.DEBUG)
             .enableBackendMode()
-            .setRequestQueueMaxSize(10000)
+            .setRequestQueueMaxSize(10_000)
             .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
             .setRequiresConsent(false)
             .setEventQueueSizeToSend(1000);

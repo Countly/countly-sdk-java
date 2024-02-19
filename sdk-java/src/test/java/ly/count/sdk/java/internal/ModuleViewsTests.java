@@ -260,7 +260,7 @@ public class ModuleViewsTests {
         Countly.instance().init(TestUtils.getConfigViews());
         TestUtils.validateEQSize(0);
 
-        Map<String, Object> customSegmentationA = TestUtils.map("money", 238746798234739L, "start", "1", "visit", "1", "name", TestUtils.keysValues[0], "segment", TestUtils.keysValues[1]);
+        Map<String, Object> customSegmentationA = TestUtils.map("money", 238_746_798_234_739L, "start", "1", "visit", "1", "name", TestUtils.keysValues[0], "segment", TestUtils.keysValues[1]);
         Map<String, Object> customSegmentationB = TestUtils.map("gone_to", "Wall Sina", "map", TestUtils.map("titan", true, "level", 65));
 
         Countly.instance().views().startView("A", customSegmentationA);
@@ -270,7 +270,7 @@ public class ModuleViewsTests {
 
         TestUtils.validateEQSize(4);
 
-        validateView("A", 0.0, 0, 4, true, true, TestUtils.map("money", 238746798234739L), "idv1", ""); // starting
+        validateView("A", 0.0, 0, 4, true, true, TestUtils.map("money", 238_746_798_234_739L), "idv1", ""); // starting
         validateView("AutoStopped", 0.0, 1, 4, false, true, TestUtils.map("gone_to", "Wall Sina"), "idv2", "idv1"); // starting
         validateView("AutoStopped", 1.0, 2, 4, false, false, null, "idv2", "idv1"); // closing
         validateView("B", 0.0, 3, 4, false, true, null, "idv3", "idv2"); // starting
@@ -376,7 +376,7 @@ public class ModuleViewsTests {
         validateView("A", 0.0, 0, 2, true, true, null, "idv1", "");
         validateView("B", 0.0, 1, 2, false, true, null, "idv2", "idv1");
 
-        Map<String, Object> allSegmentation = TestUtils.map("Copyright", "Countly", "AppExit", true, "DestroyToken", false, "ExitedAt", 1702975890000L);
+        Map<String, Object> allSegmentation = TestUtils.map("Copyright", "Countly", "AppExit", true, "DestroyToken", false, "ExitedAt", 1_702_975_890_000L);
         Countly.instance().views().stopAllViews(allSegmentation);
 
         validateView("A", 0.0, 2, 4, false, false, allSegmentation, "idv1", "idv1");
@@ -401,9 +401,9 @@ public class ModuleViewsTests {
         Map<String, Object> internalKeysSegmentation = TestUtils.map("start", "YES", "name", TestUtils.keysValues[0], "visit", "YES", "segment", TestUtils.keysValues[1]);
 
         Countly.instance().views().startView("A", TestUtils.map(internalKeysSegmentation, "ultimate", "YES"));
-        Countly.instance().views().stopViewWithName("A", TestUtils.map(internalKeysSegmentation, "end", "Unfortunately", "time", 1234567890L));
+        Countly.instance().views().stopViewWithName("A", TestUtils.map(internalKeysSegmentation, "end", "Unfortunately", "time", 1_234_567_890L));
         validateView("A", 0.0, 0, 2, true, true, TestUtils.map("ultimate", "YES"), "idv1", "");
-        validateView("A", 0.0, 1, 2, false, false, TestUtils.map("end", "Unfortunately", "time", 1234567890), "idv1", "");
+        validateView("A", 0.0, 1, 2, false, false, TestUtils.map("end", "Unfortunately", "time", 1_234_567_890L), "idv1", "");
     }
 
     /**
