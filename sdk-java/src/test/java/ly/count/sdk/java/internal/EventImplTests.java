@@ -220,7 +220,7 @@ public class EventImplTests {
         expectedSegmentation.put("price", BigDecimal.valueOf(9.43));
         expectedSegmentation.put("quantity", 3);
         expectedSegmentation.put("name", "test");
-        expectedSegmentation.put("checksum", 56_476_587L);
+        expectedSegmentation.put("checksum", 56_476_587);
         expectedSegmentation.put("divisor", BigDecimal.valueOf(0.2));
 
         JSONObject json = new JSONObject();

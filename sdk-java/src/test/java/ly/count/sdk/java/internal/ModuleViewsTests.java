@@ -403,7 +403,7 @@ public class ModuleViewsTests {
         Countly.instance().views().startView("A", TestUtils.map(internalKeysSegmentation, "ultimate", "YES"));
         Countly.instance().views().stopViewWithName("A", TestUtils.map(internalKeysSegmentation, "end", "Unfortunately", "time", 1_234_567_890L));
         validateView("A", 0.0, 0, 2, true, true, TestUtils.map("ultimate", "YES"), "idv1", "");
-        validateView("A", 0.0, 1, 2, false, false, TestUtils.map("end", "Unfortunately", "time", 1_234_567_890L), "idv1", "");
+        validateView("A", 0.0, 1, 2, false, false, TestUtils.map("end", "Unfortunately", "time", 1_234_567_890), "idv1", "");
     }
 
     /**
