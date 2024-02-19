@@ -40,7 +40,7 @@ public final class BackendModePerformanceTests {
 
     static void performLargeRequestQueueSizeTest() {
         DemoUtils.println("===== Test Started: 'Large request queue size' =====");
-        int requestQSize = 1000000;
+        int requestQSize = 1_000_000;
         DemoUtils.printf("Before SDK Initialization: Total Memory = %dMb, Available RAM = %dMb %n", Device.dev.getRAMTotal(), Device.dev.getRAMAvailable());
         initSDK(1, requestQSize);
         DemoUtils.printf("After SDK Initialization: Total Memory = %d Mb, Available RAM= %d Mb %n", Device.dev.getRAMTotal(), Device.dev.getRAMAvailable());
@@ -121,7 +121,7 @@ public final class BackendModePerformanceTests {
         DemoUtils.printf("After SDK Initialization: Total Memory = %d Mb, Available RAM= %d Mb %n", Device.dev.getRAMTotal(), Device.dev.getRAMAvailable());
         int noOfDevices = 10;
         for (int d = 0; d <= noOfDevices; ++d) {
-            DemoUtils.printf("Adding %d events into event Queue against deviceID = %s%n", 1_000_00, "device-id-" + d);
+            DemoUtils.printf("Adding %d events into event Queue against deviceID = %s%n", 100_000, "device-id-" + d);
             for (int i = 1; i <= noOfEvents; ++i) {
 
                 Map<String, Object> segment = new ConcurrentHashMap<>();

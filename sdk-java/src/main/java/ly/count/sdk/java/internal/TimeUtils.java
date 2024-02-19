@@ -4,8 +4,8 @@ import java.util.Calendar;
 
 public class TimeUtils {
 
-    protected static final Double NS_IN_SECOND = 1000000000.0d;
-    protected static final Double NS_IN_MS = 1000000.0d;
+    protected static final Double NS_IN_SECOND = 1_000_000_000.0d;
+    protected static final Double NS_IN_MS = 1_000_000.0d;
     protected static final long MS_IN_SECOND = 1000;
     private static final UniqueTimeGenerator uniqueTimer = new UniqueTimeGenerator();
 
@@ -39,7 +39,7 @@ public class TimeUtils {
         return new Instant(timestamp,
             calendar.get(Calendar.HOUR_OF_DAY),
             calendar.get(Calendar.DAY_OF_WEEK) - 1, // Calendar days are 1-based, Countly days are 0-based
-            calendar.get(Calendar.ZONE_OFFSET) / 60000); //convert it to seconds
+            calendar.get(Calendar.ZONE_OFFSET) / 60_000); //convert it to seconds
     }
 
     /**
