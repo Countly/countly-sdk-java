@@ -17,8 +17,17 @@ import java.util.concurrent.TimeUnit;
 public class Tasks {
     public static final Long ID_STRICT = 0L;
     public static final Long ID_LIST = -1L;
-
     final Log L;
+    /**
+     * Service which runs {@link Callable}s
+     */
+    private final ExecutorService executor;
+    private Long running = null;
+
+    /**
+     * Map of {@link Future}s for {@link Callable}s not yet resolved
+     */
+    private final Map<Long, Future> pending;
 
     public static abstract class Task<T> implements Callable<T> {
         Long id;
@@ -33,17 +42,6 @@ public class Tasks {
     public interface Callback<T> {
         void call(T param) throws Exception;
     }
-
-    /**
-     * Service which runs {@link Callable}s
-     */
-    private final ExecutorService executor;
-    private Long running = null;
-
-    /**
-     * Map of {@link Future}s for {@link Callable}s not yet resolved
-     */
-    private final Map<Long, Future> pending;
 
     public Tasks(final String name, Log L) {
         this.L = L;

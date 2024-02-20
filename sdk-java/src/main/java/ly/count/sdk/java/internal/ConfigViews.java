@@ -5,12 +5,11 @@ import ly.count.sdk.java.Config;
 
 public class ConfigViews {
     private final Config config;
+    protected Map<String, Object> globalViewSegmentation = null;
 
     public ConfigViews(Config config) {
         this.config = config;
     }
-
-    protected Map<String, Object> globalViewSegmentation = null;
 
     /**
      * @param segmentation segmentation values that will be added for all recorded views (manual and automatic)
