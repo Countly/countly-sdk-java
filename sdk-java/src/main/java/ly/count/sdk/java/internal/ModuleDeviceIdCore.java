@@ -21,6 +21,8 @@ public class ModuleDeviceIdCore extends ModuleBase {
      * Tasks instance for async execution
      */
     private Tasks tasks;
+    private static final Map<Integer, DeviceIdGenerator> generators = new ConcurrentHashMap<>();
+    protected DeviceId deviceIdInterface;
 
     private static final class UUIDGenerator implements DeviceIdGenerator {
 
@@ -43,10 +45,6 @@ public class ModuleDeviceIdCore extends ModuleBase {
             return customId;
         }
     }
-
-    private static final Map<Integer, DeviceIdGenerator> generators = new ConcurrentHashMap<>();
-
-    protected DeviceId deviceIdInterface;
 
     @Override
     public void init(InternalConfig config) throws IllegalArgumentException {

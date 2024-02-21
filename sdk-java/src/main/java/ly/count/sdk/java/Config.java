@@ -22,136 +22,6 @@ import ly.count.sdk.java.internal.Utils;
  * Countly configuration object.
  */
 public class Config {
-    /**
-     * Logging level for {@link Log} module
-     */
-    public enum LoggingLevel {
-        VERBOSE(0),
-        DEBUG(1),
-        INFO(2),
-        WARN(3),
-        ERROR(4),
-        OFF(5);
-
-        private final int level;
-
-        LoggingLevel(int level) {
-            this.level = level;
-        }
-
-        public int getLevel() {
-            return level;
-        }
-
-        public boolean prints(LoggingLevel l) {
-            return level <= l.level;
-        }
-    }
-
-    public enum DeviceIdStrategy {
-        UUID(0),
-        CUSTOM_ID(10);
-
-        private final int index;
-
-        DeviceIdStrategy(int level) {
-            this.index = level;
-        }
-
-        public int getIndex() {
-            return index;
-        }
-
-        public static DeviceIdStrategy fromIndex(int index) {
-            if (index == UUID.index) {
-                return UUID;
-            }
-            if (index == CUSTOM_ID.index) {
-                return CUSTOM_ID;
-            }
-            return null;
-        }
-    }
-
-    public enum Feature {
-        Events(CoreFeature.Events.getIndex()),
-        Sessions(CoreFeature.Sessions.getIndex()),
-        Views(CoreFeature.Views.getIndex()),
-        CrashReporting(CoreFeature.CrashReporting.getIndex()),
-        Location(CoreFeature.Location.getIndex()),
-        UserProfiles(CoreFeature.UserProfiles.getIndex()),
-        Feedback(CoreFeature.Feedback.getIndex()),
-        RemoteConfig(CoreFeature.RemoteConfig.getIndex());
-        //        StarRating(1 << 12),
-        //        PerformanceMonitoring(1 << 14);
-
-        private final int index;
-
-        Feature(int index) {
-            this.index = index;
-        }
-
-        public int getIndex() {
-            return index;
-        }
-
-        public static Config.Feature byIndex(int index) {
-            if (index == Events.index) {
-                return Events;
-            } else if (index == Sessions.index) {
-                return Sessions;
-            } else if (index == Views.index) {
-                return Views;
-            } else if (index == CrashReporting.index) {
-                return CrashReporting;
-            } else if (index == Location.index) {
-                return Location;
-            } else if (index == UserProfiles.index) {
-                return UserProfiles;
-            } else if (index == RemoteConfig.index) {
-                return RemoteConfig;
-            } else if (index == Feedback.index) {
-                return Feedback;
-            } else {
-                return null;
-            }
-        }
-    }
-
-    /**
-     * Holder class for various ids met
-     * adata and id itself. Final, unmodifiable.
-     */
-    public static final class DID {
-        public static final int STRATEGY_UUID = 0;
-        public static final int STRATEGY_CUSTOM = 10;
-        public int strategy;
-        public String id;
-
-        public DID(int strategy, String id) {
-            this.strategy = strategy;
-            this.id = id;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (!(obj instanceof DID)) {
-                return false;
-            }
-            DID did = (DID) obj;
-            return did.strategy == strategy && Objects.equals(did.id, id);
-        }
-
-        @Override
-        public int hashCode() {
-            return id.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "DID " + id + " ( " + strategy + ")";
-        }
-    }
 
     protected Log configLog;
 
@@ -360,26 +230,7 @@ public class Config {
      */
     protected boolean unhandledCrashReportingEnabled = true;
 
-    /**
-     * Get the maximum amount of breadcrumbs. Default is 100.
-     *
-     * @param maxBreadcrumbCount the maximum amount of breadcrumbs
-     * @return {@code this} instance for method chaining
-     */
-    public Config setMaxBreadcrumbCount(int maxBreadcrumbCount) {
-        this.maxBreadcrumbCount = maxBreadcrumbCount;
-        return this;
-    }
-
-    /**
-     * Disable automatic crash reporting for unhandled exceptions.
-     *
-     * @return {@code this} instance for method chaining
-     */
-    public Config disableUnhandledCrashReporting() {
-        this.unhandledCrashReportingEnabled = false;
-        return this;
-    }
+    public ConfigViews views = new ConfigViews(this);
 
     protected String location = null;
     protected String ip = null;
@@ -423,6 +274,27 @@ public class Config {
         }
         this.serverAppKey = serverAppKey;
         this.sdkStorageRootDirectory = sdkStorageRootDirectory;
+    }
+
+    /**
+     * Get the maximum amount of breadcrumbs. Default is 100.
+     *
+     * @param maxBreadcrumbCount the maximum amount of breadcrumbs
+     * @return {@code this} instance for method chaining
+     */
+    public Config setMaxBreadcrumbCount(int maxBreadcrumbCount) {
+        this.maxBreadcrumbCount = maxBreadcrumbCount;
+        return this;
+    }
+
+    /**
+     * Disable automatic crash reporting for unhandled exceptions.
+     *
+     * @return {@code this} instance for method chaining
+     */
+    public Config disableUnhandledCrashReporting() {
+        this.unhandledCrashReportingEnabled = false;
+        return this;
     }
 
     /**
@@ -1458,5 +1330,134 @@ public class Config {
         return this;
     }
 
-    public ConfigViews views = new ConfigViews(this);
+    /**
+     * Logging level for {@link Log} module
+     */
+    public enum LoggingLevel {
+        VERBOSE(0),
+        DEBUG(1),
+        INFO(2),
+        WARN(3),
+        ERROR(4),
+        OFF(5);
+
+        private final int level;
+
+        LoggingLevel(int level) {
+            this.level = level;
+        }
+
+        public int getLevel() {
+            return level;
+        }
+
+        public boolean prints(LoggingLevel l) {
+            return level <= l.level;
+        }
+    }
+
+    public enum DeviceIdStrategy {
+        UUID(0),
+        CUSTOM_ID(10);
+
+        private final int index;
+
+        DeviceIdStrategy(int level) {
+            this.index = level;
+        }
+
+        public int getIndex() {
+            return index;
+        }
+
+        public static DeviceIdStrategy fromIndex(int index) {
+            if (index == UUID.index) {
+                return UUID;
+            }
+            if (index == CUSTOM_ID.index) {
+                return CUSTOM_ID;
+            }
+            return null;
+        }
+    }
+
+    public enum Feature {
+        Events(CoreFeature.Events.getIndex()),
+        Sessions(CoreFeature.Sessions.getIndex()),
+        Views(CoreFeature.Views.getIndex()),
+        CrashReporting(CoreFeature.CrashReporting.getIndex()),
+        Location(CoreFeature.Location.getIndex()),
+        UserProfiles(CoreFeature.UserProfiles.getIndex()),
+        Feedback(CoreFeature.Feedback.getIndex()),
+        RemoteConfig(CoreFeature.RemoteConfig.getIndex());
+        //        StarRating(1 << 12),
+        //        PerformanceMonitoring(1 << 14);
+
+        private final int index;
+
+        Feature(int index) {
+            this.index = index;
+        }
+
+        public int getIndex() {
+            return index;
+        }
+
+        public static Config.Feature byIndex(int index) {
+            if (index == Events.index) {
+                return Events;
+            } else if (index == Sessions.index) {
+                return Sessions;
+            } else if (index == Views.index) {
+                return Views;
+            } else if (index == CrashReporting.index) {
+                return CrashReporting;
+            } else if (index == Location.index) {
+                return Location;
+            } else if (index == UserProfiles.index) {
+                return UserProfiles;
+            } else if (index == RemoteConfig.index) {
+                return RemoteConfig;
+            } else if (index == Feedback.index) {
+                return Feedback;
+            } else {
+                return null;
+            }
+        }
+    }
+
+    /**
+     * Holder class for various ids met
+     * adata and id itself. Final, unmodifiable.
+     */
+    public static final class DID {
+        public static final int STRATEGY_UUID = 0;
+        public static final int STRATEGY_CUSTOM = 10;
+        public int strategy;
+        public String id;
+
+        public DID(int strategy, String id) {
+            this.strategy = strategy;
+            this.id = id;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof DID)) {
+                return false;
+            }
+            DID did = (DID) obj;
+            return did.strategy == strategy && Objects.equals(did.id, id);
+        }
+
+        @Override
+        public int hashCode() {
+            return id.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "DID " + id + " ( " + strategy + ")";
+        }
+    }
 }

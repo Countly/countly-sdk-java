@@ -28,8 +28,11 @@ public class Device {
     private String orientation;
     private Boolean online;
     private Boolean muted;
-
     private Log L;
+    protected static final Double NS_IN_SECOND = 1_000_000_000.0d;
+    protected static final Double NS_IN_MS = 1_000_000.0d;
+    protected static final Double MS_IN_SECOND = 1000d;
+    protected static final Long BYTES_IN_MB = 1024L * 1024;
 
     private final Map<String, String> metricOverride = new ConcurrentHashMap<>();
 
@@ -44,10 +47,6 @@ public class Device {
     /**
      * One second in nanoseconds
      */
-    protected static final Double NS_IN_SECOND = 1_000_000_000.0d;
-    protected static final Double NS_IN_MS = 1_000_000.0d;
-    protected static final Double MS_IN_SECOND = 1000d;
-    protected static final Long BYTES_IN_MB = 1024L * 1024;
 
     /**
      * Get operation system name

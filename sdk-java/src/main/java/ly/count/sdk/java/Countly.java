@@ -35,6 +35,8 @@ public class Countly implements Usage {
     public static final Device device = Device.dev;
 
     private static final Countly cly = SingletonHolder.INSTANCE;
+    protected SDKCore sdk;
+    protected Log L;
 
     private static class SingletonHolder {
         private static final Countly INSTANCE = new Countly();
@@ -48,9 +50,6 @@ public class Countly implements Usage {
             INSTANCE.sdk = null;
         }
     }
-
-    protected SDKCore sdk;
-    protected Log L;
 
     protected Countly(SDKCore sdk, final Log logger) {
         L = logger;

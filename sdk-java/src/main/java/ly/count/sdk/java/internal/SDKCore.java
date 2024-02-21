@@ -6,25 +6,36 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.TreeMap;
-import javax.annotation.Nonnull;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import ly.count.sdk.java.Config;
 
 public class SDKCore {
 
     protected static SDKCore instance;
-
     protected final SDKStorage sdkStorage;
     private UserImpl user;
-
     public InternalConfig config;
     protected Networking networking;
     protected Queue<Request> requestQueueMemory = null;
-
     protected final Object lockBRQStorage = new Object();
-
     private CountlyTimer countlyTimer;
+
+    protected Log L = null;
+    protected static ModuleBase testDummyModule = null;//set during testing when trying to check the SDK's lifecycle
+    /**
+     * Currently enabled features with consents
+     */
+    protected int consents = 0;
+
+    /**
+     * Selected by config map of module mappings
+     */
+    private static final Map<CoreFeature, Class<? extends ModuleBase>> moduleMappings = new ConcurrentHashMap<>();
+
+    // TreeMap to keep modules sorted by their feature indexes
+    protected final Map<Integer, ModuleBase> modules;
 
     public enum Signal {
         DID(1),
@@ -49,9 +60,6 @@ public class SDKCore {
         sdkStorage = new SDKStorage();
     }
 
-    protected Log L = null;
-    protected static ModuleBase testDummyModule = null;//set during testing when trying to check the SDK's lifecycle
-
     protected static void registerDefaultModuleMappings() {
         moduleMappings.put(CoreFeature.DeviceId, ModuleDeviceIdCore.class);
         moduleMappings.put(CoreFeature.Requests, ModuleRequests.class);
@@ -66,19 +74,6 @@ public class SDKCore {
         moduleMappings.put(CoreFeature.UserProfiles, ModuleUserProfile.class);
         moduleMappings.put(CoreFeature.Location, ModuleLocation.class);
     }
-
-    /**
-     * Currently enabled features with consents
-     */
-    protected int consents = 0;
-
-    /**
-     * Selected by config map of module mappings
-     */
-    private static final Map<CoreFeature, Class<? extends ModuleBase>> moduleMappings = new ConcurrentHashMap<>();
-
-    // TreeMap to keep modules sorted by their feature indexes
-    protected final Map<Integer, ModuleBase> modules;
 
     /**
      * Check if consent has been given for a feature

@@ -33,6 +33,19 @@ class EventImpl implements Event, JSONable {
 
     final Log L;
 
+    protected static final String SEGMENTATION_KEY = "segmentation";
+    protected static final String KEY_KEY = "key";
+    protected static final String COUNT_KEY = "count";
+    protected static final String SUM_KEY = "sum";
+    protected static final String DUR_KEY = "dur";
+    protected static final String TIMESTAMP_KEY = "timestamp";
+    protected static final String DAY_OF_WEEK = "dow";
+    protected static final String HOUR = "hour";
+    protected static final String ID_KEY = "id";
+    protected static final String PV_ID_KEY = "pvid";
+    protected static final String CV_ID_KEY = "cvid";
+    protected static final String PE_ID_KEY = "peid";
+
     public interface EventRecorder {
         void recordEvent(Event event);
     }
@@ -239,19 +252,6 @@ class EventImpl implements Event, JSONable {
         }
         return true;
     }
-
-    protected static final String SEGMENTATION_KEY = "segmentation";
-    protected static final String KEY_KEY = "key";
-    protected static final String COUNT_KEY = "count";
-    protected static final String SUM_KEY = "sum";
-    protected static final String DUR_KEY = "dur";
-    protected static final String TIMESTAMP_KEY = "timestamp";
-    protected static final String DAY_OF_WEEK = "dow";
-    protected static final String HOUR = "hour";
-    protected static final String ID_KEY = "id";
-    protected static final String PV_ID_KEY = "pvid";
-    protected static final String CV_ID_KEY = "cvid";
-    protected static final String PE_ID_KEY = "peid";
 
     /**
      * Serialize to JSON format according to Countly server requirements
