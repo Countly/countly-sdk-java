@@ -411,13 +411,12 @@ public class UtilsTests {
             BufferedWriter writer = Files.newBufferedWriter(file.toPath());
             writer.write(fileContent);
             writer.close();
-            Files.setPosixFilePermissions(file.toPath(), EnumSet.of(PosixFilePermission.OWNER_WRITE));
 
-            String content = Utils.readFileContent(file, logger);
             if (System.getProperty("os.name").toLowerCase().contains("win")) {
-                Assert.assertEquals(fileContent, content);
+                Assert.assertEquals(fileContent, Utils.readFileContent(file, logger));
             } else {
-                Assert.assertEquals("", content);
+                Files.setPosixFilePermissions(file.toPath(), EnumSet.of(PosixFilePermission.OWNER_WRITE));
+                Assert.assertEquals("", Utils.readFileContent(file, logger));
             }
         } finally {
             File file = new File(TEST_FILE_NAME);
