@@ -29,6 +29,10 @@ public class Device {
     private Boolean online;
     private Boolean muted;
     private Log L;
+
+    /**
+     * One second in nanoseconds
+     */
     protected static final Double NS_IN_SECOND = 1_000_000_000.0d;
     protected static final Double NS_IN_MS = 1_000_000.0d;
     protected static final Double MS_IN_SECOND = 1000d;
@@ -43,10 +47,6 @@ public class Device {
     public void setLog(Log L) {
         this.L = L;
     }
-
-    /**
-     * One second in nanoseconds
-     */
 
     /**
      * Get operation system name
