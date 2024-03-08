@@ -465,8 +465,12 @@ public class Transport implements X509TrustManager {
             throw new IllegalArgumentException("PublicKeyManager: X509Certificate is empty");
         }
 
-        if (!(null != authType && authType.contains("RSA"))) {
-            throw new CertificateException("PublicKeyManager: AuthType is not RSA");
+        if (authType == null) {
+            throw new CertificateException("PublicKeyManager: AuthType is null");
+        }
+
+        if (authType.isEmpty()) {
+            throw new CertificateException("PublicKeyManager: AuthType is empty");
         }
 
         // Perform standard SSL/TLS checks
