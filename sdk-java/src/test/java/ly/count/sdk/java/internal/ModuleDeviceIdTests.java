@@ -480,7 +480,7 @@ public class ModuleDeviceIdTests {
     }
 
     /**
-     * "changeWithoutMerge" with custom device id
+     * "setID" with double without merge
      * Validating that new id set and callback is called, and existing events,timed events and session must end, new session must begin
      * request order should be first began session, 1 events, 1 end session, second began session, second end session, third began session
      */
@@ -513,9 +513,8 @@ public class ModuleDeviceIdTests {
     }
 
     /**
-     * "changeWithMerge"
-     * Validating that only one began session request is created and two device id change request for two
-     * "changeWithMerge" calls with different ids
+     * "setID" first sdk generated then developer supplied
+     * Validating that first call acts like "changeWithMerge" and second call acts like "changeWithoutMerge"
      * SDK must generate an id first, then should change with developer supplied two times
      */
     @Test
