@@ -195,6 +195,27 @@ public class ModuleDeviceIdCore extends ModuleBase {
         return did;
     }
 
+    private void setIDInternal(String newDeviceID) {
+        if (Utils.isEmptyOrNull(newDeviceID)) {
+            L.w("[ModuleDeviceIdCore] setID, Empty id passed to setID method");
+            return;
+        }
+
+        if (getIDInternal().equals(newDeviceID)) {
+            L.w("[ModuleDeviceIdCore] setID, Same id passed to setID method, ignoring");
+            return;
+        }
+
+        // if current type is DEVELOPER_SUPPLIED
+        // an ID was provided by the host app previously
+        // we can assume that a device ID change with merge was executed previously
+        // now we change it without merging
+        // else
+        // SDK generated ID
+        // we change device ID with merge so that data is combined
+        changeDeviceIdInternal(newDeviceID, DeviceIdType.DEVELOPER_SUPPLIED, !getTypeInternal().equals(DeviceIdType.DEVELOPER_SUPPLIED));
+    }
+
     @Override
     public void stop(InternalConfig config, boolean clear) {
         if (tasks != null) {
@@ -222,6 +243,17 @@ public class ModuleDeviceIdCore extends ModuleBase {
         public String getID() {
             synchronized (Countly.instance()) {
                 return getIDInternal();
+            }
+        }
+
+        /**
+         * Sets current device id to the new one.
+         *
+         * @param newDeviceID device id to set
+         */
+        public void setID(String newDeviceID) {
+            synchronized (Countly.instance()) {
+                setIDInternal(newDeviceID);
             }
         }
 

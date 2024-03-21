@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
@@ -59,7 +60,7 @@ public class ModuleDeviceIdTests {
     @Test
     public void changeWithMerge() {
         TestUtils.AtomicString deviceID = new TestUtils.AtomicString(TestUtils.DEVICE_ID);
-        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(deviceID, false, DeviceIdType.DEVELOPER_SUPPLIED);
+        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(deviceID, no(), DeviceIdType.DEVELOPER_SUPPLIED);
         Countly.instance().init(TestUtils.getConfigDeviceId(null)); // to create sdk generated device id
         setupView_Event_Session();
         Assert.assertEquals(1, TestUtils.getCurrentRQ().length); // began session request
@@ -96,7 +97,7 @@ public class ModuleDeviceIdTests {
         //why atomic string? Because changing it should also trigger dummy module callback asserts.
         //so it should be modifiable from outside
         TestUtils.AtomicString deviceID = new TestUtils.AtomicString(TestUtils.keysValues[0]);
-        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(deviceID, true, DeviceIdType.DEVELOPER_SUPPLIED);
+        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(deviceID, yes(), DeviceIdType.DEVELOPER_SUPPLIED);
         Countly.instance().init(TestUtils.getConfigDeviceId(TestUtils.DEVICE_ID)); //custom id given
         setupView_Event_Session(); // setup view, event and session to simulate a device id change
         validateBeganSessionRequest(); // also validates rq size is 1
@@ -129,7 +130,7 @@ public class ModuleDeviceIdTests {
         //why atomic string? Because changing it should also trigger dummy module callback asserts.
         //so it should be modifiable from outside
         TestUtils.AtomicString deviceID = new TestUtils.AtomicString(TestUtils.keysValues[0]);
-        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(deviceID, true, DeviceIdType.DEVELOPER_SUPPLIED);
+        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(deviceID, yes(), DeviceIdType.DEVELOPER_SUPPLIED);
         Countly.instance().init(TestUtils.getConfigDeviceId(null)); //let sdk generate
         setupView_Event_Session(); // setup view, event and session to simulate a device id change
         validateBeganSessionRequest(); // also validates rq size is 1
@@ -153,7 +154,7 @@ public class ModuleDeviceIdTests {
         //why atomic string? Because changing it should also trigger dummy module callback asserts.
         //so it should be modifiable from outside
         TestUtils.AtomicString deviceID = new TestUtils.AtomicString(TestUtils.keysValues[0]);
-        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(deviceID, true, DeviceIdType.DEVELOPER_SUPPLIED);
+        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(deviceID, yes(), DeviceIdType.DEVELOPER_SUPPLIED);
         Countly.instance().init(TestUtils.getConfigDeviceId(null)); //let sdk generate
         setupView_Event_Session(); // setup view, event and session to simulate a device id change
         validateBeganSessionRequest(); // also validates rq size is 1
@@ -177,7 +178,7 @@ public class ModuleDeviceIdTests {
         //why atomic string? Because changing it should also trigger dummy module callback asserts.
         //so it should be modifiable from outside
         TestUtils.AtomicString deviceID = new TestUtils.AtomicString(TestUtils.keysValues[0]);
-        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(deviceID, true, DeviceIdType.DEVELOPER_SUPPLIED);
+        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(deviceID, yes(), DeviceIdType.DEVELOPER_SUPPLIED);
         Countly.instance().init(TestUtils.getConfigDeviceId(null)); //let sdk generate
         setupView_Event_Session(); // setup view, event and session to simulate a device id change
         validateBeganSessionRequest(); // also validates rq size is 1
@@ -198,7 +199,7 @@ public class ModuleDeviceIdTests {
      */
     @Test
     public void changeWithMerge_nullDeviceId() {
-        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(null, false, DeviceIdType.SDK_GENERATED);
+        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(null, no(), DeviceIdType.SDK_GENERATED);
         Countly.instance().init(TestUtils.getConfigDeviceId(null)); // to create sdk generated device id
         setupView_Event_Session();
 
@@ -220,7 +221,7 @@ public class ModuleDeviceIdTests {
      */
     @Test
     public void changeWithMerge_emptyDeviceId() {
-        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(new TestUtils.AtomicString(""), false, DeviceIdType.SDK_GENERATED);
+        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(new TestUtils.AtomicString(""), no(), DeviceIdType.SDK_GENERATED);
         Countly.instance().init(TestUtils.getConfigDeviceId(null)); // to create sdk generated device id
         setupView_Event_Session();
 
@@ -243,7 +244,7 @@ public class ModuleDeviceIdTests {
      */
     @Test
     public void changeWithMerge_sameDeviceId() throws InterruptedException {
-        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(new TestUtils.AtomicString(TestUtils.DEVICE_ID), false, DeviceIdType.DEVELOPER_SUPPLIED);
+        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(new TestUtils.AtomicString(TestUtils.DEVICE_ID), no(), DeviceIdType.DEVELOPER_SUPPLIED);
         Countly.instance().init(TestUtils.getConfigDeviceId(null)); // to create sdk generated device id
         setupView_Event_Session();
         Thread.sleep(200); // wait for session request to written to the disk
@@ -273,7 +274,7 @@ public class ModuleDeviceIdTests {
      */
     @Test
     public void changeWithMerge_sessionNotStarted() {
-        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(new TestUtils.AtomicString(TestUtils.DEVICE_ID), false, DeviceIdType.DEVELOPER_SUPPLIED);
+        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(new TestUtils.AtomicString(TestUtils.DEVICE_ID), no(), DeviceIdType.DEVELOPER_SUPPLIED);
         Countly.instance().init(TestUtils.getConfigDeviceId(null)); // to create sdk generated device id
         setupEvent();
 
@@ -296,7 +297,7 @@ public class ModuleDeviceIdTests {
      */
     @Test
     public void changeWithoutMerge_sessionNotStarted() {
-        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(new TestUtils.AtomicString(TestUtils.DEVICE_ID), true, DeviceIdType.DEVELOPER_SUPPLIED);
+        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(new TestUtils.AtomicString(TestUtils.DEVICE_ID), yes(), DeviceIdType.DEVELOPER_SUPPLIED);
         Countly.instance().init(TestUtils.getConfigDeviceId(null)); // to create sdk generated device id
 
         validateDeviceIdIsSdkGenerated();
@@ -314,7 +315,7 @@ public class ModuleDeviceIdTests {
      */
     @Test
     public void changeWithoutMerge_sessionNotStarted_withEvents() throws InterruptedException {
-        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(new TestUtils.AtomicString(TestUtils.DEVICE_ID), true, DeviceIdType.DEVELOPER_SUPPLIED);
+        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(new TestUtils.AtomicString(TestUtils.DEVICE_ID), yes(), DeviceIdType.DEVELOPER_SUPPLIED);
         Countly.instance().init(TestUtils.getConfigDeviceId(null)); // to create sdk generated device id
         setupEvent(); // two events created one is timed event it is started, the other is casual event
         String oldDeviceId = Countly.instance().deviceId().getID();
@@ -360,7 +361,7 @@ public class ModuleDeviceIdTests {
      */
     @Test
     public void logout_sdkGenerated() throws InterruptedException {
-        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(null, true, DeviceIdType.SDK_GENERATED);
+        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(null, yes(), DeviceIdType.SDK_GENERATED);
         Countly.instance().init(TestUtils.getConfigDeviceId(null)); // to create sdk generated device id
         setupView_Event_Session();
 
@@ -382,7 +383,7 @@ public class ModuleDeviceIdTests {
     @Test
     public void logout_developerSupplied() {
         TestUtils.AtomicString deviceID = new TestUtils.AtomicString(TestUtils.DEVICE_ID);
-        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(deviceID, true, DeviceIdType.SDK_GENERATED);
+        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(deviceID, yes(), DeviceIdType.SDK_GENERATED);
         Countly.instance().init(TestUtils.getConfigDeviceId(TestUtils.DEVICE_ID)); // to create sdk generated device id
         setupView_Event_Session();
 
@@ -422,6 +423,136 @@ public class ModuleDeviceIdTests {
         Assert.assertEquals(TestUtils.DEVICE_ID, did.id);
     }
 
+    @Test
+    public void setID() {
+        Countly.instance().init(TestUtils.getBaseConfig(null)); // no custom id provided
+        validateDeviceIdIsSdkGenerated(); // validate id exist and sdk generated
+
+        String newId = TestUtils.keysValues[0];
+        Countly.instance().deviceId().setID(newId);
+        validateDeviceIdDeveloperSupplied(newId);
+    }
+
+    @Test
+    public void setID_null() {
+        Countly.instance().init(TestUtils.getBaseConfig(null)); // no custom id provided
+        validateDeviceIdIsSdkGenerated(); // validate id exist and sdk generated
+
+        Countly.instance().deviceId().setID(null);
+        validateDeviceIdIsSdkGenerated();
+    }
+
+    @Test
+    public void setID_empty() {
+        Countly.instance().init(TestUtils.getBaseConfig(null)); // no custom id provided
+        validateDeviceIdIsSdkGenerated(); // validate id exist and sdk generated
+
+        Countly.instance().deviceId().setID("");
+        validateDeviceIdIsSdkGenerated();
+    }
+
+    @Test
+    public void setID_same() {
+        Countly.instance().init(TestUtils.getBaseConfig(null)); // no custom id provided
+        validateDeviceIdIsSdkGenerated(); // validate id exist and sdk generated
+
+        Countly.instance().deviceId().setID(Countly.instance().deviceId().getID());
+        validateDeviceIdIsSdkGenerated();
+    }
+
+    @Test
+    public void setID_sameCustom() {
+        Countly.instance().init(TestUtils.getBaseConfig(TestUtils.DEVICE_ID)); // custom id provided
+        validateDeviceIdDeveloperSupplied(TestUtils.DEVICE_ID); // validate id exist and developer supplied
+
+        Countly.instance().deviceId().setID(TestUtils.DEVICE_ID);
+        validateDeviceIdDeveloperSupplied(TestUtils.DEVICE_ID);
+    }
+
+    @Test
+    public void setID_custom() {
+        Countly.instance().init(TestUtils.getBaseConfig(TestUtils.DEVICE_ID)); // custom id provided
+        validateDeviceIdDeveloperSupplied(TestUtils.DEVICE_ID); // validate id exist and developer supplied
+
+        String newId = TestUtils.keysValues[0];
+        Countly.instance().deviceId().setID(newId);
+        validateDeviceIdDeveloperSupplied(newId);
+    }
+
+    /**
+     * "changeWithoutMerge" with custom device id
+     * Validating that new id set and callback is called, and existing events,timed events and session must end, new session must begin
+     * request order should be first began session, 1 events, 1 end session, second began session, second end session, third began session
+     */
+    @Test
+    public void setID_changeWithoutMerge() throws InterruptedException {
+        //why atomic string? Because changing it should also trigger dummy module callback asserts.
+        //so it should be modifiable from outside
+        TestUtils.AtomicString deviceID = new TestUtils.AtomicString(TestUtils.keysValues[0]);
+        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(deviceID, yes(), DeviceIdType.DEVELOPER_SUPPLIED);
+        Countly.instance().init(TestUtils.getConfigDeviceId(TestUtils.DEVICE_ID)); //custom id given
+        setupView_Event_Session(); // setup view, event and session to simulate a device id change
+        validateBeganSessionRequest(); // also validates rq size is 1
+
+        validateDeviceIdDeveloperSupplied(TestUtils.DEVICE_ID);
+        Assert.assertEquals(0, callCount.get());
+
+        Thread.sleep(1000); // waiting for timed event duration
+        Assert.assertEquals(2, TestUtils.getCurrentEQ().size()); // size should be 2 one view and a casual event
+        Countly.instance().deviceId().setID(deviceID.value);
+        Assert.assertEquals(0, TestUtils.getCurrentEQ().size()); // size should be zero because queue is flushed
+        Assert.assertEquals(1, callCount.get());
+        validateDeviceIdWithoutMergeChange(4, TestUtils.DEVICE_ID); // there should be 2 began, 1 end, 1 events request
+        TestUtils.flushCurrentRQWithOldDeviceId(TestUtils.DEVICE_ID); // clean current rq with old device id requests
+
+        deviceID.value += "1"; //change device id
+        Countly.instance().deviceId().setID(deviceID.value);
+        Assert.assertEquals(2, callCount.get());
+        //if device id is not merged, then device id change request should not exist
+        validateDeviceIdWithoutMergeChange(3, TestUtils.keysValues[0]); // additional 1 session end 1 session begin, no events because no events exist
+    }
+
+    /**
+     * "changeWithMerge"
+     * Validating that only one began session request is created and two device id change request for two
+     * "changeWithMerge" calls with different ids
+     * SDK must generate an id first, then should change with developer supplied two times
+     */
+    @Test
+    public void setID_changeWithMerge_then_withoutMerge() throws InterruptedException {
+        TestUtils.AtomicString deviceID = new TestUtils.AtomicString(TestUtils.DEVICE_ID);
+        AtomicBoolean withMerge = new AtomicBoolean(false);
+        AtomicInteger callCount = initDummyModuleForDeviceIdChangedCallback(deviceID, withMerge, DeviceIdType.DEVELOPER_SUPPLIED);
+        Countly.instance().init(TestUtils.getConfigDeviceId(null)); // to create sdk generated device id
+        setupView_Event_Session();
+        Assert.assertEquals(1, TestUtils.getCurrentRQ().length); // began session request
+        // validate began session request with generated id
+        validateBeganSessionRequest();
+        validateDeviceIdIsSdkGenerated(); // validate device id generated by the sdk
+
+        String oldDeviceId = Countly.instance().deviceId().getID();
+        Assert.assertEquals(0, callCount.get()); // validate "deviceIdChanged" callback not called
+
+        Assert.assertEquals(2, TestUtils.getCurrentEQ().size()); // size should not change because it is merge request
+        Countly.instance().deviceId().setID(deviceID.value); // TestUtils.DEVICE_ID
+        Assert.assertEquals(2, TestUtils.getCurrentEQ().size()); // size should not change because it is merge request
+
+        Assert.assertEquals(1, callCount.get());
+        validateDeviceIdWithMergeChange(oldDeviceId, 1, 2);
+        TestUtils.flushCurrentRQWithOldDeviceId(oldDeviceId); // clean current rq with old device id requests
+
+        deviceID.value += "1";
+        withMerge.set(true); // set atomic boolean to true to validate without merge
+        Thread.sleep(1000); // waiting for timed event duration
+
+        Assert.assertEquals(2, TestUtils.getCurrentEQ().size()); // size should not change because it is merge request
+        Countly.instance().deviceId().setID(deviceID.value); // TestUtils.DEVICE_ID + "1"
+        Assert.assertEquals(0, TestUtils.getCurrentEQ().size()); // size should change because it is not a merge request
+
+        Assert.assertEquals(2, callCount.get());
+        validateDeviceIdWithoutMergeChange(3, TestUtils.DEVICE_ID, false); // there should be 1 began, 1 events request
+    }
+
     /**
      * validates that requests in RQ are valid for without merge request
      * It validates the requests after a without merge device id change
@@ -438,20 +569,22 @@ public class ModuleDeviceIdTests {
      * @param rqSize expected RQ size
      * @param oldDeviceId to validate device id in requests before device id change
      */
-    private void validateDeviceIdWithoutMergeChange(final int rqSize, String oldDeviceId) {
+    private void validateDeviceIdWithoutMergeChange(final int rqSize, String oldDeviceId, boolean checkFirstReq) {
         Map<String, String>[] requests = TestUtils.getCurrentRQ();
         Assert.assertEquals(rqSize, TestUtils.getCurrentRQ().length);
+        int remainingRequestIndex = 0; // if there is no begin session request, then this will be 0 to continue checking
 
-        // validate first begin session request
-        TestUtils.validateRequiredParams(requests[0], oldDeviceId); // first request must be began session request
-        TestUtils.validateMetrics(requests[0].get("metrics")); // validate metrics exist in the first session request
-        Assert.assertEquals("1", requests[0].get("begin_session")); // validate begin session value is 1
-
-        int remainingRequestIndex = 1; // if there is no event request, then this will be 1 to continue checking
+        if (checkFirstReq) {
+            remainingRequestIndex = 1; // if no event request exists, then this will be 1 to continue checking
+            // validate first begin session request
+            TestUtils.validateRequiredParams(requests[0], oldDeviceId); // first request must be began session request
+            TestUtils.validateMetrics(requests[0].get("metrics")); // validate metrics exist in the first session request
+            Assert.assertEquals("1", requests[0].get("begin_session")); // validate begin session value is 1
+        }
 
         // validate event request if exists
         try {
-            List<EventImpl> existingEvents = validateEvents(1, oldDeviceId, 2);
+            List<EventImpl> existingEvents = validateEvents(remainingRequestIndex, oldDeviceId, 2);
             if (!existingEvents.isEmpty()) {
                 Map<String, Object> viewSegmentation = new ConcurrentHashMap<>();
                 viewSegmentation.put("segment", Device.dev.getOS());
@@ -478,6 +611,10 @@ public class ModuleDeviceIdTests {
         Assert.assertEquals("1", requests[remainingRequestIndex].get("begin_session")); // validate begin session value is 1
     }
 
+    private void validateDeviceIdWithoutMergeChange(final int rqSize, String oldDeviceId) {
+        validateDeviceIdWithoutMergeChange(rqSize, oldDeviceId, true);
+    }
+
     /**
      * Validates that the device id change request is valid
      *
@@ -501,14 +638,14 @@ public class ModuleDeviceIdTests {
      * @param type to validate by types
      * @return call count of the callback
      */
-    private AtomicInteger initDummyModuleForDeviceIdChangedCallback(TestUtils.AtomicString deviceId, boolean withoutMerge, DeviceIdType type) {
+    private AtomicInteger initDummyModuleForDeviceIdChangedCallback(TestUtils.AtomicString deviceId, AtomicBoolean withoutMerge, DeviceIdType type) {
         AtomicInteger callCount = new AtomicInteger(0);
         SDKCore.testDummyModule = new ModuleBase() {
             @Override
             protected void deviceIdChanged(String oldDeviceId, boolean withMerge) {
                 super.deviceIdChanged(oldDeviceId, withMerge);
                 callCount.incrementAndGet();
-                Assert.assertEquals(!withoutMerge, withMerge);
+                Assert.assertEquals(!withoutMerge.get(), withMerge);
                 if (type == DeviceIdType.SDK_GENERATED) {
                     validateDeviceIdIsSdkGenerated();
                 } else {
@@ -600,5 +737,13 @@ public class ModuleDeviceIdTests {
         }
 
         return existingEvents;
+    }
+
+    private AtomicBoolean yes() {
+        return new AtomicBoolean(true);
+    }
+
+    private AtomicBoolean no() {
+        return new AtomicBoolean(false);
     }
 }
