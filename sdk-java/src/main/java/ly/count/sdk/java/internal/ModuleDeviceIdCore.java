@@ -206,14 +206,16 @@ public class ModuleDeviceIdCore extends ModuleBase {
             return;
         }
 
-        // if current type is DEVELOPER_SUPPLIED
-        // an ID was provided by the host app previously
-        // we can assume that a device ID change with merge was executed previously
-        // now we change it without merging
-        // else
-        // SDK generated ID
-        // we change device ID with merge so that data is combined
-        changeDeviceIdInternal(newDeviceID, DeviceIdType.DEVELOPER_SUPPLIED, !getTypeInternal().equals(DeviceIdType.DEVELOPER_SUPPLIED));
+        if (getTypeInternal().equals(DeviceIdType.DEVELOPER_SUPPLIED)) {
+            // an ID was provided by the host app previously
+            // we can assume that a device ID change with merge was executed previously
+            // now we change it without merging
+            changeDeviceIdInternal(newDeviceID, DeviceIdType.DEVELOPER_SUPPLIED, false);
+        } else {
+            // SDK generated ID
+            // we change device ID with merge so that data is combined
+            changeDeviceIdInternal(newDeviceID, DeviceIdType.DEVELOPER_SUPPLIED, true);
+        }
     }
 
     @Override
