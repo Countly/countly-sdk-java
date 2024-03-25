@@ -483,6 +483,21 @@ public class ModuleDeviceIdTests {
      * "setID" with double without merge
      * Validating that new id set and callback is called, and existing events,timed events and session must end, new session must begin
      * request order should be first began session, 1 events, 1 end session, second began session, second end session, third began session
+     * <br>
+     * - Init the SDK with custom device id TestUtil.DEVICE_ID
+     * - Setup session, view and event
+     * - Validate that session is begun
+     * - Validate that device id is developer supplied, and it is TestUtil.DEVICE_ID
+     * - Wait for view duration to end
+     * - Validate that there are 2 events in the event queue (view start and casual event)
+     * - Set new device id TestUtil.keysValues[0]
+     * - Validate that there are no events in the event queue because it is flushed due to device id without merge change
+     * - Validate that callback is called once which is "deviceIdChanged" internal callback
+     * - Validate that there are 4 requests in the request queue, first began session, 1 events, 1 end session, second began session
+     * - Flush the request queue with old device id TestUtil.DEVICE_ID
+     * - Change device id to TestUtils.DEVICE_ID + "1"
+     * - Validate that there are 2 calls to the callback
+     * - Validate that there are 3 requests in the request queue, second began session, second end session, third began session
      */
     @Test
     public void setID_changeWithoutMerge() throws InterruptedException {
@@ -516,6 +531,20 @@ public class ModuleDeviceIdTests {
      * "setID" first sdk generated then developer supplied
      * Validating that first call acts like "changeWithMerge" and second call acts like "changeWithoutMerge"
      * SDK must generate an id first, then should change with developer supplied two times
+     * <br>
+     * - Init the SDK with no custom id
+     * - Setup session, view and event to simulate a device id change
+     * - Validate that session is begun
+     * - Validate that device id is sdk generated
+     * - Set new device id TestUtils.DEVICE_ID
+     * - Validate that EQ size is not changed because it is merge request
+     * - Validate that callback is called once which is "deviceIdChanged" internal callback
+     * - Validate that there are 2 requests in the event queue (first is begun session second one is device id change request)
+     * - Flush the request queue with old device id
+     * - Change device id to TestUtils.DEVICE_ID + "1"
+     * - Validate that EQ is flushed because it is not a merge request
+     * - Validate that callback is called twice
+     * - Validate that there are 3 requests in the request queue, first began session, 1 events, 1 end session
      */
     @Test
     public void setID_changeWithMerge_then_withoutMerge() throws InterruptedException {
