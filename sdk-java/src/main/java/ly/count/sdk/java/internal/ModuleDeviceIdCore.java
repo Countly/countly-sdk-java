@@ -249,7 +249,8 @@ public class ModuleDeviceIdCore extends ModuleBase {
         }
 
         /**
-         * Sets current device id to the new one.
+         * Sets device ID according to the device ID Type.
+         * If previous ID was Developer Supplied sets it without merge, otherwise with merge.
          *
          * @param newDeviceID device id to set
          */

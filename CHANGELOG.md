@@ -1,5 +1,6 @@
 ## XX.XX.XX
-* Added a new function "setID(newDeviceId)" for managing device id changes.
+
+* Added a new function "setID(newDeviceId)" for managing device id changes according to the device ID Type.
 
 ## 24.1.0
 
