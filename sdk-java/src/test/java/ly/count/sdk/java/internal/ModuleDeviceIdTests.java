@@ -569,7 +569,7 @@ public class ModuleDeviceIdTests {
         validateDeviceIdWithMergeChange(oldDeviceId, 1, 2);
         TestUtils.flushCurrentRQWithOldDeviceId(oldDeviceId); // clean current rq with old device id requests
 
-        deviceID.value += "1";
+        deviceID.value = TestUtils.DEVICE_ID + "1";
         withMerge.set(true); // set atomic boolean to true to validate without merge
         Thread.sleep(1000); // waiting for timed event duration
 
