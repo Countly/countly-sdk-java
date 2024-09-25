@@ -2,6 +2,8 @@
 
 * Added a new function "setID(newDeviceId)" for managing device id changes according to the device ID Type.
 
+* Mitigated an issue where json and junit dependencies had vulnerabilities.
+
 ## 24.1.0
 
 * !! Major breaking change !! The following method and its functionality is deprecated from the "UserEditor" interface and will not function anymore:
