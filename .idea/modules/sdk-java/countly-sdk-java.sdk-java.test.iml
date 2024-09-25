@@ -9,10 +9,10 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="countly-sdk-java.sdk-java.main" />
-    <orderEntry type="library" name="Gradle: org.json:json:20230227" level="project" />
+    <orderEntry type="library" name="Gradle: org.json:json:20231013" level="project" />
     <orderEntry type="library" name="Gradle: com.google.code.findbugs:jsr305:3.0.2" level="project" />
     <orderEntry type="library" name="Gradle: org.powermock:powermock-module-junit4:1.7.4" level="project" />
-    <orderEntry type="library" name="Gradle: junit:junit:4.12" level="project" />
+    <orderEntry type="library" name="Gradle: junit:junit:4.13.1" level="project" />
     <orderEntry type="library" name="Gradle: org.powermock:powermock-core:1.7.4" level="project" />
     <orderEntry type="library" name="Gradle: org.mockito:mockito-core:2.8.9" level="project" />
     <orderEntry type="library" name="Gradle: org.powermock:powermock-module-junit4-common:1.7.4" level="project" />
