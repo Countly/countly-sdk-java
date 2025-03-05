@@ -1,4 +1,4 @@
-## XX.XX.XX
+## 24.1.1
 
 * Added a new function "setID(newDeviceId)" for managing device id changes according to the device ID Type.
 
