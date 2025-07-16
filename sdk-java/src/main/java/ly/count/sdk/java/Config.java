@@ -68,7 +68,7 @@ public class Config {
     /**
      * Countly SDK version to be sent in HTTP requests
      */
-    protected String sdkVersion = "24.1.1";
+    protected String sdkVersion = "24.1.2";
 
     /**
      * Countly SDK version to be sent in HTTP requests
@@ -229,6 +229,12 @@ public class Config {
      * Enable automatic crash reporting for unhandled exceptions.
      */
     protected boolean unhandledCrashReportingEnabled = true;
+
+    /**
+     * Custom network request headers to be sent with each request.
+     * If you want to add a header, use {@link #addCustomNetworkRequestHeaders(Map)}.
+     */
+    protected Map<String, String> customNetworkRequestHeaders = null;
 
     public ConfigViews views = new ConfigViews(this);
 
@@ -1328,6 +1334,20 @@ public class Config {
     public Config disableLocation() {
         locationEnabled = false;
         return this;
+    }
+
+    /**
+     * Allows you to add custom header key/value pairs to each request
+     *
+     * @return Returns the same config object for convenient linking
+     */
+    public Config addCustomNetworkRequestHeaders(Map<String, String> customHeaderValues) {
+        this.customNetworkRequestHeaders = customHeaderValues;
+        return this;
+    }
+
+    public Map<String, String> getCustomNetworkRequestHeaders() {
+        return customNetworkRequestHeaders;
     }
 
     /**
