@@ -1,3 +1,7 @@
+## 24.1.2
+
+* Added e new configuration function "addCustomNetworkRequestHeaders(Map<String, String>)" to add custom request headers to each request.
+
 ## 24.1.1
 
 * Added a new function "setID(newDeviceId)" for managing device id changes according to the device ID Type.
