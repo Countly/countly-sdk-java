@@ -210,9 +210,14 @@ public class Example {
             }
         }
 
+        Map<String, String> customNetworkRequestHeaders = new ConcurrentHashMap<>();
+        customNetworkRequestHeaders.put("X-Countly-Example", "true");
+        customNetworkRequestHeaders.put("X-Countly-Example-Version", "1.0");
+
         Config config = new Config(COUNTLY_SERVER_URL, COUNTLY_APP_KEY, sdkStorageRootDirectory)
             .setLoggingLevel(Config.LoggingLevel.DEBUG)
             .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
+            .addCustomNetworkRequestHeaders(customNetworkRequestHeaders)
             .enableFeatures(Config.Feature.Events, Config.Feature.Sessions, Config.Feature.CrashReporting, Config.Feature.Views, Config.Feature.UserProfiles, Config.Feature.Location, Config.Feature.Feedback)
             .setRequiresConsent(true)
             //.enableParameterTamperingProtection("test-salt-checksum")
