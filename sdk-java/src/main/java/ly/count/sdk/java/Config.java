@@ -68,7 +68,7 @@ public class Config {
     /**
      * Countly SDK version to be sent in HTTP requests
      */
-    protected String sdkVersion = "24.1.2";
+    protected String sdkVersion = "24.1.3";
 
     /**
      * Countly SDK version to be sent in HTTP requests
