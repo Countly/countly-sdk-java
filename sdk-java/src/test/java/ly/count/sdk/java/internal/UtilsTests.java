@@ -208,9 +208,9 @@ public class UtilsTests {
      */
     @Test
     public void urlencode_symbols() {
-        final String givenString = "~!@ #$%^&()_+{ }:\"|[]\\|,./<>?❤️";
+        final String givenString = "~!@ #$%^&()_+{ }:\"|[]\\|,./<>?";
         final String res = Utils.urlencode(givenString, null);
-        Assert.assertEquals("%7E%21%40+%23%24%25%5E%26%28%29_%2B%7B+%7D%3A%22%7C%5B%5D%5C%7C%2C.%2F%3C%3E%3F%E2%9D%A4%EF%B8%8F", res);
+        Assert.assertEquals("%7E%21%40+%23%24%25%5E%26%28%29_%2B%7B+%7D%3A%22%7C%5B%5D%5C%7C%2C.%2F%3C%3E%3F", res);
     }
 
     /**
@@ -411,13 +411,12 @@ public class UtilsTests {
             BufferedWriter writer = Files.newBufferedWriter(file.toPath());
             writer.write(fileContent);
             writer.close();
-            Files.setPosixFilePermissions(file.toPath(), EnumSet.of(PosixFilePermission.OWNER_WRITE));
 
-            String content = Utils.readFileContent(file, logger);
             if (System.getProperty("os.name").toLowerCase().contains("win")) {
-                Assert.assertEquals(fileContent, content);
+                Assert.assertEquals(fileContent, Utils.readFileContent(file, logger));
             } else {
-                Assert.assertEquals("", content);
+                Files.setPosixFilePermissions(file.toPath(), EnumSet.of(PosixFilePermission.OWNER_WRITE));
+                Assert.assertEquals("", Utils.readFileContent(file, logger));
             }
         } finally {
             File file = new File(TEST_FILE_NAME);

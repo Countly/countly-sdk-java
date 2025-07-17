@@ -10,6 +10,9 @@ import org.json.JSONObject;
  */
 class ImmediateRequestMaker implements ImmediateRequestI {
 
+    private InternalImmediateRequestCallback callback;
+    private Log L;
+
     @Override
     public void doWork(String requestData, String customEndpoint, Transport cp, boolean requestShouldBeDelayed, boolean networkingIsEnabled, InternalImmediateRequestCallback callback, Log log) {
         CompletableFuture.supplyAsync(() -> doInBackground(requestData, customEndpoint, cp, requestShouldBeDelayed, networkingIsEnabled, callback, log))
@@ -22,9 +25,6 @@ class ImmediateRequestMaker implements ImmediateRequestI {
     protected interface InternalImmediateRequestCallback {
         void callback(JSONObject checkResponse);
     }
-
-    private InternalImmediateRequestCallback callback;
-    private Log L;
 
     /**
      * params fields:

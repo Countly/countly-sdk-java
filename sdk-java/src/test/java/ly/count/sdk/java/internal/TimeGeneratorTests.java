@@ -10,7 +10,7 @@ public class TimeGeneratorTests {
 
         long last = simulator.timestamp();
 
-        for (int i = 0; i < 10000; i++) {
+        for (int i = 0; i < 10_000; i++) {
             long next = simulator.timestamp();
             Assert.assertNotSame(last, next);
         }
@@ -27,7 +27,7 @@ public class TimeGeneratorTests {
             Assert.assertNotSame(last, next);
         }
 
-        simulator.addition = -10000;
+        simulator.addition = -10_000;
 
         for (int i = 0; i < 100; i++) {
             long next = simulator.timestamp();
@@ -41,7 +41,7 @@ public class TimeGeneratorTests {
             Assert.assertNotSame(last, next);
         }
 
-        simulator.addition = 10000;
+        simulator.addition = 10_000;
 
         for (int i = 0; i < 100; i++) {
             long next = simulator.timestamp();
@@ -55,9 +55,9 @@ public class TimeGeneratorTests {
 
         long last = simulator.timestamp();
 
-        for (int i = 0; i < 100000; i++) {
+        for (int i = 0; i < 100_000; i++) {
             if (i % 30 == 0) {
-                simulator.addition = Math.round(Math.random() * 10000 - 5000);
+                simulator.addition = Math.round(Math.random() * 10_000 - 5000);
             }
             long next = simulator.timestamp();
             Assert.assertNotSame(last, next);
@@ -65,7 +65,7 @@ public class TimeGeneratorTests {
 
         simulator.addition = 0;
 
-        for (int i = 0; i < 100000; i++) {
+        for (int i = 0; i < 100_000; i++) {
             if (i % 30 == 0) {
                 simulator.addition += Math.round(Math.random() * 1000 - 500);
             }

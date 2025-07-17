@@ -45,7 +45,7 @@ public class TimeUtilsTests {
      */
     @Test
     public void nsToMs() {
-        Assert.assertEquals(1, TimeUtils.nsToMs(1000000));
+        Assert.assertEquals(1, TimeUtils.nsToMs(1_000_000));
     }
 
     /**
@@ -54,7 +54,7 @@ public class TimeUtilsTests {
      */
     @Test
     public void nsToSec() {
-        Assert.assertEquals(1, TimeUtils.nsToSec(1000000000));
+        Assert.assertEquals(1, TimeUtils.nsToSec(1_000_000_000));
     }
 
     /**
@@ -72,6 +72,6 @@ public class TimeUtilsTests {
      */
     @Test
     public void secToNs() {
-        Assert.assertEquals(1000000000, TimeUtils.secToNs(1));
+        Assert.assertEquals(1_000_000_000, TimeUtils.secToNs(1));
     }
 }

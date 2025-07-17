@@ -149,6 +149,18 @@ public class Transport implements X509TrustManager {
             https.setSSLSocketFactory(sslContext.getSocketFactory());
         }
 
+        if (config.getCustomNetworkRequestHeaders() != null) {
+            //if there are custom header values, add them
+            L.v("[Transport] connection, Adding [" + config.getCustomNetworkRequestHeaders() + "] custom header fields");
+            for (Map.Entry<String, String> entry : config.getCustomNetworkRequestHeaders().entrySet()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
+                if (key != null && value != null && !key.isEmpty()) {
+                    connection.addRequestProperty(key, value);
+                }
+            }
+        }
+
         if (!usingGET) {
             OutputStream output = null;
             PrintWriter writer = null;
@@ -465,8 +477,12 @@ public class Transport implements X509TrustManager {
             throw new IllegalArgumentException("PublicKeyManager: X509Certificate is empty");
         }
 
-        if (!(null != authType && authType.contains("RSA"))) {
-            throw new CertificateException("PublicKeyManager: AuthType is not RSA");
+        if (authType == null) {
+            throw new CertificateException("PublicKeyManager: AuthType is null");
+        }
+
+        if (authType.isEmpty()) {
+            throw new CertificateException("PublicKeyManager: AuthType is empty");
         }
 
         // Perform standard SSL/TLS checks

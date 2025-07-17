@@ -624,7 +624,7 @@ public class UserEditorTests {
             .set(PredefinedUserPropertyKeys.USERNAME, new TestUtils.AtomicString("TestUsername"))
             .set(PredefinedUserPropertyKeys.EMAIL, new TestUtils.AtomicString("test@test.ly"))
             .set(PredefinedUserPropertyKeys.ORGANIZATION, new TestUtils.AtomicString("Magical Org"))
-            .set(PredefinedUserPropertyKeys.PHONE, 123456789)
+            .set(PredefinedUserPropertyKeys.PHONE, 123_456_789)
             .set(PredefinedUserPropertyKeys.PICTURE, new TestUtils.AtomicString("Not a picture"))
             .set(PredefinedUserPropertyKeys.PICTURE_PATH, new TestUtils.AtomicString("Not a picture path"))
             .set(PredefinedUserPropertyKeys.BIRTH_YEAR, new TestUtils.AtomicString("Not a birthyear"))

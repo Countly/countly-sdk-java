@@ -28,8 +28,15 @@ public class Device {
     private String orientation;
     private Boolean online;
     private Boolean muted;
-
     private Log L;
+
+    /**
+     * One second in nanoseconds
+     */
+    protected static final Double NS_IN_SECOND = 1_000_000_000.0d;
+    protected static final Double NS_IN_MS = 1_000_000.0d;
+    protected static final Double MS_IN_SECOND = 1000d;
+    protected static final Long BYTES_IN_MB = 1024L * 1024;
 
     private final Map<String, String> metricOverride = new ConcurrentHashMap<>();
 
@@ -40,14 +47,6 @@ public class Device {
     public void setLog(Log L) {
         this.L = L;
     }
-
-    /**
-     * One second in nanoseconds
-     */
-    protected static final Double NS_IN_SECOND = 1000000000.0d;
-    protected static final Double NS_IN_MS = 1000000.0d;
-    protected static final Double MS_IN_SECOND = 1000d;
-    protected static final Long BYTES_IN_MB = 1024L * 1024;
 
     /**
      * Get operation system name
@@ -74,7 +73,7 @@ public class Device {
      * @return timezone offset in seconds
      */
     public int getTimezoneOffset() {
-        return TimeZone.getDefault().getOffset(new Date().getTime()) / 60000;
+        return TimeZone.getDefault().getOffset(new Date().getTime()) / 60_000;
     }
 
     /**

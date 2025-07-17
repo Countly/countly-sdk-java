@@ -41,7 +41,7 @@ public class SessionImplTests {
     @Test
     public void constructor() {
         Countly.instance().init(TestUtils.getConfigSessions());
-        assertEquals(new Long(12345L), createSessionImpl(12345L).getId());
+        assertEquals(new Long(12_345L), createSessionImpl(12_345L).getId());
     }
 
     /**
@@ -488,7 +488,7 @@ public class SessionImplTests {
     @Test
     public void hashCode_id() {
         Countly.instance().init(TestUtils.getConfigSessions());
-        assertEquals(new Long(12345L).hashCode(), createSessionImpl(12345L).hashCode());
+        assertEquals(new Long(12_345L).hashCode(), createSessionImpl(12_345L).hashCode());
     }
 
     /**
@@ -521,7 +521,7 @@ public class SessionImplTests {
     @Test
     public void equals_notInstanceOf() {
         Countly.instance().init(TestUtils.getConfigSessions());
-        Assert.assertFalse(createSessionImpl(12345L).equals(new Object()));
+        Assert.assertFalse(createSessionImpl(12_345L).equals(new Object()));
     }
 
     /**
@@ -632,8 +632,8 @@ public class SessionImplTests {
     private void validateNotEquals(int idOffset, BiFunction<SessionImpl, SessionImpl, Consumer<Long>> setter) {
         Countly.instance().init(TestUtils.getConfigSessions());
         long ts = TimeUtils.timestampMs();
-        SessionImpl session = createSessionImpl(12345L);
-        SessionImpl session2 = createSessionImpl(12345L + idOffset);
+        SessionImpl session = createSessionImpl(12_345L);
+        SessionImpl session2 = createSessionImpl(12_345L + idOffset);
         setter.apply(session, session).accept(ts);
         Assert.assertFalse(session.equals(session2));
     }

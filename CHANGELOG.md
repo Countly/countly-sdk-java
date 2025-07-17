@@ -1,3 +1,15 @@
+## 24.1.2
+* !! Major Breaking Change !! Minimum JDK support is 19 for this minor.
+
+* Migrated from Sonatype OSSRH.
+* Added a new configuration function "addCustomNetworkRequestHeaders(Map<String, String>)" to add custom request headers to each request.
+
+## 24.1.1
+
+* Added a new function "setID(newDeviceId)" for managing device id changes according to the device ID Type.
+
+* Mitigated an issue where json and junit dependencies had vulnerabilities.
+
 ## 24.1.0
 
 * !! Major breaking change !! The following method and its functionality is deprecated from the "UserEditor" interface and will not function anymore:

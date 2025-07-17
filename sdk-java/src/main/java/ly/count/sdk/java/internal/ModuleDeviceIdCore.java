@@ -21,6 +21,8 @@ public class ModuleDeviceIdCore extends ModuleBase {
      * Tasks instance for async execution
      */
     private Tasks tasks;
+    private static final Map<Integer, DeviceIdGenerator> generators = new ConcurrentHashMap<>();
+    protected DeviceId deviceIdInterface;
 
     private static final class UUIDGenerator implements DeviceIdGenerator {
 
@@ -43,10 +45,6 @@ public class ModuleDeviceIdCore extends ModuleBase {
             return customId;
         }
     }
-
-    private static final Map<Integer, DeviceIdGenerator> generators = new ConcurrentHashMap<>();
-
-    protected DeviceId deviceIdInterface;
 
     @Override
     public void init(InternalConfig config) throws IllegalArgumentException {
@@ -197,6 +195,29 @@ public class ModuleDeviceIdCore extends ModuleBase {
         return did;
     }
 
+    private void setIDInternal(String newDeviceID) {
+        if (Utils.isEmptyOrNull(newDeviceID)) {
+            L.w("[ModuleDeviceIdCore] setID, Empty id passed to setID method");
+            return;
+        }
+
+        if (getIDInternal().equals(newDeviceID)) {
+            L.w("[ModuleDeviceIdCore] setID, Same id passed to setID method, ignoring");
+            return;
+        }
+
+        if (getTypeInternal().equals(DeviceIdType.DEVELOPER_SUPPLIED)) {
+            // an ID was provided by the host app previously
+            // we can assume that a device ID change with merge was executed previously
+            // now we change it without merging
+            changeDeviceIdInternal(newDeviceID, DeviceIdType.DEVELOPER_SUPPLIED, false);
+        } else {
+            // SDK generated ID
+            // we change device ID with merge so that data is combined
+            changeDeviceIdInternal(newDeviceID, DeviceIdType.DEVELOPER_SUPPLIED, true);
+        }
+    }
+
     @Override
     public void stop(InternalConfig config, boolean clear) {
         if (tasks != null) {
@@ -224,6 +245,18 @@ public class ModuleDeviceIdCore extends ModuleBase {
         public String getID() {
             synchronized (Countly.instance()) {
                 return getIDInternal();
+            }
+        }
+
+        /**
+         * Sets device ID according to the device ID Type.
+         * If previous ID was Developer Supplied sets it without merge, otherwise with merge.
+         *
+         * @param newDeviceID device id to set
+         */
+        public void setID(String newDeviceID) {
+            synchronized (Countly.instance()) {
+                setIDInternal(newDeviceID);
             }
         }
 
