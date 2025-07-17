@@ -1,3 +1,7 @@
+## 24.1.3
+
+* Extended minimum JDK support to 8.
+
 ## 24.1.2
 * !! Major Breaking Change !! Minimum JDK support is 19 for this minor.
 
