@@ -1,6 +1,8 @@
 ## 24.1.2
+* !! Major Breaking Change !! Minimum JDK support is 19 for this minor.
 
-* Added e new configuration function "addCustomNetworkRequestHeaders(Map<String, String>)" to add custom request headers to each request.
+* Migrated from Sonatype OSSRH.
+* Added a new configuration function "addCustomNetworkRequestHeaders(Map<String, String>)" to add custom request headers to each request.
 
 ## 24.1.1
 
