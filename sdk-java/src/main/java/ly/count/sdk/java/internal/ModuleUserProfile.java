@@ -259,7 +259,13 @@ public class ModuleUserProfile extends ModuleBase {
         if (internalConfig.sdk.location() != null) {
             internalConfig.sdk.module(ModuleLocation.class).saveLocationToParamsLegacy(generatedParams);
         }
+
         L.d("[ModuleUserProfile] saveInternal, generated params [" + generatedParams + "]");
+        if (generatedParams.length() <= 0) {
+            L.d("[ModuleUserProfile] saveInternal, nothing to save returning");
+            return;
+        }
+
         ModuleRequests.pushAsync(internalConfig, new Request(generatedParams));
         clearInternal();
     }
