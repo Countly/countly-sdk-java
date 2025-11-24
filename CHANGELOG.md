@@ -1,3 +1,6 @@
+## XX.XX.XX
+* Updated user properties caching mechanism according to sessions.
+
 ## 24.1.3
 
 * Extended minimum JDK support to 8.
