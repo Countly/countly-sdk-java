@@ -139,7 +139,7 @@ public class ModuleEvents extends ModuleBase {
         checkEventQueueToSend(false);
     }
 
-    private void checkEventQueueToSend(boolean forceSend) {
+    void checkEventQueueToSend(boolean forceSend) {
         L.d("[ModuleEvents] queue size:[" + eventQueue.eqSize() + "] || forceSend: " + forceSend);
         if (forceSend || eventQueue.eqSize() >= internalConfig.getEventsBufferSize()) {
             addEventsToRequestQ(null);

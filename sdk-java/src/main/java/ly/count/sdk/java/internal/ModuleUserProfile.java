@@ -266,6 +266,10 @@ public class ModuleUserProfile extends ModuleBase {
             return;
         }
 
+        if (internalConfig.sdk.events() != null) {
+            internalConfig.sdk.module(ModuleEvents.class).checkEventQueueToSend(true);
+        }
+
         ModuleRequests.pushAsync(internalConfig, new Request(generatedParams));
         clearInternal();
     }
