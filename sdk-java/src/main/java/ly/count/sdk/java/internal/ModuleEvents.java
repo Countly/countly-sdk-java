@@ -109,6 +109,10 @@ public class ModuleEvents extends ModuleBase {
 
         Utils.removeInvalidDataFromSegments(segmentation, L);
 
+        if (internalConfig.sdk.userProfile() != null) {
+            internalConfig.sdk.module(ModuleUserProfile.class).saveInternal();
+        }
+
         String eventId, pvid = null, cvid = null;
         if (Utils.isEmptyOrNull(eventIdOverride)) {
             L.d("[ModuleEvents] recordEventInternal, Generating new event id because it was null or empty");
