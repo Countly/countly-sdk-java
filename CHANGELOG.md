@@ -1,5 +1,10 @@
+## XX.XX.XX
+* ! Minor breaking change ! User properties will now be automatically saved under the following conditions:
+  * When an event is recorded
+  * During an internal timer tick
+  * Upon flushing the event queue
+  
 ## 24.1.3
-
 * Extended minimum JDK support to 8.
 
 ## 24.1.2
