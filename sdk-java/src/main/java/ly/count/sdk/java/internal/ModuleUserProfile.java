@@ -298,6 +298,20 @@ public class ModuleUserProfile extends ModuleBase {
         userProfileInterface = null;
     }
 
+    @Override
+    protected void onTimer() {
+        saveInternal();
+    }
+
+    @Override
+    public void deviceIdChanged(String oldDeviceId, boolean withMerge) {
+        super.deviceIdChanged(oldDeviceId, withMerge);
+        L.d("[ModuleUserProfile] deviceIdChanged: oldDeviceId = " + oldDeviceId + ", withMerge = " + withMerge);
+        if (!withMerge) {
+            saveInternal();
+        }
+    }
+
     public class UserProfile {
 
         /**
