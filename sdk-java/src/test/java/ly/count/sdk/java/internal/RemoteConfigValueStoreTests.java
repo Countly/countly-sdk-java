@@ -19,7 +19,7 @@ public class RemoteConfigValueStoreTests {
      */
     @Test
     public void constructor_defaults() {
-        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(new JSONObject(), false, Mockito.mock(Log.class));
+        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(new JSONObject(), false, TestUtils.getLogger());
         Assert.assertEquals(RemoteConfigValueStore.keyValue, "v");
         Assert.assertEquals(RemoteConfigValueStore.keyCacheFlag, "c");
         Assert.assertEquals(RemoteConfigValueStore.cacheValCached, 0);
@@ -35,7 +35,7 @@ public class RemoteConfigValueStoreTests {
      */
     @Test
     public void cacheClearValues_cachingDisabled() {
-        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(rcvsJson(RemoteConfigValueStore.keyCacheFlag), false, Mockito.mock(Log.class));
+        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(rcvsJson(RemoteConfigValueStore.keyCacheFlag), false, TestUtils.getLogger());
         Assert.assertEquals(2, rcvs.getAllValues().size());
         rcvs.cacheClearValues();
         Assert.assertEquals(rcvs.values.length(), 0);
@@ -48,7 +48,7 @@ public class RemoteConfigValueStoreTests {
      */
     @Test(expected = NullPointerException.class)
     public void cacheClearValues_nullRcValues() {
-        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(null, false, Mockito.mock(Log.class));
+        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(null, false, TestUtils.getLogger());
         rcvs.cacheClearValues();
     }
 
@@ -59,7 +59,7 @@ public class RemoteConfigValueStoreTests {
      */
     @Test
     public void cacheClearValues_cachingEnabled() {
-        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(rcvsJson(RemoteConfigValueStore.keyCacheFlag), true, Mockito.mock(Log.class));
+        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(rcvsJson(RemoteConfigValueStore.keyCacheFlag), true, TestUtils.getLogger());
         Assert.assertEquals(2, rcvs.getAllValues().size());
         rcvs.cacheClearValues();
         Assert.assertEquals(2, rcvs.getAllValues().size());
@@ -74,7 +74,7 @@ public class RemoteConfigValueStoreTests {
      */
     @Test
     public void cacheClearValues_garbageJson() {
-        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(garbageJson(), true, Mockito.mock(Log.class));
+        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(garbageJson(), true, TestUtils.getLogger());
         rcvs.L = Mockito.spy(rcvs.L);
         rcvs.cacheClearValues();
         Mockito.verify(rcvs.L, Mockito.times(1)).w("[RemoteConfigValueStore] cacheClearValues, stored entry was not a JSON object, key:[" + TestUtils.keysValues[0] + "] value:[garbage]");
@@ -89,7 +89,7 @@ public class RemoteConfigValueStoreTests {
      */
     @Test
     public void mergeValues_fullUpdate() {
-        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(rcvsJson(RemoteConfigValueStore.keyCacheFlag), true, Mockito.mock(Log.class));
+        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(rcvsJson(RemoteConfigValueStore.keyCacheFlag), true, TestUtils.getLogger());
         Assert.assertEquals(2, rcvs.getAllValues().size());
         Assert.assertEquals(TestUtils.keysValues[1], rcvs.getValue(TestUtils.keysValues[0]).value);
         rcvs.mergeValues(newRCValues(), true);
@@ -105,7 +105,7 @@ public class RemoteConfigValueStoreTests {
      */
     @Test
     public void mergeValues_notFullUpdate() {
-        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(rcvsJson(RemoteConfigValueStore.keyCacheFlag), true, Mockito.mock(Log.class));
+        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(rcvsJson(RemoteConfigValueStore.keyCacheFlag), true, TestUtils.getLogger());
         Assert.assertEquals(2, rcvs.getAllValues().size());
         Assert.assertEquals(TestUtils.keysValues[1], rcvs.getValue(TestUtils.keysValues[0]).value);
         rcvs.mergeValues(newRCValues(), false);
@@ -121,7 +121,7 @@ public class RemoteConfigValueStoreTests {
      */
     @Test(expected = NullPointerException.class)
     public void mergeValues_nullNewRcValues() {
-        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(rcvsJson(RemoteConfigValueStore.keyCacheFlag), true, Mockito.mock(Log.class));
+        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(rcvsJson(RemoteConfigValueStore.keyCacheFlag), true, TestUtils.getLogger());
         Assert.assertEquals(2, rcvs.getAllValues().size());
         rcvs.mergeValues(null, false);
     }
@@ -133,7 +133,7 @@ public class RemoteConfigValueStoreTests {
      */
     @Test(expected = NullPointerException.class)
     public void mergeValues_nullRcValues() {
-        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(null, true, Mockito.mock(Log.class));
+        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(null, true, TestUtils.getLogger());
         rcvs.mergeValues(newRCValues(), false);
     }
 
@@ -144,7 +144,7 @@ public class RemoteConfigValueStoreTests {
      */
     @Test
     public void getValue_nullRcValues() {
-        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(null, true, Mockito.mock(Log.class));
+        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(null, true, TestUtils.getLogger());
         rcvs.L = Mockito.spy(rcvs.L);
         Assert.assertNull(rcvs.getValue(TestUtils.keysValues[0]).value);
         Mockito.verify(rcvs.L, Mockito.times(1)).e(Mockito.anyString());
@@ -157,7 +157,7 @@ public class RemoteConfigValueStoreTests {
      */
     @Test
     public void getValue() {
-        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(rcvsJson(RemoteConfigValueStore.keyCacheFlag), true, Mockito.mock(Log.class));
+        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(rcvsJson(RemoteConfigValueStore.keyCacheFlag), true, TestUtils.getLogger());
         Assert.assertEquals(TestUtils.keysValues[1], rcvs.getValue(TestUtils.keysValues[0]).value);
     }
 
@@ -168,7 +168,7 @@ public class RemoteConfigValueStoreTests {
      */
     @Test
     public void getValue_notExist() {
-        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(rcvsJson(RemoteConfigValueStore.keyCacheFlag), true, Mockito.mock(Log.class));
+        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(rcvsJson(RemoteConfigValueStore.keyCacheFlag), true, TestUtils.getLogger());
         Assert.assertNull(rcvs.getValue(TestUtils.keysValues[5]).value);
     }
 
@@ -179,7 +179,7 @@ public class RemoteConfigValueStoreTests {
      */
     @Test
     public void getValue_garbageJson() {
-        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(garbageJson(), true, Mockito.mock(Log.class));
+        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(garbageJson(), true, TestUtils.getLogger());
         Assert.assertEquals(1, rcvs.values.length());
         Assert.assertNull(rcvs.getValue(TestUtils.keysValues[0]).value);
     }
@@ -191,7 +191,7 @@ public class RemoteConfigValueStoreTests {
      */
     @Test
     public void getAllValues() {
-        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(rcvsJson(RemoteConfigValueStore.keyCacheFlag), true, Mockito.mock(Log.class));
+        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(rcvsJson(RemoteConfigValueStore.keyCacheFlag), true, TestUtils.getLogger());
         Assert.assertEquals(2, rcvs.getAllValues().size());
         Assert.assertEquals(2, rcvs.values.length());
     }
@@ -203,7 +203,7 @@ public class RemoteConfigValueStoreTests {
      */
     @Test(expected = NullPointerException.class)
     public void getAllValues_nullRcValues() {
-        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(null, true, Mockito.mock(Log.class));
+        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(null, true, TestUtils.getLogger());
         rcvs.getAllValues();
     }
 
@@ -214,7 +214,7 @@ public class RemoteConfigValueStoreTests {
      */
     @Test
     public void getAllValues_garbageJson() {
-        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(garbageJson(), true, Mockito.mock(Log.class));
+        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(garbageJson(), true, TestUtils.getLogger());
         Assert.assertEquals(0, rcvs.getAllValues().size());
         Assert.assertEquals(1, rcvs.values.length());
     }
@@ -226,7 +226,7 @@ public class RemoteConfigValueStoreTests {
      */
     @Test
     public void getAllValues_garbageCacheKey() {
-        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(rcvsJson("garbage"), true, Mockito.mock(Log.class));
+        RemoteConfigValueStore rcvs = new RemoteConfigValueStore(rcvsJson("garbage"), true, TestUtils.getLogger());
         rcvs.L = Mockito.spy(rcvs.L);
         Assert.assertEquals(0, rcvs.getAllValues().size());
         Mockito.verify(rcvs.L, Mockito.times(2)).e(Mockito.anyString());

@@ -14,7 +14,7 @@ import static org.mockito.Mockito.mock;
 public class ScenarioDeviceIdInitTests {
 
     final static String alternativeDeviceID = TestUtils.DEVICE_ID + "1";
-    Log L = mock(Log.class);
+    Log L = TestUtils.getLogger();
 
     @Before
     public void beforeTest() {

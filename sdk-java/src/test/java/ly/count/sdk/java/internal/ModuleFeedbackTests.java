@@ -25,7 +25,7 @@ import static org.mockito.Mockito.mock;
 @RunWith(JUnit4.class)
 public class ModuleFeedbackTests {
 
-    Log L = mock(Log.class);
+    Log L = TestUtils.getLogger();
 
     @Before
     public void beforeTest() {

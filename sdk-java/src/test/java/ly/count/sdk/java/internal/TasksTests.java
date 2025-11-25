@@ -8,7 +8,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.powermock.reflect.Whitebox;
 
 @RunWith(JUnit4.class)
 public class TasksTests {
@@ -26,8 +25,8 @@ public class TasksTests {
 
     @Test
     public void testSetup() {
-        Assert.assertNotNull(Whitebox.getInternalState(tasks, "executor"));
-        Assert.assertNotNull(Whitebox.getInternalState(tasks, "pending"));
+        Assert.assertNotNull(WhiteboxUtils.getInternalState(tasks, "executor"));
+        Assert.assertNotNull(WhiteboxUtils.getInternalState(tasks, "pending"));
     }
 
     @Test
@@ -43,8 +42,8 @@ public class TasksTests {
         long now = System.nanoTime();
         other.shutdown();
         long timeToShutdown = TimeUtils.nsToMs(System.nanoTime() - now);
-        Assert.assertTrue(Whitebox.<ExecutorService>getInternalState(other, "executor").isShutdown());
-        Assert.assertTrue(Whitebox.<ExecutorService>getInternalState(other, "executor").isTerminated());
+        Assert.assertTrue(WhiteboxUtils.getInternalState(other, "executor", ExecutorService.class).isShutdown());
+        Assert.assertTrue(WhiteboxUtils.getInternalState(other, "executor", ExecutorService.class).isTerminated());
         //Assert.assertTrue(timeToShutdown > 100);//todo, this line fails when trying to publish (AK, 12.12.18)
     }
 

@@ -20,7 +20,6 @@ import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_PREFIX;
 import static ly.count.sdk.java.internal.SDKStorage.FILE_NAME_SEPARATOR;
 import static ly.count.sdk.java.internal.TestUtils.validateEvent;
 import static org.mockito.ArgumentMatchers.anyCollection;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -28,7 +27,7 @@ import static org.mockito.Mockito.verify;
 @RunWith(JUnit4.class)
 public class EventQueueTests {
 
-    Log L = mock(Log.class);
+    Log L = TestUtils.getLogger();
 
     EventQueue eventQueue;
 
@@ -96,7 +95,7 @@ public class EventQueueTests {
     @Test
     public void writeEventQueueToStorage_emptyCache() {
         eventQueue = spy(EventQueue.class);
-        eventQueue.L = mock(Log.class);
+        eventQueue.L = TestUtils.getLogger();
         eventQueue.eventQueueMemoryCache = new ArrayList<>();
 
         eventQueue.writeEventQueueToStorage();

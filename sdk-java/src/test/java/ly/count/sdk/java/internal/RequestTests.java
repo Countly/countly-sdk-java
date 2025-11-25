@@ -6,7 +6,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.powermock.reflect.Whitebox;
 
 @RunWith(JUnit4.class)
 public class RequestTests {
@@ -19,30 +18,30 @@ public class RequestTests {
     }
 
     @Test
-    public void request_constructorString() throws Exception {
+    public void request_constructorString() {
         String paramVals = "a=1&b=2";
         Params params = new Params(paramVals);
 
-        Request request = Whitebox.invokeConstructor(Request.class, paramVals);
+        Request request = new Request(paramVals);
         Params requestParams = request.params;
         Assert.assertEquals(params.toString(), requestParams.toString());
     }
 
     @Test
-    public void request_constructorObjectsNull() throws Exception {
+    public void request_constructorObjectsNull() {
         String[] paramsVals = new String[] { "asd", "123" };
         Object[] vals = new Object[] { new Object[] { paramsVals[0], paramsVals[1] } };
-        Request request = Whitebox.invokeConstructor(Request.class, vals);
+        Request request = new Request(vals);
         Assert.assertEquals(paramsVals[0] + "=" + paramsVals[1], request.params.toString());
     }
 
     @Test
-    public void request_constructorObjects() throws Exception {
+    public void request_constructorObjects() {
         String[] paramsParts = new String[] { "abc", "123", "qwe", "456" };
         String paramVals = paramsParts[0] + "=" + paramsParts[1] + "&" + paramsParts[2] + "=" + paramsParts[3];
         Params params = new Params(paramVals);
 
-        Request request = Whitebox.invokeConstructor(Request.class, paramsParts[0], paramsParts[1], paramsParts[2], paramsParts[3]);
+        Request request = new Request(paramsParts[0], paramsParts[1], paramsParts[2], paramsParts[3]);
         Params requestParams = request.params;
         Assert.assertEquals(params.toString(), requestParams.toString());
     }
@@ -59,19 +58,19 @@ public class RequestTests {
     }
 
     @Test
-    public void request_serialize() throws Exception {
+    public void request_serialize() {
         String paramVals = "a=1&b=2";
-        Request request = Whitebox.invokeConstructor(Request.class, paramVals);
+        Request request = new Request(paramVals);
 
-        String manualSerialization = paramVals + Whitebox.<String>getInternalState(Request.class, "EOR");
+        String manualSerialization = paramVals + WhiteboxUtils.getInternalStaticState(Request.class, "EOR", String.class);
         String serializationRes = new String(request.store(null));
         Assert.assertEquals(manualSerialization, serializationRes);
     }
 
     @Test
-    public void request_loadSimple() throws Exception {
+    public void request_loadSimple() {
         String paramVals = "a=1&b=2";
-        Request request = Whitebox.invokeConstructor(Request.class, paramVals);
+        Request request = new Request(paramVals);
 
         byte[] serializationRes = request.store(null);
         Request requestNew = new Request();
@@ -92,13 +91,13 @@ public class RequestTests {
     }
 
     @Test
-    public void isGettable_ParamsEmptyUnderLimit() throws Exception {
-        Request request = Whitebox.invokeConstructor(Request.class, "");
+    public void isGettable_ParamsEmptyUnderLimit() {
+        Request request = new Request("");
         Assert.assertTrue(request.isGettable(url, 0));
     }
 
     @Test
-    public void isGettable_ParamsFilledAboveLimitLarge() throws Exception {
+    public void isGettable_ParamsFilledAboveLimitLarge() {
         StringBuilder sbParams = new StringBuilder();
 
         for (int a = 0; a < 1000; a++) {
@@ -109,7 +108,7 @@ public class RequestTests {
             sbParams.append('=').append(a);
         }
 
-        Request request = Whitebox.invokeConstructor(Request.class, sbParams.toString());
+        Request request = new Request(sbParams.toString());
 
         Assert.assertFalse(request.isGettable(url, 0));
     }

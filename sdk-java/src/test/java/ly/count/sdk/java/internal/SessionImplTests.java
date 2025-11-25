@@ -41,7 +41,7 @@ public class SessionImplTests {
     @Test
     public void constructor() {
         Countly.instance().init(TestUtils.getConfigSessions());
-        assertEquals(new Long(12_345L), createSessionImpl(12_345L).getId());
+        assertEquals(Long.valueOf(12_345L), createSessionImpl(12_345L).getId());
     }
 
     /**
@@ -488,7 +488,7 @@ public class SessionImplTests {
     @Test
     public void hashCode_id() {
         Countly.instance().init(TestUtils.getConfigSessions());
-        assertEquals(new Long(12_345L).hashCode(), createSessionImpl(12_345L).hashCode());
+        assertEquals(Long.valueOf(12_345L).hashCode(), createSessionImpl(12_345L).hashCode());
     }
 
     /**

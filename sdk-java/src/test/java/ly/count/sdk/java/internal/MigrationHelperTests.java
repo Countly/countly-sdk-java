@@ -71,7 +71,7 @@ public class MigrationHelperTests {
      */
     private void initStorage() {
         InternalConfig config = (new InternalConfig(TestUtils.getBaseConfig()));
-        config.setLogger(mock(Log.class));
+        config.setLogger(TestUtils.getLogger());
         storageProvider = new SDKStorage().init(config);
     }
 
@@ -90,7 +90,7 @@ public class MigrationHelperTests {
      */
     @Test
     public void migrationHelper_defaults() {
-        MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
+        MigrationHelper migrationHelper = new MigrationHelper(TestUtils.getLogger());
         Assert.assertEquals(-1, migrationHelper.currentDataModelVersion);//validate the default version value
         Assert.assertNotNull(migrationHelper.logger);
         Assert.assertNull(migrationHelper.storageProvider);
@@ -105,7 +105,7 @@ public class MigrationHelperTests {
     @Test
     public void setupMigrations_freshInstall() {
         initStorage(); // to initialize json storage
-        MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
+        MigrationHelper migrationHelper = new MigrationHelper(TestUtils.getLogger());
         migrationHelper.setupMigrations(storageProvider);
         Assert.assertEquals(expectedLatestSchemaVersion, migrationHelper.currentDataModelVersion);
     }
@@ -120,7 +120,7 @@ public class MigrationHelperTests {
         TestUtils.createFile("test"); //mock a sdk file, to simulate storage is not empty
         initStorage(); // to initialize json storage after mock sdk file is created
 
-        MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
+        MigrationHelper migrationHelper = new MigrationHelper(TestUtils.getLogger());
         migrationHelper.setupMigrations(storageProvider);
         Assert.assertEquals(0, migrationHelper.currentDataModelVersion);
     }
@@ -135,7 +135,7 @@ public class MigrationHelperTests {
         setDataVersionInConfigFile(expectedLatestSchemaVersion);
         initStorage(); // to initialize json storage after data version is set to expectedLatestVersion
 
-        MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
+        MigrationHelper migrationHelper = new MigrationHelper(TestUtils.getLogger());
         migrationHelper.logger = spy(migrationHelper.logger);
         migrationHelper.setupMigrations(storageProvider);
         Assert.assertEquals(expectedLatestSchemaVersion, migrationHelper.currentDataModelVersion);
@@ -153,7 +153,7 @@ public class MigrationHelperTests {
         TestUtils.createFile("test"); //mock a sdk file, to simulate storage is not empty
         initStorage(); // to initialize json storage after mock sdk file is created
 
-        MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
+        MigrationHelper migrationHelper = new MigrationHelper(TestUtils.getLogger());
         migrationHelper.setupMigrations(storageProvider);
         Assert.assertEquals(0, migrationHelper.currentDataModelVersion); //legacy state
         Map<String, Object> migrationParams = new ConcurrentHashMap<>();
@@ -175,7 +175,7 @@ public class MigrationHelperTests {
         setDataVersionInConfigFile(expectedLatestSchemaVersion); //set data version to latest
         initStorage(); // to initialize json storage after data version is set to 1
 
-        MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
+        MigrationHelper migrationHelper = new MigrationHelper(TestUtils.getLogger());
         migrationHelper.setupMigrations(storageProvider);
         Assert.assertEquals(expectedLatestSchemaVersion, migrationHelper.currentDataModelVersion); //latest state
         //run migration helper apply
@@ -195,7 +195,7 @@ public class MigrationHelperTests {
         Files.write(TestUtils.createFile("config_0").toPath(), MOCK_OLD_CONFIG_FILE_sdkGenId); //mock a sdk config file, to simulate storage is not empty
         initStorage(); // to initialize json storage after mock sdk file is created
 
-        MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
+        MigrationHelper migrationHelper = new MigrationHelper(TestUtils.getLogger());
         migrationHelper.setupMigrations(storageProvider);
         Assert.assertEquals(0, migrationHelper.currentDataModelVersion); //legacy state
 
@@ -294,7 +294,7 @@ public class MigrationHelperTests {
         Map<String, Object> migrationParams = new ConcurrentHashMap<>();
         migrationParams.put("sdk_path", TestUtils.getTestSDirectory());
 
-        MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
+        MigrationHelper migrationHelper = new MigrationHelper(TestUtils.getLogger());
         migrationHelper.setupMigrations(storageProvider);
         Assert.assertEquals(1, migrationHelper.currentDataModelVersion);
         migrationHelper.logger = Mockito.spy(migrationHelper.logger);
@@ -314,7 +314,7 @@ public class MigrationHelperTests {
         setDataVersionInConfigFile(1); // set previous data version
         initStorage();
 
-        MigrationHelper migrationHelper = new MigrationHelper(mock(Log.class));
+        MigrationHelper migrationHelper = new MigrationHelper(TestUtils.getLogger());
         migrationHelper.setupMigrations(storageProvider);
         Assert.assertEquals(1, migrationHelper.currentDataModelVersion);
         migrationHelper.logger = Mockito.spy(migrationHelper.logger);

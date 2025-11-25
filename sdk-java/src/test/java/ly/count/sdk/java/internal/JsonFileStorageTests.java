@@ -16,7 +16,7 @@ import static ly.count.sdk.java.internal.TestUtils.keysValues;
 @RunWith(JUnit4.class)
 public class JsonFileStorageTests {
 
-    private static final Log L = Mockito.mock(Log.class);
+    private static Log L = TestUtils.getLogger();
     JsonFileStorage storage;
     static final String JSON_FILE_NAME = "test.json";
 
@@ -78,6 +78,7 @@ public class JsonFileStorageTests {
     @Test
     public void readJsonFile_IOException() throws IOException {
         File file = Mockito.mock(File.class);
+        L = Mockito.spy(L);
         Mockito.doThrow(new IOException("Simulated IOException")).when(file).createNewFile();
 
         storage = new JsonFileStorage(file, L);

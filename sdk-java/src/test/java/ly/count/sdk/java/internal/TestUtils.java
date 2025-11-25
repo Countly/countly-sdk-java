@@ -139,7 +139,7 @@ public class TestUtils {
     }
 
     protected static Map<String, String>[] getCurrentRQ() {
-        return getCurrentRQ(getTestSDirectory(), mock(Log.class));
+        return getCurrentRQ(getTestSDirectory(), TestUtils.getLogger());
     }
 
     /**
@@ -150,7 +150,7 @@ public class TestUtils {
      * @return array of request params
      */
     protected static Map<String, String>[] getCurrentRQ(File targetFolder, Log logger) {
-        Storage.await(mock(Log.class)); // wait for request to be written to the disk
+        Storage.await(TestUtils.getLogger()); // wait for request to be written to the disk
 
         //check whether target folder is a directory or not
         if (!targetFolder.isDirectory()) {
@@ -182,7 +182,7 @@ public class TestUtils {
         Arrays.stream(getRequestFiles(getTestSDirectory())).forEach(file -> {
             try {
                 if (file.exists() && file.isFile()) {
-                    String content = Utils.readFileContent(file, mock(Log.class));
+                    String content = Utils.readFileContent(file, TestUtils.getLogger());
                     if (content.contains(oldDeviceId)) {
                         Files.delete(file.toPath());
                     }
@@ -194,7 +194,7 @@ public class TestUtils {
     }
 
     protected static List<EventImpl> getCurrentEQ() {
-        return getCurrentEQ(getTestSDirectory(), mock(Log.class));
+        return getCurrentEQ(getTestSDirectory(), TestUtils.getLogger());
     }
 
     /**
@@ -375,7 +375,7 @@ public class TestUtils {
 
         array.forEach(value -> {
             result.add(EventImpl.fromJSON(value.toString(), (ev) -> {
-            }, mock(Log.class)));
+            }, TestUtils.getLogger()));
         });
 
         return result;
@@ -387,7 +387,7 @@ public class TestUtils {
     }
 
     static void validateEQSize(int expectedSize, EventQueue eventQueue) {
-        validateEQSize(expectedSize, TestUtils.getCurrentEQ(getTestSDirectory(), mock(Log.class)), eventQueue);
+        validateEQSize(expectedSize, TestUtils.getCurrentEQ(getTestSDirectory(), TestUtils.getLogger()), eventQueue);
     }
 
     static void validateEQSize(int expectedSize) {
@@ -492,7 +492,7 @@ public class TestUtils {
      */
     static JSONObject readJsonFile(final File file) {
         try {
-            return new JSONObject(Utils.readFileContent(file, mock(Log.class)));
+            return new JSONObject(Utils.readFileContent(file, TestUtils.getLogger()));
         } catch (Exception e) {
             return new JSONObject();
         }
@@ -520,7 +520,7 @@ public class TestUtils {
 
     static InternalConfig getInternalConfigWithLogger(Config config) {
         InternalConfig ic = new InternalConfig(config);
-        ic.setLogger(mock(Log.class));
+        ic.setLogger(TestUtils.getLogger());
         return ic;
     }
 
@@ -666,5 +666,9 @@ public class TestUtils {
         config.viewIdGenerator = TestUtils.incrementalViewIdGenerator();
         config.views.setGlobalViewSegmentation(segmentation);
         return config;
+    }
+
+    static Log getLogger() {
+        return new Log(Config.LoggingLevel.DEBUG, null);
     }
 }

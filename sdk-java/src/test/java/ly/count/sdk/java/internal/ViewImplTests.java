@@ -33,7 +33,7 @@ public class ViewImplTests {
      */
     @Test
     public void constructor_defaults() {
-        ViewImpl view = new ViewImpl(null, TestUtils.keysValues[0], Mockito.mock(Log.class));
+        ViewImpl view = new ViewImpl(null, TestUtils.keysValues[0], TestUtils.getLogger());
         Assert.assertNull(view.session);
         Assert.assertEquals(TestUtils.keysValues[0], view.name);
         Assert.assertEquals("start", ModuleViews.KEY_START);
@@ -207,7 +207,7 @@ public class ViewImplTests {
     @Test
     public void stop_notStartedView() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Views, Config.Feature.Events));
-        ViewImpl view = new ViewImpl(Countly.session(), TestUtils.keysValues[0], Mockito.mock(Log.class));
+        ViewImpl view = new ViewImpl(Countly.session(), TestUtils.keysValues[0], TestUtils.getLogger());
         TestUtils.validateEQSize(0);
         view.stop(false);
         TestUtils.validateEQSize(0);

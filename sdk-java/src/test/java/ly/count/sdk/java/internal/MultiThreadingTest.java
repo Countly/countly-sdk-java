@@ -74,7 +74,7 @@ public class MultiThreadingTest {
         }
 
         gate.await();
-        Storage.await(Mockito.mock(Log.class));
+        Storage.await(TestUtils.getLogger());
 
         for (Thread t : runs) {
             t.join();
