@@ -11,9 +11,9 @@ buildscript {
     // Load publish plugin ONLY when publish task is requested
     if (gradle.startParameter.taskNames.any { it.toLowerCase().contains("publish") }) {
       classpath 'com.vanniktech:gradle-maven-publish-plugin:0.28.0'
-      println("[INFO] Maven Publish plugin ENABLED (publish task detected).")
+      println("[INFO] [Countly] Maven Publish plugin ENABLED (publish task detected).")
     } else {
-      println("[INFO] Maven Publish plugin SKIPPED (no publish task).")
+      println("[INFO] [Countly] Maven Publish plugin SKIPPED (no publish task).")
     }
   }
 }
@@ -36,5 +36,5 @@ dependencies {
 
 if (gradle.startParameter.taskNames.any { it.toLowerCase().contains("publish") }) {
   apply plugin: "com.vanniktech.maven.publish"
-  println("[INFO] Maven Publish plugin APPLIED (publish task detected).")
+  println("[INFO] [Countly] Maven Publish plugin APPLIED (publish task detected).")
 }
