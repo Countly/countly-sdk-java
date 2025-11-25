@@ -10,6 +10,7 @@ buildscript {
   dependencies {
     // Load publish plugin ONLY when publish task is requested
     if (gradle.startParameter.taskNames.any { it.toLowerCase().contains("publish") }) {
+      // This requires minimum java 11 to work
       classpath 'com.vanniktech:gradle-maven-publish-plugin:0.28.0'
       println("[INFO] [Countly] Maven Publish plugin ENABLED (publish task detected).")
     } else {
