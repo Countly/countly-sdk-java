@@ -32,6 +32,7 @@ public class InternalConfig extends Config {
     protected IdGenerator viewIdGenerator;
     protected IdGenerator eventIdGenerator;
     protected ViewIdProvider viewIdProvider;
+
     /**
      * Shouldn't be used!
      */
@@ -210,5 +211,9 @@ public class InternalConfig extends Config {
 
     boolean isLocationDisabled() {
         return !locationEnabled;
+    }
+
+    boolean isAutoSendUserProperties() {
+        return autoSendUserProperties;
     }
 }
