@@ -118,7 +118,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         }
 
         this.consents = SDKCore.instance.consents;
-        if (config.sdk.userProfile() != null) {
+        if (config.isAutoSendUserPropertiesOnSessions() && config.sdk.userProfile() != null) {
             config.sdk.module(ModuleUserProfile.class).saveInternal();
         }
 
@@ -160,7 +160,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         }
 
         this.consents = SDKCore.instance.consents;
-        if (config.sdk.userProfile() != null) {
+        if (config.isAutoSendUserPropertiesOnSessions() && config.sdk.userProfile() != null) {
             config.sdk.module(ModuleUserProfile.class).saveInternal();
         }
 
@@ -198,10 +198,10 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         ended = now == null ? System.nanoTime() : now;
 
         this.consents = SDKCore.instance.consents;
-        if (config.sdk.userProfile() != null) {
+        if (config.isAutoSendUserPropertiesOnSessions() && config.sdk.userProfile() != null) {
             config.sdk.module(ModuleUserProfile.class).saveInternal();
         }
-        
+
         if (currentView != null) {
             currentView.stop(true);
         } else {
