@@ -266,7 +266,7 @@ public class ModuleUserProfile extends ModuleBase {
             return;
         }
 
-        if (internalConfig.sdk.events() != null) {
+        if (internalConfig.isAutoSendUserProperties() && internalConfig.sdk.events() != null) {
             internalConfig.sdk.module(ModuleEvents.class).checkEventQueueToSend(true);
         }
 
@@ -307,7 +307,7 @@ public class ModuleUserProfile extends ModuleBase {
     public void deviceIdChanged(String oldDeviceId, boolean withMerge) {
         super.deviceIdChanged(oldDeviceId, withMerge);
         L.d("[ModuleUserProfile] deviceIdChanged: oldDeviceId = " + oldDeviceId + ", withMerge = " + withMerge);
-        if (!withMerge) {
+        if (internalConfig.isAutoSendUserProperties() && !withMerge) {
             saveInternal();
         }
     }

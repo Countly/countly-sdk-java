@@ -109,7 +109,7 @@ public class ModuleEvents extends ModuleBase {
 
         Utils.removeInvalidDataFromSegments(segmentation, L);
 
-        if (internalConfig.sdk.userProfile() != null) {
+        if (internalConfig.isAutoSendUserProperties() && internalConfig.sdk.userProfile() != null) {
             internalConfig.sdk.module(ModuleUserProfile.class).saveInternal();
         }
 
