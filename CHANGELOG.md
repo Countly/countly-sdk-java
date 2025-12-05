@@ -1,11 +1,14 @@
-## XX.XX.XX
+## 24.1.4
+
 * Updated user properties caching mechanism according to sessions.
+* Cleaned up unused gradle dependencies from root build.gradle.
 
 ## 24.1.3
 
 * Extended minimum JDK support to 8.
 
 ## 24.1.2
+
 * !! Major Breaking Change !! Minimum JDK support is 19 for this minor.
 
 * Migrated from Sonatype OSSRH.
@@ -217,3 +220,4 @@
 
 * initial SDK release
 * MavenCentral rerelease 
+
