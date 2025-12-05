@@ -629,6 +629,49 @@ public class SessionImplTests {
         ModuleViewsTests.validateView("next", 0.0, 2, 3, false, true, null, TestUtils.keysValues[1], TestUtils.keysValues[0]);
     }
 
+    /**
+     * Validates that when session calls are made, if any user properties are set,
+     * they are sent before sending that session call
+     * Validated with all session calls: begin, update, end
+     *
+     * @throws InterruptedException if thread is interrupted
+     */
+    @Test
+    public void userPropsOnSessions() throws InterruptedException {
+        Countly.instance().init(TestUtils.getConfigSessions(Config.Feature.UserProfiles));
+        Countly.instance().userProfile().setProperty("name", "John Doe");
+        Countly.instance().userProfile().setProperty("custom_key", "custom_value");
+
+        Countly.session().begin();
+        Map<String, String>[] RQ = TestUtils.getCurrentRQ();
+        UserEditorTests.validateUserDetailsRequestInRQ(TestUtils.map("user_details", TestUtils.json("name", "John Doe", "custom", TestUtils.map("custom_key", "custom_value"))), 0, 2);
+        Assert.assertEquals("1", RQ[1].get("begin_session"));
+
+        Thread.sleep(2000); // wait for session to update
+        Countly.instance().userProfile().save();
+        RQ = TestUtils.getCurrentRQ();
+        Assert.assertEquals(2, RQ.length); // Validate that user properties are flushed
+
+        Countly.instance().userProfile().setProperty("email", "john@doe.com");
+        Countly.session().update();
+
+        RQ = TestUtils.getCurrentRQ();
+        Assert.assertEquals(TestUtils.json("email", "john@doe.com"), RQ[2].get("user_details"));
+        Assert.assertEquals("2", RQ[3].get("session_duration"));
+
+        Thread.sleep(2000); // wait for session to update
+        Countly.instance().userProfile().save();
+        RQ = TestUtils.getCurrentRQ();
+        Assert.assertEquals(4, RQ.length); // Validate that user properties are flushed with update call
+
+        Countly.instance().userProfile().setProperty("done", "yes");
+        Countly.session().end();
+
+        RQ = TestUtils.getCurrentRQ();
+        Assert.assertEquals(TestUtils.json("custom", TestUtils.map("done", "yes")), RQ[4].get("user_details"));
+        Assert.assertEquals("1", RQ[5].get("end_session"));
+    }
+
     private void validateNotEquals(int idOffset, BiFunction<SessionImpl, SessionImpl, Consumer<Long>> setter) {
         Countly.instance().init(TestUtils.getConfigSessions());
         long ts = TimeUtils.timestampMs();
