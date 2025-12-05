@@ -12,10 +12,7 @@ buildscript {
     if (gradle.startParameter.taskNames.any { it.toLowerCase().contains("publish") }) {
       // This requires minimum java 11 to work
       classpath 'com.vanniktech:gradle-maven-publish-plugin:0.28.0'
-      println("[INFO] [Countly] Maven Publish plugin ENABLED (publish task detected).")
-    } else {
-      println("[INFO] [Countly] Maven Publish plugin SKIPPED (no publish task).")
-    }
+    } 
   }
 }
 
