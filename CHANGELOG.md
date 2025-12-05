@@ -1,8 +1,13 @@
+## 24.1.4
+
+* Cleaned up unused gradle dependencies from root build.gradle.
+
 ## 24.1.3
 
 * Extended minimum JDK support to 8.
 
 ## 24.1.2
+
 * !! Major Breaking Change !! Minimum JDK support is 19 for this minor.
 
 * Migrated from Sonatype OSSRH.
@@ -214,3 +219,4 @@
 
 * initial SDK release
 * MavenCentral rerelease 
+
