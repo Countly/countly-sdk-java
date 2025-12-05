@@ -1489,6 +1489,7 @@ public class Config {
      * - When an event is recorded
      * - During an internal timer tick
      * - Upon flushing the event queue
+     * - When a session call made
      *
      * @return {@code this} instance for method chaining
      */
