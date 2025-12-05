@@ -442,6 +442,74 @@ public class ModuleEventsTests {
         TestUtils.validateEventInEQ(eKeys[0], null, 2, 4.0, 2.0, 1, 2, TestUtils.keysValues[1], null, "", TestUtils.keysValues[0]);
     }
 
+    /**
+     * Recording events with user properties and with flushing events
+     * Validating that if a user property set before a recordEvent call it is sent before adding the event to EQ
+     * And also user properties packed after flushing events.
+     *
+     * @throws InterruptedException when sleep is interrupted
+     */
+    @Test
+    public void eventsUserProps() throws InterruptedException {
+        init(TestUtils.getConfigEvents(4).setUpdateSessionTimerDelay(2));
+
+        Countly.instance().userProfile().setProperty("before_event", "value1");
+        Countly.instance().events().recordEvent(eKeys[0]);
+
+        Map<String, String>[] RQ = TestUtils.getCurrentRQ();
+        Assert.assertEquals(1, RQ.length);
+        Assert.assertEquals(TestUtils.json("custom", TestUtils.map("before_event", "value1")), RQ[0].get("user_details"));
+        TestUtils.validateEventInEQ(eKeys[0], null, 1, null, null, 0, 1, "_CLY_", null, "", null);
+
+        Countly.instance().userProfile().setProperty("after_event", "value2");
+        Thread.sleep(2500); // wait for the tick
+        RQ = TestUtils.getCurrentRQ();
+        Assert.assertEquals(3, RQ.length);
+        Assert.assertTrue(RQ[1].containsKey("events"));
+        Assert.assertEquals(TestUtils.json("custom", TestUtils.map("after_event", "value2")), RQ[2].get("user_details"));
+    }
+
+    /**
+     * Recording events with user properties and with flushing events
+     * Validating that if a user property save called, it flushes EQ before saving user properties
+     */
+    @Test
+    public void eventsUserProps_propsSave() {
+        init(TestUtils.getConfigEvents(4));
+
+        Countly.instance().events().recordEvent(eKeys[0]);
+
+        Map<String, String>[] RQ = TestUtils.getCurrentRQ();
+        Assert.assertEquals(0, RQ.length);
+        TestUtils.validateEventInEQ(eKeys[0], null, 1, null, null, 0, 1, "_CLY_", null, "", null);
+
+        Countly.instance().userProfile().setProperty("after_event", "value2");
+        Countly.instance().userProfile().save();
+
+        RQ = TestUtils.getCurrentRQ();
+        Assert.assertEquals(2, RQ.length);
+        Assert.assertTrue(RQ[0].containsKey("events"));
+        Assert.assertEquals(TestUtils.json("custom", TestUtils.map("after_event", "value2")), RQ[1].get("user_details"));
+    }
+
+    /**
+     * Validate that user properties are sent with timer tick if no events are recorded
+     */
+    @Test
+    public void eventsUserProps_timer() throws InterruptedException {
+        init(TestUtils.getConfigEvents(4).setUpdateSessionTimerDelay(2));
+
+        Countly.instance().userProfile().setProperty("before_timer", "value1");
+
+        Map<String, String>[] RQ = TestUtils.getCurrentRQ();
+        Assert.assertEquals(0, RQ.length);
+
+        Thread.sleep(2500); // wait for the tick
+        RQ = TestUtils.getCurrentRQ();
+        Assert.assertEquals(1, RQ.length);
+        Assert.assertEquals(TestUtils.json("custom", TestUtils.map("before_timer", "value1")), RQ[0].get("user_details"));
+    }
+
     private void validateTimedEventSize(int expectedQueueSize, int expectedTimedEventSize) {
         TestUtils.validateEQSize(expectedQueueSize, TestUtils.getCurrentEQ(), moduleEvents.eventQueue);
         Assert.assertEquals(expectedTimedEventSize, moduleEvents.timedEvents.size());
