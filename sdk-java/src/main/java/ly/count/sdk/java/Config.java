@@ -243,6 +243,7 @@ public class Config {
     protected String city = null;
     protected String country = null;
     protected boolean locationEnabled = true;
+    protected boolean autoSendUserPropertiesOnSessions = true;
 
     // TODO: storage limits & configuration
     //    protected int maxRequestsStored = 0;
@@ -1479,5 +1480,15 @@ public class Config {
         public String toString() {
             return "DID " + id + " ( " + strategy + ")";
         }
+    }
+
+    /**
+     * Disable automatic sending of user properties on session begin, update and end
+     *
+     * @return {@code this} instance for method chaining
+     */
+    public Config disableAutoSendUserPropertiesOnSessions() {
+        this.autoSendUserPropertiesOnSessions = false;
+        return this;
     }
 }

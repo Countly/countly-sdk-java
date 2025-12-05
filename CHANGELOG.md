@@ -1,5 +1,6 @@
 ## 24.1.4
 
+* Updated user properties caching mechanism according to sessions.
 * Cleaned up unused gradle dependencies from root build.gradle.
 
 ## 24.1.3
