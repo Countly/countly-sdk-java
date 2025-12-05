@@ -517,6 +517,28 @@ public class ModuleEventsTests {
     }
 
     /**
+     * Recording events with user properties and with flushing events
+     * Validating that if a user property save called, it does not flush EQ before saving user properties
+     */
+    @Test
+    public void eventsUserProps_propsSave_reversed() {
+        init(TestUtils.getConfigEvents(4).disableAutoSendUserProperties());
+
+        Countly.instance().events().recordEvent(eKeys[0]);
+
+        Map<String, String>[] RQ = TestUtils.getCurrentRQ();
+        Assert.assertEquals(0, RQ.length);
+        TestUtils.validateEventInEQ(eKeys[0], null, 1, null, null, 0, 1, "_CLY_", null, "", null);
+
+        Countly.instance().userProfile().setProperty("after_event", "value2");
+        Countly.instance().userProfile().save();
+
+        RQ = TestUtils.getCurrentRQ();
+        Assert.assertEquals(1, RQ.length);
+        Assert.assertEquals(TestUtils.json("custom", TestUtils.map("after_event", "value2")), RQ[0].get("user_details"));
+    }
+
+    /**
      * Validate that user properties are sent with timer tick if no events are recorded
      */
     @Test
@@ -532,6 +554,23 @@ public class ModuleEventsTests {
         RQ = TestUtils.getCurrentRQ();
         Assert.assertEquals(1, RQ.length);
         Assert.assertEquals(TestUtils.json("custom", TestUtils.map("before_timer", "value1")), RQ[0].get("user_details"));
+    }
+
+    /**
+     * Validate that user properties does not send with timer tick if no events are recorded
+     */
+    @Test
+    public void eventsUserProps_timer_reversed() throws InterruptedException {
+        init(TestUtils.getConfigEvents(4).setUpdateSessionTimerDelay(2).disableAutoSendUserProperties());
+
+        Countly.instance().userProfile().setProperty("before_timer", "value1");
+
+        Map<String, String>[] RQ = TestUtils.getCurrentRQ();
+        Assert.assertEquals(0, RQ.length);
+
+        Thread.sleep(2500); // wait for the tick
+        RQ = TestUtils.getCurrentRQ();
+        Assert.assertEquals(0, RQ.length);
     }
 
     private void validateTimedEventSize(int expectedQueueSize, int expectedTimedEventSize) {

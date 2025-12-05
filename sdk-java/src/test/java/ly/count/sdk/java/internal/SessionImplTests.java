@@ -680,7 +680,7 @@ public class SessionImplTests {
      */
     @Test
     public void userPropsOnSessions_reversed() throws InterruptedException {
-        Countly.instance().init(TestUtils.getConfigSessions(Config.Feature.UserProfiles).disableAutoSendUserPropertiesOnSessions());
+        Countly.instance().init(TestUtils.getConfigSessions(Config.Feature.UserProfiles).disableAutoSendUserProperties());
         Countly.instance().userProfile().setProperty("name", "John Doe");
         Countly.instance().userProfile().setProperty("custom_key", "custom_value");
 
