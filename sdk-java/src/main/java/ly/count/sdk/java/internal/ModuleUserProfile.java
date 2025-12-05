@@ -300,7 +300,9 @@ public class ModuleUserProfile extends ModuleBase {
 
     @Override
     protected void onTimer() {
-        saveInternal();
+        if (internalConfig.isAutoSendUserProperties()) {
+            saveInternal();
+        }
     }
 
     @Override
