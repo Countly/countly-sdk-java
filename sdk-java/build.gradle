@@ -34,5 +34,4 @@ dependencies {
 
 if (gradle.startParameter.taskNames.any { it.toLowerCase().contains("publish") }) {
   apply plugin: "com.vanniktech.maven.publish"
-  println("[INFO] [Countly] Maven Publish plugin APPLIED (publish task detected).")
 }
