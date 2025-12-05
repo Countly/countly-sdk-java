@@ -1,10 +1,12 @@
 ## 24.1.4
-
-* Updated user properties caching mechanism according to sessions.
+* ! Minor breaking change ! User properties will now be automatically saved under the following conditions:
+  * When an event is recorded
+  * During an internal timer tick
+  * Upon flushing the event queue
+  * When a session call made
 * Cleaned up unused gradle dependencies from root build.gradle.
 
 ## 24.1.3
-
 * Extended minimum JDK support to 8.
 
 ## 24.1.2

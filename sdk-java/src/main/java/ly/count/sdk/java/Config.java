@@ -243,7 +243,7 @@ public class Config {
     protected String city = null;
     protected String country = null;
     protected boolean locationEnabled = true;
-    protected boolean autoSendUserPropertiesOnSessions = true;
+    protected boolean autoSendUserProperties = true;
 
     // TODO: storage limits & configuration
     //    protected int maxRequestsStored = 0;
@@ -1482,13 +1482,19 @@ public class Config {
         }
     }
 
+    // Disabling new Added features
+
     /**
-     * Disable automatic sending of user properties on session begin, update and end
+     * Disable automatic sending of user properties on
+     * - When an event is recorded
+     * - During an internal timer tick
+     * - Upon flushing the event queue
+     * - When a session call made
      *
      * @return {@code this} instance for method chaining
      */
-    public Config disableAutoSendUserPropertiesOnSessions() {
-        this.autoSendUserPropertiesOnSessions = false;
+    public Config disableAutoSendUserProperties() {
+        this.autoSendUserProperties = false;
         return this;
     }
 }

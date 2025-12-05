@@ -213,7 +213,7 @@ public class InternalConfig extends Config {
         return !locationEnabled;
     }
 
-    boolean isAutoSendUserPropertiesOnSessions() {
-        return autoSendUserPropertiesOnSessions;
+    boolean isAutoSendUserProperties() {
+        return autoSendUserProperties;
     }
 }

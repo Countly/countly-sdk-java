@@ -109,6 +109,10 @@ public class ModuleEvents extends ModuleBase {
 
         Utils.removeInvalidDataFromSegments(segmentation, L);
 
+        if (internalConfig.isAutoSendUserProperties() && internalConfig.sdk.userProfile() != null) {
+            internalConfig.sdk.module(ModuleUserProfile.class).saveInternal();
+        }
+
         String eventId, pvid = null, cvid = null;
         if (Utils.isEmptyOrNull(eventIdOverride)) {
             L.d("[ModuleEvents] recordEventInternal, Generating new event id because it was null or empty");
@@ -139,7 +143,7 @@ public class ModuleEvents extends ModuleBase {
         checkEventQueueToSend(false);
     }
 
-    private void checkEventQueueToSend(boolean forceSend) {
+    void checkEventQueueToSend(boolean forceSend) {
         L.d("[ModuleEvents] queue size:[" + eventQueue.eqSize() + "] || forceSend: " + forceSend);
         if (forceSend || eventQueue.eqSize() >= internalConfig.getEventsBufferSize()) {
             addEventsToRequestQ(null);
