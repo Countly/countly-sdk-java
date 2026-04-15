@@ -6,8 +6,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.powermock.reflect.Whitebox;
-
 import ly.count.sdk.java.Config;
 
 import static ly.count.sdk.java.Config.LoggingLevel.DEBUG;
