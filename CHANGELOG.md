@@ -1,3 +1,6 @@
+## XX.XX.XX
+* Fixed a bug where a NullPointerException in SDKCore.recover() would permanently block SDK initialization when a crash file from a previous session existed on disk.
+
 ## 24.1.4
 * ! Minor breaking change ! User properties will now be automatically saved under the following conditions:
   * When an event is recorded
