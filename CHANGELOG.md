@@ -1,3 +1,6 @@
+## XX.XX.XX
+* Fixed a bug where a non-JSON server response would cause a permanent networking deadlock, preventing all subsequent requests from being sent.
+
 ## 24.1.4
 * ! Minor breaking change ! User properties will now be automatically saved under the following conditions:
   * When an event is recorded
