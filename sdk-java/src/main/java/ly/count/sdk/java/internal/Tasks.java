@@ -22,7 +22,7 @@ public class Tasks {
      * Service which runs {@link Callable}s
      */
     private final ExecutorService executor;
-    private Long running = null;
+    private volatile Long running = null;
 
     /**
      * Map of {@link Future}s for {@link Callable}s not yet resolved
@@ -92,18 +92,20 @@ public class Tasks {
                 @Override
                 public T call() throws Exception {
                     running = task.id;
-                    T result = task.call();
-                    synchronized (pending) {
-                        if (!task.id.equals(0L)) {
-                            pending.remove(task.id);
+                    try {
+                        T result = task.call();
+                        if (callback != null) {
+                            callback.call(result);
                         }
-                        running = null;
-                        //                        L.d("pending " + pending.keySet() + ", done running " + task.id);
+                        return result;
+                    } finally {
+                        synchronized (pending) {
+                            if (!task.id.equals(0L)) {
+                                pending.remove(task.id);
+                            }
+                            running = null;
+                        }
                     }
-                    if (callback != null) {
-                        callback.call(result);
-                    }
-                    return result;
                 }
             });
 

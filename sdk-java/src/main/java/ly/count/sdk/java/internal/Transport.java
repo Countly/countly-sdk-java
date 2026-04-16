@@ -342,6 +342,9 @@ public class Transport implements X509TrustManager {
                 } catch (IOException e) {
                     L.w("[network] Error while sending request " + request + " " + e);
                     return false;
+                } catch (Exception e) {
+                    L.e("[network] Unexpected error while sending request " + request + " " + e);
+                    return false;
                 } finally {
                     if (connection != null) {
                         connection.disconnect();
@@ -354,12 +357,22 @@ public class Transport implements X509TrustManager {
     Boolean processResponse(int code, String response, Long requestId) {
         L.i("[network] [processResponse] Code [" + code + "] response [" + response + "] for request[" + requestId + "]");
 
-        JSONObject jsonObject = new JSONObject(response);
-        if (code >= 200 && code < 300 && jsonObject.has("result")) {
-            L.d("[network] Success");
-            return true;
-        } else {
-            L.w("[network] Fail: code :" + code + ", result: " + response);
+        if (response == null) {
+            L.w("[network] Null response for request [" + requestId + "]");
+            return false;
+        }
+
+        try {
+            JSONObject jsonObject = new JSONObject(response);
+            if (code >= 200 && code < 300 && jsonObject.has("result")) {
+                L.d("[network] Success");
+                return true;
+            } else {
+                L.w("[network] Fail: code :" + code + ", result: " + response);
+                return false;
+            }
+        } catch (Exception e) {
+            L.w("[network] Failed to parse response as JSON for request [" + requestId + "], response: [" + response + "], error: [" + e.getMessage() + "]");
             return false;
         }
     }
