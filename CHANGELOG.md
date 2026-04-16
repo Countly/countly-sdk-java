@@ -1,4 +1,4 @@
-## XX.XX.XX
+## 24.1.5
 * Fixed a bug where a non-JSON server response would cause a permanent networking deadlock, preventing all subsequent requests from being sent.
 * Fixed a bug where a NullPointerException in SDKCore.recover() would permanently block SDK initialization when a crash file from a previous session existed on disk.
 
