@@ -1,5 +1,6 @@
 package ly.count.sdk.java.internal;
 
+import java.lang.reflect.Field;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import org.junit.After;
@@ -8,7 +9,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.powermock.reflect.Whitebox;
 
 @RunWith(JUnit4.class)
 public class TasksTests {
@@ -24,14 +24,20 @@ public class TasksTests {
         tasks.shutdown();
     }
 
-    @Test
-    public void testSetup() {
-        Assert.assertNotNull(Whitebox.getInternalState(tasks, "executor"));
-        Assert.assertNotNull(Whitebox.getInternalState(tasks, "pending"));
+    private static Object getField(Object target, String fieldName) throws Exception {
+        Field field = target.getClass().getDeclaredField(fieldName);
+        field.setAccessible(true);
+        return field.get(target);
     }
 
     @Test
-    public void testShutdown() {
+    public void testSetup() throws Exception {
+        Assert.assertNotNull(getField(tasks, "executor"));
+        Assert.assertNotNull(getField(tasks, "pending"));
+    }
+
+    @Test
+    public void testShutdown() throws Exception {
         Tasks other = new Tasks("test", null);
         other.run(new Tasks.Task<Object>(0L) {
             @Override
@@ -43,8 +49,8 @@ public class TasksTests {
         long now = System.nanoTime();
         other.shutdown();
         long timeToShutdown = TimeUtils.nsToMs(System.nanoTime() - now);
-        Assert.assertTrue(Whitebox.<ExecutorService>getInternalState(other, "executor").isShutdown());
-        Assert.assertTrue(Whitebox.<ExecutorService>getInternalState(other, "executor").isTerminated());
+        Assert.assertTrue(((ExecutorService) getField(other, "executor")).isShutdown());
+        Assert.assertTrue(((ExecutorService) getField(other, "executor")).isTerminated());
         //Assert.assertTrue(timeToShutdown > 100);//todo, this line fails when trying to publish (AK, 12.12.18)
     }
 
