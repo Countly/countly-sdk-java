@@ -68,7 +68,7 @@ public class Config {
     /**
      * Countly SDK version to be sent in HTTP requests
      */
-    protected String sdkVersion = "24.1.3";
+    protected String sdkVersion = "24.1.5";
 
     /**
      * Countly SDK version to be sent in HTTP requests
@@ -243,6 +243,7 @@ public class Config {
     protected String city = null;
     protected String country = null;
     protected boolean locationEnabled = true;
+    protected boolean autoSendUserProperties = true;
 
     // TODO: storage limits & configuration
     //    protected int maxRequestsStored = 0;
@@ -1479,5 +1480,21 @@ public class Config {
         public String toString() {
             return "DID " + id + " ( " + strategy + ")";
         }
+    }
+
+    // Disabling new Added features
+
+    /**
+     * Disable automatic sending of user properties on
+     * - When an event is recorded
+     * - During an internal timer tick
+     * - Upon flushing the event queue
+     * - When a session call made
+     *
+     * @return {@code this} instance for method chaining
+     */
+    public Config disableAutoSendUserProperties() {
+        this.autoSendUserProperties = false;
+        return this;
     }
 }

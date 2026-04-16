@@ -459,8 +459,6 @@ public class SDKCore {
             modules.remove(feature);
         }
 
-        recover(config);
-
         if (config.isDefaultNetworking()) {
             networking = new DefaultNetworking();
 
@@ -513,15 +511,21 @@ public class SDKCore {
             }
         }
 
+        recover(config);
+
         user = new UserImpl(config);
         initFinished(config);
     }
 
-    private void initFinished(final InternalConfig config) {
-        modules.forEach((feature, module) -> module.initFinished(config));
-        if (config.isDefaultNetworking()) {
+    private void checkNetworking(InternalConfig config) {
+        if (networking != null) {
             networking.check(config);
         }
+    }
+
+    private void initFinished(final InternalConfig config) {
+        modules.forEach((feature, module) -> module.initFinished(config));
+        checkNetworking(config);
     }
 
     public UserImpl user() {
@@ -650,13 +654,13 @@ public class SDKCore {
 
     public void onSignal(InternalConfig config, int id) {
         if (id == Signal.DID.getIndex()) {
-            networking.check(config);
+            checkNetworking(config);
         }
     }
 
     public void onSignal(InternalConfig config, int id, String param) {
         if (id == Signal.Ping.getIndex()) {
-            networking.check(config);
+            checkNetworking(config);
         } else if (id == Signal.Crash.getIndex()) {
             processCrash(config, Long.parseLong(param));
         }
@@ -679,7 +683,7 @@ public class SDKCore {
 
         if (Storage.push(config, request)) {
             L.i("[SDKCore] Added request " + request.storageId() + " instead of crash " + crash.storageId());
-            networking.check(config);
+            checkNetworking(config);
             Boolean success = Storage.remove(config, crash);
             return (success != null) && success;
         } else {

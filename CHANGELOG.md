@@ -1,8 +1,20 @@
-## 24.1.3
+## 24.1.5
+* Fixed a bug where a non-JSON server response would cause a permanent networking deadlock, preventing all subsequent requests from being sent.
+* Fixed a bug where a NullPointerException in SDKCore.recover() would permanently block SDK initialization when a crash file from a previous session existed on disk.
 
+## 24.1.4
+* ! Minor breaking change ! User properties will now be automatically saved under the following conditions:
+  * When an event is recorded
+  * During an internal timer tick
+  * Upon flushing the event queue
+  * When a session call made
+* Cleaned up unused gradle dependencies from root build.gradle.
+
+## 24.1.3
 * Extended minimum JDK support to 8.
 
 ## 24.1.2
+
 * !! Major Breaking Change !! Minimum JDK support is 19 for this minor.
 
 * Migrated from Sonatype OSSRH.
@@ -214,3 +226,4 @@
 
 * initial SDK release
 * MavenCentral rerelease 
+

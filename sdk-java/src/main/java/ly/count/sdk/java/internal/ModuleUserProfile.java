@@ -259,7 +259,17 @@ public class ModuleUserProfile extends ModuleBase {
         if (internalConfig.sdk.location() != null) {
             internalConfig.sdk.module(ModuleLocation.class).saveLocationToParamsLegacy(generatedParams);
         }
+
         L.d("[ModuleUserProfile] saveInternal, generated params [" + generatedParams + "]");
+        if (generatedParams.length() <= 0) {
+            L.d("[ModuleUserProfile] saveInternal, nothing to save returning");
+            return;
+        }
+
+        if (internalConfig.isAutoSendUserProperties() && internalConfig.sdk.events() != null) {
+            internalConfig.sdk.module(ModuleEvents.class).checkEventQueueToSend(true);
+        }
+
         ModuleRequests.pushAsync(internalConfig, new Request(generatedParams));
         clearInternal();
     }
@@ -286,6 +296,22 @@ public class ModuleUserProfile extends ModuleBase {
     @Override
     public void stop(InternalConfig config, boolean clearData) {
         userProfileInterface = null;
+    }
+
+    @Override
+    protected void onTimer() {
+        if (internalConfig.isAutoSendUserProperties()) {
+            saveInternal();
+        }
+    }
+
+    @Override
+    public void deviceIdChanged(String oldDeviceId, boolean withMerge) {
+        super.deviceIdChanged(oldDeviceId, withMerge);
+        L.d("[ModuleUserProfile] deviceIdChanged: oldDeviceId = " + oldDeviceId + ", withMerge = " + withMerge);
+        if (internalConfig.isAutoSendUserProperties() && !withMerge) {
+            saveInternal();
+        }
     }
 
     public class UserProfile {

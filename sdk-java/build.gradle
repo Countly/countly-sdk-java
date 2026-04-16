@@ -8,7 +8,11 @@ buildscript {
     //mavenLocal()
   }
   dependencies {
-    classpath 'com.vanniktech:gradle-maven-publish-plugin:0.28.0' //for publishing
+    // Load publish plugin ONLY when publish task is requested
+    if (gradle.startParameter.taskNames.any { it.toLowerCase().contains("publish") }) {
+      // This requires minimum java 11 to work
+      classpath 'com.vanniktech:gradle-maven-publish-plugin:0.28.0'
+    } 
   }
 }
 
@@ -22,10 +26,10 @@ dependencies {
   implementation 'com.google.code.findbugs:jsr305:3.0.2'
 
   testImplementation 'junit:junit:4.13.1'
-  testImplementation 'org.mockito:mockito-core:2.8.9'
-  testImplementation "org.powermock:powermock-core:${POWERMOCK_VERSION}"
-  testImplementation "org.powermock:powermock-module-junit4:${POWERMOCK_VERSION}"
+  testImplementation 'org.mockito:mockito-core:4.11.0'
   //testImplementation 'com.squareup.okhttp3:mockwebserver:3.7.0'
 }
 
-apply plugin: "com.vanniktech.maven.publish"
+if (gradle.startParameter.taskNames.any { it.toLowerCase().contains("publish") }) {
+  apply plugin: "com.vanniktech.maven.publish"
+}
