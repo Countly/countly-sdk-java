@@ -1,0 +1,94 @@
+.app-root {
+    -fx-font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    -fx-font-size: 13px;
+    -fx-background-color: #f5f6f8;
+}
+
+.header-bar {
+    -fx-background-color: #1f2430;
+}
+.app-title {
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+.status-pill {
+    -fx-background-color: #444a57;
+    -fx-text-fill: #eaeaea;
+    -fx-background-radius: 12;
+    -fx-padding: 4 10 4 10;
+    -fx-font-size: 12px;
+}
+.status-ok {
+    -fx-background-color: #2ecc71;
+    -fx-text-fill: white;
+}
+
+.section-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2a2f3a;
+    -fx-padding: 4 0 4 0;
+}
+
+.panel-header {
+    -fx-background-color: #eaecf1;
+    -fx-border-color: transparent transparent #d3d7de transparent;
+}
+.panel-title {
+    -fx-font-weight: bold;
+    -fx-text-fill: #2a2f3a;
+}
+
+.log-area {
+    -fx-font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+    -fx-font-size: 12px;
+    -fx-control-inner-background: #0f1115;
+    -fx-background-color: #0f1115;
+    -fx-text-fill: white;
+    -fx-highlight-fill: #264f78;
+    -fx-highlight-text-fill: white;
+}
+.log-area .content { -fx-background-color: #0f1115; }
+.log-area .text    { -fx-fill: white; }
+.log-area:focused  { -fx-faint-focus-color: transparent; -fx-focus-color: transparent; }
+
+.widget-card {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #d3d7de;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+.widget-card:hover {
+    -fx-border-color: #4a90d9;
+    -fx-background-color: #f0f7ff;
+}
+
+.widget-name {
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}
+.widget-sub {
+    -fx-font-size: 11px;
+    -fx-text-fill: #8a909b;
+}
+
+.badge {
+    -fx-text-fill: white;
+    -fx-background-radius: 4;
+    -fx-padding: 2 8 2 8;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+.badge-nps     { -fx-background-color: #e67e22; }
+.badge-survey  { -fx-background-color: #2ecc71; }
+.badge-rating  { -fx-background-color: #3498db; }
+.badge-other   { -fx-background-color: #888;    }
+.badge-version { -fx-background-color: #6c7a89; }
+
+.placeholder {
+    -fx-font-size: 15px;
+    -fx-text-fill: #8a909b;
+    -fx-background-color: #fafbfd;
+    -fx-alignment: center;
+}

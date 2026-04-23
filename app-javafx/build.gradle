@@ -1,0 +1,29 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+javafx {
+    version = '17.0.10'
+    modules = [ 'javafx.controls', 'javafx.web' ]
+}
+
+dependencies {
+    // Build directly against the SDK module so changes in sdk-java are
+    // picked up without publishing or copying a jar.
+    implementation project(':sdk-java')
+
+    // org.json is used by the demo for pretty-printing widget data; the
+    // SDK also uses it internally (and exposes JSONObject in its API).
+    implementation 'org.json:json:20230227'
+}
+
+application {
+    mainClass = 'ly.count.javafx.demo.Main'
+}
