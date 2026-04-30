@@ -1,8 +1,10 @@
 package ly.count.sdk.java.internal;
 
 import java.lang.reflect.Field;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -74,6 +76,42 @@ public class TasksTests {
 
         Assert.assertEquals(Boolean.TRUE, called[0]);
         Assert.assertEquals(Boolean.TRUE, called[1]);
+    }
+
+    /**
+     * Regression for issue #271, end-to-end: mirrors the
+     * DefaultNetworking.check() pattern where task A's callback re-enters the
+     * scheduler with `if (!isRunning()) tasks.run(taskB)`. The actual user-facing
+     * failure was not "isRunning() reports the wrong value" but "the next request
+     * never runs". This test proves task B is both scheduled AND executed.
+     */
+    @Test
+    public void testCallbackCanScheduleAndRunNextTask() throws Exception {
+        final CountDownLatch taskBRan = new CountDownLatch(1);
+        final boolean[] taskBScheduled = { false };
+
+        tasks.run(new Tasks.Task<Integer>(0L) {
+            @Override
+            public Integer call() {
+                return 1;
+            }
+        }, paramA -> {
+            if (!tasks.isRunning()) {
+                taskBScheduled[0] = true;
+                tasks.run(new Tasks.Task<Integer>(0L) {
+                    @Override
+                    public Integer call() {
+                        taskBRan.countDown();
+                        return 2;
+                    }
+                });
+            }
+        });
+
+        Assert.assertTrue("task B should have been scheduled and run by callback A",
+            taskBRan.await(2, TimeUnit.SECONDS));
+        Assert.assertTrue("callback A should have observed isRunning() == false and entered the schedule branch",
+            taskBScheduled[0]);
     }
 
     /**
