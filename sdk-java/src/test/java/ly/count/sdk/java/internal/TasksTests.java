@@ -76,6 +76,29 @@ public class TasksTests {
         Assert.assertEquals(Boolean.TRUE, called[1]);
     }
 
+    /**
+     * Regression for issue #271: callback must observe isRunning() == false
+     * so that a callback re-entering the scheduler (e.g. DefaultNetworking.check)
+     * can schedule the next task. In 24.1.5 the callback was invoked before
+     * `running` was cleared, deadlocking the request queue.
+     */
+    @Test
+    public void testCallbackSeesIsRunningFalse() throws Exception {
+        final Boolean[] runningInsideCallback = new Boolean[] { null };
+
+        tasks.run(new Tasks.Task<Integer>(0L) {
+            @Override
+            public Integer call() {
+                return 1;
+            }
+        }, param -> runningInsideCallback[0] = tasks.isRunning());
+
+        tasks.await();
+
+        Assert.assertNotNull("callback was not invoked", runningInsideCallback[0]);
+        Assert.assertEquals(Boolean.FALSE, runningInsideCallback[0]);
+    }
+
     @Test
     public void testTaskIdsWork() throws Exception {
         final int result = 123;

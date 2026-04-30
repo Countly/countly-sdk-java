@@ -92,12 +92,9 @@ public class Tasks {
                 @Override
                 public T call() throws Exception {
                     running = task.id;
+                    T result;
                     try {
-                        T result = task.call();
-                        if (callback != null) {
-                            callback.call(result);
-                        }
-                        return result;
+                        result = task.call();
                     } finally {
                         synchronized (pending) {
                             if (!task.id.equals(0L)) {
@@ -106,6 +103,10 @@ public class Tasks {
                             running = null;
                         }
                     }
+                    if (callback != null) {
+                        callback.call(result);
+                    }
+                    return result;
                 }
             });
 
