@@ -13,7 +13,7 @@ public final class AppContext {
     // flows, so our raw feedback HTTP call (used to recover the wv field
     // for URL construction) identifies the same client.
     public static final String SDK_NAME = "java-native";
-    public static final String SDK_VERSION = "24.1.5";
+    public static final String SDK_VERSION = "24.1.6";
     public static final String PLATFORM = "desktop";
 
     // Populated from the Init tab once the user initializes the SDK; the

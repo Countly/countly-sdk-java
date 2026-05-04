@@ -1,4 +1,4 @@
-## XX.XX.XX
+## 24.1.6
 * Fixed a bug where the request queue would stall after sending the first request, preventing subsequent persisted requests from being sent.
 
 ## 24.1.5
