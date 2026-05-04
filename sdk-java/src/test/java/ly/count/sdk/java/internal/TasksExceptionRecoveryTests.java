@@ -1,6 +1,8 @@
 package ly.count.sdk.java.internal;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -131,10 +133,19 @@ public class TasksExceptionRecoveryTests {
         Assert.assertFalse("Executor should not be running", tasks.isRunning());
     }
 
+    private static Object getField(Object target, String fieldName) throws Exception {
+        Field field = target.getClass().getDeclaredField(fieldName);
+        field.setAccessible(true);
+        return field.get(target);
+    }
+
     /**
      * When a callback throws an exception, the executor should still recover
-     * and not deadlock. The callback runs inside the try block, so its exception
-     * is caught by the finally block.
+     * and not deadlock. After the issue #271 fix the callback runs outside the
+     * try/finally, so `running = null` has already executed before the throw —
+     * the exception propagates into the Future without leaving the executor
+     * stuck. This test uses id=0L; for the `pending.remove` branch on a
+     * non-zero-id task see callbackExceptionDoesNotLeakPendingForIdTask.
      */
     @Test
     public void callbackException_executorRecovers() throws Exception {
@@ -286,5 +297,102 @@ public class TasksExceptionRecoveryTests {
             "isRunning() should be false immediately after task completes (volatile visibility)",
             tasks.isRunning()
         );
+    }
+
+    /**
+     * After a task with a non-zero id throws, the `pending` map must be empty.
+     * Locks the cleanup contract directly rather than inferring it from dedup
+     * behavior — guards against future refactors that move pending.remove()
+     * out of the finally block.
+     */
+    @Test
+    public void pendingIsEmptyAfterIdTaskThrows() throws Exception {
+        Long taskId = 42L;
+
+        tasks.run(new Tasks.Task<Boolean>(taskId) {
+            @Override
+            public Boolean call() {
+                throw new RuntimeException("Simulated failure");
+            }
+        });
+
+        tasks.await();
+
+        Map<?, ?> pending = (Map<?, ?>) getField(tasks, "pending");
+        synchronized (pending) {
+            Assert.assertTrue("pending map should be empty after task throws", pending.isEmpty());
+        }
+    }
+
+    /**
+     * Issue #271 + #264 interaction: when a callback throws on a task with a
+     * non-zero id, both `running` and `pending` must be cleared. The existing
+     * callbackException_executorRecovers test uses id=0L, so it never exercises
+     * the `pending.remove(task.id)` branch — this test does.
+     */
+    @Test
+    public void callbackExceptionDoesNotLeakPendingForIdTask() throws Exception {
+        Long taskId = 99L;
+
+        tasks.run(new Tasks.Task<Boolean>(taskId) {
+            @Override
+            public Boolean call() {
+                return true;
+            }
+        }, result -> {
+            throw new RuntimeException("Simulated callback failure");
+        });
+
+        tasks.await();
+
+        Assert.assertFalse("running should be cleared after callback throws", tasks.isRunning());
+        Map<?, ?> pending = (Map<?, ?>) getField(tasks, "pending");
+        synchronized (pending) {
+            Assert.assertTrue("pending should be empty after callback throws on id-task", pending.isEmpty());
+        }
+    }
+
+    /**
+     * Issue #271 + #264 recovery path: after a callback throws (e.g. transient
+     * parse error in DefaultNetworking.check), a subsequent task's callback
+     * must still be able to re-enter the scheduler and queue the next request.
+     * This is the production scenario — taking down the request queue requires
+     * BOTH "callback A throws" AND "callback B can no longer reschedule".
+     */
+    @Test
+    public void callbackThrows_subsequentCallbackCanReschedule() throws Exception {
+        // Task A: succeeds, callback throws.
+        tasks.run(new Tasks.Task<Boolean>(0L) {
+            @Override
+            public Boolean call() {
+                return true;
+            }
+        }, result -> {
+            throw new RuntimeException("Simulated callback A failure");
+        });
+        tasks.await();
+
+        // Task B: succeeds, callback re-enters scheduler to run task C
+        // (mirrors DefaultNetworking.check() recovering after a failed callback).
+        CountDownLatch taskCRan = new CountDownLatch(1);
+        tasks.run(new Tasks.Task<Boolean>(0L) {
+            @Override
+            public Boolean call() {
+                return true;
+            }
+        }, paramB -> {
+            if (!tasks.isRunning()) {
+                tasks.run(new Tasks.Task<Boolean>(0L) {
+                    @Override
+                    public Boolean call() {
+                        taskCRan.countDown();
+                        return true;
+                    }
+                });
+            }
+        });
+
+        Assert.assertTrue("task C should run — recovery path after a failed callback must still allow re-entry",
+            taskCRan.await(2, TimeUnit.SECONDS));
     }
 }
