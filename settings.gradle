@@ -1,1 +1,14 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
 include ':sdk-java', ':app-java'
+
+// app-javafx uses the openjfx Gradle plugin which requires Java 11+.
+// Skip it on older JVMs so sdk-java / app-java stay buildable on Java 8.
+if (JavaVersion.current().isJava11Compatible()) {
+    include ':app-javafx'
+}

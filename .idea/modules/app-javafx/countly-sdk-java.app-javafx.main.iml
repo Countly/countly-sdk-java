@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module external.linked.project.id=":app-javafx:main" external.linked.project.path="$MODULE_DIR$/../../../app-javafx" external.root.project.path="$MODULE_DIR$/../../.." external.system.id="GRADLE" external.system.module.group="countly-sdk-java" external.system.module.type="sourceSet" external.system.module.version="unspecified" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_11">
+    <output url="file://$MODULE_DIR$/../../../app-javafx/build/classes/java/main" />
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../../../app-javafx/src/main">
+      <sourceFolder url="file://$MODULE_DIR$/../../../app-javafx/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../app-javafx/src/main/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="countly-sdk-java.sdk-java.main" />
+    <orderEntry type="library" scope="PROVIDED" name="Gradle: org.json:json:20230227" level="project" />
+    <orderEntry type="library" name="Gradle: org.openjfx:javafx-web:mac-aarch64:17.0.10" level="project" />
+    <orderEntry type="library" name="Gradle: org.openjfx:javafx-controls:mac-aarch64:17.0.10" level="project" />
+    <orderEntry type="library" name="Gradle: org.openjfx:javafx-media:mac-aarch64:17.0.10" level="project" />
+    <orderEntry type="library" name="Gradle: org.openjfx:javafx-graphics:mac-aarch64:17.0.10" level="project" />
+    <orderEntry type="library" name="Gradle: org.openjfx:javafx-base:mac-aarch64:17.0.10" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.json:json:20250107" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.google.code.findbugs:jsr305:3.0.2" level="project" />
+  </component>
+</module>

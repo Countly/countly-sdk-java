@@ -11,6 +11,13 @@
       <entry name="!?*.kt" />
       <entry name="!?*.clj" />
     </wildcardResourcePatterns>
-    <bytecodeTargetLevel target="1.8" />
+    <bytecodeTargetLevel target="1.8">
+      <module name="countly-sdk-java.app-java" target="11" />
+      <module name="countly-sdk-java.app-java.main" target="11" />
+      <module name="countly-sdk-java.app-java.test" target="11" />
+      <module name="countly-sdk-java.app-javafx" target="11" />
+      <module name="countly-sdk-java.app-javafx.main" target="11" />
+      <module name="countly-sdk-java.app-javafx.test" target="11" />
+    </bytecodeTargetLevel>
   </component>
 </project>
