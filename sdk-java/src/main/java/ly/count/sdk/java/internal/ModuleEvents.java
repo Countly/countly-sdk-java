@@ -95,6 +95,10 @@ public class ModuleEvents extends ModuleBase {
     }
 
     protected void recordEventInternal(String key, int count, Double sum, Double dur, Map<String, Object> segmentation, String eventIdOverride) {
+        if (internalConfig.configProvider != null && (!internalConfig.configProvider.getTrackingEnabled() || !internalConfig.configProvider.getCustomEventTrackingEnabled())) {
+            L.d("[ModuleEvents] recordEventInternal, event recording disabled by SDK behavior settings; ignoring");
+            return;
+        }
         if (count <= 0) {
             L.w("[ModuleEvents] recordEventInternal, Count can't be less than 1, ignoring this event.");
             return;

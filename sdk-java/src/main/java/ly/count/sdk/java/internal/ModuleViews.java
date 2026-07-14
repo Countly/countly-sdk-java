@@ -155,6 +155,10 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
      * @return Returns link to Countly for call chaining
      */
     @Nullable String startViewInternal(@Nullable String viewName, @Nullable Map<String, Object> customViewSegmentation, boolean viewShouldBeAutomaticallyStopped) {
+        if (internalConfig.configProvider != null && (!internalConfig.configProvider.getTrackingEnabled() || !internalConfig.configProvider.getViewTrackingEnabled())) {
+            L.d("[ModuleViews] startViewInternal, view tracking disabled by SDK behavior settings; ignoring");
+            return null;
+        }
 
         if (viewName == null || viewName.isEmpty()) {
             L.e("[ModuleViews] startViewInternal, Trying to record view with null or empty view name, ignoring request");

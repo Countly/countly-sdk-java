@@ -206,6 +206,18 @@ public class ModuleRequests extends ModuleBase {
     public static Future<Boolean> pushAsync(final InternalConfig config, final Request request, final boolean noControl, final Tasks.Callback<Boolean> callback) {
         config.getLogger().d("New request " + request.storageId() + ": " + request);
 
+        if (config.configProvider != null && !config.configProvider.getTrackingEnabled()) {
+            config.getLogger().d("[ModuleRequests] pushAsync, tracking disabled by SDK behavior settings; dropping request");
+            if (callback != null) {
+                try {
+                    callback.call(null);
+                } catch (Exception e) {
+                    config.getLogger().e("[ModuleRequests] Exception in a callback " + e);
+                }
+            }
+            return null;
+        }
+
         if (!noControl && request.isEmpty()) {
             if (callback != null) {
                 try {

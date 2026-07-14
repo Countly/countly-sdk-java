@@ -61,6 +61,10 @@ public class TestUtils {
         checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
         Config config = new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
         config.setApplicationVersion(APPLICATION_VERSION);
+        // Disable server config requests by default in tests so the suite doesn't fire HTTP calls
+        // to a non-existent test host on every init. Tests covering ModuleConfiguration opt back in
+        // explicitly.
+        config.disableSdkBehaviorSettingsUpdates();
 
         config.setCustomDeviceId(deviceID);
         return config;

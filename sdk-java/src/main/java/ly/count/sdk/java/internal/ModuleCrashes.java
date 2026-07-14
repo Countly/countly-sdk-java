@@ -82,6 +82,10 @@ public class ModuleCrashes extends ModuleBase {
     }
 
     protected void recordExceptionInternal(Throwable t, boolean handled, Map<String, Object> segments, String legacyCrashName) {
+        if (internalConfig.configProvider != null && (!internalConfig.configProvider.getTrackingEnabled() || !internalConfig.configProvider.getCrashReportingEnabled())) {
+            L.d("[ModuleCrash] recordExceptionInternal, crash reporting disabled by SDK behavior settings; ignoring");
+            return;
+        }
         if (config.isBackendModeEnabled()) {
             L.w("[ModuleCrash] recordExceptionInternal, Skipping crash, backend mode is enabled!");
             return;

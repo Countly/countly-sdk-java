@@ -245,6 +245,20 @@ public class Config {
     protected boolean locationEnabled = true;
     protected boolean autoSendUserProperties = true;
 
+    /**
+     * Seed value for the SDK behavior settings. Used on first init only,
+     * when no settings have yet been persisted; subsequent inits use the
+     * value pulled from storage.
+     */
+    protected String sdkBehaviorSettings = null;
+
+    /**
+     * If {@code true}, the SDK skips the periodic {@code /o/sdk?method=sc}
+     * fetch. The seed JSON from {@link #setSdkBehaviorSettings(String)} (or
+     * a previously-persisted snapshot) is still applied.
+     */
+    protected boolean sdkBehaviorSettingsRequestsDisabled = false;
+
     // TODO: storage limits & configuration
     //    protected int maxRequestsStored = 0;
     //    protected int storageDirectory = "";
@@ -1495,6 +1509,31 @@ public class Config {
      */
     public Config disableAutoSendUserProperties() {
         this.autoSendUserProperties = false;
+        return this;
+    }
+
+    /**
+     * Provide an initial SDK behavior settings payload to apply at init time,
+     * before the first {@code /o/sdk?method=sc} fetch returns. The value is
+     * the same JSON shape the Countly server emits: {@code {"v":1,"t":<ts>,
+     * "c":{...}}}. The seed is only used when nothing has been persisted yet.
+     *
+     * @param sdkBehaviorSettings serialized config JSON, or {@code null} for none
+     * @return {@code this} instance for method chaining
+     */
+    public Config setSdkBehaviorSettings(String sdkBehaviorSettings) {
+        this.sdkBehaviorSettings = sdkBehaviorSettings;
+        return this;
+    }
+
+    /**
+     * Disable the periodic SDK behavior settings fetch from the server. Any
+     * seed JSON or previously-persisted snapshot is still applied at init.
+     *
+     * @return {@code this} instance for method chaining
+     */
+    public Config disableSdkBehaviorSettingsUpdates() {
+        this.sdkBehaviorSettingsRequestsDisabled = true;
         return this;
     }
 }
