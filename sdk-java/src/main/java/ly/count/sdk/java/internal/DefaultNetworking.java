@@ -36,6 +36,10 @@ public class DefaultNetworking implements Networking {
         return new Tasks.Task<Boolean>(Tasks.ID_STRICT) {
             @Override
             public Boolean call() throws Exception {
+                if (!config.getNetworkingEnabled()) {
+                    L.d("[Networking] submit, networking disabled by SDK behavior settings; skipping queue drain");
+                    return false;
+                }
                 final Request request = storageForRequestQueue.getNextRequest();
                 if (request == null) {
                     return false;

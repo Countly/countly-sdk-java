@@ -45,6 +45,10 @@ public class ModuleLocation extends ModuleBase {
     }
 
     void setLocationInternal(@Nullable String countryCode, @Nullable String cityName, @Nullable String gpsCoordinates, @Nullable String ipAddress) {
+        if (internalConfig.configProvider != null && (!internalConfig.configProvider.getTrackingEnabled() || !internalConfig.configProvider.getLocationTrackingEnabled())) {
+            L.d("[ModuleLocation] setLocationInternal, location tracking disabled by SDK behavior settings; ignoring");
+            return;
+        }
         L.d("[ModuleLocation] setLocationInternal, Setting location parameters, cc[" + countryCode + "] cy[" + city + "] gps[" + gpsCoordinates + "] ip[" + ipAddress + "]");
 
         if (countryCode != null ^ city != null) {

@@ -73,6 +73,7 @@ public class SDKCore {
         moduleMappings.put(CoreFeature.RemoteConfig, ModuleRemoteConfig.class);
         moduleMappings.put(CoreFeature.UserProfiles, ModuleUserProfile.class);
         moduleMappings.put(CoreFeature.Location, ModuleLocation.class);
+        moduleMappings.put(CoreFeature.Configuration, ModuleConfiguration.class);
     }
 
     /**
@@ -254,6 +255,9 @@ public class SDKCore {
         // standard required internal features
         modules.put(-3, new ModuleDeviceIdCore());
         modules.put(-2, new ModuleRequests());
+        // ModuleConfiguration is built unconditionally so the ConfigurationProvider
+        // is wired before other modules read flags through it.
+        modules.put(-1, new ModuleConfiguration());
         modules.put(CoreFeature.Sessions.getIndex(), new ModuleSessions());
         modules.put(CoreFeature.UserProfiles.getIndex(), new ModuleUserProfile());
 

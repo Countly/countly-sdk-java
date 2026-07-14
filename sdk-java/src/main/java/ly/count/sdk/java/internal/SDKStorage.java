@@ -33,6 +33,7 @@ public class SDKStorage implements StorageProvider {
     protected static final String key_device_id_type = "did_t";
     protected static final String key_remote_config = "rc";
     protected static final String key_migration_version = "dv";
+    protected static final String key_server_config = "sc";
 
     private JsonFileStorage jsonFileStorage;
 
@@ -377,6 +378,20 @@ public class SDKStorage implements StorageProvider {
     @Override
     public void setMigrationVersion(Integer migrationVersion) {
         jsonFileStorage.addAndSave(key_migration_version, migrationVersion);
+    }
+
+    @Override
+    public void setServerConfig(String config) {
+        if (config == null) {
+            jsonFileStorage.deleteAndSave(key_server_config);
+        } else {
+            jsonFileStorage.addAndSave(key_server_config, config);
+        }
+    }
+
+    @Override
+    public String getServerConfig() {
+        return jsonFileStorage.getString(key_server_config);
     }
 
     @Override

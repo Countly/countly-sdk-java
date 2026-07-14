@@ -21,7 +21,8 @@ public enum CoreFeature {
     DeviceId(1 << 20, ModuleDeviceIdCore::new),
     Requests(1 << 21, ModuleRequests::new),
     Logs(1 << 22),
-    Feedback(1 << 23, ModuleFeedback::new);
+    Feedback(1 << 23, ModuleFeedback::new),
+    Configuration(1 << 24, ModuleConfiguration::new);
 
     private final int index;
 

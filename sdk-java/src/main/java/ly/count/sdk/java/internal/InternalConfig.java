@@ -32,6 +32,12 @@ public class InternalConfig extends Config {
     protected IdGenerator viewIdGenerator;
     protected IdGenerator eventIdGenerator;
     protected ViewIdProvider viewIdProvider;
+    /**
+     * Set by {@link ModuleConfiguration} at construction time; remains
+     * {@code null} until that module runs, which means callers must
+     * tolerate that absence (treat it as "no overrides yet").
+     */
+    public ConfigurationProvider configProvider;
 
     /**
      * Shouldn't be used!
@@ -144,13 +150,26 @@ public class InternalConfig extends Config {
     }
 
     /**
-     * This feature is not yet implemented
-     * and always return true
+     * Whether the SDK is currently allowed to perform network requests.
+     * Defaults to {@code true}; the value is overridden when a SDK
+     * behavior settings payload from the server toggles {@code networking}
+     * off (see {@link ModuleConfiguration}).
      *
-     * @return true
+     * @return {@code true} if networking is allowed
      */
     public boolean getNetworkingEnabled() {
-        return true;
+        if (configProvider == null) {
+            return true;
+        }
+        return configProvider.getNetworkingEnabled();
+    }
+
+    public String getSdkBehaviorSettings() {
+        return sdkBehaviorSettings;
+    }
+
+    public boolean isSdkBehaviorSettingsRequestsDisabled() {
+        return sdkBehaviorSettingsRequestsDisabled;
     }
 
     /**
