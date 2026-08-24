@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check every resolved Gradle dependency against the OSV vulnerability database.
+"""Check resolved Gradle dependencies against the OSV vulnerability DB.
 
 Reads "COORD <projectPath> <group>:<artifact>:<version>" lines (produced by
 dependency-report.init.gradle) on stdin and queries https://osv.dev.
@@ -19,8 +19,12 @@ import sys
 import urllib.error
 import urllib.request
 
-OSV_BATCH = "https://api.osv.dev/v1/querybatch"
-OSV_VULN = "https://api.osv.dev/v1/vulns/"
+OSV_HOST_PREFIX = "https://api.osv.dev/"
+OSV_BATCH = OSV_HOST_PREFIX + "v1/querybatch"
+OSV_VULN = OSV_HOST_PREFIX + "v1/vulns/"
+# Advisory ids come back inside an OSV response, i.e. from outside this repo.
+# They are interpolated into a URL, so accept only the documented shape.
+VULN_ID_RE = re.compile(r"^[A-Za-z0-9._-]{1,100}$")
 # Local project artifacts have no upstream version to check.
 SKIP_VERSIONS = {"unspecified", ""}
 
@@ -42,30 +46,49 @@ def read_coords(stream):
     return {k: sorted(v) for k, v in sorted(coords.items())}
 
 
+def _check_url(url):
+    """Reject any URL that is not a plain https OSV API endpoint.
+
+    urlopen would happily accept file:/ or a custom scheme, so the host and
+    scheme are pinned here rather than trusted from the caller.
+    """
+    if not url.startswith(OSV_HOST_PREFIX):
+        raise ValueError(f"refusing to fetch a non-OSV URL: {url}")
+    return url
+
+
 def post_json(url, payload):
+    """POST a JSON payload to OSV and return the decoded response."""
     req = urllib.request.Request(
-        url,
+        _check_url(url),
         data=json.dumps(payload).encode(),
         headers={"Content-Type": "application/json"},
     )
-    with urllib.request.urlopen(req, timeout=60) as resp:
+    # nosec B310 - scheme and host are pinned by _check_url above.
+    with urllib.request.urlopen(req, timeout=60) as resp:  # nosec B310
         return json.load(resp)
 
 
 def get_json(url):
-    with urllib.request.urlopen(url, timeout=60) as resp:
+    """GET an OSV endpoint and return the decoded response."""
+    # nosec B310 -- scheme and host are pinned by _check_url above.
+    checked = _check_url(url)
+    with urllib.request.urlopen(checked, timeout=60) as resp:  # nosec B310
         return json.load(resp)
 
 
 def query_osv(coords):
-    """-> {coord: [vuln id, ...]} for coords with at least one vulnerability."""
+    """-> {coord: [vuln id, ...]} for coords with a vulnerability."""
     keys = list(coords)
     queries = []
     for ga_v in keys:
         group, artifact, version = ga_v.rsplit(":", 2)
         queries.append(
             {
-                "package": {"ecosystem": "Maven", "name": f"{group}:{artifact}"},
+                "package": {
+                    "ecosystem": "Maven",
+                    "name": f"{group}:{artifact}",
+                },
                 "version": version,
             }
         )
@@ -80,11 +103,15 @@ def query_osv(coords):
 
 def describe(vuln_id):
     """-> (summary, severity, fixed_versions) - best effort."""
+    if not VULN_ID_RE.match(vuln_id):
+        return "(advisory id in unexpected format)", "", []
     try:
         data = get_json(OSV_VULN + vuln_id)
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError):
         return "(details unavailable)", "", []
-    summary = data.get("summary") or data.get("details", "")[:160] or "(no summary)"
+    summary = (data.get("summary")
+               or data.get("details", "")[:160]
+               or "(no summary)")
     severity = ""
     for sev in data.get("severity") or []:
         score = sev.get("score", "")
@@ -106,14 +133,17 @@ def describe(vuln_id):
 
 
 def main():
+    """Scan stdin's coordinates and return a process exit code."""
     coords = read_coords(sys.stdin)
     if not coords:
-        print("::error::no dependency coordinates received - the Gradle report step failed")
+        print("::error::no dependency coordinates received - the "
+              "Gradle report step failed")
         return 1
 
-    print(f"Scanned {len(coords)} resolved dependencies across all modules.\n")
+    print(f"Scanned {len(coords)} resolved dependencies, all modules.\n")
     hits = query_osv(coords)
 
+    module_count = len({m for ms in coords.values() for m in ms})
     summary_lines = ["# Dependency security scan", ""]
     if not hits:
         print("No known vulnerabilities.")
@@ -121,7 +151,7 @@ def main():
             print(f"  ok  {ga_v}  ({', '.join(modules)})")
         summary_lines += [
             f"No known vulnerabilities in **{len(coords)}** resolved "
-            f"dependencies across {len(set(m for ms in coords.values() for m in ms))} modules.",
+            f"dependencies across {module_count} modules.",
             "",
             "<details><summary>Dependencies checked</summary>",
             "",
@@ -135,7 +165,8 @@ def main():
         return 0
 
     summary_lines += [
-        f"**{len(hits)} vulnerable dependency(ies)** out of {len(coords)} resolved.",
+        f"**{len(hits)} vulnerable dependency(ies)** out of "
+        f"{len(coords)} resolved.",
         "",
         "| Dependency | Modules | Advisory | Severity | Fixed in |",
         "| --- | --- | --- | --- | --- |",
@@ -151,17 +182,20 @@ def main():
             print(f"      fixed in: {fixed_text}")
             print(f"      https://osv.dev/vulnerability/{vuln_id}")
             # A GitHub annotation so the failure is visible on the PR itself.
-            print(f"::error title={ga_v} {vuln_id}::{summary} (fixed in {fixed_text})")
+            print(f"::error title={ga_v} {vuln_id}::{summary} "
+                  f"(fixed in {fixed_text})")
             summary_lines.append(
-                f"| `{ga_v}` | {modules} | [{vuln_id}](https://osv.dev/vulnerability/{vuln_id})"
+                f"| `{ga_v}` | {modules} | "
+                f"[{vuln_id}](https://osv.dev/vulnerability/{vuln_id})"
                 f" | {severity or 'n/a'} | {fixed_text} |"
             )
         print()
 
     summary_lines += [
         "",
-        "Upgrade the dependency in **every** module that declares it - this project "
-        "declares `org.json` in `sdk-java`, `app-java` and `app-javafx` separately.",
+        "Upgrade the dependency in **every** module that declares it - "
+        "this project declares `org.json` in `sdk-java`, `app-java` "
+        "and `app-javafx` separately.",
     ]
     write_summary(summary_lines)
     return 1
@@ -178,8 +212,8 @@ def write_summary(lines):
     if step_summary:
         with open(step_summary, "a", encoding="utf-8") as handle:
             handle.write(body)
-    with open(os.environ.get("OSV_REPORT_FILE", "osv-report.md"), "w",
-              encoding="utf-8") as handle:
+    report_path = os.environ.get("OSV_REPORT_FILE", "osv-report.md")
+    with open(report_path, "w", encoding="utf-8") as handle:
         handle.write(body)
 
 
