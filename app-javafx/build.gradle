@@ -10,7 +10,7 @@ java {
 }
 
 javafx {
-    version = '17.0.10'
+    version = '17.0.20'
     modules = [ 'javafx.controls', 'javafx.web' ]
 }
 
@@ -21,7 +21,7 @@ dependencies {
 
     // org.json is used by the demo for pretty-printing widget data; the
     // SDK also uses it internally (and exposes JSONObject in its API).
-    implementation 'org.json:json:20230227'
+    implementation 'org.json:json:20250517'
 }
 
 application {

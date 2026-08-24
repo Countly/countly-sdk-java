@@ -1,0 +1,34 @@
+// Adds a read-only task that prints every resolved external dependency
+// coordinate, for every module, as "group:artifact:version".
+//
+// Applied via `--init-script` so no build file in the repo has to change.
+// Used by .github/workflows/dependency-security.yml.
+gradle.projectsLoaded {
+    gradle.rootProject.allprojects { p ->
+        p.tasks.register('printResolvedDependencies') {
+            doLast {
+                def seen = new TreeSet<String>()
+                p.configurations.each { cfg ->
+                    if (!cfg.canBeResolved) {
+                        return
+                    }
+                    // Skip configurations that pull in the Gradle/plugin classpath
+                    // rather than the shipped or test dependencies.
+                    if (cfg.name.toLowerCase().contains('classpath') && !cfg.name.endsWith('Classpath')) {
+                        return
+                    }
+                    try {
+                        cfg.resolvedConfiguration.lenientConfiguration
+                           .getArtifacts({ true }).each { art ->
+                            def id = art.moduleVersion.id
+                            seen << "${id.group}:${id.name}:${id.version}".toString()
+                        }
+                    } catch (Exception ignored) {
+                        // An unresolvable configuration is not a scan failure.
+                    }
+                }
+                seen.each { println "COORD ${p.path} ${it}" }
+            }
+        }
+    }
+}

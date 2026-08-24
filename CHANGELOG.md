@@ -1,3 +1,6 @@
+## XX.XX.XX
+* Updated JSON library version from "20250107" to "20250517".
+
 ## 24.1.6
 * Fixed a bug where the request queue would stall after sending the first request, preventing subsequent persisted requests from being sent.
 

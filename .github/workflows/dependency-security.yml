@@ -1,0 +1,86 @@
+name: Dependency Security Scan
+
+# Runs on pushes/PRs so a bad upgrade is caught immediately, and on a schedule
+# because a dependency can become vulnerable without this repo changing at all.
+on:
+  push:
+    branches:
+      - master
+      - staging
+  pull_request:
+    branches:
+      - master
+      - staging
+  schedule:
+    # Mondays 06:00 UTC
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  osv-scan:
+    name: OSV scan (all modules)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # NOTE: JDK 17, not the JDK 8 used by gradle.yml. settings.gradle only
+      # includes :app-javafx on Java 11+, so a JDK 8 run would silently skip
+      # that module's dependencies -- exactly the blind spot that let a known
+      # org.json CVE sit in the demo modules after sdk-java had been fixed.
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'corretto'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Resolve dependencies for every module
+        run: |
+          ./gradlew -q --init-script .github/scripts/dependency-report.init.gradle \
+            printResolvedDependencies | tee resolved-dependencies.txt
+          grep -c '^COORD' resolved-dependencies.txt
+
+      - name: Check resolved dependencies against OSV
+        run: python3 .github/scripts/osv_scan.py < resolved-dependencies.txt
+
+      - name: Upload dependency list
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resolved-dependencies
+          path: resolved-dependencies.txt
+
+  dependency-submission:
+    name: Submit dependency graph
+    # Only from the default branch: this writes the graph GitHub uses for
+    # Dependabot alerts, and PR runs must not overwrite it.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'corretto'
+      - name: Submit resolved dependency graph to GitHub
+        uses: gradle/actions/dependency-submission@v4
+
+  dependency-review:
+    name: Review dependency changes
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fail the PR on newly introduced vulnerable dependencies
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: low
+          comment-summary-in-pr: on-failure

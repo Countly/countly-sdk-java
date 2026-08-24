@@ -1,0 +1,25 @@
+version: 2
+updates:
+  # Gradle dependencies. org.json is declared separately in sdk-java, app-java
+  # and app-javafx; Dependabot opens one PR per module, so check that a bump
+  # lands everywhere before closing the others.
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    labels:
+      - dependencies
+      - ci
+    commit-message:
+      prefix: "chore(ci)"
