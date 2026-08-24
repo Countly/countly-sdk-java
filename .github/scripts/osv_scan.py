@@ -120,8 +120,17 @@ def main():
         for ga_v, modules in coords.items():
             print(f"  ok  {ga_v}  ({', '.join(modules)})")
         summary_lines += [
-            f"No known vulnerabilities in {len(coords)} resolved dependencies.",
-        ]
+            f"No known vulnerabilities in **{len(coords)}** resolved "
+            f"dependencies across {len(set(m for ms in coords.values() for m in ms))} modules.",
+            "",
+            "<details><summary>Dependencies checked</summary>",
+            "",
+            "| Dependency | Modules |",
+            "| --- | --- |",
+        ] + [
+            f"| `{ga_v}` | {', '.join(modules)} |"
+            for ga_v, modules in coords.items()
+        ] + ["", "</details>"]
         write_summary(summary_lines)
         return 0
 
@@ -159,11 +168,19 @@ def main():
 
 
 def write_summary(lines):
-    path = os.environ.get("GITHUB_STEP_SUMMARY")
-    if not path:
-        return
-    with open(path, "a", encoding="utf-8") as handle:
-        handle.write("\n".join(lines) + "\n")
+    """Write the report to the job summary and to a file for the PR comment.
+
+    GITHUB_STEP_SUMMARY only renders on the workflow run page - it does NOT
+    reach the pull request. The report file is what the PR comment step posts.
+    """
+    body = "\n".join(lines) + "\n"
+    step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
+    if step_summary:
+        with open(step_summary, "a", encoding="utf-8") as handle:
+            handle.write(body)
+    with open(os.environ.get("OSV_REPORT_FILE", "osv-report.md"), "w",
+              encoding="utf-8") as handle:
+        handle.write(body)
 
 
 if __name__ == "__main__":

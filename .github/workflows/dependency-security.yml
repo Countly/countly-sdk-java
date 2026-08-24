@@ -23,6 +23,10 @@ jobs:
   osv-scan:
     name: OSV scan (all modules)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Needed to post the scan result as a comment on the pull request.
+      pull-requests: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -42,25 +46,90 @@ jobs:
 
       - name: Resolve dependencies for every module
         run: |
+          set -o pipefail
           ./gradlew -q --init-script .github/scripts/dependency-report.init.gradle \
             printResolvedDependencies | tee resolved-dependencies.txt
-          grep -c '^COORD' resolved-dependencies.txt
+          count=$(grep -c '^COORD' resolved-dependencies.txt || true)
+          echo "Resolved $count coordinate lines."
+          if [ "$count" -eq 0 ]; then
+            echo "::error::Gradle produced no dependency coordinates"
+            exit 1
+          fi
 
       - name: Check resolved dependencies against OSV
+        id: osv
         run: python3 .github/scripts/osv_scan.py < resolved-dependencies.txt
+
+      # The job summary written above only shows on the workflow run page. This
+      # is what actually puts the result on the pull request. It updates one
+      # sticky comment instead of adding a new one on every push.
+      - name: Comment scan result on the pull request
+        if: always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- countly-dependency-security-scan -->';
+            const outcome = '${{ steps.osv.outcome }}';
+            // The report body already carries its own heading.
+            const status = outcome === 'success'
+              ? '**Result: passed**'
+              : '**Result: FAILED — a dependency has a known vulnerability**';
+            let report = '';
+            try {
+              report = fs.readFileSync('osv-report.md', 'utf8');
+            } catch (e) {
+              report = `The scan step did not produce a report (outcome: ${outcome}). See the workflow logs.`;
+            }
+            const body = [
+              marker,
+              report,
+              status,
+              '',
+              `[Full run log](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`,
+            ].join('\n');
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              per_page: 100,
+            });
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
 
       - name: Upload dependency list
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: resolved-dependencies
-          path: resolved-dependencies.txt
+          path: |
+            resolved-dependencies.txt
+            osv-report.md
 
   dependency-submission:
     name: Submit dependency graph
-    # Only from the default branch: this writes the graph GitHub uses for
-    # Dependabot alerts, and PR runs must not overwrite it.
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    # Deliberately NOT run on pull_request: on that event the ref is
+    # refs/pull/N/merge, which is not a branch, and the dependency submission
+    # API expects a real branch. Snapshots are what power Dependabot alerts,
+    # so they are submitted from the long-lived branches (and on the weekly
+    # cron, so a newly published advisory is matched against a fresh graph).
+    # Use workflow_dispatch to submit one on demand from another branch.
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -75,8 +144,18 @@ jobs:
 
   dependency-review:
     name: Review dependency changes
+    # SCOPE: on a Gradle project with no lockfile this reviews the GitHub
+    # Actions used by the workflows, their licenses and any denied packages --
+    # it does NOT see the Gradle dependencies, because that needs a submitted
+    # snapshot for both the base and the head of the PR. The osv-scan job is
+    # the check that actually covers the Gradle dependencies on every PR.
+    # (Do not add `needs: dependency-submission` -- that job is skipped on
+    # pull_request, and a skipped dependency would skip this job too.)
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
       - name: Fail the PR on newly introduced vulnerable dependencies
