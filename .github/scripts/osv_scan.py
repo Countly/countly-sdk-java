@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Check resolved Gradle dependencies against the OSV vulnerability DB.
+"""
+Check resolved Gradle dependencies against the OSV vulnerability DB.
 
 Reads "COORD <projectPath> <group>:<artifact>:<version>" lines (produced by
 dependency-report.init.gradle) on stdin and queries https://osv.dev.
@@ -30,7 +31,7 @@ SKIP_VERSIONS = {"unspecified", ""}
 
 
 def read_coords(stream):
-    """-> {(group:artifact:version): sorted list of module paths}"""
+    """Map each coordinate to the sorted module paths that declare it."""
     coords = {}
     for line in stream:
         parts = line.split()
@@ -47,7 +48,8 @@ def read_coords(stream):
 
 
 def _check_url(url):
-    """Reject any URL that is not a plain https OSV API endpoint.
+    """
+    Reject any URL that is not a plain https OSV API endpoint.
 
     urlopen would happily accept file:/ or a custom scheme, so the host and
     scheme are pinned here rather than trusted from the caller.
@@ -78,7 +80,7 @@ def get_json(url):
 
 
 def query_osv(coords):
-    """-> {coord: [vuln id, ...]} for coords with a vulnerability."""
+    """Return {coord: [vuln id, ...]} for coordinates with a vulnerability."""
     keys = list(coords)
     queries = []
     for ga_v in keys:
@@ -102,7 +104,7 @@ def query_osv(coords):
 
 
 def describe(vuln_id):
-    """-> (summary, severity, fixed_versions) - best effort."""
+    """Return (summary, severity, fixed_versions) for an advisory id."""
     if not VULN_ID_RE.match(vuln_id):
         return "(advisory id in unexpected format)", "", []
     try:
@@ -202,7 +204,8 @@ def main():
 
 
 def write_summary(lines):
-    """Write the report to the job summary and to a file for the PR comment.
+    """
+    Write the report to the job summary and to a file for the PR comment.
 
     GITHUB_STEP_SUMMARY only renders on the workflow run page - it does NOT
     reach the pull request. The report file is what the PR comment step posts.

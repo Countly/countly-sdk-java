@@ -4,6 +4,7 @@ import com.sun.net.httpserver.HttpServer;
 import java.io.File;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -154,7 +155,7 @@ public class ScenarioRequestQueueStallTests {
                 }
             }
             String body = "{\"result\":\"Success\"}";
-            byte[] bytes = body.getBytes("UTF-8");
+            byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
             exchange.sendResponseHeaders(200, bytes.length);
             try (OutputStream os = exchange.getResponseBody()) {
                 os.write(bytes);
