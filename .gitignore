@@ -12,3 +12,7 @@ data
 # Gradle build output (all modules, current and future)
 build/
 out/
+
+# Dependency security scan output
+osv-report.md
+resolved-dependencies.txt
