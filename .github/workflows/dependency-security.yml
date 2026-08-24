@@ -123,13 +123,14 @@ jobs:
 
   dependency-submission:
     name: Submit dependency graph
-    # Deliberately NOT run on pull_request: on that event the ref is
-    # refs/pull/N/merge, which is not a branch, and the dependency submission
-    # API expects a real branch. Snapshots are what power Dependabot alerts,
-    # so they are submitted from the long-lived branches (and on the weekly
-    # cron, so a newly published advisory is matched against a fresh graph).
-    # Use workflow_dispatch to submit one on demand from another branch.
-    if: github.event_name != 'pull_request'
+    # Runs on pushes to the long-lived branches, on the weekly cron, on manual
+    # dispatch, AND on same-repo pull requests -- the last one is what gives
+    # dependency-review a head snapshot to diff against.
+    # Fork PRs are skipped on purpose: `contents: write` is not granted to a
+    # workflow triggered by a PR from a public fork, so the submit would fail.
+    # Covering forks needs the two-workflow generate-and-upload + workflow_run
+    # pattern from the gradle/actions docs.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -144,14 +145,15 @@ jobs:
 
   dependency-review:
     name: Review dependency changes
-    # SCOPE: on a Gradle project with no lockfile this reviews the GitHub
-    # Actions used by the workflows, their licenses and any denied packages --
-    # it does NOT see the Gradle dependencies, because that needs a submitted
-    # snapshot for both the base and the head of the PR. The osv-scan job is
-    # the check that actually covers the Gradle dependencies on every PR.
-    # (Do not add `needs: dependency-submission` -- that job is skipped on
-    # pull_request, and a skipped dependency would skip this job too.)
-    if: github.event_name == 'pull_request'
+    # Needs the submission job so the head snapshot exists before the diff.
+    # `always()` keeps this running on fork PRs, where submission is skipped --
+    # without it, a skipped dependency would skip this job too.
+    # SCOPE: this can only diff Gradle dependencies once BOTH the base branch
+    # and the head have a submitted snapshot, so expect Actions-only output
+    # until master has been through dependency-submission at least once.
+    # osv-scan is the job that covers Gradle dependencies unconditionally.
+    if: always() && github.event_name == 'pull_request'
+    needs: dependency-submission
     runs-on: ubuntu-latest
     permissions:
       contents: read
