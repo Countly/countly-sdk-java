@@ -3,14 +3,16 @@
 /.idea/workspace.xml
 /.idea/libraries
 .DS_Store
-/build
 .idea/caches/
-sdkJava/build/
-core/build/
-sdk-java/build/
 *.attach_pid*
-app-java/out/
 data
-sdk-java/out/
 /.vscode/
 *.class
+
+# Gradle build output (all modules, current and future)
+build/
+out/
+
+# Dependency security scan output
+osv-report.md
+resolved-dependencies.txt

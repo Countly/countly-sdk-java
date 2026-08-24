@@ -134,7 +134,15 @@ public class ScenarioNetworkDeadlockTests {
 
         Countly.instance().init(configForLocalServer());
         Countly.session().begin();
-        Thread.sleep(2000);
+
+        // Poll instead of sleeping a fixed 2s and asserting immediately. The
+        // property under test is "the SDK does not stay stuck sending", so
+        // waiting longer for isSending() to clear is correct; a genuine deadlock
+        // still fails the assertion when the budget runs out.
+        long deadline = System.currentTimeMillis() + 30_000;
+        while (SDKCore.instance.networking.isSending() && System.currentTimeMillis() < deadline) {
+            Thread.sleep(100);
+        }
 
         Assert.assertFalse(
             "SDK should recover from 502 HTML response",
