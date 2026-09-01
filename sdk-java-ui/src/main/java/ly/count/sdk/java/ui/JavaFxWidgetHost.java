@@ -122,6 +122,7 @@ class JavaFxWidgetHost implements WidgetWebHost {
         if (state == Worker.State.SUCCEEDED) {
             pageLoaded = true;
             installBridge();
+            FxSurfaces.logPageDiagnostics(engine, "JavaFxWidgetHost");
             if (listener != null) {
                 listener.onPageLoaded();
             }

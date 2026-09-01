@@ -64,6 +64,9 @@ public class JavaFxContentDisplay implements ContentDisplay {
         this.owner = owner;
         this.surface = FxSurfaces.screenOf(owner);
         watchOwner();
+        // Pay for starting WebKit now, while entering the zone, rather than when a content block
+        // finally arrives and the user is waiting to see it.
+        FxSurfaces.prewarm();
     }
 
     /**
@@ -146,10 +149,13 @@ public class JavaFxContentDisplay implements ContentDisplay {
             // empty white rectangle that fills in a moment later, is what makes content look like it
             // arrives late.
             AtomicBoolean shown = new AtomicBoolean(false);
+            long loadStarted = System.currentTimeMillis();
             engine.getLoadWorker().stateProperty().addListener((observable, oldState, newState) -> {
                 if (newState == Worker.State.SUCCEEDED && shown.compareAndSet(false, true)) {
-                    UiLog.i("[JavaFxContentDisplay] show, showing content at " + placement);
+                    UiLog.i("[JavaFxContentDisplay] show, showing content at " + placement
+                        + " after [" + (System.currentTimeMillis() - loadStarted) + "] ms");
                     stage.show();
+                    FxSurfaces.logPageDiagnostics(engine, "JavaFxContentDisplay");
                 } else if (newState == Worker.State.FAILED && !shown.get()) {
                     UiLog.w("[JavaFxContentDisplay] show, the content page could not be loaded");
                     notifyClosed(closed, onClosed, Collections.emptyMap());

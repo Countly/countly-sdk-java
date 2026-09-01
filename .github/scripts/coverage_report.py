@@ -115,6 +115,17 @@ def count_test_failures(results_dir):
     return failures
 
 
+def read_build_log_tail(path, limit=40):
+    """The last few lines of the build output, for when there is no report to show."""
+    if not path or not os.path.isfile(path):
+        return []
+    try:
+        with open(path, encoding="utf-8", errors="replace") as handle:
+            return [line.rstrip() for line in handle.readlines()[-limit:]]
+    except OSError:
+        return []
+
+
 def read_changed_files(path):
     if not path or not os.path.isfile(path):
         return []
@@ -134,6 +145,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--out", required=True)
     parser.add_argument("--changed-files")
+    parser.add_argument("--build-log", help="Build output, shown when no report was produced.")
     parser.add_argument(
         "--module",
         action="append",
@@ -227,6 +239,19 @@ def main():
         lines.append("> No coverage report was produced for: {}."
                      .format(", ".join("`{}`".format(m) for m in missing_reports)))
         lines.append("")
+
+        # A missing report almost always means the build failed before jacoco ran. Putting the
+        # tail of the build output in the comment saves a trip to the workflow logs.
+        tail = read_build_log_tail(args.build_log)
+        if tail:
+            lines.append("<details><summary>Build output (last {} lines)</summary>".format(len(tail)))
+            lines.append("")
+            lines.append("```")
+            lines.extend(tail)
+            lines.append("```")
+            lines.append("")
+            lines.append("</details>")
+            lines.append("")
 
     # Threshold checks, reported either way and enforced only when asked to be.
     problems = []

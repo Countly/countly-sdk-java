@@ -54,6 +54,17 @@ public final class CountlyWebView {
     }
 
     /**
+     * Log what each page the SDK loads manages to fetch: the bundled WebKit version, images that
+     * failed, and the font loading status. Off by default, because it scripts the page. Switch it on
+     * when a widget or a content block does not look the way it should.
+     *
+     * @param enabled whether to log page diagnostics
+     */
+    public static void setWebViewDiagnosticsEnabled(boolean enabled) {
+        FxSurfaces.setDiagnosticsEnabled(enabled);
+    }
+
+    /**
      * Show a feedback widget as a borderless card, sized and positioned where the widget asks. Must
      * be called on the JavaFX application thread.
      *
@@ -82,6 +93,7 @@ public final class CountlyWebView {
         }
 
         try {
+            FxSurfaces.prewarm();
             WidgetSurface surface = resolveSurface(owner);
             WebView webView = new WebView();
 

@@ -11,6 +11,7 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import ly.count.javafx.demo.ui.MainView;
 import ly.count.sdk.java.Countly;
+import ly.count.sdk.java.ui.CountlyWebView;
 
 public class Main extends Application {
 
@@ -24,6 +25,11 @@ public class Main extends Application {
         scene.getStylesheets().add(
             getClass().getResource("/styles/app.css").toExternalForm()
         );
+        // A demo is exactly where the extra logging is wanted: it reports the bundled WebKit
+        // version and anything a widget or content page failed to fetch. Needs the SDK's logging
+        // level set to DEBUG or VERBOSE on the Init tab to show up in the log panel.
+        CountlyWebView.setWebViewDiagnosticsEnabled(true);
+
         stage.setTitle("Countly Java SDK - JavaFX Demo");
         stage.setScene(scene);
         stage.setOnCloseRequest(e -> {
