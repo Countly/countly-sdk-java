@@ -4,8 +4,23 @@ buildscript {
   }
   // A widget or content link would otherwise be handed to the real system browser
 // while tests run.
+//
+// The rest runs JavaFX headlessly through Monocle, so the display classes can be exercised
+// in CI and on a developer machine without windows flashing on screen. Monocle version
+// tracks the JavaFX version above.
 tasks.withType(Test) {
   systemProperty 'java.awt.headless', 'true'
+  systemProperty 'glass.platform', 'Monocle'
+  systemProperty 'monocle.platform', 'Headless'
+  systemProperty 'prism.order', 'sw'
+
+  // Monocle has to match the JavaFX version exactly -- the 11.x build is missing methods
+  // JavaFX 17's glass layer expects, and blows up as soon as a stage is shown. The matching
+  // 17.x build is Java 17 bytecode, so the TEST JVM is 17 while the published artifact still
+  // targets Java 11 (see the java block above). Needs a JDK 17 installed to run these tests.
+  javaLauncher = javaToolchains.launcherFor {
+    languageVersion = JavaLanguageVersion.of(17)
+  }
 }
 
 dependencies {
@@ -42,6 +57,7 @@ dependencies {
   implementation 'org.json:json:20250517'
 
   testImplementation 'junit:junit:4.13.1'
+  testImplementation 'org.testfx:openjfx-monocle:17.0.10'
   testImplementation 'org.mockito:mockito-core:4.11.0'
 }
 

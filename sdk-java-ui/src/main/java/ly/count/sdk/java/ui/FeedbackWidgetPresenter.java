@@ -144,8 +144,15 @@ public class FeedbackWidgetPresenter implements WidgetWebHost.Listener {
         finished = true;
 
         if (widget != null && feedback != null) {
-            // The widget itself reports a completed result; this marks the dismissal.
-            feedback.reportFeedbackWidgetManually(widget, null, null);
+            try {
+                // The widget itself reports a completed result; this marks the dismissal.
+                feedback.reportFeedbackWidgetManually(widget, null, null);
+            } catch (Throwable t) {
+                // Reporting is the least important part of tearing down. If it throws, the card
+                // still has to close and the caller still has to be told, or the presentation
+                // wedges with a stuck window and no callback.
+                UiLog.e("[FeedbackWidgetPresenter] finish, reporting the dismissal failed, [" + t + "]");
+            }
         }
 
         try {

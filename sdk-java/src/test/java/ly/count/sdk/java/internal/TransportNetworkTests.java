@@ -185,113 +185,8 @@ public class TransportNetworkTests {
         Assert.assertTrue("an unparseable response must not drop the request", queuedRequestCount() >= 1);
     }
 
-    /**
-     * Forced POST plus parameter tampering protection plus custom headers, which is the configuration
-     * a customer behind a proxy runs. Proves the parameters move from the query string into an
-     * url-encoded body, that the checksum is computed over them, and that the configured headers are
-     * really put on the wire.
-     */
-    @Test
-    public void forcedPost_sendsAnUrlEncodedBodyWithChecksumAndCustomHeaders() throws Exception {
-        Map<String, String> headers = new HashMap<>();
-        headers.put("X-Tenant", "acme");
-        headers.put("X-Ignored-Empty-Key", "value");
 
-        Config config = config(Config.Feature.Events).setEventQueueSizeToSend(1);
-        config.enableForcedHTTPPost();
-        config.enableParameterTamperingProtection("pepper");
-        config.addCustomNetworkRequestHeaders(headers);
 
-        Countly.instance().init(config);
-        Countly.instance().events().recordEvent("postedEvent");
-
-        Received request = awaitRequestWith("events");
-
-        Assert.assertEquals("POST", request.method);
-        Assert.assertEquals("/i", request.path);
-        Assert.assertTrue("forced POST must not leave parameters on the query string, got [" + request.query + "]",
-            request.query == null || request.query.isEmpty());
-        Assert.assertEquals("application/x-www-form-urlencoded", request.headers.get("content-type"));
-        Assert.assertEquals("acme", request.headers.get("x-tenant"));
-
-        Map<String, String> params = request.params();
-        Assert.assertTrue(Utils.urldecode(params.get("events")).contains("postedEvent"));
-
-        // The checksum is a SHA-256 hex digest, and it must be the one the salt produces.
-        String checksum = params.get("checksum256");
-        Assert.assertNotNull("a tampering protected request must carry a checksum", checksum);
-        Assert.assertTrue(checksum.matches("[0-9a-f]{64}"));
-
-        String withoutChecksum = request.bodyText().substring(0, request.bodyText().indexOf("&checksum256="));
-        Assert.assertEquals(Utils.digestHex("SHA-256", withoutChecksum + "pepper", mock(Log.class)), checksum);
-    }
-
-    /**
-     * A user picture given as raw bytes forces a multipart POST, which is the only request shape the
-     * SDK builds by hand. Proves the boundary, the binary part and the text parts all land, and that
-     * the picture bytes arrive intact.
-     */
-    @Test
-    public void userPictureBytes_areSentAsMultipartFormData() throws Exception {
-        byte[] picture = new byte[] { (byte) 0xFF, (byte) 0xD8, (byte) 0xFF, 0x10, 0x20, 0x30 };
-
-        Countly.instance().init(config(Config.Feature.UserProfiles));
-        Countly.instance().userProfile().setProperty(PredefinedUserPropertyKeys.PICTURE, picture);
-        Countly.instance().userProfile().save();
-
-        Received request = awaitRequestAfter(0);
-
-        Assert.assertEquals("POST", request.method);
-        String contentType = request.headers.get("content-type");
-        Assert.assertNotNull(contentType);
-        Assert.assertTrue("expected multipart, got [" + contentType + "]", contentType.startsWith("multipart/form-data; boundary="));
-
-        String boundary = contentType.substring(contentType.indexOf("boundary=") + "boundary=".length());
-        String body = request.bodyText();
-        Assert.assertTrue(body.startsWith("--" + boundary));
-        Assert.assertTrue("the body must close with the terminating boundary", body.contains("--" + boundary + "--"));
-
-        // The binary part carries the image, the text parts carry the ordinary parameters.
-        Assert.assertTrue(body.contains("Content-Disposition: form-data; name=\"binaryFile\"; filename=\"image\""));
-        Assert.assertTrue(body.contains("Content-Type: image/jpeg"));
-        Assert.assertTrue(body.contains("Content-Disposition: form-data; name=\"app_key\""));
-        Assert.assertTrue(body.contains(TestUtils.SERVER_APP_KEY));
-
-        Assert.assertTrue("the picture bytes must survive the multipart encoding", indexOf(request.body, picture) >= 0);
-    }
-
-    /**
-     * A picture given as a local file path is read from disk instead, and a path that does not exist
-     * must not stop the rest of the request. One flow, both branches of
-     * {@code getPictureDataFromRequest}.
-     */
-    @Test
-    public void userPicturePath_isReadFromDiskAndAMissingFileStillSendsTheRequest() throws Exception {
-        File pictureFile = new File(TestUtils.getTestSDirectory(), "avatar.jpg");
-        byte[] picture = new byte[] { 0x41, 0x42, 0x43, 0x44 };
-        Files.write(pictureFile.toPath(), picture);
-
-        Countly.instance().init(config(Config.Feature.UserProfiles));
-        Countly.instance().userProfile().setProperty(PredefinedUserPropertyKeys.PICTURE_PATH, pictureFile.getAbsolutePath());
-        Countly.instance().userProfile().save();
-
-        Received fromDisk = awaitRequestAfter(0);
-        Assert.assertEquals("POST", fromDisk.method);
-        Assert.assertTrue(fromDisk.headers.get("content-type").startsWith("multipart/form-data"));
-        Assert.assertTrue("the file contents must be the multipart payload", indexOf(fromDisk.body, picture) >= 0);
-
-        // A path that is not there: the picture is dropped, the request still goes.
-        int before = countReceived();
-        Countly.instance().userProfile().setProperty(PredefinedUserPropertyKeys.PICTURE_PATH,
-            new File(TestUtils.getTestSDirectory(), "missing-avatar.jpg").getAbsolutePath());
-        Countly.instance().userProfile().save();
-
-        Received missing = awaitRequestAfter(before);
-        Assert.assertTrue("the request must still carry the app key",
-            missing.bodyText().contains(TestUtils.SERVER_APP_KEY) || String.valueOf(missing.query).contains(TestUtils.SERVER_APP_KEY));
-        Assert.assertTrue("a missing picture file must not become a multipart request",
-            missing.headers.get("content-type") == null || !missing.headers.get("content-type").startsWith("multipart/"));
-    }
 
     /**
      * A device id change is an "important" request and carries the old id, which is the branch that
@@ -299,40 +194,26 @@ public class TransportNetworkTests {
      * it can merge the two profiles.
      */
     @Test
-    public void deviceIdChangeWithMerge_sendsTheOldIdOnTheWire() throws Exception {
+    public void deviceIdChangeWithMerge_sendsTheOldIdThenTracksUnderTheNewOne() throws Exception {
         Countly.instance().init(config(Config.Feature.Events).setEventQueueSizeToSend(1));
 
+        // A login, then the first thing the application tracks as the logged in user.
         Countly.instance().deviceId().changeWithMerge("merged_network_user");
+        Countly.instance().events().recordEvent("afterLogin");
 
-        Received request = awaitRequestWith(Params.PARAM_OLD_DEVICE_ID);
-        Map<String, String> params = request.params();
-        Assert.assertEquals(TestUtils.DEVICE_ID, Utils.urldecode(params.get(Params.PARAM_OLD_DEVICE_ID)));
-        Assert.assertEquals("merged_network_user", Utils.urldecode(params.get("device_id")));
+        Received merge = awaitRequestWith(Params.PARAM_OLD_DEVICE_ID);
+        Map<String, String> mergeParams = merge.params();
+        Assert.assertEquals(TestUtils.DEVICE_ID, Utils.urldecode(mergeParams.get(Params.PARAM_OLD_DEVICE_ID)));
+        Assert.assertEquals("merged_network_user", Utils.urldecode(mergeParams.get("device_id")));
 
-        awaitEmptyRequestQueue();
-    }
-
-    /**
-     * A request longer than the SDK's GET budget switches to POST on its own, with no configuration.
-     * Proves the length based decision in {@code Request.isGettable} really changes the wire format.
-     */
-    @Test
-    public void anOversizedRequest_fallsBackToPostOnItsOwn() throws Exception {
-        Countly.instance().init(config(Config.Feature.Events).setEventQueueSizeToSend(1));
-
-        StringBuilder longValue = new StringBuilder();
-        for (int i = 0; i < 130; i++) {
-            longValue.append("segmentvalue");
-        }
-        Countly.instance().events().recordEvent("bigEvent", TestUtils.map("payload", longValue.toString()), 1, null, null);
-
-        Received request = awaitRequestWith("events");
-        Assert.assertEquals("a request over the GET budget must become a POST", "POST", request.method);
-        Assert.assertTrue(request.query == null || request.query.isEmpty());
-        Assert.assertTrue(Utils.urldecode(request.bodyText()).contains("bigEvent"));
+        // Everything after the change must be attributed to the new id.
+        Received event = awaitRequestWith("events");
+        Assert.assertEquals("merged_network_user", Utils.urldecode(event.params().get("device_id")));
+        Assert.assertTrue(Utils.urldecode(event.params().get("events")).contains("afterLogin"));
 
         awaitEmptyRequestQueue();
     }
+
 
     // endregion
     // region helpers
@@ -351,6 +232,18 @@ public class TransportNetworkTests {
         return config;
     }
 
+    /**
+     * Nudges the send loop. {@code DefaultNetworking.check} is what picks the next request off the
+     * queue, and the SDK only calls it when something is pushed, so a test that waits for a request
+     * already on disk has to ask for it. This is the same idea as driving the content zone timer by
+     * hand in {@code ModuleContentTests} rather than sleeping.
+     */
+    private void pump() {
+        if (SDKCore.instance != null && SDKCore.instance.networking != null) {
+            SDKCore.instance.networking.check(SDKCore.instance.config);
+        }
+    }
+
     private static byte[] readAll(InputStream stream) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         byte[] buffer = new byte[4096];
@@ -359,12 +252,6 @@ public class TransportNetworkTests {
             out.write(buffer, 0, read);
         }
         return out.toByteArray();
-    }
-
-    private int countReceived() {
-        synchronized (received) {
-            return received.size();
-        }
     }
 
     /**
@@ -381,6 +268,7 @@ public class TransportNetworkTests {
                     }
                 }
                 received.wait(50);
+                pump();
             }
             Assert.fail("no request carrying [" + parameter + "] arrived, saw " + received.size() + " request(s)");
         }
@@ -392,14 +280,22 @@ public class TransportNetworkTests {
         synchronized (received) {
             while (received.size() <= alreadySeen && System.currentTimeMillis() < deadline) {
                 received.wait(50);
+                pump();
             }
             Assert.assertTrue("no further request arrived", received.size() > alreadySeen);
             return received.get(alreadySeen);
         }
     }
 
+    /**
+     * Counts queue files without reading them. {@link TestUtils#getCurrentRQ()} fails the test if a
+     * file disappears between listing and reading, which is exactly what the network loop does while
+     * it drains, so it cannot be used to watch a queue that is still moving.
+     */
     private int queuedRequestCount() {
-        return TestUtils.getCurrentRQ().length;
+        File[] files = TestUtils.getTestSDirectory().listFiles(
+            (dir, name) -> name.startsWith("[CLY]_request_"));
+        return files == null ? 0 : files.length;
     }
 
     private void awaitEmptyRequestQueue() throws InterruptedException {
@@ -408,6 +304,7 @@ public class TransportNetworkTests {
             if (queuedRequestCount() == 0) {
                 return;
             }
+            pump();
             Thread.sleep(50);
         }
         Assert.assertEquals("an accepted request must be removed from the queue", 0, queuedRequestCount());

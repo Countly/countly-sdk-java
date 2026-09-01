@@ -54,6 +54,13 @@ final class FxSurfaces {
             + "if(document.fonts&&document.fonts.status){out.push('fonts status='+document.fonts.status+"
             + "' loaded='+(document.fonts.size!==undefined?document.fonts.size:'?'));}"
             + "else{out.push('fonts: CSS Font Loading API not available in this WebKit');}"
+            + "var b=document.body;if(b){var cs=window.getComputedStyle(b);"
+            + "out.push('body font='+cs.fontFamily+' size='+cs.fontSize);"
+            + "out.push('body background='+cs.backgroundColor);}"
+            + "try{var faces=[];for(var s=0;s<document.styleSheets.length;s++){var rs=document.styleSheets[s].cssRules;"
+            + "if(!rs){continue;}for(var r=0;r<rs.length;r++){if(rs[r].type===5){faces.push(rs[r].style.fontFamily+' <- '+rs[r].style.src);}}}"
+            + "out.push('@font-face: '+(faces.length?faces.join(' ;; '):'none'));}"
+            + "catch(e){out.push('@font-face: unreadable ('+e+')');}"
             + "return out.join(' | ');"
             + "}catch(e){return 'diagnostics failed: '+e;}})()";
 

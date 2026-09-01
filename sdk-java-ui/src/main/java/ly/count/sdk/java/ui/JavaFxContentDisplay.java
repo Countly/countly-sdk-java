@@ -7,6 +7,7 @@ import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.scene.Scene;
+import javafx.scene.paint.Color;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
@@ -41,8 +42,11 @@ public class JavaFxContentDisplay implements ContentDisplay {
      * How long a content page gets to load before the attempt is abandoned. Without this a page that
      * never finishes would leave the content zone believing something is on screen, and no further
      * content would ever be fetched.
+     * <p>
+     * Shortened by tests, the same way {@link ly.count.sdk.java.internal.CountlyTimer} exposes its
+     * own delay, so the give-up path can be exercised without a twenty second test.
      */
-    private static final Duration LOAD_TIMEOUT = Duration.seconds(20);
+    static Duration loadTimeout = Duration.seconds(20); // shortened for testing purposes
 
     private final Window owner;
     private volatile WidgetSurface surface;
@@ -125,10 +129,16 @@ public class JavaFxContentDisplay implements ContentDisplay {
             WebEngine engine = webView.getEngine();
             FxSurfaces.configure(engine);
 
-            Stage stage = new Stage(StageStyle.UNDECORATED);
+            // Transparent, not merely undecorated. Content is laid out by the server as a card
+            // with its own background inside the rectangle it asked for, exactly as on the other
+            // platforms, so anything the card does not paint has to show the application through it.
+            // An undecorated stage with a default scene fill put an opaque white block there instead.
+            Stage stage = new Stage(StageStyle.TRANSPARENT);
             stage.setAlwaysOnTop(true);
             stage.setResizable(false);
-            stage.setScene(new Scene(webView, placement.width, placement.height));
+            Scene scene = new Scene(webView, placement.width, placement.height);
+            scene.setFill(Color.TRANSPARENT);
+            stage.setScene(scene);
             stage.setX(placement.x);
             stage.setY(placement.y);
             stage.setWidth(placement.width);
@@ -163,7 +173,7 @@ public class JavaFxContentDisplay implements ContentDisplay {
                 }
             });
 
-            PauseTransition loadDeadline = new PauseTransition(LOAD_TIMEOUT);
+            PauseTransition loadDeadline = new PauseTransition(loadTimeout);
             loadDeadline.setOnFinished(event -> {
                 if (!shown.get()) {
                     UiLog.w("[JavaFxContentDisplay] show, the content page did not load in time, giving up");

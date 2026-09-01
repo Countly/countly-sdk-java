@@ -243,10 +243,13 @@ public class ModuleFeedback extends ModuleBase {
             }
         }
 
+        // A ConcurrentHashMap rejects null values, and the application version is unset unless the
+        // integrator supplied one, so putting it in blindly threw a NullPointerException out of a
+        // public API for every integration that never called 'setApplicationVersion'.
         Map<String, Object> segm = new ConcurrentHashMap<>();
-        segm.put("platform", internalConfig.getSdkPlatform());
-        segm.put("app_version", cachedAppVersion);
-        segm.put("widget_id", widgetInfo.widgetId);
+        putIfNotNull(segm, "platform", internalConfig.getSdkPlatform());
+        putIfNotNull(segm, "app_version", cachedAppVersion);
+        putIfNotNull(segm, "widget_id", widgetInfo.widgetId);
 
         if (widgetResult == null) {
             //mark as closed
@@ -258,6 +261,14 @@ public class ModuleFeedback extends ModuleBase {
         }
 
         Countly.instance().events().recordEvent(widgetInfo.type.eventKey, segm);
+    }
+
+    private void putIfNotNull(Map<String, Object> segmentation, String key, Object value) {
+        if (value == null) {
+            L.d("[ModuleFeedback] putIfNotNull, no value for [" + key + "], leaving it out of the segmentation");
+            return;
+        }
+        segmentation.put(key, value);
     }
 
     private <T> void callCallback(String errorLog, CallbackOnFinish<T> callback) {
