@@ -10,6 +10,7 @@ buildscript {
 allprojects {
   ext.CLY_VERSION = "24.1.6"
   ext.POWERMOCK_VERSION = "1.7.4"
+  ext.JACOCO_VERSION = "0.8.13"
 
   tasks.withType(Javadoc) {
     options.addStringOption('Xdoclint:none', '-quiet')
@@ -18,4 +19,134 @@ allprojects {
     google()
     mavenCentral()
   }
+}
+
+// ---------------------------------------------------------------------------
+// Coverage
+//
+// The library modules apply the jacoco plugin themselves (see their build.gradle).
+// "./gradlew coverage" runs their tests, writes HTML + XML reports and prints a
+// per-module summary, so the numbers do not have to be dug out of the reports.
+// ---------------------------------------------------------------------------
+
+// Only the published libraries are measured; the demo apps are not shipped.
+ext.COVERED_MODULES = [':sdk-java', ':sdk-java-ui']
+
+// Measuring coverage must not be blocked by a flaky test: the jacoco agent adds a large
+// wall-clock overhead, which is exactly what tips the SDK's few Thread.sleep based duration
+// assertions over their tolerance. So under "coverage" the test tasks are allowed to fail, the
+// report is still produced, and the summary reports how many tests failed. A plain
+// "./gradlew test" is untouched and still fails the build.
+gradle.taskGraph.whenReady { graph ->
+  if (!graph.allTasks.any { it.path == ':coverage' }) {
+    return
+  }
+  COVERED_MODULES.each { path ->
+    def module = findProject(path)
+    if (module != null) {
+      module.tasks.withType(Test).each { it.ignoreFailures = true }
+    }
+  }
+}
+
+tasks.register('coverage') {
+  group = 'verification'
+  description = 'Runs the tests of every published module and prints a line and branch coverage summary.'
+
+  // sdk-java-ui only exists on Java 11+, so resolve against the projects that are actually included.
+  def reportTasks = COVERED_MODULES
+    .findAll { findProject(it) != null }
+    .collect { "${it}:jacocoTestReport" }
+  dependsOn reportTasks
+
+  doLast {
+    println ''
+    println 'Coverage (jacoco)'
+    println '-'.multiply(64)
+    printf('%-16s %18s %18s%n', 'module', 'lines', 'branches')
+
+    COVERED_MODULES.each { path ->
+      def module = findProject(path)
+      if (module == null) {
+        printf('%-16s %18s %18s%n', path - ':', 'not included', '')
+        return
+      }
+
+      def report = new File(module.layout.buildDirectory.get().asFile, 'reports/jacoco/test/jacocoTestReport.xml')
+      if (!report.exists()) {
+        printf('%-16s %18s %18s%n', path - ':', 'no report', '')
+        return
+      }
+
+      def counters = readCounters(report)
+      printf('%-16s %18s %18s%n', path - ':', format(counters['LINE']), format(counters['BRANCH']))
+    }
+
+    println '-'.multiply(64)
+    COVERED_MODULES.findAll { findProject(it) != null }.each { path ->
+      def buildDir = findProject(path).layout.buildDirectory.get().asFile
+      println "HTML: ${buildDir}/reports/jacoco/test/html/index.html"
+    }
+
+    int failed = COVERED_MODULES
+      .findAll { findProject(it) != null }
+      .sum { countFailedTests(findProject(it)) } ?: 0
+    if (failed > 0) {
+      println ''
+      println "WARNING: ${failed} test(s) failed. The coverage numbers above still cover the whole run,"
+      println '         but read the test report before trusting them.'
+    }
+    println ''
+  }
+}
+
+/**
+ * Counts failures and errors across a module's JUnit XML results.
+ */
+ext.countFailedTests = { module ->
+  def resultsDir = new File(module.layout.buildDirectory.get().asFile, 'test-results/test')
+  if (!resultsDir.isDirectory()) {
+    return 0
+  }
+
+  int failed = 0
+  resultsDir.listFiles({ file -> file.name.endsWith('.xml') } as FileFilter)?.each { file ->
+    try {
+      def suite = new XmlParser(false, false).parse(file)
+      failed += (suite.@failures as int) + (suite.@errors as int)
+    } catch (Exception ignored) {
+      // An unreadable result file is not worth failing the summary over.
+    }
+  }
+  return failed
+}
+
+/**
+ * Reads the report level counters out of a jacoco XML report.
+ *
+ * The report declares a DOCTYPE pointing at a remote DTD; loading it would make the
+ * build depend on the network, so external entities are switched off.
+ */
+ext.readCounters = { File report ->
+  def parser = new XmlParser(false, false)
+  parser.setFeature('http://apache.org/xml/features/disallow-doctype-decl', false)
+  parser.setFeature('http://apache.org/xml/features/nonvalidating/load-external-dtd', false)
+
+  def root = parser.parse(report)
+  def counters = [:]
+  root.counter.each { counter ->
+    counters[counter.@type] = [missed: counter.@missed as int, covered: counter.@covered as int]
+  }
+  return counters
+}
+
+ext.format = { counter ->
+  if (counter == null) {
+    return 'n/a'
+  }
+  int total = counter.missed + counter.covered
+  if (total == 0) {
+    return 'n/a'
+  }
+  return String.format('%.1f%% (%d/%d)', counter.covered * 100.0d / total, counter.covered, total)
 }

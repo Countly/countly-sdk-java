@@ -10,6 +10,8 @@ import javafx.stage.StageStyle;
 import javafx.stage.Window;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.internal.CountlyFeedbackWidget;
+import ly.count.sdk.java.internal.FeedbackWidgetSelector;
+import ly.count.sdk.java.internal.FeedbackWidgetType;
 import ly.count.sdk.java.internal.ModuleContent;
 import ly.count.sdk.java.internal.ModuleFeedback;
 
@@ -20,7 +22,12 @@ import ly.count.sdk.java.internal.ModuleFeedback;
  * usual, then present a widget or turn the content zone on.
  *
  * <pre>
- * // Feedback widgets
+ * // Feedback widgets, the quick way: fetch, pick and show in one call
+ * CountlyWebView.presentNPS(stage);
+ * CountlyWebView.presentSurvey(stage, "onboarding");
+ * CountlyWebView.presentRating(stage, "", () -&gt; System.out.println("dismissed"));
+ *
+ * // Feedback widgets, picking one yourself
  * Countly.instance().feedback().getAvailableFeedbackWidgets((widgets, error) -&gt;
  *     Platform.runLater(() -&gt; CountlyWebView.presentFeedbackWidget(stage, widgets.get(0), null)));
  *
@@ -103,6 +110,135 @@ public final class CountlyWebView {
     }
 
     /**
+     * Show the first available NPS widget.
+     *
+     * @param owner the application window the card belongs to, may be {@code null}
+     */
+    public static void presentNPS(Window owner) {
+        presentNPS(owner, null, null);
+    }
+
+    /**
+     * Show an NPS widget picked by its ID, name or one of its tags.
+     *
+     * @param owner the application window the card belongs to, may be {@code null}
+     * @param nameIDorTag the widget ID, widget name or widget tag to look for. Leave it empty to take
+     *     the first available NPS widget.
+     */
+    public static void presentNPS(Window owner, String nameIDorTag) {
+        presentNPS(owner, nameIDorTag, null);
+    }
+
+    /**
+     * Show an NPS widget picked by its ID, name or one of its tags.
+     *
+     * @param owner the application window the card belongs to, may be {@code null}
+     * @param nameIDorTag the widget ID, widget name or widget tag to look for. Leave it empty to take
+     *     the first available NPS widget.
+     * @param onClosed called once, when the card is gone, may be {@code null}
+     */
+    public static void presentNPS(Window owner, String nameIDorTag, Runnable onClosed) {
+        presentWidgetOfType(owner, FeedbackWidgetType.nps, nameIDorTag, onClosed);
+    }
+
+    /**
+     * Show the first available survey widget.
+     *
+     * @param owner the application window the card belongs to, may be {@code null}
+     */
+    public static void presentSurvey(Window owner) {
+        presentSurvey(owner, null, null);
+    }
+
+    /**
+     * Show a survey widget picked by its ID, name or one of its tags.
+     *
+     * @param owner the application window the card belongs to, may be {@code null}
+     * @param nameIDorTag the widget ID, widget name or widget tag to look for. Leave it empty to take
+     *     the first available survey widget.
+     */
+    public static void presentSurvey(Window owner, String nameIDorTag) {
+        presentSurvey(owner, nameIDorTag, null);
+    }
+
+    /**
+     * Show a survey widget picked by its ID, name or one of its tags.
+     *
+     * @param owner the application window the card belongs to, may be {@code null}
+     * @param nameIDorTag the widget ID, widget name or widget tag to look for. Leave it empty to take
+     *     the first available survey widget.
+     * @param onClosed called once, when the card is gone, may be {@code null}
+     */
+    public static void presentSurvey(Window owner, String nameIDorTag, Runnable onClosed) {
+        presentWidgetOfType(owner, FeedbackWidgetType.survey, nameIDorTag, onClosed);
+    }
+
+    /**
+     * Show the first available rating widget.
+     *
+     * @param owner the application window the card belongs to, may be {@code null}
+     */
+    public static void presentRating(Window owner) {
+        presentRating(owner, null, null);
+    }
+
+    /**
+     * Show a rating widget picked by its ID, name or one of its tags.
+     *
+     * @param owner the application window the card belongs to, may be {@code null}
+     * @param nameIDorTag the widget ID, widget name or widget tag to look for. Leave it empty to take
+     *     the first available rating widget.
+     */
+    public static void presentRating(Window owner, String nameIDorTag) {
+        presentRating(owner, nameIDorTag, null);
+    }
+
+    /**
+     * Show a rating widget picked by its ID, name or one of its tags.
+     *
+     * @param owner the application window the card belongs to, may be {@code null}
+     * @param nameIDorTag the widget ID, widget name or widget tag to look for. Leave it empty to take
+     *     the first available rating widget.
+     * @param onClosed called once, when the card is gone, may be {@code null}
+     */
+    public static void presentRating(Window owner, String nameIDorTag, Runnable onClosed) {
+        presentWidgetOfType(owner, FeedbackWidgetType.rating, nameIDorTag, onClosed);
+    }
+
+    /**
+     * Fetches the widget list, picks the one asked for, and shows it. The fetch is a network call, so
+     * this returns straight away and the card appears later.
+     */
+    private static void presentWidgetOfType(Window owner, FeedbackWidgetType type, String nameIDorTag, Runnable onClosed) {
+        ModuleFeedback.Feedback feedback = Countly.instance().feedback();
+        if (feedback == null) {
+            UiLog.w("[CountlyWebView] present" + type.name() + ", the feedback interface is not available, ignoring the call");
+            run(onClosed);
+            return;
+        }
+
+        feedback.getAvailableFeedbackWidgets((widgets, error) -> {
+            // This callback runs on the SDK's network thread. The happy path hands the callback back
+            // on the JavaFX thread, so these bail outs do the same and the caller only ever sees one.
+            if (error != null) {
+                UiLog.e("[CountlyWebView] present" + type.name() + ", could not retrieve the widget list, [" + error + "]");
+                runOnFxThread(onClosed);
+                return;
+            }
+
+            CountlyFeedbackWidget widget = FeedbackWidgetSelector.select(widgets, type, nameIDorTag);
+            if (widget == null) {
+                UiLog.w("[CountlyWebView] present" + type.name() + ", no widget of that type matches [" + nameIDorTag + "]");
+                runOnFxThread(onClosed);
+                return;
+            }
+
+            // The fetch completed off the JavaFX thread; presentFeedbackWidget hops back on its own.
+            presentFeedbackWidget(owner, widget, onClosed);
+        });
+    }
+
+    /**
      * Register the JavaFX content display with the SDK and enter the content zone. Must be called on
      * the JavaFX application thread, after the SDK was initialized with
      * {@code Config.Feature.Content} enabled.
@@ -162,6 +298,19 @@ public final class CountlyWebView {
 
         Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
         return new WidgetSurface((int) bounds.getMinX(), (int) bounds.getMinY(), (int) bounds.getWidth(), (int) bounds.getHeight());
+    }
+
+    private static void runOnFxThread(Runnable runnable) {
+        if (runnable == null) {
+            return;
+        }
+        try {
+            Platform.runLater(() -> run(runnable));
+        } catch (Throwable t) {
+            // No toolkit running: better an off thread callback than none at all.
+            UiLog.w("[CountlyWebView] runOnFxThread, the JavaFX toolkit is not running, [" + t + "]");
+            run(runnable);
+        }
     }
 
     private static void run(Runnable runnable) {

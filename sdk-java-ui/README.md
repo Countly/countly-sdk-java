@@ -43,6 +43,20 @@ Initialize the core SDK as usual, then reach for `CountlyWebView`.
 
 ### Feedback widgets
 
+The quick calls fetch the widget list, pick the widget you asked for and show it:
+
+```java
+CountlyWebView.presentNPS(stage);
+CountlyWebView.presentSurvey(stage, "onboarding");
+CountlyWebView.presentRating(stage, "", () -> System.out.println("dismissed"));
+```
+
+The second argument is a widget ID, a widget name or one of the widget's tags. Leave it out, or pass
+an empty string, to take the first available widget of that type. These are safe to call from any
+thread; the card is shown on the JavaFX application thread once the list arrives.
+
+To pick the widget yourself:
+
 ```java
 Countly.instance().feedback().getAvailableFeedbackWidgets((widgets, error) -> {
     if (error != null || widgets.isEmpty()) {

@@ -30,6 +30,19 @@ This SDK supports the following features:
 * [User Profiles](https://support.count.ly/hc/en-us/articles/4403281285913-User-Profiles)
 * [Crash Reports](https://support.count.ly/hc/en-us/articles/4404213566105-Crashes-Errors)
 
+## Building and testing
+
+```bash
+./gradlew :sdk-java:build      # compile the core SDK and run its tests
+./gradlew :sdk-java-ui:build   # compile the JavaFX UI artifact and run its tests (Java 11+)
+./gradlew coverage             # run every published module's tests and print a coverage summary
+./gradlew :app-java:run        # console demo
+./gradlew :app-javafx:run      # JavaFX demo (Java 11+)
+```
+
+`coverage` writes a jacoco report per module to `<module>/build/reports/jacoco/test/`, HTML to read
+and XML for tooling, and prints line and branch coverage for each one.
+
 ## Security
 
 Security is very important to us. If you discover any issue regarding security, please disclose the information responsibly by sending an email to security@count.ly and **not by creating a GitHub issue**.

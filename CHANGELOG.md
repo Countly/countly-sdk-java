@@ -8,7 +8,8 @@
   * This feature uses "Content" consent.
   * Needs the new "ly.count.sdk:java-ui" artifact for displaying content.
 * Added a separately published artifact "ly.count.sdk:java-ui" (requires Java 11 and JavaFX 17) that displays feedback widgets and content on the desktop:
-  * "CountlyWebView.presentFeedbackWidget" for showing a feedback widget as a positioned card
+  * "presentNPS", "presentSurvey" and "presentRating" for fetching, picking and showing a widget in one call, optionally by widget ID, name or tag
+  * "CountlyWebView.presentFeedbackWidget" for showing a feedback widget you picked yourself
   * "CountlyWebView.enableContentZone" / "CountlyWebView.disableContentZone" for showing content
   * "CountlyWebView.setShowWidgetsWithinApp" for keeping widget cards inside the application window
   * Implement "ContentDisplay" yourself to draw content with another toolkit.

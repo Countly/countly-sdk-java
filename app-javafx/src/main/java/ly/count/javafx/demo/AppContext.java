@@ -4,8 +4,8 @@ import java.io.File;
 
 public final class AppContext {
 
-    public static final String DEFAULT_SERVER_URL = "https://your.server.ly";
-    public static final String DEFAULT_APP_KEY = "YOUR_APP_KEY";
+    public static final String DEFAULT_SERVER_URL = "https://master.count.ly";
+    public static final String DEFAULT_APP_KEY = "dte_mobile_v2";
     public static final String DEFAULT_DEVICE_ID = "JAVA_FX_DEMO_DEVICE";
     public static final String APP_VERSION = "1.0.0";
 
@@ -21,7 +21,7 @@ public final class AppContext {
     // the raw /o/sdk?method=feedback call (the SDK's Config does not expose
     // them publicly to code outside its package).
     public static volatile String liveServerUrl = DEFAULT_SERVER_URL;
-    public static volatile String liveAppKey    = DEFAULT_APP_KEY;
+    public static volatile String liveAppKey = DEFAULT_APP_KEY;
 
     public static File storageDir() {
         File dir = new File(
@@ -35,5 +35,6 @@ public final class AppContext {
         return dir;
     }
 
-    private AppContext() {}
+    private AppContext() {
+    }
 }

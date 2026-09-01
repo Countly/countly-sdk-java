@@ -224,6 +224,53 @@ public class ModuleFeedbackTests {
         });
     }
 
+    /**
+     * "FeedbackWidgetSelector.select"
+     * A fetched widget list is searched by type, and by widget ID, name or tag
+     * The first widget matching both the type and the selector is returned, and a selector that
+     * matches nothing returns "null" instead of an unrelated widget
+     */
+    @Test
+    public void selectWidget_byTypeAndNameIdOrTag() {
+        List<CountlyFeedbackWidget> widgets = new ArrayList<>();
+        widgets.add(widget("nps_1", FeedbackWidgetType.nps, "First NPS", new String[] { "checkout" }));
+        widgets.add(widget("nps_2", FeedbackWidgetType.nps, "Second NPS", new String[] { "onboarding", "beta" }));
+        widgets.add(widget("survey_1", FeedbackWidgetType.survey, "Only survey", new String[] {}));
+        widgets.add(widget("rating_1", FeedbackWidgetType.rating, "Only rating", null));
+
+        // No selector: the first widget of that type wins.
+        Assert.assertEquals("nps_1", FeedbackWidgetSelector.select(widgets, FeedbackWidgetType.nps, null).widgetId);
+        Assert.assertEquals("nps_1", FeedbackWidgetSelector.select(widgets, FeedbackWidgetType.nps, "").widgetId);
+        Assert.assertEquals("survey_1", FeedbackWidgetSelector.select(widgets, FeedbackWidgetType.survey, "").widgetId);
+
+        // By ID, by name and by tag.
+        Assert.assertEquals("nps_2", FeedbackWidgetSelector.select(widgets, FeedbackWidgetType.nps, "nps_2").widgetId);
+        Assert.assertEquals("nps_2", FeedbackWidgetSelector.select(widgets, FeedbackWidgetType.nps, "Second NPS").widgetId);
+        Assert.assertEquals("nps_2", FeedbackWidgetSelector.select(widgets, FeedbackWidgetType.nps, "beta").widgetId);
+        Assert.assertEquals("nps_1", FeedbackWidgetSelector.select(widgets, FeedbackWidgetType.nps, "checkout").widgetId);
+
+        // The type always wins over the selector: a survey tag must not return the NPS widget.
+        Assert.assertNull(FeedbackWidgetSelector.select(widgets, FeedbackWidgetType.survey, "checkout"));
+        Assert.assertNull(FeedbackWidgetSelector.select(widgets, FeedbackWidgetType.nps, "nothing_matches"));
+
+        // A widget with no tags at all must not blow up the search.
+        Assert.assertEquals("rating_1", FeedbackWidgetSelector.select(widgets, FeedbackWidgetType.rating, "Only rating").widgetId);
+        Assert.assertNull(FeedbackWidgetSelector.select(widgets, FeedbackWidgetType.rating, "some_tag"));
+
+        Assert.assertNull(FeedbackWidgetSelector.select(null, FeedbackWidgetType.nps, ""));
+        Assert.assertNull(FeedbackWidgetSelector.select(new ArrayList<>(), FeedbackWidgetType.nps, ""));
+        Assert.assertNull(FeedbackWidgetSelector.select(widgets, null, ""));
+    }
+
+    private static CountlyFeedbackWidget widget(String id, FeedbackWidgetType type, String name, String[] tags) {
+        CountlyFeedbackWidget widget = new CountlyFeedbackWidget();
+        widget.widgetId = id;
+        widget.type = type;
+        widget.name = name;
+        widget.tags = tags;
+        return widget;
+    }
+
     public void constructFeedbackWidgetUrl_base(CountlyFeedbackWidget widgetInfo, boolean goodResult) {
         init(TestUtils.getConfigFeedback());
 
