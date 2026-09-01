@@ -89,6 +89,18 @@ CountlyWebView.disableContentZone();
 Content interactions, the events it records, external links, resizes and closes, are handled for
 you. Recorded events are pushed to the server straight away, so it can react to them.
 
+Content is placed on the screen your application window is on, and follows it if the window is
+dragged to another monitor. Pass a window explicitly when your application has more than one and you
+want content pinned to a particular one:
+
+```java
+CountlyWebView.enableContentZone(myWindow);
+```
+
+The content window is shown only once its page has painted, so nothing flashes as an empty
+rectangle. A page that fails to load, or does not load within 20 seconds, is abandoned and the zone
+resumes fetching.
+
 Content is an **experimental** feature and its API can change.
 
 ### Your own display

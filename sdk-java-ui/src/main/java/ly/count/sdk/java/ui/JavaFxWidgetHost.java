@@ -51,7 +51,7 @@ class JavaFxWidgetHost implements WidgetWebHost {
      * Wires up the engine. Call once, before navigating.
      */
     void initialize() {
-        engine.setJavaScriptEnabled(true);
+        FxSurfaces.configure(engine);
         engine.locationProperty().addListener((observable, oldUrl, newUrl) -> onLocationChanged(newUrl));
         engine.setCreatePopupHandler(features -> openPopupExternally());
         engine.getLoadWorker().stateProperty().addListener((observable, oldState, newState) -> onLoadStateChanged(newState));

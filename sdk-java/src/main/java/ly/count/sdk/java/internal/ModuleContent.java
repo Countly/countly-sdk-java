@@ -44,7 +44,6 @@ public class ModuleContent extends ModuleBase {
     private boolean fetching = false;
     private int waitForDelay = 0;
     private int generation = 0;
-    private String[] categories = null;
 
     private int zoneTimerInterval = ConfigContent.DEFAULT_ZONE_TIMER_INTERVAL;
     private ContentCallback globalContentCallback = null;
@@ -76,6 +75,25 @@ public class ModuleContent extends ModuleBase {
         globalContentCallback = null;
     }
 
+    /**
+     * A device ID change without merge means a different user, so whatever the server decided to
+     * show the previous one no longer applies. The zone is torn down and the developer decides
+     * whether to enter it again for the new user. A change with merge is the same user, so the zone
+     * keeps running.
+     */
+    @Override
+    protected void deviceIdChanged(String oldDeviceId, boolean withMerge) {
+        super.deviceIdChanged(oldDeviceId, withMerge);
+        L.d("[ModuleContent] deviceIdChanged, oldDeviceId:[" + oldDeviceId + "] withMerge:[" + withMerge + "]");
+
+        if (withMerge) {
+            return;
+        }
+
+        L.i("[ModuleContent] deviceIdChanged, the device ID changed without merge, leaving the content zone");
+        exitContentZoneInternal();
+    }
+
     void setContentDisplayInternal(ContentDisplay contentDisplay) {
         L.d("[ModuleContent] setContentDisplayInternal, display set:[" + (contentDisplay != null) + "]");
         synchronized (contentLock) {
@@ -83,7 +101,7 @@ public class ModuleContent extends ModuleBase {
         }
     }
 
-    void enterContentZoneInternal(@Nullable String[] requestedCategories) {
+    void enterContentZoneInternal() {
         if (display == null) {
             L.w("[ModuleContent] enterContentZoneInternal, no content display is registered, ignoring the call");
             return;
@@ -108,7 +126,6 @@ public class ModuleContent extends ModuleBase {
             // Any fetch left in flight from a previous zone belongs to an older generation and is
             // discarded when it completes.
             generation++;
-            categories = requestedCategories == null ? null : requestedCategories.clone();
 
             contentTimer = new CountlyTimer(L);
             contentTimer.startTimer(zoneTimerInterval, START_DELAY_MS, this::onZoneTimerTick);
@@ -134,7 +151,6 @@ public class ModuleContent extends ModuleBase {
             fetching = false;
             waitForDelay = 0;
             generation++;
-            categories = null;
 
             timerToStop = contentTimer;
             contentTimer = null;
@@ -149,13 +165,11 @@ public class ModuleContent extends ModuleBase {
     }
 
     void refreshContentZoneInternal() {
-        String[] previousCategories;
         synchronized (contentLock) {
             if (contentShown) {
                 L.d("[ModuleContent] refreshContentZoneInternal, a content block is on screen, ignoring the call");
                 return;
             }
-            previousCategories = categories == null ? null : categories.clone();
         }
 
         // Push whatever is queued out first, so the trigger the developer just recorded has a
@@ -163,7 +177,7 @@ public class ModuleContent extends ModuleBase {
         flushEventQueue();
 
         exitContentZoneInternal();
-        enterContentZoneInternal(previousCategories);
+        enterContentZoneInternal();
     }
 
     void previewContentInternal(String contentId) {
@@ -188,7 +202,7 @@ public class ModuleContent extends ModuleBase {
         }
 
         L.i("[ModuleContent] previewContentInternal, previewing content:[" + contentId + "]");
-        fetchContents(null, contentId, currentGeneration);
+        fetchContents(contentId, currentGeneration);
     }
 
     void recordContentEventsInternal(String eventsJson) {
@@ -288,7 +302,6 @@ public class ModuleContent extends ModuleBase {
             return;
         }
 
-        String[] currentCategories;
         int currentGeneration;
         synchronized (contentLock) {
             if (waitForDelay > 0) {
@@ -303,13 +316,12 @@ public class ModuleContent extends ModuleBase {
 
             fetching = true;
             currentGeneration = generation;
-            currentCategories = categories == null ? null : categories.clone();
         }
 
-        fetchContents(currentCategories, null, currentGeneration);
+        fetchContents(null, currentGeneration);
     }
 
-    private void fetchContents(String[] fetchCategories, String contentId, int fetchGeneration) {
+    private void fetchContents(String contentId, int fetchGeneration) {
         try {
             ContentDisplay currentDisplay;
             synchronized (contentLock) {
@@ -324,7 +336,7 @@ public class ModuleContent extends ModuleBase {
 
             ContentScreen screen = currentDisplay.getScreen();
             String requestData = ModuleRequests.prepareRequiredParams(internalConfig)
-                .add(ContentRequestBuilder.build(screen, fetchCategories, contentId, L))
+                .add(ContentRequestBuilder.build(screen, contentId, L))
                 .toString();
 
             Transport transport = SDKCore.instance.networking.getTransport();
@@ -444,20 +456,9 @@ public class ModuleContent extends ModuleBase {
          * @apiNote This is an EXPERIMENTAL feature, and it can have breaking changes
          */
         public void enterContentZone() {
-            enterContentZone(null);
-        }
-
-        /**
-         * Start asking the server for content to show, limited to the given categories. Ignored
-         * while already in a content zone.
-         *
-         * @param categories the content categories to ask for, {@code null} or empty for all
-         * @apiNote This is an EXPERIMENTAL feature, and it can have breaking changes
-         */
-        public void enterContentZone(@Nullable String[] categories) {
             synchronized (Countly.instance()) {
                 L.i("[Content] enterContentZone, entering the content zone");
-                enterContentZoneInternal(categories);
+                enterContentZoneInternal();
             }
         }
 

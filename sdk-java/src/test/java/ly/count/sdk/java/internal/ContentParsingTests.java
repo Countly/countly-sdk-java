@@ -180,25 +180,27 @@ public class ContentParsingTests {
     }
 
     /**
-     * The content fetch parameters, including the category filter and the preview flags.
+     * The content fetch parameters, and the preview flags.
      */
     @Test
     public void contentRequestBuilder_buildsTheFetchParameters() {
-        Params plain = ContentRequestBuilder.build(new ContentScreen(800, 600), null, null, L);
+        Params plain = ContentRequestBuilder.build(new ContentScreen(800, 600), null, L);
         Map<String, String> params = TestUtils.parseQueryParams(plain.toString());
         Assert.assertEquals("queue", params.get("method"));
         Assert.assertEquals(ContentRequestBuilder.DEVICE_TYPE, params.get("dt"));
-        Assert.assertEquals("[]", Utils.urldecode(params.get("category")));
         Assert.assertEquals("{\"l\":{\"w\":800,\"h\":600},\"p\":{\"w\":800,\"h\":600}}", Utils.urldecode(params.get("resolution")));
+        Assert.assertNull(params.get("content_id"));
+        Assert.assertNull(params.get("preview"));
+        // Content categories are not supported by the server, so nothing is sent for them.
+        Assert.assertNull(params.get("category"));
 
-        Params filtered = ContentRequestBuilder.build(new ContentScreen(800, 600), new String[] { "promo", "news" }, "block_1", L);
-        Map<String, String> filteredParams = TestUtils.parseQueryParams(filtered.toString());
-        Assert.assertEquals("[promo, news]", Utils.urldecode(filteredParams.get("category")));
-        Assert.assertEquals("block_1", filteredParams.get("content_id"));
-        Assert.assertEquals("true", filteredParams.get("preview"));
+        Params preview = ContentRequestBuilder.build(new ContentScreen(800, 600), "block_1", L);
+        Map<String, String> previewParams = TestUtils.parseQueryParams(preview.toString());
+        Assert.assertEquals("block_1", previewParams.get("content_id"));
+        Assert.assertEquals("true", previewParams.get("preview"));
 
         // A missing screen must not throw; it simply reports nothing to fit into.
-        Params noScreen = ContentRequestBuilder.build(null, null, null, L);
+        Params noScreen = ContentRequestBuilder.build(null, null, L);
         Assert.assertEquals("{\"l\":{\"w\":0,\"h\":0},\"p\":{\"w\":0,\"h\":0}}",
             Utils.urldecode(TestUtils.parseQueryParams(noScreen.toString()).get("resolution")));
     }

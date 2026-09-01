@@ -3,19 +3,21 @@ package ly.count.sdk.java.ui;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
-import javafx.geometry.Rectangle2D;
+import javafx.concurrent.Worker;
 import javafx.scene.Scene;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
-import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.stage.Window;
+import javafx.util.Duration;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.internal.ContentCloseCallback;
 import ly.count.sdk.java.internal.ContentData;
-import ly.count.sdk.java.internal.ContentPlacement;
 import ly.count.sdk.java.internal.ContentDisplay;
+import ly.count.sdk.java.internal.ContentPlacement;
 import ly.count.sdk.java.internal.ContentScreen;
 import ly.count.sdk.java.internal.ModuleContent;
 import ly.count.sdk.java.internal.SDKCore;
@@ -26,18 +28,57 @@ import ly.count.sdk.java.internal.WidgetActionParser;
  * Shows Countly content in a borderless, always on top JavaFX window placed where the server asked,
  * leaving the rest of the application usable.
  * <p>
+ * The placement follows the screen the application window is on, and keeps following it when the
+ * application is dragged to another monitor, so content never opens on a monitor the user is not
+ * looking at.
+ * <p>
  * JavaFX lays a web page out in logical pixels, which is also the unit the server's coordinates come
  * back in, so the reported surface and the applied rectangles need no density conversion.
  */
 public class JavaFxContentDisplay implements ContentDisplay {
 
+    /**
+     * How long a content page gets to load before the attempt is abandoned. Without this a page that
+     * never finishes would leave the content zone believing something is on screen, and no further
+     * content would ever be fetched.
+     */
+    private static final Duration LOAD_TIMEOUT = Duration.seconds(20);
+
+    private final Window owner;
     private volatile WidgetSurface surface;
 
     /**
-     * Construct on the JavaFX application thread, so the primary screen can be measured.
+     * Follows the primary application window. Construct on the JavaFX application thread.
      */
     public JavaFxContentDisplay() {
-        surface = readPrimarySurface();
+        this(FxSurfaces.primaryApplicationWindow());
+    }
+
+    /**
+     * Follows the given window. Construct on the JavaFX application thread.
+     *
+     * @param owner the application window whose screen content is placed on, {@code null} to use the
+     *     primary screen
+     */
+    public JavaFxContentDisplay(Window owner) {
+        this.owner = owner;
+        this.surface = FxSurfaces.screenOf(owner);
+        watchOwner();
+    }
+
+    /**
+     * The fetch runs off the JavaFX thread and has to know the surface, so the cached value is kept
+     * current by listening to the window instead of measuring on demand.
+     */
+    private void watchOwner() {
+        if (owner == null) {
+            return;
+        }
+        Runnable refresh = () -> surface = FxSurfaces.screenOf(owner);
+        owner.xProperty().addListener((observable, old, current) -> refresh.run());
+        owner.yProperty().addListener((observable, old, current) -> refresh.run());
+        owner.widthProperty().addListener((observable, old, current) -> refresh.run());
+        owner.heightProperty().addListener((observable, old, current) -> refresh.run());
     }
 
     @Override
@@ -63,7 +104,7 @@ public class JavaFxContentDisplay implements ContentDisplay {
 
     private void show(ContentData content, AtomicBoolean closed, ContentCloseCallback onClosed) {
         try {
-            surface = readPrimarySurface();
+            surface = FxSurfaces.screenOf(owner);
             WidgetSurface currentSurface = surface;
 
             ContentPlacement placement = WidgetPlacement.resolve(content.placementFor(currentSurface.isLandscape()), currentSurface);
@@ -79,7 +120,7 @@ public class JavaFxContentDisplay implements ContentDisplay {
 
             WebView webView = new WebView();
             WebEngine engine = webView.getEngine();
-            engine.setJavaScriptEnabled(true);
+            FxSurfaces.configure(engine);
 
             Stage stage = new Stage(StageStyle.UNDECORATED);
             stage.setAlwaysOnTop(true);
@@ -101,9 +142,32 @@ public class JavaFxContentDisplay implements ContentDisplay {
             // A window the user closed by other means must still release the content zone.
             stage.setOnHidden(event -> notifyClosed(closed, onClosed, Collections.emptyMap()));
 
-            UiLog.i("[JavaFxContentDisplay] show, showing content at " + placement);
+            // The window is shown only once the page has painted. Showing it before the load, as an
+            // empty white rectangle that fills in a moment later, is what makes content look like it
+            // arrives late.
+            AtomicBoolean shown = new AtomicBoolean(false);
+            engine.getLoadWorker().stateProperty().addListener((observable, oldState, newState) -> {
+                if (newState == Worker.State.SUCCEEDED && shown.compareAndSet(false, true)) {
+                    UiLog.i("[JavaFxContentDisplay] show, showing content at " + placement);
+                    stage.show();
+                } else if (newState == Worker.State.FAILED && !shown.get()) {
+                    UiLog.w("[JavaFxContentDisplay] show, the content page could not be loaded");
+                    notifyClosed(closed, onClosed, Collections.emptyMap());
+                    stage.close();
+                }
+            });
+
+            PauseTransition loadDeadline = new PauseTransition(LOAD_TIMEOUT);
+            loadDeadline.setOnFinished(event -> {
+                if (!shown.get()) {
+                    UiLog.w("[JavaFxContentDisplay] show, the content page did not load in time, giving up");
+                    notifyClosed(closed, onClosed, Collections.emptyMap());
+                    stage.close();
+                }
+            });
+            loadDeadline.play();
+
             engine.load(content.url);
-            stage.show();
         } catch (Throwable t) {
             UiLog.e("[JavaFxContentDisplay] show, could not show the content, [" + t + "]");
             notifyClosed(closed, onClosed, Collections.emptyMap());
@@ -169,16 +233,6 @@ public class JavaFxContentDisplay implements ContentDisplay {
             onClosed.onClosed(contentData);
         } catch (Throwable t) {
             UiLog.e("[JavaFxContentDisplay] notifyClosed, the close callback threw, [" + t + "]");
-        }
-    }
-
-    private WidgetSurface readPrimarySurface() {
-        try {
-            Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
-            return new WidgetSurface((int) bounds.getMinX(), (int) bounds.getMinY(), (int) bounds.getWidth(), (int) bounds.getHeight());
-        } catch (Throwable t) {
-            UiLog.w("[JavaFxContentDisplay] readPrimarySurface, could not measure the screen, [" + t + "]");
-            return new WidgetSurface(0, 0, 0, 0);
         }
     }
 }

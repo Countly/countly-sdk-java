@@ -1,10 +1,8 @@
 package ly.count.sdk.java.ui;
 
 import javafx.application.Platform;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.web.WebView;
-import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.Window;
@@ -40,6 +38,7 @@ public final class CountlyWebView {
 
     private static volatile boolean showWidgetsWithinApp = false;
     private static volatile JavaFxContentDisplay contentDisplay = null;
+    private static volatile Window contentDisplayOwner = null;
 
     private CountlyWebView() {
     }
@@ -250,15 +249,17 @@ public final class CountlyWebView {
     }
 
     /**
-     * Register the JavaFX content display with the SDK and enter the content zone, limited to the
-     * given categories. Must be called on the JavaFX application thread.
+     * Register the JavaFX content display with the SDK and enter the content zone, placing content on
+     * the screen the given window is on. Must be called on the JavaFX application thread, after the
+     * SDK was initialized with {@code Config.Feature.Content} enabled.
      *
-     * @param categories the content categories to ask for, {@code null} or empty for all
+     * @param owner the application window content should follow. Pass {@code null} to follow the
+     *     application's focused window, which is what most applications want.
      * @apiNote This is an EXPERIMENTAL feature, and it can have breaking changes
      */
-    public static void enableContentZone(String[] categories) {
+    public static void enableContentZone(Window owner) {
         if (!Platform.isFxApplicationThread()) {
-            Platform.runLater(() -> enableContentZone(categories));
+            Platform.runLater(() -> enableContentZone(owner));
             return;
         }
 
@@ -268,12 +269,17 @@ public final class CountlyWebView {
             return;
         }
 
-        if (contentDisplay == null) {
-            contentDisplay = new JavaFxContentDisplay();
+        Window window = owner != null ? owner : FxSurfaces.primaryApplicationWindow();
+
+        // The display listens to its window to follow it across monitors, so a different window
+        // needs a different display.
+        if (contentDisplay == null || contentDisplayOwner != window) {
+            contentDisplay = new JavaFxContentDisplay(window);
+            contentDisplayOwner = window;
         }
 
         content.setContentDisplay(contentDisplay);
-        content.enterContentZone(categories);
+        content.enterContentZone();
     }
 
     /**
@@ -292,12 +298,14 @@ public final class CountlyWebView {
     }
 
     private static WidgetSurface resolveSurface(Window owner) {
-        if (showWidgetsWithinApp && owner != null) {
-            return new WidgetSurface((int) owner.getX(), (int) owner.getY(), (int) owner.getWidth(), (int) owner.getHeight());
+        Window window = owner != null ? owner : FxSurfaces.primaryApplicationWindow();
+
+        if (showWidgetsWithinApp) {
+            return FxSurfaces.boundsOf(window);
         }
 
-        Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
-        return new WidgetSurface((int) bounds.getMinX(), (int) bounds.getMinY(), (int) bounds.getWidth(), (int) bounds.getHeight());
+        // The work area of the screen the application is on, which is not necessarily the primary one.
+        return FxSurfaces.screenOf(window);
     }
 
     private static void runOnFxThread(Runnable runnable) {

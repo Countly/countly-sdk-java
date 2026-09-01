@@ -84,7 +84,8 @@ public class ModuleContentTests {
         TestUtils.validateRequiredParams(params);
         Assert.assertEquals("queue", params.get("method"));
         Assert.assertEquals("desktop", params.get("dt"));
-        Assert.assertEquals("[]", Utils.urldecode(params.get("category")));
+        // Content categories are not supported by the server, so nothing is sent for them.
+        Assert.assertNull(params.get("category"));
         Assert.assertFalse(params.get("la").isEmpty());
         Assert.assertEquals("{\"l\":{\"w\":1600,\"h\":900},\"p\":{\"w\":1600,\"h\":900}}", Utils.urldecode(params.get("resolution")));
         Assert.assertNull(params.get("content_id"));
@@ -350,6 +351,74 @@ public class ModuleContentTests {
         Countly.instance().content().recordContentEvents("");
         Countly.instance().content().recordContentEvents(null);
         Assert.assertEquals(requestCount, TestUtils.getCurrentRQ().length);
+    }
+
+    /**
+     * Switching users. A device ID change with merge is the same user, so the zone keeps polling. A
+     * change without merge is a different user, so the zone is torn down and only a deliberate
+     * enter brings it back.
+     */
+    @Test
+    public void deviceIdChange_withoutMergeLeavesTheContentZone() throws JSONException {
+        initWithContent(TestUtils.getConfigContent());
+        nextResponse = new JSONObject(NO_CONTENT_RESPONSE);
+
+        Countly.instance().content().enterContentZone();
+        tick();
+        Assert.assertEquals(1, requests.size());
+
+        // Same user: the zone survives and keeps fetching, now under the new ID.
+        Countly.instance().deviceId().changeWithMerge("merged_user");
+        tick();
+        Assert.assertEquals(2, requests.size());
+        Assert.assertEquals("merged_user", requests.get(1).get("device_id"));
+
+        // Different user: the zone is gone, so polling stops.
+        Countly.instance().deviceId().changeWithoutMerge("other_user");
+        tick();
+        Assert.assertEquals(2, requests.size());
+
+        // Only a deliberate enter brings it back, and it fetches for the new user.
+        Countly.instance().content().setContentDisplay(display);
+        Countly.instance().content().enterContentZone();
+        tick();
+        Assert.assertEquals(3, requests.size());
+        Assert.assertEquals("other_user", requests.get(2).get("device_id"));
+    }
+
+    /**
+     * "setID" changes the device ID without merge once an ID was already developer supplied, so it
+     * leaves the content zone. Granting the consents again and entering again is what an application
+     * runs on a login, and it has to end with a working zone.
+     */
+    @Test
+    public void setID_leavesTheZoneAndSurvivesAConsentRegrant() throws JSONException {
+        Config config = TestUtils.getConfigContent().setRequiresConsent(true);
+        init(config);
+        Countly.onConsent(Config.Feature.values());
+        installRequestMaker();
+
+        Countly.instance().content().setContentDisplay(display);
+        Countly.instance().content().enterContentZone();
+        nextResponse = new JSONObject(NO_CONTENT_RESPONSE);
+        tick();
+        Assert.assertEquals(1, requests.size());
+
+        // The test config supplies a custom device ID, so setID changes it without merge.
+        Countly.instance().deviceId().setID("logged_in_user");
+        tick();
+        Assert.assertEquals(1, requests.size());
+
+        Countly.onConsent(Config.Feature.values());
+
+        ModuleContent.Content content = Countly.instance().content();
+        Assert.assertNotNull(content);
+        content.setContentDisplay(display);
+        content.enterContentZone();
+        tick();
+
+        Assert.assertEquals(2, requests.size());
+        Assert.assertEquals("logged_in_user", requests.get(1).get("device_id"));
     }
 
     /**

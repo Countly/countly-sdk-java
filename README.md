@@ -43,6 +43,10 @@ This SDK supports the following features:
 `coverage` writes a jacoco report per module to `<module>/build/reports/jacoco/test/`, HTML to read
 and XML for tooling, and prints line and branch coverage for each one.
 
+The same task runs in CI on every pull request and posts the result as a comment, including
+coverage of the files that pull request changed. Minimums live in the `env` block of
+`.github/workflows/coverage.yml` and are advisory until `ENFORCE_COVERAGE` is set to `true`.
+
 ## Security
 
 Security is very important to us. If you discover any issue regarding security, please disclose the information responsibly by sending an email to security@count.ly and **not by creating a GitHub issue**.
