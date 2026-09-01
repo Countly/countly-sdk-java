@@ -3,12 +3,15 @@ package ly.count.sdk.java.ui;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 import javafx.animation.PauseTransition;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.web.WebEngine;
+import javafx.scene.paint.Color;
 import javafx.scene.web.WebView;
 import javafx.stage.Screen;
 import javafx.stage.Window;
+import ly.count.sdk.java.internal.WidgetActionParser;
 import javafx.util.Duration;
 
 /**
@@ -17,19 +20,31 @@ import javafx.util.Duration;
 final class FxSurfaces {
 
     /**
-     * Default typography for the pages the SDK loads. This is a <em>user</em> stylesheet, which the
-     * CSS cascade ranks below the page's own rules, so it only fills in where the page left the font
-     * unstated or ended its stack in a generic family. JavaFX bundles an old WebKit that cannot
-     * resolve the "system-ui" keyword, and a page whose stack is only "system-ui" would otherwise
-     * fall back to the engine's serif default.
+     * A fallback font for the pages the SDK loads, plus emoji coverage.
+     * <p>
+     * Scoped to {@code html} and {@code body} only, and therefore <em>inherited</em>. That is the
+     * whole trick: an inherited declaration is weaker than any direct one, so an element the page
+     * styles itself keeps the page's font (the templates load Inter and Lato through @font-face and
+     * those do load here), while text the page leaves unstyled inherits this instead of falling all
+     * the way back to the engine's serif default. An earlier version forced this on every element,
+     * which replaced the templates' own typography with Helvetica.
+     * <p>
+     * {@code !important} is still needed, because losing to an inherited author rule on {@code body}
+     * is exactly the case that produced serif text.
+     * <p>
+     * The emoji families come <em>before</em> the generic {@code sans-serif}: a generic always
+     * matches, so anything after it is never consulted, which is why the templates' emoji rendered
+     * as nothing.
      */
     private static final String USER_CSS =
-        "html,body,button,input,select,textarea{"
-            + "font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",Helvetica,Arial,sans-serif;"
+        "html,body{"
+            + "font-family:\"Helvetica Neue\",Helvetica,\"Segoe UI\",Roboto,Arial,"
+            + "\"Apple Color Emoji\",\"Segoe UI Emoji\",\"Noto Color Emoji\",sans-serif !important;"
             + "-webkit-font-smoothing:antialiased;}";
 
     private static final String USER_STYLESHEET =
-        "data:text/css;charset=utf-8;base64," + Base64.getEncoder().encodeToString(USER_CSS.getBytes(StandardCharsets.UTF_8));
+        "data:text/css;charset=utf-8;base64,"
+            + Base64.getEncoder().encodeToString(USER_CSS.getBytes(StandardCharsets.UTF_8));
 
     /**
      * How long after a page loads to look at what it actually managed to fetch. Images are still
@@ -57,6 +72,8 @@ final class FxSurfaces {
             + "var b=document.body;if(b){var cs=window.getComputedStyle(b);"
             + "out.push('body font='+cs.fontFamily+' size='+cs.fontSize);"
             + "out.push('body background='+cs.backgroundColor);}"
+            + "var h=document.documentElement;if(h){out.push('html background='"
+            + "+window.getComputedStyle(h).backgroundColor);}"
             + "try{var faces=[];for(var s=0;s<document.styleSheets.length;s++){var rs=document.styleSheets[s].cssRules;"
             + "if(!rs){continue;}for(var r=0;r<rs.length;r++){if(rs[r].type===5){faces.push(rs[r].style.fontFamily+' <- '+rs[r].style.src);}}}"
             + "out.push('@font-face: '+(faces.length?faces.join(' ;; '):'none'));}"
@@ -72,6 +89,7 @@ final class FxSurfaces {
     private static WebView warmView;
 
     private static volatile boolean diagnosticsEnabled = false;
+    private static boolean signalFilterInstalled = false;
 
     private FxSurfaces() {
     }
@@ -88,6 +106,101 @@ final class FxSurfaces {
     }
 
     /**
+     * Makes the web view's own page backdrop fully transparent, so only what the page paints is
+     * visible and the application shows through everywhere else.
+     * <p>
+     * This is public JavaFX API as of version 20 ({@code WebView.setPageFill}). Before that the only
+     * lever was a {@code com.sun.webkit} internal reached by reflection, which needed
+     * {@code --add-exports} from every integrator and, on this pipeline, rendered the empty area
+     * opaque black instead of see-through. That is why this module requires JavaFX 21.
+     * <p>
+     * The page still wins: if the document sets its own background colour, that is what shows.
+     *
+     * @param webView the view whose backdrop to clear
+     */
+    static void makePageBackgroundTransparent(WebView webView) {
+        try {
+            webView.setPageFill(Color.TRANSPARENT);
+        } catch (Throwable t) {
+            // Cosmetic only: the overlay keeps an opaque backdrop.
+            UiLog.w("[FxSurfaces] makePageBackgroundTransparent, could not clear the backdrop, [" + t + "]");
+        }
+    }
+
+    /**
+     * The JavaFX property that chooses between the HTTP/2 loader and the older one.
+     * Read once, in {@code NetworkContext}'s static initialiser, so it has to be set before the
+     * first web view exists. Found by reading {@code NetworkContext}'s bytecode; it is not documented.
+     */
+    private static final String USE_HTTP2_LOADER = "com.sun.webkit.useHTTP2Loader";
+
+    /**
+     * Opts out of JavaFX's HTTP/2 loader before any page is loaded.
+     * <p>
+     * A widget or content block talks to the SDK by navigating to {@code https://countly_action_event/…},
+     * a host that deliberately does not resolve: the navigation is a message, not a destination. The
+     * HTTP/2 loader routes through {@code java.net.http}, whose request builder rejects that URI and
+     * throws {@code IllegalArgumentException} on the application thread, before the SDK's cancel can
+     * take effect. The older loader fails such a load quietly, which is what the protocol relies on
+     * and what JavaFX 17 did.
+     * <p>
+     * Only set when the integrator has not chosen for themselves. HTTP/1.1 versus HTTP/2 makes no
+     * practical difference for loading a single widget page.
+     */
+    private static void preferTolerantNetworkLoader() {
+        if (System.getProperty(USE_HTTP2_LOADER) != null) {
+            return;
+        }
+        try {
+            System.setProperty(USE_HTTP2_LOADER, "false");
+        } catch (Throwable t) {
+            // A restrictive security manager: the signalling URL will then log a stack trace.
+            UiLog.w("[FxSurfaces] preferTolerantNetworkLoader, could not set " + USE_HTTP2_LOADER
+                + ", signalling URLs may log a stack trace, [" + t + "]");
+        }
+    }
+
+    /**
+     * Stops JavaFX's network stack from reporting the SDK's own signalling URLs as fatal.
+     * <p>
+     * A widget or content block talks to the SDK by navigating to {@code https://countly_action_event/…}.
+     * That host does not resolve, which is the point: the navigation is a message, not a destination,
+     * and it is cancelled as soon as it is seen. JavaFX 21 routes loads through {@code java.net.http},
+     * whose builder rejects the URI outright and throws {@code IllegalArgumentException} on the
+     * application thread before the cancel can take effect. JavaFX 17's older loader simply failed
+     * the load quietly.
+     * <p>
+     * There is no navigation veto in the {@code WebEngine} API to prevent the dispatch, so the
+     * exception is filtered instead: only this exact case, only on the JavaFX thread, and any other
+     * uncaught exception is passed to the handler that was already installed.
+     */
+    static void installSignalUrlExceptionFilter() {
+        if (signalFilterInstalled) {
+            return;
+        }
+        signalFilterInstalled = true;
+
+        Thread fxThread = Thread.currentThread();
+        Thread.UncaughtExceptionHandler previous = fxThread.getUncaughtExceptionHandler();
+        fxThread.setUncaughtExceptionHandler((thread, thrown) -> {
+            if (isSignalUrlRejection(thrown)) {
+                UiLog.d("[FxSurfaces] the network stack refused a signalling URL, which is expected: "
+                    + thrown.getMessage());
+                return;
+            }
+            if (previous != null) {
+                previous.uncaughtException(thread, thrown);
+            }
+        });
+    }
+
+    private static boolean isSignalUrlRejection(Throwable thrown) {
+        return thrown instanceof IllegalArgumentException
+            && thrown.getMessage() != null
+            && thrown.getMessage().contains(WidgetActionParser.ACTION_HOST);
+    }
+
+    /**
      * Starts WebKit ahead of time, so the first widget or content block does not pay for it. Cheap
      * to call more than once. Must be called on the JavaFX application thread.
      */
@@ -95,6 +208,8 @@ final class FxSurfaces {
         if (warmView != null) {
             return;
         }
+        // Before the first WebView: NetworkContext reads the loader choice in its static initialiser.
+        preferTolerantNetworkLoader();
         try {
             long started = System.currentTimeMillis();
             warmView = new WebView();
@@ -114,22 +229,44 @@ final class FxSurfaces {
      * @param label which display is asking
      */
     static void logPageDiagnostics(WebEngine engine, String label) {
+        logPageDiagnostics(engine, label, () -> true);
+    }
+
+    /**
+     * @param engine the engine whose page to inspect
+     * @param label which display is asking
+     * @param stillShowing whether the page is still the one that was loaded. The delayed sample is
+     *     skipped when it is not: a content block the user closed quickly has already been navigated
+     *     away to a blank page, and probing that reports an empty document rather than the content.
+     */
+    static void logPageDiagnostics(WebEngine engine, String label, BooleanSupplier stillShowing) {
         if (!diagnosticsEnabled) {
             return;
         }
 
         UiLog.d("[" + label + "] user agent: " + engine.getUserAgent());
+        // Sampled straight away, so a page that gets dismissed a moment later is still described.
+        // Images may legitimately still be arriving here; the probe reports those as pending.
+        sample(engine, label, "on load");
 
         PauseTransition wait = new PauseTransition(DIAGNOSTICS_DELAY);
         wait.setOnFinished(event -> {
-            try {
-                Object result = engine.executeScript(DIAGNOSTICS_SCRIPT);
-                UiLog.d("[" + label + "] page resources: " + result);
-            } catch (Throwable t) {
-                UiLog.w("[" + label + "] could not read the page diagnostics, [" + t + "]");
+            if (!stillShowing.getAsBoolean()) {
+                UiLog.d("[" + label + "] page went away before the second diagnostics sample");
+                return;
             }
+            sample(engine, label, "settled");
         });
         wait.play();
+    }
+
+    private static void sample(WebEngine engine, String label, String when) {
+        try {
+            Object result = engine.executeScript(DIAGNOSTICS_SCRIPT);
+            UiLog.d("[" + label + "] page resources (" + when + "): " + result);
+        } catch (Throwable t) {
+            UiLog.w("[" + label + "] could not read the page diagnostics (" + when + "), [" + t + "]");
+        }
     }
 
     /**
@@ -138,12 +275,14 @@ final class FxSurfaces {
      * @param engine the engine to configure
      */
     static void configure(WebEngine engine) {
+        preferTolerantNetworkLoader();
+        installSignalUrlExceptionFilter();
         engine.setJavaScriptEnabled(true);
         try {
             engine.setUserStyleSheetLocation(USER_STYLESHEET);
         } catch (Throwable t) {
             // Cosmetic only: the page still renders with the engine's own defaults.
-            UiLog.w("[FxSurfaces] configure, could not apply the default stylesheet, [" + t + "]");
+            UiLog.w("[FxSurfaces] configure, could not apply the fallback font, [" + t + "]");
         }
 
         engine.getLoadWorker().exceptionProperty().addListener((observable, old, thrown) -> {

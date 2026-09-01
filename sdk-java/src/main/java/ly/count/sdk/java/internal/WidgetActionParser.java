@@ -15,8 +15,13 @@ import org.json.JSONObject;
  */
 public class WidgetActionParser {
 
-    static final String ACTION_HOST = "countly_action_event";
-    static final String ACTION_URL_START = "https://" + ACTION_HOST;
+    /**
+     * The host a widget or content block navigates to in order to talk to the SDK. Public because a
+     * display implementation outside this package has to recognise it, and because JavaFX's network
+     * stack reports it as an error that has to be filtered by name.
+     */
+    public static final String ACTION_HOST = "countly_action_event";
+    public static final String ACTION_URL_START = "https://" + ACTION_HOST;
 
     private WidgetActionParser() {
     }

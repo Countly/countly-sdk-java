@@ -741,7 +741,15 @@ public class SDKCore {
             return null;
         }
 
-        return module(ModuleFeedback.class).feedbackInterface;
+        ModuleFeedback module = module(ModuleFeedback.class);
+        if (module == null) {
+            // Consent is not the only gate: the feature may simply never have been enabled,
+            // in which case the module was never built and there is nothing to hand back.
+            L.v("[SDKCore] feedback, feedback feature was not enabled, returning null");
+            return null;
+        }
+
+        return module.feedbackInterface;
     }
 
     public ModuleContent.Content content() {
@@ -764,7 +772,15 @@ public class SDKCore {
             return null;
         }
 
-        return module(ModuleCrashes.class).crashInterface;
+        ModuleCrashes module = module(ModuleCrashes.class);
+        if (module == null) {
+            // Consent is not the only gate: the feature may simply never have been enabled,
+            // in which case the module was never built and there is nothing to hand back.
+            L.v("[SDKCore] crashes, crashes feature was not enabled, returning null");
+            return null;
+        }
+
+        return module.crashInterface;
     }
 
     public ModuleViews.Views views() {
@@ -787,7 +803,15 @@ public class SDKCore {
             return null;
         }
 
-        return module(ModuleRemoteConfig.class).remoteConfigInterface;
+        ModuleRemoteConfig module = module(ModuleRemoteConfig.class);
+        if (module == null) {
+            // Consent is not the only gate: the feature may simply never have been enabled,
+            // in which case the module was never built and there is nothing to hand back.
+            L.v("[SDKCore] remoteConfig, remoteConfig feature was not enabled, returning null");
+            return null;
+        }
+
+        return module.remoteConfigInterface;
     }
 
     public ModuleUserProfile.UserProfile userProfile() {

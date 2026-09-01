@@ -67,12 +67,13 @@ public class Countly implements Usage {
      * @param config configuration object
      */
     public void init(final Config config) {
-        File directory = config.sdkStorageRootDirectory;
-
         if (config == null) {
             System.out.println("[ERROR][Countly] Config cannot be null");
             return;
         }
+
+        // Read only after the null check: doing it first made the check unreachable.
+        File directory = config.sdkStorageRootDirectory;
 
         InternalConfig internalConfig;
 
@@ -134,6 +135,10 @@ public class Countly implements Usage {
      * @deprecated use {@link #init(Config)} instead via instance() call
      */
     public static void init(final File sdkStorageRootDirectory, final Config config) {
+        if (config == null) {
+            System.out.println("[ERROR][Countly] Config cannot be null");
+            return;
+        }
         config.sdkStorageRootDirectory = sdkStorageRootDirectory;
         SingletonHolder.INSTANCE.init(config);
     }
@@ -544,7 +549,10 @@ public class Countly implements Usage {
      */
     public ModuleLocation.Location location() {
         if (!isInitialized()) {
-            L.e("Countly.sharedInstance().init must be called before accessing location");
+            // L is null before init, so this has to be guarded like every sibling accessor.
+            if (L != null) {
+                L.e("Countly.sharedInstance().init must be called before accessing location");
+            }
             return null;
         }
 

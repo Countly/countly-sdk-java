@@ -106,6 +106,8 @@ public class FxSurfacesTests {
             FxSurfaces.configure(webView.getEngine());
             FxSurfaces.configure(webView.getEngine());
             Assert.assertTrue(webView.getEngine().isJavaScriptEnabled());
+            // A fallback font IS installed, as a user stylesheet so the page still wins when it
+            // states a font. Without it, a page with no usable font declaration renders in serif.
             Assert.assertNotNull(webView.getEngine().getUserStyleSheetLocation());
 
             // Off by default, so a customer's page is never scripted.
@@ -115,6 +117,24 @@ public class FxSurfacesTests {
             Assert.assertTrue(FxSurfaces.isDiagnosticsEnabled());
             FxSurfaces.logPageDiagnostics(webView.getEngine(), "test");
             FxSurfaces.setDiagnosticsEnabled(false);
+        });
+    }
+
+    /**
+     * Clearing the web view's page backdrop, which is what lets the application show through
+     * everywhere the page does not paint. Public JavaFX API since version 20; this module requires
+     * JavaFX 21 precisely so it does not have to reach an internal reflectively.
+     */
+    @Test
+    public void makePageBackgroundTransparent_clearsTheBackdrop() {
+        FxTestToolkit.onFx(() -> {
+            WebView webView = new WebView();
+            FxSurfaces.makePageBackgroundTransparent(webView);
+            Assert.assertEquals(javafx.scene.paint.Color.TRANSPARENT, webView.getPageFill());
+
+            // Applying it twice is harmless.
+            FxSurfaces.makePageBackgroundTransparent(webView);
+            Assert.assertEquals(javafx.scene.paint.Color.TRANSPARENT, webView.getPageFill());
         });
     }
 

@@ -52,6 +52,9 @@ class JavaFxWidgetHost implements WidgetWebHost {
      */
     void initialize() {
         FxSurfaces.configure(engine);
+        // Everything the widget's own card does not paint shows the application through it, rather
+        // than sitting in an opaque box.
+        FxSurfaces.makePageBackgroundTransparent(webView);
         engine.locationProperty().addListener((observable, oldUrl, newUrl) -> onLocationChanged(newUrl));
         engine.setCreatePopupHandler(features -> openPopupExternally());
         engine.getLoadWorker().stateProperty().addListener((observable, oldState, newState) -> onLoadStateChanged(newState));

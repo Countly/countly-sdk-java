@@ -129,6 +129,11 @@ public class JavaFxContentDisplay implements ContentDisplay {
             WebEngine engine = webView.getEngine();
             FxSurfaces.configure(engine);
 
+            // Public JavaFX API since version 20. Everything the page does not paint shows the
+            // application through it, which is how content behaves on the other platforms, and it
+            // means showing the window before the page has painted costs nothing visually.
+            FxSurfaces.makePageBackgroundTransparent(webView);
+
             // Transparent, not merely undecorated. Content is laid out by the server as a card
             // with its own background inside the rectangle it asked for, exactly as on the other
             // platforms, so anything the card does not paint has to show the application through it.
@@ -158,15 +163,22 @@ public class JavaFxContentDisplay implements ContentDisplay {
             // The window is shown only once the page has painted. Showing it before the load, as an
             // empty white rectangle that fills in a moment later, is what makes content look like it
             // arrives late.
-            AtomicBoolean shown = new AtomicBoolean(false);
+            // Two separate facts, which must not share a flag: whether the page finished loading,
+            // and whether the window is on screen. Showing a transparent window early is an
+            // optimisation; giving up still has to depend only on the page never arriving.
+            AtomicBoolean pageLoaded = new AtomicBoolean(false);
             long loadStarted = System.currentTimeMillis();
+
             engine.getLoadWorker().stateProperty().addListener((observable, oldState, newState) -> {
-                if (newState == Worker.State.SUCCEEDED && shown.compareAndSet(false, true)) {
-                    UiLog.i("[JavaFxContentDisplay] show, showing content at " + placement
+                if (newState == Worker.State.SUCCEEDED) {
+                    pageLoaded.set(true);
+                    UiLog.i("[JavaFxContentDisplay] show, content painted at " + placement
                         + " after [" + (System.currentTimeMillis() - loadStarted) + "] ms");
-                    stage.show();
-                    FxSurfaces.logPageDiagnostics(engine, "JavaFxContentDisplay");
-                } else if (newState == Worker.State.FAILED && !shown.get()) {
+                    if (!stage.isShowing()) {
+                        stage.show();
+                    }
+                    FxSurfaces.logPageDiagnostics(engine, "JavaFxContentDisplay", () -> !closed.get());
+                } else if (newState == Worker.State.FAILED && !pageLoaded.get()) {
                     UiLog.w("[JavaFxContentDisplay] show, the content page could not be loaded");
                     notifyClosed(closed, onClosed, Collections.emptyMap());
                     stage.close();
@@ -175,13 +187,17 @@ public class JavaFxContentDisplay implements ContentDisplay {
 
             PauseTransition loadDeadline = new PauseTransition(loadTimeout);
             loadDeadline.setOnFinished(event -> {
-                if (!shown.get()) {
+                if (!pageLoaded.get()) {
                     UiLog.w("[JavaFxContentDisplay] show, the content page did not load in time, giving up");
                     notifyClosed(closed, onClosed, Collections.emptyMap());
                     stage.close();
                 }
             });
             loadDeadline.play();
+
+            // Transparent all the way down, so showing before the page has painted costs nothing
+            // visually and the content is never late to appear.
+            stage.show();
 
             engine.load(content.url);
         } catch (Throwable t) {

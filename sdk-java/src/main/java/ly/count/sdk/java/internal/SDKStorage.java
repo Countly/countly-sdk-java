@@ -140,7 +140,14 @@ public class SDKStorage implements StorageProvider {
     }
 
     public <T extends Storable> Boolean storableWrite(ly.count.sdk.java.internal.InternalConfig config, T storable) {
-        return storableWrite(config, storable.storagePrefix(), storable.storageId(), storable.store(L));
+        byte[] data = storable.store(L);
+        if (data == null) {
+            // Writing nothing still created the file, which then read back as a corrupt storable.
+            L.w("[SDKStorage] storableWrite, " + storable.storagePrefix() + " " + storable.storageId()
+                + " could not be serialised, nothing written");
+            return false;
+        }
+        return storableWrite(config, storable.storagePrefix(), storable.storageId(), data);
     }
 
     private String createFileFullPath(ly.count.sdk.java.internal.InternalConfig config, String filename) {

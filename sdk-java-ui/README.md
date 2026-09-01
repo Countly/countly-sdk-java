@@ -10,8 +10,10 @@ example, never pulls JavaFX in.
 
 ## Requirements
 
-- Java 11 or newer. The core SDK still runs on Java 8; JavaFX is what raises the floor here.
-- JavaFX 17 or newer, with the `javafx.controls` and `javafx.web` modules.
+- Java 17 or newer. The core SDK still runs on Java 8; JavaFX is what raises the floor here.
+- JavaFX 21 or newer, with the `javafx.controls` and `javafx.web` modules. JavaFX 20 is the first
+  release with a public API for a transparent web view background (`WebView.setPageFill`), which the
+  content overlay needs in order to float over your application rather than sit in an opaque box.
 - The `ly.count.sdk:java` core artifact, which comes in as a dependency of this one.
 
 ## Installation

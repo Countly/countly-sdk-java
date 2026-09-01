@@ -14,13 +14,9 @@ tasks.withType(Test) {
   systemProperty 'monocle.platform', 'Headless'
   systemProperty 'prism.order', 'sw'
 
-  // Monocle has to match the JavaFX version exactly -- the 11.x build is missing methods
-  // JavaFX 17's glass layer expects, and blows up as soon as a stage is shown. The matching
-  // 17.x build is Java 17 bytecode, so the TEST JVM is 17 while the published artifact still
-  // targets Java 11 (see the java block above). Needs a JDK 17 installed to run these tests.
-  javaLauncher = javaToolchains.launcherFor {
-    languageVersion = JavaLanguageVersion.of(17)
-  }
+  // Monocle has to match the JavaFX version exactly: a mismatched build is missing methods the
+  // glass layer expects and dies as soon as a stage is shown. The module toolchain above already
+  // pins the test JVM, so nothing extra is needed here.
 }
 
 dependencies {
@@ -37,15 +33,21 @@ plugins {
   id 'org.openjfx.javafxplugin' version '0.1.0'
 }
 
-// JavaFX itself needs Java 11+, so this artifact has a higher floor than the
-// core SDK, which stays on Java 8. Customers on Java 8 keep using the core.
+// Java 17, not 11. JavaFX only gained a public API for a transparent web view background
+// (WebView.setPageFill) in version 20, and JavaFX 20+ requires Java 17. Without it the only
+// lever is a com.sun.webkit internal reached by reflection, which needs --add-exports from
+// every integrator and renders the empty area opaque black rather than see-through.
+//
+// A toolchain rather than sourceCompatibility, so this module still builds when the Gradle
+// daemon itself is running on an older JDK. The core SDK stays on Java 8 regardless.
 java {
-  sourceCompatibility = JavaVersion.VERSION_11
-  targetCompatibility = JavaVersion.VERSION_11
+  toolchain {
+    languageVersion = JavaLanguageVersion.of(17)
+  }
 }
 
 javafx {
-  version = '17.0.20'
+  version = '21.0.5'
   modules = ['javafx.controls', 'javafx.web']
 }
 
@@ -57,7 +59,7 @@ dependencies {
   implementation 'org.json:json:20250517'
 
   testImplementation 'junit:junit:4.13.1'
-  testImplementation 'org.testfx:openjfx-monocle:17.0.10'
+  testImplementation 'org.testfx:openjfx-monocle:21.0.2'
   testImplementation 'org.mockito:mockito-core:4.11.0'
 }
 

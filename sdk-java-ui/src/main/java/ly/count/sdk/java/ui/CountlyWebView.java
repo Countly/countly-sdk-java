@@ -2,6 +2,7 @@ package ly.count.sdk.java.ui;
 
 import javafx.application.Platform;
 import javafx.scene.Scene;
+import javafx.scene.paint.Color;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -99,13 +100,18 @@ public final class CountlyWebView {
 
             // Starts as a 1x1 window at the surface origin so the page can load before the widget
             // tells us how big its card has to be; the presenter shows it once it knows.
-            Stage stage = new Stage(StageStyle.UNDECORATED);
+            // Transparent, like the content overlay. A widget draws its own rounded card with its
+            // own background; everything around that card has to show the application through it,
+            // or the card sits in an opaque box.
+            Stage stage = new Stage(StageStyle.TRANSPARENT);
             stage.setAlwaysOnTop(true);
             stage.setResizable(false);
             if (owner != null) {
                 stage.initOwner(owner);
             }
-            stage.setScene(new Scene(webView, 1, 1));
+            Scene scene = new Scene(webView, 1, 1);
+            scene.setFill(Color.TRANSPARENT);
+            stage.setScene(scene);
             stage.setX(surface.x);
             stage.setY(surface.y);
 

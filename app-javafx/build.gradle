@@ -5,12 +5,14 @@ plugins {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    // Matches sdk-java-ui: JavaFX 21 needs Java 17.
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
 }
 
 javafx {
-    version = '17.0.20'
+    version = '21.0.5'
     modules = [ 'javafx.controls', 'javafx.web' ]
 }
 
