@@ -19,6 +19,9 @@ dependencies {
     // picked up without publishing or copying a jar.
     implementation project(':sdk-java')
 
+    // The JavaFX UI artifact: feedback widget cards and the content overlay.
+    implementation project(':sdk-java-ui')
+
     // org.json is used by the demo for pretty-printing widget data; the
     // SDK also uses it internally (and exposes JSONObject in its API).
     implementation 'org.json:json:20250517'

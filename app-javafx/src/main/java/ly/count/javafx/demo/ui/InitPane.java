@@ -209,6 +209,9 @@ public class InitPane {
                 .setLoggingLevel(loggingLevelBox.getValue())
                 .setLogListener((msg, lvl) -> log.sdk("[" + lvl + "] " + msg));
 
+            config.content.setGlobalContentCallback((status, data) ->
+                log.info("[Content] callback: " + status + " " + data));
+
             Config.Feature[] selected = selectedFeatures();
             if (selected.length > 0) {
                 config.setFeatures(selected);

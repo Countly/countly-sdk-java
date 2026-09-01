@@ -69,6 +69,7 @@ public class SDKCore {
         moduleMappings.put(CoreFeature.CrashReporting, ModuleCrashes.class);
         moduleMappings.put(CoreFeature.BackendMode, ModuleBackendMode.class);
         moduleMappings.put(CoreFeature.Feedback, ModuleFeedback.class);
+        moduleMappings.put(CoreFeature.Content, ModuleContent.class);
         moduleMappings.put(CoreFeature.Events, ModuleEvents.class);
         moduleMappings.put(CoreFeature.RemoteConfig, ModuleRemoteConfig.class);
         moduleMappings.put(CoreFeature.UserProfiles, ModuleUserProfile.class);
@@ -577,6 +578,18 @@ public class SDKCore {
         deviceId().changeWithMerge(id);
     }
 
+    /**
+     * The logger the SDK was configured with, so code outside of this package (a
+     * {@link ContentDisplay} implementation, for example) can log through the same level and
+     * listener the integrator set up.
+     *
+     * @return the SDK logger, or {@code null} while the SDK is not initialized
+     */
+    public static Log logger() {
+        SDKCore core = instance;
+        return core == null ? null : core.L;
+    }
+
     public static boolean enabled(int feature) {
         return (feature & instance.consents) == feature &&
             (feature & instance.config().getFeatures1()) == feature;
@@ -729,6 +742,20 @@ public class SDKCore {
         }
 
         return module(ModuleFeedback.class).feedbackInterface;
+    }
+
+    public ModuleContent.Content content() {
+        if (!hasConsentForFeature(CoreFeature.Content)) {
+            L.v("[SDKCore] content, Content feature has no consent, returning null");
+            return null;
+        }
+
+        ModuleContent module = module(ModuleContent.class);
+        if (module == null) {
+            return null;
+        }
+
+        return module.contentInterface;
     }
 
     public ModuleCrashes.Crashes crashes() {

@@ -124,6 +124,15 @@ public class TestUtils {
         return config;
     }
 
+    static Config getConfigContent(Config.Feature... features) {
+        Config config = getBaseConfig();
+
+        config.enableFeatures(features);
+        config.enableFeatures(Config.Feature.Content, Config.Feature.Events);
+
+        return config;
+    }
+
     public static File getTestSDirectory() {
         // System specific folder structure
         String[] sdkStorageRootPath = { System.getProperty("user.home"), "__COUNTLY", "java_test" };

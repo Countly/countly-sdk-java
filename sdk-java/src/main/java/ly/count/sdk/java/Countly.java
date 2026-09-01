@@ -7,6 +7,7 @@ import ly.count.sdk.java.internal.DeviceIdType;
 import ly.count.sdk.java.internal.InternalConfig;
 import ly.count.sdk.java.internal.Log;
 import ly.count.sdk.java.internal.ModuleBackendMode;
+import ly.count.sdk.java.internal.ModuleContent;
 import ly.count.sdk.java.internal.ModuleCrashes;
 import ly.count.sdk.java.internal.ModuleDeviceIdCore;
 import ly.count.sdk.java.internal.ModuleEvents;
@@ -400,6 +401,24 @@ public class Countly implements Usage {
             return null;
         }
         return sdk.feedback();
+    }
+
+    /**
+     * <code>Content</code> interface to enter, leave and refresh content zones, and to preview a
+     * content block. A {@link ly.count.sdk.java.internal.ContentDisplay} has to be registered
+     * before a content zone can be entered; the "ly.count.sdk:java-ui" artifact ships a JavaFX one.
+     *
+     * @return {@link ModuleContent.Content} instance.
+     * @apiNote This is an EXPERIMENTAL feature, and it can have breaking changes
+     */
+    public ModuleContent.Content content() {
+        if (!isInitialized()) {
+            if (L != null) {
+                L.e("[Countly] content, SDK is not initialized yet.");
+            }
+            return null;
+        }
+        return sdk.content();
     }
 
     /**

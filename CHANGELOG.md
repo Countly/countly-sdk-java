@@ -1,4 +1,17 @@
 ## XX.XX.XX
+* Added support for the Content feature, accessible through the "Countly.instance().content()" interface:
+  * "enterContentZone" / "exitContentZone" for starting and stopping periodic content fetching
+  * "refreshContentZone" for flushing the event queue and fetching again right away
+  * "previewContent" for showing one specific content block by its ID
+  * "setContentDisplay" for registering the component that draws content
+  * Added the "content" configuration group with "setZoneTimerInterval" and "setGlobalContentCallback"
+  * This feature uses "Content" consent.
+  * Needs the new "ly.count.sdk:java-ui" artifact for displaying content.
+* Added a separately published artifact "ly.count.sdk:java-ui" (requires Java 11 and JavaFX 17) that displays feedback widgets and content on the desktop:
+  * "CountlyWebView.presentFeedbackWidget" for showing a feedback widget as a positioned card
+  * "CountlyWebView.enableContentZone" / "CountlyWebView.disableContentZone" for showing content
+  * "CountlyWebView.setShowWidgetsWithinApp" for keeping widget cards inside the application window
+  * Implement "ContentDisplay" yourself to draw content with another toolkit.
 * Updated JSON library version from "20250107" to "20250517".
 
 ## 24.1.6

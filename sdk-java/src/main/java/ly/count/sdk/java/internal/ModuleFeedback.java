@@ -343,23 +343,9 @@ public class ModuleFeedback extends ModuleBase {
             return null;
         }
 
-        StringBuilder widgetListUrl = new StringBuilder();
-        widgetListUrl.append(internalConfig.getServerURL());
-        widgetListUrl.append("/feedback/");
-        widgetListUrl.append(widgetInfo.type.name());
-        widgetListUrl.append('?');
-        Params params = new Params()
-            .add("widget_id", widgetInfo.widgetId)
-            .add("device_id", internalConfig.getDeviceId().id)
-            .add("app_key", internalConfig.getServerAppKey())
-            .add("sdk_version", internalConfig.getSdkVersion())
-            .add("sdk_name", internalConfig.getSdkName())
-            .add("platform", internalConfig.getSdkPlatform());
+        final String preparedWidgetUrl = WidgetUrlBuilder.build(internalConfig, widgetInfo, cachedAppVersion);
 
-        widgetListUrl.append(params.toString());
-        final String preparedWidgetUrl = widgetListUrl.toString();
-
-        L.d("[ModuleFeedback] constructFeedbackWidgetUrlInternal, Using following url for widget:[" + widgetListUrl + "]");
+        L.d("[ModuleFeedback] constructFeedbackWidgetUrlInternal, Using following url for widget:[" + preparedWidgetUrl + "]");
         return preparedWidgetUrl;
     }
 

@@ -31,10 +31,12 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import javafx.stage.Window;
 import ly.count.javafx.demo.AppContext;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.internal.CountlyFeedbackWidget;
 import ly.count.sdk.java.internal.FeedbackWidgetType;
+import ly.count.sdk.java.ui.CountlyWebView;
 
 /**
  * Mirrors cpp_demo/main.cpp + Countly_Feedback_Widget_Implementation_Guide.html:
@@ -164,7 +166,8 @@ public class FeedbackWidgetsPane {
             cardList.getChildren().add(new WidgetCard(w, wv,
                 widget -> openWidget(widget, wv),
                 this::inspectWidget,
-                this::openManualReportDialog));
+                this::openManualReportDialog,
+                this::presentWithSdkUi));
         }
     }
 
@@ -211,6 +214,22 @@ public class FeedbackWidgetsPane {
         placeholder.setText(text);
         placeholder.setVisible(true);
         webView.setVisible(false);
+    }
+
+    // ------------------- Presentation by the SDK UI artifact -------------------
+
+    /**
+     * Hands the widget to {@code sdk-java-ui}, which builds the URL, drives the card and reports the
+     * dismissal itself. The panel above stays as the hand rolled reference implementation.
+     */
+    private void presentWithSdkUi(CountlyFeedbackWidget widget) {
+        if (!SdkUtil.requireSdk(log)) {
+            return;
+        }
+        log.info("[Widget] Presenting " + widget.widgetId + " with the SDK UI artifact");
+        Window owner = root.getScene() == null ? null : root.getScene().getWindow();
+        CountlyWebView.presentFeedbackWidget(owner, widget,
+            () -> log.info("[Widget] SDK UI card for " + widget.widgetId + " was dismissed"));
     }
 
     // ------------------- Inspect widget data -------------------

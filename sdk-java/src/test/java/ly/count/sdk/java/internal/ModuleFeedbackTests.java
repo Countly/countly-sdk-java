@@ -248,6 +248,14 @@ public class ModuleFeedbackTests {
         widgetListUrl.append(TestUtils.SDK_NAME);
         widgetListUrl.append("&platform=");
         widgetListUrl.append(Utils.urlencode(getOS(), L));
+        widgetListUrl.append("&app_version=");
+        widgetListUrl.append(Utils.urlencode(TestUtils.APPLICATION_VERSION, L));
+        // Desktop web views need the widget to draw itself as a card with its own close button, and
+        // the page only accepts the SDK's viewport message when the origin matches.
+        widgetListUrl.append("&custom=");
+        widgetListUrl.append(Utils.urlencode(WidgetUrlBuilder.CUSTOM_PARAMS, L));
+        widgetListUrl.append("&origin=");
+        widgetListUrl.append(TestUtils.SERVER_URL);
 
         Assert.assertEquals(widgetListUrl.toString(), Countly.instance().feedback().constructFeedbackWidgetUrl(widgetInfo));
     }
