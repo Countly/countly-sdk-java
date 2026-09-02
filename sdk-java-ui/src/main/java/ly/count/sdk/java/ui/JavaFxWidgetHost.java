@@ -162,31 +162,33 @@ class JavaFxWidgetHost implements WidgetWebHost {
     }
 
     /**
-     * Places a widget that never reported a size, by measuring the rendered page and centring a
-     * card of that height on the surface.
+     * Places a widget that never reported its own size, by measuring the card the page painted.
+     * <p>
+     * A page that painted no card at all is not a widget: it is whatever the browser substituted
+     * when the real page could not be fetched. JavaFX reports an HTTP level failure (a refused
+     * connection, a 404) as a SUCCEEDED load carrying an error document, so this is the only point
+     * at which that can be noticed. Without the check a card was shown around a browser error page
+     * and the caller's callback never ran, which is the exact wedge {@code onLoadFailed} exists to
+     * prevent.
      */
     private void placeByMeasuredContent() {
-        int height = FALLBACK_HEIGHT;
-        try {
-            Object measured = engine.executeScript(
-                "(function(){var e=document.getElementById('widget-body');"
-                    + "return Math.ceil(e?e.scrollHeight:document.body.scrollHeight);})()");
-            if (measured instanceof Number) {
-                int value = ((Number) measured).intValue();
-                if (value > 0) {
-                    height = value;
-                }
+        int[] card = FxSurfaces.measurePaintedContent(engine);
+        if (card == null) {
+            UiLog.w("[JavaFxWidgetHost] placeByMeasuredContent, the page painted no widget card, so"
+                + " it is not a widget page: treating it as a failed load");
+            if (listener != null) {
+                listener.onLoadFailed();
             }
-        } catch (Throwable t) {
-            UiLog.w("[JavaFxWidgetHost] placeByMeasuredContent, could not measure the widget, [" + t + "]");
+            return;
         }
 
-        int width = Math.min(FALLBACK_WIDTH, surface.width);
-        height = Math.min(height, surface.height);
+        int width = Math.min(card[2] > 0 ? card[2] : FALLBACK_WIDTH, surface.width);
+        int height = Math.min(card[3] > 0 ? card[3] : FALLBACK_HEIGHT, surface.height);
         int x = Math.max(0, (surface.width - width) / 2);
         int y = Math.max(0, (surface.height - height) / 2);
 
-        UiLog.d("[JavaFxWidgetHost] placeByMeasuredContent, the widget reported no size, centring a measured card");
+        UiLog.d("[JavaFxWidgetHost] placeByMeasuredContent, the widget reported no size, centring the"
+            + " card it painted (" + width + "x" + height + ")");
         placeAndShow(new ContentPlacement(surface.x + x, surface.y + y, width, height));
     }
 

@@ -72,7 +72,7 @@ public class JavaFxWidgetHostTests {
             hostRef.get().placeAndShow(new ContentPlacement(120, 90, 340, 260));
         });
 
-        FxTestToolkit.waitUntil("the stage to show", () -> stageRef.get().isShowing());
+        FxTestToolkit.waitUntil("the stage to show", () -> showing(stageRef));
 
         FxTestToolkit.onFx(() -> {
             Stage stage = stageRef.get();
@@ -88,7 +88,7 @@ public class JavaFxWidgetHostTests {
             hostRef.get().closeHost();
         });
 
-        FxTestToolkit.waitUntil("the stage to close", () -> !stageRef.get().isShowing());
+        FxTestToolkit.waitUntil("the stage to close", () -> !showing(stageRef));
     }
 
     /**
@@ -137,7 +137,7 @@ public class JavaFxWidgetHostTests {
         });
 
         // Nothing in the test places it, so only the host's own fallback can.
-        FxTestToolkit.waitUntil("the measured placement", () -> stageRef.get().isShowing());
+        FxTestToolkit.waitUntil("the measured placement", () -> showing(stageRef));
 
         FxTestToolkit.onFx(() -> {
             Stage stage = stageRef.get();
@@ -209,6 +209,19 @@ public class JavaFxWidgetHostTests {
         Assert.assertTrue(listener.navigations.isEmpty());
 
         FxTestToolkit.onFx(() -> stageRef.get().close());
+    }
+
+    /**
+     * A stage's showing state read on the JavaFX thread, which is the only place it is reliably
+     * observable. Polling it from the test thread only ever appeared to work under Monocle.
+     *
+     * @param stageRef holds the stage
+     * @return whether it is on screen
+     */
+    private static boolean showing(AtomicReference<Stage> stageRef) {
+        AtomicReference<Boolean> shown = new AtomicReference<>(false);
+        FxTestToolkit.onFx(() -> shown.set(stageRef.get() != null && stageRef.get().isShowing()));
+        return shown.get();
     }
 
     private static JavaFxWidgetHost newHost(WidgetSurface surface, WidgetWebHost.Listener listener, AtomicReference<Stage> stageRef) {

@@ -191,23 +191,22 @@ public class CountlyWebViewTests {
     }
 
     /**
-     * A widget served from a host that refuses the connection.
+     * A widget whose page cannot be fetched is dismissed and reported, rather than leaving a card
+     * around a browser error page with no callback.
      * <p>
-     * KNOWN GAP, pinned here rather than asserted as desirable: JavaFX reports a refused connection
-     * as a SUCCEEDED load, because WebKit substitutes its own error document. So the load-failure
-     * path never runs, a card is placed around the error page, and the caller's callback is never
-     * run. Only a transport level failure reaches {@code onLoadFailed}. What this pins is that the
-     * SDK neither crashes nor reports twice.
+     * JavaFX reports an HTTP level failure as a SUCCEEDED load carrying an error document, so the
+     * load failure listener never fires. The host notices it instead by measuring what the page
+     * painted: an error page paints no card.
      */
     @Test
-    public void aWidgetOnARefusedPort_showsAnErrorPageAndDoesNotCallBack() {
+    public void aWidgetWhosePageCannotBeFetched_isDismissedAndReported() {
         Countly.instance().init(UiTestConfigs.refusedServer());
 
         CountlyWebView.presentFeedbackWidget(null, widget(), closed::incrementAndGet);
 
-        // Long enough for the load and the placement fallback to have run.
-        FxTestToolkit.sleep(2500);
-        Assert.assertEquals(0, closed.get());
+        FxTestToolkit.waitUntil("the dismissal", () -> closed.get() >= 1);
+        FxTestToolkit.sleep(600);
+        Assert.assertEquals("must be reported exactly once", 1, closed.get());
     }
 
     /**

@@ -106,6 +106,50 @@ final class FxSurfaces {
     }
 
     /**
+     * Measures the rectangle the page actually painted, in CSS pixels.
+     * <p>
+     * Used to tell a real widget page from whatever the browser substituted when the real one could
+     * not be fetched: JavaFX reports an HTTP level failure as a SUCCEEDED load carrying an error
+     * document, and an error document paints no card.
+     *
+     * @param engine the engine to measure
+     * @return {@code left,top,width,height}, or {@code null} when the page has no card element at
+     *     all. Width and height may be zero when the window has not been sized yet.
+     */
+    static int[] measurePaintedContent(WebEngine engine) {
+        try {
+            Object result = engine.executeScript(
+                "(function(){try{"
+                    + "var e=document.getElementById('widget-body');"
+                    + "if(!e){var kids=document.body?document.body.children:[];"
+                    + "for(var i=0;i<kids.length;i++){var s=window.getComputedStyle(kids[i]);"
+                    + "var bg=s.backgroundColor;"
+                    + "if(bg&&bg!=='transparent'&&bg.indexOf('rgba(0, 0, 0, 0)')<0){e=kids[i];break;}}}"
+                    + "if(!e){return '';}"
+                    // Zero sizes are reported rather than rejected: the window is still 1x1 before
+                    // it has been placed, so a real card measures zero here. The absence of the
+                    // element is what says "this is not a widget page", not its size.
+                    + "var b=e.getBoundingClientRect();"
+                    + "return [Math.round(b.left),Math.round(b.top),Math.round(b.width),Math.round(b.height)].join(',');"
+                    + "}catch(err){return '';}})()");
+            if (!(result instanceof String) || ((String) result).isEmpty()) {
+                return null;
+            }
+            String[] parts = ((String) result).split(",");
+            if (parts.length != 4) {
+                return null;
+            }
+            return new int[] {
+                Integer.parseInt(parts[0]), Integer.parseInt(parts[1]),
+                Integer.parseInt(parts[2]), Integer.parseInt(parts[3])
+            };
+        } catch (Throwable t) {
+            UiLog.w("[FxSurfaces] measurePaintedContent, could not measure the page, [" + t + "]");
+            return null;
+        }
+    }
+
+    /**
      * Makes the web view's own page backdrop fully transparent, so only what the page paints is
      * visible and the application shows through everywhere else.
      * <p>
