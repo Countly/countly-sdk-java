@@ -56,21 +56,22 @@ jobs:
       # itself carries the failure count, and gradle.yml is what actually gates on tests.
       # The output is kept so a build failure can be shown in the pull request comment rather
       # than sending the reader off to the workflow logs.
-      # The toolkit dependent tests of sdk-java-ui are NOT enabled here. JavaFX 21's WebKit
-      # segfaults the JVM as soon as it loads a page inside a forked Gradle test JVM, on every
-      # configuration tried: headless Monocle and the real toolkit under xvfb on Linux, Monocle and
-      # the real toolkit on macOS. A crashed JVM is not a test failure, so ignoreFailures does not
-      # apply and the whole job dies without producing any report at all -- losing sdk-java's
-      # numbers too. Reporting a lower, honest figure for sdk-java-ui is worth more than that.
-      #
-      # continue-on-error so that if the build does die, the report step below still runs and the
-      # pull request comment explains why instead of the job going silent.
+      # sdk-java-ui's tests need a real JavaFX toolkit, and this runner has no display, so without
+      # xvfb every one of them skips itself and the module reports about a third of its real
+      # coverage. Note this is NOT paired with -Dcountly.ui.pageLoadTests: that flag additionally
+      # enables the one class which shows a transparent stage, and that class segfaults the JVM.
+      - name: Install a virtual display
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq xvfb
+
+      # continue-on-error because a crashed JVM is not a test failure: ignoreFailures does not cover
+      # it, so without this a crash would kill the job and lose sdk-java's numbers as collateral.
+      # The report step below runs either way and explains what happened.
       - name: Run tests under jacoco
         id: gradle
         continue-on-error: true
         run: |
           set -o pipefail
-          ./gradlew coverage --console=plain 2>&1 | tee coverage-run.log
+          xvfb-run -a ./gradlew coverage --console=plain 2>&1 | tee coverage-run.log
 
       # Best effort, and never allowed to fail the job: without it the report simply has no
       # changed-files section. checkout already fetched the full history, so this only makes

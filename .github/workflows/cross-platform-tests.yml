@@ -50,15 +50,22 @@ jobs:
         shell: bash
         run: ./gradlew :sdk-java:test --console=plain
 
-      # The toolkit dependent classes skip themselves here and say why. They are opt-in via
-      # -Dcountly.ui.pageLoadTests=true, and no environment we have can actually run them: JavaFX
-      # 21's WebKit segfaults the JVM on the first real page load inside a forked Gradle test JVM,
-      # confirmed with headless Monocle and with the real toolkit under xvfb on Linux, and with both
-      # on macOS. What this job does cover is everything else in the module on both platforms.
+      # These tests need a real JavaFX toolkit. Linux runners have no display, so xvfb provides
+      # one; the Windows runner has a desktop session already. Classes still skip themselves with a
+      # reason if no toolkit can start, so this never fails for the wrong reason.
+      #
+      # Deliberately without -Dcountly.ui.pageLoadTests: that enables the one class showing a
+      # transparent stage, which segfaults the JVM everywhere it has been tried.
       - name: Run the JavaFX UI tests
         if: always()
         shell: bash
-        run: ./gradlew :sdk-java-ui:test --console=plain
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            sudo apt-get update -qq && sudo apt-get install -y -qq xvfb
+            xvfb-run -a ./gradlew :sdk-java-ui:test --console=plain
+          else
+            ./gradlew :sdk-java-ui:test --console=plain
+          fi
 
       - name: Upload test results
         if: always()
