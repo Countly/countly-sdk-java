@@ -56,17 +56,21 @@ jobs:
       # itself carries the failure count, and gradle.yml is what actually gates on tests.
       # The output is kept so a build failure can be shown in the pull request comment rather
       # than sending the reader off to the workflow logs.
-      # xvfb gives sdk-java-ui's toolkit dependent tests a real JavaFX toolkit with a single
-      # predictable screen. Without it they skip themselves and this module's coverage drops by
-      # roughly a third, so it is load bearing for the reported numbers.
-      - name: Install a virtual display
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq xvfb
-
+      # The toolkit dependent tests of sdk-java-ui are NOT enabled here. JavaFX 21's WebKit
+      # segfaults the JVM as soon as it loads a page inside a forked Gradle test JVM, on every
+      # configuration tried: headless Monocle and the real toolkit under xvfb on Linux, Monocle and
+      # the real toolkit on macOS. A crashed JVM is not a test failure, so ignoreFailures does not
+      # apply and the whole job dies without producing any report at all -- losing sdk-java's
+      # numbers too. Reporting a lower, honest figure for sdk-java-ui is worth more than that.
+      #
+      # continue-on-error so that if the build does die, the report step below still runs and the
+      # pull request comment explains why instead of the job going silent.
       - name: Run tests under jacoco
         id: gradle
+        continue-on-error: true
         run: |
           set -o pipefail
-          xvfb-run -a ./gradlew coverage --console=plain -Dcountly.ui.pageLoadTests=true 2>&1 | tee coverage-run.log
+          ./gradlew coverage --console=plain 2>&1 | tee coverage-run.log
 
       # Best effort, and never allowed to fail the job: without it the report simply has no
       # changed-files section. checkout already fetched the full history, so this only makes
