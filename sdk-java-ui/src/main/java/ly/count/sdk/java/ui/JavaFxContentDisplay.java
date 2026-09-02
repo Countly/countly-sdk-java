@@ -51,6 +51,10 @@ public class JavaFxContentDisplay implements ContentDisplay {
     private final Window owner;
     private volatile WidgetSurface surface;
 
+    /** The block on screen right now, so it can follow the window it was placed against. */
+    private Stage activeStage;
+    private ContentData activeContent;
+
     /**
      * Follows the primary application window. Construct on the JavaFX application thread.
      */
@@ -66,7 +70,7 @@ public class JavaFxContentDisplay implements ContentDisplay {
      */
     public JavaFxContentDisplay(Window owner) {
         this.owner = owner;
-        this.surface = FxSurfaces.screenOf(owner);
+        this.surface = FxSurfaces.surfaceFor(owner);
         watchOwner();
         // Pay for starting WebKit now, while entering the zone, rather than when a content block
         // finally arrives and the user is waiting to see it.
@@ -81,7 +85,10 @@ public class JavaFxContentDisplay implements ContentDisplay {
         if (owner == null) {
             return;
         }
-        Runnable refresh = () -> surface = FxSurfaces.screenOf(owner);
+        Runnable refresh = () -> {
+            surface = FxSurfaces.surfaceFor(owner);
+            repositionActiveContent();
+        };
         owner.xProperty().addListener((observable, old, current) -> refresh.run());
         owner.yProperty().addListener((observable, old, current) -> refresh.run());
         owner.widthProperty().addListener((observable, old, current) -> refresh.run());
@@ -109,9 +116,42 @@ public class JavaFxContentDisplay implements ContentDisplay {
         }
     }
 
+    /**
+     * @return the window the block on screen is in, or {@code null} when nothing is showing. For the
+     *     scenario driver, which scripts the page inside it.
+     */
+    Stage activeStage() {
+        return activeStage;
+    }
+
+    /**
+     * Moves the block on screen to where the window it belongs to has gone. A content block is laid
+     * out by the server against a specific area, so a window that is moved, resized or dragged to
+     * another monitor has to take its content with it instead of leaving it behind.
+     */
+    private void repositionActiveContent() {
+        Stage stage = activeStage;
+        ContentData content = activeContent;
+        if (stage == null || content == null || !stage.isShowing()) {
+            return;
+        }
+
+        WidgetSurface current = surface;
+        ContentPlacement placement = WidgetPlacement.resolve(content.placementFor(current.isLandscape()), current);
+        if (placement == null) {
+            return;
+        }
+
+        UiLog.d("[JavaFxContentDisplay] repositionActiveContent, following the window to " + placement);
+        stage.setX(placement.x);
+        stage.setY(placement.y);
+        stage.setWidth(placement.width);
+        stage.setHeight(placement.height);
+    }
+
     private void show(ContentData content, AtomicBoolean closed, ContentCloseCallback onClosed) {
         try {
-            surface = FxSurfaces.screenOf(owner);
+            surface = FxSurfaces.surfaceFor(owner);
             WidgetSurface currentSurface = surface;
 
             ContentPlacement placement = WidgetPlacement.resolve(content.placementFor(currentSurface.isLandscape()), currentSurface);
@@ -157,8 +197,17 @@ public class JavaFxContentDisplay implements ContentDisplay {
                 return popup;
             });
 
+            activeStage = stage;
+            activeContent = content;
+
             // A window the user closed by other means must still release the content zone.
-            stage.setOnHidden(event -> notifyClosed(closed, onClosed, Collections.emptyMap()));
+            stage.setOnHidden(event -> {
+                if (activeStage == stage) {
+                    activeStage = null;
+                    activeContent = null;
+                }
+                notifyClosed(closed, onClosed, Collections.emptyMap());
+            });
 
             // The window is shown only once the page has painted. Showing it before the load, as an
             // empty white rectangle that fills in a moment later, is what makes content look like it
@@ -219,6 +268,15 @@ public class JavaFxContentDisplay implements ContentDisplay {
         if (action.isExternalLink) {
             UiLog.d("[JavaFxContentDisplay] onContentUrl, opening an external link");
             ExternalBrowser.open(action.link);
+
+            // A "cly_x_int=1" link that also carries "close=1" closes the content, the same way an
+            // action event does. Returning here unconditionally, as this used to, meant a link that
+            // asked to be opened AND dismissed only got opened.
+            if (action.close) {
+                notifyClosed(closed, onClosed, action.queryParams);
+                engine.load("about:blank");
+                stage.close();
+            }
             return;
         }
 
@@ -236,7 +294,10 @@ public class JavaFxContentDisplay implements ContentDisplay {
         }
 
         if (action.hasResize) {
-            ContentPlacement resized = WidgetPlacement.resolve(action, currentSurface);
+            // Against the area the window is on now, not the one it was shown on: a content block
+            // that resizes itself after the application window moved would otherwise jump back to
+            // where that window used to be.
+            ContentPlacement resized = WidgetPlacement.resolve(action, surface);
             if (resized != null) {
                 UiLog.d("[JavaFxContentDisplay] onContentUrl, resizing the content to " + resized);
                 stage.setX(resized.x);

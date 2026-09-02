@@ -15,6 +15,7 @@ public class ConfigContent {
     private final Config config;
     protected int zoneTimerInterval = DEFAULT_ZONE_TIMER_INTERVAL;
     protected ContentCallback globalContentCallback = null;
+    protected ContentUrlHandler contentUrlHandler = null;
 
     public ConfigContent(Config config) {
         this.config = config;
@@ -33,6 +34,20 @@ public class ConfigContent {
         if (zoneTimerIntervalSeconds >= MIN_ZONE_TIMER_INTERVAL) {
             this.zoneTimerInterval = zoneTimerIntervalSeconds;
         }
+        return config;
+    }
+
+    /**
+     * Take over opening the links that content blocks and feedback widgets ask to open, instead of
+     * the SDK handing them to the desktop. This is how an application routes its own deep links to
+     * the right screen.
+     *
+     * @param handler consulted for every link, {@code null} to let the SDK open them
+     * @return the same config object for convenient linking
+     * @apiNote This is an EXPERIMENTAL feature, and it can have breaking changes
+     */
+    public synchronized Config setContentUrlHandler(ContentUrlHandler handler) {
+        this.contentUrlHandler = handler;
         return config;
     }
 

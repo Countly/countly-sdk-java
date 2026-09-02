@@ -21,6 +21,7 @@ public class FeedbackWidgetPresenter implements WidgetWebHost.Listener {
     private final Runnable onClosed;
 
     private CountlyFeedbackWidget widget;
+    private ContentPlacement lastRequested;
     private boolean surfaceReported = false;
     private boolean finished = false;
 
@@ -114,13 +115,19 @@ public class FeedbackWidgetPresenter implements WidgetWebHost.Listener {
         handle(action);
     }
 
+    @Override
+    public void onSizeNotReported(int paintedWidth, int paintedHeight) {
+        // What a widget page paints is not the card: a rating paints only its little sticky tab, and
+        // placing that measurement gave a 50px sliver of a window. For a type we know, the type's
+        // own card wins; the measurement is only worth anything when the type is not known at all.
+        boolean known = widget != null && widget.type != null;
+        place(!known && paintedWidth > 0 && paintedHeight > 0
+            ? new ContentPlacement(0, 0, paintedWidth, paintedHeight) : null);
+    }
+
     private void handle(WidgetAction action) {
         if (action.hasResize) {
-            ContentPlacement rect = WidgetPlacement.resolve(action, host.getSurface());
-            if (rect != null) {
-                UiLog.d("[FeedbackWidgetPresenter] handle, placing the widget at " + rect);
-                host.placeAndShow(rect);
-            }
+            place(WidgetPlacement.resolve(action, host.getSurface()));
         }
 
         if (action.link != null) {
@@ -131,6 +138,58 @@ public class FeedbackWidgetPresenter implements WidgetWebHost.Listener {
             UiLog.i("[FeedbackWidgetPresenter] handle, the widget asked to be closed");
             finish();
         }
+    }
+
+    /**
+     * Places the card the widget asked for. The size is the widget's own, since its page measured
+     * its content to get it; the anchor is the widget type's, since on the web that comes from the
+     * SDK's stylesheet and the page's numbers assume it was applied.
+     *
+     * @param requested the rect the widget asked for, {@code null} when it asked for nothing
+     */
+    @Override
+    public void onCardMeasured(int width, int height) {
+        if (widget != null && !WidgetLayout.usesReportedSize(widget.type)) {
+            // A rating's card is a fixed size, so re-placing it from a measurement lands on the same
+            // rectangle. Answering anyway just made the host measure again, three times over, and a
+            // card is not shown until the fitting settles.
+            return;
+        }
+
+        // What the page drew wins over what it asked for: the card is what the user sees, and a
+        // window taller than the card leaves it floating above the edge it is anchored to.
+        place(new ContentPlacement(0, 0, width, height));
+    }
+
+    /**
+     * Puts the card back where it belongs after the window or screen it is anchored to moved or was
+     * resized. Nothing happens until the widget has asked to be placed at least once.
+     */
+    public void refreshPlacement() {
+        if (finished || (lastRequested == null && !surfaceReported)) {
+            return;
+        }
+
+        // The widget sizes its own card against the room it was told it has, so a resized window is
+        // news it has to act on: it answers with a fresh rect, which places the card again.
+        WidgetSurface surface = host.getSurface();
+        if (surfaceReported) {
+            host.reportSurfaceSize(surface.width, surface.height);
+        }
+        place(lastRequested);
+    }
+
+    private void place(ContentPlacement requested) {
+        lastRequested = requested;
+        WidgetSurface surface = host.getSurface();
+        ContentPlacement rect = WidgetLayout.resolve(
+            widget == null ? null : widget.type,
+            widget == null ? null : widget.position,
+            surface, requested);
+
+        UiLog.d("[FeedbackWidgetPresenter] place, putting the " + (widget == null ? "widget" : widget.type)
+            + " at " + rect + " (it asked for " + requested + ")");
+        host.placeAndShow(rect);
     }
 
     /**

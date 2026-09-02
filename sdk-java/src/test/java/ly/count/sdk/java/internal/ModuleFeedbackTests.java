@@ -83,6 +83,33 @@ public class ModuleFeedbackTests {
 
     /**
      * "parseFeedbackList"
+     * Widgets given with and without an 'appearance.position'
+     * The position should be parsed when present and left null otherwise, since it anchors the
+     * widget on screen and a missing one has to fall back to the type's default
+     */
+    @Test
+    public void parseFeedbackList_position() throws JSONException {
+        init(TestUtils.getConfigFeedback());
+
+        String requestJson = "{\"result\":["
+            + "{\"_id\":\"id1\",\"type\":\"survey\",\"appearance\":{\"position\":\"bRight\"},\"name\":\"w1\",\"tg\":[]},"
+            + "{\"_id\":\"id2\",\"type\":\"survey\",\"appearance\":{\"color\":\"#fff\"},\"name\":\"w2\",\"tg\":[]},"
+            + "{\"_id\":\"id3\",\"type\":\"nps\",\"name\":\"w3\",\"tg\":[]},"
+            + "{\"_id\":\"id4\",\"type\":\"rating\",\"appearance\":{\"position\":\"mleft\"},\"name\":\"w4\",\"tg\":[]}"
+            + "]}";
+
+        List<CountlyFeedbackWidget> ret = new ArrayList<>();
+        Assert.assertNull(ModuleFeedback.parseFeedbackList(new JSONObject(requestJson), ret));
+        Assert.assertEquals(4, ret.size());
+
+        Assert.assertEquals("bRight", ret.get(0).position);
+        Assert.assertNull("no position in appearance", ret.get(1).position);
+        Assert.assertNull("no appearance at all", ret.get(2).position);
+        Assert.assertEquals("mleft", ret.get(3).position);
+    }
+
+    /**
+     * "parseFeedbackList"
      * Response with partial entries given
      * Only the entries with all important fields given should be returned
      */

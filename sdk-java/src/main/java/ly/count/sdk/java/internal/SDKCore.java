@@ -590,6 +590,20 @@ public class SDKCore {
         return core == null ? null : core.L;
     }
 
+    /**
+     * The application's link handler, so code outside this package (a display implementation) can
+     * offer it a link before opening it itself.
+     *
+     * @return the handler, or {@code null} when none was configured or the SDK is not initialized
+     */
+    public static ContentUrlHandler contentUrlHandler() {
+        SDKCore core = instance;
+        if (core == null || core.config == null) {
+            return null;
+        }
+        return core.config.content.contentUrlHandler;
+    }
+
     public static boolean enabled(int feature) {
         return (feature & instance.consents) == feature &&
             (feature & instance.config().getFeatures1()) == feature;

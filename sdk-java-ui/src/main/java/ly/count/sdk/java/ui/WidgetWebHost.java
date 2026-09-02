@@ -34,6 +34,26 @@ public interface WidgetWebHost {
          * The widget page could not be loaded at all.
          */
         void onLoadFailed();
+
+        /**
+         * The page loaded but never reported a card size, so the placement has to be decided from
+         * the widget type instead. Rating widgets never report one.
+         *
+         * @param paintedWidth the width of the card the page painted, {@code 0} when it painted none
+         * @param paintedHeight the height of the card the page painted, {@code 0} when it painted none
+         */
+        void onSizeNotReported(int paintedWidth, int paintedHeight);
+
+        /**
+         * The size of the card the page actually drew, once it has settled and when it differs from
+         * the size the host was given. A page draws its card at the top of the viewport, so a window
+         * any taller than the card shows transparent space underneath it, and a card meant to sit on
+         * the bottom edge floats above it instead.
+         *
+         * @param width the drawn card's width
+         * @param height the drawn card's height
+         */
+        void onCardMeasured(int width, int height);
     }
 
     /**
@@ -45,6 +65,13 @@ public interface WidgetWebHost {
      * @return the area the widget may place itself on
      */
     WidgetSurface getSurface();
+
+    /**
+     * The area moved, because the window or the screen the card belongs to did.
+     *
+     * @param surface the new area, {@code null} is ignored
+     */
+    void setSurface(WidgetSurface surface);
 
     /**
      * @param url the URL to load

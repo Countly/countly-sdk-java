@@ -25,6 +25,13 @@ tasks.withType(Test) {
   // silently skipped even in the CI job that passes the flag, and this module's reported coverage
   // was about a third of what it should be.
   systemProperty 'countly.ui.pageLoadTests', System.getProperty('countly.ui.pageLoadTests', 'false')
+  // The scenario driver: a real server and a desktop session, so never on by default. A -D on the
+  // gradle command line does not reach a forked test JVM by itself, hence the forwarding.
+  systemProperty 'countly.ui.scenarios', System.getProperty('countly.ui.scenarios', 'false')
+  systemProperty 'countly.ui.scenarioServer', System.getProperty('countly.ui.scenarioServer', 'https://master.count.ly')
+  systemProperty 'countly.ui.scenarioAppKey', System.getProperty('countly.ui.scenarioAppKey', 'dte_mobile_v2')
+  systemProperty 'countly.ui.scenarioOut', System.getProperty('countly.ui.scenarioOut', "$buildDir/scenarios")
+  systemProperty 'countly.ui.scenarioWithinApp', System.getProperty('countly.ui.scenarioWithinApp', 'false')
 }
 
 dependencies {

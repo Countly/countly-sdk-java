@@ -128,10 +128,16 @@ public class ModuleFeedback extends ModuleBase {
                             continue;
                         }
 
+                        // appearance.position anchors the card on screen; the web SDK applies it as
+                        // a CSS class. Dropping it left every survey in the default corner.
+                        JSONObject appearance = jObj.optJSONObject("appearance");
+                        String valPosition = appearance == null ? null : appearance.optString("position", null);
+
                         CountlyFeedbackWidget se = new CountlyFeedbackWidget();
                         se.type = plannedType;
                         se.widgetId = valId;
                         se.name = valName;
+                        se.position = valPosition;
                         se.tags = valTagsArr.toArray(new String[0]);
 
                         parsedRes.add(se);

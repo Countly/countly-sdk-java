@@ -1,5 +1,7 @@
 package ly.count.sdk.java.ui;
 
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -8,6 +10,7 @@ import javafx.scene.Scene;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.util.Duration;
 import ly.count.sdk.java.internal.ContentPlacement;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -120,11 +123,59 @@ public class JavaFxWidgetHostTests {
     }
 
     /**
-     * A widget that never reports its own size still gets placed: the host measures the rendered
-     * page and centres a card on the surface. Without this a rating widget would never appear.
+     * The card is fitted to what the page drew before it is ever visible, so it appears once at the
+     * size it keeps rather than at the size the widget guessed and then jumping to the right one.
      */
     @Test
-    public void aPageThatNeverReportsASize_isPlacedByMeasuringIt() {
+    public void aCardIsFittedBeforeItIsVisible() {
+        RecordingListener listener = new RecordingListener();
+        AtomicReference<Stage> stageRef = new AtomicReference<>();
+        AtomicReference<JavaFxWidgetHost> hostRef = new AtomicReference<>();
+        // Every rectangle the window was ever visible at, which is the whole point of the test.
+        List<String> seen = Collections.synchronizedList(new ArrayList<>());
+
+        // A 300px card in a page it will be asked to fill 500px of.
+        String page = "<html><head><title>test</title></head><body style='margin:0'>"
+            + "<div id='widget-body' style='height:300px;background:#fff'>card</div></body></html>";
+
+        // Re-places the way the presenter does, keeping the bottom edge.
+        listener.onMeasured = (width, height) -> hostRef.get().placeAndShow(
+            new ContentPlacement(0, 200 + 500 - height, width, height));
+
+        FxTestToolkit.onFx(() -> {
+            hostRef.set(newHost(new WidgetSurface(0, 0, 900, 700), listener, stageRef));
+            Stage stage = stageRef.get();
+            stage.opacityProperty().addListener((observable, was, now) -> {
+                if (now.doubleValue() > 0) {
+                    seen.add((int) stage.getWidth() + "x" + (int) stage.getHeight() + " at " + (int) stage.getY());
+                }
+            });
+            hostRef.get().navigate(FxTestToolkit.pageUrl(page));
+        });
+
+        FxTestToolkit.waitUntil("the page to load", () -> listener.pageLoads > 0);
+        FxTestToolkit.onFx(() -> hostRef.get().placeAndShow(new ContentPlacement(0, 200, 480, 500)));
+
+        FxTestToolkit.waitUntil("the card to be measured", () -> !listener.measuredCards.isEmpty());
+        Assert.assertEquals("300 tall, not the 500 it was placed at", "480x300", listener.measuredCards.get(0));
+
+        FxTestToolkit.waitUntil("the card to be revealed", () -> !seen.isEmpty());
+        Assert.assertEquals("only ever visible at the fitted size", "480x300 at 400", seen.get(0));
+
+        FxTestToolkit.onFx(() -> {
+            Assert.assertTrue(showing(stageRef));
+            stageRef.get().close();
+        });
+    }
+
+    /**
+     * A widget that never reports its own size is reported along with the size of what it did paint,
+     * rather than being placed here: only the presenter knows the widget type, and the type is what
+     * decides the card. A rating reports no size and paints only its sticky tab, so placing the
+     * measurement gave a 50px sliver of a window.
+     */
+    @Test
+    public void aPageThatNeverReportsASize_isReportedWithWhatItPainted() {
         RecordingListener listener = new RecordingListener();
         AtomicReference<Stage> stageRef = new AtomicReference<>();
 
@@ -136,17 +187,55 @@ public class JavaFxWidgetHostTests {
             host.navigate(FxTestToolkit.pageUrl(page));
         });
 
-        // Nothing in the test places it, so only the host's own fallback can.
-        FxTestToolkit.waitUntil("the measured placement", () -> showing(stageRef));
+        FxTestToolkit.waitUntil("the missing size report", () -> !listener.missingSizes.isEmpty());
 
-        FxTestToolkit.onFx(() -> {
-            Stage stage = stageRef.get();
-            Assert.assertTrue("card should be no wider than the surface", stage.getWidth() <= 900);
-            Assert.assertTrue("card should have a real height", stage.getHeight() > 0);
-            // Centred horizontally on the surface.
-            Assert.assertEquals((900 - stage.getWidth()) / 2, stage.getX(), 2.0);
-            stage.close();
+        Assert.assertEquals(0, listener.loadFailures);
+        Assert.assertFalse("the host must not place it itself", showing(stageRef));
+
+        FxTestToolkit.onFx(() -> stageRef.get().close());
+    }
+
+    /**
+     * A load that never resolves is reported as a failure once the deadline passes.
+     * <p>
+     * WebKit reports neither success nor failure for a connection that is accepted and then goes
+     * quiet, which left the caller with no card and no callback at all: a click that did nothing.
+     */
+    @Test
+    public void aLoadThatNeverResolves_isReportedAsAFailure() throws Exception {
+        RecordingListener listener = new RecordingListener();
+        AtomicReference<Stage> stageRef = new AtomicReference<>();
+
+        // Accepts the connection and then says nothing, which is what stalls a load.
+        ServerSocket silent = new ServerSocket(0);
+        Thread accepting = new Thread(() -> {
+            try {
+                while (!silent.isClosed()) {
+                    silent.accept();
+                }
+            } catch (IOException expected) {
+                // The socket was closed by the test.
+            }
         });
+        accepting.setDaemon(true);
+        accepting.start();
+
+        Duration original = JavaFxWidgetHost.loadTimeout;
+        JavaFxWidgetHost.loadTimeout = Duration.millis(400);
+        try {
+            FxTestToolkit.onFx(() -> {
+                JavaFxWidgetHost host = newHost(new WidgetSurface(0, 0, 900, 700), listener, stageRef);
+                host.navigate("http://127.0.0.1:" + silent.getLocalPort() + "/stalls");
+            });
+
+            FxTestToolkit.waitUntil("the deadline to pass", () -> listener.loadFailures > 0);
+            Assert.assertEquals(0, listener.pageLoads);
+        } finally {
+            JavaFxWidgetHost.loadTimeout = original;
+            silent.close();
+        }
+
+        FxTestToolkit.onFx(() -> stageRef.get().close());
     }
 
     /**
@@ -242,6 +331,8 @@ public class JavaFxWidgetHostTests {
 
         final List<String> navigations = Collections.synchronizedList(new ArrayList<>());
         final List<String> messages = Collections.synchronizedList(new ArrayList<>());
+        final List<String> missingSizes = Collections.synchronizedList(new ArrayList<>());
+        final List<String> measuredCards = Collections.synchronizedList(new ArrayList<>());
         volatile int pageLoads = 0;
         volatile int loadFailures = 0;
 
@@ -263,6 +354,22 @@ public class JavaFxWidgetHostTests {
         @Override
         public void onLoadFailed() {
             loadFailures++;
+        }
+
+        @Override
+        public void onSizeNotReported(int paintedWidth, int paintedHeight) {
+            missingSizes.add(paintedWidth + "x" + paintedHeight);
+        }
+
+        /** What to do about a measurement, when a test wants to react like the presenter does. */
+        volatile java.util.function.BiConsumer<Integer, Integer> onMeasured;
+
+        @Override
+        public void onCardMeasured(int width, int height) {
+            measuredCards.add(width + "x" + height);
+            if (onMeasured != null) {
+                onMeasured.accept(width, height);
+            }
         }
     }
 }

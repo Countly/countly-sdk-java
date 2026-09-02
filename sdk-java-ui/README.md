@@ -69,9 +69,17 @@ Countly.instance().feedback().getAvailableFeedbackWidgets((widgets, error) -> {
 });
 ```
 
-The card sizes and positions itself where the widget asks, on the primary screen's work area by
-default, or inside the application window when you call
-`CountlyWebView.setShowWidgetsWithinApp(true)`.
+The card takes the size the widget asks for, and is anchored the way that widget type is anchored on
+the web: an NPS at the bottom centre, a survey at the bottom left or bottom right per its
+`appearance.position`, and a rating as a centred card.
+
+By default that happens on the work area of the screen the application is on. To keep both widget
+cards and content blocks inside the application window instead, set this once before showing
+anything:
+
+```java
+CountlyWebView.setShowWidgetsWithinApp(true);
+```
 
 ### Content
 

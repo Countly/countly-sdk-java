@@ -83,7 +83,7 @@ public class CountlyWebViewTests {
 
     @After
     public void stopSdk() {
-        CountlyWebView.setShowWidgetsWithinApp(false);
+        CountlyWebView.forgetDisplayAreaForTests();
         CountlyWebView.setWebViewDiagnosticsEnabled(false);
         Countly.instance().halt();
     }

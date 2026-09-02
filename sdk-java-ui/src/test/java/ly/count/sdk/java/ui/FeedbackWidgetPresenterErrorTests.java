@@ -113,6 +113,11 @@ public class FeedbackWidgetPresenterErrorTests {
         }
 
         @Override
+        public void setSurface(WidgetSurface updated) {
+            surface = updated;
+        }
+
+        @Override
         public void navigate(String url) {
         }
 

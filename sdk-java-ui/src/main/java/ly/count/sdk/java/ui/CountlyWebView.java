@@ -1,6 +1,8 @@
 package ly.count.sdk.java.ui;
 
+import java.util.concurrent.atomic.AtomicReference;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
 import javafx.scene.Scene;
 import javafx.scene.paint.Color;
 import javafx.scene.web.WebView;
@@ -30,6 +32,9 @@ import ly.count.sdk.java.internal.ModuleFeedback;
  * Countly.instance().feedback().getAvailableFeedbackWidgets((widgets, error) -&gt;
  *     Platform.runLater(() -&gt; CountlyWebView.presentFeedbackWidget(stage, widgets.get(0), null)));
  *
+ * // Configuration, set once up front: lay widgets and content out inside the application window
+ * CountlyWebView.setShowWidgetsWithinApp(true);
+ *
  * // Content (experimental)
  * CountlyWebView.enableContentZone();
  * CountlyWebView.disableContentZone();
@@ -37,21 +42,51 @@ import ly.count.sdk.java.internal.ModuleFeedback;
  */
 public final class CountlyWebView {
 
-    private static volatile boolean showWidgetsWithinApp = false;
+    private static volatile boolean displayAreaSet = false;
     private static volatile JavaFxContentDisplay contentDisplay = null;
     private static volatile Window contentDisplayOwner = null;
 
     private CountlyWebView() {
     }
 
+
     /**
-     * Place widget cards inside the application window instead of on the screen's work area.
-     * Defaults to {@code false}, which is what a desktop widget expects.
+     * Lay feedback widget cards and content blocks out inside the application window instead of over
+     * the work area of the screen the application is on. Applies to both.
+     * <p>
+     * Configuration, set once before the first widget or content block: a widget's own layout is
+     * built around one of the two, so moving the goalposts underneath a running application is not
+     * something it can be expected to cope with. Later calls are ignored.
+     * <p>
+     * Defaults to {@code false}, which is what a desktop widget expects. Pass {@code true} when the
+     * application should feel self contained and never draw over the rest of the desktop.
      *
-     * @param withinApp {@code true} to keep cards inside the owner window
+     * @param withinApp {@code true} to keep cards and content inside the application window
      */
     public static void setShowWidgetsWithinApp(boolean withinApp) {
-        showWidgetsWithinApp = withinApp;
+        if (displayAreaSet) {
+            UiLog.w("[CountlyWebView] setShowWidgetsWithinApp, this is set once and it already is ["
+                + FxSurfaces.isDisplayWithinApp() + "], ignoring [" + withinApp + "]");
+            return;
+        }
+        displayAreaSet = true;
+        FxSurfaces.setDisplayWithinApp(withinApp);
+    }
+
+    /**
+     * @return whether cards and content are laid out inside the application window
+     */
+    public static boolean isShowingWidgetsWithinApp() {
+        return FxSurfaces.isDisplayWithinApp();
+    }
+
+    /**
+     * Forgets that the setting above was set, so a test can set it again. A one time setting is
+     * one time per process, and tests share one.
+     */
+    static void forgetDisplayAreaForTests() {
+        displayAreaSet = false;
+        FxSurfaces.setDisplayWithinApp(false);
     }
 
     /**
@@ -95,6 +130,7 @@ public final class CountlyWebView {
 
         try {
             FxSurfaces.prewarm();
+            AtomicReference<FeedbackWidgetPresenter> presenterRef = new AtomicReference<>();
             WidgetSurface surface = resolveSurface(owner);
             WebView webView = new WebView();
 
@@ -118,7 +154,9 @@ public final class CountlyWebView {
             JavaFxWidgetHost host = new JavaFxWidgetHost(stage, webView, surface);
             host.initialize();
 
-            FeedbackWidgetPresenter presenter = new FeedbackWidgetPresenter(host, feedback, onClosed);
+            FeedbackWidgetPresenter presenter = new FeedbackWidgetPresenter(host, feedback,
+                followWindow(owner, host, presenterRef, onClosed));
+            presenterRef.set(presenter);
             presenter.start(widget);
         } catch (Throwable t) {
             UiLog.e("[CountlyWebView] presentFeedbackWidget, could not show the widget, [" + t + "]");
@@ -315,15 +353,62 @@ public final class CountlyWebView {
         content.exitContentZone();
     }
 
-    private static WidgetSurface resolveSurface(Window owner) {
-        Window window = owner != null ? owner : FxSurfaces.primaryApplicationWindow();
-
-        if (showWidgetsWithinApp) {
-            return FxSurfaces.boundsOf(window);
+    /**
+     * Keeps a card with the window it belongs to: a window that is moved, resized, or dragged to
+     * another monitor takes its card with it, rather than leaving it stranded where the window used
+     * to be. The listeners are removed when the card closes, so a long lived application window does
+     * not collect one set per widget it ever showed.
+     *
+     * @param owner the window to follow, may be {@code null}
+     * @param host the host whose surface to keep current
+     * @param presenterRef where the presenter will be, once it exists
+     * @param onClosed the caller's own callback, may be {@code null}
+     * @return the callback to hand the presenter
+     */
+    private static Runnable followWindow(Window owner, JavaFxWidgetHost host,
+        AtomicReference<FeedbackWidgetPresenter> presenterRef, Runnable onClosed) {
+        if (owner == null) {
+            return onClosed;
         }
 
-        // The work area of the screen the application is on, which is not necessarily the primary one.
-        return FxSurfaces.screenOf(window);
+        ChangeListener<Number> moved = (observable, was, now) -> {
+            host.setSurface(resolveSurface(owner));
+            FeedbackWidgetPresenter presenter = presenterRef.get();
+            if (presenter != null) {
+                presenter.refreshPlacement();
+            }
+        };
+        owner.xProperty().addListener(moved);
+        owner.yProperty().addListener(moved);
+        owner.widthProperty().addListener(moved);
+        owner.heightProperty().addListener(moved);
+
+        return () -> {
+            owner.xProperty().removeListener(moved);
+            owner.yProperty().removeListener(moved);
+            owner.widthProperty().removeListener(moved);
+            owner.heightProperty().removeListener(moved);
+            run(onClosed);
+        };
+    }
+
+    private static WidgetSurface resolveSurface(Window owner) {
+        Window window = owner != null ? owner : FxSurfaces.primaryApplicationWindow();
+        WidgetSurface surface = FxSurfaces.surfaceFor(window);
+
+        // Which monitor a card lands on is the application window's, so when a card is reported as
+        // not showing up, the first thing worth knowing is where the SDK thought that window was.
+        UiLog.d("[CountlyWebView] resolveSurface, withinApp=" + FxSurfaces.isDisplayWithinApp() + " " + surface
+            + ", owner " + describe(window));
+        return surface;
+    }
+
+    private static String describe(Window window) {
+        if (window == null) {
+            return "none, so the primary screen";
+        }
+        return (window.isShowing() ? "showing" : "not on screen") + " at " + (int) window.getX()
+            + "," + (int) window.getY() + " " + (int) window.getWidth() + "x" + (int) window.getHeight();
     }
 
     private static void runOnFxThread(Runnable runnable) {

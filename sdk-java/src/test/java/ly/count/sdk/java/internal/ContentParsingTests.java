@@ -128,6 +128,33 @@ public class ContentParsingTests {
     }
 
     /**
+     * A "mailto:" destination survives parsing intact, and the close flag beside it is honoured.
+     * <p>
+     * Both shapes matter: close as its own parameter, and close carried inside the destination's own
+     * query, which has to be honoured and then stripped so the address is left clean.
+     */
+    @Test
+    public void widgetActionParser_handlesMailLinksWithClose() {
+        WidgetAction plain = WidgetActionParser.parse(
+            "https://countly_action_event/?cly_x_action_event=1&action=link"
+                + "&link=mailto%3Asupport%40count.ly&close=1", L);
+        Assert.assertTrue(plain.close);
+        Assert.assertEquals("mailto:support@count.ly", plain.link);
+
+        WidgetAction withSubject = WidgetActionParser.parse(
+            "https://countly_action_event/?cly_x_action_event=1&action=link"
+                + "&link=mailto%3Asupport%40count.ly%3Fsubject%3DHelp%26close%3D1", L);
+        Assert.assertTrue("close inside the destination's query must be honoured", withSubject.close);
+        Assert.assertEquals("the address must be left clean", "mailto:support@count.ly?subject=Help", withSubject.link);
+
+        WidgetAction noClose = WidgetActionParser.parse(
+            "https://countly_action_event/?cly_x_action_event=1&action=link"
+                + "&link=mailto%3Asupport%40count.ly&close=0", L);
+        Assert.assertFalse(noClose.close);
+        Assert.assertEquals("mailto:support@count.ly", noClose.link);
+    }
+
+    /**
      * Dropping a query parameter has to leave a valid URL behind, whatever position it was in.
      */
     @Test

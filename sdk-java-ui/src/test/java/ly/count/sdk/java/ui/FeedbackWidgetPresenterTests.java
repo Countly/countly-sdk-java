@@ -76,8 +76,11 @@ public class FeedbackWidgetPresenterTests {
 
         Assert.assertEquals(1, host.placements.size());
         ContentPlacement placed = host.placements.get(0);
-        Assert.assertEquals(1200, placed.x);
-        Assert.assertEquals(40, placed.y);
+        // The widget's own rect supplies the size (360x500 for this landscape surface); the anchor
+        // comes from the widget type, the way the web SDK's stylesheet applies it. This one is an
+        // NPS, so: bottom, centred.
+        Assert.assertEquals((1600 - 360) / 2, placed.x);
+        Assert.assertEquals(900 - 500, placed.y);
         Assert.assertEquals(360, placed.width);
         Assert.assertEquals(500, placed.height);
 
@@ -162,12 +165,133 @@ public class FeedbackWidgetPresenterTests {
 
         Assert.assertEquals(1, host.placements.size());
         ContentPlacement placed = host.placements.get(0);
-        // Clamped to the surface and offset by its origin.
+        // A request bigger than the surface is clamped to it, then anchored bottom centre, origin
+        // included.
         Assert.assertEquals(100, placed.x);
         Assert.assertEquals(50, placed.y);
         Assert.assertEquals(600, placed.width);
         Assert.assertEquals(1000, placed.height);
         Assert.assertEquals(0, host.closeCount);
+    }
+
+    /**
+     * A rating's card is a fixed size, so a measurement of its page is not worth re-placing for:
+     * the rectangle would not change, and every answer costs the host another measuring round
+     * before the card is allowed to appear.
+     */
+    @Test
+    public void aRating_isNotRefittedFromItsPage() {
+        widget.type = FeedbackWidgetType.rating;
+
+        FeedbackWidgetPresenter presenter = newPresenter();
+        presenter.start(widget);
+        host.listener.onPageLoaded();
+        host.listener.onSizeNotReported(50, 669);
+        Assert.assertEquals(1, host.placements.size());
+
+        host.listener.onCardMeasured(50, 669);
+        Assert.assertEquals("nothing to re-place", 1, host.placements.size());
+    }
+
+    /**
+     * A widget that never reports a size still gets a card, and it is the card its type calls for
+     * rather than the sliver its page painted. This is every rating widget: they report nothing and
+     * paint only a sticky tab, which came out as a 50px wide window.
+     */
+    @Test
+    public void aWidgetThatReportsNoSize_isPlacedByItsType() {
+        widget.type = FeedbackWidgetType.rating;
+
+        FeedbackWidgetPresenter presenter = newPresenter();
+        presenter.start(widget);
+        host.listener.onPageLoaded();
+        host.listener.onSizeNotReported(50, 669);
+
+        Assert.assertEquals(1, host.placements.size());
+        ContentPlacement placed = host.placements.get(0);
+        Assert.assertEquals(WidgetLayout.RATING_WIDTH, placed.width);
+        Assert.assertEquals(WidgetLayout.RATING_HEIGHT, placed.height);
+        Assert.assertEquals((1600 - WidgetLayout.RATING_WIDTH) / 2, placed.x);
+    }
+
+    /**
+     * With no type to go by, the size the page painted is the only thing left to place, and a page
+     * that painted nothing at all still has to end up somewhere sane.
+     */
+    @Test
+    public void aWidgetOfUnknownType_isPlacedByWhatItPainted() {
+        widget.type = null;
+
+        FeedbackWidgetPresenter presenter = newPresenter();
+        presenter.start(widget);
+        host.listener.onSizeNotReported(320, 240);
+
+        ContentPlacement painted = host.placements.get(0);
+        Assert.assertEquals(320, painted.width);
+        Assert.assertEquals(240, painted.height);
+
+        host.listener.onSizeNotReported(0, 0);
+
+        ContentPlacement fallback = host.placements.get(1);
+        Assert.assertEquals(WidgetLayout.DEFAULT_WIDTH, fallback.width);
+        Assert.assertEquals(WidgetLayout.SURVEY_DEFAULT_HEIGHT, fallback.height);
+    }
+
+    /**
+     * The card is fitted to what the page actually drew.
+     * <p>
+     * A page lays its card out at the top of the viewport, so a window taller than the card leaves
+     * transparent space below it, and an NPS anchored to the bottom edge visibly floats above it.
+     */
+    @Test
+    public void theCardIsFittedToWhatThePageDrew() {
+        FeedbackWidgetPresenter presenter = newPresenter();
+        presenter.start(widget);
+        host.listener.onPageLoaded();
+
+        host.listener.onWidgetMessage("{\"cly_widget_command\":1,\"action\":\"resize_me\","
+            + "\"resize_me\":{\"l\":{\"x\":800,\"y\":0,\"w\":480,\"h\":563}}}");
+        Assert.assertEquals(563, host.placements.get(0).height);
+
+        host.listener.onCardMeasured(480, 414);
+
+        ContentPlacement fitted = host.placements.get(1);
+        Assert.assertEquals("the drawn card's height wins", 414, fitted.height);
+        Assert.assertEquals(480, fitted.width);
+        Assert.assertEquals("still flush with the bottom", 900 - 414, fitted.y);
+        Assert.assertEquals((1600 - 480) / 2, fitted.x);
+    }
+
+    /**
+     * A card follows the window it was placed against, so moving or resizing the application window
+     * does not leave the card stranded where the window used to be.
+     */
+    @Test
+    public void aMovedSurface_takesTheCardWithIt() {
+        FeedbackWidgetPresenter presenter = newPresenter();
+
+        // Nothing to re-place before the widget has asked for anything.
+        presenter.refreshPlacement();
+        Assert.assertTrue(host.placements.isEmpty());
+
+        presenter.start(widget);
+        host.listener.onPageLoaded();
+        host.listener.onWidgetMessage("{\"cly_widget_command\":1,\"action\":\"resize_me\","
+            + "\"resize_me\":{\"l\":{\"x\":800,\"y\":0,\"w\":480,\"h\":400}}}");
+
+        host.setSurface(new WidgetSurface(-1000, -200, 1200, 800));
+        presenter.refreshPlacement();
+
+        ContentPlacement moved = host.placements.get(host.placements.size() - 1);
+        Assert.assertEquals("centred on the new surface", -1000 + (1200 - 480) / 2, moved.x);
+        Assert.assertEquals("bottom of the new surface", -200 + 800 - 400, moved.y);
+        Assert.assertEquals("the widget's own size is kept", 400, moved.height);
+
+        // A dismissed card has nothing left to follow with.
+        host.listener.onNavigationStarting(CLOSE_URL);
+        int placementsAtClose = host.placements.size();
+        presenter.refreshPlacement();
+        Assert.assertEquals(placementsAtClose, host.placements.size());
     }
 
     private FeedbackWidgetPresenter newPresenter() {
@@ -191,6 +315,11 @@ public class FeedbackWidgetPresenterTests {
         @Override
         public WidgetSurface getSurface() {
             return surface;
+        }
+
+        @Override
+        public void setSurface(WidgetSurface updated) {
+            surface = updated;
         }
 
         @Override

@@ -142,6 +142,50 @@ public class FxSurfacesTests {
     }
 
     /**
+     * The display area setting decides what {@code surfaceFor} measures, and one setting has to
+     * cover both the widget cards and the content blocks.
+     */
+    @Test
+    public void surfaceFor_followsTheOneTimeSetting() {
+        Assert.assertFalse("the screen is the default", FxSurfaces.isDisplayWithinApp());
+
+        FxTestToolkit.onFx(() -> {
+            Stage owner = new Stage(StageStyle.UNDECORATED);
+            owner.setScene(new Scene(new Pane(), 500, 400));
+            owner.setX(120);
+            owner.setY(90);
+            owner.show();
+
+            try {
+                WidgetSurface screen = FxSurfaces.surfaceFor(owner);
+                Assert.assertEquals(FxSurfaces.screenOf(owner).toString(), screen.toString());
+
+                FxSurfaces.setDisplayWithinApp(true);
+                Assert.assertTrue(FxSurfaces.isDisplayWithinApp());
+                WidgetSurface window = FxSurfaces.surfaceFor(owner);
+                Assert.assertEquals(FxSurfaces.boundsOf(owner).toString(), window.toString());
+                Assert.assertTrue(CountlyWebView.isShowingWidgetsWithinApp());
+
+                // A window sits inside its own screen, so this is the whole point of the setting.
+                Assert.assertTrue(window.width <= screen.width);
+                Assert.assertTrue(window.height <= screen.height);
+
+                // Set through the public API, which is configuration: the first call decides and
+                // later ones are ignored, so a widget's layout cannot change under a running app.
+                CountlyWebView.forgetDisplayAreaForTests();
+                Assert.assertFalse(CountlyWebView.isShowingWidgetsWithinApp());
+                CountlyWebView.setShowWidgetsWithinApp(true);
+                Assert.assertTrue(CountlyWebView.isShowingWidgetsWithinApp());
+                CountlyWebView.setShowWidgetsWithinApp(false);
+                Assert.assertTrue("a second call must not change it", CountlyWebView.isShowingWidgetsWithinApp());
+            } finally {
+                CountlyWebView.forgetDisplayAreaForTests();
+                owner.close();
+            }
+        });
+    }
+
+    /**
      * Starting WebKit early is idempotent and does not throw.
      */
     @Test

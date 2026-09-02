@@ -11,7 +11,7 @@
   * "presentNPS", "presentSurvey" and "presentRating" for fetching, picking and showing a widget in one call, optionally by widget ID, name or tag
   * "CountlyWebView.presentFeedbackWidget" for showing a feedback widget you picked yourself
   * "CountlyWebView.enableContentZone" / "CountlyWebView.disableContentZone" for showing content
-  * "CountlyWebView.setShowWidgetsWithinApp" for keeping widget cards inside the application window
+  * "CountlyWebView.setShowWidgetsWithinApp" for laying widget cards and content out inside the application window instead of over the screen
   * Implement "ContentDisplay" yourself to draw content with another toolkit.
 * Updated JSON library version from "20250107" to "20250517".
 

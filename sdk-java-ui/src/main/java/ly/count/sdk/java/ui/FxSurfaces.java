@@ -116,21 +116,66 @@ final class FxSurfaces {
      * @return {@code left,top,width,height}, or {@code null} when the page has no card element at
      *     all. Width and height may be zero when the window has not been sized yet.
      */
+    /**
+     * The containers every feedback widget and content template ships in its static HTML, so their
+     * presence is what tells a real widget page apart from whatever the browser substituted for one.
+     */
+    private static final String WIDGET_MARKERS =
+        "#widget-body,.modal-content,[class*=\"survey-widget\"],[id^=\"nps-\"],"
+            + "[class*=\"countly-ratings\"],[class*=\"cly-\"],.smiley-container";
+
+    /**
+     * Whether the loaded document is a widget page at all.
+     * <p>
+     * JavaFX reports an HTTP level failure (a refused connection, a 404, a gateway error) as a
+     * SUCCEEDED load carrying an error document, so this is the only way to notice one. It asks
+     * whether the widget templates' own elements are in the document, not whether anything was
+     * painted: they are in the served HTML from the moment it parses, whereas painting waits on the
+     * widget's own fetches, and judging by paint killed slow widgets that were perfectly fine.
+     *
+     * @param engine the engine whose document to inspect
+     * @return {@code true} when this looks like a widget page, and when it cannot be determined
+     */
+    static boolean looksLikeWidgetPage(WebEngine engine) {
+        try {
+            Object result = engine.executeScript(
+                "(function(){try{return !!(document.body&&document.querySelector('" + WIDGET_MARKERS + "'));}"
+                    + "catch(e){return true;}})()");
+            return !(result instanceof Boolean) || (Boolean) result;
+        } catch (Throwable t) {
+            // Undecidable, so it is not held against the page.
+            UiLog.w("[FxSurfaces] looksLikeWidgetPage, could not inspect the page, [" + t + "]");
+            return true;
+        }
+    }
+
     static int[] measurePaintedContent(WebEngine engine) {
         try {
             Object result = engine.executeScript(
                 "(function(){try{"
-                    + "var e=document.getElementById('widget-body');"
-                    + "if(!e){var kids=document.body?document.body.children:[];"
-                    + "for(var i=0;i<kids.length;i++){var s=window.getComputedStyle(kids[i]);"
-                    + "var bg=s.backgroundColor;"
-                    + "if(bg&&bg!=='transparent'&&bg.indexOf('rgba(0, 0, 0, 0)')<0){e=kids[i];break;}}}"
+                    + "if(!document.body){return '';}"
+                    // The widget templates' own containers, most specific first. Guessing from
+                    // style does not work: every one of these sits in a transparent wrapper, so a
+                    // "child of body with a background" test finds nothing on a perfectly good
+                    // page, and that used to be read as a failed load.
+                    + "var sel=['#widget-body','.modal-content','[class*=\"survey-widget\"]',"
+                    + "'[id^=\"nps-\"]','[class*=\"countly-ratings\"]','[class*=\"cly-\"]',"
+                    + "'.smiley-container'];"
+                    + "var e=null;"
+                    + "for(var i=0;i<sel.length&&!e;i++){var c=document.querySelectorAll(sel[i]);"
+                    + "for(var j=0;j<c.length;j++){var r=c[j].getBoundingClientRect();"
+                    + "if(r.width>0&&r.height>0){e=c[j];break;}}}"
+                    // Anything else the page painted, biggest first: enough to say "this rendered
+                    // something", which is all the caller needs.
+                    + "if(!e){var best=0;var kids=document.body.querySelectorAll('*');"
+                    + "for(var k=0;k<kids.length;k++){var b=kids[k].getBoundingClientRect();"
+                    + "var area=b.width*b.height;if(area>best){best=area;e=kids[k];}}}"
                     + "if(!e){return '';}"
                     // Zero sizes are reported rather than rejected: the window is still 1x1 before
-                    // it has been placed, so a real card measures zero here. The absence of the
-                    // element is what says "this is not a widget page", not its size.
-                    + "var b=e.getBoundingClientRect();"
-                    + "return [Math.round(b.left),Math.round(b.top),Math.round(b.width),Math.round(b.height)].join(',');"
+                    // it has been placed, so a real card measures zero here. The absence of any
+                    // element at all is what says the page rendered nothing.
+                    + "var b2=e.getBoundingClientRect();"
+                    + "return [Math.round(b2.left),Math.round(b2.top),Math.round(b2.width),Math.round(b2.height)].join(',');"
                     + "}catch(err){return '';}})()");
             if (!(result instanceof String) || ((String) result).isEmpty()) {
                 return null;
@@ -354,6 +399,30 @@ final class FxSurfaces {
      * @param owner the window to measure
      * @return the window's own bounds, or the primary screen's work area when it is not on screen yet
      */
+    /**
+     * Whether widget cards and content blocks are laid out inside the application window instead of
+     * on the screen the application is on. Both displays read this, so one setting decides both.
+     */
+    private static volatile boolean displayWithinApp = false;
+
+    static void setDisplayWithinApp(boolean withinApp) {
+        displayWithinApp = withinApp;
+    }
+
+    static boolean isDisplayWithinApp() {
+        return displayWithinApp;
+    }
+
+    /**
+     * The area a card or a content block may occupy, per the current setting.
+     *
+     * @param owner the application window to measure against, {@code null} for the primary screen
+     * @return the application window's bounds, or the work area of the screen it is on
+     */
+    static WidgetSurface surfaceFor(Window owner) {
+        return displayWithinApp ? boundsOf(owner) : screenOf(owner);
+    }
+
     static WidgetSurface boundsOf(Window owner) {
         if (!isOnScreen(owner)) {
             return screenOf(null);
