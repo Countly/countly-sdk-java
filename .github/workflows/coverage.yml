@@ -43,10 +43,16 @@ jobs:
           # more than the default single commit.
           fetch-depth: 0
 
-      - name: Set up JDK 17
+      # Two JDKs on purpose. 17 is what the build itself runs on and what sdk-java-ui publishes
+      # bytecode for; 21 is what that module's tests run on, because the headless JavaFX toolkit
+      # they use (openjfx-monocle 21, matched to JavaFX 21) is Java 21 bytecode. setup-java leaves
+      # the LAST listed version as JAVA_HOME, so 17 comes second.
+      - name: Set up JDK 21 and 17
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: |
+            21
+            17
           distribution: 'corretto'
 
       - name: Set up Gradle
@@ -58,9 +64,12 @@ jobs:
       # than sending the reader off to the workflow logs.
       - name: Run tests under jacoco
         id: gradle
+        # -Dcountly.ui.pageLoadTests=true opts the headless web view tests back in. They are skipped
+        # by default only because JavaFX 21's WebKit crashes the JVM when loading a page on
+        # macOS/aarch64; Linux is where that coverage is collected.
         run: |
           set -o pipefail
-          ./gradlew coverage --console=plain 2>&1 | tee coverage-run.log
+          ./gradlew coverage --console=plain -Dcountly.ui.pageLoadTests=true 2>&1 | tee coverage-run.log
 
       # Best effort, and never allowed to fail the job: without it the report simply has no
       # changed-files section. checkout already fetched the full history, so this only makes

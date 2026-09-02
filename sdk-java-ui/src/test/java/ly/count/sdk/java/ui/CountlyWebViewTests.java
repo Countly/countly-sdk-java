@@ -38,6 +38,8 @@ public class CountlyWebViewTests {
 
     @BeforeClass
     public static void startToolkit() throws IOException {
+        // See the javadoc: loading real pages headlessly crashes JavaFX 21's WebKit on macOS.
+        FxTestToolkit.assumeRealPageLoadsAreSafe();
         FxTestToolkit.start();
 
         // A real widget page over real HTTP, so the whole chain runs: the SDK builds the URL, the

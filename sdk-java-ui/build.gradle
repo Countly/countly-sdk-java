@@ -14,9 +14,15 @@ tasks.withType(Test) {
   systemProperty 'monocle.platform', 'Headless'
   systemProperty 'prism.order', 'sw'
 
-  // Monocle has to match the JavaFX version exactly: a mismatched build is missing methods the
-  // glass layer expects and dies as soon as a stage is shown. The module toolchain above already
-  // pins the test JVM, so nothing extra is needed here.
+  // Monocle has to match the JavaFX version exactly. Mismatches are not graceful: Monocle 11 with
+  // JavaFX 17 threw AbstractMethodError from the glass Timer, and Monocle 17 with JavaFX 21 crashed
+  // the JVM outright (exit 134). So JavaFX 21 needs openjfx-monocle 21.
+  //
+  // That jar is Java 21 bytecode, so the TEST JVM has to be 21 while the published artifact stays
+  // at Java 17 (see the toolchain above). Only the tests need the newer JDK.
+  javaLauncher = javaToolchains.launcherFor {
+    languageVersion = JavaLanguageVersion.of(21)
+  }
 }
 
 dependencies {

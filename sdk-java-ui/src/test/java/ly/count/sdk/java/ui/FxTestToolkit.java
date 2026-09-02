@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import javafx.application.Platform;
 import org.junit.Assert;
+import org.junit.Assume;
 
 /**
  * Runs the JavaFX display classes headlessly.
@@ -28,6 +29,31 @@ final class FxTestToolkit {
     private static boolean started = false;
 
     private FxTestToolkit() {
+    }
+
+    /**
+     * Skips a test class that loads real pages in a headless web view, on platforms where doing so
+     * takes the JVM down.
+     * <p>
+     * JavaFX 21's WebKit segfaults inside {@code libjfxwebkit} on the Monocle thread when a real
+     * page is loaded on macOS/aarch64: every test in the class passes and then the process dies with
+     * exit 134. Creating a web view and loading {@code about:blank} is fine, so this is specific to
+     * loading a document. JavaFX 17 did not do this, but JavaFX 21 is what provides
+     * {@code WebView.setPageFill}, which the content overlay needs to be transparent at all.
+     * <p>
+     * Linux CI is not known to be affected and is where this coverage matters, so the skip is
+     * platform scoped rather than blanket. Force the tests anywhere with
+     * {@code -Dcountly.ui.pageLoadTests=true}.
+     */
+    static void assumeRealPageLoadsAreSafe() {
+        if (Boolean.getBoolean("countly.ui.pageLoadTests")) {
+            return;
+        }
+        String os = System.getProperty("os.name", "");
+        Assume.assumeFalse(
+            "skipped: JavaFX 21 WebKit crashes the JVM when loading a page headlessly on macOS."
+                + " Run with -Dcountly.ui.pageLoadTests=true to force it.",
+            os.toLowerCase().contains("mac"));
     }
 
     static synchronized void start() {

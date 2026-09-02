@@ -45,6 +45,8 @@ public class JavaFxContentDisplayTests {
 
     @BeforeClass
     public static void startToolkit() throws IOException {
+        // See the javadoc: loading real pages headlessly crashes JavaFX 21's WebKit on macOS.
+        FxTestToolkit.assumeRealPageLoadsAreSafe();
         FxTestToolkit.start();
 
         // An endpoint that accepts the request and then does not answer for far longer than the
