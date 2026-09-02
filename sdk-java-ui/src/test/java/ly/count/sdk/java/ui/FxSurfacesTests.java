@@ -21,8 +21,7 @@ public class FxSurfacesTests {
 
     @BeforeClass
     public static void startToolkit() {
-        // Needs a toolkit, and the screen assertions below only hold on a predictable single screen.
-        FxTestToolkit.assumeRealPageLoadsAreSafe();
+        FxTestToolkit.assumeToolkitAvailable();
     }
 
     @AfterClass
@@ -38,8 +37,7 @@ public class FxSurfacesTests {
     @Test
     public void surfaces_fallBackToThePrimaryScreenUntilAWindowIsOnScreen() {
         WidgetSurface primary = FxSurfaces.screenOf(null);
-        Assert.assertTrue("the headless screen should have a size", primary.width > 0 && primary.height > 0);
-        Assert.assertTrue(primary.isLandscape());
+        Assert.assertTrue("the primary screen should have a size", primary.width > 0 && primary.height > 0);
 
         // Not shown yet, so there is nothing to follow.
         FxTestToolkit.onFx(() -> {
@@ -62,13 +60,15 @@ public class FxSurfacesTests {
                 WidgetSurface screen = FxSurfaces.screenOf(shown);
                 Assert.assertTrue(screen.width > 0 && screen.height > 0);
 
+                // Compared against what the stage reports, not against the numbers we asked for: a
+                // window manager is free to move or resize a window it is given, and on a real
+                // desktop it does.
                 WidgetSurface own = FxSurfaces.boundsOf(shown);
-                Assert.assertEquals(40, own.x);
-                Assert.assertEquals(30, own.y);
-                Assert.assertEquals(300, own.width);
-                Assert.assertEquals(200, own.height);
-                Assert.assertTrue(own.isLandscape());
-                Assert.assertTrue(own.toString().contains("width=300"));
+                Assert.assertEquals((int) shown.getX(), own.x);
+                Assert.assertEquals((int) shown.getY(), own.y);
+                Assert.assertEquals((int) shown.getWidth(), own.width);
+                Assert.assertEquals((int) shown.getHeight(), own.height);
+                Assert.assertTrue(own.toString().contains("width=" + own.width));
             } finally {
                 shown.close();
             }

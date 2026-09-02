@@ -13,6 +13,13 @@ buildscript {
 tasks.withType(Test) {
   systemProperty 'java.awt.headless', 'true'
 
+  // One JVM per test class. JavaFX cannot be restarted inside a process, so every class that needs
+  // the toolkit shares one, and WebKit does not survive that: each page loading class passes on its
+  // own, but running two in the same JVM segfaults libjfxwebkit. Forking per class is what makes
+  // them runnable at all.
+  forkEvery = 1
+
+
   // Forwarded explicitly. "./gradlew -Dcountly.ui.pageLoadTests=true" sets the property on the
   // Gradle daemon, NOT on the forked test JVM, so without this line the toolkit dependent tests
   // silently skipped even in the CI job that passes the flag, and this module's reported coverage
@@ -69,6 +76,14 @@ apply plugin: 'jacoco'
 
 jacoco {
   toolVersion = JACOCO_VERSION
+}
+
+// Experiment hook: -PnoJacoco=true detaches the coverage agent from the test JVM, to tell a JVM
+// crash caused by the agent apart from one caused by the code under test.
+if (project.hasProperty('noJacoco')) {
+  tasks.withType(Test).configureEach {
+    jacoco.enabled = false
+  }
 }
 
 jacocoTestReport {

@@ -25,8 +25,7 @@ public class JavaFxWidgetHostTests {
 
     @BeforeClass
     public static void startToolkit() {
-        // See the javadoc: loading real pages headlessly crashes JavaFX 21's WebKit on macOS.
-        FxTestToolkit.assumeRealPageLoadsAreSafe();
+        FxTestToolkit.assumeToolkitAvailable();
         FxTestToolkit.start();
     }
 

@@ -32,22 +32,36 @@ final class FxTestToolkit {
     }
 
     /**
-     * Skips a test class that needs a live JavaFX toolkit unless this environment is known to
-     * support one.
+     * Skips a test class when this machine cannot start a JavaFX toolkit at all.
      * <p>
-     * Opt-in rather than opt-out, because every automatic option was tried and failed. Headless
-     * Monocle is unusable: version 11 threw {@code AbstractMethodError} against JavaFX 17, 17
-     * crashed the JVM against JavaFX 21, 21 needs a Java 21 test JVM, and with all that solved
-     * JavaFX 21's WebKit still segfaulted the moment a real page loaded, on macOS, Linux and
-     * Windows alike. The real toolkit is not automatic either: on macOS it is unstable inside a
-     * forked Gradle test JVM, and it reports the machine's actual monitors, which makes screen
-     * geometry assertions machine dependent.
-     * <p>
-     * So these run in exactly one place, the Linux CI job, under xvfb: a real toolkit with a single
-     * predictable virtual screen. Enable them anywhere with {@code -Dcountly.ui.pageLoadTests=true},
-     * which is what that job passes.
+     * Most of the toolkit dependent classes are fine: with one JVM per class (see the build file)
+     * they load real pages and pass. Only {@code JavaFxContentDisplayTests} cannot run, and it has
+     * its own stricter gate.
      */
-    static void assumeRealPageLoadsAreSafe() {
+    static void assumeToolkitAvailable() {
+        try {
+            start();
+        } catch (Throwable t) {
+            Assume.assumeNoException("skipped: no JavaFX toolkit on this machine", t);
+        }
+    }
+
+    /**
+     * Skips a class that shows a TRANSPARENT stage with a web view in it.
+     * <p>
+     * Narrowed down by elimination: with one JVM per test class, every other toolkit dependent class
+     * loads real pages and passes. This one segfaults {@code libjfxwebkit} even run entirely alone,
+     * and it is the only class that combines {@code StageStyle.TRANSPARENT} with
+     * {@code WebView.setPageFill(TRANSPARENT)} — the transparency the content overlay needs. The
+     * same code is stable in a real application; it dies in a forked test JVM that creates and tears
+     * down transparent stages back to back.
+     * <p>
+     * Ruled out along the way: the jacoco agent (crashes identically without it), the URL scheme
+     * (file: and http: both fine elsewhere), headless Monocle, and xvfb on Linux.
+     * <p>
+     * Opt in with {@code -Dcountly.ui.pageLoadTests=true} if a future JavaFX fixes it.
+     */
+    static void assumeTransparentStagesAreSafe() {
         Assume.assumeTrue(
             "skipped: needs a live JavaFX toolkit. CI runs these on Linux under xvfb; enable"
                 + " locally with -Dcountly.ui.pageLoadTests=true and a desktop session.",
