@@ -12,6 +12,12 @@ buildscript {
 // display with xvfb.
 tasks.withType(Test) {
   systemProperty 'java.awt.headless', 'true'
+
+  // Forwarded explicitly. "./gradlew -Dcountly.ui.pageLoadTests=true" sets the property on the
+  // Gradle daemon, NOT on the forked test JVM, so without this line the toolkit dependent tests
+  // silently skipped even in the CI job that passes the flag, and this module's reported coverage
+  // was about a third of what it should be.
+  systemProperty 'countly.ui.pageLoadTests', System.getProperty('countly.ui.pageLoadTests', 'false')
 }
 
 dependencies {
