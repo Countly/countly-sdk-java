@@ -5,12 +5,6 @@ pluginManagement {
     }
 }
 
-// Lets Gradle fetch a JDK it does not have. sdk-java-ui runs its tests on Java 21 (the headless
-// JavaFX toolkit it uses is built for 21) while still publishing Java 17 bytecode, so a machine
-// with only an older JDK can still build and test the whole repo.
-plugins {
-    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
-}
 
 include ':sdk-java', ':app-java'
 

@@ -36,14 +36,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 21 for the UI module's tests (openjfx-monocle 21 is Java 21 bytecode), 17 for everything
-      # else. setup-java leaves the last listed version as JAVA_HOME, so 17 comes second.
-      - name: Set up JDK 21 and 17
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: |
-            21
-            17
+          java-version: '17'
           distribution: 'corretto'
 
       - name: Set up Gradle
@@ -54,13 +50,21 @@ jobs:
         shell: bash
         run: ./gradlew :sdk-java:test --console=plain
 
-      # -Dcountly.ui.pageLoadTests=true opts the headless web view tests back in. They are skipped
-      # by default only on macOS, where JavaFX 21's WebKit crashes the JVM on a real page load; this
-      # job is here to find out whether Linux and Windows share that problem.
+      # The toolkit dependent tests run only on Linux, under xvfb: a real JavaFX toolkit with one
+      # predictable virtual screen. They are opt-in via -Dcountly.ui.pageLoadTests=true because
+      # headless Monocle segfaults JavaFX 21's WebKit on every platform, and the real toolkit is
+      # unstable in a forked test JVM on macOS. On Windows the rest of the suite still runs; the
+      # toolkit dependent classes skip themselves and say why.
       - name: Run the JavaFX UI tests
         if: always()
         shell: bash
-        run: ./gradlew :sdk-java-ui:test --console=plain -Dcountly.ui.pageLoadTests=true
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            sudo apt-get update -qq && sudo apt-get install -y -qq xvfb
+            xvfb-run -a ./gradlew :sdk-java-ui:test --console=plain -Dcountly.ui.pageLoadTests=true
+          else
+            ./gradlew :sdk-java-ui:test --console=plain
+          fi
 
       - name: Upload test results
         if: always()

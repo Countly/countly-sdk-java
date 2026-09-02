@@ -2,27 +2,16 @@ buildscript {
   repositories {
     mavenCentral()
   }
-  // A widget or content link would otherwise be handed to the real system browser
-// while tests run.
+  // A widget or content link would otherwise be handed to the real system browser while tests run.
 //
-// The rest runs JavaFX headlessly through Monocle, so the display classes can be exercised
-// in CI and on a developer machine without windows flashing on screen. Monocle version
-// tracks the JavaFX version above.
+// No Monocle. The headless JavaFX platform cost four separate failures: Monocle 11 threw
+// AbstractMethodError against JavaFX 17, Monocle 17 crashed the JVM against JavaFX 21, Monocle 21 is
+// Java 21 bytecode so it needed a newer test JVM, and once that was solved JavaFX 21's WebKit
+// segfaulted on every platform the moment a real page was loaded (verified on macOS, Linux and
+// Windows). The tests now use the real toolkit, which is far better exercised; CI gives Linux a
+// display with xvfb.
 tasks.withType(Test) {
   systemProperty 'java.awt.headless', 'true'
-  systemProperty 'glass.platform', 'Monocle'
-  systemProperty 'monocle.platform', 'Headless'
-  systemProperty 'prism.order', 'sw'
-
-  // Monocle has to match the JavaFX version exactly. Mismatches are not graceful: Monocle 11 with
-  // JavaFX 17 threw AbstractMethodError from the glass Timer, and Monocle 17 with JavaFX 21 crashed
-  // the JVM outright (exit 134). So JavaFX 21 needs openjfx-monocle 21.
-  //
-  // That jar is Java 21 bytecode, so the TEST JVM has to be 21 while the published artifact stays
-  // at Java 17 (see the toolchain above). Only the tests need the newer JDK.
-  javaLauncher = javaToolchains.launcherFor {
-    languageVersion = JavaLanguageVersion.of(21)
-  }
 }
 
 dependencies {
@@ -65,7 +54,6 @@ dependencies {
   implementation 'org.json:json:20250517'
 
   testImplementation 'junit:junit:4.13.1'
-  testImplementation 'org.testfx:openjfx-monocle:21.0.2'
   testImplementation 'org.mockito:mockito-core:4.11.0'
 }
 

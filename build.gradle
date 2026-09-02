@@ -12,7 +12,14 @@ allprojects {
   ext.POWERMOCK_VERSION = "1.7.4"
   ext.JACOCO_VERSION = "0.8.13"
 
+  // Without this the compiler uses the platform default, which is windows-1252 on the Windows
+  // runner and fails on any non-ASCII character in a source file.
+  tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+  }
+
   tasks.withType(Javadoc) {
+    options.encoding = 'UTF-8'
     options.addStringOption('Xdoclint:none', '-quiet')
   }
   repositories {
