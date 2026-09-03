@@ -35,6 +35,7 @@ class JavaFxWidgetHost implements WidgetWebHost {
      */
     static Duration loadTimeout = Duration.seconds(20);
 
+
     /** Long enough for the page to lay itself out at a newly applied size. */
     private static final Duration FIT_DELAY = Duration.millis(160);
 
@@ -265,6 +266,8 @@ class JavaFxWidgetHost implements WidgetWebHost {
             fits = 0;
             installBridge();
             FxSurfaces.logPageDiagnostics(engine, "JavaFxWidgetHost");
+            WebFontPrefetch.remember(engine);
+            FxSurfaces.repaintBackgroundImagesWhenTheyArrive(engine);
             if (listener != null) {
                 listener.onPageLoaded();
             }

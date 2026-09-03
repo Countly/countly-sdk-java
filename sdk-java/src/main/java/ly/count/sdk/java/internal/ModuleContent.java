@@ -22,8 +22,13 @@ import org.json.JSONObject;
 public class ModuleContent extends ModuleBase {
 
     /**
-     * How long the first fetch of a zone waits, so a zone entered right after init does not race
-     * the rest of the SDK coming up.
+     * How long after the SDK started the first fetch of a zone may happen, so a zone entered right
+     * after init does not race the rest of the SDK coming up.
+     * <p>
+     * It is a floor measured from init, not a delay charged to every {@code enterContentZone}: an
+     * application that turns the zone on later has already waited it out, and charging it anyway put
+     * four seconds between the call and the content appearing every single time. Same rule as the
+     * Android SDK's {@code CONTENT_START_DELAY_MS}, which only adds it while the SDK is that new.
      */
     static final long START_DELAY_MS = 4000;
 
@@ -46,6 +51,9 @@ public class ModuleContent extends ModuleBase {
     private int generation = 0;
 
     private int zoneTimerInterval = ConfigContent.DEFAULT_ZONE_TIMER_INTERVAL;
+
+    /** When the SDK came up, which is what {@link #START_DELAY_MS} is measured from. */
+    private long startedAt = 0;
     private ContentCallback globalContentCallback = null;
 
     ModuleContent() {
@@ -59,6 +67,7 @@ public class ModuleContent extends ModuleBase {
         zoneTimerInterval = config.content.zoneTimerInterval;
         globalContentCallback = config.content.globalContentCallback;
         contentInterface = new Content();
+        startedAt = TimeUtils.uniqueTimestampMs();
     }
 
     @Override
@@ -128,10 +137,30 @@ public class ModuleContent extends ModuleBase {
             generation++;
 
             contentTimer = new CountlyTimer(L);
-            contentTimer.startTimer(zoneTimerInterval, START_DELAY_MS, this::onZoneTimerTick);
+            contentTimer.startTimer(zoneTimerInterval, firstFetchDelay(), this::onZoneTimerTick);
         }
 
         L.i("[ModuleContent] enterContentZoneInternal, entered the content zone, fetch interval:[" + zoneTimerInterval + "] seconds");
+    }
+
+    /**
+     * @return how long the first fetch of this zone has to wait: whatever is left of
+     *     {@link #START_DELAY_MS} since the SDK started, and nothing once that has passed
+     */
+    long firstFetchDelay() {
+        long sinceStart = TimeUtils.uniqueTimestampMs() - startedAt;
+        long remaining = START_DELAY_MS - sinceStart;
+        return remaining > 0 ? remaining : 0;
+    }
+
+    /**
+     * Pretends the SDK started at another time, so a test can exercise the delay rule without
+     * waiting out the window.
+     *
+     * @param when when the SDK is to be considered started, in milliseconds
+     */
+    void startedAtForTests(long when) {
+        startedAt = when;
     }
 
     void exitContentZoneInternal() {

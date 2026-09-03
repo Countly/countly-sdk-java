@@ -1,5 +1,6 @@
 package ly.count.sdk.java.internal;
 
+import java.io.File;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
@@ -602,6 +603,20 @@ public class SDKCore {
             return null;
         }
         return core.config.content.contentUrlHandler;
+    }
+
+    /**
+     * The directory the SDK keeps its files in, so a display implementation outside this package can
+     * cache what it needs to show a widget without waiting for the network.
+     *
+     * @return the directory, or {@code null} when the SDK is not initialized
+     */
+    public static File sdkStorageDirectory() {
+        SDKCore core = instance;
+        if (core == null || core.config == null) {
+            return null;
+        }
+        return core.config.getSdkStorageRootDirectory();
     }
 
     public static boolean enabled(int feature) {

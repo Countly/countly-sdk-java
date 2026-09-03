@@ -517,4 +517,32 @@ public class ModuleContentTests {
     }
 
     // endregion
+    /**
+     * The first fetch of a zone waits only for what is left of the SDK's own start up window.
+     * <p>
+     * Charging the full delay to every call put four seconds between "enter the content zone" and
+     * anything appearing, however long the application had been running, which reads as content that
+     * loads late. The floor still holds for a zone entered in the same breath as init, which is what
+     * it is there for.
+     */
+    @Test
+    public void firstFetchDelay_isAFloorFromInitNotAToll() {
+        Countly.instance().init(TestUtils.getConfigContent());
+        ModuleContent module = (ModuleContent) SDKCore.instance.module(ModuleContent.class);
+
+        long atInit = module.firstFetchDelay();
+        Assert.assertTrue("a zone entered at init still waits: " + atInit,
+            atInit > 0 && atInit <= ModuleContent.START_DELAY_MS);
+
+        // An application that has been up longer than the window has already waited it out.
+        module.startedAtForTests(System.currentTimeMillis() - ModuleContent.START_DELAY_MS - 1);
+        Assert.assertEquals(0, module.firstFetchDelay());
+
+        // Halfway through the window, only the remainder is left.
+        module.startedAtForTests(System.currentTimeMillis() - ModuleContent.START_DELAY_MS / 2);
+        long halfway = module.firstFetchDelay();
+        Assert.assertTrue("about half the window should remain: " + halfway,
+            halfway > 0 && halfway <= ModuleContent.START_DELAY_MS / 2 + 200);
+    }
+
 }

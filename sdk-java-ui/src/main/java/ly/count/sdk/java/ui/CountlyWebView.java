@@ -42,6 +42,9 @@ import ly.count.sdk.java.internal.ModuleFeedback;
  */
 public final class CountlyWebView {
 
+    /** Inside the application window, matching the other desktop SDKs. */
+    private static final boolean DEFAULT_WITHIN_APP = true;
+
     private static volatile boolean displayAreaSet = false;
     private static volatile JavaFxContentDisplay contentDisplay = null;
     private static volatile Window contentDisplayOwner = null;
@@ -86,7 +89,7 @@ public final class CountlyWebView {
      */
     static void forgetDisplayAreaForTests() {
         displayAreaSet = false;
-        FxSurfaces.setDisplayWithinApp(false);
+        FxSurfaces.setDisplayWithinApp(DEFAULT_WITHIN_APP);
     }
 
     /**
@@ -140,10 +143,13 @@ public final class CountlyWebView {
             // own background; everything around that card has to show the application through it,
             // or the card sits in an opaque box.
             Stage stage = new Stage(StageStyle.TRANSPARENT);
-            stage.setAlwaysOnTop(true);
             stage.setResizable(false);
-            if (owner != null) {
+            // See JavaFxContentDisplay: owned, so the card is ordered with the application window
+            // rather than above every application. Only an ownerless card floats.
+            if (owner != null && owner.isShowing()) {
                 stage.initOwner(owner);
+            } else {
+                stage.setAlwaysOnTop(true);
             }
             Scene scene = new Scene(webView, 1, 1);
             scene.setFill(Color.TRANSPARENT);

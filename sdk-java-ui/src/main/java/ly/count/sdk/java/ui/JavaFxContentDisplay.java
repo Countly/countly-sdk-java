@@ -48,6 +48,7 @@ public class JavaFxContentDisplay implements ContentDisplay {
      */
     static Duration loadTimeout = Duration.seconds(20); // shortened for testing purposes
 
+
     private final Window owner;
     private volatile WidgetSurface surface;
 
@@ -97,7 +98,16 @@ public class JavaFxContentDisplay implements ContentDisplay {
 
     @Override
     public ContentScreen getScreen() {
+        // Re-resolved, not the surface captured when this display was built. The server lays a block
+        // out inside the size reported here, and show() places it inside the surface as it is then:
+        // if those two disagree the coordinates are computed for one area and clamped into another,
+        // which pins the card to a corner. They disagree easily - the application window may not
+        // have been on screen when this display was constructed, in which case the surface was the
+        // screen, and it is the window by the time a block arrives.
+        surface = FxSurfaces.surfaceFor(owner);
         WidgetSurface current = surface;
+        UiLog.d("[JavaFxContentDisplay] getScreen, reporting " + current
+            + " withinApp=" + FxSurfaces.isDisplayWithinApp());
         return new ContentScreen(current.width, current.height);
     }
 
@@ -155,6 +165,8 @@ public class JavaFxContentDisplay implements ContentDisplay {
             WidgetSurface currentSurface = surface;
 
             ContentPlacement placement = WidgetPlacement.resolve(content.placementFor(currentSurface.isLandscape()), currentSurface);
+            UiLog.d("[JavaFxContentDisplay] show, placing into " + currentSurface
+                + " server asked for " + content.placementFor(currentSurface.isLandscape()));
             if (placement == null) {
                 UiLog.w("[JavaFxContentDisplay] show, the content has no usable placement, dropping it");
                 notifyClosed(closed, onClosed, Collections.emptyMap());
@@ -179,8 +191,16 @@ public class JavaFxContentDisplay implements ContentDisplay {
             // platforms, so anything the card does not paint has to show the application through it.
             // An undecorated stage with a default scene fill put an opaque white block there instead.
             Stage stage = new Stage(StageStyle.TRANSPARENT);
-            stage.setAlwaysOnTop(true);
             stage.setResizable(false);
+            // Owned by the application window rather than floating over every application. An owned
+            // stage is ordered with its owner and stays above it, so the block sits over the app that
+            // asked for it and not over whatever else the user has open. Always on top is kept only
+            // when there is no window to belong to, where it is the only way to be seen.
+            if (owner != null && owner.isShowing()) {
+                stage.initOwner(owner);
+            } else {
+                stage.setAlwaysOnTop(true);
+            }
             Scene scene = new Scene(webView, placement.width, placement.height);
             scene.setFill(Color.TRANSPARENT);
             stage.setScene(scene);
@@ -220,12 +240,30 @@ public class JavaFxContentDisplay implements ContentDisplay {
 
             engine.getLoadWorker().stateProperty().addListener((observable, oldState, newState) -> {
                 if (newState == Worker.State.SUCCEEDED) {
+                    // The blank page a dismissed block is navigated away to loads successfully too;
+                    // treating that as the content arriving logged a second paint and re-revealed a
+                    // window that was on its way out.
+                    if (pageLoaded.get() || closed.get()) {
+                        return;
+                    }
                     pageLoaded.set(true);
-                    UiLog.i("[JavaFxContentDisplay] show, content painted at " + placement
-                        + " after [" + (System.currentTimeMillis() - loadStarted) + "] ms");
                     if (!stage.isShowing()) {
                         stage.show();
                     }
+                    // The picture and the fonts are asked for before the reveal, so the card is
+                    // seen once, complete, rather than appearing and then rearranging itself.
+                    FxSurfaces.repaintBackgroundImagesWhenTheyArrive(engine);
+                    WebFontPrefetch.remember(engine);
+
+                    // Shown as soon as the page is loaded, like the other platforms' SDKs do.
+                    // Holding the card back until the page's fonts settled was measured on the live
+                    // server and never paid off: document.fonts.ready did not resolve on any of the
+                    // nine content variants, so every card paid the full deadline and still showed
+                    // with fonts in flight. What removes the swap is having the faces in the cache
+                    // before the page asks, which is WebFontPrefetch's job.
+                    stage.setOpacity(1);
+                    UiLog.i("[JavaFxContentDisplay] show, content painted at " + placement
+                        + " after [" + (System.currentTimeMillis() - loadStarted) + "] ms");
                     FxSurfaces.logPageDiagnostics(engine, "JavaFxContentDisplay", () -> !closed.get());
                 } else if (newState == Worker.State.FAILED && !pageLoaded.get()) {
                     UiLog.w("[JavaFxContentDisplay] show, the content page could not be loaded");
@@ -245,7 +283,9 @@ public class JavaFxContentDisplay implements ContentDisplay {
             loadDeadline.play();
 
             // Transparent all the way down, so showing before the page has painted costs nothing
-            // visually and the content is never late to appear.
+            // visually and the content is never late to appear. Fully invisible until the page and
+            // its fonts are both ready, so it is never seen half drawn.
+            stage.setOpacity(0);
             stage.show();
 
             engine.load(content.url);

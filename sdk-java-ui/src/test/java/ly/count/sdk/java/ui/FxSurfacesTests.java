@@ -1,11 +1,14 @@
 package ly.count.sdk.java.ui;
 
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.Window;
+import javafx.util.Duration;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -147,7 +150,7 @@ public class FxSurfacesTests {
      */
     @Test
     public void surfaceFor_followsTheOneTimeSetting() {
-        Assert.assertFalse("the screen is the default", FxSurfaces.isDisplayWithinApp());
+        Assert.assertTrue("the application window is the default", FxSurfaces.isDisplayWithinApp());
 
         FxTestToolkit.onFx(() -> {
             Stage owner = new Stage(StageStyle.UNDECORATED);
@@ -157,14 +160,14 @@ public class FxSurfacesTests {
             owner.show();
 
             try {
-                WidgetSurface screen = FxSurfaces.surfaceFor(owner);
-                Assert.assertEquals(FxSurfaces.screenOf(owner).toString(), screen.toString());
-
-                FxSurfaces.setDisplayWithinApp(true);
-                Assert.assertTrue(FxSurfaces.isDisplayWithinApp());
                 WidgetSurface window = FxSurfaces.surfaceFor(owner);
                 Assert.assertEquals(FxSurfaces.boundsOf(owner).toString(), window.toString());
                 Assert.assertTrue(CountlyWebView.isShowingWidgetsWithinApp());
+
+                FxSurfaces.setDisplayWithinApp(false);
+                Assert.assertFalse(FxSurfaces.isDisplayWithinApp());
+                WidgetSurface screen = FxSurfaces.surfaceFor(owner);
+                Assert.assertEquals(FxSurfaces.screenOf(owner).toString(), screen.toString());
 
                 // A window sits inside its own screen, so this is the whole point of the setting.
                 Assert.assertTrue(window.width <= screen.width);
@@ -173,11 +176,11 @@ public class FxSurfacesTests {
                 // Set through the public API, which is configuration: the first call decides and
                 // later ones are ignored, so a widget's layout cannot change under a running app.
                 CountlyWebView.forgetDisplayAreaForTests();
+                Assert.assertTrue("the default is restored", CountlyWebView.isShowingWidgetsWithinApp());
+                CountlyWebView.setShowWidgetsWithinApp(false);
                 Assert.assertFalse(CountlyWebView.isShowingWidgetsWithinApp());
                 CountlyWebView.setShowWidgetsWithinApp(true);
-                Assert.assertTrue(CountlyWebView.isShowingWidgetsWithinApp());
-                CountlyWebView.setShowWidgetsWithinApp(false);
-                Assert.assertTrue("a second call must not change it", CountlyWebView.isShowingWidgetsWithinApp());
+                Assert.assertFalse("a second call must not change it", CountlyWebView.isShowingWidgetsWithinApp());
             } finally {
                 CountlyWebView.forgetDisplayAreaForTests();
                 owner.close();

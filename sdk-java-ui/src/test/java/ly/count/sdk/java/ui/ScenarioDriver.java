@@ -37,6 +37,14 @@ final class ScenarioDriver {
     static final String SERVER = System.getProperty("countly.ui.scenarioServer", "https://master.count.ly");
     static final String APP_KEY = System.getProperty("countly.ui.scenarioAppKey", "dte_mobile_v2");
 
+    /**
+     * Distinguishes one run's device IDs from the last one's.
+     * <p>
+     * A journey serves a device its content once: re-running with the same IDs gets nothing, which
+     * looks exactly like a server with no campaigns on it. Every run gets fresh devices instead.
+     */
+    static final String RUN_ID = Long.toString(System.currentTimeMillis(), 36);
+
     /** Where the findings of a run are collected, one line per checked step. */
     private static final List<String> FINDINGS = Collections.synchronizedList(new ArrayList<>());
 
@@ -72,7 +80,11 @@ final class ScenarioDriver {
         }
 
         Config config = new Config(serverUrl, APP_KEY, storage)
-            .enableFeatures(Config.Feature.Content, Config.Feature.Events, Config.Feature.Feedback)
+            // Sessions included on purpose: a device that never began one has not entered any
+            // journey, so the server has no content for it, and session().begin() is a no-op while
+            // the feature is off. Leaving it out made every content variant look unconfigured.
+            .enableFeatures(Config.Feature.Content, Config.Feature.Events, Config.Feature.Feedback,
+                Config.Feature.Sessions)
             .setLoggingLevel(Config.LoggingLevel.DEBUG)
             .setLogListener(log)
             .setApplicationVersion("1.0.0")
@@ -115,6 +127,12 @@ final class ScenarioDriver {
         try {
             File dir = new File(System.getProperty("countly.ui.scenarioOut",
                 System.getProperty("java.io.tmpdir")));
+            // A clean build has no such directory, and losing a five minute live run to that is a
+            // waste of the run.
+            if (!dir.exists() && !dir.mkdirs()) {
+                System.out.println("[scenario] could not create " + dir + ", falling back to the temp directory");
+                dir = new File(System.getProperty("java.io.tmpdir"));
+            }
             Files.write(Paths.get(new File(dir, name + ".md").toURI()),
                 out.toString().getBytes(StandardCharsets.UTF_8));
             System.out.println("[scenario] report written to " + new File(dir, name + ".md"));
@@ -179,6 +197,36 @@ final class ScenarioDriver {
             + "if(!e.checked){e.click();}"
             + "return e.checked?'yes':'no';}catch(err){return 'err '+err;}})()");
         return "yes".equals(String.valueOf(result));
+    }
+
+    /**
+     * Clicks the first element whose own text is one of the given hints, which is how the Android
+     * harness finds a widget's Close or Go control ({@code WEBVIEW_HINTS}). A CSS selector cannot
+     * express "the button that says Close", and picking the first button instead clicks whatever
+     * happens to come first in the markup.
+     *
+     * @param engine the page to click in
+     * @param hints the texts to look for, case insensitively
+     * @return the text that was clicked, or {@code null} when none of them was there
+     */
+    static String clickByText(WebEngine engine, String... hints) {
+        StringBuilder list = new StringBuilder();
+        for (String hint : hints) {
+            list.append(list.length() == 0 ? "" : ",").append(quote(hint));
+        }
+
+        Object result = script(engine, "(function(){try{"
+            + "var hints=[" + list + "].map(function(h){return h.toLowerCase();});"
+            + "var nodes=document.querySelectorAll('button,a,[role=button],[onclick],span,div');"
+            + "for(var i=0;i<nodes.length;i++){"
+            + "var n=nodes[i];"
+            // Own text only: a wrapper contains every hint its children do.
+            + "var t=(n.innerText||n.textContent||'').trim();"
+            + "if(!t||t.length>24||n.children.length>0){continue;}"
+            + "if(hints.indexOf(t.toLowerCase())>=0){n.scrollIntoView();n.click();return t;}}"
+            + "return '';}catch(err){return 'err '+err;}})()");
+        String clicked = String.valueOf(result);
+        return clicked.isEmpty() || clicked.startsWith("err ") ? null : clicked;
     }
 
     static String visibleText(WebEngine engine) {

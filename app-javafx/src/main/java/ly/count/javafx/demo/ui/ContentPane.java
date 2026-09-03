@@ -118,7 +118,7 @@ public class ContentPane {
 
             // The device ID change tore the zone down, so it has to be entered again. This also
             // re-registers the display, because a consent change rebuilds the content module.
-            CountlyWebView.enableContentZone();
+            //CountlyWebView.enableContentZone();
             log.info("[Content] re-entered the content zone for the new user");
         });
     }

@@ -6,13 +6,13 @@ import java.util.List;
 import java.util.function.BooleanSupplier;
 import javafx.animation.PauseTransition;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.web.WebEngine;
 import javafx.scene.paint.Color;
+import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.Screen;
 import javafx.stage.Window;
-import ly.count.sdk.java.internal.WidgetActionParser;
 import javafx.util.Duration;
+import ly.count.sdk.java.internal.WidgetActionParser;
 
 /**
  * Screen geometry and web view defaults shared by the widget and content displays.
@@ -294,6 +294,7 @@ final class FxSurfaces {
      * to call more than once. Must be called on the JavaFX application thread.
      */
     static void prewarm() {
+
         if (warmView != null) {
             return;
         }
@@ -302,11 +303,44 @@ final class FxSurfaces {
         try {
             long started = System.currentTimeMillis();
             warmView = new WebView();
-            warmView.getEngine().load("about:blank");
-            UiLog.d("[FxSurfaces] prewarm, started WebKit in [" + (System.currentTimeMillis() - started) + "] ms");
+            // The warm-up page is the fonts the last run's widget used, so the first widget of this
+            // run finds them in WebKit's memory cache instead of fetching them while on screen.
+            String warmupPage = WebFontPrefetch.warmupPage();
+            if (warmupPage == null) {
+                warmView.getEngine().load("about:blank");
+            } else {
+                warmView.getEngine().loadContent(warmupPage);
+            }
+            UiLog.d("[FxSurfaces] prewarm, started WebKit in [" + (System.currentTimeMillis() - started)
+                + "] ms, prefetching [" + WebFontPrefetch.rememberedCount() + "] fonts");
         } catch (Throwable t) {
             warmView = null;
             UiLog.w("[FxSurfaces] prewarm, could not start WebKit ahead of time, [" + t + "]");
+        }
+    }
+
+    /**
+     * Fetches the given faces into the engine's memory cache now, using the hidden warm-up view.
+     * <p>
+     * The view belongs to the process rather than to any card, so what it starts finishes even when
+     * the card that prompted it is dismissed a second later. Call on the JavaFX application thread.
+     *
+     * @param warmupPage the page to load, or {@code null} to do nothing
+     */
+    static void warmFonts(String warmupPage) {
+        if (warmupPage == null) {
+            return;
+        }
+        prewarm();
+        if (warmView == null) {
+            return;
+        }
+        try {
+            warmView.getEngine().loadContent(warmupPage);
+            UiLog.d("[FxSurfaces] warmFonts, fetching this run's faces into the cache");
+        } catch (Throwable t) {
+            // The next card pays for the fonts again, which is what happened before this existed.
+            UiLog.d("[FxSurfaces] warmFonts, could not warm the faces, [" + t + "]");
         }
     }
 
@@ -349,10 +383,152 @@ final class FxSurfaces {
         wait.play();
     }
 
+    /**
+     * @return the first few CSS background image URLs the page paints with, so an image that is not
+     *     an {@code <img>} element is still visible in the log
+     */
+    /**
+     * The page's {@code <img>} elements: where each one sits and whether the engine actually decoded
+     * it. A card can be missing its picture for two very different reasons, and only this tells them
+     * apart: {@code natural=0x0} means the engine never got an image, while a real natural size on a
+     * box that is tiny, empty or off the card means the image is there and the layout is wrong.
+     *
+     * @param engine the engine whose document to inspect
+     * @return one entry per image, or a short reason why there are none
+     */
+    /**
+     * Makes the engine paint a CSS background image that arrives after its box was painted.
+     * <p>
+     * A content card shows its picture as a {@code background-image} rather than an {@code <img>}.
+     * This engine fetches and decodes that image, but does not repaint the box when it arrives: the
+     * card is left with an empty slot, and no amount of invalidating the scene fills it. Handing the
+     * same URL back to the style system does, so that is what this does, once per element, as soon
+     * as the image is known to be loaded.
+     * <p>
+     * Proven by driving the live server: every card whose slot measured a single flat colour
+     * measured hundreds of colours after this ran, including a 1.26MB photograph. Other platforms
+     * do not need it because their engines invalidate the box themselves.
+     * <p>
+     * The trigger is the image's own load event, taken from the engine's memory cache, so nothing is
+     * downloaded twice and nothing is polled. The observer catches the elements the page adds after
+     * the first sweep, and stops after {@code OBSERVER_LIFETIME_MS}: a card is settled long before
+     * then, and an observer nobody stops would outlive it.
+     */
+    private static final String BACKGROUND_IMAGE_REPAINT =
+        "(function(){if(window.__clyBackgroundFix){return 'already installed';}"
+            + "window.__clyBackgroundFix=true;var ATTEMPTS=4;"
+            + "function fix(el){if(!el.style){return;}"
+            + "var u=window.getComputedStyle(el).backgroundImage;"
+            + "if(!u||u.indexOf('url(')!==0){return;}"
+            // Already carrying the value this fix applies: nothing to do, and this is also what
+            // stops the observer from reacting to its own writes.
+            + "if((el.style.backgroundImage||'')===u){return;}"
+            + "var tries=el.__clyBackgroundTries||0;if(tries>=ATTEMPTS){return;}"
+            + "el.__clyBackgroundTries=tries+1;"
+            + "var url=u.slice(4,u.length-1).replace(/['\"]/g,'');"
+            + "var probe=new Image();"
+            + "probe.onload=function(){el.style.backgroundImage='none';"
+            + "void el.offsetHeight;el.style.backgroundImage=u;};"
+            + "probe.src=url;}"
+            + "function sweep(){var all=document.querySelectorAll('*');"
+            + "for(var i=0;i<all.length&&i<400;i++){fix(all[i]);}}"
+            + "sweep();"
+            + "if(window.MutationObserver){var obs=new MutationObserver(sweep);"
+            + "obs.observe(document.documentElement,{childList:true,subtree:true,"
+            + "attributes:true,attributeFilter:['style','class']});"
+            + "setTimeout(function(){obs.disconnect();},%1$d);}"
+            // The page rebuilds its card as fonts and images settle, and a rebuild drops the value
+            // this fix applied. The observer catches most of that; these sweeps catch a rebuild that
+            // changes nothing the observer is watching.
+            + "[400,1200,2500,5000,9000].forEach(function(ms){"
+            + "if(ms<=%1$d){setTimeout(sweep,ms);}});"
+            + "return 'installed';})()";
+
+    /** How long the page is watched for elements that gain a background image. */
+    private static final long OBSERVER_LIFETIME_MS = 15_000;
+
+    /**
+     * Installs the background image repaint on a page that has just loaded. Call on the JavaFX
+     * application thread, after the load succeeded.
+     *
+     * @param engine the engine showing the page
+     */
+    static void repaintBackgroundImagesWhenTheyArrive(WebEngine engine) {
+        try {
+            Object result = engine.executeScript(
+                String.format(BACKGROUND_IMAGE_REPAINT, OBSERVER_LIFETIME_MS));
+            UiLog.d("[FxSurfaces] background image repaint " + result);
+        } catch (Throwable t) {
+            // The card still shows its text and buttons, only the picture may be missing.
+            UiLog.w("[FxSurfaces] could not install the background image repaint, [" + t + "]");
+        }
+    }
+
+    static String describeImages(WebEngine engine) {
+        try {
+            Object result = engine.executeScript(
+                "(function(){try{var out=[];var imgs=document.images;"
+                    + "for(var i=0;i<imgs.length&&out.length<5;i++){var im=imgs[i];"
+                    + "var st=window.getComputedStyle(im);var r=im.getBoundingClientRect();"
+                    + "out.push((im.currentSrc||im.src||'no src').slice(0,90)"
+                    + "+' @ '+Math.round(r.left)+','+Math.round(r.top)"
+                    + "+' '+Math.round(r.width)+'x'+Math.round(r.height)"
+                    + "+' natural='+im.naturalWidth+'x'+im.naturalHeight"
+                    + "+' complete='+im.complete"
+                    + "+' vis='+st.visibility+' disp='+st.display+' op='+st.opacity);}"
+                    + "return out.length?out.join(' ;; '):'no img elements';}catch(e){return 'err '+e;}})()");
+            return String.valueOf(result);
+        } catch (Throwable t) {
+            return "unavailable";
+        }
+    }
+
+    private static String backgroundImages(WebEngine engine) {
+        try {
+            Object result = engine.executeScript(
+                "(function(){try{var out=[];var all=document.querySelectorAll('*');"
+                    + "for(var i=0;i<all.length&&out.length<5;i++){"
+                    + "var el=all[i];var st=window.getComputedStyle(el);"
+                    + "var u=st.backgroundImage;"
+                    + "if(!u||u.indexOf('url(')!==0){continue;}"
+                    // Where the box actually is and whether anything is being drawn: a background on
+                    // a box with no size, or one sitting outside the card, is invisible however well
+                    // the image itself loaded.
+                    + "var r=el.getBoundingClientRect();"
+                    + "out.push(u.slice(0,90)+' @ '+Math.round(r.left)+','+Math.round(r.top)"
+                    + "+' '+Math.round(r.width)+'x'+Math.round(r.height)"
+                    + "+' vis='+st.visibility+' disp='+st.display+' op='+st.opacity"
+                    + "+' size='+st.backgroundSize+' pos='+st.backgroundPosition);}"
+                    + "return out.join(' ;; ');}catch(e){return 'err '+e;}})()");
+            return String.valueOf(result);
+        } catch (Throwable t) {
+            return "unavailable";
+        }
+    }
+
+    /**
+     * @return each declared font face and whether it has actually been fetched, which is what tells
+     *     "the page has not asked for its fonts yet" apart from "the fonts are here"
+     */
+    private static String faceStates(WebEngine engine) {
+        try {
+            Object result = engine.executeScript(
+                "(function(){try{var f=document.fonts;if(!f||!f.forEach){return 'none';}"
+                    + "var out=[];f.forEach(function(face){out.push(face.family+':'+face.status);});"
+                    + "return out.join(', ');}catch(e){return 'err '+e;}})()");
+            return String.valueOf(result);
+        } catch (Throwable t) {
+            return "unavailable";
+        }
+    }
+
     private static void sample(WebEngine engine, String label, String when) {
         try {
             Object result = engine.executeScript(DIAGNOSTICS_SCRIPT);
-            UiLog.d("[" + label + "] page resources (" + when + "): " + result);
+            UiLog.d("[" + label + "] page resources (" + when + "): " + result
+                + " | images: " + describeImages(engine)
+                + " | css backgrounds: " + backgroundImages(engine)
+                + " | faces: " + faceStates(engine));
         } catch (Throwable t) {
             UiLog.w("[" + label + "] could not read the page diagnostics (" + when + "), [" + t + "]");
         }
@@ -402,8 +578,12 @@ final class FxSurfaces {
     /**
      * Whether widget cards and content blocks are laid out inside the application window instead of
      * on the screen the application is on. Both displays read this, so one setting decides both.
+     * <p>
+     * Inside the window by default, which is what the other desktop SDKs settled on: a card belongs
+     * to the application that asked for it, and one placed against the whole screen appears over
+     * whatever else the user has open. An integrator who wants the screen says so.
      */
-    private static volatile boolean displayWithinApp = false;
+    private static volatile boolean displayWithinApp = true;
 
     static void setDisplayWithinApp(boolean withinApp) {
         displayWithinApp = withinApp;
