@@ -154,17 +154,17 @@ public class ExternalBrowserTests {
      */
     @Test
     public void linuxLaunchers_tryTheUsersBrowserFirstThenTheDesktopsThenTheBrowsers() {
-        java.util.List<String[]> plain = ExternalBrowser.linuxLaunchers("https://x.y/z", null);
+        java.util.List<String[]> plain = ExternalBrowser.linuxLaunchers("https://x.y/z", null, null);
         Assert.assertArrayEquals(new String[] { "xdg-open", "https://x.y/z" }, plain.get(0));
         Assert.assertArrayEquals(new String[] { "gio", "open", "https://x.y/z" }, plain.get(1));
         Assert.assertEquals("firefox", plain.get(4)[0]);
 
-        java.util.List<String[]> own = ExternalBrowser.linuxLaunchers("https://x.y/z", "brave-browser");
+        java.util.List<String[]> own = ExternalBrowser.linuxLaunchers("https://x.y/z", "brave-browser", null);
         Assert.assertArrayEquals(new String[] { "brave-browser", "https://x.y/z" }, own.get(0));
         Assert.assertEquals("xdg-open", own.get(1)[0]);
 
         // The %s convention, and several colon separated entries.
-        java.util.List<String[]> templated = ExternalBrowser.linuxLaunchers("https://x.y/z", "myopen --url=%s:firefox");
+        java.util.List<String[]> templated = ExternalBrowser.linuxLaunchers("https://x.y/z", "myopen --url=%s:firefox", null);
         Assert.assertEquals("/bin/sh", templated.get(0)[0]);
         Assert.assertEquals("myopen --url=\"$0\"", templated.get(0)[2]);
         Assert.assertEquals("https://x.y/z", templated.get(0)[3]);
@@ -173,6 +173,31 @@ public class ExternalBrowserTests {
         Assert.assertTrue(ExternalBrowser.isLinux("Linux"));
         Assert.assertFalse(ExternalBrowser.isLinux("Mac OS X"));
         Assert.assertFalse(ExternalBrowser.isLinux("Windows 11"));
+    }
+
+    /**
+     * The default browser is raised through gtk-launch ahead of xdg-open, so that on Wayland the tab
+     * comes to the front instead of opening in the background; the user's own BROWSER still wins,
+     * and what xdg-settings printed is trusted only when it is a desktop file id.
+     */
+    @Test
+    public void linuxLaunchers_raiseTheDefaultBrowserAheadOfXdgOpen() {
+        java.util.List<String[]> withDefault = ExternalBrowser.linuxLaunchers("https://x.y/z", null, "org.mozilla.firefox.desktop");
+        Assert.assertArrayEquals(new String[] { "gtk-launch", "org.mozilla.firefox.desktop", "https://x.y/z" }, withDefault.get(0));
+        Assert.assertArrayEquals(new String[] { "xdg-open", "https://x.y/z" }, withDefault.get(1));
+
+        java.util.List<String[]> own = ExternalBrowser.linuxLaunchers("https://x.y/z", "brave-browser", "org.mozilla.firefox.desktop");
+        Assert.assertEquals("brave-browser", own.get(0)[0]);
+        Assert.assertEquals("gtk-launch", own.get(1)[0]);
+        Assert.assertEquals("xdg-open", own.get(2)[0]);
+
+        Assert.assertEquals("org.mozilla.firefox.desktop", ExternalBrowser.desktopIdOf("org.mozilla.firefox.desktop\n"));
+        Assert.assertEquals("firefox.desktop", ExternalBrowser.desktopIdOf("  firefox.desktop  \nsecond line"));
+        Assert.assertNull(ExternalBrowser.desktopIdOf(null));
+        Assert.assertNull(ExternalBrowser.desktopIdOf(""));
+        Assert.assertNull(ExternalBrowser.desktopIdOf("xdg-settings: unknown property default-web-browser"));
+        Assert.assertNull(ExternalBrowser.desktopIdOf("../evil.desktop"));
+        Assert.assertNull(ExternalBrowser.desktopIdOf("firefox"));
     }
 
 }

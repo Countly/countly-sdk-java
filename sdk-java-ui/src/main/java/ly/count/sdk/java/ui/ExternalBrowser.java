@@ -3,6 +3,7 @@ package ly.count.sdk.java.ui;
 import java.awt.Desktop;
 import java.awt.GraphicsEnvironment;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -10,6 +11,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import ly.count.sdk.java.internal.ContentUrlHandler;
 import ly.count.sdk.java.internal.SDKCore;
 
@@ -235,7 +237,7 @@ class ExternalBrowser {
      * @return whether some launcher took it
      */
     private static boolean openOnLinux(String url) {
-        for (String[] command : linuxLaunchers(url, System.getenv("BROWSER"))) {
+        for (String[] command : linuxLaunchers(url, System.getenv("BROWSER"), defaultBrowserDesktopId())) {
             try {
                 Process process = new ProcessBuilder(command).redirectErrorStream(true).start();
                 if (!process.waitFor(LAUNCHER_VERDICT_MS, TimeUnit.MILLISECONDS)) {
@@ -264,15 +266,63 @@ class ExternalBrowser {
     }
 
     /**
+     * What a desktop file id looks like, as {@code xdg-settings} prints it: {@code firefox.desktop},
+     * {@code org.mozilla.firefox.desktop}. Anything else it prints is an error message, not an id.
+     */
+    private static final Pattern DESKTOP_ID = Pattern.compile("[A-Za-z0-9][A-Za-z0-9._+-]*\\.desktop");
+
+    /**
+     * The desktop file id of the default browser, asked of {@code xdg-settings}.
+     *
+     * @return the id, or {@code null} when there is no {@code xdg-settings}, no default, or the
+     *     answer took too long
+     */
+    private static String defaultBrowserDesktopId() {
+        try {
+            Process process = new ProcessBuilder("xdg-settings", "get", "default-web-browser").start();
+            if (!process.waitFor(LAUNCHER_VERDICT_MS, TimeUnit.MILLISECONDS)) {
+                process.destroyForcibly();
+                return null;
+            }
+            if (process.exitValue() != 0) {
+                return null;
+            }
+            return desktopIdOf(new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8));
+        } catch (Throwable t) {
+            // No xdg-settings here; the chain has plenty left.
+            return null;
+        }
+    }
+
+    /**
+     * @param output what {@code xdg-settings get default-web-browser} printed
+     * @return the desktop file id in it, or {@code null} when it printed something else
+     */
+    static String desktopIdOf(String output) {
+        if (output == null) {
+            return null;
+        }
+        String firstLine = output.trim().split("\\R", 2)[0].trim();
+        return DESKTOP_ID.matcher(firstLine).matches() ? firstLine : null;
+    }
+
+    /**
      * The launchers to try on Linux, most specific first: the user's own {@code BROWSER}, then the
      * desktop's openers, then the browsers themselves.
+     * <p>
+     * The default browser is launched through {@code gtk-launch} before {@code xdg-open} gets a turn.
+     * Both open the link, but on Wayland a browser that is already running only comes to the front
+     * for a launcher that hands it an activation token, which {@code gtk-launch} does and
+     * {@code xdg-open} does not: through {@code xdg-open} the page opened in a background tab and,
+     * from inside the application, nothing visibly happened.
      *
      * @param url the link
      * @param browserEnv the {@code BROWSER} environment variable, may be {@code null}; a {@code %s}
      *     in it is replaced by the URL, as the convention has it
+     * @param defaultBrowserDesktopId the default browser's desktop file id, may be {@code null}
      * @return commands, each ready for a ProcessBuilder
      */
-    static List<String[]> linuxLaunchers(String url, String browserEnv) {
+    static List<String[]> linuxLaunchers(String url, String browserEnv, String defaultBrowserDesktopId) {
         List<String[]> launchers = new ArrayList<>();
         if (browserEnv != null && !browserEnv.trim().isEmpty()) {
             // BROWSER may hold several, colon separated, each possibly with a %s placeholder.
@@ -285,6 +335,9 @@ class ExternalBrowser {
                     ? new String[] { "/bin/sh", "-c", trimmed.replace("%s", "\"$0\""), url }
                     : new String[] { trimmed, url });
             }
+        }
+        if (defaultBrowserDesktopId != null) {
+            launchers.add(new String[] { "gtk-launch", defaultBrowserDesktopId, url });
         }
         launchers.add(new String[] { "xdg-open", url });
         launchers.add(new String[] { "gio", "open", url });
