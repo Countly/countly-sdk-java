@@ -56,6 +56,14 @@ class ContentParser {
         if (rect == null) {
             return null;
         }
-        return new ContentPlacement(rect.optInt("x", 0), rect.optInt("y", 0), rect.optInt("w", 0), rect.optInt("h", 0));
+        int width = rect.optInt("w", 0);
+        int height = rect.optInt("h", 0);
+        if (width <= 0 || height <= 0) {
+            // Like the widget parsers: a degenerate rectangle must fall through to the other
+            // orientation, or to "no usable placement", rather than become an invisible 0x0 window
+            // that holds the zone open with nothing the user can close.
+            return null;
+        }
+        return new ContentPlacement(rect.optInt("x", 0), rect.optInt("y", 0), width, height);
     }
 }

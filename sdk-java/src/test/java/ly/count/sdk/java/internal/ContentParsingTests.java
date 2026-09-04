@@ -54,10 +54,11 @@ public class ContentParsingTests {
         Assert.assertEquals(portraitOnly.portrait, portraitOnly.placementFor(true));
 
         // Missing coordinates default to zero rather than failing the whole block.
+        // A rectangle missing its height is no rectangle: it is dropped rather than becoming a 3x0
+        // window nobody can see or close, which is what the widget parsers do with it too.
         ContentData partial = ContentParser.parse(new JSONObject("{\"html\":\"https://a.b/c\",\"geo\":{\"p\":{\"w\":3}}}"), L);
-        Assert.assertNotNull(partial);
-        Assert.assertEquals(0, partial.portrait.x);
-        Assert.assertEquals(3, partial.portrait.width);
+        Assert.assertTrue(partial == null || partial.portrait == null);
+        Assert.assertTrue(partial == null || partial.placementFor(false) == null);
 
         Assert.assertNull(ContentParser.parse(null, L));
         Assert.assertNull(ContentParser.parse(new JSONObject("{\"jsonArray\":[{\"result\":\"No content block found!\"}]}"), L));
@@ -242,4 +243,38 @@ public class ContentParsingTests {
         Assert.assertEquals(Config.Feature.Content, Config.Feature.byIndex(CoreFeature.Content.getIndex()));
         Assert.assertNotNull(CoreFeature.Content.getCreator());
     }
+
+    /**
+     * A link that also asks to close: both are read. Reading close after the external-link return
+     * made every open-and-dismiss branch downstream unreachable.
+     */
+    @Test
+    public void widgetActionParser_externalLinkCanAlsoClose() {
+        WidgetAction action = WidgetActionParser.parse("https://count.ly/offer?cly_x_int=1&close=1", L);
+        Assert.assertTrue(action.isExternalLink);
+        Assert.assertTrue("the close travels with the link", action.close);
+        Assert.assertEquals("https://count.ly/offer?cly_x_int=1&close=1", action.link);
+
+        WidgetAction plain = WidgetActionParser.parse("https://count.ly/offer?cly_x_int=1", L);
+        Assert.assertTrue(plain.isExternalLink);
+        Assert.assertFalse(plain.close);
+    }
+
+    /**
+     * A zero-sized geo rectangle is no rectangle: it falls through to the other orientation, and
+     * two of them leave the block without a usable placement instead of an invisible window.
+     */
+    @Test
+    public void contentParser_rejectsZeroSizedRectangles() {
+        ContentData data = ContentParser.parse(new JSONObject(
+            "{\"html\":\"https://x.count.ly/c\",\"geo\":{\"l\":{},\"p\":{\"x\":0,\"y\":400,\"w\":768,\"h\":420}}}"), L);
+        Assert.assertNotNull(data);
+        Assert.assertNull("an empty landscape rect is not a placement", data.landscape);
+        Assert.assertEquals("so the valid portrait one is used on a landscape desktop", 420, data.placementFor(true).height);
+
+        ContentData none = ContentParser.parse(new JSONObject(
+            "{\"html\":\"https://x.count.ly/c\",\"geo\":{\"l\":{\"w\":0,\"h\":95},\"p\":{\"w\":768,\"h\":0}}}"), L);
+        Assert.assertTrue(none == null || (none.landscape == null && none.portrait == null));
+    }
+
 }

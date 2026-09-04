@@ -1,21 +1,18 @@
 package ly.count.sdk.java.ui;
 
+import java.net.URI;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
-import javafx.scene.Scene;
-import javafx.scene.paint.Color;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 import javafx.stage.Window;
 import javafx.util.Duration;
 import ly.count.sdk.java.Countly;
-import netscape.javascript.JSObject;
 import ly.count.sdk.java.internal.ContentCloseCallback;
 import ly.count.sdk.java.internal.ContentData;
 import ly.count.sdk.java.internal.ContentDisplay;
@@ -25,6 +22,7 @@ import ly.count.sdk.java.internal.ModuleContent;
 import ly.count.sdk.java.internal.SDKCore;
 import ly.count.sdk.java.internal.WidgetAction;
 import ly.count.sdk.java.internal.WidgetActionParser;
+import netscape.javascript.JSObject;
 
 /**
  * Shows Countly content in a borderless, always on top JavaFX window placed where the server asked,
@@ -49,7 +47,6 @@ public class JavaFxContentDisplay implements ContentDisplay {
      */
     static Duration loadTimeout = Duration.seconds(20); // shortened for testing purposes
 
-
     private final Window owner;
     private volatile WidgetSurface surface;
 
@@ -70,63 +67,18 @@ public class JavaFxContentDisplay implements ContentDisplay {
     private volatile String presentationClaim;
 
     /**
-     * The content URL with an {@code origin} parameter added, so a survey the content queue hosts
-     * accepts this display's resize message.
-     * <p>
-     * The widget templates only act on the host's {@code {type:'resize'}} message when
-     * {@code event.origin} equals the URL's {@code origin} parameter, which the server's content URL
-     * does not carry. For a page posting to its own window that origin is the page's own, so it is
-     * taken from the URL itself. A content block ignores the parameter.
-     *
-     * @param url the URL the server handed out
-     * @return the same URL, carrying {@code origin} when it did not already
-     */
-    static String withOrigin(String url) {
-        if (url == null || url.contains("origin=")) {
-            return url;
-        }
-        try {
-            java.net.URI uri = new java.net.URI(url);
-            if (uri.getScheme() == null || uri.getHost() == null) {
-                return url;
-            }
-            String origin = uri.getScheme() + "://" + uri.getHost() + (uri.getPort() > 0 ? ":" + uri.getPort() : "");
-            return url + (url.contains("?") ? "&" : "?") + "origin=" + origin;
-        } catch (Throwable t) {
-            // An unparseable URL is the server's problem to report, not this parameter's.
-            return url;
-        }
-    }
-
-    /**
-     * The object the page posts to. A field, because the engine holds only a weak reference to it
-     * and a bridge nobody else references is collected after its first message.
-     */
-    private ContentJsBridge contentBridge;
-
-    private void installContentBridge(WebEngine engine) {
-        if (contentBridge == null) {
-            return;
-        }
-        try {
-            JSObject window = (JSObject) engine.executeScript("window");
-            window.setMember(ContentJsBridge.MEMBER_NAME, contentBridge);
-            Object result = engine.executeScript(ContentJsBridge.INSTALL_SCRIPT);
-            UiLog.d("[JavaFxContentDisplay] installContentBridge, " + result);
-        } catch (Throwable t) {
-            // A block that only navigates to signal still works; only a hosted survey loses its
-            // resize and close.
-            UiLog.w("[JavaFxContentDisplay] installContentBridge, could not install, [" + t + "]");
-        }
-    }
-
-    /**
      * The rectangle the page asked for through {@code resize_me}, and the surface it asked against.
      * Once the page has spoken it outranks the server's rectangle: it is the only party that knows
      * how tall its own content turned out.
      */
     private volatile ContentPlacement pageRequested;
     private volatile WidgetSurface pageRequestedFor;
+
+    /**
+     * The object the page posts to. A field, because the engine holds only a weak reference to it
+     * and a bridge nobody else references is collected after its first message.
+     */
+    private ContentJsBridge contentBridge;
 
     /**
      * Follows the primary application window. Construct on the JavaFX application thread.
@@ -262,43 +214,34 @@ public class JavaFxContentDisplay implements ContentDisplay {
 
         // Only a change of size is worth telling the page about: it lays itself out against the
         // width and height, and a block that merely moved with its window has nothing to recompute.
-        if (resized && stage.getScene() != null && stage.getScene().getRoot() instanceof WebView) {
-            FxSurfaces.notifyPageOfSurface(((WebView) stage.getScene().getRoot()).getEngine(), current);
+        WebView webView = resized ? webViewOf(stage) : null;
+        if (webView != null) {
+            FxSurfaces.notifyPageOfSurface(webView.getEngine(), current);
         }
     }
 
     /**
-     * Applies a rectangle to the window <i>and</i> to the page inside it.
-     * <p>
-     * Moving the window is not enough: a web view reports its own preferred size, so the page's
-     * viewport stays whatever it was when the scene was built and the page never reflows or sees a
-     * resize. A block laid out for one width then keeps that width in a window of another. The web
-     * view is resized outright rather than only asked to lay out, because a window that has not run
-     * a layout pass yet would otherwise leave the page measuring the scene it started in.
+     * Applies a rectangle to the window and the page inside it, remembering it so a window manager
+     * that moves the block afterwards can be undone.
      *
      * @param stage the window showing the block
      * @param rect where the block belongs
+     * @param onSurface the area it is being placed on
      */
-    private void applyGeometry(Stage stage, ContentPlacement rect, WidgetSurface surface) {
+    private void applyGeometry(Stage stage, ContentPlacement rect, WidgetSurface onSurface) {
         appliedPlacement = rect;
-        setGeometry(stage, rect, surface);
+        FxSurfaces.applyGeometry(stage, webViewOf(stage), rect, onSurface);
     }
 
-    private static void setGeometry(Stage stage, ContentPlacement rect, WidgetSurface surface) {
-        stage.setX(rect.x);
-        stage.setY(rect.y);
-        stage.setWidth(rect.width);
-        stage.setHeight(rect.height);
-
+    /**
+     * @param stage the window to look inside
+     * @return the view showing the block, or {@code null} when the scene holds something else
+     */
+    private static WebView webViewOf(Stage stage) {
         if (stage.getScene() == null || !(stage.getScene().getRoot() instanceof WebView)) {
-            return;
+            return null;
         }
-        WebView webView = (WebView) stage.getScene().getRoot();
-        webView.setPrefSize(rect.width, rect.height);
-        webView.resize(rect.width, rect.height);
-        webView.requestLayout();
-        // A block that fills the application window has to follow its rounded corners.
-        FxSurfaces.applyOverlayCorners(webView, rect, surface);
+        return (WebView) stage.getScene().getRoot();
     }
 
     private void show(ContentData content, AtomicBoolean closed, ContentCloseCallback onClosed) {
@@ -307,7 +250,9 @@ public class JavaFxContentDisplay implements ContentDisplay {
         // than waiting on a block that never appeared.
         String claim = "content " + (content == null ? "?" : content.url);
         if (!PresentationLock.tryAcquire(claim)) {
-            notifyClosed(closed, onClosed, Collections.emptyMap());
+            // Told at once, without touching the claim: this block never held the screen, and the
+            // one that does must keep its claim, or the next request would open on top of it.
+            notifyClosed(closed, onClosed, Collections.emptyMap(), null);
             return;
         }
         presentationClaim = claim;
@@ -342,39 +287,16 @@ public class JavaFxContentDisplay implements ContentDisplay {
             // means showing the window before the page has painted costs nothing visually.
             FxSurfaces.makePageBackgroundTransparent(webView);
 
-            // Transparent, not merely undecorated. Content is laid out by the server as a card
-            // with its own background inside the rectangle it asked for, exactly as on the other
-            // platforms, so anything the card does not paint has to show the application through it.
-            // An undecorated stage with a default scene fill put an opaque white block there instead.
-            Stage stage = new Stage(StageStyle.TRANSPARENT);
-            stage.setResizable(false);
-            // Who the block belongs to follows where it is being shown.
-            //
-            // Inside the application window it is a child of that window: ordered with it, above it,
-            // and carried along when it moves, which is what a block laid out against the window
-            // should do.
-            //
-            // On the whole screen it belongs to nobody. A block placed against the screen is a
-            // system wide message for as long as the process runs, so it sits on the top layer and
-            // stays where it was put, instead of being dragged around by an application window it
-            // was never laid out against.
-            if (FxSurfaces.isDisplayWithinApp() && owner != null && owner.isShowing()) {
-                stage.initOwner(owner);
-            } else {
-                stage.setAlwaysOnTop(true);
-            }
-            Scene scene = new Scene(webView, placement.width, placement.height);
-            scene.setFill(Color.TRANSPARENT);
-            stage.setScene(scene);
+            // Transparent and owned or always on top, as FxSurfaces explains: content is laid out by
+            // the server as a card with its own background inside the rectangle it asked for,
+            // exactly as on the other platforms, so anything the card does not paint has to show
+            // the application through it.
+            Stage stage = FxSurfaces.newOverlayStage(owner, webView, placement.width, placement.height);
             applyGeometry(stage, placement, currentSurface);
 
             engine.locationProperty().addListener((observable, oldUrl, newUrl) ->
                 onContentUrl(newUrl, engine, stage, currentSurface, contentInterface, closed, onClosed));
-            engine.setCreatePopupHandler(features -> {
-                WebEngine popup = new WebEngine();
-                popup.locationProperty().addListener((observable, oldUrl, newUrl) -> ExternalBrowser.open(newUrl));
-                return popup;
-            });
+            engine.setCreatePopupHandler(features -> FxSurfaces.newExternalLinkEngine());
 
             activeStage = stage;
             activeContent = content;
@@ -470,6 +392,51 @@ public class JavaFxContentDisplay implements ContentDisplay {
         }
     }
 
+    /**
+     * The content URL with an {@code origin} parameter added, so a survey the content queue hosts
+     * accepts this display's resize message.
+     * <p>
+     * The widget templates only act on the host's {@code {type:'resize'}} message when
+     * {@code event.origin} equals the URL's {@code origin} parameter, which the server's content URL
+     * does not carry. For a page posting to its own window that origin is the page's own, so it is
+     * taken from the URL itself. A content block ignores the parameter.
+     *
+     * @param url the URL the server handed out
+     * @return the same URL, carrying {@code origin} when it did not already
+     */
+    static String withOrigin(String url) {
+        if (url == null || url.contains("origin=")) {
+            return url;
+        }
+        try {
+            URI uri = new URI(url);
+            if (uri.getScheme() == null || uri.getHost() == null) {
+                return url;
+            }
+            String origin = uri.getScheme() + "://" + uri.getHost() + (uri.getPort() > 0 ? ":" + uri.getPort() : "");
+            return url + (url.contains("?") ? "&" : "?") + "origin=" + origin;
+        } catch (Throwable t) {
+            // An unparseable URL is the server's problem to report, not this parameter's.
+            return url;
+        }
+    }
+
+    private void installContentBridge(WebEngine engine) {
+        if (contentBridge == null) {
+            return;
+        }
+        try {
+            JSObject window = (JSObject) engine.executeScript("window");
+            window.setMember(ContentJsBridge.MEMBER_NAME, contentBridge);
+            Object result = engine.executeScript(ContentJsBridge.INSTALL_SCRIPT);
+            UiLog.d("[JavaFxContentDisplay] installContentBridge, " + result);
+        } catch (Throwable t) {
+            // A block that only navigates to signal still works; only a hosted survey loses its
+            // resize and close.
+            UiLog.w("[JavaFxContentDisplay] installContentBridge, could not install, [" + t + "]");
+        }
+    }
+
     private void onContentUrl(String url, WebEngine engine, Stage stage, WidgetSurface currentSurface,
         ModuleContent.Content contentInterface, AtomicBoolean closed, ContentCloseCallback onClosed) {
 
@@ -547,13 +514,22 @@ public class JavaFxContentDisplay implements ContentDisplay {
     }
 
     private void notifyClosed(AtomicBoolean closed, ContentCloseCallback onClosed, Map<String, Object> contentData) {
+        notifyClosed(closed, onClosed, contentData, presentationClaim);
+    }
+
+    /**
+     * @param claim the screen claim this close frees, {@code null} when the block never held one
+     */
+    private void notifyClosed(AtomicBoolean closed, ContentCloseCallback onClosed, Map<String, Object> contentData,
+        String claim) {
         if (!closed.compareAndSet(false, true)) {
             return;
         }
         // Freed before the SDK hears about the close, so the next thing it wants to show is not
         // refused by the block that just went away.
-        String claim = presentationClaim;
-        presentationClaim = null;
+        if (claim != null && claim.equals(presentationClaim)) {
+            presentationClaim = null;
+        }
         PresentationLock.release(claim);
         if (onClosed == null) {
             return;

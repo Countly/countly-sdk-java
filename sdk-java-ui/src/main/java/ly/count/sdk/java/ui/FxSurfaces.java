@@ -3,14 +3,18 @@ package ly.count.sdk.java.ui;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.BooleanSupplier;
 import javafx.animation.PauseTransition;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Scene;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.Screen;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.stage.Window;
 import javafx.util.Duration;
 import ly.count.sdk.java.internal.ContentPlacement;
@@ -108,17 +112,6 @@ final class FxSurfaces {
     }
 
     /**
-     * Measures the rectangle the page actually painted, in CSS pixels.
-     * <p>
-     * Used to tell a real widget page from whatever the browser substituted when the real one could
-     * not be fetched: JavaFX reports an HTTP level failure as a SUCCEEDED load carrying an error
-     * document, and an error document paints no card.
-     *
-     * @param engine the engine to measure
-     * @return {@code left,top,width,height}, or {@code null} when the page has no card element at
-     *     all. Width and height may be zero when the window has not been sized yet.
-     */
-    /**
      * The containers every feedback widget and content template ships in its static HTML, so their
      * presence is what tells a real widget page apart from whatever the browser substituted for one.
      */
@@ -151,6 +144,17 @@ final class FxSurfaces {
         }
     }
 
+    /**
+     * Measures the rectangle the page actually painted, in CSS pixels.
+     * <p>
+     * Used to tell a real widget page from whatever the browser substituted when the real one could
+     * not be fetched: JavaFX reports an HTTP level failure as a SUCCEEDED load carrying an error
+     * document, and an error document paints no card.
+     *
+     * @param engine the engine to measure
+     * @return {@code left,top,width,height}, or {@code null} when the page has no card element at
+     *     all. Width and height may be zero when the window has not been sized yet.
+     */
     static int[] measurePaintedContent(WebEngine engine) {
         try {
             Object result = engine.executeScript(
@@ -296,7 +300,6 @@ final class FxSurfaces {
      * to call more than once. Must be called on the JavaFX application thread.
      */
     static void prewarm() {
-
         if (warmView != null) {
             return;
         }
@@ -417,19 +420,6 @@ final class FxSurfaces {
     }
 
     /**
-     * @return the first few CSS background image URLs the page paints with, so an image that is not
-     *     an {@code <img>} element is still visible in the log
-     */
-    /**
-     * The page's {@code <img>} elements: where each one sits and whether the engine actually decoded
-     * it. A card can be missing its picture for two very different reasons, and only this tells them
-     * apart: {@code natural=0x0} means the engine never got an image, while a real natural size on a
-     * box that is tiny, empty or off the card means the image is there and the layout is wrong.
-     *
-     * @param engine the engine whose document to inspect
-     * @return one entry per image, or a short reason why there are none
-     */
-    /**
      * Makes the engine paint a CSS background image that arrives after its box was painted.
      * <p>
      * A content card shows its picture as a {@code background-image} rather than an {@code <img>}.
@@ -489,7 +479,9 @@ final class FxSurfaces {
     static void repaintBackgroundImagesWhenTheyArrive(WebEngine engine) {
         try {
             Object result = engine.executeScript(
-                String.format(BACKGROUND_IMAGE_REPAINT, OBSERVER_LIFETIME_MS));
+                // Locale.ROOT: a default locale with its own digits (Arabic-Indic, for one) would
+                // print them into the script and make it a syntax error.
+                String.format(Locale.ROOT, BACKGROUND_IMAGE_REPAINT, OBSERVER_LIFETIME_MS));
             UiLog.d("[FxSurfaces] background image repaint " + result);
         } catch (Throwable t) {
             // The card still shows its text and buttons, only the picture may be missing.
@@ -524,6 +516,15 @@ final class FxSurfaces {
         return 0;
     }
 
+    /**
+     * The page's {@code <img>} elements: where each one sits and whether the engine actually decoded
+     * it. A card can be missing its picture for two very different reasons, and only this tells them
+     * apart: {@code natural=0x0} means the engine never got an image, while a real natural size on a
+     * box that is tiny, empty or off the card means the image is there and the layout is wrong.
+     *
+     * @param engine the engine whose document to inspect
+     * @return one entry per image, or a short reason why there are none
+     */
     static String describeImages(WebEngine engine) {
         try {
             Object result = engine.executeScript(
@@ -543,6 +544,10 @@ final class FxSurfaces {
         }
     }
 
+    /**
+     * @return the first few CSS background image URLs the page paints with, so an image that is not
+     *     an {@code <img>} element is still visible in the log
+     */
     private static String backgroundImages(WebEngine engine) {
         try {
             Object result = engine.executeScript(
@@ -632,10 +637,6 @@ final class FxSurfaces {
     }
 
     /**
-     * @param owner the window to measure
-     * @return the window's own bounds, or the primary screen's work area when it is not on screen yet
-     */
-    /**
      * Whether widget cards and content blocks are laid out inside the application window instead of
      * on the screen the application is on. Both displays read this, so one setting decides both.
      * <p>
@@ -663,6 +664,10 @@ final class FxSurfaces {
         return displayWithinApp ? boundsOf(owner) : screenOf(owner);
     }
 
+    /**
+     * @param owner the window to measure
+     * @return the window's own bounds, or the primary screen's work area when it is not on screen yet
+     */
     static WidgetSurface boundsOf(Window owner) {
         if (!isOnScreen(owner)) {
             return screenOf(null);
@@ -717,6 +722,89 @@ final class FxSurfaces {
         clip.setArcWidth(overlayCornerRadius * 2);
         clip.setArcHeight(overlayCornerRadius * 2);
         webView.setClip(clip);
+    }
+
+    /**
+     * The borderless window a widget card or a content block is shown in, with its web view already
+     * in a transparent scene. Call on the JavaFX application thread.
+     * <p>
+     * Transparent, not merely undecorated: both a widget and a content block draw their own rounded
+     * card with its own background, so everything around that card has to show the application
+     * through it. An undecorated stage with a default scene fill puts an opaque white block there
+     * instead.
+     * <p>
+     * Who the window belongs to follows where it is being shown. Inside the application window it is
+     * a child of that window: ordered with it, above it, and carried along when it moves, which is
+     * what something laid out against that window should do. On the whole screen it belongs to
+     * nobody - a card placed against the screen is a system wide message for as long as the process
+     * runs, so it sits on the top layer and stays where it was put, instead of being dragged around
+     * by an application window it was never laid out against.
+     *
+     * @param owner the application window to belong to, may be {@code null}
+     * @param webView the view to show, which becomes the scene root
+     * @param sceneWidth the scene's initial width
+     * @param sceneHeight the scene's initial height
+     * @return the window, not yet placed and not yet shown
+     */
+    static Stage newOverlayStage(Window owner, WebView webView, int sceneWidth, int sceneHeight) {
+        Stage stage = new Stage(StageStyle.TRANSPARENT);
+        stage.setResizable(false);
+        if (isDisplayWithinApp() && owner != null && owner.isShowing()) {
+            stage.initOwner(owner);
+        } else {
+            stage.setAlwaysOnTop(true);
+        }
+        Scene scene = new Scene(webView, sceneWidth, sceneHeight);
+        scene.setFill(Color.TRANSPARENT);
+        stage.setScene(scene);
+        return stage;
+    }
+
+    /**
+     * Applies a rectangle to the window <i>and</i> to the page inside it.
+     * <p>
+     * Moving the window is not enough: a web view reports its own 800x600 preferred size, so the
+     * page's viewport stays whatever it was when the scene was built and the page never reflows or
+     * sees a resize. Something laid out for one width then keeps that width in a window of another.
+     * The view is resized outright rather than only asked to lay out, because a window that has not
+     * run a layout pass yet - one that has never been shown - would otherwise leave the page
+     * measuring the scene it started in, and any fit that follows would have nothing to work with.
+     *
+     * @param stage the window to move and size
+     * @param webView the view inside it, {@code null} when the scene holds something else
+     * @param rect where it belongs, screen absolute
+     * @param surface the area it was placed on, for the rounded corners of a covering block
+     */
+    static void applyGeometry(Stage stage, WebView webView, ContentPlacement rect, WidgetSurface surface) {
+        stage.setX(rect.x);
+        stage.setY(rect.y);
+        stage.setWidth(rect.width);
+        stage.setHeight(rect.height);
+
+        if (webView == null) {
+            return;
+        }
+        webView.setPrefSize(rect.width, rect.height);
+        webView.resize(rect.width, rect.height);
+        webView.requestLayout();
+        // Something covering the application window has to follow its rounded corners too.
+        applyOverlayCorners(webView, rect, surface);
+    }
+
+    /**
+     * The engine handed to a {@code target="_blank"} link, which sends it to the system browser
+     * instead of rendering it in the card.
+     *
+     * @return a throwaway engine that only reports where it was asked to go
+     */
+    static WebEngine newExternalLinkEngine() {
+        WebEngine popup = new WebEngine();
+        popup.locationProperty().addListener((observable, oldUrl, newUrl) -> {
+            if (newUrl != null && !newUrl.isEmpty()) {
+                ExternalBrowser.open(newUrl);
+            }
+        });
+        return popup;
     }
 
     private static Rectangle2D screenBoundsOf(Window owner) {

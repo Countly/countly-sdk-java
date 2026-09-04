@@ -157,13 +157,6 @@ public class FeedbackWidgetPresenter implements WidgetWebHost.Listener {
         }
     }
 
-    /**
-     * Places the card the widget asked for. The size is the widget's own, since its page measured
-     * its content to get it; the anchor is the widget type's, since on the web that comes from the
-     * SDK's stylesheet and the page's numbers assume it was applied.
-     *
-     * @param requested the rect the widget asked for, {@code null} when it asked for nothing
-     */
     @Override
     public void onCardMeasured(int width, int height) {
         if (widget != null && !WidgetLayout.usesReportedSize(widget.type)) {
@@ -261,6 +254,13 @@ public class FeedbackWidgetPresenter implements WidgetWebHost.Listener {
         return new ContentPlacement(requested.x, requested.y, drawn.width, drawn.height);
     }
 
+    /**
+     * Places the card the widget asked for. The size is the widget's own, since its page measured
+     * its content to get it; the anchor is the widget type's, since on the web that comes from the
+     * SDK's stylesheet and the page's numbers assume it was applied.
+     *
+     * @param requested the rect the widget asked for, {@code null} when it asked for nothing
+     */
     private void place(ContentPlacement requested) {
         UiLog.d("[FeedbackWidgetPresenter] place, requested " + requested);
         lastRequested = requested;
@@ -273,6 +273,18 @@ public class FeedbackWidgetPresenter implements WidgetWebHost.Listener {
         UiLog.d("[FeedbackWidgetPresenter] place, putting the " + (widget == null ? "widget" : widget.type)
             + " at " + rect + " (it asked for " + requested + ")");
         host.placeAndShow(rect);
+    }
+
+    /**
+     * The card went away without the SDK closing it. Reported and torn down like any other dismissal,
+     * once; a no-op after finish() has already run.
+     */
+    void dismissedExternally() {
+        if (finished) {
+            return;
+        }
+        UiLog.i("[FeedbackWidgetPresenter] dismissedExternally, the card was hidden from outside the SDK");
+        finish();
     }
 
     /**

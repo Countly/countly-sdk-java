@@ -210,4 +210,14 @@ public class WebFontPrefetchTests {
         Assert.fail("nothing was remembered");
         return Collections.<String>emptyList().toString();
     }
+
+    /** An OpenType face is declared as one; a truetype hint on an .otf made the engine skip it. */
+    @Test
+    public void anOtfFaceIsDeclaredAsOpentype() {
+        rememberFontsOf("@font-face{font-family:'Brand';src:url('" + base + "/brand.otf') format('opentype');}");
+        String page = awaitWarmupPage();
+        Assert.assertTrue(page, page.contains("brand.otf') format('opentype')"));
+        Assert.assertFalse(page, page.contains("brand.otf') format('truetype')"));
+    }
+
 }

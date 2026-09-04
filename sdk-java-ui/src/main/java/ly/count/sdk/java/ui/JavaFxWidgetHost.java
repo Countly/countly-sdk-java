@@ -38,7 +38,6 @@ class JavaFxWidgetHost implements WidgetWebHost {
      */
     static Duration loadTimeout = Duration.seconds(20);
 
-
     /** Long enough for the page to lay itself out at a newly applied size. */
     private static final Duration FIT_DELAY = Duration.millis(160);
 
@@ -80,6 +79,9 @@ class JavaFxWidgetHost implements WidgetWebHost {
     private int followedFrames = 0;
     private Timeline watch;
 
+    /** Set by closeHost: nothing the dying page does afterwards may start anything. */
+    private boolean closed;
+
     /** The object the page calls into. See installBridge for why it has to be a field. */
     private WidgetJsBridge bridge;
     private long placementRequests = 0;
@@ -100,7 +102,7 @@ class JavaFxWidgetHost implements WidgetWebHost {
         // than sitting in an opaque box.
         FxSurfaces.makePageBackgroundTransparent(webView);
         engine.locationProperty().addListener((observable, oldUrl, newUrl) -> onLocationChanged(newUrl));
-        engine.setCreatePopupHandler(features -> openPopupExternally());
+        engine.setCreatePopupHandler(features -> FxSurfaces.newExternalLinkEngine());
         engine.getLoadWorker().stateProperty().addListener((observable, oldState, newState) -> onLoadStateChanged(newState));
         // As soon as there is a document, rather than only once the load has succeeded.
         //
@@ -169,6 +171,10 @@ class JavaFxWidgetHost implements WidgetWebHost {
 
     @Override
     public void placeAndShow(ContentPlacement rect) {
+        if (closed) {
+            // A fit or a measurement that was in flight when the card closed must not re-show it.
+            return;
+        }
         if (placed && stage.isShowing() && rect.x == (int) stage.getX() && rect.y == (int) stage.getY()
             && rect.width == (int) stage.getWidth() && rect.height == (int) stage.getHeight()) {
             // Already exactly there. A page re-announcing the same size, or a window drag that
@@ -214,25 +220,10 @@ class JavaFxWidgetHost implements WidgetWebHost {
         PauseTransition fit = new PauseTransition(request <= 1 ? FIT_DELAY : SETTLE_DELAY);
         fit.setOnFinished(event -> fitThenReveal(rect, request));
         fit.play();
-
     }
 
     private void applyGeometry(ContentPlacement rect) {
-        stage.setX(rect.x);
-        stage.setY(rect.y);
-        stage.setWidth(rect.width);
-        stage.setHeight(rect.height);
-        // The web view is the scene root, so the scene resizes it, but its own 800x600 preferred
-        // size is what it reports meanwhile. Stating the size outright keeps the page's viewport and
-        // the window the same size on every resize, not just the first.
-        webView.setPrefSize(rect.width, rect.height);
-        // Resized outright rather than only asked to lay out: a window that has not been shown yet
-        // does not run a layout pass, so the page would still be measuring itself against the 1x1
-        // scene it started in, and the fit below would have nothing to work with.
-        webView.resize(rect.width, rect.height);
-        webView.requestLayout();
-        // A fullscreen widget covers the application window, so it follows its rounded corners too.
-        FxSurfaces.applyOverlayCorners(webView, rect, surface);
+        FxSurfaces.applyGeometry(stage, webView, rect, surface);
     }
 
     /**
@@ -274,7 +265,6 @@ class JavaFxWidgetHost implements WidgetWebHost {
             + ", web view " + (int) webView.getWidth() + "x" + (int) webView.getHeight()
             + ", owner " + describeOwner());
     }
-
 
     /**
      * Hands the size of the card the page actually drew to the listener.
@@ -329,6 +319,7 @@ class JavaFxWidgetHost implements WidgetWebHost {
 
     @Override
     public void closeHost() {
+        closed = true;
         if (followedFrames > 0) {
             UiLog.d("[JavaFxWidgetHost] closeHost, followed [" + followedFrames
                 + "] animation frames since the last placement");
@@ -363,6 +354,13 @@ class JavaFxWidgetHost implements WidgetWebHost {
     }
 
     private void onLoadStateChanged(Worker.State state) {
+        if (closed) {
+            // The blank page a closed card is navigated away to loads successfully too. Treating that
+            // as a page arriving re-installed the bridge, re-told the page its surface and, worst,
+            // started a fresh INDEFINITE watch timer that nothing would ever stop: one leaked engine
+            // and one immortal 3s poll per widget ever shown.
+            return;
+        }
         if (state == Worker.State.SUCCEEDED) {
             pageLoaded = true;
             fits = 0;
@@ -404,7 +402,7 @@ class JavaFxWidgetHost implements WidgetWebHost {
      * @param overflow how much taller its content is than the room it has
      */
     private void onObservedCard(int width, int height, int overflow) {
-        if (!pageLoaded || !placed || listener == null) {
+        if (closed || !pageLoaded || !placed || listener == null) {
             return;
         }
         if (width < MIN_CREDIBLE_CARD || height < MIN_CREDIBLE_CARD) {
@@ -450,7 +448,7 @@ class JavaFxWidgetHost implements WidgetWebHost {
      * the card already correct does nothing and says nothing.
      */
     private void startWatchingThePage() {
-        if (watch != null) {
+        if (watch != null || closed) {
             return;
         }
         watch = new Timeline(new KeyFrame(WATCH_INTERVAL, event -> {
@@ -566,22 +564,6 @@ class JavaFxWidgetHost implements WidgetWebHost {
         UiLog.d("[JavaFxWidgetHost] reportMissingSize, the widget has reported no size; it painted "
             + (card == null ? "nothing measurable" : card[2] + "x" + card[3]));
         listener.onSizeNotReported(card == null ? 0 : card[2], card == null ? 0 : card[3]);
-    }
-
-    /**
-     * Sends {@code target="_blank"} links to the system browser instead of rendering them in the
-     * card.
-     *
-     * @return a throwaway engine that only reports where it was asked to go
-     */
-    private WebEngine openPopupExternally() {
-        WebEngine popup = new WebEngine();
-        popup.locationProperty().addListener((observable, oldUrl, newUrl) -> {
-            if (newUrl != null && !newUrl.isEmpty()) {
-                ExternalBrowser.open(newUrl);
-            }
-        });
-        return popup;
     }
 
     /**

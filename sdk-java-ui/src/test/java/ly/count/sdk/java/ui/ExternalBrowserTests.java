@@ -147,4 +147,32 @@ public class ExternalBrowserTests {
         Assert.assertFalse("a headless JVM never supports Desktop.browse",
             ExternalBrowser.open("https://count.ly"));
     }
+
+    /**
+     * Linux gets a chain of launchers, the user's own BROWSER first, rather than one fire-and-forget
+     * xdg-open whose failure used to be logged as an open.
+     */
+    @Test
+    public void linuxLaunchers_tryTheUsersBrowserFirstThenTheDesktopsThenTheBrowsers() {
+        java.util.List<String[]> plain = ExternalBrowser.linuxLaunchers("https://x.y/z", null);
+        Assert.assertArrayEquals(new String[] { "xdg-open", "https://x.y/z" }, plain.get(0));
+        Assert.assertArrayEquals(new String[] { "gio", "open", "https://x.y/z" }, plain.get(1));
+        Assert.assertEquals("firefox", plain.get(4)[0]);
+
+        java.util.List<String[]> own = ExternalBrowser.linuxLaunchers("https://x.y/z", "brave-browser");
+        Assert.assertArrayEquals(new String[] { "brave-browser", "https://x.y/z" }, own.get(0));
+        Assert.assertEquals("xdg-open", own.get(1)[0]);
+
+        // The %s convention, and several colon separated entries.
+        java.util.List<String[]> templated = ExternalBrowser.linuxLaunchers("https://x.y/z", "myopen --url=%s:firefox");
+        Assert.assertEquals("/bin/sh", templated.get(0)[0]);
+        Assert.assertEquals("myopen --url=\"$0\"", templated.get(0)[2]);
+        Assert.assertEquals("https://x.y/z", templated.get(0)[3]);
+        Assert.assertArrayEquals(new String[] { "firefox", "https://x.y/z" }, templated.get(1));
+
+        Assert.assertTrue(ExternalBrowser.isLinux("Linux"));
+        Assert.assertFalse(ExternalBrowser.isLinux("Mac OS X"));
+        Assert.assertFalse(ExternalBrowser.isLinux("Windows 11"));
+    }
+
 }

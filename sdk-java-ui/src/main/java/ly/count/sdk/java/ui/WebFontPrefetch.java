@@ -122,8 +122,7 @@ final class WebFontPrefetch {
             return;
         }
         // Off the application thread: the widget is on screen and must not wait for a disk write.
-        List<String> toWrite = urls;
-        Thread writer = new Thread(() -> write(file, toWrite), "cly-font-list");
+        Thread writer = new Thread(() -> write(file, urls), "cly-font-list");
         writer.setDaemon(true);
         writer.start();
 
@@ -192,10 +191,11 @@ final class WebFontPrefetch {
      * and capped.
      */
     private static List<String> usableUrls(String harvested) {
-        Set<String> unique = new LinkedHashSet<>();
         if (harvested == null || harvested.isEmpty() || "null".equals(harvested)) {
-            return new ArrayList<>(unique);
+            return new ArrayList<>();
         }
+
+        Set<String> unique = new LinkedHashSet<>();
         // One format per face. A page lists the same face as woff2, woff and ttf, and this engine
         // uses the first of those it can decode: warming the others would spend the budget on bytes
         // no page will ask for. USABLE_EXTENSIONS is in the engine's own order of preference, and
@@ -262,7 +262,10 @@ final class WebFontPrefetch {
         if (".woff".equals(extension)) {
             return "woff";
         }
-        return "opentype".equals(extension) ? "opentype" : "truetype";
+        if (".otf".equals(extension)) {
+            return "opentype";
+        }
+        return "truetype";
     }
 
     private static File listFile() {

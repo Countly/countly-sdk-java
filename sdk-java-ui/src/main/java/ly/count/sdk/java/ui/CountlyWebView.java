@@ -3,11 +3,8 @@ package ly.count.sdk.java.ui;
 import java.util.concurrent.atomic.AtomicReference;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
-import javafx.scene.Scene;
-import javafx.scene.paint.Color;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 import javafx.stage.Window;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.internal.CountlyFeedbackWidget;
@@ -52,7 +49,6 @@ public final class CountlyWebView {
     private CountlyWebView() {
     }
 
-
     /**
      * Lay feedback widget cards and content blocks out inside the application window instead of over
      * the work area of the screen the application is on. Applies to both.
@@ -61,8 +57,9 @@ public final class CountlyWebView {
      * built around one of the two, so moving the goalposts underneath a running application is not
      * something it can be expected to cope with. Later calls are ignored.
      * <p>
-     * Defaults to {@code false}, which is what a desktop widget expects. Pass {@code true} when the
-     * application should feel self contained and never draw over the rest of the desktop.
+     * Defaults to {@code true}, which is what the other desktop SDKs settled on: a card belongs to
+     * the application that asked for it. Pass {@code false} to lay cards and content out against the
+     * work area of the screen the application is on instead.
      *
      * @param withinApp {@code true} to keep cards and content inside the application window
      */
@@ -166,24 +163,9 @@ public final class CountlyWebView {
             WebView webView = new WebView();
 
             // Starts as a 1x1 window at the surface origin so the page can load before the widget
-            // tells us how big its card has to be; the presenter shows it once it knows.
-            // Transparent, like the content overlay. A widget draws its own rounded card with its
-            // own background; everything around that card has to show the application through it,
-            // or the card sits in an opaque box.
-            Stage stage = new Stage(StageStyle.TRANSPARENT);
-            stage.setResizable(false);
-            // See JavaFxContentDisplay: a card laid out inside the application window is a child of
-            // it, ordered with it and carried with it. A card laid out against the whole screen
-            // belongs to nobody and sits on the top layer, so it can be shown system wide for as
-            // long as the process runs.
-            if (FxSurfaces.isDisplayWithinApp() && owner != null && owner.isShowing()) {
-                stage.initOwner(owner);
-            } else {
-                stage.setAlwaysOnTop(true);
-            }
-            Scene scene = new Scene(webView, 1, 1);
-            scene.setFill(Color.TRANSPARENT);
-            stage.setScene(scene);
+            // tells us how big its card has to be; the presenter shows it once it knows. Transparent
+            // and owned or always on top, as FxSurfaces explains.
+            Stage stage = FxSurfaces.newOverlayStage(owner, webView, 1, 1);
             stage.setX(surface.x);
             stage.setY(surface.y);
 
@@ -193,6 +175,11 @@ public final class CountlyWebView {
             FeedbackWidgetPresenter presenter = new FeedbackWidgetPresenter(host, feedback,
                 followWindow(owner, host, presenterRef, onClosedAndReleased));
             presenterRef.set(presenter);
+            // A card hidden by anything other than the SDK - its owner window closing and taking it
+            // along, the integrator calling hide() - must still free the screen and tell the caller,
+            // or every later widget and block is refused as "already being shown". The presenter's
+            // own finish() runs first on the SDK's paths and makes this a no-op there.
+            stage.setOnHidden(event -> presenter.dismissedExternally());
             presenter.start(widget);
         } catch (Throwable t) {
             UiLog.e("[CountlyWebView] presentFeedbackWidget, could not show the widget, [" + t + "]");

@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
@@ -48,7 +49,9 @@ public class CountlyWebViewTests {
         widgetPort = widgetServer.getAddress().getPort();
         widgetServer.createContext("/", exchange -> {
             boolean askingForTheList = exchange.getRequestURI().getPath().startsWith("/o/sdk");
-            String payload = askingForTheList ? WIDGET_LIST : WIDGET_PAGE;
+            String query = String.valueOf(exchange.getRequestURI().getQuery());
+            String payload = askingForTheList ? WIDGET_LIST
+                : query.contains("never-closes") ? OPEN_ENDED_WIDGET_PAGE : WIDGET_PAGE;
             byte[] body = payload.getBytes(StandardCharsets.UTF_8);
             exchange.getResponseHeaders().add("Content-Type",
                 askingForTheList ? "application/json; charset=utf-8" : "text/html; charset=utf-8");
@@ -74,6 +77,10 @@ public class CountlyWebViewTests {
             + "{\"_id\":\"survey_1\",\"type\":\"survey\",\"name\":\"served survey\",\"tg\":[]},"
             + "{\"_id\":\"rating_1\",\"type\":\"rating\",\"name\":\"served rating\",\"tg\":[]}"
             + "]}";
+
+    /** A widget page that never closes itself, for the tests that end the presentation another way. */
+    private static final String OPEN_ENDED_WIDGET_PAGE =
+        "<html><head><title>widget</title></head><body><div id='widget-body'>survey</div></body></html>";
 
     private static final String WIDGET_PAGE =
         "<html><head><title>widget</title></head><body><div id='widget-body'>survey</div><script>"
@@ -324,6 +331,42 @@ public class CountlyWebViewTests {
         Assert.assertEquals(1, first.get());
         Assert.assertEquals(1, second.get());
         Assert.assertEquals(1, third.get());
+    }
+
+
+    /**
+     * A card hidden by something other than the SDK still tells the caller and frees the screen;
+     * otherwise every later widget and block is refused as "already being shown".
+     */
+    @Test
+    public void aCardHiddenFromOutside_stillReportsAndFreesTheScreen() {
+        Countly.instance().init(UiTestConfigs.configFor("http://127.0.0.1:" + widgetPort));
+
+        // A page that never closes itself, so only the outside hide can end the presentation.
+        CountlyFeedbackWidget widget = widget();
+        widget.widgetId = "never-closes";
+        AtomicInteger told = new AtomicInteger();
+        CountlyWebView.presentFeedbackWidget(null, widget, told::incrementAndGet);
+
+        AtomicReference<Stage> card = new AtomicReference<>();
+        FxTestToolkit.waitUntil("the card to be up", () -> {
+            FxTestToolkit.onFx(() -> {
+                for (javafx.stage.Window window : javafx.stage.Window.getWindows()) {
+                    if (window instanceof Stage && window.isShowing() && window.getScene() != null
+                        && window.getScene().getRoot() instanceof javafx.scene.web.WebView) {
+                        card.set((Stage) window);
+                    }
+                }
+            });
+            return card.get() != null && PresentationLock.showing() != null;
+        });
+
+        FxTestToolkit.onFx(() -> card.get().hide());
+
+        FxTestToolkit.waitUntil("the caller to be told", () -> told.get() == 1);
+        FxTestToolkit.waitUntil("the screen to be free", () -> PresentationLock.showing() == null);
+        FxTestToolkit.sleep(300);
+        Assert.assertEquals("told exactly once", 1, told.get());
     }
 
 }

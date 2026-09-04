@@ -3,10 +3,13 @@ package ly.count.sdk.java.ui;
 import java.awt.Desktop;
 import java.awt.GraphicsEnvironment;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import ly.count.sdk.java.internal.ContentUrlHandler;
 import ly.count.sdk.java.internal.SDKCore;
 
@@ -58,11 +61,12 @@ class ExternalBrowser {
         if (url == null) {
             return null;
         }
-        int colon = url.trim().indexOf(':');
+        String trimmed = url.trim();
+        int colon = trimmed.indexOf(':');
         if (colon <= 0) {
             return null;
         }
-        return url.trim().substring(0, colon).toLowerCase(Locale.ROOT);
+        return trimmed.substring(0, colon).toLowerCase(Locale.ROOT);
     }
 
     /**
@@ -155,6 +159,15 @@ class ExternalBrowser {
             return false;
         }
 
+        // Linux never goes through java.awt.Desktop. Where it is supported at all, its browse is
+        // gnome_url_show underneath, which does not return when called on the JavaFX Application
+        // Thread (the GTK main loop) and holds the AWT lock while it waits: the click froze the
+        // application, no browser appeared and nothing was logged. The launchers below return in
+        // milliseconds from that same thread, so they are the only path there.
+        if (isLinux(System.getProperty("os.name"))) {
+            return openOnLinux(trimmed);
+        }
+
         if (openWithDesktop(trimmed)) {
             return true;
         }
@@ -199,5 +212,88 @@ class ExternalBrowser {
             UiLog.w("[ExternalBrowser] open, the platform launcher could not open [" + url + "], [" + t + "]");
             return false;
         }
+    }
+
+    /**
+     * How long a launcher gets to fail before it is taken to have succeeded. {@code xdg-open} and
+     * its relatives exit non-zero within a few tens of milliseconds when they have nothing to hand
+     * the URL to; a launcher that is still running after this has handed it over.
+     */
+    private static final long LAUNCHER_VERDICT_MS = 400;
+
+    /**
+     * Linux has no single way to open a URL. {@code java.awt.Desktop} is out (see {@link #open}: it
+     * hangs the JavaFX thread where it is supported, and is missing where it is not), and
+     * {@code xdg-open} is missing on minimal installs, has no default browser on a fresh desktop,
+     * and cannot reach a browser installed as a snap from some sandboxes. Starting it and calling
+     * that success, as this used to, logged an open that never happened. So the candidates are
+     * tried in turn, each given a moment to fail, and every failure is logged so the log says why a
+     * link did not open rather than that it did. {@code xdg-open} and {@code gio} take
+     * {@code mailto:} links as well, so mail needs no separate path here.
+     *
+     * @param url the link
+     * @return whether some launcher took it
+     */
+    private static boolean openOnLinux(String url) {
+        for (String[] command : linuxLaunchers(url, System.getenv("BROWSER"))) {
+            try {
+                Process process = new ProcessBuilder(command).redirectErrorStream(true).start();
+                if (!process.waitFor(LAUNCHER_VERDICT_MS, TimeUnit.MILLISECONDS)) {
+                    UiLog.d("[ExternalBrowser] openOnLinux, [" + command[0] + "] took the link");
+                    return true;
+                }
+                if (process.exitValue() == 0) {
+                    UiLog.d("[ExternalBrowser] openOnLinux, [" + command[0] + "] opened the link");
+                    return true;
+                }
+                UiLog.w("[ExternalBrowser] openOnLinux, [" + command[0] + "] exited with ["
+                    + process.exitValue() + "], trying the next launcher");
+            } catch (Throwable t) {
+                // Typically "No such file or directory": this launcher is not installed.
+                UiLog.w("[ExternalBrowser] openOnLinux, [" + command[0] + "] is not available, [" + t + "]");
+            }
+        }
+        UiLog.w("[ExternalBrowser] openOnLinux, no launcher could open [" + url + "]. Set the BROWSER"
+            + " environment variable, or give the SDK a ContentUrlHandler to open links itself.");
+        return false;
+    }
+
+    static boolean isLinux(String osName) {
+        String os = osName == null ? "" : osName.toLowerCase(Locale.ROOT);
+        return os.contains("nix") || os.contains("nux") || os.contains("aix");
+    }
+
+    /**
+     * The launchers to try on Linux, most specific first: the user's own {@code BROWSER}, then the
+     * desktop's openers, then the browsers themselves.
+     *
+     * @param url the link
+     * @param browserEnv the {@code BROWSER} environment variable, may be {@code null}; a {@code %s}
+     *     in it is replaced by the URL, as the convention has it
+     * @return commands, each ready for a ProcessBuilder
+     */
+    static List<String[]> linuxLaunchers(String url, String browserEnv) {
+        List<String[]> launchers = new ArrayList<>();
+        if (browserEnv != null && !browserEnv.trim().isEmpty()) {
+            // BROWSER may hold several, colon separated, each possibly with a %s placeholder.
+            for (String candidate : browserEnv.split(":")) {
+                String trimmed = candidate.trim();
+                if (trimmed.isEmpty()) {
+                    continue;
+                }
+                launchers.add(trimmed.contains("%s")
+                    ? new String[] { "/bin/sh", "-c", trimmed.replace("%s", "\"$0\""), url }
+                    : new String[] { trimmed, url });
+            }
+        }
+        launchers.add(new String[] { "xdg-open", url });
+        launchers.add(new String[] { "gio", "open", url });
+        launchers.add(new String[] { "sensible-browser", url });
+        launchers.add(new String[] { "x-www-browser", url });
+        launchers.add(new String[] { "firefox", url });
+        launchers.add(new String[] { "google-chrome", url });
+        launchers.add(new String[] { "chromium", url });
+        launchers.add(new String[] { "chromium-browser", url });
+        return launchers;
     }
 }

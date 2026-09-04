@@ -237,6 +237,63 @@ public class JavaFxContentDisplayTests {
         FxTestToolkit.sleep(1200);
     }
 
+    /**
+     * One block at a time, and a refused block must not free the one on screen. A second block asked
+     * for while the first is up is reported closed at once and the first keeps its claim. When the
+     * refusal released that claim instead, the next request opened on top of the first, which is how
+     * two blocks ended up alive together.
+     */
+    @Test
+    public void aSecondBlockWhileOneIsShowing_isRefusedAndTheFirstKeepsTheScreen() {
+        // A page that never closes itself, so only the test decides when the first block ends.
+        String openEnded = "<html><head><title>c</title></head><body><p>content</p></body></html>";
+        JavaFxContentDisplay display = new JavaFxContentDisplay(null);
+        display.present(content(FxTestToolkit.pageUrl(openEnded)), this::recordClose);
+        FxTestToolkit.waitUntil("the first block to hold the screen", () -> PresentationLock.showing() != null);
+        String firstClaim = PresentationLock.showing();
+
+        AtomicInteger refused = new AtomicInteger();
+        display.present(content(FxTestToolkit.pageUrl(openEnded + "<!-- 2 -->")), data -> refused.incrementAndGet());
+        FxTestToolkit.waitUntil("the second block to be refused", () -> refused.get() == 1);
+        FxTestToolkit.sleep(200);
+        Assert.assertEquals("the first block still holds the screen", firstClaim, PresentationLock.showing());
+        Assert.assertEquals("the first block was not reported closed", 0, closeCount.get());
+
+        // A third request while the first is still up is refused just the same, and does not open.
+        display.present(content(FxTestToolkit.pageUrl(openEnded + "<!-- 3 -->")), data -> refused.incrementAndGet());
+        FxTestToolkit.waitUntil("the third block to be refused", () -> refused.get() == 2);
+        Assert.assertEquals(firstClaim, PresentationLock.showing());
+        Assert.assertEquals("only the first block has a window", 1, contentWindows());
+
+        // Hiding the first from outside ends it and frees the screen.
+        FxTestToolkit.onFx(() -> {
+            for (javafx.stage.Window window : javafx.stage.Window.getWindows()) {
+                if (isContentWindow(window)) {
+                    ((Stage) window).hide();
+                }
+            }
+        });
+        FxTestToolkit.waitUntil("the first block to be reported closed", () -> closeCount.get() == 1);
+        FxTestToolkit.waitUntil("the screen to be free", () -> PresentationLock.showing() == null);
+    }
+
+    private static int contentWindows() {
+        AtomicInteger count = new AtomicInteger();
+        FxTestToolkit.onFx(() -> {
+            for (javafx.stage.Window window : javafx.stage.Window.getWindows()) {
+                if (isContentWindow(window)) {
+                    count.incrementAndGet();
+                }
+            }
+        });
+        return count.get();
+    }
+
+    private static boolean isContentWindow(javafx.stage.Window window) {
+        return window instanceof Stage && window.isShowing() && window.getScene() != null
+            && window.getScene().getRoot() instanceof javafx.scene.web.WebView;
+    }
+
     private void recordClose(Map<String, Object> data) {
         closes.add(data);
         closeCount.incrementAndGet();

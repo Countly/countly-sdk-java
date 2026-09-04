@@ -50,13 +50,16 @@ public class WidgetActionParser {
             return action;
         }
 
+        // Read before the external link returns: a "cly_x_int=1" link may also carry "close=1",
+        // asking to be opened AND to dismiss the block, and reading it afterwards made every
+        // open-and-close branch downstream unreachable.
+        action.close = isTruthy(query.get("close"));
+
         if (action.isExternalLink) {
             // The whole URL is the destination; there is nothing else to process.
             action.link = url;
             return action;
         }
-
-        action.close = isTruthy(query.get("close"));
 
         Object resize = query.get("resize_me");
         if (resize != null) {

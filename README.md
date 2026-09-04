@@ -34,10 +34,10 @@ This SDK supports the following features:
 
 ```bash
 ./gradlew :sdk-java:build      # compile the core SDK and run its tests
-./gradlew :sdk-java-ui:build   # compile the JavaFX UI artifact and run its tests (Java 11+)
+./gradlew :sdk-java-ui:build   # compile the JavaFX UI artifact and run its tests (Java 17+)
 ./gradlew coverage             # run every published module's tests and print a coverage summary
 ./gradlew :app-java:run        # console demo
-./gradlew :app-javafx:run      # JavaFX demo (Java 11+)
+./gradlew :app-javafx:run      # JavaFX demo (Java 17+)
 ```
 
 `coverage` writes a jacoco report per module to `<module>/build/reports/jacoco/test/`, HTML to read

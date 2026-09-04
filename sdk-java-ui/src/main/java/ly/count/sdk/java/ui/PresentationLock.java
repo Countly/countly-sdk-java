@@ -43,11 +43,19 @@ final class PresentationLock {
      * a close can arrive from the page, the window manager or the SDK, and each path releases.
      */
     static void release(String what) {
-        if (!Platform.isFxApplicationThread()) {
-            Platform.runLater(() -> release(what));
+        if (what == null) {
             return;
         }
-        if (what != null && what.equals(showing)) {
+        if (!Platform.isFxApplicationThread()) {
+            try {
+                Platform.runLater(() -> release(what));
+                return;
+            } catch (IllegalStateException toolkitNotRunning) {
+                // No application thread to hop to, and nothing else can be touching the field
+                // either: clear it here rather than let a close go unreported.
+            }
+        }
+        if (what.equals(showing)) {
             showing = null;
         }
     }

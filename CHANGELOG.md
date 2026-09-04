@@ -7,7 +7,7 @@
   * Added the "content" configuration group with "setZoneTimerInterval" and "setGlobalContentCallback"
   * This feature uses "Content" consent.
   * Needs the new "ly.count.sdk:java-ui" artifact for displaying content.
-* Added a separately published artifact "ly.count.sdk:java-ui" (requires Java 11 and JavaFX 17) that displays feedback widgets and content on the desktop:
+* Added a separately published artifact "ly.count.sdk:java-ui" (Java 17+, JavaFX 20+) that displays feedback widgets and content on the desktop:
   * "presentNPS", "presentSurvey" and "presentRating" for fetching, picking and showing a widget in one call, optionally by widget ID, name or tag
   * "CountlyWebView.presentFeedbackWidget" for showing a feedback widget you picked yourself
   * "CountlyWebView.enableContentZone" / "CountlyWebView.disableContentZone" for showing content
