@@ -1,0 +1,157 @@
+name: "Code Coverage"
+
+# Separate from gradle.yml on purpose. That job runs on JDK 8 to prove the SDK's Java 8
+# floor, and settings.gradle only includes :sdk-java-ui on Java 11+, so a JDK 8 run would
+# silently report no coverage at all for that module. Same blind spot the dependency scan
+# workflow documents.
+on:
+  push:
+    branches:
+      - master
+      - staging
+  pull_request:
+    branches:
+      - master
+      - staging
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Advisory to begin with: the repository is not at target yet, and a gate that fails every
+  # pull request from day one just gets ignored. Raise these, then set ENFORCE_COVERAGE to
+  # make them block.
+  COVERAGE_MIN_OVERALL: "0"
+  COVERAGE_MIN_CHANGED: "0"
+  ENFORCE_COVERAGE: "false"
+
+jobs:
+  coverage:
+    name: Measure and report coverage
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Needed to post the report as a comment on the pull request.
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # The changed-file list is computed by diffing against the base branch, which needs
+          # more than the default single commit.
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'corretto'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # The task deliberately lets tests fail so a flake cannot block the report. The report
+      # itself carries the failure count, and gradle.yml is what actually gates on tests.
+      # The output is kept so a build failure can be shown in the pull request comment rather
+      # than sending the reader off to the workflow logs.
+      # sdk-java-ui's tests need a real JavaFX toolkit, and this runner has no display, so without
+      # xvfb every one of them skips itself and the module reports about a third of its real
+      # coverage. Note this is NOT paired with -Dcountly.ui.pageLoadTests: that flag additionally
+      # enables the one class which shows a transparent stage, and that class segfaults the JVM.
+      - name: Install a virtual display
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq xvfb
+
+      # continue-on-error because a crashed JVM is not a test failure: ignoreFailures does not cover
+      # it, so without this a crash would kill the job and lose sdk-java's numbers as collateral.
+      # The report step below runs either way and explains what happened.
+      - name: Run tests under jacoco
+        id: gradle
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          xvfb-run -a ./gradlew coverage --console=plain 2>&1 | tee coverage-run.log
+
+      # Best effort, and never allowed to fail the job: without it the report simply has no
+      # changed-files section. checkout already fetched the full history, so this only makes
+      # sure the base branch ref itself is present.
+      - name: Collect the files this pull request changed
+        if: always() && github.event_name == 'pull_request'
+        continue-on-error: true
+        run: |
+          git fetch --no-tags origin "${{ github.base_ref }}"
+          git diff --name-only --diff-filter=d \
+            "origin/${{ github.base_ref }}...HEAD" > changed-files.txt
+          echo "Changed files:"
+          cat changed-files.txt
+
+      # always(): when the build above fails there is no report, and this step is what turns
+      # that into a comment explaining why instead of a silent skip.
+      - name: Build the coverage report
+        id: report
+        if: always()
+        run: |
+          python3 .github/scripts/coverage_report.py \
+            --out coverage-report.md \
+            --changed-files changed-files.txt \
+            --build-log coverage-run.log \
+            --module "sdk-java:sdk-java/build/reports/jacoco/test/jacocoTestReport.xml:sdk-java/build/test-results/test:sdk-java/src/main/java" \
+            --module "sdk-java-ui:sdk-java-ui/build/reports/jacoco/test/jacocoTestReport.xml:sdk-java-ui/build/test-results/test:sdk-java-ui/src/main/java"
+
+      # Updates one sticky comment instead of adding a new one on every push, matching the
+      # dependency security scan. Skipped for fork pull requests, which are not granted
+      # pull-requests: write.
+      - name: Comment the report on the pull request
+        if: always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- countly-coverage-report -->';
+            let report = '';
+            try {
+              report = fs.readFileSync('coverage-report.md', 'utf8');
+            } catch (e) {
+              report = `## Code coverage\n\nThe coverage step did not produce a report (outcome: ${{ steps.report.outcome }}). See the workflow logs.`;
+            }
+            const body = [
+              marker,
+              report,
+              `[Full run log](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`,
+            ].join('\n');
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              per_page: 100,
+            });
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      - name: Upload the coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: |
+            coverage-report.md
+            coverage-run.log
+            sdk-java/build/reports/jacoco/test/
+            sdk-java-ui/build/reports/jacoco/test/
+          if-no-files-found: warn

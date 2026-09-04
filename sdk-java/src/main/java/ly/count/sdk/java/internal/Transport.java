@@ -414,6 +414,13 @@ public class Transport implements X509TrustManager {
                         data = Utils.Base64.decode(trimPem(key), L);
                     }
 
+                    if (data == null) {
+                        // Base64.decode returns null for a malformed pin; passing that on made
+                        // Countly.init() throw instead of reporting a bad pin.
+                        L.e("[network] Public key pin is not valid base64, ignoring it: " + key);
+                        continue;
+                    }
+
                     try {
                         X509EncodedKeySpec spec = new X509EncodedKeySpec(data);
                         KeyFactory kf = KeyFactory.getInstance("RSA");
@@ -442,6 +449,11 @@ public class Transport implements X509TrustManager {
                     }
                 } else {
                     data = Utils.Base64.decode(trimPem(cert), L);
+                }
+
+                if (data == null) {
+                    L.e("[network] Certificate pin is not valid base64, ignoring it: " + cert);
+                    continue;
                 }
 
                 CertificateFactory cf = CertificateFactory.getInstance("X.509");

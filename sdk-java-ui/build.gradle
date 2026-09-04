@@ -1,0 +1,108 @@
+buildscript {
+  repositories {
+    mavenCentral()
+  }
+  // A widget or content link would otherwise be handed to the real system browser while tests run.
+//
+// No Monocle. The headless JavaFX platform cost four separate failures: Monocle 11 threw
+// AbstractMethodError against JavaFX 17, Monocle 17 crashed the JVM against JavaFX 21, Monocle 21 is
+// Java 21 bytecode so it needed a newer test JVM, and once that was solved JavaFX 21's WebKit
+// segfaulted on every platform the moment a real page was loaded (verified on macOS, Linux and
+// Windows). The tests now use the real toolkit, which is far better exercised; CI gives Linux a
+// display with xvfb.
+tasks.withType(Test) {
+  systemProperty 'java.awt.headless', 'true'
+
+  // One JVM per test class. JavaFX cannot be restarted inside a process, so every class that needs
+  // the toolkit shares one, and WebKit does not survive that: each page loading class passes on its
+  // own, but running two in the same JVM segfaults libjfxwebkit. Forking per class is what makes
+  // them runnable at all.
+  forkEvery = 1
+
+
+  // Forwarded explicitly. "./gradlew -Dcountly.ui.pageLoadTests=true" sets the property on the
+  // Gradle daemon, NOT on the forked test JVM, so without this line the toolkit dependent tests
+  // silently skipped even in the CI job that passes the flag, and this module's reported coverage
+  // was about a third of what it should be.
+  systemProperty 'countly.ui.pageLoadTests', System.getProperty('countly.ui.pageLoadTests', 'false')
+  // The scenario driver: a real server and a desktop session, so never on by default. A -D on the
+  // gradle command line does not reach a forked test JVM by itself, hence the forwarding.
+  systemProperty 'countly.ui.scenarios', System.getProperty('countly.ui.scenarios', 'false')
+  systemProperty 'countly.ui.scenarioServer', System.getProperty('countly.ui.scenarioServer', 'https://master.count.ly')
+  systemProperty 'countly.ui.scenarioAppKey', System.getProperty('countly.ui.scenarioAppKey', 'dte_mobile_v2')
+  systemProperty 'countly.ui.scenarioOut', System.getProperty('countly.ui.scenarioOut', "$buildDir/scenarios")
+  systemProperty 'countly.ui.scenarioWithinApp', System.getProperty('countly.ui.scenarioWithinApp', 'false')
+}
+
+dependencies {
+    // Load publish plugin ONLY when publish task is requested
+    if (gradle.startParameter.taskNames.any { it.toLowerCase().contains("publish") }) {
+      // This requires minimum java 11 to work
+      classpath 'com.vanniktech:gradle-maven-publish-plugin:0.28.0'
+    }
+  }
+}
+
+plugins {
+  id 'java-library'
+  id 'org.openjfx.javafxplugin' version '0.1.0'
+}
+
+// Java 17, not 11. JavaFX only gained a public API for a transparent web view background
+// (WebView.setPageFill) in version 20, and JavaFX 20+ requires Java 17. Without it the only
+// lever is a com.sun.webkit internal reached by reflection, which needs --add-exports from
+// every integrator and renders the empty area opaque black rather than see-through.
+//
+// A toolchain rather than sourceCompatibility, so this module still builds when the Gradle
+// daemon itself is running on an older JDK. The core SDK stays on Java 8 regardless.
+java {
+  toolchain {
+    languageVersion = JavaLanguageVersion.of(17)
+  }
+}
+
+javafx {
+  version = '21.0.5'
+  modules = ['javafx.controls', 'javafx.web']
+}
+
+dependencies {
+  // 'api' so a consumer of this artifact also gets the core SDK, whose types
+  // appear in this package's public signatures.
+  api project(':sdk-java')
+
+  implementation 'org.json:json:20250517'
+
+  testImplementation 'junit:junit:4.13.1'
+  testImplementation 'org.mockito:mockito-core:4.11.0'
+}
+
+// Coverage. Reports land in build/reports/jacoco/test/ (HTML to read, XML for tooling).
+// "./gradlew coverage" from the repo root runs this and prints a summary.
+apply plugin: 'jacoco'
+
+jacoco {
+  toolVersion = JACOCO_VERSION
+}
+
+// Experiment hook: -PnoJacoco=true detaches the coverage agent from the test JVM, to tell a JVM
+// crash caused by the agent apart from one caused by the code under test.
+if (project.hasProperty('noJacoco')) {
+  tasks.withType(Test).configureEach {
+    jacoco.enabled = false
+  }
+}
+
+jacocoTestReport {
+  dependsOn test
+
+  reports {
+    html.required = true
+    xml.required = true
+    csv.required = false
+  }
+}
+
+if (gradle.startParameter.taskNames.any { it.toLowerCase().contains("publish") }) {
+  apply plugin: "com.vanniktech.maven.publish"
+}

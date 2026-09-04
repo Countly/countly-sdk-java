@@ -1,5 +1,6 @@
 package ly.count.sdk.java.internal;
 
+import java.io.File;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,6 +70,7 @@ public class SDKCore {
         moduleMappings.put(CoreFeature.CrashReporting, ModuleCrashes.class);
         moduleMappings.put(CoreFeature.BackendMode, ModuleBackendMode.class);
         moduleMappings.put(CoreFeature.Feedback, ModuleFeedback.class);
+        moduleMappings.put(CoreFeature.Content, ModuleContent.class);
         moduleMappings.put(CoreFeature.Events, ModuleEvents.class);
         moduleMappings.put(CoreFeature.RemoteConfig, ModuleRemoteConfig.class);
         moduleMappings.put(CoreFeature.UserProfiles, ModuleUserProfile.class);
@@ -577,6 +579,46 @@ public class SDKCore {
         deviceId().changeWithMerge(id);
     }
 
+    /**
+     * The logger the SDK was configured with, so code outside of this package (a
+     * {@link ContentDisplay} implementation, for example) can log through the same level and
+     * listener the integrator set up.
+     *
+     * @return the SDK logger, or {@code null} while the SDK is not initialized
+     */
+    public static Log logger() {
+        SDKCore core = instance;
+        return core == null ? null : core.L;
+    }
+
+    /**
+     * The application's link handler, so code outside this package (a display implementation) can
+     * offer it a link before opening it itself.
+     *
+     * @return the handler, or {@code null} when none was configured or the SDK is not initialized
+     */
+    public static ContentUrlHandler contentUrlHandler() {
+        SDKCore core = instance;
+        if (core == null || core.config == null) {
+            return null;
+        }
+        return core.config.content.contentUrlHandler;
+    }
+
+    /**
+     * The directory the SDK keeps its files in, so a display implementation outside this package can
+     * cache what it needs to show a widget without waiting for the network.
+     *
+     * @return the directory, or {@code null} when the SDK is not initialized
+     */
+    public static File sdkStorageDirectory() {
+        SDKCore core = instance;
+        if (core == null || core.config == null) {
+            return null;
+        }
+        return core.config.getSdkStorageRootDirectory();
+    }
+
     public static boolean enabled(int feature) {
         return (feature & instance.consents) == feature &&
             (feature & instance.config().getFeatures1()) == feature;
@@ -728,7 +770,29 @@ public class SDKCore {
             return null;
         }
 
-        return module(ModuleFeedback.class).feedbackInterface;
+        ModuleFeedback module = module(ModuleFeedback.class);
+        if (module == null) {
+            // Consent is not the only gate: the feature may simply never have been enabled,
+            // in which case the module was never built and there is nothing to hand back.
+            L.v("[SDKCore] feedback, feedback feature was not enabled, returning null");
+            return null;
+        }
+
+        return module.feedbackInterface;
+    }
+
+    public ModuleContent.Content content() {
+        if (!hasConsentForFeature(CoreFeature.Content)) {
+            L.v("[SDKCore] content, Content feature has no consent, returning null");
+            return null;
+        }
+
+        ModuleContent module = module(ModuleContent.class);
+        if (module == null) {
+            return null;
+        }
+
+        return module.contentInterface;
     }
 
     public ModuleCrashes.Crashes crashes() {
@@ -737,7 +801,15 @@ public class SDKCore {
             return null;
         }
 
-        return module(ModuleCrashes.class).crashInterface;
+        ModuleCrashes module = module(ModuleCrashes.class);
+        if (module == null) {
+            // Consent is not the only gate: the feature may simply never have been enabled,
+            // in which case the module was never built and there is nothing to hand back.
+            L.v("[SDKCore] crashes, crashes feature was not enabled, returning null");
+            return null;
+        }
+
+        return module.crashInterface;
     }
 
     public ModuleViews.Views views() {
@@ -760,7 +832,15 @@ public class SDKCore {
             return null;
         }
 
-        return module(ModuleRemoteConfig.class).remoteConfigInterface;
+        ModuleRemoteConfig module = module(ModuleRemoteConfig.class);
+        if (module == null) {
+            // Consent is not the only gate: the feature may simply never have been enabled,
+            // in which case the module was never built and there is nothing to hand back.
+            L.v("[SDKCore] remoteConfig, remoteConfig feature was not enabled, returning null");
+            return null;
+        }
+
+        return module.remoteConfigInterface;
     }
 
     public ModuleUserProfile.UserProfile userProfile() {

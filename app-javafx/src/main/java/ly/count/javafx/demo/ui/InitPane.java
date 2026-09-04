@@ -21,6 +21,7 @@ import javafx.scene.layout.VBox;
 import ly.count.javafx.demo.AppContext;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
+import ly.count.sdk.java.ui.CountlyWebView;
 
 public class InitPane {
 
@@ -49,6 +50,9 @@ public class InitPane {
     private final CheckBox disableUnhandledCrash = new CheckBox("Disable unhandled crash reporting");
     private final CheckBox disableAutoUserProps = new CheckBox("Disable auto-send user properties");
     private final CheckBox disableLocationBox = new CheckBox("Disable location tracking");
+    // Belongs on this screen because it is a one time setting: it is applied with init and ignored
+    // afterwards, so a checkbox anywhere else would be a switch that does nothing.
+    private final CheckBox widgetsWithinApp = new CheckBox("Show widgets and content within the app window");
 
     // Numeric / tuning fields
     private final TextField eventQueueSizeField = new TextField();
@@ -165,7 +169,8 @@ public class InitPane {
     private VBox buildFlags() {
         HBox col1 = new HBox(20, new VBox(4, requiresConsent, backendMode, forcePost));
         VBox rcBox = new VBox(4, autoRcTriggers, rcCaching, rcAutoEnroll);
-        VBox disableBox = new VBox(4, disableUnhandledCrash, disableAutoUserProps, disableLocationBox);
+        VBox disableBox = new VBox(4, disableUnhandledCrash, disableAutoUserProps, disableLocationBox,
+            widgetsWithinApp);
         HBox row = new HBox(30, col1, rcBox, disableBox);
         row.setPadding(new Insets(2, 0, 0, 0));
         return new VBox(row);
@@ -208,6 +213,9 @@ public class InitPane {
             )
                 .setLoggingLevel(loggingLevelBox.getValue())
                 .setLogListener((msg, lvl) -> log.sdk("[" + lvl + "] " + msg));
+
+            config.content.setGlobalContentCallback((status, data) ->
+                log.info("[Content] callback: " + status + " " + data));
 
             Config.Feature[] selected = selectedFeatures();
             if (selected.length > 0) {
@@ -272,6 +280,10 @@ public class InitPane {
             applyIntField(netReadTimeoutField,     "network read timeout",    config::setNetworkReadTimeout);
             applyIntField(netRequestCooldownField, "network request cooldown", config::setNetworkRequestCooldown);
             applyIntField(netImportantCooldownField, "important request cooldown", config::setNetworkImportantRequestCooldown);
+
+            // A UI artifact setting rather than a Config one, and it only takes once, so it goes
+            // in with init.
+            CountlyWebView.setShowWidgetsWithinApp(widgetsWithinApp.isSelected());
 
             Countly.instance().init(config);
 

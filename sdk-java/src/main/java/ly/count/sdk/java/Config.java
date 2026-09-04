@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import ly.count.sdk.java.internal.ConfigContent;
 import ly.count.sdk.java.internal.ConfigViews;
 import ly.count.sdk.java.internal.CoreFeature;
 import ly.count.sdk.java.internal.Log;
@@ -237,6 +238,13 @@ public class Config {
     protected Map<String, String> customNetworkRequestHeaders = null;
 
     public ConfigViews views = new ConfigViews(this);
+
+    /**
+     * Init time options of the content feature.
+     *
+     * @apiNote This is an EXPERIMENTAL feature, and it can have breaking changes
+     */
+    public ConfigContent content = new ConfigContent(this);
 
     protected String location = null;
     protected String ip = null;
@@ -1410,7 +1418,8 @@ public class Config {
         Location(CoreFeature.Location.getIndex()),
         UserProfiles(CoreFeature.UserProfiles.getIndex()),
         Feedback(CoreFeature.Feedback.getIndex()),
-        RemoteConfig(CoreFeature.RemoteConfig.getIndex());
+        RemoteConfig(CoreFeature.RemoteConfig.getIndex()),
+        Content(CoreFeature.Content.getIndex());
         //        StarRating(1 << 12),
         //        PerformanceMonitoring(1 << 14);
 
@@ -1441,6 +1450,8 @@ public class Config {
                 return RemoteConfig;
             } else if (index == Feedback.index) {
                 return Feedback;
+            } else if (index == Content.index) {
+                return Content;
             } else {
                 return null;
             }

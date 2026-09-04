@@ -31,10 +31,12 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import javafx.stage.Window;
 import ly.count.javafx.demo.AppContext;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.internal.CountlyFeedbackWidget;
 import ly.count.sdk.java.internal.FeedbackWidgetType;
+import ly.count.sdk.java.ui.CountlyWebView;
 
 /**
  * Mirrors cpp_demo/main.cpp + Countly_Feedback_Widget_Implementation_Guide.html:
@@ -75,7 +77,23 @@ public class FeedbackWidgetsPane {
         headerLabel.getStyleClass().add("section-title");
         HBox headerRow = new HBox(8, headerLabel, refresh);
         headerRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-        leftBox.getChildren().addAll(headerRow, cardList);
+
+        // The one-call shortcuts of the SDK UI artifact: fetch, pick by type and show.
+        TextField selector = new TextField();
+        selector.setPromptText("widget ID, name or tag (optional)");
+        Button nps = new Button("Present NPS");
+        nps.setOnAction(e -> presentByType("NPS", selector.getText().trim()));
+        Button survey = new Button("Present Survey");
+        survey.setOnAction(e -> presentByType("Survey", selector.getText().trim()));
+        Button rating = new Button("Present Rating");
+        rating.setOnAction(e -> presentByType("Rating", selector.getText().trim()));
+
+        Label quickLabel = new Label("Quick calls");
+        quickLabel.getStyleClass().add("section-title");
+        HBox quickRow = new HBox(6, nps, survey, rating);
+        quickRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+        leftBox.getChildren().addAll(headerRow, quickLabel, selector, quickRow, cardList);
 
         ScrollPane leftScroll = new ScrollPane(leftBox);
         leftScroll.setFitToWidth(true);
@@ -164,7 +182,8 @@ public class FeedbackWidgetsPane {
             cardList.getChildren().add(new WidgetCard(w, wv,
                 widget -> openWidget(widget, wv),
                 this::inspectWidget,
-                this::openManualReportDialog));
+                this::openManualReportDialog,
+                this::presentWithSdkUi));
         }
     }
 
@@ -211,6 +230,45 @@ public class FeedbackWidgetsPane {
         placeholder.setText(text);
         placeholder.setVisible(true);
         webView.setVisible(false);
+    }
+
+    // ------------------- Quick calls of the SDK UI artifact -------------------
+
+    private void presentByType(String type, String nameIDorTag) {
+        if (!SdkUtil.requireSdk(log)) {
+            return;
+        }
+        log.info("[Widget] present" + type + " nameIDorTag:[" + nameIDorTag + "]");
+        Window owner = root.getScene() == null ? null : root.getScene().getWindow();
+        Runnable onClosed = () -> log.info("[Widget] " + type + " card was dismissed");
+
+        switch (type) {
+            case "NPS":
+                CountlyWebView.presentNPS(owner, nameIDorTag, onClosed);
+                break;
+            case "Survey":
+                CountlyWebView.presentSurvey(owner, nameIDorTag, onClosed);
+                break;
+            default:
+                CountlyWebView.presentRating(owner, nameIDorTag, onClosed);
+                break;
+        }
+    }
+
+    // ------------------- Presentation by the SDK UI artifact -------------------
+
+    /**
+     * Hands the widget to {@code sdk-java-ui}, which builds the URL, drives the card and reports the
+     * dismissal itself. The panel above stays as the hand rolled reference implementation.
+     */
+    private void presentWithSdkUi(CountlyFeedbackWidget widget) {
+        if (!SdkUtil.requireSdk(log)) {
+            return;
+        }
+        log.info("[Widget] Presenting " + widget.widgetId + " with the SDK UI artifact");
+        Window owner = root.getScene() == null ? null : root.getScene().getWindow();
+        CountlyWebView.presentFeedbackWidget(owner, widget,
+            () -> log.info("[Widget] SDK UI card for " + widget.widgetId + " was dismissed"));
     }
 
     // ------------------- Inspect widget data -------------------

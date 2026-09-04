@@ -128,10 +128,16 @@ public class ModuleFeedback extends ModuleBase {
                             continue;
                         }
 
+                        // appearance.position anchors the card on screen; the web SDK applies it as
+                        // a CSS class. Dropping it left every survey in the default corner.
+                        JSONObject appearance = jObj.optJSONObject("appearance");
+                        String valPosition = appearance == null ? null : appearance.optString("position", null);
+
                         CountlyFeedbackWidget se = new CountlyFeedbackWidget();
                         se.type = plannedType;
                         se.widgetId = valId;
                         se.name = valName;
+                        se.position = valPosition;
                         se.tags = valTagsArr.toArray(new String[0]);
 
                         parsedRes.add(se);
@@ -243,10 +249,13 @@ public class ModuleFeedback extends ModuleBase {
             }
         }
 
+        // A ConcurrentHashMap rejects null values, and the application version is unset unless the
+        // integrator supplied one, so putting it in blindly threw a NullPointerException out of a
+        // public API for every integration that never called 'setApplicationVersion'.
         Map<String, Object> segm = new ConcurrentHashMap<>();
-        segm.put("platform", internalConfig.getSdkPlatform());
-        segm.put("app_version", cachedAppVersion);
-        segm.put("widget_id", widgetInfo.widgetId);
+        putIfNotNull(segm, "platform", WidgetUrlBuilder.PLATFORM);
+        putIfNotNull(segm, "app_version", cachedAppVersion);
+        putIfNotNull(segm, "widget_id", widgetInfo.widgetId);
 
         if (widgetResult == null) {
             //mark as closed
@@ -258,6 +267,14 @@ public class ModuleFeedback extends ModuleBase {
         }
 
         Countly.instance().events().recordEvent(widgetInfo.type.eventKey, segm);
+    }
+
+    private void putIfNotNull(Map<String, Object> segmentation, String key, Object value) {
+        if (value == null) {
+            L.d("[ModuleFeedback] putIfNotNull, no value for [" + key + "], leaving it out of the segmentation");
+            return;
+        }
+        segmentation.put(key, value);
     }
 
     private <T> void callCallback(String errorLog, CallbackOnFinish<T> callback) {
@@ -284,7 +301,7 @@ public class ModuleFeedback extends ModuleBase {
             .add("shown", "1")
             .add("sdk_version", internalConfig.getSdkVersion())
             .add("sdk_name", internalConfig.getSdkName())
-            .add("platform", internalConfig.getSdkPlatform())
+            .add("platform", WidgetUrlBuilder.PLATFORM)
             .add("app_version", cachedAppVersion)
             .add("av", internalConfig.getApplicationVersion());
 
@@ -326,6 +343,10 @@ public class ModuleFeedback extends ModuleBase {
     }
 
     private String constructFeedbackWidgetUrlInternal(CountlyFeedbackWidget widgetInfo) {
+        return constructFeedbackWidgetUrlInternal(widgetInfo, 0, 0);
+    }
+
+    private String constructFeedbackWidgetUrlInternal(CountlyFeedbackWidget widgetInfo, int surfaceWidth, int surfaceHeight) {
         L.d("[ModuleFeedback] constructFeedbackWidgetUrlInternal, widgetInfo :[" + widgetInfo + "]");
 
         if (widgetInfo == null) {
@@ -343,23 +364,10 @@ public class ModuleFeedback extends ModuleBase {
             return null;
         }
 
-        StringBuilder widgetListUrl = new StringBuilder();
-        widgetListUrl.append(internalConfig.getServerURL());
-        widgetListUrl.append("/feedback/");
-        widgetListUrl.append(widgetInfo.type.name());
-        widgetListUrl.append('?');
-        Params params = new Params()
-            .add("widget_id", widgetInfo.widgetId)
-            .add("device_id", internalConfig.getDeviceId().id)
-            .add("app_key", internalConfig.getServerAppKey())
-            .add("sdk_version", internalConfig.getSdkVersion())
-            .add("sdk_name", internalConfig.getSdkName())
-            .add("platform", internalConfig.getSdkPlatform());
+        final String preparedWidgetUrl = WidgetUrlBuilder.build(internalConfig, widgetInfo, cachedAppVersion,
+            surfaceWidth, surfaceHeight);
 
-        widgetListUrl.append(params.toString());
-        final String preparedWidgetUrl = widgetListUrl.toString();
-
-        L.d("[ModuleFeedback] constructFeedbackWidgetUrlInternal, Using following url for widget:[" + widgetListUrl + "]");
+        L.d("[ModuleFeedback] constructFeedbackWidgetUrlInternal, Using following url for widget:[" + preparedWidgetUrl + "]");
         return preparedWidgetUrl;
     }
 
@@ -388,6 +396,30 @@ public class ModuleFeedback extends ModuleBase {
                 L.i("[Feedback] constructFeedbackWidgetUrl, Trying to present feedback widget in an alert dialog");
 
                 return constructFeedbackWidgetUrlInternal(widgetInfo);
+            }
+        }
+
+        /**
+         * Construct a URL that can be used to present a feedback widget in a web viewer, telling the
+         * widget how much room it has.
+         * <p>
+         * A widget template lays its card out against these dimensions and reports the rectangle it
+         * wants back through {@code resize_me}. Without them it falls back to its largest breakpoint
+         * with no idea of the real area, which caps its height and anchors it to the top rather than
+         * the edge it belongs on. A display that knows its surface should use this.
+         *
+         * @param widgetInfo widget info
+         * @param surfaceWidth the width the widget may occupy, in the page's own pixels
+         * @param surfaceHeight the height the widget may occupy, in the page's own pixels
+         * @return the URL to load, or {@code null} when one cannot be built
+         * @apiNote This is an EXPERIMENTAL feature, and it can have breaking changes
+         */
+        public String constructFeedbackWidgetUrl(@Nullable CountlyFeedbackWidget widgetInfo, int surfaceWidth, int surfaceHeight) {
+            synchronized (Countly.instance()) {
+                L.i("[Feedback] constructFeedbackWidgetUrl, building a URL for a "
+                    + surfaceWidth + "x" + surfaceHeight + " surface");
+
+                return constructFeedbackWidgetUrlInternal(widgetInfo, surfaceWidth, surfaceHeight);
             }
         }
 
