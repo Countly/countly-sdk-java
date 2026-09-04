@@ -310,11 +310,14 @@ class ExternalBrowser {
      * The launchers to try on Linux, most specific first: the user's own {@code BROWSER}, then the
      * desktop's openers, then the browsers themselves.
      * <p>
-     * The default browser is launched through {@code gtk-launch} before {@code xdg-open} gets a turn.
-     * Both open the link, but on Wayland a browser that is already running only comes to the front
-     * for a launcher that hands it an activation token, which {@code gtk-launch} does and
-     * {@code xdg-open} does not: through {@code xdg-open} the page opened in a background tab and,
-     * from inside the application, nothing visibly happened.
+     * The desktop portal and {@code gtk-launch} come before {@code xdg-open}. All three open the
+     * link, but on Wayland a browser that is already running only comes to the front for a launcher
+     * that hands it an activation token, which those two do and {@code xdg-open} does not: through
+     * {@code xdg-open} the page opened in a background tab and, from inside the application,
+     * nothing visibly happened. The portal ({@code org.freedesktop.portal.OpenURI}, reached through
+     * {@code gdbus} from glib) covers GNOME, KDE and sandboxed applications and answers with an
+     * error when no portal is running; {@code gtk-launch} covers GTK desktops without one, and fails
+     * fast when the desktop id is unknown.
      *
      * @param url the link
      * @param browserEnv the {@code BROWSER} environment variable, may be {@code null}; a {@code %s}
@@ -336,6 +339,11 @@ class ExternalBrowser {
                     : new String[] { trimmed, url });
             }
         }
+        launchers.add(new String[] { "gdbus", "call", "--session",
+            "--dest", "org.freedesktop.portal.Desktop",
+            "--object-path", "/org/freedesktop/portal/desktop",
+            "--method", "org.freedesktop.portal.OpenURI.OpenURI",
+            "", url, "{}" });
         if (defaultBrowserDesktopId != null) {
             launchers.add(new String[] { "gtk-launch", defaultBrowserDesktopId, url });
         }
