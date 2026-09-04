@@ -7,6 +7,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import ly.count.sdk.java.internal.ContentPlacement;
 import javafx.stage.Window;
 import javafx.util.Duration;
 import org.junit.AfterClass;
@@ -198,4 +199,87 @@ public class FxSurfacesTests {
             FxSurfaces.prewarm();
         });
     }
+
+    /**
+     * The host's half of the resize protocol: the page cannot see the application window, so it is
+     * told, in the shape Android uses, and answers with a resize_me of its own.
+     */
+    @Test
+    public void notifyPageOfSurface_reachesThePage() {
+        java.util.concurrent.atomic.AtomicReference<javafx.scene.web.WebView> viewRef =
+            new java.util.concurrent.atomic.AtomicReference<>();
+        java.util.concurrent.atomic.AtomicReference<Boolean> loaded =
+            new java.util.concurrent.atomic.AtomicReference<>(false);
+
+        FxTestToolkit.onFx(() -> {
+            javafx.scene.web.WebView webView = new javafx.scene.web.WebView();
+            viewRef.set(webView);
+            webView.getEngine().getLoadWorker().stateProperty().addListener((o, old, state) -> {
+                if (state == javafx.concurrent.Worker.State.SUCCEEDED) {
+                    loaded.set(true);
+                }
+            });
+            webView.getEngine().loadContent("<html><body><script>window.seen='none';"
+                + "window.addEventListener('message',function(e){"
+                + "window.seen=e.data.type+' '+e.data.width+'x'+e.data.height;});</script></body></html>");
+        });
+
+        for (int i = 0; i < 60 && !loaded.get(); i++) {
+            ScenarioDriver.pause(100);
+        }
+        Assert.assertTrue("the probe page never loaded", loaded.get());
+
+        FxTestToolkit.onFx(() -> FxSurfaces.notifyPageOfSurface(viewRef.get().getEngine(),
+            new WidgetSurface(-2560, -519, 1280, 820)));
+
+        String seen = "none";
+        for (int i = 0; i < 40; i++) {
+            java.util.concurrent.atomic.AtomicReference<String> read =
+                new java.util.concurrent.atomic.AtomicReference<>("none");
+            FxTestToolkit.onFx(() -> {
+                try {
+                    read.set(String.valueOf(viewRef.get().getEngine().executeScript("window.seen")));
+                } catch (Throwable t) {
+                    read.set("none");
+                }
+            });
+            seen = read.get();
+            if (!"none".equals(seen)) {
+                break;
+            }
+            ScenarioDriver.pause(100);
+        }
+        // The surface, not the card: the width and height of the room, not of the block.
+        Assert.assertEquals("resize 1280x820", seen);
+    }
+
+
+    /**
+     * The rounded corners are for a block that covers the window; a card sitting inside it paints
+     * its own and must not be cut into.
+     */
+    @Test
+    public void applyOverlayCorners_onlyClipsACoveringBlock() {
+        FxTestToolkit.onFx(() -> {
+            WebView webView = new WebView();
+            WidgetSurface surface = new WidgetSurface(0, 0, 1280, 820);
+
+            FxSurfaces.applyOverlayCorners(webView, new ContentPlacement(16, 16, 435, 144), surface);
+            Assert.assertNull("a card inside the window is not clipped", webView.getClip());
+
+            FxSurfaces.applyOverlayCorners(webView, new ContentPlacement(0, 0, 1280, 820), surface);
+            Assert.assertNotNull("a block filling the window is", webView.getClip());
+
+            // Square windows exist, and an integrator can say so.
+            double was = FxSurfaces.getOverlayCornerRadius();
+            try {
+                FxSurfaces.setOverlayCornerRadius(0);
+                FxSurfaces.applyOverlayCorners(webView, new ContentPlacement(0, 0, 1280, 820), surface);
+                Assert.assertNull("a zero radius means no clip at all", webView.getClip());
+            } finally {
+                FxSurfaces.setOverlayCornerRadius(was);
+            }
+        });
+    }
+
 }

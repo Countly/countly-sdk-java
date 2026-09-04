@@ -97,6 +97,7 @@ public class ContentScenarioTests {
                 }
             });
         }
+        FxTestToolkit.onFx(PresentationLock::resetForTests);
         try {
             Countly.instance().content().exitContentZone();
         } catch (Throwable ignored) {

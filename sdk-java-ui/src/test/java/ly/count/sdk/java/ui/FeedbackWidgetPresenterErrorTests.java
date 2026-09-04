@@ -13,6 +13,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -37,7 +38,7 @@ public class FeedbackWidgetPresenterErrorTests {
     public void navigation_opensExternalAndInPageLinksWithoutClosingOrPlacing() {
         FakeHost host = new FakeHost();
         ModuleFeedback.Feedback feedback = mock(ModuleFeedback.Feedback.class);
-        when(feedback.constructFeedbackWidgetUrl(any())).thenReturn(WIDGET_URL);
+        when(feedback.constructFeedbackWidgetUrl(any(), anyInt(), anyInt())).thenReturn(WIDGET_URL);
         CountlyFeedbackWidget widget = new CountlyFeedbackWidget();
         widget.widgetId = "w1";
         widget.type = FeedbackWidgetType.nps;
@@ -69,7 +70,7 @@ public class FeedbackWidgetPresenterErrorTests {
     @Test
     public void finish_isolatesAThrowingHostFromAThrowingCallback() {
         ModuleFeedback.Feedback feedback = mock(ModuleFeedback.Feedback.class);
-        when(feedback.constructFeedbackWidgetUrl(any())).thenReturn(WIDGET_URL);
+        when(feedback.constructFeedbackWidgetUrl(any(), anyInt(), anyInt())).thenReturn(WIDGET_URL);
         CountlyFeedbackWidget widget = new CountlyFeedbackWidget();
         widget.widgetId = "w1";
         widget.type = FeedbackWidgetType.nps;
@@ -99,6 +100,7 @@ public class FeedbackWidgetPresenterErrorTests {
         Listener listener;
         WidgetSurface surface = new WidgetSurface(0, 0, 1600, 900);
         final List<ContentPlacement> placements = new ArrayList<>();
+        final List<ContentPlacement> followed = new ArrayList<>();
         boolean throwOnClose = false;
         int closeCount = 0;
 
@@ -136,6 +138,11 @@ public class FeedbackWidgetPresenterErrorTests {
             if (throwOnClose) {
                 throw new RuntimeException("host failed to close");
             }
+        }
+
+        @Override
+        public void followGeometry(ContentPlacement rect) {
+            followed.add(rect);
         }
     }
 }

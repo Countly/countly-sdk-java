@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import javafx.stage.Window;
+import javafx.scene.web.WebView;
 import javafx.scene.web.WebEngine;
 import javafx.stage.Stage;
 import ly.count.sdk.java.Countly;
@@ -99,6 +101,10 @@ public class FeedbackScenarioTests {
 
     @After
     public void stopSdk() {
+        if (log != null) {
+            log.dump("feedback-scenarios");
+        }
+        FxTestToolkit.onFx(PresentationLock::resetForTests);
         Countly.instance().halt();
     }
 
@@ -120,6 +126,7 @@ public class FeedbackScenarioTests {
         ScenarioDriver.check("nps", "a close button is present",
             ScenarioDriver.exists(engine, SURVEY_V2_CLOSE_SELECTOR), SURVEY_V2_CLOSE_SELECTOR);
         reportLinks(engine, "nps", SURVEY_V2_TERMS_LINK, SURVEY_V2_PRIVACY_LINK);
+        measureStep(card, "nps", "rating step");
 
         ScenarioDriver.check("nps", "pick a score",
             ScenarioDriver.click(engine, String.format(NPS_RATING_BUTTON_FMT, 9)), "score 9");
@@ -133,6 +140,7 @@ public class FeedbackScenarioTests {
                 ScenarioDriver.exists(engine, NPS_COMMENT_TEXTAREA)
                     ? ScenarioDriver.Verdict.PASS : ScenarioDriver.Verdict.WARN,
                 "textarea present: " + ScenarioDriver.exists(engine, NPS_COMMENT_TEXTAREA));
+            measureStep(card, "nps", "comment step");
             ScenarioDriver.check("nps", "write a comment",
                 ScenarioDriver.type(engine, NPS_COMMENT_TEXTAREA, LOREM), "lorem text");
             // The links live on this page, not the first one: checking them on the rating screen is
@@ -144,6 +152,7 @@ public class FeedbackScenarioTests {
                 "checkbox: " + ScenarioDriver.exists(engine, NPS_CONSENT_CHECKBOX));
             ScenarioDriver.check("nps", "submit", ScenarioDriver.click(engine, NPS_SUBMIT_BUTTON),
                 NPS_SUBMIT_BUTTON);
+            measureStep(card, "nps", "thanks step");
         }
 
         finish(card, "nps", "\\[CLY\\]_nps");
@@ -300,6 +309,14 @@ public class FeedbackScenarioTests {
             @Override public void onWidgetMessage(String json) {
                 presenter.onWidgetMessage(json);
             }
+            @Override public void onCardFollowing(int width, int height) {
+                presenter.onCardFollowing(width, height);
+            }
+            @Override public void onContentOverflow(int extraHeight) {
+                ScenarioDriver.record(scenario, "the page's content did not fit its card",
+                    ScenarioDriver.Verdict.WARN, extraHeight + " px short, growing the card");
+                presenter.onContentOverflow(extraHeight);
+            }
             @Override public void onPageLoaded() {
                 loads.incrementAndGet();
                 presenter.onPageLoaded();
@@ -376,4 +393,141 @@ public class FeedbackScenarioTests {
             }
         });
     }
+
+    /**
+     * The card against its own content, at whichever step it is on: a window smaller than the page
+     * needs is a scrollbar the user has to fight, and a bottom anchored card that stopped short of
+     * the edge floats.
+     *
+     * @param card the card on screen
+     * @param scenario which run this is
+     * @param step what the widget is showing
+     */
+    private void measureStep(Card card, String scenario, String step) {
+        // Long enough for the page to have asked for its new size and for the fit to have run.
+        ScenarioDriver.pause(1200);
+
+        AtomicReference<String> detail = new AtomicReference<>("not measured");
+        FxTestToolkit.onFx(() -> {
+            Stage stage = card.driven.stage;
+            WidgetSurface surface = card.driven.host.getSurface();
+            int overflow = FxSurfaces.measureOverflow(card.driven.engine());
+            int bottomGap = (surface.y + surface.height) - ((int) stage.getY() + (int) stage.getHeight());
+            detail.set("card " + (int) stage.getWidth() + "x" + (int) stage.getHeight()
+                + " @" + (int) stage.getX() + "," + (int) stage.getY()
+                + " | needs " + overflow + " more px"
+                + " | " + bottomGap + " px above the surface bottom"
+                + " | surface " + surface);
+        });
+
+        boolean fits = detail.get().contains("needs 0 more px");
+        ScenarioDriver.record(scenario, "the card fits its content on the " + step,
+            fits ? ScenarioDriver.Verdict.PASS : ScenarioDriver.Verdict.FAIL, detail.get());
+
+        // What the host did to get there, in order: the size the page asked for, what was measured
+        // off the drawn card, and any growth. Without this a wrong height is a mystery.
+        List<String> trail = log.findAll(
+            "resizing the content|reportMeasuredCard|growPastAScrollbar|onContentOverflow|placeAndShow", 6);
+        ScenarioDriver.record(scenario, "how the card got its size on the " + step,
+            ScenarioDriver.Verdict.PASS, trail.isEmpty() ? "nothing logged"
+                : String.join(" ;; ", trail).replace("DEBUG ", ""));
+    }
+
+
+    /**
+     * NPS the way an integrator shows it: through {@link CountlyWebView#presentNPS}, not through a
+     * card this test built itself.
+     * <p>
+     * The other NPS scenario drives a stage and a host the driver assembles, which is a different
+     * code path from the one a demo application takes: the public facade resolves the surface,
+     * creates the stage, wires the presenter and installs the bridge itself. A widget that resizes
+     * per step in one and not the other is a fault in that wiring, so this drives the facade and
+     * measures the same three steps.
+     */
+    @Test
+    public void npsThroughThePublicApi() {
+        // The screen, as the demo is configured when the fault is seen.
+        CountlyWebView.forgetDisplayAreaForTests();
+        CountlyWebView.setShowWidgetsWithinApp(false);
+        CountlyWebView.setWebViewDiagnosticsEnabled(true);
+
+        AtomicInteger closed = new AtomicInteger();
+        FxTestToolkit.onFx(() -> CountlyWebView.presentNPS(owner, null, closed::incrementAndGet));
+
+        // The facade keeps its stage to itself, so it is found the way a user sees it: the
+        // transparent window that appeared, showing a web view on the widget's own URL.
+        AtomicReference<Stage> found = new AtomicReference<>();
+        for (int i = 0; i < 80 && found.get() == null; i++) {
+            ScenarioDriver.pause(250);
+            FxTestToolkit.onFx(() -> {
+                for (Window window : Window.getWindows()) {
+                    if (!(window instanceof Stage) || !window.isShowing()) {
+                        continue;
+                    }
+                    Stage stage = (Stage) window;
+                    if (stage == owner || stage.getScene() == null
+                        || !(stage.getScene().getRoot() instanceof WebView)) {
+                        continue;
+                    }
+                    String location = ((WebView) stage.getScene().getRoot()).getEngine().getLocation();
+                    if (location != null && location.contains("/feedback/")) {
+                        found.set(stage);
+                        return;
+                    }
+                }
+            });
+        }
+
+        if (found.get() == null) {
+            ScenarioDriver.record("nps (public api)", "the facade presented a widget",
+                ScenarioDriver.Verdict.SKIP, "no widget window appeared, closed callbacks: " + closed.get());
+            return;
+        }
+
+        Stage stage = found.get();
+        AtomicReference<WebEngine> engineRef = new AtomicReference<>();
+        FxTestToolkit.onFx(() -> engineRef.set(((WebView) stage.getScene().getRoot()).getEngine()));
+        WebEngine engine = engineRef.get();
+
+        ScenarioDriver.record("nps (public api)", "the facade presented a widget",
+            ScenarioDriver.Verdict.PASS, "window at " + (int) stage.getX() + "," + (int) stage.getY()
+                + " " + (int) stage.getWidth() + "x" + (int) stage.getHeight());
+
+        measureFacadeStep("nps (public api)", "rating step", stage, engine);
+        ScenarioDriver.click(engine, String.format(NPS_RATING_BUTTON_FMT, 9));
+        ScenarioDriver.click(engine, NPS_NEXT_BUTTON);
+        measureFacadeStep("nps (public api)", "comment step", stage, engine);
+        ScenarioDriver.type(engine, NPS_COMMENT_TEXTAREA, LOREM);
+        ScenarioDriver.tick(engine, NPS_CONSENT_CHECKBOX);
+        ScenarioDriver.click(engine, NPS_SUBMIT_BUTTON);
+        measureFacadeStep("nps (public api)", "thanks step", stage, engine);
+
+        FxTestToolkit.onFx(() -> {
+            if (stage.isShowing()) {
+                stage.close();
+            }
+        });
+    }
+
+    /**
+     * The same measurement as the other scenario, against a stage the facade owns.
+     */
+    private void measureFacadeStep(String scenario, String step, Stage stage, WebEngine engine) {
+        ScenarioDriver.pause(2600);
+
+        AtomicReference<String> detail = new AtomicReference<>("not measured");
+        FxTestToolkit.onFx(() -> detail.set("card " + (int) stage.getWidth() + "x" + (int) stage.getHeight()
+            + " @" + (int) stage.getX() + "," + (int) stage.getY()
+            + " | needs " + FxSurfaces.measureOverflow(engine) + " more px"));
+
+        ScenarioDriver.record(scenario, "the card fits its content on the " + step,
+            detail.get().contains("needs 0 more px") ? ScenarioDriver.Verdict.PASS : ScenarioDriver.Verdict.FAIL,
+            detail.get());
+        List<String> trail = log.findAll(
+            "asked to be|putting the|reportMeasuredCard|growPastAScrollbar|notifyPageOfSurface", 6);
+        ScenarioDriver.record(scenario, "how the card got its size on the " + step,
+            ScenarioDriver.Verdict.PASS, trail.isEmpty() ? "nothing logged"
+                : String.join(" ;; ", trail).replace("DEBUG ", ""));
+    }
+
 }

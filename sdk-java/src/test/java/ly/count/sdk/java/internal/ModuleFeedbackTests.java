@@ -321,7 +321,9 @@ public class ModuleFeedbackTests {
         widgetListUrl.append("&sdk_name=");
         widgetListUrl.append(TestUtils.SDK_NAME);
         widgetListUrl.append("&platform=");
-        widgetListUrl.append(Utils.urlencode(getOS(), L));
+        // The feedback platform is one value for every desktop, not the operating system's name:
+        // see WidgetUrlBuilder.PLATFORM.
+        widgetListUrl.append(WidgetUrlBuilder.PLATFORM);
         widgetListUrl.append("&app_version=");
         widgetListUrl.append(Utils.urlencode(TestUtils.APPLICATION_VERSION, L));
         // Desktop web views need the widget to draw itself as a card with its own close button, and
@@ -615,7 +617,8 @@ public class ModuleFeedbackTests {
 
     private void validateWidgetDataParams(Map<String, String> params, CountlyFeedbackWidget widgetInfo) {
         Assert.assertEquals(widgetInfo.widgetId, params.get("widget_id"));
-        Assert.assertEquals(Utils.urlencode(getOS(), L), params.get("platform"));
+        // One value for every desktop, not the operating system's name: see WidgetUrlBuilder.PLATFORM.
+        Assert.assertEquals(WidgetUrlBuilder.PLATFORM, params.get("platform"));
         Assert.assertEquals("1", params.get("shown"));
         Assert.assertEquals(String.valueOf(SDKCore.instance.config.getApplicationVersion()), params.get("app_version"));
         TestUtils.validateSdkIdentityParams(params);
@@ -661,7 +664,7 @@ public class ModuleFeedbackTests {
 
     private Map<String, Object> requiredWidgetSegmentation(String widgetId, Map<String, Object> widgetResult) {
         Map<String, Object> segm = new ConcurrentHashMap<>();
-        segm.put("platform", getOS());
+        segm.put("platform", WidgetUrlBuilder.PLATFORM);
         segm.put("app_version", SDKCore.instance.config.getApplicationVersion());
         segm.put("widget_id", widgetId);
         if (widgetResult != null) {

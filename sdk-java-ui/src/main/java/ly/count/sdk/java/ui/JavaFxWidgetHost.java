@@ -1,6 +1,9 @@
 package ly.count.sdk.java.ui;
 
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
 import javafx.animation.PauseTransition;
+import javafx.animation.Timeline;
 import javafx.concurrent.Worker;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
@@ -39,6 +42,22 @@ class JavaFxWidgetHost implements WidgetWebHost {
     /** Long enough for the page to lay itself out at a newly applied size. */
     private static final Duration FIT_DELAY = Duration.millis(160);
 
+    /** How long a step transition is given to finish before the card is measured or checked. */
+    private static final Duration SETTLE_DELAY = Duration.millis(600);
+
+    /**
+     * How often the card is re-checked from this side. Only a backstop now that the page reports its
+     * own changes: it covers a page that cannot be scripted, where nothing else would notice.
+     */
+    private static final Duration WATCH_INTERVAL = Duration.millis(3000);
+
+    /**
+     * How many corrections the watcher may make for one page. A widget has a handful of steps, so
+     * this is generous; it exists so a page that changes size every time it is looked at cannot keep
+     * the card moving forever.
+     */
+    private static final int MAX_WATCH_CORRECTIONS = 12;
+
     /** A page and a fit that disagreed forever would resize each other forever. */
     private static final int MAX_FITS_PER_PAGE = 3;
 
@@ -57,6 +76,12 @@ class JavaFxWidgetHost implements WidgetWebHost {
     private boolean pageLoaded = false;
     private boolean placed = false;
     private int fits = 0;
+    private int corrections = 0;
+    private int followedFrames = 0;
+    private Timeline watch;
+
+    /** The object the page calls into. See installBridge for why it has to be a field. */
+    private WidgetJsBridge bridge;
     private long placementRequests = 0;
 
     JavaFxWidgetHost(Stage stage, WebView webView, WidgetSurface surface) {
@@ -77,6 +102,18 @@ class JavaFxWidgetHost implements WidgetWebHost {
         engine.locationProperty().addListener((observable, oldUrl, newUrl) -> onLocationChanged(newUrl));
         engine.setCreatePopupHandler(features -> openPopupExternally());
         engine.getLoadWorker().stateProperty().addListener((observable, oldState, newState) -> onLoadStateChanged(newState));
+        // As soon as there is a document, rather than only once the load has succeeded.
+        //
+        // A widget template asks for its size while it is still initialising, which happens as the
+        // document parses. Installing the bridge on SUCCEEDED is later than that: on a fast machine
+        // the page's first resize_me was posted before anything was listening and was lost, and the
+        // card was left at a guessed height with the page never asked again. Installing here catches
+        // it. Both installs are guarded, so whichever runs first wins and the other does nothing.
+        engine.documentProperty().addListener((observable, oldDocument, document) -> {
+            if (document != null) {
+                installBridge();
+            }
+        });
     }
 
     @Override
@@ -95,6 +132,11 @@ class JavaFxWidgetHost implements WidgetWebHost {
             return;
         }
         surface = updated;
+        // A page that sizes itself against the surface has to be told when the surface changes, the
+        // same way the content display tells its page.
+        if (pageLoaded) {
+            FxSurfaces.notifyPageOfSurface(engine, updated);
+        }
     }
 
     @Override
@@ -112,10 +154,42 @@ class JavaFxWidgetHost implements WidgetWebHost {
         }
     }
 
+    /** @return how many placements were applied, for tests */
+    long placementRequestsForTests() {
+        return placementRequests;
+    }
+
+    @Override
+    public void followGeometry(ContentPlacement rect) {
+        if (!stage.isShowing()) {
+            return;
+        }
+        applyGeometry(rect);
+    }
+
     @Override
     public void placeAndShow(ContentPlacement rect) {
+        if (placed && stage.isShowing() && rect.x == (int) stage.getX() && rect.y == (int) stage.getY()
+            && rect.width == (int) stage.getWidth() && rect.height == (int) stage.getHeight()) {
+            // Already exactly there. A page re-announcing the same size, or a window drag that
+            // changed nothing for this card, used to start a fresh round of fitting and timers each
+            // time - seven identical placements in a row in one log.
+            return;
+        }
         placed = true;
         placementRequests++;
+        UiLog.d("[JavaFxWidgetHost] placeAndShow, request [" + placementRequests + "] for " + rect
+            + ", the card is " + (int) stage.getWidth() + "x" + (int) stage.getHeight()
+            + (followedFrames > 0 ? ", after following [" + followedFrames + "] animation frames" : ""));
+        followedFrames = 0;
+        // A rectangle materially different from the one on screen is a new request from the page - a
+        // widget moving to its next step - and each of those gets its own fit budget. Without this a
+        // three step widget spends the whole budget on its first step and the rest are left at
+        // whatever height that one settled on.
+        if (Math.abs(rect.height - (int) stage.getHeight()) > FIT_TOLERANCE
+            || Math.abs(rect.width - (int) stage.getWidth()) > FIT_TOLERANCE) {
+            fits = 0;
+        }
         applyGeometry(rect);
 
         // The size a widget asks for is not the size it always draws, and a card drawn shorter than
@@ -132,9 +206,15 @@ class JavaFxWidgetHost implements WidgetWebHost {
             stage.toFront();
         }
 
-        PauseTransition fit = new PauseTransition(FIT_DELAY);
-        fit.setOnFinished(event -> fitThenReveal(rect));
+        // The first placement is fitted quickly, because the card is invisible until it is: the
+        // widget must not be held back. Every later one is a step the page moved to, and the page
+        // fades that in over a few hundred milliseconds - measuring during the fade describes the
+        // step it is leaving, which is what left later steps at the wrong height.
+        long request = placementRequests;
+        PauseTransition fit = new PauseTransition(request <= 1 ? FIT_DELAY : SETTLE_DELAY);
+        fit.setOnFinished(event -> fitThenReveal(rect, request));
         fit.play();
+
     }
 
     private void applyGeometry(ContentPlacement rect) {
@@ -151,6 +231,8 @@ class JavaFxWidgetHost implements WidgetWebHost {
         // scene it started in, and the fit below would have nothing to work with.
         webView.resize(rect.width, rect.height);
         webView.requestLayout();
+        // A fullscreen widget covers the application window, so it follows its rounded corners too.
+        FxSurfaces.applyOverlayCorners(webView, rect, surface);
     }
 
     /**
@@ -160,9 +242,17 @@ class JavaFxWidgetHost implements WidgetWebHost {
      *
      * @param rect the rectangle this round was asked for
      */
-    private void fitThenReveal(ContentPlacement rect) {
+    private void fitThenReveal(ContentPlacement rect, long requestWhenScheduled) {
+        if (placementRequests != requestWhenScheduled) {
+            // A newer placement was applied while this fit waited, so it describes a card that no
+            // longer exists. Reporting that as a window manager surprise was crying wolf, which is
+            // what filled the log with warnings about rectangles nobody had asked for any more.
+            return;
+        }
+
         long requestsBefore = placementRequests;
         reportMeasuredCard(FxSurfaces.measurePaintedContent(engine));
+
         if (placementRequests != requestsBefore) {
             // The fit re-placed the card, and that round owns revealing it.
             return;
@@ -207,6 +297,8 @@ class JavaFxWidgetHost implements WidgetWebHost {
         if (width < MIN_CREDIBLE_CARD || height < MIN_CREDIBLE_CARD
             || (Math.abs(width - (int) stage.getWidth()) <= FIT_TOLERANCE
             && Math.abs(height - (int) stage.getHeight()) <= FIT_TOLERANCE)) {
+            UiLog.d("[JavaFxWidgetHost] reportMeasuredCard, declining " + width + "x" + height
+                + " against a " + (int) stage.getWidth() + "x" + (int) stage.getHeight() + " card");
             return;
         }
 
@@ -237,7 +329,17 @@ class JavaFxWidgetHost implements WidgetWebHost {
 
     @Override
     public void closeHost() {
+        if (followedFrames > 0) {
+            UiLog.d("[JavaFxWidgetHost] closeHost, followed [" + followedFrames
+                + "] animation frames since the last placement");
+        }
         try {
+            if (watch != null) {
+                // Before the page goes: a tick against a document being torn down measures nothing
+                // useful and would keep a timer alive after the card is gone.
+                watch.stop();
+                watch = null;
+            }
             engine.load("about:blank");
             stage.close();
         } catch (Throwable t) {
@@ -265,6 +367,15 @@ class JavaFxWidgetHost implements WidgetWebHost {
             pageLoaded = true;
             fits = 0;
             installBridge();
+            // The widget's own half of the resize protocol. An NPS page keeps its parent dimensions
+            // null until this message arrives and computes every size from them, so without it
+            // getDeviceSize throws on null and the page reports no size at all: every step is then
+            // drawn at the host's fallback height, which is a scrollbar on the comment step and dead
+            // space on the thanks step. A survey does not need it, because it seeds the same
+            // dimensions from the 'custom' URL parameter itself. The page only accepts the message
+            // when its 'origin' parameter matches, which WidgetUrlBuilder sends.
+            FxSurfaces.notifyPageOfSurface(engine, surface);
+            startWatchingThePage();
             FxSurfaces.logPageDiagnostics(engine, "JavaFxWidgetHost");
             WebFontPrefetch.remember(engine);
             FxSurfaces.repaintBackgroundImagesWhenTheyArrive(engine);
@@ -281,11 +392,119 @@ class JavaFxWidgetHost implements WidgetWebHost {
         }
     }
 
+    /**
+     * The page's own report about its card: it changed size, or its content stopped fitting.
+     * <p>
+     * This is the fast path and the only one that needs to be. It arrives as the page lays the step
+     * out, rather than a fifth of a second to a second later, which is what a timer on this side
+     * could manage.
+     *
+     * @param width the card the page has drawn
+     * @param height its height
+     * @param overflow how much taller its content is than the room it has
+     */
+    private void onObservedCard(int width, int height, int overflow) {
+        if (!pageLoaded || !placed || listener == null) {
+            return;
+        }
+        if (width < MIN_CREDIBLE_CARD || height < MIN_CREDIBLE_CARD) {
+            return;
+        }
+
+        // Overflow means the page has capped its own card and the content does not fit, so the card
+        // has to be told to grow beyond what the page drew. Budgeted, because growing changes what
+        // the page then reports and could otherwise chase itself.
+        if (overflow > FIT_TOLERANCE && (int) stage.getHeight() < surface.height) {
+            if (corrections >= MAX_WATCH_CORRECTIONS) {
+                return;
+            }
+            corrections++;
+            UiLog.d("[JavaFxWidgetHost] onObservedCard, the content needs [" + overflow
+                + "] more pixels than its " + (int) stage.getHeight() + " tall card");
+            listener.onContentOverflow(overflow);
+            return;
+        }
+
+        if (width == (int) stage.getWidth() && height == (int) stage.getHeight()) {
+            return;
+        }
+
+        // Every other report is a frame of the page's own animation, and following it is the whole
+        // point: no per-frame logging, no budget, no fitting. A pixel of difference is worth
+        // following, which is why this does not use FIT_TOLERANCE. Counted, so a log can show the
+        // animation was followed at all, in one line rather than one per frame.
+        followedFrames++;
+        listener.onCardFollowing(width, height);
+    }
+
+    /**
+     * Follows the page while the widget is on screen, correcting the card when it stops matching.
+     * <p>
+     * Everything else here reacts to something: a load finishing, or the page asking for a size
+     * through {@code resize_me}. Both proved unreliable for a widget that moves between steps - the
+     * page announces some steps and not others, and a step that is not announced produces no
+     * placement, so nothing was scheduled to notice that the card no longer fits. Driving the live
+     * server, an NPS comment step sat 55 pixels short with a scrollbar for exactly that reason.
+     * <p>
+     * So the card is also checked on a timer, which needs nothing from the page. A check that finds
+     * the card already correct does nothing and says nothing.
+     */
+    private void startWatchingThePage() {
+        if (watch != null) {
+            return;
+        }
+        watch = new Timeline(new KeyFrame(WATCH_INTERVAL, event -> {
+            if (!pageLoaded || !placed || listener == null || corrections >= MAX_WATCH_CORRECTIONS) {
+                return;
+            }
+
+            int[] painted = FxSurfaces.measurePaintedContent(engine);
+            int overflow = FxSurfaces.measureOverflow(engine);
+            int cardHeight = (int) stage.getHeight();
+            int cardWidth = (int) stage.getWidth();
+
+            if (overflow > FIT_TOLERANCE && cardHeight < surface.height) {
+                corrections++;
+                UiLog.d("[JavaFxWidgetHost] watch, the content needs [" + overflow
+                    + "] more pixels than its " + cardHeight + " tall card");
+                listener.onContentOverflow(overflow);
+                return;
+            }
+
+            // The other direction: a step shorter than the one before it leaves the card too tall,
+            // and a card taller than what it draws floats above the edge it is anchored to.
+            if (painted == null || painted[2] < MIN_CREDIBLE_CARD || painted[3] < MIN_CREDIBLE_CARD) {
+                return;
+            }
+            if (Math.abs(painted[2] - cardWidth) <= FIT_TOLERANCE
+                && Math.abs(painted[3] - cardHeight) <= FIT_TOLERANCE) {
+                return;
+            }
+
+            corrections++;
+            UiLog.d("[JavaFxWidgetHost] watch, the page now draws " + painted[2] + "x" + painted[3]
+                + " in a " + cardWidth + "x" + cardHeight + " card, fitting it");
+            listener.onCardMeasured(painted[2], painted[3]);
+        }));
+        watch.setCycleCount(Animation.INDEFINITE);
+        watch.play();
+    }
+
     private void installBridge() {
         try {
             JSObject window = (JSObject) engine.executeScript("window");
-            window.setMember(WidgetJsBridge.MEMBER_NAME, new WidgetJsBridge(listener));
-            engine.executeScript(WidgetJsBridge.INSTALL_SCRIPT);
+            // Held in a field on purpose. The engine keeps only a weak reference to an object handed
+            // to setMember, so a bridge created inline is garbage collected the first time the
+            // collector runs, and from then on every call the page makes into it is dropped without
+            // a trace. That is exactly how it failed on a customer's machine: the page's first
+            // message arrived, and nothing after it ever did. A test JVM rarely collects in time,
+            // which is why the tests kept passing.
+            if (bridge == null) {
+                bridge = new WidgetJsBridge(listener, this::onObservedCard);
+            }
+            window.setMember(WidgetJsBridge.MEMBER_NAME, bridge);
+            Object result = engine.executeScript(WidgetJsBridge.INSTALL_SCRIPT);
+            UiLog.d("[JavaFxWidgetHost] installBridge, " + result);
         } catch (Throwable t) {
             // Without the bridge a widget can still close itself through a signalling URL, it just
             // cannot report its own card size, so the fallback placement takes over.

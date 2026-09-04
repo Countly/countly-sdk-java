@@ -54,6 +54,31 @@ public interface WidgetWebHost {
          * @param height the drawn card's height
          */
         void onCardMeasured(int width, int height);
+
+        /**
+         * Called when the page's content does not fit the card it was given.
+         * <p>
+         * Kept apart from {@link #onCardMeasured(int, int)} because the two mean different things: a
+         * measurement is a guess at what the page drew and must never override a size the page asked
+         * for outright, while an overflow is a fact about that very size - the template capped its
+         * own height and the content did not fit. The card can be grown without contradicting the
+         * page.
+         *
+         * @param extraHeight how many more pixels the content needs
+         */
+        void onContentOverflow(int extraHeight);
+
+        /**
+         * Called for every size the page reports while it is animating a step.
+         * <p>
+         * Separate from {@link #onCardMeasured(int, int)} because it happens at frame rate: the card
+         * follows the animation instead of jumping to its end state, and that means no fitting, no
+         * revealing and no budget - just geometry, as cheaply as possible.
+         *
+         * @param width the card's width at this frame
+         * @param height its height at this frame
+         */
+        void onCardFollowing(int width, int height);
     }
 
     /**
@@ -77,6 +102,14 @@ public interface WidgetWebHost {
      * @param url the URL to load
      */
     void navigate(String url);
+
+    /**
+     * Moves and resizes the card, and nothing else: no fitting, no reveal, no bookkeeping. For
+     * following a page that is animating.
+     *
+     * @param rect where the card belongs now
+     */
+    void followGeometry(ContentPlacement rect);
 
     /**
      * Tell the page how much room it has, by posting a {@code {type:'resize',width,height}} message.

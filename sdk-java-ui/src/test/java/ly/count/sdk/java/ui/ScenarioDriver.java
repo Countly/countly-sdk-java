@@ -88,6 +88,10 @@ final class ScenarioDriver {
             .setLoggingLevel(Config.LoggingLevel.DEBUG)
             .setLogListener(log)
             .setApplicationVersion("1.0.0")
+            // As the demo application configures it. Left at the SDK's default - the operating
+            // system name - a widget page behaved differently from the one a real integrator sees,
+            // which is exactly the kind of difference a driven run exists to remove.
+            .setSdkPlatform("desktop")
             .setCustomDeviceId(deviceId);
         // A short zone timer, so a content fetch does not cost half a minute per scenario.
         config.content.setZoneTimerInterval(30);
@@ -342,6 +346,43 @@ final class ScenarioDriver {
                 }
             }
             return null;
+        }
+
+        /**
+         * @param regex what to look for
+         * @param limit how many to return, most recent last
+         * @return every matching line, in order, so a sequence can be read rather than a single hit
+         */
+        List<String> findAll(String regex, int limit) {
+            Pattern pattern = Pattern.compile(regex);
+            List<String> found = new ArrayList<>();
+            for (String line : new ArrayList<>(lines)) {
+                if (pattern.matcher(line).find()) {
+                    found.add(line);
+                }
+            }
+            return found.size() <= limit ? found : found.subList(found.size() - limit, found.size());
+        }
+
+        /**
+         * Writes every line to a file beside the report, so a run can be read in full. A recorded
+         * row shows what was checked; this shows what happened.
+         *
+         * @param name what to call the file
+         */
+        void dump(String name) {
+            try {
+                File dir = new File(System.getProperty("countly.ui.scenarioOut",
+                    System.getProperty("java.io.tmpdir")));
+                if (!dir.exists() && !dir.mkdirs()) {
+                    return;
+                }
+                Files.write(new File(dir, name + ".log").toPath(),
+                    String.join("\n", new ArrayList<>(lines)).getBytes(StandardCharsets.UTF_8));
+                System.out.println("[scenario] log written to " + new File(dir, name + ".log"));
+            } catch (Throwable t) {
+                System.out.println("[scenario] could not write the log: " + t);
+            }
         }
 
         int countOf(String regex) {

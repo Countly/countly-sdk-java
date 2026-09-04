@@ -22,6 +22,17 @@ public class FeedbackWidgetPresenter implements WidgetWebHost.Listener {
 
     private CountlyFeedbackWidget widget;
     private ContentPlacement lastRequested;
+
+    /** The card as the page last drew it, which outranks a request that only differs by a border. */
+    private ContentPlacement lastDrawn;
+
+    /**
+     * How far a page's request may differ from the card it draws and still mean the same card. Wider
+     * than the host's fit tolerance on purpose: this is about a template's own arithmetic being off
+     * by a border or a shadow, not about a card that changed.
+     */
+    private static final int NEAR_ENOUGH = 24;
+
     private boolean surfaceReported = false;
     private boolean finished = false;
 
@@ -58,7 +69,11 @@ public class FeedbackWidgetPresenter implements WidgetWebHost.Listener {
             return;
         }
 
-        String url = feedback.constructFeedbackWidgetUrl(widgetToShow);
+        // With the surface, so the page can lay its card out against the real area and report the
+        // rectangle it wants. Every template reads these two numbers out of the custom parameter.
+        WidgetSurface surface = host.getSurface();
+        String url = feedback.constructFeedbackWidgetUrl(widgetToShow,
+            surface == null ? 0 : surface.width, surface == null ? 0 : surface.height);
         if (url == null || url.trim().isEmpty()) {
             UiLog.w("[FeedbackWidgetPresenter] start, could not build a URL for widget [" + widgetToShow.widgetId + "]");
             finish();
@@ -127,7 +142,9 @@ public class FeedbackWidgetPresenter implements WidgetWebHost.Listener {
 
     private void handle(WidgetAction action) {
         if (action.hasResize) {
-            place(WidgetPlacement.resolve(action, host.getSurface()));
+            UiLog.d("[FeedbackWidgetPresenter] handle, the page asked to be "
+                + action.resizeFor(host.getSurface().isLandscape()) + " on surface " + host.getSurface());
+            place(reconciledWithDrawn(WidgetPlacement.resolve(action, host.getSurface())));
         }
 
         if (action.link != null) {
@@ -157,8 +174,42 @@ public class FeedbackWidgetPresenter implements WidgetWebHost.Listener {
         }
 
         // What the page drew wins over what it asked for: the card is what the user sees, and a
-        // window taller than the card leaves it floating above the edge it is anchored to.
-        place(new ContentPlacement(0, 0, width, height));
+        // window taller than the card leaves it floating above the edge it is anchored to. The
+        // measurement has to be taken after the page's own step transition, though, or it describes
+        // a card mid fade rather than the step it is becoming - that timing lives in the host.
+        lastDrawn = new ContentPlacement(0, 0, width, height);
+        place(lastDrawn);
+    }
+
+    @Override
+    public void onCardFollowing(int width, int height) {
+        if (finished || widget == null || !WidgetLayout.usesReportedSize(widget.type)) {
+            return;
+        }
+
+        // The same anchor rule as a placement, without any of its machinery: this runs for every
+        // frame the page animates, so the card grows with the animation rather than after it.
+        ContentPlacement following = WidgetLayout.resolve(widget.type, widget.position,
+            host.getSurface(), new ContentPlacement(0, 0, width, height));
+        if (following == null) {
+            return;
+        }
+        lastRequested = new ContentPlacement(0, 0, width, height);
+        lastDrawn = lastRequested;
+        host.followGeometry(following);
+    }
+
+    @Override
+    public void onContentOverflow(int extraHeight) {
+        ContentPlacement current = lastRequested;
+        if (finished || extraHeight <= 0 || current == null) {
+            return;
+        }
+
+        // Taller by exactly what the content could not fit, keeping the width the page chose. The
+        // host bounds this by the surface before it asks.
+        UiLog.d("[FeedbackWidgetPresenter] onContentOverflow, growing the card by [" + extraHeight + "] px");
+        place(new ContentPlacement(current.x, current.y, current.width, current.height + extraHeight));
     }
 
     /**
@@ -179,7 +230,39 @@ public class FeedbackWidgetPresenter implements WidgetWebHost.Listener {
         place(lastRequested);
     }
 
+    /**
+     * Where a page's own number and the card it actually paints disagree by a few pixels, the paint
+     * wins, and this stops the two from correcting each other forever.
+     * <p>
+     * A survey template asked for 574 and drew 580 - a border its own height calculation does not
+     * count. Honouring the request left six pixels of card clipped, measuring the card then grew
+     * the window to 580, the page's next message asked for 574 again, and so on: a visible loop,
+     * restarted by every window resize. A request this close to the drawn card now resolves to the
+     * drawn card, which is what is already on screen, so nothing moves. A request that differs by
+     * more than {@link #NEAR_ENOUGH} is a genuinely new step and is honoured as asked.
+     *
+     * @param requested what the page asked for, surface absolute
+     * @return the same rectangle, or one carrying the drawn card's size when that is what it means
+     */
+    private ContentPlacement reconciledWithDrawn(ContentPlacement requested) {
+        ContentPlacement drawn = lastDrawn;
+        if (requested == null || drawn == null) {
+            return requested;
+        }
+        if (Math.abs(requested.width - drawn.width) > NEAR_ENOUGH
+            || Math.abs(requested.height - drawn.height) > NEAR_ENOUGH) {
+            return requested;
+        }
+        if (requested.width == drawn.width && requested.height == drawn.height) {
+            return requested;
+        }
+        UiLog.d("[FeedbackWidgetPresenter] reconciledWithDrawn, the page asked for " + requested.width
+            + "x" + requested.height + " but draws " + drawn.width + "x" + drawn.height + ", keeping the drawn size");
+        return new ContentPlacement(requested.x, requested.y, drawn.width, drawn.height);
+    }
+
     private void place(ContentPlacement requested) {
+        UiLog.d("[FeedbackWidgetPresenter] place, requested " + requested);
         lastRequested = requested;
         WidgetSurface surface = host.getSurface();
         ContentPlacement rect = WidgetLayout.resolve(

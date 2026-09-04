@@ -7,11 +7,13 @@ import java.util.function.BooleanSupplier;
 import javafx.animation.PauseTransition;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.Screen;
 import javafx.stage.Window;
 import javafx.util.Duration;
+import ly.count.sdk.java.internal.ContentPlacement;
 import ly.count.sdk.java.internal.WidgetActionParser;
 
 /**
@@ -120,7 +122,7 @@ final class FxSurfaces {
      * The containers every feedback widget and content template ships in its static HTML, so their
      * presence is what tells a real widget page apart from whatever the browser substituted for one.
      */
-    private static final String WIDGET_MARKERS =
+    static final String WIDGET_MARKERS =
         "#widget-body,.modal-content,[class*=\"survey-widget\"],[id^=\"nps-\"],"
             + "[class*=\"countly-ratings\"],[class*=\"cly-\"],.smiley-container";
 
@@ -320,6 +322,37 @@ final class FxSurfaces {
     }
 
     /**
+     * Tells the page how much room it has, which is what makes it recompute its own rectangle.
+     * <p>
+     * This is the half of the resize protocol the host owns. A content page cannot see the
+     * application window: its viewport is the card, and the surface only ever reached the server, in
+     * the fetch. Android posts the same message on every layout change
+     * ({@code ContentOverlayView.notifyWebViewOfResize}), the page answers with {@code resize_me},
+     * and the host adopts that rectangle. Without the message the page never asks for anything and
+     * the host is left guessing the geometry.
+     * <p>
+     * No density conversion: JavaFX lays a page out in logical pixels, which is the unit the message
+     * is defined in, so Android's divide-by-density has no counterpart here.
+     *
+     * @param engine the engine showing the page
+     * @param surface the room the page has
+     */
+    static void notifyPageOfSurface(WebEngine engine, WidgetSurface surface) {
+        if (engine == null || surface == null) {
+            return;
+        }
+        try {
+            engine.executeScript("window.postMessage({type: 'resize', width: " + surface.width
+                + ", height: " + surface.height + "}, '*');");
+            UiLog.d("[FxSurfaces] notifyPageOfSurface, told the page it has "
+                + surface.width + "x" + surface.height);
+        } catch (Throwable t) {
+            // A page that cannot be scripted keeps the geometry the host worked out for it.
+            UiLog.d("[FxSurfaces] notifyPageOfSurface, could not tell the page its size, [" + t + "]");
+        }
+    }
+
+    /**
      * Fetches the given faces into the engine's memory cache now, using the hidden warm-up view.
      * <p>
      * The view belongs to the process rather than to any card, so what it starts finishes even when
@@ -462,6 +495,33 @@ final class FxSurfaces {
             // The card still shows its text and buttons, only the picture may be missing.
             UiLog.w("[FxSurfaces] could not install the background image repaint, [" + t + "]");
         }
+    }
+
+    /**
+     * How much taller the page's content is than the room it has, in logical pixels.
+     * <p>
+     * A widget template caps its own card: the NPS definitions stop at 620 tall whatever the screen,
+     * so a step with a comment box reports 620 and then scrolls inside itself. On a phone that is the
+     * only option; on a desktop there is room, and a scrollbar in a card is a worse answer than a
+     * taller card. The card is grown by this much instead, still bounded by the surface.
+     *
+     * @param engine the engine showing the page
+     * @return the overflow, or 0 when the content fits or cannot be measured
+     */
+    static int measureOverflow(WebEngine engine) {
+        try {
+            Object result = engine.executeScript(
+                "(function(){try{var d=document.documentElement;var b=document.body;"
+                    + "var need=Math.max(d.scrollHeight||0,b?b.scrollHeight||0:0);"
+                    + "var have=Math.max(d.clientHeight||0,window.innerHeight||0);"
+                    + "return Math.max(0,need-have);}catch(e){return 0;}})()");
+            if (result instanceof Number) {
+                return Math.max(0, ((Number) result).intValue());
+            }
+        } catch (Throwable t) {
+            UiLog.d("[FxSurfaces] measureOverflow, could not measure the page, [" + t + "]");
+        }
+        return 0;
     }
 
     static String describeImages(WebEngine engine) {
@@ -607,7 +667,56 @@ final class FxSurfaces {
         if (!isOnScreen(owner)) {
             return screenOf(null);
         }
-        return new WidgetSurface((int) owner.getX(), (int) owner.getY(), (int) owner.getWidth(), (int) owner.getHeight());
+        // The window's own bounds. Insetting them to spare the resize border was worse on both
+        // counts: a block that fills the window left the application showing through as a stripe
+        // down every side, and a card anchored to an edge no longer touched it. A covering block is
+        // a modal, and there is nothing to resize while one is up.
+        return new WidgetSurface((int) owner.getX(), (int) owner.getY(),
+            (int) owner.getWidth(), (int) owner.getHeight());
+    }
+
+    /**
+     * The corner radius applied to a block that covers the whole application window.
+     * <p>
+     * An overlay is a rectangular window laid over one with rounded corners, so a block that fills
+     * it paints its own square corners past the application's - visible as four dark wedges. JavaFX
+     * cannot read the native window's radius, so this is a sensible default an integrator can
+     * correct, in the same spirit as the Swift SDK's {@code content.overlayCornerRadius}.
+     */
+    private static volatile double overlayCornerRadius = 10;
+
+    static void setOverlayCornerRadius(double radius) {
+        overlayCornerRadius = Math.max(0, radius);
+    }
+
+    static double getOverlayCornerRadius() {
+        return overlayCornerRadius;
+    }
+
+    /**
+     * Rounds off a block that covers its whole surface, and leaves any other block alone.
+     * <p>
+     * Only a covering block needs it: a card placed somewhere inside the window paints its own
+     * corners and everything around them is already transparent, so clipping it would cut into the
+     * card itself.
+     *
+     * @param webView the view showing the block
+     * @param rect where the block was placed, screen absolute
+     * @param surface the area it was placed on
+     */
+    static void applyOverlayCorners(WebView webView, ContentPlacement rect, WidgetSurface surface) {
+        if (webView == null || rect == null || surface == null) {
+            return;
+        }
+        boolean covers = rect.width >= surface.width && rect.height >= surface.height;
+        if (!covers || overlayCornerRadius <= 0) {
+            webView.setClip(null);
+            return;
+        }
+        Rectangle clip = new Rectangle(rect.width, rect.height);
+        clip.setArcWidth(overlayCornerRadius * 2);
+        clip.setArcHeight(overlayCornerRadius * 2);
+        webView.setClip(clip);
     }
 
     private static Rectangle2D screenBoundsOf(Window owner) {

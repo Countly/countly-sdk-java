@@ -333,12 +333,24 @@ public class JavaFxWidgetHostTests {
         final List<String> messages = Collections.synchronizedList(new ArrayList<>());
         final List<String> missingSizes = Collections.synchronizedList(new ArrayList<>());
         final List<String> measuredCards = Collections.synchronizedList(new ArrayList<>());
+        final List<Integer> overflows = Collections.synchronizedList(new ArrayList<>());
+        final List<String> followedSizes = Collections.synchronizedList(new ArrayList<>());
         volatile int pageLoads = 0;
         volatile int loadFailures = 0;
 
         @Override
         public void onNavigationStarting(String url) {
             navigations.add(url);
+        }
+
+        @Override
+        public void onContentOverflow(int extraHeight) {
+            overflows.add(extraHeight);
+        }
+
+        @Override
+        public void onCardFollowing(int width, int height) {
+            followedSizes.add(width + "x" + height);
         }
 
         @Override
@@ -372,4 +384,41 @@ public class JavaFxWidgetHostTests {
             }
         }
     }
+
+    /**
+     * Placing a card exactly where it already is must not start another round of fitting: a page
+     * re-announcing its size, or a window drag that changed nothing for the card, produced seven
+     * identical placements in a row, each rescheduling timers.
+     */
+    @Test
+    public void anIdenticalPlacementIsANoOp() {
+        RecordingListener listener = new RecordingListener();
+        AtomicReference<Stage> stageRef = new AtomicReference<>();
+        AtomicReference<JavaFxWidgetHost> hostRef = new AtomicReference<>();
+        // A stage and a web view can only be made on the application thread, like every other test
+        // here does.
+        FxTestToolkit.onFx(() -> hostRef.set(newHost(new WidgetSurface(0, 0, 1600, 900), listener, stageRef)));
+        JavaFxWidgetHost host = hostRef.get();
+        ContentPlacement rect = new ContentPlacement(100, 100, 480, 414);
+
+        FxTestToolkit.onFx(() -> host.placeAndShow(rect));
+        ScenarioDriver.pause(300);
+        AtomicReference<String> first = new AtomicReference<>();
+        FxTestToolkit.onFx(() -> first.set(geometryOf(stageRef.get())));
+
+        // Same rectangle again: the stage is untouched and no new placement is counted.
+        FxTestToolkit.onFx(() -> host.placeAndShow(new ContentPlacement(100, 100, 480, 414)));
+        ScenarioDriver.pause(300);
+        AtomicReference<String> second = new AtomicReference<>();
+        FxTestToolkit.onFx(() -> second.set(geometryOf(stageRef.get())));
+
+        Assert.assertEquals(first.get(), second.get());
+        Assert.assertEquals("one placement, not two", 1, host.placementRequestsForTests());
+    }
+
+    private static String geometryOf(Stage stage) {
+        return (int) stage.getX() + "," + (int) stage.getY() + " "
+            + (int) stage.getWidth() + "x" + (int) stage.getHeight();
+    }
+
 }

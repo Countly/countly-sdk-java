@@ -93,6 +93,20 @@ public final class CountlyWebView {
     }
 
     /**
+     * The corner radius used for a widget or content block that fills the application window.
+     * <p>
+     * Only matters with {@link #setShowWidgetsWithinApp(boolean)}: an overlay is a rectangular window
+     * laid over the application's, so a block that covers it would otherwise paint square corners
+     * past the application's rounded ones. JavaFX cannot read the window's real radius, so the
+     * default is a sensible one; set it to match your window, or to {@code 0} for square windows.
+     *
+     * @param radius the radius in logical pixels
+     */
+    public static void setOverlayCornerRadius(double radius) {
+        FxSurfaces.setOverlayCornerRadius(radius);
+    }
+
+    /**
      * Log what each page the SDK loads manages to fetch: the bundled WebKit version, images that
      * failed, and the font loading status. Off by default, because it scripts the page. Switch it on
      * when a widget or a content block does not look the way it should.
@@ -131,6 +145,20 @@ public final class CountlyWebView {
             return;
         }
 
+        // One card at a time, shared with content: see PresentationLock.
+        String claim = "widget " + widget.widgetId;
+        if (!PresentationLock.tryAcquire(claim)) {
+            run(onClosed);
+            return;
+        }
+        // Whatever ends this presentation - the page closing itself, the window manager, an error
+        // below - frees the screen before the caller hears about it, so the caller may present again
+        // from inside its own callback.
+        Runnable onClosedAndReleased = () -> {
+            PresentationLock.release(claim);
+            run(onClosed);
+        };
+
         try {
             FxSurfaces.prewarm();
             AtomicReference<FeedbackWidgetPresenter> presenterRef = new AtomicReference<>();
@@ -144,9 +172,11 @@ public final class CountlyWebView {
             // or the card sits in an opaque box.
             Stage stage = new Stage(StageStyle.TRANSPARENT);
             stage.setResizable(false);
-            // See JavaFxContentDisplay: owned, so the card is ordered with the application window
-            // rather than above every application. Only an ownerless card floats.
-            if (owner != null && owner.isShowing()) {
+            // See JavaFxContentDisplay: a card laid out inside the application window is a child of
+            // it, ordered with it and carried with it. A card laid out against the whole screen
+            // belongs to nobody and sits on the top layer, so it can be shown system wide for as
+            // long as the process runs.
+            if (FxSurfaces.isDisplayWithinApp() && owner != null && owner.isShowing()) {
                 stage.initOwner(owner);
             } else {
                 stage.setAlwaysOnTop(true);
@@ -161,12 +191,12 @@ public final class CountlyWebView {
             host.initialize();
 
             FeedbackWidgetPresenter presenter = new FeedbackWidgetPresenter(host, feedback,
-                followWindow(owner, host, presenterRef, onClosed));
+                followWindow(owner, host, presenterRef, onClosedAndReleased));
             presenterRef.set(presenter);
             presenter.start(widget);
         } catch (Throwable t) {
             UiLog.e("[CountlyWebView] presentFeedbackWidget, could not show the widget, [" + t + "]");
-            run(onClosed);
+            onClosedAndReleased.run();
         }
     }
 

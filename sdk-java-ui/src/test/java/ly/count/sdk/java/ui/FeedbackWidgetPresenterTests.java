@@ -14,6 +14,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
@@ -47,7 +48,7 @@ public class FeedbackWidgetPresenterTests {
         widget.widgetId = "w1";
         widget.type = FeedbackWidgetType.nps;
 
-        when(feedback.constructFeedbackWidgetUrl(any())).thenReturn(WIDGET_URL);
+        when(feedback.constructFeedbackWidgetUrl(any(), anyInt(), anyInt())).thenReturn(WIDGET_URL);
     }
 
     /**
@@ -116,14 +117,14 @@ public class FeedbackWidgetPresenterTests {
         verify(feedback, never()).reportFeedbackWidgetManually(any(), any(), any());
 
         beforeTest();
-        when(feedback.constructFeedbackWidgetUrl(any())).thenReturn(null);
+        when(feedback.constructFeedbackWidgetUrl(any(), anyInt(), anyInt())).thenReturn(null);
         newPresenter().start(widget);
         Assert.assertTrue(host.navigations.isEmpty());
         Assert.assertEquals(1, host.closeCount);
         Assert.assertEquals(1, closedCallbacks.get());
 
         beforeTest();
-        when(feedback.constructFeedbackWidgetUrl(any())).thenReturn("   ");
+        when(feedback.constructFeedbackWidgetUrl(any(), anyInt(), anyInt())).thenReturn("   ");
         newPresenter().start(widget);
         Assert.assertTrue(host.navigations.isEmpty());
         Assert.assertEquals(1, closedCallbacks.get());
@@ -305,6 +306,7 @@ public class FeedbackWidgetPresenterTests {
         final List<String> navigations = new ArrayList<>();
         final List<int[]> reportedSizes = new ArrayList<>();
         final List<ContentPlacement> placements = new ArrayList<>();
+        final List<ContentPlacement> followed = new ArrayList<>();
         int closeCount = 0;
 
         @Override
@@ -328,6 +330,11 @@ public class FeedbackWidgetPresenterTests {
         }
 
         @Override
+        public void followGeometry(ContentPlacement rect) {
+            followed.add(rect);
+        }
+
+        @Override
         public void reportSurfaceSize(int width, int height) {
             reportedSizes.add(new int[] { width, height });
         }
@@ -342,4 +349,41 @@ public class FeedbackWidgetPresenterTests {
             closeCount++;
         }
     }
+
+    /**
+     * A survey asked for 574 and drew 580 - a border its own arithmetic leaves out. Honouring the
+     * request, measuring the card, honouring the next request and so on made the card flicker
+     * forever. A request within a border's width of what the page draws now resolves to the drawn
+     * size, so nothing moves; a request further away is a real step and is honoured.
+     */
+    @Test
+    public void aRequestWithinABorderOfTheDrawnCard_keepsTheDrawnCard() {
+        CountlyFeedbackWidget widget = new CountlyFeedbackWidget();
+        widget.widgetId = "survey_1";
+        widget.type = FeedbackWidgetType.survey;
+        widget.position = "bLeft";
+        host.surface = new WidgetSurface(0, 0, 1600, 900);
+        FeedbackWidgetPresenter presenter = newPresenter();
+        presenter.start(widget);
+
+        // The page drew 580.
+        presenter.onCardMeasured(500, 580);
+        ContentPlacement drawn = host.placements.get(host.placements.size() - 1);
+        Assert.assertEquals(580, drawn.height);
+
+        // It then asks for 574: six pixels off, the same card. Nothing changes.
+        int before = host.placements.size();
+        presenter.onWidgetMessage("{\"cly_widget_command\":1,\"resize_me\":"
+            + "{\"p\":{\"x\":0,\"y\":326,\"w\":500,\"h\":574},\"l\":{\"x\":0,\"y\":326,\"w\":500,\"h\":574}}}");
+        ContentPlacement after = host.placements.get(host.placements.size() - 1);
+        Assert.assertEquals("the drawn height is kept", 580, after.height);
+        Assert.assertEquals("and the anchor with it", drawn.y, after.y);
+
+        // A genuinely new step is honoured as asked.
+        presenter.onWidgetMessage("{\"cly_widget_command\":1,\"resize_me\":"
+            + "{\"p\":{\"x\":0,\"y\":100,\"w\":500,\"h\":800},\"l\":{\"x\":0,\"y\":100,\"w\":500,\"h\":800}}}");
+        Assert.assertEquals(800, host.placements.get(host.placements.size() - 1).height);
+        Assert.assertTrue(host.placements.size() > before);
+    }
+
 }

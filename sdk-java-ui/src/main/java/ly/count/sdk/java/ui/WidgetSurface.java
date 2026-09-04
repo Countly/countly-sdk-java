@@ -26,6 +26,22 @@ public class WidgetSurface {
         return width >= height;
     }
 
+    /**
+     * @param other the surface to compare against, may be {@code null}
+     * @return whether the two describe the same area
+     */
+    public boolean sameAs(WidgetSurface other) {
+        return other != null && x == other.x && y == other.y && width == other.width && height == other.height;
+    }
+
+    /**
+     * @param other the surface to compare against, may be {@code null}
+     * @return whether the two are the same size, wherever they sit
+     */
+    public boolean sameSizeAs(WidgetSurface other) {
+        return other != null && width == other.width && height == other.height;
+    }
+
     @Override
     public String toString() {
         return "WidgetSurface{x=" + x + ", y=" + y + ", width=" + width + ", height=" + height + '}';

@@ -85,6 +85,7 @@ public class CountlyWebViewTests {
     public void stopSdk() {
         CountlyWebView.forgetDisplayAreaForTests();
         CountlyWebView.setWebViewDiagnosticsEnabled(false);
+        FxTestToolkit.onFx(PresentationLock::resetForTests);
         Countly.instance().halt();
     }
 
@@ -289,4 +290,40 @@ public class CountlyWebViewTests {
         widget.tags = new String[] { "by-tag" };
         return widget;
     }
+
+    /**
+     * One card at a time. A second widget asked for while the first is on screen is refused and its
+     * caller told at once; once the first has closed itself the screen is free again.
+     */
+    @Test
+    public void aSecondWidgetWhileOneIsShowing_isRefusedUntilTheFirstCloses() {
+        Countly.instance().init(UiTestConfigs.configFor("http://127.0.0.1:" + widgetPort));
+
+        AtomicInteger first = new AtomicInteger();
+        AtomicInteger second = new AtomicInteger();
+        AtomicInteger third = new AtomicInteger();
+
+        // Both asked for on the same pulse: the second arrives before the first's page has even
+        // loaded, and is refused on the spot.
+        FxTestToolkit.onFx(() -> {
+            CountlyWebView.presentFeedbackWidget(null, widget(), first::incrementAndGet);
+            CountlyWebView.presentFeedbackWidget(null, widget(), second::incrementAndGet);
+        });
+        FxTestToolkit.waitUntil("the refused caller to be told", () -> second.get() == 1);
+        Assert.assertEquals("the first is still on its way", 0, first.get());
+        FxTestToolkit.onFx(() -> Assert.assertNotNull("the first holds the screen", PresentationLock.showing()));
+
+        // The first's page closes itself, which frees the screen for the next one.
+        FxTestToolkit.waitUntil("the first to close", () -> first.get() == 1);
+        FxTestToolkit.waitUntil("the screen to be free", () -> PresentationLock.showing() == null);
+
+        CountlyWebView.presentFeedbackWidget(null, widget(), third::incrementAndGet);
+        FxTestToolkit.waitUntil("the third to show and close", () -> third.get() == 1);
+
+        FxTestToolkit.sleep(300);
+        Assert.assertEquals(1, first.get());
+        Assert.assertEquals(1, second.get());
+        Assert.assertEquals(1, third.get());
+    }
+
 }
