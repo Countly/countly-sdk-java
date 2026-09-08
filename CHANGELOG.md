@@ -1,4 +1,4 @@
-## XX.XX.XX
+## 26.8.0
 * Added support for the Content feature, accessible through the "Countly.instance().content()" interface:
   * "enterContentZone" / "exitContentZone" for starting and stopping periodic content fetching
   * "refreshContentZone" for flushing the event queue and fetching again right away
