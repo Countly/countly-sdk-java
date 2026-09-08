@@ -12,7 +12,7 @@ buildscript {
     // ... loaded with a different classloader" as soon as two modules published in one build.
     if (gradle.startParameter.taskNames.any { it.toLowerCase().contains("publish") }) {
       // This requires minimum java 11 to work
-      classpath 'com.vanniktech:gradle-maven-publish-plugin:0.28.0'
+      classpath 'com.vanniktech:gradle-maven-publish-plugin:0.37.0'
     }
   }
 }
