@@ -21,7 +21,7 @@ public final class AppContext {
     // the raw /o/sdk?method=feedback call (the SDK's Config does not expose
     // them publicly to code outside its package).
     public static volatile String liveServerUrl = DEFAULT_SERVER_URL;
-    public static volatile String liveAppKey    = DEFAULT_APP_KEY;
+    public static volatile String liveAppKey = DEFAULT_APP_KEY;
 
     public static File storageDir() {
         File dir = new File(
@@ -35,5 +35,6 @@ public final class AppContext {
         return dir;
     }
 
-    private AppContext() {}
+    private AppContext() {
+    }
 }

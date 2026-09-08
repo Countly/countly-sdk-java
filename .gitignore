@@ -16,3 +16,8 @@ out/
 # Dependency security scan output
 osv-report.md
 resolved-dependencies.txt
+
+# JVM crash dumps, produced when the JavaFX toolkit dies during tests
+hs_err_pid*.log
+replay_pid*.log
+*.mdmp

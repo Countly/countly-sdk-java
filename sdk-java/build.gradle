@@ -30,6 +30,24 @@ dependencies {
   //testImplementation 'com.squareup.okhttp3:mockwebserver:3.7.0'
 }
 
+// Coverage. Reports land in build/reports/jacoco/test/ (HTML to read, XML for tooling).
+// "./gradlew coverage" from the repo root runs this and prints a summary.
+apply plugin: 'jacoco'
+
+jacoco {
+  toolVersion = JACOCO_VERSION
+}
+
+jacocoTestReport {
+  dependsOn test
+
+  reports {
+    html.required = true
+    xml.required = true
+    csv.required = false
+  }
+}
+
 if (gradle.startParameter.taskNames.any { it.toLowerCase().contains("publish") }) {
   apply plugin: "com.vanniktech.maven.publish"
 }

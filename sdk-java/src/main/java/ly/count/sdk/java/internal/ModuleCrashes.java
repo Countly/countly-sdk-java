@@ -94,7 +94,8 @@ public class ModuleCrashes extends ModuleBase {
 
         CrashImpl crash = new CrashImpl(L).addThrowable(t).setFatal(!handled).addSegments(segments);
 
-        if (Utils.isEmptyOrNull(legacyCrashName)) {
+        // Guard was inverted: a real name was never applied and an empty one was sent as '_name:""'.
+        if (!Utils.isEmptyOrNull(legacyCrashName)) {
             crash.setName(legacyCrashName);
         }
 
