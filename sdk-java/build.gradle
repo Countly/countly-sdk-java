@@ -2,19 +2,8 @@ apply plugin: 'java-library'
 // apply plugin: 'maven'
 
 
-buildscript {
-  repositories {
-    mavenCentral()
-    //mavenLocal()
-  }
-  dependencies {
-    // Load publish plugin ONLY when publish task is requested
-    if (gradle.startParameter.taskNames.any { it.toLowerCase().contains("publish") }) {
-      // This requires minimum java 11 to work
-      classpath 'com.vanniktech:gradle-maven-publish-plugin:0.28.0'
-    } 
-  }
-}
+// The maven publish plugin is put on the classpath by the root build.gradle, so that every module
+// shares one copy of it.
 
 java {
   sourceCompatibility = JavaVersion.VERSION_1_8

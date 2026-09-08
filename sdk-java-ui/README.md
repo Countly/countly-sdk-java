@@ -73,13 +73,17 @@ The card takes the size the widget asks for, and is anchored the way that widget
 the web: an NPS at the bottom centre, a survey at the bottom left or bottom right per its
 `appearance.position`, and a rating as a centred card.
 
-By default that happens on the work area of the screen the application is on. To keep both widget
-cards and content blocks inside the application window instead, set this once before showing
-anything:
+By default both widget cards and content blocks are laid out inside the application window, as a
+child window that follows it. To lay them out over the work area of the screen the application is on
+instead, set this once before showing anything:
 
 ```java
-CountlyWebView.setShowWidgetsWithinApp(true);
+CountlyWebView.setShowWidgetsWithinApp(false);
 ```
+
+Inside the window, a block that covers the whole window is clipped to rounded corners; match the
+radius to your window with `CountlyWebView.setOverlayCornerRadius(radius)`, or pass `0` for square
+windows.
 
 ### Content
 
@@ -107,9 +111,10 @@ want content pinned to a particular one:
 CountlyWebView.enableContentZone(myWindow);
 ```
 
-The content window is shown only once its page has painted, so nothing flashes as an empty
-rectangle. A page that fails to load, or does not load within 20 seconds, is abandoned and the zone
-resumes fetching.
+The content window is transparent, so the block appears as soon as its page draws. A page that fails
+to load, or does not load within 20 seconds, is abandoned and the zone resumes fetching. Only one
+widget or content block is shown at a time; a second one asked for meanwhile is reported closed at
+once.
 
 Content is an **experimental** feature and its API can change.
 

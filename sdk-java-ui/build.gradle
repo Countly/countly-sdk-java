@@ -1,8 +1,8 @@
-buildscript {
-  repositories {
-    mavenCentral()
-  }
-  // A widget or content link would otherwise be handed to the real system browser while tests run.
+plugins {
+  id 'java-library'
+  id 'org.openjfx.javafxplugin' version '0.1.0'
+}
+
 //
 // No Monocle. The headless JavaFX platform cost four separate failures: Monocle 11 threw
 // AbstractMethodError against JavaFX 17, Monocle 17 crashed the JVM against JavaFX 21, Monocle 21 is
@@ -11,6 +11,7 @@ buildscript {
 // Windows). The tests now use the real toolkit, which is far better exercised; CI gives Linux a
 // display with xvfb.
 tasks.withType(Test) {
+  // A widget or content link would otherwise be handed to the real system browser while tests run.
   systemProperty 'java.awt.headless', 'true'
 
   // One JVM per test class. JavaFX cannot be restarted inside a process, so every class that needs
@@ -34,19 +35,9 @@ tasks.withType(Test) {
   systemProperty 'countly.ui.scenarioWithinApp', System.getProperty('countly.ui.scenarioWithinApp', 'false')
 }
 
-dependencies {
-    // Load publish plugin ONLY when publish task is requested
-    if (gradle.startParameter.taskNames.any { it.toLowerCase().contains("publish") }) {
-      // This requires minimum java 11 to work
-      classpath 'com.vanniktech:gradle-maven-publish-plugin:0.28.0'
-    }
-  }
-}
+// The maven publish plugin is put on the classpath by the root build.gradle, so that every module
+// shares one copy of it.
 
-plugins {
-  id 'java-library'
-  id 'org.openjfx.javafxplugin' version '0.1.0'
-}
 
 // Java 17, not 11. JavaFX only gained a public API for a transparent web view background
 // (WebView.setPageFill) in version 20, and JavaFX 20+ requires Java 17. Without it the only
