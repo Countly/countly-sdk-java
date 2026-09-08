@@ -190,9 +190,15 @@ public class ScenarioLocationTests {
             TestUtils.validateMetrics(requestsInQ[rqIdx].get("metrics"));
             expectedSessionParams += 2; // we need to add 2 more params for metrics and session_id
         } else if (expectedParams.containsKey("end_session")) {
-            expectedSessionParams += 1; // we need to add 1 more param for session_duration
+            expectedSessionParams += 1; // session_id
+            // session_duration is sent only when the session lasted long enough to round up to a
+            // second, so under load these short sessions carry it and on a quiet machine they don't.
+            if (requestsInQ[rqIdx].containsKey("session_duration")) {
+                expectedSessionParams += 1;
+            }
         }
-        Assert.assertEquals(9 + expectedParams.size() + expectedSessionParams, requestsInQ[rqIdx].size()); // so we need to add expect 9 + params size
+        Assert.assertEquals("params were " + new java.util.TreeMap<>(requestsInQ[rqIdx]).keySet(),
+            9 + expectedParams.size() + expectedSessionParams, requestsInQ[rqIdx].size()); // so we need to add expect 9 + params size
         expectedParams.forEach((key, value) -> Assert.assertEquals(value.toString(), requestsInQ[rqIdx].get(key)));
     }
 }

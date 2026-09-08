@@ -191,6 +191,29 @@ public class TransportPinningTests {
     }
 
     /**
+     * keytool and the Windows tools write the base64 body with "\r\n" line ends. Such a pin used to
+     * fail to decode, and since an undecodable pin is skipped rather than refused, pinning was silently
+     * off for exactly the customer who exported the certificate with the JDK's own tool. The pins must
+     * be registered, not merely tolerated: with no pins at all the trust check passes everything.
+     */
+    @Test
+    public void pinParsing_acceptsCrlfLineEndsAsKeytoolWritesThem() throws Exception {
+        Transport byCertificate = pinnedTransport(null, CERTIFICATE_PEM.replace("\n", "\r\n"));
+        Assert.assertEquals(1, pinsOf(byCertificate, "certPins").size());
+        byCertificate.checkServerTrusted(new X509Certificate[] { certificate }, "RSA");
+
+        Transport byKey = pinnedTransport(PUBLIC_KEY_PEM.replace("\n", "\r\n"), null);
+        Assert.assertEquals(1, pinsOf(byKey, "keyPins").size());
+        byKey.checkServerTrusted(new X509Certificate[] { certificate }, "RSA");
+    }
+
+    private static java.util.List<?> pinsOf(Transport transport, String field) throws Exception {
+        Field pins = Transport.class.getDeclaredField(field);
+        pins.setAccessible(true);
+        return (java.util.List<?>) pins.get(transport);
+    }
+
+    /**
      * The trust manager contract the SDK implements. Client side checks delegate to the platform, and
      * the accepted issuer list is deliberately empty because the SDK never acts as a server.
      */

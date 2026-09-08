@@ -393,8 +393,9 @@ public class Transport implements X509TrustManager {
         if (pem.contains("-----END ")) {
             pem = pem.substring(0, pem.indexOf("-----END"));
         }
-        String res = pem.replaceAll("\n", "");
-        return res;
+        // All whitespace, not only "\n": keytool and Windows tools write the base64 body with
+        // "\r\n" line ends, and a stray "\r" makes the decoder reject the whole pin.
+        return pem.replaceAll("\\s", "");
     }
 
     private void setPins(Set<String> keys, Set<String> certs) throws CertificateException {
