@@ -5,6 +5,16 @@ buildscript {
     google()
     mavenCentral()
   }
+  dependencies {
+    // The publish plugin is loaded here, once, and only when a publish task is requested. Loading it
+    // from each module's own buildscript gave every module its own copy of the plugin classes, and
+    // the plugin's shared Sonatype build service then failed with "cannot set property buildService
+    // ... loaded with a different classloader" as soon as two modules published in one build.
+    if (gradle.startParameter.taskNames.any { it.toLowerCase().contains("publish") }) {
+      // This requires minimum java 11 to work
+      classpath 'com.vanniktech:gradle-maven-publish-plugin:0.28.0'
+    }
+  }
 }
 
 allprojects {
