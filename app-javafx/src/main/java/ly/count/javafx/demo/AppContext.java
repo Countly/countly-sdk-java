@@ -13,7 +13,7 @@ public final class AppContext {
     // flows, so our raw feedback HTTP call (used to recover the wv field
     // for URL construction) identifies the same client.
     public static final String SDK_NAME = "java-native";
-    public static final String SDK_VERSION = "24.1.6";
+    public static final String SDK_VERSION = "26.8.0";
     public static final String PLATFORM = "desktop";
 
     // Populated from the Init tab once the user initializes the SDK; the
@@ -21,7 +21,7 @@ public final class AppContext {
     // the raw /o/sdk?method=feedback call (the SDK's Config does not expose
     // them publicly to code outside its package).
     public static volatile String liveServerUrl = DEFAULT_SERVER_URL;
-    public static volatile String liveAppKey    = DEFAULT_APP_KEY;
+    public static volatile String liveAppKey = DEFAULT_APP_KEY;
 
     public static File storageDir() {
         File dir = new File(
@@ -35,5 +35,6 @@ public final class AppContext {
         return dir;
     }
 
-    private AppContext() {}
+    private AppContext() {
+    }
 }

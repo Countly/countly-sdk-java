@@ -32,7 +32,8 @@ public class MainView {
             tab("Crashes",        new CrashesPane(logPanel).getRoot()),
             tab("Device ID",      new DeviceIdPane(logPanel, statusLabel).getRoot()),
             tab("Remote Config",  new RemoteConfigPane(logPanel).getRoot()),
-            tab("Feedback Widgets", new FeedbackWidgetsPane(logPanel).getRoot())
+            tab("Feedback Widgets", new FeedbackWidgetsPane(logPanel).getRoot()),
+            tab("Content",        new ContentPane(logPanel).getRoot())
         );
 
         SplitPane split = new SplitPane();

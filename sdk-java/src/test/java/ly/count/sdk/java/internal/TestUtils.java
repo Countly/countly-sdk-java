@@ -39,7 +39,7 @@ public class TestUtils {
     static String SERVER_APP_KEY = "COUNTLY_APP_KEY";
     static String DEVICE_ID = "some_random_test_device_id";
     static String SDK_NAME = "java-native";
-    static String SDK_VERSION = "24.1.6";
+    static String SDK_VERSION = "26.8.0";
     static String APPLICATION_VERSION = "1.0";
 
     public static final String[] eKeys = new String[] { "eventKey1", "eventKey2", "eventKey3", "eventKey4", "eventKey5", "eventKey6", "eventKey7" };
@@ -120,6 +120,15 @@ public class TestUtils {
 
         config.enableFeatures(features);
         config.enableFeatures(Config.Feature.Feedback);
+
+        return config;
+    }
+
+    static Config getConfigContent(Config.Feature... features) {
+        Config config = getBaseConfig();
+
+        config.enableFeatures(features);
+        config.enableFeatures(Config.Feature.Content, Config.Feature.Events);
 
         return config;
     }
@@ -309,6 +318,14 @@ public class TestUtils {
         return paramMap;
     }
 
+    /**
+     * Slack allowed above an expected event duration that was produced by a
+     * Thread.sleep in a test. Absolute rather than proportional, so it soaks up
+     * scheduler overrun on a loaded CI runner without meaningfully weakening
+     * the large, synthetically-set durations some tests assert.
+     */
+    private static final double SLEEP_OVERRUN_TOLERANCE_SECONDS = 2.0;
+
     static void validateEvent(EventImpl gonnaValidate, String key, Map<String, Object> segmentation, int count, Double sum, Double duration, String id, String pvid, String cvid, String peid) {
         Assert.assertEquals(key, gonnaValidate.key);
 
@@ -324,7 +341,21 @@ public class TestUtils {
 
         if (duration != null) {
             double delta = 0.5;
-            Assert.assertTrue(duration + " expected duration, got " + gonnaValidate.duration, Math.abs(duration - gonnaValidate.duration) < delta);
+            if (duration == 0.0) {
+                // A view that has only just started must report exactly 0.
+                // Loosening this would hide a real "duration never reset" bug.
+                Assert.assertTrue(duration + " expected duration, got " + gonnaValidate.duration, Math.abs(duration - gonnaValidate.duration) < delta);
+            } else {
+                // Non-zero expectations come from a Thread.sleep in the test, and
+                // a sleep can only overrun - never finish early. Asserting
+                // near-equality therefore asserts the machine is not busy, which
+                // is why these tests flake on CI (a 1s sleep measured as 2s, a 5s
+                // sleep as 6s). Keep the lower bound strict so a duration that was
+                // never recorded still fails, and allow bounded overrun above it.
+                Assert.assertTrue(duration + " expected duration, got " + gonnaValidate.duration,
+                    gonnaValidate.duration >= duration - delta
+                        && gonnaValidate.duration <= duration + SLEEP_OVERRUN_TOLERANCE_SECONDS);
+            }
         }
 
         Assert.assertTrue(gonnaValidate.dow >= 0 && gonnaValidate.dow < 7);

@@ -16,7 +16,8 @@ public class WidgetCard extends VBox {
                       String widgetVersion,
                       Consumer<CountlyFeedbackWidget> onOpen,
                       Consumer<CountlyFeedbackWidget> onInspect,
-                      Consumer<CountlyFeedbackWidget> onManualReport) {
+                      Consumer<CountlyFeedbackWidget> onManualReport,
+                      Consumer<CountlyFeedbackWidget> onPresentWithSdkUi) {
         getStyleClass().add("widget-card");
         setPadding(new Insets(10));
         setSpacing(4);
@@ -53,7 +54,10 @@ public class WidgetCard extends VBox {
         javafx.scene.control.Button manual = new javafx.scene.control.Button("Report manually");
         manual.setOnAction(e -> onManualReport.accept(widget));
 
-        HBox actions = new HBox(6, open, inspect, manual);
+        javafx.scene.control.Button sdkUi = new javafx.scene.control.Button("Present (SDK UI)");
+        sdkUi.setOnAction(e -> onPresentWithSdkUi.accept(widget));
+
+        HBox actions = new HBox(6, open, sdkUi, inspect, manual);
         actions.setPadding(new Insets(6, 0, 0, 0));
 
         getChildren().addAll(badgeRow, nameLabel, idLabel, tagsLabel, actions);
