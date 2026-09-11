@@ -62,7 +62,7 @@ dependencies {
   // appear in this package's public signatures.
   api project(':sdk-java')
 
-  implementation 'org.json:json:20250517'
+  implementation 'org.json:json:20260814'
 
   testImplementation 'junit:junit:4.13.2'
   testImplementation 'org.mockito:mockito-core:4.11.0'
