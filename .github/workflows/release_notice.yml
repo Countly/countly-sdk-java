@@ -16,6 +16,8 @@ jobs:
         id: slack
         uses: slackapi/slack-github-action@v4.0.0
         with:
+          webhook: ${{ secrets.SLACK_RELEASE }}
+          webhook-type: webhook-trigger
           # This data can be any valid JSON from a previous step in the GitHub Action
           payload: |
             {
@@ -25,8 +27,6 @@ jobs:
               "body": ${{ toJSON(github.event.release.body) }},
               "html_url": "${{ github.event.release.html_url }}"
             }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_RELEASE }}
       - name: Send custom JSON data to Discord
         uses: sarisia/actions-status-discord@v1.13.0
         with:
