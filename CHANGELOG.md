@@ -1,4 +1,4 @@
-## XX.XX.XX
+## 0.0.1
 * !! Major breaking change !! New versions of `ly.count.sdk:java` and `ly.count.sdk:java-ui` are published at `https://maven.countly.com` instead of Maven Central. Add the repository once.
   Gradle, next to `mavenCentral()` in `dependencyResolutionManagement` of `settings.gradle` (or in `allprojects` of the root `build.gradle` in older projects):
   ```groovy

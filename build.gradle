@@ -41,7 +41,7 @@ subprojects {
 }
 
 allprojects {
-  ext.CLY_VERSION = "26.8.0"
+  ext.CLY_VERSION = "0.0.1"
   ext.POWERMOCK_VERSION = "1.7.4"
   ext.JACOCO_VERSION = "0.8.13"
 
