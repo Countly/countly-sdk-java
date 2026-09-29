@@ -10,6 +10,13 @@ java {
   targetCompatibility = JavaVersion.VERSION_1_8
 }
 
+// javac 8 has no --release flag; on a newer JDK it also stops the use of Java 9+ APIs, which the target alone allows.
+if (JavaVersion.current().isJava9Compatible()) {
+  tasks.withType(JavaCompile).configureEach {
+    options.release = 8
+  }
+}
+
 dependencies {
   implementation 'org.json:json:20250517'
   implementation 'com.google.code.findbugs:jsr305:3.0.2'

@@ -1,3 +1,25 @@
+## XX.XX.XX
+* !! Major breaking change !! New versions of `ly.count.sdk:java` and `ly.count.sdk:java-ui` are published at `https://maven.countly.com` instead of Maven Central. Add the repository once.
+  Gradle, next to `mavenCentral()` in `dependencyResolutionManagement` of `settings.gradle` (or in `allprojects` of the root `build.gradle` in older projects):
+  ```groovy
+  maven {
+    url = 'https://maven.countly.com'
+    content { includeGroupByRegex 'ly\\.count\\..*' }
+  }
+  ```
+  Maven, in `pom.xml`:
+  ```xml
+  <repositories>
+    <repository>
+      <id>countly</id>
+      <url>https://maven.countly.com</url>
+      <releases><enabled>true</enabled></releases>
+      <snapshots><enabled>false</enabled></snapshots>
+    </repository>
+  </repositories>
+  ```
+  Versions released before this one stay available on Maven Central. The files are signed with the same key as before (`FC8DB0DE234A273BA45E562FB8C83A079A5BBD0C`).
+
 ## 26.8.0
 * Added support for the Content feature, accessible through the "Countly.instance().content()" interface:
   * "enterContentZone" / "exitContentZone" for starting and stopping periodic content fetching

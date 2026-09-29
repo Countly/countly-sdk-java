@@ -1,0 +1,33 @@
+{
+  "repository": "Countly/countly-sdk-java",
+  "publicBaseUrl": { "production": "https://maven.countly.com/", "test": "https://maven-test.countly.com/" },
+  "centralBaseUrl": "https://repo1.maven.org/maven2/",
+  "publishedModules": ":sdk-java,:sdk-java-ui",
+  "platformSpecificGroups": ["org.openjfx"],
+  "requiredChecks": ["Build and Test", "Test on ubuntu-latest", "Test on windows-latest", "OSV scan (all modules)", "Analyze (java)"],
+  "tagRules": [
+    { "tag": "{version}", "branch": "staging", "artifacts": ["java", "java-ui"] }
+  ],
+  "artifacts": {
+    "java": {
+      "group": "ly.count.sdk", "artifact": "java", "module": ":sdk-java",
+      "contract": ".github/release-contract/java.json", "consumerJava": 8,
+      "versionSources": [
+        { "file": "gradle.properties", "regex": "^VERSION_NAME=(.+)$" },
+        { "file": "build.gradle", "regex": "ext\\.CLY_VERSION = \"([^\"]+)\"" },
+        { "file": "sdk-java/src/main/java/ly/count/sdk/java/Config.java", "regex": "protected String sdkVersion = \"([^\"]+)\"" }
+      ],
+      "changelog": "CHANGELOG.md"
+    },
+    "java-ui": {
+      "group": "ly.count.sdk", "artifact": "java-ui", "module": ":sdk-java-ui",
+      "contract": ".github/release-contract/java-ui.json", "consumerJava": 17,
+      "versionSources": [
+        { "file": "gradle.properties", "regex": "^VERSION_NAME=(.+)$" },
+        { "file": "build.gradle", "regex": "ext\\.CLY_VERSION = \"([^\"]+)\"" },
+        { "file": "sdk-java/src/main/java/ly/count/sdk/java/Config.java", "regex": "protected String sdkVersion = \"([^\"]+)\"" }
+      ],
+      "changelog": "CHANGELOG.md"
+    }
+  }
+}

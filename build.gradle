@@ -4,6 +4,10 @@ buildscript {
   repositories {
     google()
     mavenCentral()
+    // CycloneDX publishes its Gradle plugin 3.x only on the Gradle Plugin Portal.
+    gradlePluginPortal {
+      content { includeGroup 'org.cyclonedx' }
+    }
   }
   dependencies {
     // The publish plugin is loaded here, once, and only when a publish task is requested. Loading it
@@ -13,6 +17,25 @@ buildscript {
     if (gradle.startParameter.taskNames.any { it.toLowerCase().contains("publish") }) {
       // This requires minimum java 11 to work
       classpath 'com.vanniktech:gradle-maven-publish-plugin:0.28.0'
+      classpath 'org.cyclonedx:cyclonedx-gradle-plugin:3.4.1'
+    }
+  }
+}
+
+// Publishing modules: the local staging repository release.yml uploads from, and the SBOM of the published runtime classpath.
+subprojects {
+  plugins.withId('com.vanniktech.maven.publish') {
+    publishing {
+      repositories {
+        maven {
+          name = 'releaseStaging'
+          url = rootProject.file('build/release-staging')
+        }
+      }
+    }
+    apply plugin: 'org.cyclonedx.bom'
+    tasks.named('cyclonedxDirectBom').configure {
+      includeConfigs = ['runtimeClasspath']
     }
   }
 }

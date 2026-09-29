@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "coordinates": "ly.count.sdk:java",
+  "pomDependencies": [
+    "com.google.code.findbugs:jsr305:3.0.2:runtime",
+    "org.json:json:20250517:runtime"
+  ],
+  "moduleVariantAttributes": {
+    "org.gradle.jvm.version": 8
+  },
+  "maxClassFileMajor": 52
+}
