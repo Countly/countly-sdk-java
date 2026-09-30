@@ -29,6 +29,15 @@ dependencies {
     implementation 'org.json:json:20250517'
 }
 
+// sdk-java-ui depends on a released ly.count.sdk:java. The demo runs everything on
+// the local sdk-java module instead, so two copies of the core never meet on its
+// classpath.
+configurations.configureEach {
+    resolutionStrategy.dependencySubstitution {
+        substitute module('ly.count.sdk:java') using project(':sdk-java')
+    }
+}
+
 application {
     mainClass = 'ly.count.javafx.demo.Main'
 }

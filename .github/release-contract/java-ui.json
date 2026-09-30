@@ -2,7 +2,7 @@
   "schema": 1,
   "coordinates": "ly.count.sdk:java-ui",
   "pomDependencies": [
-    "ly.count.sdk:java:{version}:compile",
+    "ly.count.sdk:java:26.8.0:compile",
     "org.json:json:20250517:runtime",
     "org.openjfx:javafx-controls:21.0.5:runtime",
     "org.openjfx:javafx-web:21.0.5:runtime"

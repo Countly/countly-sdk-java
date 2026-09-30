@@ -1,4 +1,6 @@
 def countlyRepository = gradle.startParameter.projectProperties['countlyRepository']
+def countlyPublicRepository = gradle.startParameter.projectProperties['countlyPublicRepository']
+def countlyStaged = gradle.startParameter.projectProperties['countlyStaged'].split(',')
 
 dependencyResolutionManagement {
   repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
@@ -7,9 +9,18 @@ dependencyResolutionManagement {
       forRepository {
         maven { url = countlyRepository }
       }
-      filter { includeGroupByRegex 'ly\\.count\\..*' }
+      filter {
+        countlyStaged.each { coordinates ->
+          def (group, name) = coordinates.split(':')
+          includeModule(group, name)
+        }
+      }
     }
     mavenCentral()
+    maven {
+      url = countlyPublicRepository
+      content { includeGroupByRegex 'ly\\.count\\..*' }
+    }
   }
 }
 

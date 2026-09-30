@@ -9,20 +9,26 @@ PROBE_CLASS = "ly.count.consumer.Probe"
 REPOSITORY_ID = "countly"
 
 
-def gradle_command(gradlew, repository, artifact, version):
-    """Builds the Gradle consumer against one artifact version and installs it with its runtime classpath."""
+def gradle_command(gradlew, repository, public_repository, plan, artifact):
+    """Builds the Gradle consumer against one artifact of the plan and installs it with its runtime classpath. Only the
+    plan's artifacts come from the staging folder; any other Countly package they need, such as the core SDK of a UI
+    release, comes from the public repository or Maven Central, as it does for an integrator."""
+    staged = ",".join(item.coordinates for item in plan.artifacts)
     return [
         gradlew, "-p", GRADLE_PROJECT, *GRADLE_FLAGS, "clean", "installDist",
-        f"-PcountlyRepository={repository}", f"-PcountlyDependency={artifact.coordinates}:{version}",
+        f"-PcountlyRepository={repository}", f"-PcountlyPublicRepository={public_repository}", f"-PcountlyStaged={staged}",
+        f"-PcountlyDependency={artifact.coordinates}:{plan.version}",
         f"-PcountlyRelease={artifact.consumer_java}", f"-PcountlyProbe={artifact.artifact}",
     ]
 
 
-def maven_command(mvn, repository, artifact, version, local_repository):
-    """Compiles the Maven consumer against one artifact version, with an empty local repository so nothing is reused."""
+def maven_command(mvn, repository, public_repository, artifact, version, local_repository):
+    """Compiles the Maven consumer against one artifact version, with an empty local repository so nothing is reused.
+    Maven looks in the staging folder first, then in the public repository, then on Maven Central."""
     return [
         mvn, "-B", "-f", MAVEN_POM, "clean", "compile",
-        f"-Dcountly.repository={repository}", f"-Dcountly.artifact={artifact.artifact}", f"-Dcountly.version={version}",
+        f"-Dcountly.repository={repository}", f"-Dcountly.publicRepository={public_repository}",
+        f"-Dcountly.artifact={artifact.artifact}", f"-Dcountly.version={version}",
         f"-Dcountly.release={artifact.consumer_java}", f"-Dmaven.repo.local={local_repository}",
     ]
 

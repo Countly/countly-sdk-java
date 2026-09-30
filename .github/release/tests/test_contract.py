@@ -50,11 +50,13 @@ class ContractTest(unittest.TestCase):
             f"the .module declares ['{JSR305}', '{JSON}', 'org.slf4j:slf4j-api:2.0.17'] but the POM declares ['{JSR305}', '{JSON}']",
         ])
 
-    def test_own_release_version_is_a_placeholder(self):
-        ui = plan_for_tag(self.config, "26.8.1").artifacts[1]
-        pom = pom_bytes(["ly.count.sdk:java:26.8.1:compile", "ly.count.sdk:java:26.8.0:compile", JSON + ":runtime"])
-        write_artifact(self.staging, ui, "26.8.1", pom=pom, module=module_bytes(17, ["ly.count.sdk:java:26.8.1", JSON]))
-        self.assertEqual(actual_contract(self.staging, ui, "26.8.1")["pomDependencies"], ["ly.count.sdk:java:26.8.0:compile", "ly.count.sdk:java:{version}:compile", JSON + ":runtime"])
+    def test_the_core_version_of_the_ui_is_compared_exactly(self):
+        ui = plan_for_tag(self.config, "ui-26.8.1").artifacts[0]
+        contract = {"schema": 1, "coordinates": "ly.count.sdk:java-ui", "pomDependencies": ["ly.count.sdk:java:26.8.0:compile", JSON + ":runtime"], "moduleVariantAttributes": {"org.gradle.jvm.version": 17}, "maxClassFileMajor": 61}
+        write_artifact(self.staging, ui, "26.8.1", main=jar_bytes([61]), pom=pom_bytes(["ly.count.sdk:java:26.8.1:compile", JSON + ":runtime"]), module=module_bytes(17, ["ly.count.sdk:java:26.8.1", JSON]))
+        actual = actual_contract(self.staging, ui, "26.8.1")
+        self.assertEqual(actual["pomDependencies"], ["ly.count.sdk:java:26.8.1:compile", JSON + ":runtime"])
+        self.assertEqual(compare(contract, actual), [f"POM dependencies are ['ly.count.sdk:java:26.8.1:compile', '{JSON}:runtime'], the contract says ['ly.count.sdk:java:26.8.0:compile', '{JSON}:runtime']"])
 
     def test_highest_class_version_wins(self):
         self.assertEqual(max_class_major(jar_bytes([52, 50])), 52)

@@ -59,8 +59,11 @@ javafx {
 
 dependencies {
   // 'api' so a consumer of this artifact also gets the core SDK, whose types
-  // appear in this package's public signatures.
-  api project(':sdk-java')
+  // appear in this package's public signatures. A released core, not the sdk-java
+  // project: this artifact is released on its own, so what it is built and tested
+  // against is exactly what its POM tells integrators to use. Raise it only to a
+  // core version that is already published.
+  api 'ly.count.sdk:java:26.8.0'
 
   implementation 'org.json:json:20250517'
 

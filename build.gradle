@@ -58,6 +58,11 @@ allprojects {
   repositories {
     google()
     mavenCentral()
+    // Core SDK releases published after the move from Maven Central, which sdk-java-ui can depend on.
+    maven {
+      url = 'https://maven.countly.com'
+      content { includeGroupByRegex 'ly\\.count\\..*' }
+    }
   }
 }
 

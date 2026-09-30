@@ -24,9 +24,8 @@ class UploadTest(unittest.TestCase):
         self.plan = plan_for_tag(self.config, "26.8.1")
 
     def stage(self):
-        """Stages both artifacts of the tag and returns the folder of java."""
-        folders = [write_artifact(self.staging, artifact, self.plan.version) for artifact in self.plan.artifacts]
-        return folders[0]
+        """Stages the artifact of the tag and returns its folder."""
+        return write_artifact(self.staging, self.plan.artifacts[0], self.plan.version)
 
     def test_pom_family_goes_last(self):
         names = ["a.pom", "a.pom.asc", "a.pom.sha1", "a.jar", "a.jar.sha1", "a.module"]
@@ -37,9 +36,8 @@ class UploadTest(unittest.TestCase):
         bucket = FakeBucket()
         upload_release(bucket, self.staging, self.plan, log=quiet)
         stored = dict(bucket.objects)
-        java_calls = [key for key in bucket.calls if key.startswith("ly/count/sdk/java/")]
-        self.assertEqual(java_calls[-1], POM)
-        self.assertEqual(bucket.calls[-1], "ly/count/sdk/java-ui/26.8.1/java-ui-26.8.1.pom")
+        self.assertEqual(bucket.calls[-1], POM)
+        self.assertEqual(len(bucket.calls), 30)
         self.assertEqual(stored[POM][2], IMMUTABLE)
         self.assertEqual(stored[JAR][1], "application/java-archive")
         upload_release(bucket, self.staging, self.plan, log=quiet)

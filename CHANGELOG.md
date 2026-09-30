@@ -19,6 +19,7 @@
   </repositories>
   ```
   Versions released before this one stay available on Maven Central. The files are signed with the same key as before (`FC8DB0DE234A273BA45E562FB8C83A079A5BBD0C`).
+* ! Minor breaking change ! `ly.count.sdk:java-ui` now has its own version numbers and is released only when it changes; see its own [CHANGELOG](sdk-java-ui/CHANGELOG.md). Use the latest version of each package instead of one shared number.
 
 ## 26.8.0
 * Added support for the Content feature, accessible through the "Countly.instance().content()" interface:
