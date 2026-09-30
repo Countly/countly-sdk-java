@@ -9,7 +9,7 @@ repositories {
 }
 
 dependencies {
-  implementation 'org.json:json:20230227'
+  implementation 'org.json:json:20250517'
 
   implementation fileTree(dir: 'libs', include: ['*.jar'])
   implementation project(path: ':sdk-java')

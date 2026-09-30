@@ -1,0 +1,20 @@
+plugins {
+  id 'java'
+  id 'application'
+}
+
+def probe = findProperty('countlyProbe')
+
+sourceSets.main.java.srcDirs = ["../probes/${probe}"]
+
+tasks.withType(JavaCompile).configureEach {
+  options.release = Integer.parseInt(findProperty('countlyRelease'))
+}
+
+dependencies {
+  implementation findProperty('countlyDependency')
+}
+
+application {
+  mainClass = 'ly.count.consumer.Probe'
+}

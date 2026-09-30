@@ -1,0 +1,8 @@
+# Vulnerabilities the dependency security scan may ignore, one per line:
+#
+#   <OSV id>  <YYYY-MM-DD expiry>  <reason>
+#
+# The expiry is mandatory. Once it passes, the finding blocks the scan again and the entry
+# has to be re-reviewed — a temporary exception must not become a permanent silence.
+# Only add an entry when there is a concrete reason the advisory cannot or need not be acted
+# on right now, and say what that reason is.

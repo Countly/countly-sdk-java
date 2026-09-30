@@ -393,8 +393,9 @@ public class Transport implements X509TrustManager {
         if (pem.contains("-----END ")) {
             pem = pem.substring(0, pem.indexOf("-----END"));
         }
-        String res = pem.replaceAll("\n", "");
-        return res;
+        // All whitespace, not only "\n": keytool and Windows tools write the base64 body with
+        // "\r\n" line ends, and a stray "\r" makes the decoder reject the whole pin.
+        return pem.replaceAll("\\s", "");
     }
 
     private void setPins(Set<String> keys, Set<String> certs) throws CertificateException {
@@ -412,6 +413,13 @@ public class Transport implements X509TrustManager {
                         }
                     } else {
                         data = Utils.Base64.decode(trimPem(key), L);
+                    }
+
+                    if (data == null) {
+                        // Base64.decode returns null for a malformed pin; passing that on made
+                        // Countly.init() throw instead of reporting a bad pin.
+                        L.e("[network] Public key pin is not valid base64, ignoring it: " + key);
+                        continue;
                     }
 
                     try {
@@ -442,6 +450,11 @@ public class Transport implements X509TrustManager {
                     }
                 } else {
                     data = Utils.Base64.decode(trimPem(cert), L);
+                }
+
+                if (data == null) {
+                    L.e("[network] Certificate pin is not valid base64, ignoring it: " + cert);
+                    continue;
                 }
 
                 CertificateFactory cf = CertificateFactory.getInstance("X.509");

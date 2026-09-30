@@ -9,6 +9,13 @@ public class CountlyFeedbackWidget {
     public String name;
     public String[] tags;
 
+    /**
+     * The widget's {@code appearance.position}, for example "bLeft" or "bRight", or {@code null}
+     * when the server did not send one. A display uses it to anchor the card the way the web SDK's
+     * stylesheet does.
+     */
+    public String position;
+
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof CountlyFeedbackWidget)) {

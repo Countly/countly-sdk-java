@@ -7,6 +7,7 @@ import ly.count.sdk.java.internal.DeviceIdType;
 import ly.count.sdk.java.internal.InternalConfig;
 import ly.count.sdk.java.internal.Log;
 import ly.count.sdk.java.internal.ModuleBackendMode;
+import ly.count.sdk.java.internal.ModuleContent;
 import ly.count.sdk.java.internal.ModuleCrashes;
 import ly.count.sdk.java.internal.ModuleDeviceIdCore;
 import ly.count.sdk.java.internal.ModuleEvents;
@@ -66,12 +67,13 @@ public class Countly implements Usage {
      * @param config configuration object
      */
     public void init(final Config config) {
-        File directory = config.sdkStorageRootDirectory;
-
         if (config == null) {
             System.out.println("[ERROR][Countly] Config cannot be null");
             return;
         }
+
+        // Read only after the null check: doing it first made the check unreachable.
+        File directory = config.sdkStorageRootDirectory;
 
         InternalConfig internalConfig;
 
@@ -133,6 +135,10 @@ public class Countly implements Usage {
      * @deprecated use {@link #init(Config)} instead via instance() call
      */
     public static void init(final File sdkStorageRootDirectory, final Config config) {
+        if (config == null) {
+            System.out.println("[ERROR][Countly] Config cannot be null");
+            return;
+        }
         config.sdkStorageRootDirectory = sdkStorageRootDirectory;
         SingletonHolder.INSTANCE.init(config);
     }
@@ -403,6 +409,24 @@ public class Countly implements Usage {
     }
 
     /**
+     * <code>Content</code> interface to enter, leave and refresh content zones, and to preview a
+     * content block. A {@link ly.count.sdk.java.internal.ContentDisplay} has to be registered
+     * before a content zone can be entered; the "ly.count.sdk:java-ui" artifact ships a JavaFX one.
+     *
+     * @return {@link ModuleContent.Content} instance.
+     * @apiNote This is an EXPERIMENTAL feature, and it can have breaking changes
+     */
+    public ModuleContent.Content content() {
+        if (!isInitialized()) {
+            if (L != null) {
+                L.e("[Countly] content, SDK is not initialized yet.");
+            }
+            return null;
+        }
+        return sdk.content();
+    }
+
+    /**
      * <code>RemoteConfig</code> interface to use remote config feature.
      *
      * @return {@link ModuleRemoteConfig.RemoteConfig} instance.
@@ -525,7 +549,10 @@ public class Countly implements Usage {
      */
     public ModuleLocation.Location location() {
         if (!isInitialized()) {
-            L.e("Countly.sharedInstance().init must be called before accessing location");
+            // L is null before init, so this has to be guarded like every sibling accessor.
+            if (L != null) {
+                L.e("Countly.sharedInstance().init must be called before accessing location");
+            }
             return null;
         }
 

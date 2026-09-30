@@ -55,6 +55,11 @@ public class ModuleBackendMode extends ModuleBase {
 
     public void disableModule() {
         disabledModule = true;
+        if (L == null) {
+            // The placeholder handed out when backend mode is off is never init'ed, so it has no
+            // logger of its own. Borrow the SDK's, or every call through it would fail on logging.
+            L = SDKCore.logger();
+        }
     }
 
     private void recordEventInternal(String deviceID, String key, int count, Double sum, Double dur, Map<String, Object> segmentation, Long timestamp) {
@@ -365,11 +370,11 @@ public class ModuleBackendMode extends ModuleBase {
          * @param timestamp record time in milliseconds, leave null if you don't have it
          */
         public void recordView(String deviceID, String name, Map<String, Object> segmentation, Long timestamp) {
-            L.i(String.format(":recordView: deviceID = %s, key = %s, segmentation = %s, timestamp = %d", deviceID, name, segmentation, timestamp));
-
             if (disabledModule) {
                 return;
             }
+
+            L.i(String.format(":recordView: deviceID = %s, key = %s, segmentation = %s, timestamp = %d", deviceID, name, segmentation, timestamp));
 
             if (deviceID == null || deviceID.isEmpty()) {
                 L.e("[BackendMode] recordView: DeviceID can not be null or empty.");
@@ -402,11 +407,11 @@ public class ModuleBackendMode extends ModuleBase {
          * @param timestamp record time in milliseconds, leave null if you don't have it
          */
         public void recordEvent(String deviceID, String key, int count, Double sum, Double dur, Map<String, Object> segmentation, Long timestamp) {
-            L.i(String.format("recordEvent: deviceID = %s, key = %s, count = %d, sum = %f, dur = %f, segmentation = %s, timestamp = %d", deviceID, key, count, sum, dur, segmentation, timestamp));
-
             if (disabledModule) {
                 return;
             }
+
+            L.i(String.format("recordEvent: deviceID = %s, key = %s, count = %d, sum = %f, dur = %f, segmentation = %s, timestamp = %d", deviceID, key, count, sum, dur, segmentation, timestamp));
 
             if (deviceID == null || deviceID.isEmpty()) {
                 L.e("[BackendMode] recordEvent: DeviceID can not be null or empty.");
@@ -433,11 +438,11 @@ public class ModuleBackendMode extends ModuleBase {
          * @param timestamp record time in milliseconds, leave null if you don't have it
          */
         public void sessionBegin(String deviceID, Map<String, String> metrics, Map<String, String> location, Long timestamp) {
-            L.i(String.format("sessionBegin: deviceID = %s, timestamp = %d", deviceID, timestamp));
-
             if (disabledModule) {
                 return;
             }
+
+            L.i(String.format("sessionBegin: deviceID = %s, timestamp = %d", deviceID, timestamp));
 
             if (deviceID == null || deviceID.isEmpty()) {
                 L.e("[BackendMode] sessionBegin: DeviceID can not be null or empty.");
@@ -455,11 +460,11 @@ public class ModuleBackendMode extends ModuleBase {
          * @param timestamp record time in milliseconds, leave null if you don't have it
          */
         public void sessionUpdate(String deviceID, double duration, Long timestamp) {
-            L.i(String.format("sessionUpdate: deviceID = %s, duration = %f, timestamp = %d", deviceID, duration, timestamp));
-
             if (disabledModule) {
                 return;
             }
+
+            L.i(String.format("sessionUpdate: deviceID = %s, duration = %f, timestamp = %d", deviceID, duration, timestamp));
 
             if (deviceID == null || deviceID.isEmpty()) {
                 L.e("[BackendMode] sessionUpdate: DeviceID can not be null or empty.");
@@ -481,11 +486,11 @@ public class ModuleBackendMode extends ModuleBase {
          * @param timestamp record time in milliseconds, leave null if you don't have it
          */
         public void sessionEnd(String deviceID, double duration, Long timestamp) {
-            L.i(String.format("sessionEnd: deviceID = %s, duration = %f, timestamp = %d", deviceID, duration, timestamp));
-
             if (disabledModule) {
                 return;
             }
+
+            L.i(String.format("sessionEnd: deviceID = %s, duration = %f, timestamp = %d", deviceID, duration, timestamp));
 
             if (deviceID == null || deviceID.isEmpty()) {
                 L.e("[BackendMode] sessionEnd: DeviceID can not be null or empty.");
@@ -509,11 +514,11 @@ public class ModuleBackendMode extends ModuleBase {
          * @param timestamp record time in milliseconds, leave null if you don't have it
          */
         public void recordException(String deviceID, Throwable throwable, Map<String, Object> segmentation, Map<String, String> crashDetails, Long timestamp) {
-            L.i(String.format("recordException: deviceID = %s, throwable = %s, segmentation = %s, timestamp = %d", deviceID, throwable, segmentation, timestamp));
-
             if (disabledModule) {
                 return;
             }
+
+            L.i(String.format("recordException: deviceID = %s, throwable = %s, segmentation = %s, timestamp = %d", deviceID, throwable, segmentation, timestamp));
 
             if (deviceID == null || deviceID.isEmpty()) {
                 L.e("[BackendMode] recordException: DeviceID can not be null or empty.");
@@ -543,11 +548,11 @@ public class ModuleBackendMode extends ModuleBase {
          * @param timestamp record time in milliseconds, leave null if you don't have it
          */
         public void recordException(String deviceID, String message, String stacktrace, Map<String, Object> segmentation, Map<String, String> crashDetails, Long timestamp) {
-            L.i(String.format("recordException: deviceID = %s, message = %s, stacktrace = %s, segmentation = %s, timestamp = %d", deviceID, message, stacktrace, segmentation, timestamp));
-
             if (disabledModule) {
                 return;
             }
+
+            L.i(String.format("recordException: deviceID = %s, message = %s, stacktrace = %s, segmentation = %s, timestamp = %d", deviceID, message, stacktrace, segmentation, timestamp));
 
             if (deviceID == null || deviceID.isEmpty()) {
                 L.e("[BackendMode] recordException: DeviceID can not be null or empty.");
@@ -575,11 +580,11 @@ public class ModuleBackendMode extends ModuleBase {
          * @param timestamp record time in milliseconds, leave null if you don't have it
          */
         public void recordUserProperties(String deviceID, Map<String, Object> userProperties, Long timestamp) {
-            L.i(String.format("recordUserProperties: deviceID = %s, userProperties = %s, timestamp = %d", deviceID, userProperties, timestamp));
-
             if (disabledModule) {
                 return;
             }
+
+            L.i(String.format("recordUserProperties: deviceID = %s, userProperties = %s, timestamp = %d", deviceID, userProperties, timestamp));
 
             if (deviceID == null || deviceID.isEmpty()) {
                 L.e("[BackendMode] recordUserProperties: DeviceID can not be null or empty.");
@@ -601,11 +606,11 @@ public class ModuleBackendMode extends ModuleBase {
          * @param timestamp record time in milliseconds, leave null if you don't have it
          */
         public void recordDirectRequest(String deviceID, Map<String, String> requestData, Long timestamp) {
-            L.i(String.format("recordDirectRequest: deviceID = %s, requestData = %s, timestamp = %d", deviceID, requestData, timestamp));
-
             if (disabledModule) {
                 return;
             }
+
+            L.i(String.format("recordDirectRequest: deviceID = %s, requestData = %s, timestamp = %d", deviceID, requestData, timestamp));
 
             if (deviceID == null || deviceID.isEmpty()) {
                 L.e("[BackendMode] recordDirectRequest: DeviceID can not be null or empty.");

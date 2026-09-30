@@ -22,7 +22,8 @@ public enum CoreFeature {
     Requests(1 << 21, ModuleRequests::new),
     Logs(1 << 22),
     Feedback(1 << 23, ModuleFeedback::new),
-    Configuration(1 << 24, ModuleConfiguration::new);
+    Content(1 << 24, ModuleContent::new);
+    Configuration(1 << 25, ModuleConfiguration::new);
 
     private final int index;
 

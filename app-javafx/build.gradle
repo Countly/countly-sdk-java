@@ -5,12 +5,14 @@ plugins {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    // Matches sdk-java-ui: JavaFX 21 needs Java 17.
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
 }
 
 javafx {
-    version = '17.0.10'
+    version = '21.0.5'
     modules = [ 'javafx.controls', 'javafx.web' ]
 }
 
@@ -19,9 +21,12 @@ dependencies {
     // picked up without publishing or copying a jar.
     implementation project(':sdk-java')
 
+    // The JavaFX UI artifact: feedback widget cards and the content overlay.
+    implementation project(':sdk-java-ui')
+
     // org.json is used by the demo for pretty-printing widget data; the
     // SDK also uses it internally (and exposes JSONObject in its API).
-    implementation 'org.json:json:20230227'
+    implementation 'org.json:json:20250517'
 }
 
 application {

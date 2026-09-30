@@ -83,6 +83,33 @@ public class ModuleFeedbackTests {
 
     /**
      * "parseFeedbackList"
+     * Widgets given with and without an 'appearance.position'
+     * The position should be parsed when present and left null otherwise, since it anchors the
+     * widget on screen and a missing one has to fall back to the type's default
+     */
+    @Test
+    public void parseFeedbackList_position() throws JSONException {
+        init(TestUtils.getConfigFeedback());
+
+        String requestJson = "{\"result\":["
+            + "{\"_id\":\"id1\",\"type\":\"survey\",\"appearance\":{\"position\":\"bRight\"},\"name\":\"w1\",\"tg\":[]},"
+            + "{\"_id\":\"id2\",\"type\":\"survey\",\"appearance\":{\"color\":\"#fff\"},\"name\":\"w2\",\"tg\":[]},"
+            + "{\"_id\":\"id3\",\"type\":\"nps\",\"name\":\"w3\",\"tg\":[]},"
+            + "{\"_id\":\"id4\",\"type\":\"rating\",\"appearance\":{\"position\":\"mleft\"},\"name\":\"w4\",\"tg\":[]}"
+            + "]}";
+
+        List<CountlyFeedbackWidget> ret = new ArrayList<>();
+        Assert.assertNull(ModuleFeedback.parseFeedbackList(new JSONObject(requestJson), ret));
+        Assert.assertEquals(4, ret.size());
+
+        Assert.assertEquals("bRight", ret.get(0).position);
+        Assert.assertNull("no position in appearance", ret.get(1).position);
+        Assert.assertNull("no appearance at all", ret.get(2).position);
+        Assert.assertEquals("mleft", ret.get(3).position);
+    }
+
+    /**
+     * "parseFeedbackList"
      * Response with partial entries given
      * Only the entries with all important fields given should be returned
      */
@@ -224,6 +251,53 @@ public class ModuleFeedbackTests {
         });
     }
 
+    /**
+     * "FeedbackWidgetSelector.select"
+     * A fetched widget list is searched by type, and by widget ID, name or tag
+     * The first widget matching both the type and the selector is returned, and a selector that
+     * matches nothing returns "null" instead of an unrelated widget
+     */
+    @Test
+    public void selectWidget_byTypeAndNameIdOrTag() {
+        List<CountlyFeedbackWidget> widgets = new ArrayList<>();
+        widgets.add(widget("nps_1", FeedbackWidgetType.nps, "First NPS", new String[] { "checkout" }));
+        widgets.add(widget("nps_2", FeedbackWidgetType.nps, "Second NPS", new String[] { "onboarding", "beta" }));
+        widgets.add(widget("survey_1", FeedbackWidgetType.survey, "Only survey", new String[] {}));
+        widgets.add(widget("rating_1", FeedbackWidgetType.rating, "Only rating", null));
+
+        // No selector: the first widget of that type wins.
+        Assert.assertEquals("nps_1", FeedbackWidgetSelector.select(widgets, FeedbackWidgetType.nps, null).widgetId);
+        Assert.assertEquals("nps_1", FeedbackWidgetSelector.select(widgets, FeedbackWidgetType.nps, "").widgetId);
+        Assert.assertEquals("survey_1", FeedbackWidgetSelector.select(widgets, FeedbackWidgetType.survey, "").widgetId);
+
+        // By ID, by name and by tag.
+        Assert.assertEquals("nps_2", FeedbackWidgetSelector.select(widgets, FeedbackWidgetType.nps, "nps_2").widgetId);
+        Assert.assertEquals("nps_2", FeedbackWidgetSelector.select(widgets, FeedbackWidgetType.nps, "Second NPS").widgetId);
+        Assert.assertEquals("nps_2", FeedbackWidgetSelector.select(widgets, FeedbackWidgetType.nps, "beta").widgetId);
+        Assert.assertEquals("nps_1", FeedbackWidgetSelector.select(widgets, FeedbackWidgetType.nps, "checkout").widgetId);
+
+        // The type always wins over the selector: a survey tag must not return the NPS widget.
+        Assert.assertNull(FeedbackWidgetSelector.select(widgets, FeedbackWidgetType.survey, "checkout"));
+        Assert.assertNull(FeedbackWidgetSelector.select(widgets, FeedbackWidgetType.nps, "nothing_matches"));
+
+        // A widget with no tags at all must not blow up the search.
+        Assert.assertEquals("rating_1", FeedbackWidgetSelector.select(widgets, FeedbackWidgetType.rating, "Only rating").widgetId);
+        Assert.assertNull(FeedbackWidgetSelector.select(widgets, FeedbackWidgetType.rating, "some_tag"));
+
+        Assert.assertNull(FeedbackWidgetSelector.select(null, FeedbackWidgetType.nps, ""));
+        Assert.assertNull(FeedbackWidgetSelector.select(new ArrayList<>(), FeedbackWidgetType.nps, ""));
+        Assert.assertNull(FeedbackWidgetSelector.select(widgets, null, ""));
+    }
+
+    private static CountlyFeedbackWidget widget(String id, FeedbackWidgetType type, String name, String[] tags) {
+        CountlyFeedbackWidget widget = new CountlyFeedbackWidget();
+        widget.widgetId = id;
+        widget.type = type;
+        widget.name = name;
+        widget.tags = tags;
+        return widget;
+    }
+
     public void constructFeedbackWidgetUrl_base(CountlyFeedbackWidget widgetInfo, boolean goodResult) {
         init(TestUtils.getConfigFeedback());
 
@@ -247,7 +321,17 @@ public class ModuleFeedbackTests {
         widgetListUrl.append("&sdk_name=");
         widgetListUrl.append(TestUtils.SDK_NAME);
         widgetListUrl.append("&platform=");
-        widgetListUrl.append(Utils.urlencode(getOS(), L));
+        // The feedback platform is one value for every desktop, not the operating system's name:
+        // see WidgetUrlBuilder.PLATFORM.
+        widgetListUrl.append(WidgetUrlBuilder.PLATFORM);
+        widgetListUrl.append("&app_version=");
+        widgetListUrl.append(Utils.urlencode(TestUtils.APPLICATION_VERSION, L));
+        // Desktop web views need the widget to draw itself as a card with its own close button, and
+        // the page only accepts the SDK's viewport message when the origin matches.
+        widgetListUrl.append("&custom=");
+        widgetListUrl.append(Utils.urlencode(WidgetUrlBuilder.CUSTOM_PARAMS, L));
+        widgetListUrl.append("&origin=");
+        widgetListUrl.append(TestUtils.SERVER_URL);
 
         Assert.assertEquals(widgetListUrl.toString(), Countly.instance().feedback().constructFeedbackWidgetUrl(widgetInfo));
     }
@@ -533,7 +617,8 @@ public class ModuleFeedbackTests {
 
     private void validateWidgetDataParams(Map<String, String> params, CountlyFeedbackWidget widgetInfo) {
         Assert.assertEquals(widgetInfo.widgetId, params.get("widget_id"));
-        Assert.assertEquals(Utils.urlencode(getOS(), L), params.get("platform"));
+        // One value for every desktop, not the operating system's name: see WidgetUrlBuilder.PLATFORM.
+        Assert.assertEquals(WidgetUrlBuilder.PLATFORM, params.get("platform"));
         Assert.assertEquals("1", params.get("shown"));
         Assert.assertEquals(String.valueOf(SDKCore.instance.config.getApplicationVersion()), params.get("app_version"));
         TestUtils.validateSdkIdentityParams(params);
@@ -579,7 +664,7 @@ public class ModuleFeedbackTests {
 
     private Map<String, Object> requiredWidgetSegmentation(String widgetId, Map<String, Object> widgetResult) {
         Map<String, Object> segm = new ConcurrentHashMap<>();
-        segm.put("platform", getOS());
+        segm.put("platform", WidgetUrlBuilder.PLATFORM);
         segm.put("app_version", SDKCore.instance.config.getApplicationVersion());
         segm.put("widget_id", widgetId);
         if (widgetResult != null) {
