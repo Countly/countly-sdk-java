@@ -39,12 +39,28 @@ public class ModuleLocation extends ModuleBase {
     void sendLocation() {
         L.d("[ModuleLocation] Calling 'sendLocation'");
         SessionImpl session = internalConfig.sdk.getSession();
-        if (session == null || session.getBegan() != null) {
+        if (session == null || session.getBegan() != null || !isLocationSentWithSessionBegin()) {
             ModuleRequests.pushAsync(internalConfig, new Request(prepareLocationParams()), true, null);
         } // else case, values are added to the session begin request
     }
 
+    /**
+     * Whether a session that has not begun yet sends the location with its begin request, which the
+     * SDK behavior settings allow only while both session tracking and location tracking are enabled.
+     *
+     * @return {@code true} when the location can wait for the begin request
+     */
+    private boolean isLocationSentWithSessionBegin() {
+        ConfigurationProvider configProvider = internalConfig.getConfigurationProvider();
+        return configProvider.getSessionTrackingEnabled() && configProvider.getLocationTrackingEnabled();
+    }
+
     void setLocationInternal(@Nullable String countryCode, @Nullable String cityName, @Nullable String gpsCoordinates, @Nullable String ipAddress) {
+        ConfigurationProvider configProvider = internalConfig.getConfigurationProvider();
+        if (!configProvider.getTrackingEnabled() || !configProvider.getLocationTrackingEnabled()) {
+            L.d("[ModuleLocation] setLocationInternal, location tracking disabled by SDK behavior settings; ignoring");
+            return;
+        }
         L.d("[ModuleLocation] setLocationInternal, Setting location parameters, cc[" + countryCode + "] cy[" + city + "] gps[" + gpsCoordinates + "] ip[" + ipAddress + "]");
 
         if (countryCode != null ^ city != null) {
@@ -96,13 +112,31 @@ public class ModuleLocation extends ModuleBase {
     @Override
     public void initFinished(@Nonnull InternalConfig config) {
         if (config.isLocationDisabled()) {
-            //disable location if needed
-            disableLocationInternal();
+            //disable location if needed, unless a settings response during init already did and sent the erase request
+            if (!locationDisabled) {
+                disableLocationInternal();
+            }
         } else {
             //if we are not disabling location, check for other set values
             String[] locParams = config.getLocationParams(); // country, city, location, ip
             if (locParams[3] != null || locParams[2] != null || locParams[1] != null || locParams[0] != null) {
                 setLocationInternal(locParams[0], locParams[1], locParams[2], locParams[3]);
+            }
+        }
+    }
+
+    /**
+     * Disables location when a server response turned location tracking off, which erases the
+     * location stored on the server as {@link Location#disableLocation()} does.
+     *
+     * @param config configuration of the running SDK
+     */
+    @Override
+    protected void onSdkConfigurationChanged(InternalConfig config) {
+        synchronized (Countly.instance()) {
+            if (!locationDisabled && !config.getConfigurationProvider().getLocationTrackingEnabled()) {
+                L.d("[ModuleLocation] onSdkConfigurationChanged, location tracking was disabled by the SDK behavior settings, disabling location");
+                disableLocationInternal();
             }
         }
     }

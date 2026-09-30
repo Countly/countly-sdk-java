@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import javax.annotation.Nonnull;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class JsonFileStorage {
@@ -32,19 +33,27 @@ public class JsonFileStorage {
      * @param key to set
      * @param value to add
      */
-    public void add(@Nonnull final String key, @Nonnull Object value) {
+    public synchronized void add(@Nonnull final String key, @Nonnull Object value) {
         logger.i("[JsonFileStorage] add, Adding key: [" + key + "], value: [" + value + "]");
         json.put(key, value);
     }
 
     /**
-     * Saves changes to the disk/db/memory
+     * Saves changes to the disk/db/memory. When the data cannot be serialized, the file keeps what
+     * it had.
      */
-    public void save() {
+    public synchronized void save() {
         logger.i("[JsonFileStorage] save, Saving json file: [" + file.getAbsolutePath() + "]");
 
+        // Serialized before the file is opened: opening truncates it, and toString returns null instead of throwing
+        String content = json.toString();
+        if (content == null) {
+            logger.e("[JsonFileStorage] save, Failed to serialize the data, the json file is left as it is: [" + file.getAbsolutePath() + "]");
+            return;
+        }
+
         try (BufferedWriter writer = Files.newBufferedWriter(file.toPath())) {
-            writer.write(json.toString());
+            writer.write(content);
         } catch (IOException e) {
             logger.e("[JsonFileStorage] save, Failed to save json file, reason: [" + e.getMessage() + "]");
         }
@@ -57,7 +66,7 @@ public class JsonFileStorage {
      *
      * @param key to remove
      */
-    public void delete(@Nonnull final String key) {
+    public synchronized void delete(@Nonnull final String key) {
         if (!json.has(key)) {
             logger.v("[JsonFileStorage] delete, Nothing to delete");
         }
@@ -71,7 +80,7 @@ public class JsonFileStorage {
      * @param key to set
      * @param value to add
      */
-    public void addAndSave(@Nonnull final String key, @Nonnull Object value) {
+    public synchronized void addAndSave(@Nonnull final String key, @Nonnull Object value) {
         add(key, value);
         save();
     }
@@ -82,7 +91,7 @@ public class JsonFileStorage {
      *
      * @param key to remove
      */
-    public void deleteAndSave(@Nonnull final String key) {
+    public synchronized void deleteAndSave(@Nonnull final String key) {
         delete(key);
         save();
     }
@@ -94,19 +103,53 @@ public class JsonFileStorage {
      * @param key to get
      * @return value
      */
-    public Object get(@Nonnull final String key) {
+    public synchronized Object get(@Nonnull final String key) {
         return json.opt(key);
     }
 
     /**
-     * Returns JSONObject value for the key
+     * Returns a copy of the JSONObject value for the key. Changing the copy changes nothing stored:
+     * hand it back through {@link #add(String, Object)} to store it, so another thread that saves
+     * never serializes an object while it is being changed.
      *
      * @param key to get
      * @param defaultValue to return if key not found
-     * @return value, if key not found returns defaultValue
+     * @return a deep copy of the value, if key not found returns defaultValue
      */
-    public JSONObject getJsonObj(@Nonnull final String key, final JSONObject defaultValue) {
-        return json.optJSONObject(key, defaultValue);
+    public synchronized JSONObject getJsonObj(@Nonnull final String key, final JSONObject defaultValue) {
+        JSONObject value = json.optJSONObject(key, null);
+        if (value == null) {
+            return defaultValue;
+        }
+        return (JSONObject) deepCopy(value);
+    }
+
+    /**
+     * Copies a JSON value, every nested object and array included, keeping every other value as it is.
+     *
+     * @param value the value to copy
+     * @return the copy, or the value itself when it holds nothing that can change
+     */
+    private static Object deepCopy(final Object value) {
+        if (value instanceof JSONObject) {
+            JSONObject source = (JSONObject) value;
+            JSONObject copy = new JSONObject();
+            for (String key : source.keySet()) {
+                copy.put(key, deepCopy(source.opt(key)));
+            }
+            return copy;
+        }
+
+        if (value instanceof JSONArray) {
+            JSONArray source = (JSONArray) value;
+            JSONArray copy = new JSONArray();
+            for (int i = 0; i < source.length(); i++) {
+                copy.put(deepCopy(source.opt(i)));
+            }
+            return copy;
+        }
+
+        return value;
     }
 
     /**
@@ -115,7 +158,7 @@ public class JsonFileStorage {
      * @param key to get
      * @return value, if key not found returns null
      */
-    public String getString(@Nonnull final String key) {
+    public synchronized String getString(@Nonnull final String key) {
         return getString(key, null);
     }
 
@@ -126,7 +169,7 @@ public class JsonFileStorage {
      * @param defaultValue to return if key not found
      * @return value, if key not found returns defaultValue
      */
-    public String getString(@Nonnull final String key, final String defaultValue) {
+    public synchronized String getString(@Nonnull final String key, final String defaultValue) {
         return json.optString(key, defaultValue);
     }
 
@@ -137,21 +180,21 @@ public class JsonFileStorage {
      * @param defaultValue to return if key not found
      * @return value, if key not found returns defaultValue
      */
-    public int getInt(@Nonnull final String key, final int defaultValue) {
+    public synchronized int getInt(@Nonnull final String key, final int defaultValue) {
         return json.optInt(key, defaultValue);
     }
 
     /**
      * Clears all data
      */
-    public void clear() {
+    public synchronized void clear() {
         json.clear();
     }
 
     /**
      * Clears all data and saves changes to the disk/db/memory
      */
-    public void clearAndSave() {
+    public synchronized void clearAndSave() {
         clear();
         save();
     }
@@ -161,7 +204,7 @@ public class JsonFileStorage {
      *
      * @return number of key-value pairs
      */
-    public int size() {
+    public synchronized int size() {
         return json.length();
     }
 

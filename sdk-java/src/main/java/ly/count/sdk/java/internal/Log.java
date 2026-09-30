@@ -10,13 +10,42 @@ import ly.count.sdk.java.Config;
 public class Log {
     private final LogCallback logListener;
     private final Config.LoggingLevel loggingLevel;
+    //the lowest level printed: the developer level unless the SDK behavior settings override it
+    private volatile Config.LoggingLevel printLevel;
 
     public Log(Config.LoggingLevel loggingLevel, LogCallback logListener) {
         if (loggingLevel == null) {
             throw new NullPointerException("Logging level can't null.");
         }
         this.loggingLevel = loggingLevel;
+        this.printLevel = loggingLevel;
         this.logListener = logListener;
+    }
+
+    /**
+     * Applies the {@code log} switch of the SDK behavior settings to what is printed. Switched off,
+     * nothing is printed. Switched on, the developer level is printed, or every level when the
+     * developer level is {@link Config.LoggingLevel#OFF}. The log listener receives every line either way.
+     *
+     * @param loggingEnabled the resolved {@code log} switch
+     */
+    void setLoggingEnabled(boolean loggingEnabled) {
+        if (!loggingEnabled) {
+            printLevel = Config.LoggingLevel.OFF;
+        } else if (loggingLevel == Config.LoggingLevel.OFF) {
+            printLevel = Config.LoggingLevel.VERBOSE;
+        } else {
+            printLevel = loggingLevel;
+        }
+    }
+
+    /**
+     * The lowest level printed, which the SDK behavior settings can change.
+     *
+     * @return the level, {@link Config.LoggingLevel#OFF} while nothing is printed
+     */
+    Config.LoggingLevel getPrintLevel() {
+        return printLevel;
     }
 
     /**
@@ -70,7 +99,7 @@ public class Log {
     }
 
     private void print(String msg, Config.LoggingLevel level) {
-        if (level != null && loggingLevel.prints(level)) {
+        if (level != null && printLevel.prints(level)) {
             System.out.println(msg);
         }
     }

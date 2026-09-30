@@ -21,7 +21,10 @@ public class SDKCore {
     protected Networking networking;
     protected Queue<Request> requestQueueMemory = null;
     protected final Object lockBRQStorage = new Object();
-    private CountlyTimer countlyTimer;
+    private final Object lockTimer = new Object();
+    //guarded by lockTimer for writes
+    volatile CountlyTimer countlyTimer;
+    private ModuleConfiguration moduleConfiguration;
 
     protected Log L = null;
     protected static ModuleBase testDummyModule = null;//set during testing when trying to check the SDK's lifecycle
@@ -106,7 +109,14 @@ public class SDKCore {
             networking.stop(config);
         }
 
-        countlyTimer.stopTimer();
+        CountlyTimer timerToStop;
+        synchronized (lockTimer) {
+            timerToStop = countlyTimer;
+            countlyTimer = null;
+        }
+        if (timerToStop != null) {
+            timerToStop.stopTimer();
+        }
 
         L.i("[SDKCore] Stopping Countly SDK" + (clear ? " and clearing all data" : ""));
 
@@ -124,6 +134,7 @@ public class SDKCore {
         sdkStorage.stop(config, clear);//from original super class
 
         user = null;
+        moduleConfiguration = null;
         config = null;
         instance = null;
     }
@@ -256,6 +267,10 @@ public class SDKCore {
         // standard required internal features
         modules.put(-3, new ModuleDeviceIdCore());
         modules.put(-2, new ModuleRequests());
+        if (moduleConfiguration != null) {
+            modules.put(-1, moduleConfiguration);
+        }
+        modules.put(0, new ModuleConnectionTest());
         modules.put(CoreFeature.Sessions.getIndex(), new ModuleSessions());
         modules.put(CoreFeature.UserProfiles.getIndex(), new ModuleUserProfile());
 
@@ -405,10 +420,6 @@ public class SDKCore {
         //setup module mapping
         prepareMappings();
 
-        //create internal timer
-        countlyTimer = new CountlyTimer(L);
-        countlyTimer.startTimer(config.getSendUpdateEachSeconds(), this::onTimer);
-
         //setup and perform migrations
         MigrationHelper migrationHelper = new MigrationHelper(L);
         migrationHelper.setupMigrations(config.storageProvider);
@@ -417,6 +428,17 @@ public class SDKCore {
         migrationHelper.applyMigrations(migrationParams);
 
         setDeviceIdFromStorageIfExist(config);
+
+        //resolve the SDK behavior settings before anything reads them
+        moduleConfiguration = new ModuleConfiguration();
+        moduleConfiguration.init(config);
+        applyLoggingSetting(config, moduleConfiguration);
+        applyConsentRequirementAtInit(config, moduleConfiguration.getConsentRequired());
+
+        //create internal timer
+        synchronized (lockTimer) {
+            startTimer(moduleConfiguration.getSessionUpdateInterval());
+        }
 
         requestQueueMemory = new ArrayDeque<>(config.getRequestQueueMaxSize());
 
@@ -449,7 +471,9 @@ public class SDKCore {
 
         modules.forEach((feature, module) -> {
             try {
-                module.init(config);
+                if (module != moduleConfiguration) {
+                    module.init(config);
+                }
                 module.setActive(true);
             } catch (IllegalArgumentException | IllegalStateException e) {
                 L.e("[SDKCore] Error during module initialization" + e);
@@ -528,6 +552,105 @@ public class SDKCore {
     private void initFinished(final InternalConfig config) {
         modules.forEach((feature, module) -> module.initFinished(config));
         checkNetworking(config);
+    }
+
+    /**
+     * Makes the consent requirement the SDK behavior settings resolved the one every module reads
+     * through {@link InternalConfig#requiresConsent()}. It is applied here, before the modules are
+     * built, and only here: a value that arrives later takes effect on the next init.
+     *
+     * @param config configuration of the SDK being initialized
+     * @param consentRequired the resolved consent requirement
+     */
+    private void applyConsentRequirementAtInit(@Nonnull InternalConfig config, boolean consentRequired) {
+        if (consentRequired != config.requiresConsent()) {
+            L.i("[SDKCore] applyConsentRequirementAtInit, SDK behavior settings set the consent requirement to [" + consentRequired + "]");
+            config.setRequiresConsent(consentRequired);
+        }
+    }
+
+    /**
+     * Starts the global timer, replacing the running one. The caller holds {@link #lockTimer}.
+     *
+     * @param intervalSeconds seconds between two ticks
+     */
+    private void startTimer(int intervalSeconds) {
+        countlyTimer = new CountlyTimer(L);
+        countlyTimer.startTimer(intervalSeconds, this::onTimer);
+    }
+
+    /**
+     * Restarts the global timer when its interval differs from the given one. Never waits for the
+     * replaced timer, as a settings change can be applied from a timer task.
+     *
+     * @param intervalSeconds the session update interval now in effect
+     */
+    private void restartTimerIfIntervalChanged(int intervalSeconds) {
+        synchronized (lockTimer) {
+            CountlyTimer runningTimer = countlyTimer;
+            if (runningTimer == null || runningTimer.getTimerDelaySeconds() == intervalSeconds) {
+                return;
+            }
+
+            L.d("[SDKCore] restartTimerIfIntervalChanged, session update interval changed from [" + runningTimer.getTimerDelaySeconds() + "] to [" + intervalSeconds + "] seconds, restarting the timer");
+            runningTimer.stopTimer(false);
+            startTimer(intervalSeconds);
+        }
+    }
+
+    /**
+     * Applies the {@code log} switch of the SDK behavior settings to what the SDK logger prints.
+     *
+     * @param config configuration whose logger prints
+     * @param provider the settings in effect
+     */
+    private void applyLoggingSetting(@Nonnull InternalConfig config, @Nonnull ConfigurationProvider provider) {
+        Log logger = config.getLogger();
+        if (logger == null) {
+            return;
+        }
+
+        logger.setLoggingEnabled(provider.getLoggingEnabled());
+        logger.d("[SDKCore] applyLoggingSetting, logging enabled:[" + provider.getLoggingEnabled() + "], printing from level:[" + logger.getPrintLevel() + "]");
+    }
+
+    /**
+     * Applies SDK behavior settings that a server response changed while the SDK runs: sets what the
+     * logger prints, restarts the global timer when the session update interval changed, lets the
+     * request queue drain when networking is allowed, then notifies every module, each on its own.
+     *
+     * @param changedConfig configuration whose settings changed
+     */
+    void onSdkConfigurationChanged(@Nonnull InternalConfig changedConfig) {
+        if (config == null || config != changedConfig) {
+            L.d("[SDKCore] onSdkConfigurationChanged, the SDK was stopped before the change arrived, ignoring it");
+            return;
+        }
+
+        L.i("[SDKCore] onSdkConfigurationChanged");
+        ConfigurationProvider provider = changedConfig.getConfigurationProvider();
+        applyLoggingSetting(changedConfig, provider);
+        restartTimerIfIntervalChanged(provider.getSessionUpdateInterval());
+
+        if (provider.getNetworkingEnabled()) {
+            checkNetworking(changedConfig);
+        }
+
+        List<ModuleBase> modulesToNotify;
+        try {
+            modulesToNotify = new ArrayList<>(modules.values());
+        } catch (RuntimeException e) {
+            L.e("[SDKCore] onSdkConfigurationChanged, failed to list the modules, [" + e + "]");
+            return;
+        }
+
+        for (ModuleBase module : modulesToNotify) {
+            try {
+                module.onSdkConfigurationChanged(changedConfig);
+            } catch (Exception e) {
+                L.e("[SDKCore] onSdkConfigurationChanged, " + module.getClass().getSimpleName() + " failed to apply the change, [" + e + "]");
+            }
+        }
     }
 
     public UserImpl user() {
@@ -642,8 +765,8 @@ public class SDKCore {
         if (cls == null) {
             return true;
         } else {
+            // The owner stays on the request: Transport.send reads it to hand over the response, then removes it before sending
             ModuleBase module = module(cls);
-            request.params.remove(Request.MODULE);
             if (module == null) {
                 return true;
             } else {
@@ -655,7 +778,7 @@ public class SDKCore {
     /**
      * After a network request has been finished
      * propagate that response to the module
-     * that owns the request
+     * that owns the request. A module that fails to handle it never fails the send.
      *
      * @param request the request that was sent, used to identify the request
      */
@@ -664,7 +787,11 @@ public class SDKCore {
             ModuleBase module = module(requestOwner);
 
             if (module != null) {
-                module.onRequestCompleted(request, response, responseCode);
+                try {
+                    module.onRequestCompleted(request, response, responseCode);
+                } catch (Exception e) {
+                    L.e("[SDKCore] onRequestCompleted, " + module.getClass().getSimpleName() + " failed to handle the response of request [" + (request == null ? null : request.storageId()) + "], [" + e + "]");
+                }
             }
         }
     }
@@ -723,7 +850,7 @@ public class SDKCore {
         ModuleRequests.addRequiredParametersToParams(config, request.params);
         ModuleRequests.addRequiredTimeParametersToParams(request.params);
 
-        if (Storage.push(config, request)) {
+        if (ModuleRequests.pushWithinQueueLimit(config, request)) {
             L.i("[SDKCore] Added request " + request.storageId() + " instead of crash " + crash.storageId());
             checkNetworking(config);
             Boolean success = Storage.remove(config, crash);

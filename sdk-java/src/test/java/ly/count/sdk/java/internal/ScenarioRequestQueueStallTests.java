@@ -94,7 +94,9 @@ public class ScenarioRequestQueueStallTests {
             .setLoggingLevel(Config.LoggingLevel.VERBOSE)
             .setDeviceIdStrategy(Config.DeviceIdStrategy.UUID)
             .enableFeatures(Config.Feature.Events, Config.Feature.Sessions)
-            .setEventQueueSizeToSend(1);
+            .setEventQueueSizeToSend(1)
+            // request #1 can be held past the backoff's accepted timeout, and a backoff would hold the backlog past the drain timeout
+            .disableBackoffMechanism();
     }
 
     /**

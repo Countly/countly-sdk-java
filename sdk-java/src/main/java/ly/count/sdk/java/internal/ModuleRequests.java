@@ -1,7 +1,12 @@
 package ly.count.sdk.java.internal;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import javax.annotation.Nonnull;
 
 /**
  * Centralized place for all requests construction & handling.
@@ -96,6 +101,11 @@ public class ModuleRequests extends ModuleBase {
 
     public static Future<Boolean> location(InternalConfig config, double latitude, double longitude) {
         if (!SDKCore.enabled(CoreFeature.Location)) {
+            return null;
+        }
+
+        if (!config.getConfigurationProvider().getLocationTrackingEnabled()) {
+            config.getLogger().d("[ModuleRequests] location, location tracking is disabled by the SDK behavior settings, the location is not sent");
             return null;
         }
 
@@ -195,21 +205,36 @@ public class ModuleRequests extends ModuleBase {
     }
 
     /**
-     * Common store-request logic: store & send a ping to the service.
+     * Common store-request logic: store & send a ping to the service. While the SDK behavior
+     * settings set the request queue size, storing a request drops the oldest ones the queue holds
+     * over that size.
      *
      * @param config InternalConfig to run in
      * @param request Request to store
      * @param noControl do not check empty validity of the request
-     * @param callback Callback (nullable) to call when storing is done, called in {@link Storage} {@link Thread}
+     * @param callback Callback (nullable) to call when storing is done, called in {@link Storage} {@link Thread},
+     * or on the calling thread with {@code false} when the request is not stored
      * @return {@link Future} which resolves to {@code} true if stored successfully, false otherwise
      */
     public static Future<Boolean> pushAsync(final InternalConfig config, final Request request, final boolean noControl, final Tasks.Callback<Boolean> callback) {
         config.getLogger().d("New request " + request.storageId() + ": " + request);
 
+        if (!config.getConfigurationProvider().getTrackingEnabled()) {
+            config.getLogger().d("[ModuleRequests] pushAsync, tracking disabled by SDK behavior settings; dropping request");
+            if (callback != null) {
+                try {
+                    callback.call(false);
+                } catch (Exception e) {
+                    config.getLogger().e("[ModuleRequests] Exception in a callback " + e);
+                }
+            }
+            return null;
+        }
+
         if (!noControl && request.isEmpty()) {
             if (callback != null) {
                 try {
-                    callback.call(null);
+                    callback.call(false);
                 } catch (Exception e) {
                     config.getLogger().e("[ModuleRequests] Exception in a callback " + e);
                 }
@@ -221,10 +246,99 @@ public class ModuleRequests extends ModuleBase {
         addRequiredParametersToParams(config, request.params);
 
         return Storage.pushAsync(config, request, param -> {
+            if (Boolean.TRUE.equals(param)) {
+                dropOldestRequestsOverQueueLimit(config);
+            }
             SDKCore.instance.onRequest(config, request);
             if (callback != null) {
                 callback.call(param);
             }
         });
+    }
+
+    /**
+     * Stores a request as it is, without the checks of {@link #pushAsync(InternalConfig, Request, boolean, Tasks.Callback)},
+     * then drops the oldest requests the queue holds over the request queue size of the SDK behavior
+     * settings. Waits until both are done.
+     *
+     * @param config configuration of the running SDK
+     * @param request the request, with every parameter it is sent with
+     * @return whether the request was stored
+     */
+    static boolean pushWithinQueueLimit(@Nonnull final InternalConfig config, @Nonnull final Request request) {
+        try {
+            return Boolean.TRUE.equals(Storage.pushAsync(config, request, stored -> {
+                if (Boolean.TRUE.equals(stored)) {
+                    dropOldestRequestsOverQueueLimit(config);
+                }
+            }).get());
+        } catch (InterruptedException | ExecutionException e) {
+            config.getLogger().e("[ModuleRequests] pushWithinQueueLimit, failed to store request " + request.storageId() + ", [" + e + "]");
+            return false;
+        }
+    }
+
+    /**
+     * Drops the oldest stored requests while the queue holds more than the request queue size of the
+     * SDK behavior settings. Without a size from the settings the queue has no limit. Must run on the
+     * storage thread, as it works on the stored files directly. The files are removed unread, so
+     * their owners are not told; the journey triggers they carried are settled instead.
+     *
+     * @param config configuration of the running SDK
+     * @return how many requests were dropped
+     */
+    static int dropOldestRequestsOverQueueLimit(@Nonnull InternalConfig config) {
+        ConfigurationProvider configProvider = config.getConfigurationProvider();
+        if (!configProvider.isRequestQueueMaxSizeFromBehaviorSettings()) {
+            return 0;
+        }
+
+        List<Long> droppedIds = new ArrayList<>();
+        try {
+            int maxSize = configProvider.getRequestQueueMaxSize();
+            List<Long> requestIds = config.sdk.sdkStorage.storableList(config, Request.getStoragePrefix(), 0);
+            int overflow = requestIds.size() - maxSize;
+            if (overflow <= 0) {
+                return 0;
+            }
+
+            Collections.sort(requestIds);
+            for (int i = 0; i < overflow; i++) {
+                Long requestId = requestIds.get(i);
+                if (Boolean.TRUE.equals(config.sdk.sdkStorage.storableRemove(config, new Request(requestId)))) {
+                    droppedIds.add(requestId);
+                }
+            }
+
+            config.getLogger().w("[ModuleRequests] dropOldestRequestsOverQueueLimit, the request queue went over its size of [" + maxSize + "] set by the SDK behavior settings, dropped the [" + droppedIds.size() + "] oldest requests");
+        } catch (Exception e) {
+            config.getLogger().e("[ModuleRequests] dropOldestRequestsOverQueueLimit, failed to keep the request queue within its size, [" + e + "]");
+        }
+
+        settleJourneyTriggersOf(config, droppedIds);
+        return droppedIds.size();
+    }
+
+    /**
+     * Tells the events module which requests were dropped unread, so a journey trigger one of them
+     * carried stops waiting for a response. Only a set of IDs is touched, which is safe on the
+     * storage thread.
+     *
+     * @param config configuration of the running SDK
+     * @param droppedIds storage IDs of the dropped requests
+     */
+    private static void settleJourneyTriggersOf(@Nonnull InternalConfig config, @Nonnull List<Long> droppedIds) {
+        if (droppedIds.isEmpty() || config.sdk == null) {
+            return;
+        }
+
+        try {
+            ModuleEvents events = config.sdk.module(ModuleEvents.class);
+            if (events != null) {
+                events.onRequestsDroppedUnread(droppedIds);
+            }
+        } catch (Exception e) {
+            config.getLogger().e("[ModuleRequests] settleJourneyTriggersOf, failed to settle the journey triggers of the dropped requests, [" + e + "]");
+        }
     }
 }

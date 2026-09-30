@@ -8,6 +8,7 @@ public class CountlyTimer {
 
     private final Log L;
     private ScheduledExecutorService timerService;
+    private volatile long timerDelaySeconds = -1;
     protected static int TIMER_DELAY_MS = 0; // for testing purposes
 
     protected CountlyTimer(Log logger) {
@@ -53,6 +54,7 @@ public class CountlyTimer {
      */
     protected void startTimer(long timerDelay, long initialDelayMs, Runnable runnable) {
         L.i("[CountlyTimer] startTimer, Starting global timer timerDelay: [" + timerDelay + "] initialDelayMs: [" + initialDelayMs + "]");
+        timerDelaySeconds = timerDelay;
         long delay = timerDelay * 1000;
 
         if (delay < 1000) {
@@ -67,5 +69,14 @@ public class CountlyTimer {
         }
 
         timerService.scheduleWithFixedDelay(runnable, startTime, delay, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * The interval this timer was last started with, as it was requested.
+     *
+     * @return the interval in seconds, {@code -1} while the timer was never started
+     */
+    long getTimerDelaySeconds() {
+        return timerDelaySeconds;
     }
 }

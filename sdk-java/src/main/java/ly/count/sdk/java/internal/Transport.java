@@ -30,6 +30,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
+import java.util.function.LongConsumer;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -52,6 +55,12 @@ import org.json.JSONObject;
 //class Network extends ModuleBase { - may be
 
 public class Transport implements X509TrustManager {
+    /**
+     * The response code handed to the module that owns a request when an attempt to send it ended
+     * before any response arrived.
+     */
+    static final int NO_RESPONSE_CODE = -1;
+
     private Log L = null;
     private static final String PARAMETER_TAMPERING_DIGEST = "SHA-256";
     private static final String CHECKSUM = "checksum256";
@@ -144,21 +153,12 @@ public class Transport implements X509TrustManager {
         connection.setConnectTimeout(1000 * config.getNetworkConnectionTimeout());
         connection.setReadTimeout(1000 * config.getNetworkReadTimeout());
 
-        if (connection instanceof HttpsURLConnection && sslContext != null) {
-            HttpsURLConnection https = (HttpsURLConnection) connection;
-            https.setSSLSocketFactory(sslContext.getSocketFactory());
-        }
+        usePinningSocketFactory(connection);
 
         if (config.getCustomNetworkRequestHeaders() != null) {
             //if there are custom header values, add them
             L.v("[Transport] connection, Adding [" + config.getCustomNetworkRequestHeaders() + "] custom header fields");
-            for (Map.Entry<String, String> entry : config.getCustomNetworkRequestHeaders().entrySet()) {
-                String key = entry.getKey();
-                String value = entry.getValue();
-                if (key != null && value != null && !key.isEmpty()) {
-                    connection.addRequestProperty(key, value);
-                }
-            }
+            addCustomRequestHeaders(connection);
         }
 
         if (!usingGET) {
@@ -219,6 +219,80 @@ public class Transport implements X509TrustManager {
         }
 
         return connection;
+    }
+
+    /**
+     * Opens the GET of one connection test probe: a bare request, built as
+     * {@link #openBareGetConnection(String, int)} builds it, that verifies the server against the
+     * configured pins and carries the custom request headers, as every queued request does. Nothing
+     * is sent before the response is read.
+     *
+     * @param url the probe URL
+     * @param timeoutMs the connect and the read timeout, in milliseconds
+     * @return the connection, not connected yet
+     * @throws IOException when the connection cannot be opened
+     */
+    HttpURLConnection openProbeConnection(@Nonnull String url, int timeoutMs) throws IOException {
+        HttpURLConnection connection = openBareGetConnection(url, timeoutMs);
+        usePinningSocketFactory(connection);
+        addCustomRequestHeaders(connection);
+        return connection;
+    }
+
+    /**
+     * Opens a GET that carries nothing but its URL, follows no redirect and uses no cache. The
+     * redirect setting is made on this connection only, never through the default of every
+     * connection.
+     *
+     * @param url the URL
+     * @param timeoutMs the connect and the read timeout, in milliseconds
+     * @return the connection, not connected yet
+     * @throws IOException when the connection cannot be opened
+     */
+    static HttpURLConnection openBareGetConnection(@Nonnull String url, int timeoutMs) throws IOException {
+        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+        connection.setRequestMethod("GET");
+        connection.setInstanceFollowRedirects(false);
+        connection.setUseCaches(false);
+        connection.setConnectTimeout(timeoutMs);
+        connection.setReadTimeout(timeoutMs);
+        connection.setDoInput(true);
+        connection.setDoOutput(false);
+        return connection;
+    }
+
+    /**
+     * Makes an HTTPS connection verify the server against the configured pins, when pins are
+     * configured.
+     *
+     * @param connection the connection, not connected yet
+     */
+    private void usePinningSocketFactory(HttpURLConnection connection) {
+        if (connection instanceof HttpsURLConnection && sslContext != null) {
+            HttpsURLConnection https = (HttpsURLConnection) connection;
+            https.setSSLSocketFactory(sslContext.getSocketFactory());
+        }
+    }
+
+    /**
+     * Adds the custom request headers of the configuration, skipping any with a {@code null} or
+     * empty name or a {@code null} value.
+     *
+     * @param connection the connection, not connected yet
+     */
+    private void addCustomRequestHeaders(HttpURLConnection connection) {
+        Map<String, String> headers = config.getCustomNetworkRequestHeaders();
+        if (headers == null) {
+            return;
+        }
+
+        for (Map.Entry<String, String> entry : headers.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+            if (key != null && value != null && !key.isEmpty()) {
+                connection.addRequestProperty(key, value);
+            }
+        }
     }
 
     void addMultipart(OutputStream output, PrintWriter writer, final String boundary, final String contentType, final String name, final String value, final byte[] file) throws IOException {
@@ -300,7 +374,26 @@ public class Transport implements X509TrustManager {
         }
     }
 
+    /**
+     * Sends a request once and hands its response to the module that owns it.
+     *
+     * @param request request to send
+     * @return the task sending the request, resolving to whether the server accepted it
+     */
     public Tasks.Task<Boolean> send(final Request request) {
+        return send(request, null);
+    }
+
+    /**
+     * Sends a request as {@link #send(Request)} does, and tells how long the server took to answer
+     * it: from opening the connection, which sends the request, to reading the whole response.
+     *
+     * @param request request to send
+     * @param responseTimeListener given the response time in milliseconds once a response was read,
+     *     never called when none was; {@code null} for none
+     * @return the task sending the request, resolving to whether the server accepted it
+     */
+    Tasks.Task<Boolean> send(final Request request, @Nullable final LongConsumer responseTimeListener) {
         return new Tasks.Task<Boolean>(request.storageId()) {
             @Override
             public Boolean call() {
@@ -311,16 +404,21 @@ public class Transport implements X509TrustManager {
                 L.i("[network] [send] Sending request: " + request);
 
                 HttpURLConnection connection = null;
+                Class<? extends ModuleBase> requestOwner = null;
                 try {
-                    Class requestOwner = request.owner();
+                    requestOwner = request.owner();
                     request.params.remove(Request.MODULE);
 
+                    long sendStartNs = System.nanoTime();
                     connection = connection(request);
                     connection.connect();
 
                     int code = connection.getResponseCode();
 
                     String response = response(connection);
+                    if (responseTimeListener != null) {
+                        responseTimeListener.accept((System.nanoTime() - sendStartNs) / 1_000_000L);
+                    }
 
                     try {
                         if (request.params.has(Params.PARAM_OLD_DEVICE_ID) || request.params.has("token_session")) {
@@ -341,6 +439,7 @@ public class Transport implements X509TrustManager {
                     return processResponse(code, response, request.storageId());
                 } catch (IOException e) {
                     L.w("[network] Error while sending request " + request + " " + e);
+                    notifyOwnerOfAttemptWithoutResponse(request, requestOwner);
                     return false;
                 } catch (Exception e) {
                     L.e("[network] Unexpected error while sending request " + request + " " + e);
@@ -354,6 +453,57 @@ public class Transport implements X509TrustManager {
         };
     }
 
+    /**
+     * Tells the module that owns a request that an attempt to send it ended before a response
+     * arrived, with a {@code null} response and {@link #NO_RESPONSE_CODE}.
+     *
+     * @param request the request
+     * @param requestOwner the module that owns it, {@code null} for none
+     */
+    private void notifyOwnerOfAttemptWithoutResponse(Request request, Class<? extends ModuleBase> requestOwner) {
+        SDKCore core = SDKCore.instance;
+        if (core == null || requestOwner == null) {
+            return;
+        }
+
+        try {
+            core.onRequestCompleted(request, null, NO_RESPONSE_CODE, requestOwner);
+        } catch (Exception e) {
+            L.e("[network] Failed to tell the owner of request [" + request.storageId() + "] that it got no response, [" + e + "]");
+        }
+    }
+
+    /**
+     * Whether a response means the server accepted the request: a 2xx code and a JSON object body
+     * that has a {@code result}, the rule {@link #processResponse(int, String, Long)} applies.
+     *
+     * @param code the response code
+     * @param response the response body, {@code null} when none arrived
+     * @return {@code true} when the request was accepted
+     */
+    static boolean isSuccessfulResponse(int code, String response) {
+        if (response == null) {
+            return false;
+        }
+
+        try {
+            return isSuccessfulResponse(code, new JSONObject(response));
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Whether a parsed response means the server accepted the request.
+     *
+     * @param code the response code
+     * @param response the parsed response body
+     * @return {@code true} for a 2xx code with a {@code result}
+     */
+    private static boolean isSuccessfulResponse(int code, JSONObject response) {
+        return code >= 200 && code < 300 && response.has("result");
+    }
+
     Boolean processResponse(int code, String response, Long requestId) {
         L.i("[network] [processResponse] Code [" + code + "] response [" + response + "] for request[" + requestId + "]");
 
@@ -364,7 +514,7 @@ public class Transport implements X509TrustManager {
 
         try {
             JSONObject jsonObject = new JSONObject(response);
-            if (code >= 200 && code < 300 && jsonObject.has("result")) {
+            if (isSuccessfulResponse(code, jsonObject)) {
                 L.d("[network] Success");
                 return true;
             } else {

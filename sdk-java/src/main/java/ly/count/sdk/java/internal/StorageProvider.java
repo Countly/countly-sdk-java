@@ -69,4 +69,18 @@ public interface StorageProvider {
      * @return true if empty, false otherwise
      */
     boolean isCountlyStorageEmpty();
+
+    /**
+     * Persist the most-recently-validated SDK behavior settings JSON.
+     *
+     * @param config serialized configuration object, or {@code null} to clear
+     */
+    void setServerConfig(String config);
+
+    /**
+     * Read the persisted SDK behavior settings JSON.
+     *
+     * @return serialized configuration, or {@code null} if none persisted yet
+     */
+    String getServerConfig();
 }

@@ -6,9 +6,11 @@ import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.annotation.Nonnull;
 import ly.count.sdk.java.Crash;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -23,6 +25,10 @@ public class CrashImpl implements Crash, Storable {
     private final JSONObject data;
     private Throwable throwable;
     private Map<Thread, StackTraceElement[]> traces;
+    private Thread tracesMainThread;
+    //whether "_error" holds the dump of addTraces rather than the stack trace of a throwable
+    private boolean errorIsTraceDump = false;
+    private String[] logs;
 
     protected CrashImpl(Log logger) {
         this(TimeUtils.uniqueTimestampMs(), logger);
@@ -38,6 +44,7 @@ public class CrashImpl implements Crash, Storable {
     @Override
     public CrashImpl addThrowable(Throwable throwable) {
         this.throwable = throwable;
+        this.errorIsTraceDump = false;
 
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
@@ -57,31 +64,58 @@ public class CrashImpl implements Crash, Storable {
             return this;
         } else {
             this.traces = traces;
-
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-
-            if (main != null && traces.containsKey(main)) {
-                pw.println("Thread [main]:");
-                printTraces(pw, null, traces.get(main));
-                pw.append("\n\n");
-            }
-
-            for (Thread thread : traces.keySet()) {
-                if (thread != main) {
-                    printTraces(pw, thread, traces.get(thread));
-                    pw.append("\n\n");
-                }
-            }
-            return add("_type", "anr").add("_error", sw.toString());
+            String dump = printAllTraces(main, traces, Integer.MAX_VALUE, "[CrashImpl] addTraces");
+            this.tracesMainThread = main;
+            this.errorIsTraceDump = true;
+            return add("_type", "anr").add("_error", dump);
         }
     }
 
-    private void printTraces(PrintWriter pw, Thread thread, StackTraceElement[] traces) {
-        if (thread != null) {
+    /**
+     * Prints the stack traces of every thread, the main thread first.
+     *
+     * @param main the main thread, {@code null} for none
+     * @param threadTraces the stack trace of each thread
+     * @param maxLinesPerThread how many of the top lines of each thread to print at most
+     * @param tag the caller, for the log of a thread that has more lines
+     * @return the printed stack traces
+     */
+    private String printAllTraces(Thread main, @Nonnull Map<Thread, StackTraceElement[]> threadTraces, int maxLinesPerThread, @Nonnull String tag) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+
+        if (main != null && threadTraces.containsKey(main)) {
+            pw.println("Thread [main]:");
+            printTraces(pw, main, true, threadTraces.get(main), maxLinesPerThread, tag);
+            pw.append("\n\n");
+        }
+
+        for (Thread thread : threadTraces.keySet()) {
+            if (thread != main) {
+                printTraces(pw, thread, false, threadTraces.get(thread), maxLinesPerThread, tag);
+                pw.append("\n\n");
+            }
+        }
+        return sw.toString();
+    }
+
+    /**
+     * Prints the stack trace of one thread, under a header naming the thread unless it is the main one.
+     *
+     * @param pw where to print
+     * @param thread the thread
+     * @param mainThread whether it is the main thread, whose header is printed by the caller
+     * @param traces the stack trace of the thread
+     * @param maxLines how many of the top lines to print at most
+     * @param tag the caller, for the log when lines are left out
+     */
+    private void printTraces(PrintWriter pw, Thread thread, boolean mainThread, StackTraceElement[] traces, int maxLines, @Nonnull String tag) {
+        if (!mainThread && thread != null) {
             pw.append("Thread [").append(thread.getName()).append("]:\n");
         }
-        for (StackTraceElement el : traces) {
+        int lines = UtilsInternalLimits.stackTraceLinesToKeep(traces.length, maxLines, thread == null ? null : thread.getName(), L, tag);
+        for (int i = 0; i < lines; i++) {
+            StackTraceElement el = traces[i];
             pw.append("\tat ").append(el == null ? "<<Unknown>>" : el.toString()).append("\n");
         }
     }
@@ -111,9 +145,88 @@ public class CrashImpl implements Crash, Storable {
     @Override
     public CrashImpl setLogs(String[] logs) {
         if (logs != null && logs.length > 0) {
+            this.logs = logs.clone();
             return add("_logs", Utils.join(Arrays.asList(logs), "\n"));
         }
         return this;
+    }
+
+    /**
+     * Applies the SDK internal limits of the SDK behavior settings to what this crash sends: the lines
+     * per thread of a dump made by {@link #addTraces(Thread, Map)}, the length of every stack trace
+     * line, the keys, string values and number of the custom segments and the length of every
+     * breadcrumb. The stack trace of a throwable keeps all its lines. Nothing changes while no limit
+     * is exceeded.
+     *
+     * @param limits the settings in effect
+     * @param tag the caller, for the log
+     */
+    void applyInternalLimits(@Nonnull ConfigurationProvider limits, @Nonnull String tag) {
+        int maxLinesPerThread = limits.getMaxStackTraceLinesPerThread();
+        if (errorIsTraceDump && traceDumpExceeds(maxLinesPerThread)) {
+            add("_error", printAllTraces(tracesMainThread, traces, maxLinesPerThread, tag));
+        }
+
+        String error = data.optString("_error", null);
+        if (error != null) {
+            String truncatedError = UtilsInternalLimits.truncateStackTraceLines(error, limits.getMaxStackTraceLineLength(), L, tag);
+            if (truncatedError.length() != error.length()) {
+                add("_error", truncatedError);
+            }
+        }
+
+        JSONObject custom = data.optJSONObject("_custom");
+        if (custom != null) {
+            Map<String, Object> segments = new LinkedHashMap<>();
+            for (String key : custom.keySet()) {
+                segments.put(key, custom.opt(key));
+            }
+            Map<String, Object> limitedSegments = UtilsInternalLimits.applySegmentationLimits(segments, limits, L, tag);
+            if (!segments.equals(limitedSegments)) {
+                add("_custom", new JSONObject(limitedSegments));
+            }
+        }
+
+        applyValueSizeLimitToLogs(limits.getMaxValueSize(), tag);
+    }
+
+    /**
+     * Whether a thread of the dump made by {@link #addTraces(Thread, Map)} has more stack trace lines
+     * than a limit.
+     *
+     * @param maxLinesPerThread the limit
+     * @return {@code true} when a thread has more lines
+     */
+    private boolean traceDumpExceeds(int maxLinesPerThread) {
+        for (StackTraceElement[] threadTraces : traces.values()) {
+            if (threadTraces != null && threadTraces.length > maxLinesPerThread) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Cuts every breadcrumb given to {@link #setLogs(String[])} to the value size limit.
+     *
+     * @param maxValueSize the limit
+     * @param tag the caller, for the log
+     */
+    private void applyValueSizeLimitToLogs(int maxValueSize, @Nonnull String tag) {
+        if (logs == null) {
+            return;
+        }
+
+        String[] truncatedLogs = new String[logs.length];
+        boolean truncated = false;
+        for (int i = 0; i < logs.length; i++) {
+            truncatedLogs[i] = UtilsInternalLimits.truncateValue(logs[i], maxValueSize, L, tag);
+            truncated |= logs[i] != null && truncatedLogs[i].length() != logs[i].length();
+        }
+
+        if (truncated) {
+            setLogs(truncatedLogs);
+        }
     }
 
     @Override

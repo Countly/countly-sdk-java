@@ -39,6 +39,11 @@ public class ModuleSessions extends ModuleBase {
 
     @Override
     protected void onTimer() {
+        ConfigurationProvider configProvider = internalConfig.getConfigurationProvider();
+        if (!configProvider.getTrackingEnabled() || !configProvider.getSessionTrackingEnabled()) {
+            L.d("[ModuleSessions] onTimer, session tracking disabled by SDK behavior settings; skipping update");
+            return;
+        }
         if (!internalConfig.isBackendModeEnabled() && isActive() && getSession() != null) {
             L.i("[ModuleSessions] onTimer, updating session");
             getSession().update();
