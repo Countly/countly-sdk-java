@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nonnull;
 import ly.count.sdk.java.Config;
 
 /**
@@ -33,11 +34,10 @@ public class InternalConfig extends Config {
     protected IdGenerator eventIdGenerator;
     protected ViewIdProvider viewIdProvider;
     /**
-     * Set by {@link ModuleConfiguration} at construction time; remains
-     * {@code null} until that module runs, which means callers must
-     * tolerate that absence (treat it as "no overrides yet").
+     * The SDK behavior settings of the running SDK, registered by {@link ModuleConfiguration} when it
+     * initializes. Read it through {@link #getConfigurationProvider()}.
      */
-    public ConfigurationProvider configProvider;
+    volatile ConfigurationProvider configProvider;
 
     /**
      * Shouldn't be used!
@@ -150,18 +150,29 @@ public class InternalConfig extends Config {
     }
 
     /**
-     * Whether the SDK is currently allowed to perform network requests.
-     * Defaults to {@code true}; the value is overridden when a SDK
-     * behavior settings payload from the server toggles {@code networking}
-     * off (see {@link ModuleConfiguration}).
+     * The SDK behavior settings in effect. While no {@link ModuleConfiguration} is registered on
+     * this configuration, as for a module built on its own in a test, the settings come from this
+     * configuration alone.
+     *
+     * @return the settings, never {@code null}
+     */
+    @Nonnull
+    ConfigurationProvider getConfigurationProvider() {
+        ConfigurationProvider provider = configProvider;
+        if (provider != null) {
+            return provider;
+        }
+        return ModuleConfiguration.developerDefaults(this);
+    }
+
+    /**
+     * Whether the SDK is currently allowed to perform network requests, the {@code networking}
+     * switch of the SDK behavior settings.
      *
      * @return {@code true} if networking is allowed
      */
     public boolean getNetworkingEnabled() {
-        if (configProvider == null) {
-            return true;
-        }
-        return configProvider.getNetworkingEnabled();
+        return getConfigurationProvider().getNetworkingEnabled();
     }
 
     public String getSdkBehaviorSettings() {
@@ -170,6 +181,16 @@ public class InternalConfig extends Config {
 
     public boolean isSdkBehaviorSettingsRequestsDisabled() {
         return sdkBehaviorSettingsRequestsDisabled;
+    }
+
+    /**
+     * Whether the developer left the backoff mechanism on, the value the {@code bom} setting of the
+     * SDK behavior settings starts from.
+     *
+     * @return {@code false} after {@link Config#disableBackoffMechanism()}
+     */
+    boolean isBackoffMechanismEnabled() {
+        return backoffMechanismEnabled;
     }
 
     /**

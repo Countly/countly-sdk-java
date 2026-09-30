@@ -263,7 +263,8 @@ public class ModuleFeedback extends ModuleBase {
         } else {
             //widget was filled out
             //merge given segmentation
-            segm.putAll(widgetResult);
+            int maxValueSize = internalConfig.getConfigurationProvider().getMaxValueSize();
+            segm.putAll(UtilsInternalLimits.truncateStringValues(widgetResult, maxValueSize, L, "[ModuleFeedback] reportFeedbackWidgetManuallyInternal"));
         }
 
         Countly.instance().events().recordEvent(widgetInfo.type.eventKey, segm);

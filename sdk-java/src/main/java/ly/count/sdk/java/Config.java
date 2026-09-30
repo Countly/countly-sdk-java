@@ -267,6 +267,12 @@ public class Config {
      */
     protected boolean sdkBehaviorSettingsRequestsDisabled = false;
 
+    /**
+     * Whether the backoff mechanism may hold the request queue back after the server answered
+     * slowly. The SDK behavior settings can override it.
+     */
+    protected boolean backoffMechanismEnabled = true;
+
     // TODO: storage limits & configuration
     //    protected int maxRequestsStored = 0;
     //    protected int storageDirectory = "";
@@ -1545,6 +1551,19 @@ public class Config {
      */
     public Config disableSdkBehaviorSettingsUpdates() {
         this.sdkBehaviorSettingsRequestsDisabled = true;
+        return this;
+    }
+
+    /**
+     * Disable the backoff mechanism. While it is on, a request the server takes long to answer
+     * makes the SDK wait before it sends the next queued request, which gives a busy server room
+     * to recover. It never waits while many requests are queued or after an old request. The SDK
+     * behavior settings can still turn it on or off.
+     *
+     * @return {@code this} instance for method chaining
+     */
+    public Config disableBackoffMechanism() {
+        this.backoffMechanismEnabled = false;
         return this;
     }
 }

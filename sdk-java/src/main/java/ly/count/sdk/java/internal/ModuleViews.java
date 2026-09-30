@@ -106,6 +106,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
     }
 
     private Map<String, Object> createViewEventSegmentation(@Nonnull ViewData vd, boolean firstView, boolean visit, Map<String, Object> customViewSegmentation) {
+        ConfigurationProvider limits = internalConfig.getConfigurationProvider();
         Map<String, Object> viewSegmentation = new ConcurrentHashMap<>();
         viewSegmentation.putAll(globalViewSegmentation);
         viewSegmentation.putAll(vd.viewSegmentation);
@@ -114,7 +115,9 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
             viewSegmentation.putAll(customViewSegmentation);
         }
 
-        viewSegmentation.put(KEY_NAME, vd.viewName);
+        viewSegmentation = applyInternalLimits(viewSegmentation, limits);
+
+        viewSegmentation.put(KEY_NAME, UtilsInternalLimits.truncateKey(vd.viewName, limits.getMaxKeyLength(), L, "[ModuleViews] createViewEventSegmentation"));
         if (visit) {
             viewSegmentation.put(KEY_VISIT, KEY_VISIT_VALUE);
         }
@@ -123,6 +126,30 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
         }
         viewSegmentation.put(KEY_SEGMENT, internalConfig.getSdkPlatform());
         return viewSegmentation;
+    }
+
+    /**
+     * Applies the key length, value size and segmentation entry limits of the SDK behavior settings
+     * to the segmentation of a view event, before the SDK adds its own keys, which are neither cut
+     * nor counted. A key cut to one of the reserved keys is removed, and entries of unsupported
+     * types are removed before the entry limit counts, so they take no place under it.
+     *
+     * @param viewSegmentation the merged segmentation, which this module owns and may change
+     * @param limits the settings in effect
+     * @return the segmentation within the limits
+     */
+    private Map<String, Object> applyInternalLimits(@Nonnull Map<String, Object> viewSegmentation, @Nonnull ConfigurationProvider limits) {
+        Map<String, Object> truncated = UtilsInternalLimits.truncateSegmentationKeysAndValues(viewSegmentation, limits.getMaxKeyLength(), limits.getMaxValueSize(), L, "[ModuleViews] createViewEventSegmentation");
+        for (String reservedKey : reservedSegmentationKeysViews) {
+            if (truncated.remove(reservedKey) != null) {
+                L.w("[ModuleViews] createViewEventSegmentation, a key truncated to the reserved key [" + reservedKey + "] is removed");
+            }
+        }
+
+        if (truncated.size() > limits.getMaxSegmentationValues()) {
+            Utils.removeInvalidDataFromSegments(truncated, L);
+        }
+        return UtilsInternalLimits.limitSegmentationEntries(truncated, limits.getMaxSegmentationValues(), L, "[ModuleViews] createViewEventSegmentation");
     }
 
     private void autoCloseRequiredViews(boolean closeAllViews, Map<String, Object> customViewSegmentation) {
@@ -155,7 +182,8 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
      * @return Returns link to Countly for call chaining
      */
     @Nullable String startViewInternal(@Nullable String viewName, @Nullable Map<String, Object> customViewSegmentation, boolean viewShouldBeAutomaticallyStopped) {
-        if (internalConfig.configProvider != null && (!internalConfig.configProvider.getTrackingEnabled() || !internalConfig.configProvider.getViewTrackingEnabled())) {
+        ConfigurationProvider configProvider = internalConfig.getConfigurationProvider();
+        if (!configProvider.getTrackingEnabled() || !configProvider.getViewTrackingEnabled()) {
             L.d("[ModuleViews] startViewInternal, view tracking disabled by SDK behavior settings; ignoring");
             return null;
         }
@@ -212,6 +240,10 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
     }
 
     void stopViewWithIDInternal(@Nullable String viewID, @Nullable Map<String, Object> customViewSegmentation) {
+        if (!isViewTrackingEnabled("stopViewWithIDInternal")) {
+            return;
+        }
+
         ViewData vd = validateViewID(viewID, "stopViewWithIDInternal");
         if (vd == null) {
             return;
@@ -256,6 +288,10 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
     }
 
     void pauseViewWithIDInternal(String viewID) {
+        if (!isViewTrackingEnabled("pauseViewWithIDInternal")) {
+            return;
+        }
+
         ViewData vd = validateViewID(viewID, "pauseViewWithIDInternal");
         if (vd == null) {
             return;
@@ -274,6 +310,10 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
     }
 
     void resumeViewWithIDInternal(String viewID) {
+        if (!isViewTrackingEnabled("resumeViewWithIDInternal")) {
+            return;
+        }
+
         ViewData vd = validateViewID(viewID, "resumeViewWithIDInternal");
         if (vd == null) {
             return;
@@ -291,8 +331,27 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
 
     void stopAllViewsInternal(Map<String, Object> viewSegmentation) {
         L.d("[ModuleViews] stopAllViewsInternal");
+        if (!isViewTrackingEnabled("stopAllViewsInternal")) {
+            return;
+        }
 
         autoCloseRequiredViews(true, viewSegmentation);
+    }
+
+    /**
+     * Whether the SDK behavior settings allow view tracking. While they do not, stopping, pausing
+     * and resuming views is ignored, so every view keeps its state until view tracking is allowed again.
+     *
+     * @param function the ignored call, for the log
+     * @return {@code true} when view tracking is enabled
+     */
+    private boolean isViewTrackingEnabled(@Nonnull String function) {
+        if (internalConfig.getConfigurationProvider().getViewTrackingEnabled()) {
+            return true;
+        }
+
+        L.d("[ModuleViews] " + function + ", view tracking is disabled by the SDK behavior settings, ignoring the call");
+        return false;
     }
 
     private ViewData validateViewID(String viewID, String function) {

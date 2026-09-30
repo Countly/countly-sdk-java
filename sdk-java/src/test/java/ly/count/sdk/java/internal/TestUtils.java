@@ -57,15 +57,36 @@ public class TestUtils {
     }
 
     static Config getBaseConfig(String deviceID) {
-        File sdkStorageRootDirectory = getTestSDirectory();
-        checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
-        Config config = new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
-        config.setApplicationVersion(APPLICATION_VERSION);
+        Config config = getConfigSdkBehaviorSettings(deviceID);
         // Disable server config requests by default in tests so the suite doesn't fire HTTP calls
         // to a non-existent test host on every init. Tests covering ModuleConfiguration opt back in
         // explicitly.
         config.disableSdkBehaviorSettingsUpdates();
+        return config;
+    }
 
+    /**
+     * The base configuration with the SDK behavior settings requests left on, for the tests that
+     * exercise them. Pair it with an immediate request generator, or every init asks the test
+     * server for its settings.
+     *
+     * @return the configuration
+     */
+    static Config getConfigSdkBehaviorSettings() {
+        return getConfigSdkBehaviorSettings(DEVICE_ID);
+    }
+
+    /**
+     * The base configuration with the SDK behavior settings requests left on, for a given device ID.
+     *
+     * @param deviceID the custom device ID
+     * @return the configuration
+     */
+    static Config getConfigSdkBehaviorSettings(String deviceID) {
+        File sdkStorageRootDirectory = getTestSDirectory();
+        checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
+        Config config = new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
+        config.setApplicationVersion(APPLICATION_VERSION);
         config.setCustomDeviceId(deviceID);
         return config;
     }
@@ -701,5 +722,22 @@ public class TestUtils {
         config.viewIdGenerator = TestUtils.incrementalViewIdGenerator();
         config.views.setGlobalViewSegmentation(segmentation);
         return config;
+    }
+
+    /**
+     * Waits until the clock is past every timestamp handed out so far. A request file is named after
+     * a {@link TimeUtils#uniqueTimestampMs()} value, which is unique among the last ten values only,
+     * so requests stored back to back could reuse a name and overwrite each other.
+     */
+    static void letTheClockCatchUp() {
+        long latest = TimeUtils.uniqueTimestampMs();
+        while (System.currentTimeMillis() <= latest) {
+            try {
+                Thread.sleep(1);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+        }
     }
 }

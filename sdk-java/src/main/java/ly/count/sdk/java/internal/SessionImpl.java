@@ -107,6 +107,8 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         if (SDKCore.instance == null) {
             L.e("[SessionImpl] Countly is not initialized");
             return null;
+        } else if (!isSessionTrackingEnabled("begin")) {
+            return null;
         } else if (began != null) {
             L.e("[SessionImpl] Session already began");
             return null;
@@ -125,8 +127,9 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         if (pushOnChange) {
             Storage.pushAsync(config, this);
         }
-        if (hasConsent(CoreFeature.Location) && config.sdk.module(ModuleLocation.class) != null) {
-            params.add(config.sdk.module(ModuleLocation.class).prepareLocationParams());
+        ModuleLocation locationModule = config.sdk.module(ModuleLocation.class);
+        if (hasConsent(CoreFeature.Location) && locationModule != null && config.getConfigurationProvider().getLocationTrackingEnabled()) {
+            params.add(locationModule.prepareLocationParams());
         }
         Future<Boolean> ret = ModuleRequests.sessionBegin(config, this);
 
@@ -150,6 +153,8 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     Future<Boolean> update(Long now) {
         if (SDKCore.instance == null) {
             L.e("[SessionImpl] Countly is not initialized");
+            return null;
+        } else if (!isSessionTrackingEnabled("update")) {
             return null;
         } else if (began == null) {
             L.e("[SessionImpl] Session is not began to update it");
@@ -188,6 +193,8 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         if (SDKCore.instance == null) {
             L.e("[SessionImpl] Countly is not initialized");
             return null;
+        } else if (!isSessionTrackingEnabled("end")) {
+            return null;
         } else if (began == null) {
             L.e("[SessionImpl] Session is not began to end it");
             return null;
@@ -222,10 +229,22 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         return ret;
     }
 
+    /**
+     * Ends a session left on disk by an earlier run, or removes it when there is nothing to end.
+     * While session tracking is disabled by the SDK behavior settings, no session request may be
+     * sent, so an unended session is removed without an end request: keeping it would end it on a
+     * later run with a stale duration.
+     *
+     * @param config configuration of the SDK being initialized
+     * @return whether the session was ended or removed, {@code null} when it is left as it is
+     */
     Boolean recover(InternalConfig config) {
         Log L = config.getLogger();
         if ((System.currentTimeMillis() - id) < 0) {
             return null;
+        } else if (!config.getConfigurationProvider().getSessionTrackingEnabled()) {
+            L.d("[SessionImpl] recover, session tracking is disabled by the SDK behavior settings, removing session " + id + " without ending it");
+            return Storage.remove(config, this);
         } else {
             Future<Boolean> future;
             if (began == null) {
@@ -258,6 +277,22 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     public boolean isActive() {
         L.d("[SessionImpl] isActive");
         return began != null && ended == null;
+    }
+
+    /**
+     * Whether the SDK behavior settings allow session tracking. While they do not, beginning,
+     * updating and ending a session are ignored, and the session keeps its state.
+     *
+     * @param function the ignored call, for the log
+     * @return {@code true} when session tracking is enabled
+     */
+    private boolean isSessionTrackingEnabled(String function) {
+        if (config.getConfigurationProvider().getSessionTrackingEnabled()) {
+            return true;
+        }
+
+        L.d("[SessionImpl] " + function + ", session tracking is disabled by the SDK behavior settings, ignoring the call");
+        return false;
     }
 
     /**
