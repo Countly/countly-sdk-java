@@ -25,7 +25,8 @@ PLUGIN_BOM = {
 class SbomTest(unittest.TestCase):
     def setUp(self):
         self.config = repository_config()
-        self.java, self.ui = plan_for_tag(self.config, "26.8.1").artifacts
+        self.java = plan_for_tag(self.config, "26.8.1").artifacts[0]
+        self.ui = plan_for_tag(self.config, "ui-26.8.1").artifacts[0]
 
     def test_normalize_sets_the_published_coordinates(self):
         bom = normalize(copy.deepcopy(PLUGIN_BOM), self.ui, "26.8.1", "2026-10-27T10:15:00+03:00", "https://maven.countly.com/")

@@ -8,7 +8,6 @@ from pathlib import Path
 
 POM_NAMESPACE = {"m": "http://maven.apache.org/POM/4.0.0"}
 JVM_VERSION = "org.gradle.jvm.version"
-RELEASE_VERSION = "{version}"
 
 
 def _child(element, tag, default=""):
@@ -22,18 +21,6 @@ def pom_dependencies(pom):
         f"{_child(d, 'groupId')}:{_child(d, 'artifactId')}:{_child(d, 'version')}:{_child(d, 'scope', 'compile')}"
         for d in root.findall("m:dependencies/m:dependency", POM_NAMESPACE)
     )
-
-
-def release_dependencies(dependencies, group, version):
-    """Dependencies with the version of the release itself written as {version} for artifacts of the same group (java-ui
-    depends on java of its own release), so a contract holds for every release."""
-    shown = []
-    for dependency in dependencies:
-        parts = dependency.split(":")
-        if parts[0] == group and parts[2] == version:
-            parts[2] = RELEASE_VERSION
-        shown.append(":".join(parts))
-    return shown
 
 
 def module_variants(module):
@@ -79,7 +66,7 @@ def actual_contract(staging_dir, artifact, version):
     return {
         "schema": 1,
         "coordinates": artifact.coordinates,
-        "pomDependencies": release_dependencies(pom_dependencies((folder / f"{base}.pom").read_bytes()), artifact.group, version),
+        "pomDependencies": pom_dependencies((folder / f"{base}.pom").read_bytes()),
         "moduleVariantAttributes": {JVM_VERSION: _common(module_variants((folder / f"{base}.module").read_bytes()), JVM_VERSION)},
         "maxClassFileMajor": max_class_major((folder / f"{base}.jar").read_bytes()),
     }

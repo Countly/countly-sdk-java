@@ -276,15 +276,16 @@ def cmd_verify_public(args):
 def cmd_consumer(args):
     """Builds a clean Gradle project and a clean Maven project against every artifact of the staging folder, used as a
     local repository, and runs the Java 8 artifacts on a Java 8 runtime, so a release that a clean project cannot build
-    with stops before the approval."""
-    _, plan = read_plan(args.plan)
+    with stops before the approval. Countly packages outside the release come from the target's public repository."""
+    config, plan = read_plan(args.plan)
     repository = Path(args.staging).resolve().as_uri()
+    public_repository = config["publicBaseUrl"][args.target].rstrip("/")
     gradlew = str(REPO_ROOT / ("gradlew.bat" if os.name == "nt" else "gradlew"))
     problems = []
     lines = []
     for artifact in plan.artifacts:
         name = f"{artifact.coordinates}:{plan.version}"
-        if subprocess.run(consumers.gradle_command(gradlew, repository, artifact, plan.version), cwd=REPO_ROOT).returncode != 0:
+        if subprocess.run(consumers.gradle_command(gradlew, repository, public_repository, plan, artifact), cwd=REPO_ROOT).returncode != 0:
             problems.append(f"a clean Gradle project could not build with {name}")
         elif artifact.consumer_java == 8:
             smoke = subprocess.run(consumers.smoke_command(args.java8_home, REPO_ROOT), cwd=REPO_ROOT, capture_output=True, text=True)
@@ -295,7 +296,7 @@ def cmd_consumer(args):
                 lines.append(f"- Java 8 run of {artifact.coordinates}: {smoke.stdout.strip()}")
         local_repository = Path(args.work) / f"m2-{artifact.artifact}"
         shutil.rmtree(local_repository, ignore_errors=True)
-        if subprocess.run(consumers.maven_command(args.mvn, repository, artifact, plan.version, local_repository.resolve()), cwd=REPO_ROOT).returncode != 0:
+        if subprocess.run(consumers.maven_command(args.mvn, repository, public_repository, artifact, plan.version, local_repository.resolve()), cwd=REPO_ROOT).returncode != 0:
             problems.append(f"a clean Maven project could not build with {name}")
         else:
             problems += consumers.maven_source_problems(local_repository, plan, artifact)
@@ -392,6 +393,7 @@ def main(argv=None):
     command = commands.add_parser("consumer")
     command.add_argument("--plan", required=True)
     command.add_argument("--staging", required=True)
+    command.add_argument("--target", choices=TARGETS, required=True)
     command.add_argument("--java8-home", required=True)
     command.add_argument("--mvn", default="mvn")
     command.add_argument("--work", required=True)

@@ -26,7 +26,6 @@ class VerifyTest(unittest.TestCase):
             BASE + POM + ".sha1": b"sha1",
             BASE + POM + ".asc": b"signature",
             BASE + "ly/count/sdk/java/maven-metadata.xml": b"<version>26.8.1</version>",
-            BASE + "ly/count/sdk/java-ui/maven-metadata.xml": b"<version>26.8.1</version>",
         })
 
     def test_published_release_passes_and_keeps_the_signatures(self):
@@ -37,12 +36,18 @@ class VerifyTest(unittest.TestCase):
     def test_problems_are_reported(self):
         self.web.pages[BASE + POM] = b"changed"
         del self.web.pages[BASE + POM + ".asc"]
-        self.web.pages[BASE + "ly/count/sdk/java-ui/maven-metadata.xml"] = b"<version>26.8.0</version>"
+        self.web.pages[BASE + "ly/count/sdk/java/maven-metadata.xml"] = b"<version>26.8.0</version>"
         self.assertEqual(verify_public(self.manifest, self.plan, BASE, "1", self.work, fetcher=self.web), [
             f"changed {POM}",
             f"missing {POM}.asc",
-            "ly.count.sdk:java-ui index does not list 26.8.1",
+            "ly.count.sdk:java index does not list 26.8.1",
         ])
+
+    def test_a_ui_release_checks_only_the_ui_index(self):
+        plan = plan_for_tag(self.config, "ui-26.8.1")
+        web = FakeWeb({BASE + "ly/count/sdk/java-ui/maven-metadata.xml": b"<version>26.8.1</version>"})
+        self.assertEqual(verify_public({"files": []}, plan, BASE, "1", self.work, fetcher=web), [])
+        self.assertEqual(web.requests, [BASE + "ly/count/sdk/java-ui/maven-metadata.xml?nocache=1"])
 
     def test_candidate_must_stay_unlisted(self):
         plan = plan_for_tag(self.config, "26.8.1-rc1")

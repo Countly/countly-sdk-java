@@ -121,7 +121,7 @@ jobs:
       - name: Check what the release promises integrators
         run: python3 .github/release/release.py contract --plan plan.json --staging build/release-staging
       - name: Clean projects build against the staged release
-        run: python3 .github/release/release.py consumer --plan plan.json --staging build/release-staging --java8-home "$JAVA_HOME_8_X64" --work "$RUNNER_TEMP/consumers"
+        run: python3 .github/release/release.py consumer --plan plan.json --staging build/release-staging --target "$TARGET" --java8-home "$JAVA_HOME_8_X64" --work "$RUNNER_TEMP/consumers"
       - name: Scan the published dependencies
         env:
           OSV_FAIL_ON: high
