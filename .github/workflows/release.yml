@@ -220,8 +220,11 @@ jobs:
     permissions: {}
     steps:
       - name: Slack
-        uses: slackapi/slack-github-action@007b2c3c751a190b6f0f040e47ed024deaa72844 # v1.23.0
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
         with:
+          errors: true
+          webhook: ${{ secrets.SLACK_RELEASE }}
+          webhook-type: webhook-trigger
           payload: |
             {
               "repository": "${{ github.repository }}",
@@ -230,15 +233,13 @@ jobs:
               "body": ${{ toJSON(github.event.release.body) }},
               "html_url": "${{ github.event.release.html_url }}"
             }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_RELEASE }}
       - name: Discord
-        uses: sarisia/actions-status-discord@9904e3130b8905d5b973df25623f17672dcb3466 # v1.13.0
+        uses: sarisia/actions-status-discord@eb045afee445dc055c18d3d90bd0f244fd062708 # v1.16.0
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
           nodetail: true
           title: New ${{ github.repository }} version ${{ github.event.release.tag_name }} published by ${{ github.actor }}
           description: |
             Release URL: ${{ github.event.release.html_url }}
-            Click [here](https://github.com/Countly/countly-server/blob/master/CHANGELOG.md) to view the change log.
+            Click [here](${{ github.server_url }}/${{ github.repository }}/blob/${{ github.event.release.tag_name }}/CHANGELOG.md) to view the change log.
             `${{ github.event.release.body }}`

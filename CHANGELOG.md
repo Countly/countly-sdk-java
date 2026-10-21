@@ -20,6 +20,8 @@
   ```
   Versions released before this one stay available on Maven Central. The files are signed with the same key as before (`FC8DB0DE234A273BA45E562FB8C83A079A5BBD0C`).
 
+* Updated JSON library version from "20250517" to "20260814".
+
 ## 26.8.0
 * Added support for the Content feature, accessible through the "Countly.instance().content()" interface:
   * "enterContentZone" / "exitContentZone" for starting and stopping periodic content fetching
