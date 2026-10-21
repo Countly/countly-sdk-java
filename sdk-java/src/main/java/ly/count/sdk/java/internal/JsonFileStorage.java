@@ -3,9 +3,12 @@ package ly.count.sdk.java.internal;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import javax.annotation.Nonnull;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 public class JsonFileStorage {
@@ -22,7 +25,20 @@ public class JsonFileStorage {
     public JsonFileStorage(@Nonnull final File file, @Nonnull Log logger) {
         this.logger = logger;
         this.file = file;
+        deleteLeftoverTemporaryFile();
         this.json = readJsonFile(file);
+    }
+
+    /**
+     * Deletes the temporary file of a save that was stopped before its move. The json file still
+     * holds the previous save then, and a leftover file would be taken for other stored SDK data.
+     */
+    private void deleteLeftoverTemporaryFile() {
+        try {
+            Files.deleteIfExists(temporaryFileOf(file).toPath());
+        } catch (IOException e) {
+            logger.w("[JsonFileStorage] deleteLeftoverTemporaryFile, Failed to delete the temporary file, reason: [" + e + "]");
+        }
     }
 
     /**
@@ -39,23 +55,53 @@ public class JsonFileStorage {
     }
 
     /**
-     * Saves changes to the disk/db/memory. When the data cannot be serialized, the file keeps what
-     * it had.
+     * Saves changes to the disk/db/memory. The data is written next to the file and then moved over
+     * it, so a process stopped while saving leaves the previous file whole. When the data cannot be
+     * serialized, the file keeps what it had.
      */
     public synchronized void save() {
         logger.i("[JsonFileStorage] save, Saving json file: [" + file.getAbsolutePath() + "]");
 
-        // Serialized before the file is opened: opening truncates it, and toString returns null instead of throwing
+        // toString returns null instead of throwing, so a failed serialization has to be caught before anything is written
         String content = json.toString();
         if (content == null) {
             logger.e("[JsonFileStorage] save, Failed to serialize the data, the json file is left as it is: [" + file.getAbsolutePath() + "]");
             return;
         }
 
-        try (BufferedWriter writer = Files.newBufferedWriter(file.toPath())) {
-            writer.write(content);
+        File temporary = temporaryFileOf(file);
+        try {
+            try (BufferedWriter writer = Files.newBufferedWriter(temporary.toPath())) {
+                writer.write(content);
+            }
+            replaceFile(temporary, file);
         } catch (IOException e) {
             logger.e("[JsonFileStorage] save, Failed to save json file, reason: [" + e.getMessage() + "]");
+        }
+    }
+
+    /**
+     * The file a save writes before moving it over the json file.
+     *
+     * @param file the json file
+     * @return the temporary file next to it
+     */
+    static File temporaryFileOf(@Nonnull File file) {
+        return new File(file.getAbsolutePath() + ".tmp");
+    }
+
+    /**
+     * Moves a file over another, atomically where the file system supports it.
+     *
+     * @param source the file to move
+     * @param target the file it replaces
+     * @throws IOException when the move fails
+     */
+    private static void replaceFile(@Nonnull File source, @Nonnull File target) throws IOException {
+        try {
+            Files.move(source.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+        } catch (AtomicMoveNotSupportedException e) {
+            Files.move(source.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
     }
 
@@ -224,6 +270,9 @@ public class JsonFileStorage {
             return new JSONObject(fileContent);
         } catch (IOException e) {
             logger.e("[JsonFileStorage] readJsonFile, Failed to read json file, reason: [" + e.getMessage() + "]");
+            return new JSONObject();
+        } catch (JSONException e) {
+            logger.e("[JsonFileStorage] readJsonFile, The json file is not valid json, starting with empty storage that replaces it on the next save: [" + file.getAbsolutePath() + "], reason: [" + e.getMessage() + "]");
             return new JSONObject();
         }
     }
