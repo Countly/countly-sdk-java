@@ -166,7 +166,9 @@ public class ModuleConfigurationFiltersTests {
         perEventWhitelist.put("event1", names("key_a"));
         push(new ServerConfigBuilder()
             .segmentationFilterList(names("key_a", "key_b", "blocked_for_event1"), true)
-            .eventSegmentationFilterMap(perEventWhitelist, true));
+            .eventSegmentationFilterMap(perEventWhitelist, true)
+            .eventQueueSize(1)
+            .networking(false));
         Countly.instance().events().recordEvent("event1", callers);
         TestUtils.letTheClockCatchUp();
         Countly.instance().events().recordEvent("event2", callers);

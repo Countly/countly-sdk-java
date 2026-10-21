@@ -201,11 +201,7 @@ public class ModuleConfigurationContentTests {
      */
     @Test
     public void journeyTriggers_sendTheWholeEventQueueRightAway_eachTriggerInItsOwnRequest() {
-        server.settings.respondWith(new ServerConfigBuilder()
-            .journeyTriggerEvents(names("purchase", "[CLY]_star_rating"))
-            .journeyTriggerViews(names("checkout"))
-            .eventQueueSize(100)
-            .networking(false));
+        server.settings.respondWith(journeyTriggerSettings());
         init(contentConfig().enableFeatures(Config.Feature.Views));
 
         Countly.instance().events().recordEvent("regular");
@@ -245,9 +241,9 @@ public class ModuleConfigurationContentTests {
         Assert.assertEquals(storedRequestIds(), SDKCore.instance.module(ModuleEvents.class).journeyTriggerRequestIds);
 
         Countly.instance().views().startView("profile");
-        push(new ServerConfigBuilder().eventFilterList(names("purchase"), false));
+        push(journeyTriggerSettings().eventFilterList(names("purchase"), false));
         Countly.instance().events().recordEvent("purchase");
-        push(new ServerConfigBuilder().viewTracking(false));
+        push(journeyTriggerSettings().viewTracking(false));
         Assert.assertNull(Countly.instance().views().startView("checkout"));
         Assert.assertEquals(4, TestUtils.getCurrentRQ().length);
         TestUtils.validateEQSize(1);
@@ -342,13 +338,17 @@ public class ModuleConfigurationContentTests {
         assertZoneIsInactive(0);
         Assert.assertEquals("[\"[CLY]_view\",\"purchase\"]", eventKeys(queueServer.eventRequests().get(0)).toString());
 
-        push(new ServerConfigBuilder().refreshContentZone(true).viewTracking(false));
+        push(new ServerConfigBuilder().refreshContentZone(true).viewTracking(false)
+            .journeyTriggerViews(names("checkout"))
+            .journeyTriggerEvents(names("purchase")));
         Assert.assertNull(Countly.instance().views().startView("checkout"));
         TestUtils.validateEQSize(0);
         Assert.assertEquals(0, queuedRequestCount());
         assertZoneIsInactive(0);
 
-        push(new ServerConfigBuilder().viewTracking(true));
+        push(new ServerConfigBuilder().viewTracking(true)
+            .journeyTriggerViews(names("checkout"))
+            .journeyTriggerEvents(names("purchase")));
         Countly.instance().views().startView("checkout");
         awaitZoneFetch(1);
         List<Map<String, String>> eventRequests = queueServer.eventRequests();
@@ -361,6 +361,21 @@ public class ModuleConfigurationContentTests {
 
     // endregion
     // region helpers
+
+    /**
+     * The settings of the journey trigger scenario: two trigger events, one trigger view, a queue
+     * that waits for 100 events and networking off, so every request stays on disk. Each response
+     * replaces the stored settings, so every response of the scenario starts from these.
+     *
+     * @return a builder holding those settings
+     */
+    private static ServerConfigBuilder journeyTriggerSettings() {
+        return new ServerConfigBuilder()
+            .journeyTriggerEvents(names("purchase", "[CLY]_star_rating"))
+            .journeyTriggerViews(names("checkout"))
+            .eventQueueSize(100)
+            .networking(false);
+    }
 
     /**
      * Stands in for the settings and the content endpoints of the server. Settings requests go to a
