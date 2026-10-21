@@ -20,6 +20,9 @@
   ```
   Versions released before this one stay available on Maven Central. The files are signed with the same key as before (`FC8DB0DE234A273BA45E562FB8C83A079A5BBD0C`).
 
+* Mitigated an issue where requests, sessions or crashes created close together could get the same storage ID, so some of them were lost.
+* Mitigated an issue where verbose logs showed the values of custom network request headers. Only the number of headers is logged now.
+
 ## 26.8.0
 * Added support for the Content feature, accessible through the "Countly.instance().content()" interface:
   * "enterContentZone" / "exitContentZone" for starting and stopping periodic content fetching
