@@ -1,10 +1,17 @@
 version: 2
 updates:
-  # Gradle dependencies. org.json is declared separately in sdk-java, app-java
-  # and app-javafx; Dependabot opens one PR per module, so check that a bump
-  # lands everywhere before closing the others.
+  # Gradle dependencies. org.json is declared separately in sdk-java, sdk-java-ui,
+  # app-java and app-javafx; Dependabot opens one PR per module, so check that a
+  # bump lands everywhere before closing the others. A bump of a published
+  # dependency also has to update .github/release-contract/, or the release
+  # checks fail.
+  #
+  # Releases are tagged on staging, so version updates target staging; master
+  # receives them with the next release. Security updates still open against
+  # master, so merge master into staging after taking one.
   - package-ecosystem: gradle
     directory: "/"
+    target-branch: staging
     schedule:
       interval: weekly
       day: monday
@@ -16,6 +23,7 @@ updates:
 
   - package-ecosystem: github-actions
     directory: "/"
+    target-branch: staging
     schedule:
       interval: monthly
     labels:
