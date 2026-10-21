@@ -71,6 +71,18 @@ dependencies {
   testImplementation 'org.mockito:mockito-core:4.11.0'
 }
 
+// -PtestUiWithLocalCore=true builds and tests this module's source against the sdk-java project
+// instead of the released core above. This module uses the core's internal classes, so a core
+// change that breaks it fails CI before the core is released. It does not test the released
+// java-ui jar on a newer core.
+if (findProperty('testUiWithLocalCore') == 'true') {
+  configurations.configureEach {
+    resolutionStrategy.dependencySubstitution {
+      substitute module('ly.count.sdk:java') using project(':sdk-java')
+    }
+  }
+}
+
 // Coverage. Reports land in build/reports/jacoco/test/ (HTML to read, XML for tooling).
 // "./gradlew coverage" from the repo root runs this and prints a summary.
 apply plugin: 'jacoco'
