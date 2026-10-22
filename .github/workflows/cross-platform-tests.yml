@@ -43,7 +43,7 @@ jobs:
           distribution: 'corretto'
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
 
       # bash on both platforms so one command works everywhere; Git Bash ships on the Windows runner.
       - name: Run the core SDK tests

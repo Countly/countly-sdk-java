@@ -50,7 +50,7 @@ jobs:
           distribution: 'corretto'
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
 
       # The task deliberately lets tests fail so a flake cannot block the report. The report
       # itself carries the failure count, and gradle.yml is what actually gates on tests.
