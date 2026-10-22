@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -22,12 +21,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BooleanSupplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.annotation.Nullable;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.internal.ConfigurationProvider.LogGatheringState;
@@ -87,156 +83,172 @@ public class SdkLogGatheringTests {
     /**
      * An armed directive adopts what was captured before it arrived.
      * <p>
-     * Verifies that the lines of the directive's levels logged during init, before any response,
-     * are queued once init finishes, the very first line of the SDK first; that every batch echoes
-     * the gather id, carries the required request parameters and at most {@code b} lines, each
-     * with exactly {@code t}, {@code l} and {@code m}, none of another level and none quoting a
-     * batch; that a full batch goes out on its own while a partial one waits for a flush; and that a
-     * full batch is too long for a GET, so it is sent as a POST. An unknown top level key next to
+     * Verifies against a local server that the lines of the directive's levels logged during init,
+     * before any response, are uploaded once init finishes, the very first line of the SDK first;
+     * that every batch echoes the gather id, carries the required request parameters and at most
+     * {@code b} lines, each with exactly {@code t}, {@code l} and {@code m}, none of another level
+     * and none quoting a batch; that a partial batch waits for a flush while no batch is in flight;
+     * that a full batch goes out on its own, the lines after it following once it is sent; and that
+     * a full batch is too long for a GET, so it is sent as a POST. An unknown top level key next to
      * {@code lg} changes none of it.
      */
     @Test
     public void armedDirective_uploadsTheInitLinesOfItsLevels_withTheGatherIdInBatchesOfAtMostB() throws Exception {
         long startMs = System.currentTimeMillis();
-        server.respondWith(new ServerConfigBuilder().networking(false)
-            .logGatheringOn("gather_init", "wi", 10)
-            .topLevelKey("someFutureFeature", "a value this SDK has never heard of"));
-        init(TestUtils.getConfigSdkBehaviorSettings());
-        assertGathering("gather_init", "wi", 10);
+        List<ReceivedRequest> requests = new CopyOnWriteArrayList<>();
+        HttpServer httpServer = startRecordingServer(requests);
+        try {
+            server.respondWith(new ServerConfigBuilder()
+                .logGatheringOn("gather_init", "wi", 10)
+                .topLevelKey("someFutureFeature", "a value this SDK has never heard of"));
+            init(localConfig(httpServer));
+            assertGathering("gather_init", "wi", 10);
 
-        awaitLogDelivery();
-        List<JSONObject> initBatches = batches();
-        Assert.assertFalse("init end queued nothing", initBatches.isEmpty());
-        Assert.assertEquals("[SDKCore] Initializing Countly", initBatches.get(0).getJSONArray("l").getJSONObject(0).getString("m"));
+            awaitSentBatches();
+            List<JSONObject> initBatches = receivedBatches(requests);
+            Assert.assertFalse("init end queued nothing", initBatches.isEmpty());
+            Assert.assertEquals("[SDKCore] Initializing Countly", initBatches.get(0).getJSONArray("l").getJSONObject(0).getString("m"));
 
-        String padding = repeat('p', 80);
-        List<String> armedLines = new ArrayList<>();
-        for (int i = 0; i < 25; i++) {
-            armedLines.add("[Test] armed line " + i + " " + padding);
-            logger().w(armedLines.get(i));
-        }
-        awaitLogDelivery();
-        List<String> beforeFlush = linesStartingWith("[Test] armed line ", batches());
-        Assert.assertTrue("[" + beforeFlush.size() + "] lines before a flush", beforeFlush.size() >= 10 && beforeFlush.size() < armedLines.size());
-        Assert.assertEquals(armedLines.subList(0, beforeFlush.size()), beforeFlush);
-
-        logger().flushGatheredLogs();
-        awaitLogDelivery();
-        Assert.assertEquals(armedLines, linesStartingWith("[Test] armed line ", batches()));
-
-        List<Map<String, String>> requests = logRequests();
-        for (Map<String, String> request : requests) {
-            TestUtils.validateRequiredParams(request);
-            JSONObject batch = new JSONObject(request.get(Log.keySdkLogs));
-            Assert.assertEquals(names("i", "d", "l"), batch.keySet());
-            Assert.assertEquals("gather_init", batch.getString("i"));
-            Assert.assertEquals(0, batch.getInt("d"));
-
-            JSONArray lines = batch.getJSONArray("l");
-            Assert.assertTrue("a batch of [" + lines.length() + "] lines", lines.length() >= 1 && lines.length() <= 10);
-            for (int i = 0; i < lines.length(); i++) {
-                JSONObject line = lines.getJSONObject(i);
-                Assert.assertEquals(names("t", "l", "m"), line.keySet());
-                long timestamp = line.getLong("t");
-                Assert.assertTrue(timestamp >= startMs && timestamp <= System.currentTimeMillis());
-                Assert.assertTrue(line.getString("l").equals("w") || line.getString("l").equals("i"));
-                Assert.assertFalse(line.getString("m").contains(Log.keySdkLogs));
+            List<String> partialLines = numbered("[Test] partial line ", 0, 5);
+            for (String line : partialLines) {
+                logger().w(line);
             }
-        }
+            awaitLogDelivery();
+            Thread.sleep(200);
+            Assert.assertTrue(linesStartingWith("[Test] partial line ", receivedBatches(requests)).isEmpty());
+            logger().flushGatheredLogs();
+            awaitSentBatches();
+            Assert.assertEquals(partialLines, linesStartingWith("[Test] partial line ", receivedBatches(requests)));
 
-        int fullArmedBatches = 0;
-        for (String params : storedRequestParams()) {
-            Map<String, String> decoded = decode(params);
-            if (decoded.containsKey(Log.keySdkLogs) && decoded.get(Log.keySdkLogs).contains("[Test] armed line 9 ")) {
-                Request request = new Request(0L);
-                request.params = new Params(params);
-                Assert.assertFalse("a full batch fits a GET", request.isGettable(new URL(TestUtils.SERVER_URL)));
-                fullArmedBatches++;
+            String padding = repeat('p', 80);
+            List<String> armedLines = new ArrayList<>();
+            for (int i = 0; i < 25; i++) {
+                armedLines.add("[Test] armed line " + i + " " + padding);
+                logger().w(armedLines.get(i));
             }
+            awaitSentBatches();
+            Assert.assertEquals(armedLines, linesStartingWith("[Test] armed line ", receivedBatches(requests)));
+
+            int fullArmedBatches = 0;
+            for (ReceivedRequest request : requests) {
+                if (!request.params.containsKey(Log.keySdkLogs)) {
+                    continue;
+                }
+                TestUtils.validateRequiredParams(request.params);
+                JSONObject batch = new JSONObject(request.params.get(Log.keySdkLogs));
+                Assert.assertEquals(names("i", "d", "l"), batch.keySet());
+                Assert.assertEquals("gather_init", batch.getString("i"));
+                Assert.assertEquals(0, batch.getInt("d"));
+
+                JSONArray lines = batch.getJSONArray("l");
+                Assert.assertTrue("a batch of [" + lines.length() + "] lines", lines.length() >= 1 && lines.length() <= 10);
+                for (int i = 0; i < lines.length(); i++) {
+                    JSONObject line = lines.getJSONObject(i);
+                    Assert.assertEquals(names("t", "l", "m"), line.keySet());
+                    long timestamp = line.getLong("t");
+                    Assert.assertTrue(timestamp >= startMs && timestamp <= System.currentTimeMillis());
+                    Assert.assertTrue(line.getString("l").equals("w") || line.getString("l").equals("i"));
+                    Assert.assertFalse(line.getString("m").contains(Log.keySdkLogs));
+                }
+                if (request.params.get(Log.keySdkLogs).contains("[Test] armed line 9 ")) {
+                    Assert.assertEquals("a full batch fits a GET", "POST", request.method);
+                    fullArmedBatches++;
+                }
+            }
+            Assert.assertEquals(1, fullArmedBatches);
+        } finally {
+            Countly.instance().halt();
+            httpServer.stop(0);
         }
-        Assert.assertEquals(1, fullArmedBatches);
     }
 
     /**
      * While tracking is off the lines are held, the buffer keeps the newest 500 of them, and the
      * lines it drops are reported once, with the next batch.
      * <p>
-     * Verifies that nothing is queued while tracking is off, flush or not; that once tracking is back
-     * on the held lines go out oldest first in full batches of {@code b}, the first one reporting
-     * every dropped line in {@code d}, so the uploaded and the dropped lines add up to every line
-     * logged; and that a {@code b} over the buffer ceiling is clamped to it, so no batch ever holds
-     * more than 500 lines.
+     * Verifies against a local server that nothing is queued while tracking is off, flush or not;
+     * that once tracking is back on the held lines go out oldest first in full batches of {@code b},
+     * one at a time as each is sent, the first one reporting every dropped line in {@code d}, so the
+     * uploaded and the dropped lines add up to every line logged; and that a {@code b} over the
+     * buffer ceiling is clamped to it, so no batch ever holds more than 500 lines.
      */
     @Test
     public void trackingOffHold_keepsTheNewest500Lines_andDAccountsForEveryDroppedLine() throws Exception {
-        server.respondWith(heldGather("gather_hold", "e", 25));
-        init(TestUtils.getConfigSdkBehaviorSettings());
-        assertGathering("gather_hold", "e", 25);
+        List<ReceivedRequest> requests = new CopyOnWriteArrayList<>();
+        HttpServer httpServer = startRecordingServer(requests);
+        try {
+            server.respondWith(heldGather("gather_hold", "e", 25));
+            init(localConfig(httpServer));
+            assertGathering("gather_hold", "e", 25);
 
-        Log logger = logger();
-        //what the SDK logged at the same level during init is held too, and is the oldest
-        int initLines = logger.heldLogLineCount();
-        for (int i = 0; i < 520; i++) {
-            logger.e("[Test] held line " + i);
+            Log logger = logger();
+            //what the SDK logged at the same level during init is held too, and is the oldest
+            int initLines = logger.heldLogLineCount();
+            for (int i = 0; i < 520; i++) {
+                logger.e("[Test] held line " + i);
+            }
+            Assert.assertEquals(ModuleConfiguration.logGatheringMaxBufferedLines, logger.heldLogLineCount());
+            Assert.assertEquals(initLines + 20, logger.droppedLogLineCount);
+            logger.flushGatheredLogs();
+            awaitLogDelivery();
+            Assert.assertEquals(ModuleConfiguration.logGatheringMaxBufferedLines, logger.heldLogLineCount());
+            Assert.assertTrue(logRequests().isEmpty());
+
+            push(new ServerConfigBuilder().tracking(true).logGatheringOn("gather_hold", "e", 25));
+            assertGathering("gather_hold", "e", 25);
+            logger.flushGatheredLogs();
+            awaitSentBatches();
+            Assert.assertEquals(0, logger.heldLogLineCount());
+
+            List<JSONObject> batches = receivedBatches(requests);
+            Assert.assertEquals(20, batches.size());
+            List<String> uploaded = new ArrayList<>();
+            int dropped = 0;
+            for (int b = 0; b < batches.size(); b++) {
+                JSONObject batch = batches.get(b);
+                Assert.assertEquals("gather_hold", batch.getString("i"));
+                Assert.assertEquals(b == 0 ? initLines + 20 : 0, batch.getInt("d"));
+                Assert.assertEquals(25, batch.getJSONArray("l").length());
+                dropped += batch.getInt("d");
+                uploaded.addAll(messagesOf(batch));
+            }
+            Assert.assertEquals(numbered("[Test] held line ", 20, 520), uploaded);
+            Assert.assertEquals(initLines + 520, uploaded.size() + dropped);
+
+            push(heldGather("gather_hold", "e", 9999));
+            assertGathering("gather_hold", "e", ModuleConfiguration.logGatheringMaxBufferedLines);
+            int heldBefore = logger.heldLogLineCount();
+            for (int i = 0; i < 600; i++) {
+                logger.e("[Test] second line " + i);
+            }
+            push(new ServerConfigBuilder().tracking(true).logGatheringOn("gather_hold", "e", 9999));
+            logger.flushGatheredLogs();
+            awaitSentBatches();
+
+            List<JSONObject> later = receivedBatches(requests).subList(20, receivedBatches(requests).size());
+            Assert.assertEquals(1, later.size());
+            Assert.assertEquals(heldBefore + 100, later.get(0).getInt("d"));
+            Assert.assertEquals(numbered("[Test] second line ", 100, 600), messagesOf(later.get(0)));
+        } finally {
+            Countly.instance().halt();
+            httpServer.stop(0);
         }
-        Assert.assertEquals(ModuleConfiguration.logGatheringMaxBufferedLines, logger.heldLogLineCount());
-        Assert.assertEquals(initLines + 20, logger.droppedLogLineCount);
-        logger.flushGatheredLogs();
-        awaitLogDelivery();
-        Assert.assertEquals(ModuleConfiguration.logGatheringMaxBufferedLines, logger.heldLogLineCount());
-        Assert.assertTrue(logRequests().isEmpty());
-
-        push(new ServerConfigBuilder().networking(false).tracking(true).logGatheringOn("gather_hold", "e", 25));
-        assertGathering("gather_hold", "e", 25);
-        Assert.assertEquals(ModuleConfiguration.logGatheringMaxBufferedLines, logger.heldLogLineCount());
-        logger.flushGatheredLogs();
-        awaitLogDelivery();
-        Assert.assertEquals(0, logger.heldLogLineCount());
-
-        List<JSONObject> batches = batches();
-        Assert.assertEquals(20, batches.size());
-        List<String> uploaded = new ArrayList<>();
-        int dropped = 0;
-        for (int b = 0; b < batches.size(); b++) {
-            JSONObject batch = batches.get(b);
-            Assert.assertEquals("gather_hold", batch.getString("i"));
-            Assert.assertEquals(b == 0 ? initLines + 20 : 0, batch.getInt("d"));
-            Assert.assertEquals(25, batch.getJSONArray("l").length());
-            dropped += batch.getInt("d");
-            uploaded.addAll(messagesOf(batch));
-        }
-        Assert.assertEquals(numbered("[Test] held line ", 20, 520), uploaded);
-        Assert.assertEquals(initLines + 520, uploaded.size() + dropped);
-
-        push(heldGather("gather_hold", "e", 9999));
-        assertGathering("gather_hold", "e", ModuleConfiguration.logGatheringMaxBufferedLines);
-        int heldBefore = logger.heldLogLineCount();
-        for (int i = 0; i < 600; i++) {
-            logger.e("[Test] second line " + i);
-        }
-        push(new ServerConfigBuilder().networking(false).tracking(true).logGatheringOn("gather_hold", "e", 9999));
-        logger.flushGatheredLogs();
-        awaitLogDelivery();
-
-        List<JSONObject> later = batches().subList(20, batches().size());
-        Assert.assertEquals(1, later.size());
-        Assert.assertEquals(heldBefore + 100, later.get(0).getInt("d"));
-        Assert.assertEquals(numbered("[Test] second line ", 100, 600), messagesOf(later.get(0)));
     }
 
     /**
-     * Every way a gather ends drops what it holds, and a new gather never carries the lines of an
+     * Every way a gather ends leaves nothing held, and a new gather never carries the lines of an
      * earlier one.
      * <p>
      * Verifies, with tracking off so nothing leaves until the end, that the same directive repeated
      * and a change of levels or batch size within one gather keep the held lines; that
      * {@code "e":false}, a directive without a usable gather id and a live response without any
-     * directive each drop them, stop the capture and release the delivery thread; that a new gather
-     * id drops the lines of the previous gather; and that only the lines of the gather in effect,
-     * with its id, are ever uploaded.
+     * directive each stop the capture and release the delivery thread, their held lines offered to
+     * the request queue once, which refuses them while tracking is off; that a new gather id drops
+     * the lines of the previous gather; and that only the lines of the gather in effect, with its id,
+     * are ever uploaded.
      */
     @Test
-    public void endedOrReplacedGather_dropsTheHeldLines_andANewGatherNeverCarriesTheOldOnes() throws Exception {
+    public void endedOrReplacedGather_leavesNothingHeld_andANewGatherNeverCarriesTheOldOnes() throws Exception {
         server.respondWith(heldGather("gather_a", "e", 10));
         init(TestUtils.getConfigSdkBehaviorSettings());
         Log logger = logger();
@@ -254,7 +266,7 @@ public class SdkLogGatheringTests {
         assertGathering("gather_a", "e", 10);
         Assert.assertEquals(initLines + 2, logger.heldLogLineCount());
 
-        push(new ServerConfigBuilder().networking(false).tracking(false).logGatheringOff());
+        pushStop(new ServerConfigBuilder().networking(false).tracking(false).logGatheringOff());
         assertNotGathering();
         logger.e("[Test] logged while off");
         Assert.assertEquals(0, logger.heldLogLineCount());
@@ -268,12 +280,12 @@ public class SdkLogGatheringTests {
         Assert.assertEquals(0, logger.heldLogLineCount());
         logger.e("[Test] c1");
 
-        push(new ServerConfigBuilder().networking(false).tracking(false).logGatheringDirective(true, "  ", "e", 10));
+        pushStop(new ServerConfigBuilder().networking(false).tracking(false).logGatheringDirective(true, "  ", "e", 10));
         assertNotGathering();
 
         push(heldGather("gather_d", "e", 10));
         logger.e("[Test] d1");
-        push(new ServerConfigBuilder().networking(false).tracking(false));
+        pushStop(new ServerConfigBuilder().networking(false).tracking(false));
         assertNotGathering();
 
         push(heldGather("gather_e", "e", 10));
@@ -343,45 +355,109 @@ public class SdkLogGatheringTests {
     }
 
     /**
-     * While consent is required and none is given, gathered lines are held, as they quote event
-     * keys and whole requests.
+     * While consent is required, a gathered line goes out only once the consent of the feature it
+     * belongs to is given, a line of no feature needs both the events and the user profiles
+     * consent, and the coordinates handed to a session are logged only with location consent.
      * <p>
-     * Verifies that neither a full batch nor a flush queues anything before any consent is given,
-     * and that once one is, a flush queues every held line.
+     * Verifies, with networking off, that the batch queued with only the sessions consent given
+     * holds no line of another feature and no coordinates; that the stop that follows events consent
+     * queues the events line but neither the location line nor the line of no feature; and that
+     * with location consent given the coordinates are gathered.
      */
     @Test
-    public void requiredConsent_holdsTheLinesUntilAnyConsentIsGiven() throws Exception {
-        server.respondWith(new ServerConfigBuilder().networking(false).logGatheringOn("gather_consent", "e", 10));
-        init(TestUtils.getConfigSdkBehaviorSettings().setRequiresConsent(true).enableFeatures(Config.Feature.Events));
-        assertGathering("gather_consent", "e", 10);
+    public void requiredConsent_gathersEachLineOnlyWithTheConsentOfItsFeature() throws Exception {
+        Config config = TestUtils.getConfigSdkBehaviorSettings().setRequiresConsent(true)
+            .enableFeatures(Config.Feature.Events, Config.Feature.Sessions, Config.Feature.Location, Config.Feature.UserProfiles);
+        server.respondWith(new ServerConfigBuilder().networking(false).logGatheringOn("gather_consent", "ewidv", 500));
+        init(config);
+        assertGathering("gather_consent", "ewidv", 500);
 
         Log logger = logger();
-        int initLines = logger.heldLogLineCount();
-        List<String> consentLines = numbered("[Test] consent line ", 0, 12);
-        for (String line : consentLines) {
-            logger.e(line);
-        }
-        awaitLogDelivery();
+        logger.e("[Test] a line of no feature");
+        logger.e("[ModuleEvents] an events line");
+        logger.e("[ModuleLocation] a location line");
+        Countly.onConsent(Config.Feature.Sessions);
+        Countly.session().begin();
+        ((SessionImpl) Countly.session()).addLocation(12.345678, 98.765432);
         logger.flushGatheredLogs();
         awaitLogDelivery();
-        Assert.assertTrue(logRequests().isEmpty());
-        Assert.assertEquals(initLines + 12, logger.heldLogLineCount());
+
+        List<String> queued = receivedLines(batches());
+        Assert.assertFalse(queued.isEmpty());
+        Assert.assertFalse(queued.contains("[Test] a line of no feature"));
+        Assert.assertFalse(queued.contains("[ModuleEvents] an events line"));
+        Assert.assertFalse(queued.contains("[ModuleLocation] a location line"));
+        for (String line : queued) {
+            Assert.assertFalse(line, line.contains("12.345678"));
+        }
+        Assert.assertTrue(logger.awaitingConsentLineCount() >= 3);
 
         Countly.onConsent(Config.Feature.Events);
+        Countly.instance().stop();
+        List<String> stopped = receivedLines(storedBatchesOnDisk());
+        Assert.assertTrue(stopped.contains("[ModuleEvents] an events line"));
+        Assert.assertFalse(stopped.contains("[ModuleLocation] a location line"));
+        Assert.assertFalse(stopped.contains("[Test] a line of no feature"));
+        for (String line : stopped) {
+            Assert.assertFalse(line, line.contains("12.345678"));
+        }
+
+        server.respondWith(new ServerConfigBuilder().networking(false).logGatheringOn("gather_location", "ewidv", 500));
+        init(config);
+        Countly.onConsent(Config.Feature.Sessions, Config.Feature.Location);
+        Countly.session().begin();
+        ((SessionImpl) Countly.session()).addLocation(12.345678, 98.765432);
+        Countly.instance().stop();
+        boolean coordinatesGathered = false;
+        for (JSONObject batch : storedBatchesOnDisk()) {
+            if ("gather_location".equals(batch.getString("i"))) {
+                for (String line : messagesOf(batch)) {
+                    coordinatesGathered |= line.contains("12.345678");
+                }
+            }
+        }
+        Assert.assertTrue(coordinatesGathered);
+    }
+
+    /**
+     * While consent is required, a feature the app did not enable holds no line back, and a removed
+     * consent drops the held lines of its feature.
+     * <p>
+     * Verifies, with networking off and the user profiles feature not enabled, that a line of no
+     * feature is gathered once the events and sessions consents are given; and that after the
+     * events consent is removed the stop queues the held sessions line but not the held events line.
+     */
+    @Test
+    public void requiredConsent_aFeatureNotEnabledHoldsNoLineBack_andARemovedConsentDropsItsLines() throws Exception {
+        Config config = TestUtils.getConfigSdkBehaviorSettings().setRequiresConsent(true)
+            .enableFeatures(Config.Feature.Events, Config.Feature.Sessions);
+        server.respondWith(new ServerConfigBuilder().networking(false).logGatheringOn("gather_enabled", "e", 500));
+        init(config);
+        Log logger = logger();
+        logger.e("[Test] a line of no feature");
+        Countly.onConsent(Config.Feature.Events, Config.Feature.Sessions);
         logger.flushGatheredLogs();
         awaitLogDelivery();
-        Assert.assertEquals(0, logger.heldLogLineCount());
-        Assert.assertEquals(consentLines, linesStartingWith("[Test] consent line ", batches()));
+        Assert.assertTrue(receivedLines(batches()).contains("[Test] a line of no feature"));
+
+        logger.e("[ModuleEvents] a held events line");
+        logger.e("[SessionImpl] a held sessions line");
+        Countly.onConsentRemoval(Config.Feature.Events);
+        Countly.instance().stop();
+
+        List<String> stopped = receivedLines(storedBatchesOnDisk());
+        Assert.assertTrue(stopped.contains("[SessionImpl] a held sessions line"));
+        Assert.assertFalse(stopped.contains("[ModuleEvents] a held events line"));
     }
 
     /**
      * The global timer flushes a batch that is not full, a stop queues what is held before the
      * storage stops, and a halt discards it. Either way the logger ends for good.
      * <p>
-     * Verifies that a line below the batch size goes out on a tick of a fast global timer; that
-     * {@code stop()} queues the held line synchronously, so it is on disk once stop returns, with
-     * the gather id; that the stopped logger captures and queues nothing more and its delivery
-     * thread ends; and that {@code halt()} queues nothing at all.
+     * Verifies that a line below the batch size reaches a local server on a tick of a fast global
+     * timer; that, with networking off, {@code stop()} queues the held line synchronously, so it is
+     * on disk once stop returns, with the gather id; that the stopped logger captures and queues
+     * nothing more and its delivery thread ends; and that {@code halt()} queues nothing at all.
      */
     @Test
     public void timerTick_flushesAPartialBatch_stopQueuesWhatIsHeld_andHaltDiscardsIt() throws Exception {
@@ -391,69 +467,76 @@ public class SdkLogGatheringTests {
                 queuedLogRequests.add(message);
             }
         };
-        server.respondWith(new ServerConfigBuilder().networking(false).logGatheringOn("gather_tick", "e", 100));
-        init(TestUtils.getConfigSdkBehaviorSettings().setLogListener(listener));
-        Log logger = logger();
-        awaitLogDelivery();
+        List<ReceivedRequest> requests = new CopyOnWriteArrayList<>();
+        HttpServer httpServer = startRecordingServer(requests);
+        try {
+            server.respondWith(new ServerConfigBuilder().logGatheringOn("gather_tick", "e", 100));
+            init(localConfig(httpServer).setLogListener(listener));
+            Log logger = logger();
+            awaitSentBatches();
 
-        //the timer ticks through the modules, so it is sped up only after init built them
-        CountlyTimer.TIMER_DELAY_MS = 50;
-        push(new ServerConfigBuilder().networking(false).sessionUpdateInterval(30).logGatheringOn("gather_tick", "e", 100));
-        logger.e("[Test] tick line");
-        Assert.assertTrue("no tick flushed the partial batch", waitFor(10_000, () -> queuedLinesContain(queuedLogRequests, "[Test] tick line")));
+            //the timer ticks through the modules, so it is sped up only after init built them
+            CountlyTimer.TIMER_DELAY_MS = 50;
+            push(new ServerConfigBuilder().sessionUpdateInterval(30).logGatheringOn("gather_tick", "e", 100));
+            logger.e("[Test] tick line");
+            Assert.assertTrue("no tick flushed the partial batch", TestUtils.waitFor(10_000, () -> !linesStartingWith("[Test] tick line", receivedBatches(requests)).isEmpty()));
 
-        CountlyTimer.TIMER_DELAY_MS = 0;
-        push(new ServerConfigBuilder().networking(false).sessionUpdateInterval(60).logGatheringOn("gather_tick", "e", 100));
-        //a tick of the replaced fast timer may still be running
-        Thread.sleep(250);
-        awaitLogDelivery();
-        logger.e("[Test] tail line");
-        Assert.assertEquals(1, logger.heldLogLineCount());
-        Set<Thread> deliveryThreads = liveDeliveryThreads();
-        Assert.assertFalse(deliveryThreads.isEmpty());
-        int queuedBeforeStop = queuedLogRequests.size();
+            CountlyTimer.TIMER_DELAY_MS = 0;
+            push(new ServerConfigBuilder().networking(false).sessionUpdateInterval(60).logGatheringOn("gather_tick", "e", 100));
+            //a tick of the replaced fast timer may still be running
+            Thread.sleep(250);
+            awaitLogDelivery();
+            logger.e("[Test] tail line");
+            Assert.assertEquals(1, logger.heldLogLineCount());
+            Set<Thread> deliveryThreads = liveDeliveryThreads();
+            Assert.assertFalse(deliveryThreads.isEmpty());
+            int queuedBeforeStop = queuedLogRequests.size();
 
-        Countly.instance().stop();
-        Assert.assertEquals(queuedBeforeStop + 1, queuedLogRequests.size());
-        JSONObject tail = null;
-        for (String params : storedRequestParams()) {
-            Map<String, String> decoded = decode(params);
-            if (decoded.containsKey(Log.keySdkLogs) && decoded.get(Log.keySdkLogs).contains("[Test] tail line")) {
-                tail = new JSONObject(decoded.get(Log.keySdkLogs));
-            }
-        }
-        Assert.assertNotNull("stop did not queue the held line", tail);
-        Assert.assertEquals("gather_tick", tail.getString("i"));
-        Assert.assertEquals(Arrays.asList("[Test] tail line"), messagesOf(tail));
-
-        Assert.assertEquals(LogGatheringState.NOT_GATHERING, logger.logGatheringState);
-        logger.e("[Test] logged after stop");
-        logger.flushGatheredLogs();
-        Assert.assertEquals(0, logger.heldLogLineCount());
-        Assert.assertNull(logger.logDeliveryExecutor);
-        Assert.assertEquals(queuedBeforeStop + 1, queuedLogRequests.size());
-        Assert.assertTrue("the delivery thread outlived the SDK", waitFor(5_000, () -> {
-            for (Thread thread : deliveryThreads) {
-                if (thread.isAlive()) {
-                    return false;
+            Countly.instance().stop();
+            Assert.assertEquals(queuedBeforeStop + 1, queuedLogRequests.size());
+            JSONObject tail = null;
+            for (JSONObject batch : storedBatchesOnDisk()) {
+                if (messagesOf(batch).contains("[Test] tail line")) {
+                    tail = batch;
                 }
             }
-            return true;
-        }));
+            Assert.assertNotNull("stop did not queue the held line", tail);
+            Assert.assertEquals("gather_tick", tail.getString("i"));
+            Assert.assertEquals(Arrays.asList("[Test] tail line"), messagesOf(tail));
 
-        server.respondWith(new ServerConfigBuilder().networking(false).logGatheringOn("gather_halt", "e", 100));
-        init(TestUtils.getConfigSdkBehaviorSettings().setLogListener(listener));
-        Log halted = logger();
-        assertGathering("gather_halt", "e", 100);
-        awaitLogDelivery();
-        halted.e("[Test] halted line");
-        Assert.assertEquals(1, halted.heldLogLineCount());
-        int queuedBeforeHalt = queuedLogRequests.size();
+            Assert.assertEquals(LogGatheringState.NOT_GATHERING, logger.logGatheringState);
+            logger.e("[Test] logged after stop");
+            logger.flushGatheredLogs();
+            Assert.assertEquals(0, logger.heldLogLineCount());
+            Assert.assertNull(logger.logDeliveryExecutor);
+            Assert.assertEquals(queuedBeforeStop + 1, queuedLogRequests.size());
+            Assert.assertTrue("the delivery thread outlived the SDK", TestUtils.waitFor(5_000, () -> {
+                for (Thread thread : deliveryThreads) {
+                    if (thread.isAlive()) {
+                        return false;
+                    }
+                }
+                return true;
+            }));
 
-        Countly.instance().halt();
-        Assert.assertEquals(queuedBeforeHalt, queuedLogRequests.size());
-        Assert.assertEquals(LogGatheringState.NOT_GATHERING, halted.logGatheringState);
-        Assert.assertEquals(0, halted.heldLogLineCount());
+            server.respondWith(new ServerConfigBuilder().networking(false).logGatheringOn("gather_halt", "e", 100));
+            init(TestUtils.getConfigSdkBehaviorSettings().setLogListener(listener));
+            Log halted = logger();
+            assertGathering("gather_halt", "e", 100);
+            awaitLogDelivery();
+            int heldAtStart = halted.heldLogLineCount();
+            halted.e("[Test] halted line");
+            Assert.assertEquals(heldAtStart + 1, halted.heldLogLineCount());
+            int queuedBeforeHalt = queuedLogRequests.size();
+
+            Countly.instance().halt();
+            Assert.assertEquals(queuedBeforeHalt, queuedLogRequests.size());
+            Assert.assertEquals(LogGatheringState.NOT_GATHERING, halted.logGatheringState);
+            Assert.assertEquals(0, halted.heldLogLineCount());
+        } finally {
+            Countly.instance().halt();
+            httpServer.stop(0);
+        }
     }
 
     /**
@@ -466,49 +549,29 @@ public class SdkLogGatheringTests {
      */
     @Test
     public void uploadThreads_neverGatherTheirOwnLines_whileLinesAboutOrdinaryRequestsAreGathered() throws Exception {
-        List<JSONObject> received = new CopyOnWriteArrayList<>();
-        AtomicInteger eventRequests = new AtomicInteger();
-        HttpServer httpServer = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
-        httpServer.createContext("/", exchange -> {
-            String query = exchange.getRequestURI().getRawQuery();
-            Map<String, String> params = decode((query == null ? "" : query) + "&" + readAll(exchange.getRequestBody()));
-            if (params.containsKey(Log.keySdkLogs)) {
-                received.add(new JSONObject(params.get(Log.keySdkLogs)));
-            }
-            if (params.containsKey("events")) {
-                eventRequests.incrementAndGet();
-            }
-            byte[] body = "{\"result\":\"Success\"}".getBytes(StandardCharsets.UTF_8);
-            exchange.sendResponseHeaders(200, body.length);
-            try (OutputStream os = exchange.getResponseBody()) {
-                os.write(body);
-            }
-        });
-        httpServer.start();
+        List<ReceivedRequest> requests = new CopyOnWriteArrayList<>();
+        HttpServer httpServer = startRecordingServer(requests);
 
         List<String> heard = new CopyOnWriteArrayList<>();
         try {
-            Config config = new Config("http://localhost:" + httpServer.getAddress().getPort(), TestUtils.SERVER_APP_KEY, TestUtils.getTestSDirectory())
-                .setApplicationVersion(TestUtils.APPLICATION_VERSION)
-                .setCustomDeviceId(TestUtils.DEVICE_ID)
+            Config config = localConfig(httpServer)
                 .enableFeatures(Config.Feature.Events)
                 .setEventQueueSizeToSend(1)
-                .setNetworkRequestCooldown(0)
                 .setLogListener((message, level) -> heard.add(message));
             server.respondWith(new ServerConfigBuilder().logGatheringOn("gather_net", "ewidv", 50));
             init(config);
 
-            Assert.assertTrue("no upload arrived", waitFor(30_000, () -> !received.isEmpty()));
-            Assert.assertTrue("no upload completed", waitFor(30_000, () -> !completedRequests(heard, requestIds(heard, Log.transportMarker)).isEmpty()));
+            Assert.assertTrue("no upload arrived", TestUtils.waitFor(30_000, () -> !receivedBatches(requests).isEmpty()));
+            Assert.assertTrue("no upload completed", TestUtils.waitFor(30_000, () -> !completedRequests(heard, requestIds(heard, Log.transportMarker)).isEmpty()));
 
             Countly.instance().events().recordEvent("ordinary_event");
-            Assert.assertTrue("the event request never arrived", waitFor(30_000, () -> eventRequests.get() > 0));
-            Assert.assertTrue("the event request never completed", waitFor(30_000, () -> !completedRequests(heard, requestIds(heard, "events=")).isEmpty()));
+            Assert.assertTrue("the event request never arrived", TestUtils.waitFor(30_000, () -> requests.stream().anyMatch(request -> request.params.containsKey("events"))));
+            Assert.assertTrue("the event request never completed", TestUtils.waitFor(30_000, () -> !completedRequests(heard, requestIds(heard, "events=")).isEmpty()));
             Set<String> eventIds = completedRequests(heard, requestIds(heard, "events="));
 
             logger().flushGatheredLogs();
-            Assert.assertTrue("the completion of the event request was not uploaded", waitFor(30_000, () -> {
-                for (String line : receivedLines(received)) {
+            Assert.assertTrue("the completion of the event request was not uploaded", TestUtils.waitFor(30_000, () -> {
+                for (String line : receivedLines(receivedBatches(requests))) {
                     for (String eventId : eventIds) {
                         if (line.startsWith("[Networking] Request " + eventId + " sent?: true")) {
                             return true;
@@ -520,10 +583,10 @@ public class SdkLogGatheringTests {
 
             Set<String> uploadIds = completedRequests(heard, requestIds(heard, Log.transportMarker));
             Assert.assertFalse(uploadIds.isEmpty());
-            for (JSONObject batch : received) {
+            for (JSONObject batch : receivedBatches(requests)) {
                 Assert.assertEquals("gather_net", batch.getString("i"));
             }
-            for (String line : receivedLines(received)) {
+            for (String line : receivedLines(receivedBatches(requests))) {
                 Assert.assertFalse(line, line.contains(Log.keySdkLogs));
                 Assert.assertFalse(line, line.startsWith("[Log] deliverHeldLogBatches"));
                 for (String uploadId : uploadIds) {
@@ -547,22 +610,19 @@ public class SdkLogGatheringTests {
      */
     @Test
     public void idleArmedSdk_uploadsNothingAboutItsOwnUploads_onTheTicksAfterAnUpload() throws Exception {
-        List<JSONObject> received = new CopyOnWriteArrayList<>();
-        HttpServer httpServer = startBatchServer(received);
+        List<ReceivedRequest> requests = new CopyOnWriteArrayList<>();
+        HttpServer httpServer = startRecordingServer(requests);
         try {
-            Config config = new Config("http://localhost:" + httpServer.getAddress().getPort(), TestUtils.SERVER_APP_KEY, TestUtils.getTestSDirectory())
-                .setApplicationVersion(TestUtils.APPLICATION_VERSION)
-                .setCustomDeviceId(TestUtils.DEVICE_ID)
-                .setNetworkRequestCooldown(0);
             server.respondWith(new ServerConfigBuilder().logGatheringOn("gather_idle", "ewidv", 100));
-            init(config);
+            init(localConfig(httpServer));
 
-            awaitIdleTicks(received);
+            awaitIdleTicks(requests);
             logger().e("[Test] idle probe");
-            Assert.assertEquals(1, tickAndCountBatches(received));
+            Assert.assertEquals(1, tickAndCountBatches(requests));
+            List<JSONObject> received = receivedBatches(requests);
             Assert.assertTrue(messagesOf(received.get(received.size() - 1)).contains("[Test] idle probe"));
             for (int tick = 0; tick < 3; tick++) {
-                Assert.assertEquals("tick " + tick, 0, tickAndCountBatches(received));
+                Assert.assertEquals("tick " + tick, 0, tickAndCountBatches(requests));
             }
             Assert.assertEquals(0, logger().heldLogLineCount());
         } finally {
@@ -572,27 +632,146 @@ public class SdkLogGatheringTests {
     }
 
     /**
-     * An armed SDK that is otherwise idle queues nothing about its own batches while networking is
-     * off.
+     * While nothing is sent, one log batch waits in the request queue and the rest stays in the
+     * capped buffer; once networking is back on, the batches go out one after another until nothing
+     * is held.
      * <p>
-     * Verifies on disk that once the lines logged before were queued a tick queues nothing, that a
-     * line logged then is queued in one batch on the next tick, and that the ticks after that queue
-     * nothing, as neither storing a batch nor the drain it asks for, which networking off skips, is
-     * gathered.
+     * Verifies, with networking off, that full batches and flushes queue nothing while a batch
+     * waits, the lines staying held; then, with networking on against a local server, that every
+     * held line arrives once, in order, with never more than one batch stored at a time.
      */
     @Test
-    public void idleArmedSdk_withNetworkingOff_queuesNothingAboutItsOwnBatches() throws Exception {
-        server.respondWith(new ServerConfigBuilder().networking(false).logGatheringOn("gather_idle_off", "ewidv", 100));
-        init(TestUtils.getConfigSdkBehaviorSettings());
+    public void networkingOff_queuesOneBatchAtATime_andTheRestFollowsOnceItIsSent() throws Exception {
+        List<ReceivedRequest> requests = new CopyOnWriteArrayList<>();
+        HttpServer httpServer = startRecordingServer(requests);
+        try {
+            server.respondWith(new ServerConfigBuilder().networking(false).logGatheringOn("gather_offline", "e", 10));
+            init(localConfig(httpServer));
+            awaitLogDelivery();
+            Log logger = logger();
+            for (int i = 0; i < 30; i++) {
+                logger.e("[Test] offline line " + i);
+            }
+            for (int flush = 0; flush < 3; flush++) {
+                logger.flushGatheredLogs();
+                awaitLogDelivery();
+            }
+            Assert.assertEquals(1, storedBatchCount());
+            Assert.assertTrue(logger.heldLogLineCount() >= 20);
 
-        awaitIdleTicks(null);
-        logger().e("[Test] idle probe");
-        Assert.assertEquals(1, tickAndCountBatches(null));
-        List<JSONObject> queued = batches();
-        Assert.assertTrue(messagesOf(queued.get(queued.size() - 1)).contains("[Test] idle probe"));
-        for (int tick = 0; tick < 3; tick++) {
-            Assert.assertEquals("tick " + tick, 0, tickAndCountBatches(null));
+            push(new ServerConfigBuilder().logGatheringOn("gather_offline", "e", 10));
+            int mostStored = 0;
+            long end = System.currentTimeMillis() + 30_000;
+            while (System.currentTimeMillis() < end) {
+                mostStored = Math.max(mostStored, storedBatchCount());
+                if (logger.heldLogLineCount() == 0 && storedBatchCount() == 0) {
+                    break;
+                }
+                Thread.sleep(5);
+            }
+            awaitSentBatches();
+            Assert.assertEquals(1, mostStored);
+            Assert.assertEquals(numbered("[Test] offline line ", 0, 30), linesStartingWith("[Test] offline line ", receivedBatches(requests)));
+        } finally {
+            Countly.instance().halt();
+            httpServer.stop(0);
         }
+    }
+
+    /**
+     * A device ID change without merge queues the gathered lines under the previous device ID and
+     * stops the gather, an answer requested for a previous device ID does not arm it again, and a
+     * change with merge keeps a gather running.
+     * <p>
+     * Verifies, with networking off, that the line logged before the change is stored before the
+     * change returns, under the previous device ID and with the gather id; that nothing logged
+     * afterwards is held; that a settings answer requested before a later change and applied after
+     * it leaves the gather stopped while its other settings apply; that an answer for the current
+     * device ID arms a gather again; that a change with merge leaves that gather running; and that
+     * an answer requested before a change with merge arms its gather.
+     */
+    @Test
+    public void deviceIdChangeWithoutMerge_queuesTheLinesUnderThePreviousId_andStopsTheGather() throws Exception {
+        server.respondWith(new ServerConfigBuilder().networking(false).logGatheringOn("gather_user_a", "e", 100));
+        init(TestUtils.getConfigSdkBehaviorSettings());
+        awaitLogDelivery();
+        logger().e("[Test] line of user A");
+        Countly.instance().deviceId().changeWithoutMerge("user_B");
+
+        Map<String, String> userA = null;
+        for (Map<String, String> request : logRequests()) {
+            if (request.get(Log.keySdkLogs).contains("[Test] line of user A")) {
+                userA = request;
+            }
+        }
+        Assert.assertNotNull("the line of user A was not queued before the change", userA);
+        Assert.assertEquals(TestUtils.DEVICE_ID, userA.get("device_id"));
+        Assert.assertEquals("gather_user_a", new JSONObject(userA.get(Log.keySdkLogs)).getString("i"));
+        assertNotGathering();
+        logger().e("[Test] line of user B");
+        Assert.assertEquals(0, logger().heldLogLineCount());
+
+        AtomicReference<ImmediateRequestMaker.InternalImmediateRequestCallback> heldAnswer = new AtomicReference<>();
+        InternalConfig config = SDKCore.instance.config;
+        config.immediateRequestGenerator = () -> (requestData, customEndpoint, transport, requestShouldBeDelayed, networkingIsEnabled, callback, log) -> heldAnswer.set(callback);
+        module().fetchConfigFromServer(config);
+        Assert.assertNotNull(heldAnswer.get());
+        Countly.instance().deviceId().changeWithoutMerge("user_C");
+        heldAnswer.get().callback(new JSONObject(new ServerConfigBuilder().networking(false).sessionUpdateInterval(45).logGatheringOn("gather_stale", "e", 100).build()));
+        assertNotGathering();
+        Assert.assertEquals(45, module().getSessionUpdateInterval());
+
+        config.immediateRequestGenerator = server;
+        push(new ServerConfigBuilder().networking(false).logGatheringOn("gather_user_c", "e", 100));
+        assertGathering("gather_user_c", "e", 100);
+        Countly.instance().deviceId().changeWithMerge("user_D");
+        assertGathering("gather_user_c", "e", 100);
+
+        config.immediateRequestGenerator = () -> (requestData, customEndpoint, transport, requestShouldBeDelayed, networkingIsEnabled, callback, log) -> heldAnswer.set(callback);
+        module().fetchConfigFromServer(config);
+        Countly.instance().deviceId().changeWithMerge("user_E");
+        heldAnswer.get().callback(new JSONObject(new ServerConfigBuilder().networking(false).logGatheringOn("gather_after_merge", "e", 100).build()));
+        assertGathering("gather_after_merge", "e", 100);
+    }
+
+    /**
+     * A gather the server stops queues the lines it held once, with its id, and a gather replaced
+     * by a new id drops them.
+     * <p>
+     * Verifies, with networking off and tracking on, that after {@code "e":false} exactly the lines
+     * held until then are stored, in one batch with the stopped gather's id, past the batch already
+     * waiting, and nothing logged afterwards; and that a gather replaced by a new id holds none of
+     * the lines of the one before.
+     */
+    @Test
+    public void stoppedGather_queuesItsHeldLinesOnce_whileAReplacedGatherDropsThem() throws Exception {
+        server.respondWith(new ServerConfigBuilder().networking(false).logGatheringOn("gather_stopped", "e", 100));
+        init(TestUtils.getConfigSdkBehaviorSettings());
+        awaitLogDelivery();
+        logger().e("[Test] stopped 1");
+        logger().e("[Test] stopped 2");
+
+        push(new ServerConfigBuilder().networking(false).logGatheringOff());
+        assertNotGathering();
+        Assert.assertTrue("the held lines were not queued", TestUtils.waitFor(10_000, () -> linesStartingWith("[Test] stopped ", batches()).size() == 2));
+        JSONObject tail = null;
+        for (JSONObject batch : batches()) {
+            if (messagesOf(batch).contains("[Test] stopped 1")) {
+                tail = batch;
+            }
+        }
+        Assert.assertNotNull(tail);
+        Assert.assertEquals("gather_stopped", tail.getString("i"));
+        Assert.assertEquals(Arrays.asList("[Test] stopped 1", "[Test] stopped 2"), linesStartingWith("[Test] stopped ", Arrays.asList(tail)));
+        logger().e("[Test] after the stop");
+        Thread.sleep(200);
+        Assert.assertTrue(linesStartingWith("[Test] after the stop", batches()).isEmpty());
+
+        push(new ServerConfigBuilder().networking(false).logGatheringOn("gather_first", "e", 100));
+        logger().e("[Test] first gather line");
+        Assert.assertTrue(logger().heldLogLineCount() >= 1);
+        push(new ServerConfigBuilder().networking(false).logGatheringOn("gather_second", "e", 100));
+        assertGathering("gather_second", "e", 100);
         Assert.assertEquals(0, logger().heldLogLineCount());
     }
 
@@ -617,19 +796,19 @@ public class SdkLogGatheringTests {
             storageBusy.countDown();
             storageFree.await(30, TimeUnit.SECONDS);
         });
-        AtomicReference<Boolean> queuedBatch = new AtomicReference<>();
+        AtomicReference<Long> queuedBatch = new AtomicReference<>(-1L);
         Thread queueing = new Thread(() -> queuedBatch.set(ModuleRequests.pushSdkLogs(config, "{\"i\":\"gather_cancel\",\"d\":0,\"l\":[]}")));
         try {
             Assert.assertTrue(storageBusy.await(30, TimeUnit.SECONDS));
             queueing.start();
-            Assert.assertTrue("the queueing never waited for its store", waitFor(30_000, () -> isWaitingForAFuture(queueing)));
+            Assert.assertTrue("the queueing never waited for its store", TestUtils.waitFor(30_000, () -> isWaitingForAFuture(queueing)));
             queueing.interrupt();
             queueing.join(30_000);
         } finally {
             storageFree.countDown();
         }
 
-        Assert.assertEquals(Boolean.FALSE, queuedBatch.get());
+        Assert.assertNull(queuedBatch.get());
         Storage.await(mock(Log.class));
         Assert.assertEquals(storedBefore, logRequests().size());
     }
@@ -638,20 +817,36 @@ public class SdkLogGatheringTests {
     // region helpers
 
     /**
-     * Starts a local server that accepts every request and keeps the log batches it receives.
+     * A request a local server received.
+     */
+    private static final class ReceivedRequest {
+        final String method;
+        final Map<String, String> params;
+
+        /**
+         * Holds one request.
+         *
+         * @param method the HTTP method it came with
+         * @param params its parameters, from the query and the body
+         */
+        ReceivedRequest(String method, Map<String, String> params) {
+            this.method = method;
+            this.params = params;
+        }
+    }
+
+    /**
+     * Starts a local server that accepts every request and records it.
      *
-     * @param received where the batches go, in arrival order
+     * @param requests where the requests go, in arrival order
      * @return the started server
      * @throws IOException when the server cannot start
      */
-    private static HttpServer startBatchServer(List<JSONObject> received) throws IOException {
+    private static HttpServer startRecordingServer(List<ReceivedRequest> requests) throws IOException {
         HttpServer httpServer = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
         httpServer.createContext("/", exchange -> {
             String query = exchange.getRequestURI().getRawQuery();
-            Map<String, String> params = decode((query == null ? "" : query) + "&" + readAll(exchange.getRequestBody()));
-            if (params.containsKey(Log.keySdkLogs)) {
-                received.add(new JSONObject(params.get(Log.keySdkLogs)));
-            }
+            requests.add(new ReceivedRequest(exchange.getRequestMethod(), decode((query == null ? "" : query) + "&" + readAll(exchange.getRequestBody()))));
             byte[] body = "{\"result\":\"Success\"}".getBytes(StandardCharsets.UTF_8);
             exchange.sendResponseHeaders(200, body.length);
             try (OutputStream os = exchange.getResponseBody()) {
@@ -663,15 +858,80 @@ public class SdkLogGatheringTests {
     }
 
     /**
+     * The log batches among the requests a local server received.
+     *
+     * @param requests the requests, in arrival order
+     * @return the batches, in arrival order
+     */
+    private static List<JSONObject> receivedBatches(List<ReceivedRequest> requests) {
+        List<JSONObject> received = new ArrayList<>();
+        for (ReceivedRequest request : requests) {
+            if (request.params.containsKey(Log.keySdkLogs)) {
+                received.add(new JSONObject(request.params.get(Log.keySdkLogs)));
+            }
+        }
+        return received;
+    }
+
+    /**
+     * The test configuration, sending to a local server instead of the test server.
+     *
+     * @param httpServer the local server
+     * @return the configuration
+     */
+    private static Config localConfig(HttpServer httpServer) {
+        return new Config("http://localhost:" + httpServer.getAddress().getPort(), TestUtils.SERVER_APP_KEY, TestUtils.getTestSDirectory())
+            .setApplicationVersion(TestUtils.APPLICATION_VERSION)
+            .setCustomDeviceId(TestUtils.DEVICE_ID)
+            .setNetworkRequestCooldown(0);
+    }
+
+    /**
+     * Waits until every batch the logger queued was sent and no delivery is left to run, as each
+     * sent batch lets the next one go.
+     *
+     * @throws Exception when the batches are not all sent in time
+     */
+    private static void awaitSentBatches() throws Exception {
+        for (int round = 0; round < 200; round++) {
+            awaitLogDelivery();
+            Assert.assertTrue("a queued batch never reached the server", TestUtils.waitFor(30_000, () -> storedBatchCount() == 0));
+            awaitLogDelivery();
+            if (storedBatchCount() == 0) {
+                return;
+            }
+        }
+        Assert.fail("the logger kept queueing batches");
+    }
+
+    /**
+     * The log batches stored on disk, read straight from the request files, which works once the
+     * SDK stopped too.
+     *
+     * @return the batches
+     * @throws IOException when a request file cannot be read
+     */
+    private static List<JSONObject> storedBatchesOnDisk() throws IOException {
+        List<JSONObject> stored = new ArrayList<>();
+        for (String params : storedRequestParams()) {
+            Map<String, String> decoded = decode(params);
+            if (decoded.containsKey(Log.keySdkLogs)) {
+                stored.add(new JSONObject(decoded.get(Log.keySdkLogs)));
+            }
+        }
+        return stored;
+    }
+
+    /**
      * Ticks until a tick queues no batch, which an idle SDK reaches once the lines it logged before
      * went out, as nothing it logs about a batch is gathered.
      *
-     * @param received the batches a local server received, {@code null} while networking is off
+     * @param requests the requests a local server received
      * @throws Exception when a batch does not go out in time
      */
-    private static void awaitIdleTicks(@Nullable List<JSONObject> received) throws Exception {
+    private static void awaitIdleTicks(List<ReceivedRequest> requests) throws Exception {
         for (int tick = 0; tick < 10; tick++) {
-            if (tickAndCountBatches(received) == 0) {
+            if (tickAndCountBatches(requests) == 0) {
                 return;
             }
         }
@@ -679,37 +939,33 @@ public class SdkLogGatheringTests {
     }
 
     /**
-     * Flushes what is held, as a timer tick does, waits until the batches it queued are stored, and
-     * sent while networking is on, then lets the drain that follows them run.
+     * Flushes what is held, as a timer tick does, waits until the batches it queued are sent, then
+     * lets the drain that follows them run.
      *
-     * @param received the batches a local server received, {@code null} while networking is off
+     * @param requests the requests a local server received
      * @return how many batches the tick queued
      * @throws Exception when a batch does not go out in time
      */
-    private static int tickAndCountBatches(@Nullable List<JSONObject> received) throws Exception {
-        int before = settledBatchCount(received);
+    private static int tickAndCountBatches(List<ReceivedRequest> requests) throws Exception {
+        int before = settledBatchCount(requests);
         logger().flushGatheredLogs();
         awaitLogDelivery();
-        int after = settledBatchCount(received);
+        int after = settledBatchCount(requests);
         //nothing tells when the drain a stored batch asked for has finished, so it gets a moment
         Thread.sleep(200);
         return after - before;
     }
 
     /**
-     * How many batches were queued so far, counted while none is in flight: the stored ones while
-     * networking is off, otherwise the ones a local server received once every stored one was sent.
+     * How many batches a local server received, counted once every stored one was sent.
      *
-     * @param received the batches a local server received, {@code null} while networking is off
+     * @param requests the requests a local server received
      * @return the number of batches
      * @throws InterruptedException when interrupted while waiting
      */
-    private static int settledBatchCount(@Nullable List<JSONObject> received) throws InterruptedException {
-        if (received == null) {
-            return storedBatchCount();
-        }
-        Assert.assertTrue("a queued batch never reached the server", waitFor(30_000, () -> storedBatchCount() == 0));
-        return received.size();
+    private static int settledBatchCount(List<ReceivedRequest> requests) throws InterruptedException {
+        Assert.assertTrue("a queued batch never reached the server", TestUtils.waitFor(30_000, () -> storedBatchCount() == 0));
+        return receivedBatches(requests).size();
     }
 
     /**
@@ -768,6 +1024,22 @@ public class SdkLogGatheringTests {
     private void push(ServerConfigBuilder builder) {
         server.respondWith(builder);
         module().fetchConfigFromServer(SDKCore.instance.config);
+    }
+
+    /**
+     * Answers the next settings request with a payload that stops the gather, makes the SDK fetch,
+     * and waits until the delivery thread offered the last batch of the stopped gather to the
+     * request queue and ended, so the settings that follow cannot change how the queue answers.
+     *
+     * @param builder the payload
+     * @throws InterruptedException when interrupted while waiting
+     */
+    private void pushStop(ServerConfigBuilder builder) throws InterruptedException {
+        ExecutorService executor = logger().logDeliveryExecutor;
+        push(builder);
+        if (executor != null) {
+            Assert.assertTrue("the delivery thread did not end", executor.awaitTermination(30, TimeUnit.SECONDS));
+        }
     }
 
     /**
@@ -937,22 +1209,6 @@ public class SdkLogGatheringTests {
     }
 
     /**
-     * Whether any queued log request a listener heard of carries the given line.
-     *
-     * @param queuedLogRequests the lines the SDK logged when it queued each log request
-     * @param line the line
-     * @return {@code true} once a queued batch carries it
-     */
-    private static boolean queuedLinesContain(List<String> queuedLogRequests, String line) {
-        for (String queued : queuedLogRequests) {
-            if (Utils.urldecode(queued).contains(line)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
      * The storage IDs of the queued requests whose parameters contain the given text, read off
      * the lines the SDK logs as it queues a request.
      *
@@ -1093,24 +1349,6 @@ public class SdkLogGatheringTests {
         return text.toString();
     }
 
-    /**
-     * Polls a condition until it holds or the time is up.
-     *
-     * @param timeoutMs how long to wait, in milliseconds
-     * @param condition the condition
-     * @return whether it held in time
-     * @throws InterruptedException when interrupted while waiting
-     */
-    private static boolean waitFor(long timeoutMs, BooleanSupplier condition) throws InterruptedException {
-        long deadline = System.currentTimeMillis() + timeoutMs;
-        while (System.currentTimeMillis() < deadline) {
-            if (condition.getAsBoolean()) {
-                return true;
-            }
-            Thread.sleep(20);
-        }
-        return condition.getAsBoolean();
-    }
 
     // endregion
 }

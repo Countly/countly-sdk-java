@@ -277,6 +277,18 @@ public class SDKStorage implements StorageProvider {
         return fileNames.toArray(ret);
     }
 
+    /**
+     * Whether the file of a storable exists, as a stored request does until it is sent or dropped.
+     *
+     * @param config configuration of the running SDK
+     * @param prefix the storage prefix of the storable
+     * @param id the storage ID of the storable
+     * @return {@code true} while the file exists
+     */
+    boolean storableExists(InternalConfig config, String prefix, Long id) {
+        return new File(createFileFullPath(config, getName(prefix, id.toString()))).exists();
+    }
+
     public List<Long> storableList(InternalConfig config, String prefix, int slice) {
         if (Utils.isEmptyOrNull(prefix)) {
             L.e("[SDKStorage] Cannot get list of ids without prefix");

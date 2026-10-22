@@ -22,6 +22,11 @@ public class DefaultNetworking implements Networking {
     private Tasks tasks;
     private volatile boolean shutdown;
     private volatile boolean backedOff;
+
+    private final Object recheckLock = new Object();
+    //a check asked for while a task ran, which a drain that found the queue empty would otherwise lose:
+    //null for none, else whether every check asked for came from the log gathering's own transport work
+    private Boolean pendingRecheck = null;
     private boolean backendMode;
     private ScheduledExecutorService backoffScheduler;
     IStorageForRequestQueue storageForRequestQueue;
@@ -56,10 +61,11 @@ public class DefaultNetworking implements Networking {
     }
 
     /**
-     * Starts draining the request queue unless the SDK stopped, a request is being handled, there is
-     * no device ID yet or the backoff mechanism holds the queue back. A drain started from a thread
-     * marked as doing the log gathering's own transport work, which queued or sent a batch of
-     * gathered log lines, keeps that mark until it read the request to send.
+     * Starts draining the request queue unless the SDK stopped, there is no device ID yet or the
+     * backoff mechanism holds the queue back. While a request is being handled the check is kept
+     * for when the drain ends without handing a request over. A drain started from a thread marked
+     * as doing the log gathering's own transport work, which queued or sent a batch of gathered log
+     * lines, keeps that mark until it read the request to send.
      *
      * @param config configuration of the running SDK
      * @return whether a request is being handled
@@ -67,10 +73,79 @@ public class DefaultNetworking implements Networking {
     @Override
     public boolean check(InternalConfig config) {
         L.d("[Networking] [check] state: shutdown [" + shutdown + "], backed off [" + backedOff + "], tasks running [" + tasks.isRunning() + "], net running [" + tasks.isRunning() + "], device id [" + config.getDeviceId() + "]");
-        if (!shutdown && !backedOff && !tasks.isRunning() && config.getDeviceId() != null) {
-            tasks.run(submit(config, L.isOwnTransportWork()));
+        if (!shutdown && !backedOff && config.getDeviceId() != null) {
+            boolean ownTransportWork = L.isOwnTransportWork();
+            boolean drainNow;
+            //decided under the lock the end of a drain takes, so a check kept for that end is never kept too late
+            synchronized (recheckLock) {
+                drainNow = !tasks.isRunning();
+                if (!drainNow) {
+                    pendingRecheck = pendingRecheck == null ? ownTransportWork : pendingRecheck && ownTransportWork;
+                }
+            }
+            if (drainNow) {
+                drain(config, ownTransportWork);
+            }
         }
         return tasks.isRunning();
+    }
+
+    /**
+     * Starts a queue drain. When it ends without handing a request over for sending, failing
+     * included, it checks again if a check was asked for meanwhile, as a request stored just after the drain read the
+     * queue would otherwise wait for the next check. A drain that hands a request over is followed
+     * by the check of that send, so one request is handled at a time.
+     *
+     * @param config configuration of the running SDK
+     * @param followsOwnTransportWork whether the log gathering's own transport work started the drain
+     */
+    private void drain(@Nonnull InternalConfig config, boolean followsOwnTransportWork) {
+        synchronized (recheckLock) {
+            pendingRecheck = null;
+        }
+        final Tasks.Task<Boolean> drain = submit(config, followsOwnTransportWork);
+        tasks.run(new Tasks.Task<Boolean>(drain.id) {
+            /**
+             * Runs the drain, a failure counting as a drain that handed nothing over.
+             */
+            @Override
+            public Boolean call() {
+                try {
+                    return drain.call();
+                } catch (Exception e) {
+                    L.e("[Networking] drain, failed to handle the next request, [" + e + "]");
+                    return false;
+                }
+            }
+        }, handedOver -> {
+            if (!Boolean.TRUE.equals(handedOver)) {
+                recheckIfRequested(config);
+            }
+        });
+    }
+
+    /**
+     * Runs a check kept while a task ran, marked as the log gathering's own transport work when
+     * every thread that asked for it was.
+     *
+     * @param config configuration of the running SDK
+     */
+    private void recheckIfRequested(@Nonnull InternalConfig config) {
+        Boolean followsOwnTransportWork;
+        synchronized (recheckLock) {
+            followsOwnTransportWork = pendingRecheck;
+            pendingRecheck = null;
+        }
+        if (followsOwnTransportWork == null) {
+            return;
+        }
+
+        L.setOwnTransportWork(followsOwnTransportWork);
+        try {
+            check(config);
+        } finally {
+            L.setOwnTransportWork(false);
+        }
     }
 
     /**
@@ -122,7 +197,7 @@ public class DefaultNetworking implements Networking {
      * Hands a queued request to the transport once its owner says it is ready, or removes it when
      * its owner says it never will be. While the request carries a batch of gathered log lines, the
      * thread is marked as doing their transport work, also while the send completes, so nothing
-     * logged about the upload is gathered.
+     * logged about the upload is gathered, and once it is sent the logger may queue its next batch.
      *
      * @param config configuration of the running SDK
      * @param request the oldest queued request
@@ -152,6 +227,9 @@ public class DefaultNetworking implements Networking {
                 L.d("[Networking] Request " + request.storageId() + " sent?: " + result + ", response time [" + responseTimeMs.get() + "] ms");
                 if (result) {
                     storageForRequestQueue.removeRequest(request);
+                    if (uploadsGatheredLogs) {
+                        L.onLogBatchSent();
+                    }
                     if (!backOffIfTheServerIsSlow(config, request, responseTimeMs.get())) {
                         check(config);
                     }
@@ -233,6 +311,9 @@ public class DefaultNetworking implements Networking {
         if (!Boolean.TRUE.equals(storageForRequestQueue.removeRequest(request))) {
             L.e("[Networking] dropWithoutSending, failed to remove request [" + request.storageId() + "], the queue drain stops here");
             return false;
+        }
+        if (request.params.has(Log.keySdkLogs)) {
+            L.onLogBatchSent();
         }
 
         Class<? extends ModuleBase> requestOwner = request.owner();

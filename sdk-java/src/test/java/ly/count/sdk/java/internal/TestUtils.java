@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BooleanSupplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -739,5 +740,24 @@ public class TestUtils {
                 return;
             }
         }
+    }
+
+    /**
+     * Polls a condition until it holds or the time is up.
+     *
+     * @param timeoutMs how long to wait at most, in milliseconds
+     * @param condition the condition
+     * @return whether it held in time
+     * @throws InterruptedException when interrupted while waiting
+     */
+    static boolean waitFor(long timeoutMs, BooleanSupplier condition) throws InterruptedException {
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        while (System.currentTimeMillis() < deadline) {
+            if (condition.getAsBoolean()) {
+                return true;
+            }
+            Thread.sleep(10);
+        }
+        return condition.getAsBoolean();
     }
 }

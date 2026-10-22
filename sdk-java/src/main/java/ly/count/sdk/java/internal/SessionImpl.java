@@ -343,11 +343,11 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
      */
     @Override
     public void recordEvent(Event event) {
-        L.d("[SessionImpl] recordEvent: " + event.toString());
         if (!SDKCore.enabled(CoreFeature.Events)) {
             L.i("[SessionImpl] recordEvent: Skipping event - feature is not enabled");
             return;
         }
+        L.d("[SessionImpl] recordEvent");
 
         if (began == null) {
             begin();
@@ -403,11 +403,11 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             return this;
         }
 
-        L.d("[SessionImpl] addLocation: latitude = " + latitude + " longitude = " + longitude);
         if (!SDKCore.enabled(CoreFeature.Location)) {
             L.i("[SessionImpl] addLocation: Skipping event - feature is not enabled");
             return this;
         }
+        L.d("[SessionImpl] addLocation");
         Countly.instance().location().setLocation(null, null, latitude + "," + longitude, null);
         return this;
     }
@@ -421,11 +421,11 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
      * @deprecated use {@link ModuleViews.Views#startView(String)} instead via {@link Countly#views()}
      */
     public View view(String name, boolean start) {
-        L.d("[SessionImpl] view: name = " + name + " start = " + start);
         if (!SDKCore.enabled(CoreFeature.Views)) {
             L.i("[SessionImpl] view: Skipping view - feature is not enabled");
             return null;
         }
+        L.d("[SessionImpl] view: start = " + start);
         if (currentView != null) {
             currentView.stop(false);
         }

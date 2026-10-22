@@ -9,6 +9,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Centralized place for all requests construction & handling.
@@ -18,7 +19,6 @@ public class ModuleRequests extends ModuleBase {
 
     //how long queueing a log batch waits for the storage, which never answers once it is shut down
     static final long SDK_LOGS_STORE_TIMEOUT_MS = 10_000L;
-    private static final int MAX_CLOCK_WAIT_MS = 20;
 
     private static Params metrics;
 
@@ -293,37 +293,36 @@ public class ModuleRequests extends ModuleBase {
     /**
      * Queues one batch of gathered SDK log lines as a request of its own, the batch as its
      * {@code sdk_logs} parameter next to the required ones, through the checks of
-     * {@link #pushAsync(InternalConfig, Request)}, and waits until it is stored. Then waits for the
-     * clock to pass the ID of the request, as batches are queued back to back and a request ID is
-     * unique among the last few drawn only. When the wait times out or is interrupted, the store is
-     * cancelled, as a store left queued would still write the request after its lines were kept for
-     * another batch.
+     * {@link #pushAsync(InternalConfig, Request)}, and waits until it is stored. When the wait times
+     * out or is interrupted, the store is cancelled, as a store left queued would still write the
+     * request after its lines were kept for another batch.
      *
      * @param config configuration of the running SDK
      * @param payload the batch, as JSON text
-     * @return whether the request was stored, {@code false} when it was refused, as while tracking
-     *     is off, could not be stored or its store was cancelled
+     * @return the storage ID of the stored request, {@code null} when it was refused, as while
+     *     tracking is off, could not be stored or its store was cancelled
      */
-    static boolean pushSdkLogs(@Nonnull InternalConfig config, @Nonnull String payload) {
+    @Nullable
+    static Long pushSdkLogs(@Nonnull InternalConfig config, @Nonnull String payload) {
         Request request = nonSessionRequest(config);
         request.params.add(Log.keySdkLogs, payload);
         Future<Boolean> stored = null;
+        boolean queued;
         try {
             stored = pushAsync(config, request);
-            return stored != null && Boolean.TRUE.equals(stored.get(SDK_LOGS_STORE_TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            queued = stored != null && Boolean.TRUE.equals(stored.get(SDK_LOGS_STORE_TIMEOUT_MS, TimeUnit.MILLISECONDS));
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             config.getLogger().w("[ModuleRequests] pushSdkLogs, interrupted while storing request " + request.storageId());
-            return !cancelStore(config, request, stored);
+            queued = !cancelStore(config, request, stored);
         } catch (TimeoutException e) {
             config.getLogger().w("[ModuleRequests] pushSdkLogs, storing request " + request.storageId() + " took over [" + SDK_LOGS_STORE_TIMEOUT_MS + "] ms");
-            return !cancelStore(config, request, stored);
+            queued = !cancelStore(config, request, stored);
         } catch (ExecutionException | RuntimeException e) {
             config.getLogger().w("[ModuleRequests] pushSdkLogs, failed to store request " + request.storageId() + ", [" + e + "]");
-            return false;
-        } finally {
-            waitForClockToPass(request.storageId());
+            queued = false;
         }
+        return queued ? request.storageId() : null;
     }
 
     /**
@@ -343,22 +342,6 @@ public class ModuleRequests extends ModuleBase {
 
         config.getLogger().w("[ModuleRequests] cancelStore, storing request " + request.storageId() + " completed before it could be cancelled, its batch counts as queued");
         return false;
-    }
-
-    /**
-     * Waits until the clock is past the given time, for a few milliseconds at most.
-     *
-     * @param timestampMs a time in milliseconds
-     */
-    private static void waitForClockToPass(long timestampMs) {
-        for (int waited = 0; waited < MAX_CLOCK_WAIT_MS && System.currentTimeMillis() <= timestampMs; waited++) {
-            try {
-                Thread.sleep(1);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                return;
-            }
-        }
     }
 
     /**

@@ -112,6 +112,11 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
 
     private boolean serverConfigRequestsDisabled = false;
     private volatile boolean running = false;
+    /**
+     * How many times the device ID changed without merge, written under this module's lock, so a
+     * response requested before such a change can tell its gather was armed for the previous user.
+     */
+    private volatile int deviceIdChangesWithoutMerge = 0;
     private volatile ConnectionTestListener connectionTestListener = null;
 
     //resolved values; the constant seeds are here, the ones read from the developer configuration are in seedFromDeveloperConfig
@@ -236,7 +241,7 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
             loadConfigFromStorage(config.getSdkBehaviorSettings());
         }
 
-        updateConfigVariables(config, null);
+        updateConfigVariables(config, null, true);
         running = true;
         config.configProvider = this;
     }
@@ -486,19 +491,26 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
     }
 
     /**
-     * Applies the merged settings to the resolved values, decides the log gathering directive of a
-     * live response and has the logger apply it, and restarts the refresh timer when its interval changed.
+     * Applies the stored settings to the resolved values, decides the log gathering directive of a
+     * live response requested since the last device ID change without merge and has the logger apply
+     * it, and restarts the refresh timer when its interval changed. A response requested before that
+     * change leaves the directive as it is, as its gather was armed for the previous user.
      *
      * @param config configuration of the running SDK
      * @param serverResponse the live response being applied, {@code null} at init, where only stored or provided settings exist
+     * @param forCurrentDeviceId whether the response was requested since the last device ID change without merge
      * @return whether a resolved value changed
      */
-    synchronized boolean updateConfigVariables(@Nonnull InternalConfig config, @Nullable JSONObject serverResponse) {
+    synchronized boolean updateConfigVariables(@Nonnull InternalConfig config, @Nullable JSONObject serverResponse, boolean forCurrentDeviceId) {
         L.v("[ModuleConfiguration] updateConfigVariables, from server response:[" + (serverResponse != null) + "]");
 
-        //read off the live response itself, so it applies even when its settings object was rejected
-        readLogGatheringDirective(serverResponse);
-        L.applyLogGatheringDirective(serverResponse == null ? "init" : "server response");
+        if (forCurrentDeviceId) {
+            //read off the live response itself, so it applies even when its settings object was rejected
+            readLogGatheringDirective(serverResponse);
+            L.applyLogGatheringDirective(serverResponse == null ? "init" : "server response");
+        } else {
+            L.d("[ModuleConfiguration] updateConfigVariables, the response was requested for a previous device ID, its log gathering directive is ignored");
+        }
 
         if (latestRetrievedConfiguration == null) {
             return false;
@@ -801,6 +813,19 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
     }
 
     /**
+     * Stops log gathering before the device ID changes without merge: decides the directive off,
+     * then has the logger queue what it holds under the current device ID and stop, so nothing the
+     * next user does is gathered until a live response for the new device ID arms a gather.
+     */
+    void stopLogGatheringForDeviceIdChange() {
+        synchronized (this) {
+            deviceIdChangesWithoutMerge++;
+            setLogGatheringOff();
+        }
+        L.stopLogGatheringForDeviceIdChange();
+    }
+
+    /**
      * Keeps only the level characters this SDK knows, lower cased, in the order the server sent them
      * and without duplicates. Falls back to every level when nothing usable is left.
      *
@@ -876,9 +901,10 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
             String requestData = ModuleRequests.prepareRequiredParams(config).add("method", "sc").toString();
             Transport transport = config.sdk.networking.getTransport();
             final long fetchStartNs = System.nanoTime();
+            final int requestedAfterDeviceIdChanges = deviceIdChangesWithoutMerge;
 
             config.immediateRequestGenerator.createImmediateRequestMaker().doWork(requestData, "/o/sdk?", transport, false, true,
-                response -> onServerConfigResponse(config, response, fetchStartNs), L);
+                response -> onServerConfigResponse(config, response, fetchStartNs, requestedAfterDeviceIdChanges), L);
         } catch (Exception e) {
             L.e("[ModuleConfiguration] fetchConfigFromServer, failed to request the configuration, [" + e + "]");
             decideLogGatheringOffIfUndecided("the server config request failed");
@@ -892,8 +918,9 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
      * @param config configuration of the running SDK
      * @param response the response, {@code null} when the request failed
      * @param fetchStartNs {@link System#nanoTime()} just before the request was made
+     * @param requestedAfterDeviceIdChanges how many device ID changes without merge happened before the request was made
      */
-    private void onServerConfigResponse(@Nonnull InternalConfig config, @Nullable JSONObject response, long fetchStartNs) {
+    private void onServerConfigResponse(@Nonnull InternalConfig config, @Nullable JSONObject response, long fetchStartNs, int requestedAfterDeviceIdChanges) {
         if (!running) {
             L.d("[ModuleConfiguration] onServerConfigResponse, the SDK was stopped before the response arrived, ignoring it");
             return;
@@ -917,7 +944,7 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
                 return;
             }
             saveAndStoreDownloadedConfig(response);
-            changed = updateConfigVariables(config, response);
+            changed = updateConfigVariables(config, response, requestedAfterDeviceIdChanges == deviceIdChangesWithoutMerge);
         }
 
         if (changed && config.sdk != null) {
