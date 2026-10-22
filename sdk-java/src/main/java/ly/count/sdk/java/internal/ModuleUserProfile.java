@@ -425,10 +425,27 @@ public class ModuleUserProfile extends ModuleBase {
         L.w("[ModuleUserProfile] applyCacheLimitToModifications, [" + modifiedKeys.size() + "] custom user properties have pending modifications, over the cache limit of [" + cacheLimit + "] set by the SDK behavior settings, dropped the modifications of the oldest ones: " + dropped);
     }
 
+    /**
+     * Sends the user properties set so far when the SDK sends them automatically, which it does
+     * before every session and event request.
+     *
+     * @param config the configuration of the running SDK
+     */
+    static void saveIfSentAutomatically(@Nonnull InternalConfig config) {
+        if (!config.isAutoSendUserProperties()) {
+            return;
+        }
+        ModuleUserProfile module = config.sdk.module(ModuleUserProfile.class);
+        if (module != null) {
+            module.saveInternal();
+        }
+    }
+
     protected void saveInternal() {
         Params generatedParams = prepareRequestParamsForUserProfile();
-        if (internalConfig.sdk.location() != null) {
-            internalConfig.sdk.module(ModuleLocation.class).saveLocationToParamsLegacy(generatedParams);
+        ModuleLocation location = internalConfig.sdk.runningModule(CoreFeature.Location, ModuleLocation.class);
+        if (location != null) {
+            location.saveLocationToParamsLegacy(generatedParams);
         }
 
         L.d("[ModuleUserProfile] saveInternal, generated params [" + generatedParams + "]");
@@ -437,8 +454,9 @@ public class ModuleUserProfile extends ModuleBase {
             return;
         }
 
-        if (internalConfig.isAutoSendUserProperties() && internalConfig.sdk.events() != null) {
-            internalConfig.sdk.module(ModuleEvents.class).checkEventQueueToSend(true);
+        ModuleEvents events = internalConfig.sdk.runningModule(CoreFeature.Events, ModuleEvents.class);
+        if (internalConfig.isAutoSendUserProperties() && events != null) {
+            events.checkEventQueueToSend(true);
         }
 
         ModuleRequests.pushAsync(internalConfig, new Request(generatedParams));
@@ -488,11 +506,31 @@ public class ModuleUserProfile extends ModuleBase {
     public class UserProfile {
 
         /**
+         * The interface a call goes to: this one while its module runs, the running module's when
+         * this one was handed out before that started or kept from one that stopped, and
+         * {@code null} while the feature does not run.
+         *
+         * @param call the call, for the log line
+         * @return the interface, {@code null} for none
+         */
+        private UserProfile target(String call) {
+            ModuleUserProfile running = runningInstance(call);
+            return running == null ? null : running.userProfileInterface;
+        }
+
+        /**
          * Increment custom property value by 1.
          *
          * @param key String with property name to increment
          */
         public void increment(String key) {
+            UserProfile target = target("[UserProfile] increment");
+            if (target != this) {
+                if (target != null) {
+                    target.increment(key);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 modifyCustomData(key, 1, Op.INC);
             }
@@ -505,6 +543,13 @@ public class ModuleUserProfile extends ModuleBase {
          * @param value int value by which to increment
          */
         public void incrementBy(String key, int value) {
+            UserProfile target = target("[UserProfile] incrementBy");
+            if (target != this) {
+                if (target != null) {
+                    target.incrementBy(key, value);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 modifyCustomData(key, value, Op.INC);
             }
@@ -517,6 +562,13 @@ public class ModuleUserProfile extends ModuleBase {
          * @param value int value by which to multiply
          */
         public void multiply(String key, double value) {
+            UserProfile target = target("[UserProfile] multiply");
+            if (target != this) {
+                if (target != null) {
+                    target.multiply(key, value);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 modifyCustomData(key, value, Op.MUL);
             }
@@ -529,6 +581,13 @@ public class ModuleUserProfile extends ModuleBase {
          * @param value int value to check for max
          */
         public void saveMax(String key, double value) {
+            UserProfile target = target("[UserProfile] saveMax");
+            if (target != this) {
+                if (target != null) {
+                    target.saveMax(key, value);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 modifyCustomData(key, value, Op.MAX);
             }
@@ -541,6 +600,13 @@ public class ModuleUserProfile extends ModuleBase {
          * @param value int value to check for min
          */
         public void saveMin(String key, double value) {
+            UserProfile target = target("[UserProfile] saveMin");
+            if (target != this) {
+                if (target != null) {
+                    target.saveMin(key, value);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 modifyCustomData(key, value, Op.MIN);
             }
@@ -553,6 +619,13 @@ public class ModuleUserProfile extends ModuleBase {
          * @param value String value to set
          */
         public void setOnce(String key, Object value) {
+            UserProfile target = target("[UserProfile] setOnce");
+            if (target != this) {
+                if (target != null) {
+                    target.setOnce(key, value);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 modifyCustomData(key, value, Op.SET_ONCE);
             }
@@ -566,6 +639,13 @@ public class ModuleUserProfile extends ModuleBase {
          * @param value String with value to add to array
          */
         public void push(String key, Object value) {
+            UserProfile target = target("[UserProfile] push");
+            if (target != this) {
+                if (target != null) {
+                    target.push(key, value);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 modifyCustomData(key, value, Op.PUSH);
             }
@@ -579,6 +659,13 @@ public class ModuleUserProfile extends ModuleBase {
          * @param value String with value to add to array
          */
         public void pushUnique(String key, Object value) {
+            UserProfile target = target("[UserProfile] pushUnique");
+            if (target != this) {
+                if (target != null) {
+                    target.pushUnique(key, value);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 modifyCustomData(key, value, Op.PUSH_UNIQUE);
             }
@@ -592,6 +679,13 @@ public class ModuleUserProfile extends ModuleBase {
          * @param value String with value to remove from array
          */
         public void pull(String key, Object value) {
+            UserProfile target = target("[UserProfile] pull");
+            if (target != this) {
+                if (target != null) {
+                    target.pull(key, value);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 modifyCustomData(key, value, Op.PULL);
             }
@@ -604,6 +698,13 @@ public class ModuleUserProfile extends ModuleBase {
          * @param value the value for the user property to be set. The value should be the allowed data type.
          */
         public void setProperty(String key, Object value) {
+            UserProfile target = target("[UserProfile] setProperty");
+            if (target != this) {
+                if (target != null) {
+                    target.setProperty(key, value);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[UserProfile] Calling 'setProperty'");
 
@@ -621,6 +722,13 @@ public class ModuleUserProfile extends ModuleBase {
          * @param data Map of user properties to set
          */
         public void setProperties(Map<String, Object> data) {
+            UserProfile target = target("[UserProfile] setProperties");
+            if (target != this) {
+                if (target != null) {
+                    target.setProperties(data);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[UserProfile] Calling 'setProperties'");
 
@@ -636,6 +744,13 @@ public class ModuleUserProfile extends ModuleBase {
          * Send provided values to server
          */
         public void save() {
+            UserProfile target = target("[UserProfile] save");
+            if (target != this) {
+                if (target != null) {
+                    target.save();
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[UserProfile] Calling 'save'");
                 saveInternal();
@@ -646,6 +761,13 @@ public class ModuleUserProfile extends ModuleBase {
          * Clear queued operations / modifications
          */
         public void clear() {
+            UserProfile target = target("[UserProfile] clear");
+            if (target != this) {
+                if (target != null) {
+                    target.clear();
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[UserProfile] Calling 'clear'");
                 clearInternal();

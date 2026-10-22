@@ -76,36 +76,42 @@ public class CoreRobustnessTests {
     }
 
     /**
-     * Feature accessors for features that were never enabled return null rather than throwing.
+     * Feature accessors for features that were never enabled hand out an interface that ignores every
+     * call, rather than null or throwing.
      * <p>
      * They dereferenced a module that was never built, and consent is not the gate that stops them:
      * with consent not required, the consent check passes and the null module was used anyway.
      */
     @Test
-    public void accessors_forFeaturesThatWereNeverEnabled_returnNull() {
+    public void accessors_forFeaturesThatWereNeverEnabled_handOutInterfacesThatIgnoreCalls() {
         Countly.instance().init(TestUtils.getConfigEvents(2));
 
-        Assert.assertNull(Countly.instance().feedback());
-        Assert.assertNull(Countly.instance().crashes());
-        Assert.assertNull(Countly.instance().remoteConfig());
-        Assert.assertNull(Countly.instance().content());
+        Assert.assertSame(SDKCore.dormantFeedback, Countly.instance().feedback());
+        Assert.assertSame(SDKCore.dormantCrashes, Countly.instance().crashes());
+        Assert.assertSame(SDKCore.dormantRemoteConfig, Countly.instance().remoteConfig());
+        Assert.assertSame(SDKCore.dormantContent, Countly.instance().content());
+        int queued = TestUtils.getCurrentRQ().length;
+        Countly.instance().crashes().recordHandledException(new RuntimeException("never enabled"));
+        Countly.instance().content().enterContentZone();
+        Assert.assertEquals(queued, TestUtils.getCurrentRQ().length);
 
         // The feature that IS enabled still works, so the guards did not break the happy path.
-        Assert.assertNotNull(Countly.instance().events());
+        Assert.assertNotSame(SDKCore.dormantEvents, Countly.instance().events());
     }
 
     /**
-     * Accessors used before init log and return null. "location" logged through a logger that does
-     * not exist yet, unlike every sibling accessor.
+     * Accessors used before init log and hand out an interface that ignores calls, backend mode
+     * aside, which still answers null. "location" logged through a logger that does not exist yet,
+     * unlike every sibling accessor.
      */
     @Test
-    public void accessors_beforeInit_returnNullWithoutCrashing() {
+    public void accessors_beforeInit_doNotThrow() {
         Countly.instance().halt();
 
-        Assert.assertNull(Countly.instance().location());
-        Assert.assertNull(Countly.instance().feedback());
-        Assert.assertNull(Countly.instance().content());
-        Assert.assertNull(Countly.instance().remoteConfig());
+        Assert.assertSame(SDKCore.dormantLocation, Countly.instance().location());
+        Assert.assertSame(SDKCore.dormantFeedback, Countly.instance().feedback());
+        Assert.assertSame(SDKCore.dormantContent, Countly.instance().content());
+        Assert.assertSame(SDKCore.dormantRemoteConfig, Countly.instance().remoteConfig());
         Assert.assertNull(Countly.instance().backendM());
     }
 

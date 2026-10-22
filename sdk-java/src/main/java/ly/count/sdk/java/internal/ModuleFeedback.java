@@ -375,11 +375,33 @@ public class ModuleFeedback extends ModuleBase {
     public class Feedback {
 
         /**
+         * The interface a call goes to: this one while its module runs, the running module's when
+         * this one was handed out before that started or kept from one that stopped, and
+         * {@code null} while the feature does not run.
+         *
+         * @param call the call, for the log line
+         * @return the interface, {@code null} for none
+         */
+        private Feedback target(String call) {
+            ModuleFeedback running = runningInstance(call);
+            return running == null ? null : running.feedbackInterface;
+        }
+
+        /**
          * Get a list of available feedback widgets for this device ID
          *
          * @param callback retrieve widget list callback
          */
         public void getAvailableFeedbackWidgets(@Nullable CallbackOnFinish<List<CountlyFeedbackWidget>> callback) {
+            Feedback target = target("[Feedback] getAvailableFeedbackWidgets");
+            if (target != this) {
+                if (target != null) {
+                    target.getAvailableFeedbackWidgets(callback);
+                } else if (callback != null) {
+                    callback.onFinished(null, NOT_RUNNING_ERROR);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[Feedback] getAvailableFeedbackWidgets, Trying to retrieve feedback widget list");
 
@@ -393,6 +415,13 @@ public class ModuleFeedback extends ModuleBase {
          * @param widgetInfo widget info
          */
         public String constructFeedbackWidgetUrl(@Nullable CountlyFeedbackWidget widgetInfo) {
+            Feedback target = target("[Feedback] constructFeedbackWidgetUrl");
+            if (target != this) {
+                if (target == null) {
+                    return null;
+                }
+                return target.constructFeedbackWidgetUrl(widgetInfo);
+            }
             synchronized (Countly.instance()) {
                 L.i("[Feedback] constructFeedbackWidgetUrl, Trying to present feedback widget in an alert dialog");
 
@@ -416,6 +445,13 @@ public class ModuleFeedback extends ModuleBase {
          * @apiNote This is an EXPERIMENTAL feature, and it can have breaking changes
          */
         public String constructFeedbackWidgetUrl(@Nullable CountlyFeedbackWidget widgetInfo, int surfaceWidth, int surfaceHeight) {
+            Feedback target = target("[Feedback] constructFeedbackWidgetUrl");
+            if (target != this) {
+                if (target == null) {
+                    return null;
+                }
+                return target.constructFeedbackWidgetUrl(widgetInfo, surfaceWidth, surfaceHeight);
+            }
             synchronized (Countly.instance()) {
                 L.i("[Feedback] constructFeedbackWidgetUrl, building a URL for a "
                     + surfaceWidth + "x" + surfaceHeight + " surface");
@@ -432,6 +468,15 @@ public class ModuleFeedback extends ModuleBase {
          * @param callback retrieve widget data callback
          */
         public void getFeedbackWidgetData(@Nullable CountlyFeedbackWidget widgetInfo, @Nullable CallbackOnFinish<JSONObject> callback) {
+            Feedback target = target("[Feedback] getFeedbackWidgetData");
+            if (target != this) {
+                if (target != null) {
+                    target.getFeedbackWidgetData(widgetInfo, callback);
+                } else if (callback != null) {
+                    callback.onFinished(null, NOT_RUNNING_ERROR);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[Feedback] getFeedbackWidgetData, Trying to retrieve feedback widget data");
 
@@ -448,6 +493,13 @@ public class ModuleFeedback extends ModuleBase {
          * @param widgetResult widget result
          */
         public void reportFeedbackWidgetManually(@Nullable CountlyFeedbackWidget widgetInfo, @Nullable JSONObject widgetData, @Nullable Map<String, Object> widgetResult) {
+            Feedback target = target("[Feedback] reportFeedbackWidgetManually");
+            if (target != this) {
+                if (target != null) {
+                    target.reportFeedbackWidgetManually(widgetInfo, widgetData, widgetResult);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[Feedback] reportFeedbackWidgetManually, Trying to report feedback widget manually");
 

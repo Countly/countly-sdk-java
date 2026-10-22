@@ -82,6 +82,7 @@ public class ModuleContent extends ModuleBase {
         contentInterface = new Content();
         startedAt = TimeUtils.uniqueTimestampMs();
         synchronized (contentLock) {
+            display = config.sdk.contentDisplay;
             contentZoneEnabledApplied = config.getConfigurationProvider().getContentZoneEnabled();
         }
     }
@@ -417,11 +418,13 @@ public class ModuleContent extends ModuleBase {
             return;
         }
 
-        ModuleEvents.Events events = SDKCore.instance == null ? null : SDKCore.instance.events();
-        if (events == null) {
+        SDKCore core = SDKCore.instance;
+        ModuleEvents eventsModule = core == null ? null : core.runningModule(CoreFeature.Events, ModuleEvents.class);
+        if (eventsModule == null) {
             L.w("[ModuleContent] recordContentEventsInternal, events are not available, content events are dropped");
             return;
         }
+        ModuleEvents.Events events = eventsModule.eventsInterface;
 
         boolean recorded = false;
         try {
@@ -644,16 +647,38 @@ public class ModuleContent extends ModuleBase {
     public class Content {
 
         /**
+         * The interface a call goes to: this one while its module runs, the running module's when
+         * this one was handed out before that started or kept from one that stopped, and
+         * {@code null} while the feature does not run.
+         *
+         * @param call the call, for the log line
+         * @return the interface, {@code null} for none
+         */
+        private Content target(String call) {
+            ModuleContent running = runningInstance(call);
+            return running == null ? null : running.contentInterface;
+        }
+
+        /**
          * Register the display that draws content blocks. Required before entering a content zone.
          * Pass {@code null} to unregister. While the SDK behavior settings ask for the content zone,
-         * registering a display enters it.
+         * registering a display enters it. A display registered before the content consent is given
+         * is used once it is.
          *
          * @param contentDisplay the display to draw content with
          * @apiNote This is an EXPERIMENTAL feature, and it can have breaking changes
          */
         public void setContentDisplay(@Nullable ContentDisplay contentDisplay) {
             synchronized (Countly.instance()) {
-                setContentDisplayInternal(contentDisplay);
+                SDKCore core = SDKCore.instance;
+                if (core == null) {
+                    return;
+                }
+                core.contentDisplay = contentDisplay;
+                ModuleContent running = core.module(ModuleContent.class);
+                if (running != null) {
+                    running.setContentDisplayInternal(contentDisplay);
+                }
             }
         }
 
@@ -665,6 +690,13 @@ public class ModuleContent extends ModuleBase {
          * @apiNote This is an EXPERIMENTAL feature, and it can have breaking changes
          */
         public void enterContentZone() {
+            Content target = target("[Content] enterContentZone");
+            if (target != this) {
+                if (target != null) {
+                    target.enterContentZone();
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[Content] enterContentZone, entering the content zone");
                 enterContentZoneInternal();
@@ -678,6 +710,13 @@ public class ModuleContent extends ModuleBase {
          * @apiNote This is an EXPERIMENTAL feature, and it can have breaking changes
          */
         public void exitContentZone() {
+            Content target = target("[Content] exitContentZone");
+            if (target != this) {
+                if (target != null) {
+                    target.exitContentZone();
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[Content] exitContentZone, leaving the content zone");
                 exitContentZoneInternal();
@@ -692,6 +731,13 @@ public class ModuleContent extends ModuleBase {
          * @apiNote This is an EXPERIMENTAL feature, and it can have breaking changes
          */
         public void refreshContentZone() {
+            Content target = target("[Content] refreshContentZone");
+            if (target != this) {
+                if (target != null) {
+                    target.refreshContentZone();
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[Content] refreshContentZone, refreshing the content zone");
                 refreshContentZoneInternal();
@@ -706,6 +752,13 @@ public class ModuleContent extends ModuleBase {
          * @apiNote This is an EXPERIMENTAL feature, and it can have breaking changes
          */
         public void previewContent(@Nullable String contentId) {
+            Content target = target("[Content] previewContent");
+            if (target != this) {
+                if (target != null) {
+                    target.previewContent(contentId);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[Content] previewContent, previewing content:[" + contentId + "]");
                 if (Utils.isEmptyOrNull(contentId)) {
@@ -725,6 +778,13 @@ public class ModuleContent extends ModuleBase {
          * @apiNote This is an EXPERIMENTAL feature, and it can have breaking changes
          */
         public void recordContentEvents(@Nullable String eventsJson) {
+            Content target = target("[Content] recordContentEvents");
+            if (target != this) {
+                if (target != null) {
+                    target.recordContentEvents(eventsJson);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.d("[Content] recordContentEvents, recording the events of a content block");
                 recordContentEventsInternal(eventsJson);

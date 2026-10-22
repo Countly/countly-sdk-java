@@ -1,8 +1,6 @@
 package ly.count.sdk.java.internal;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nonnull;
@@ -18,7 +16,6 @@ public class ModuleRemoteConfig extends ModuleBase {
     // if set to true we should add 'oi=1' to our RC download call
     boolean autoEnrollEnabled;
     boolean remoteConfigValuesShouldBeCached = false;
-    List<RCDownloadCallback> downloadCallbacks = new ArrayList<>(2);
 
     ModuleRemoteConfig() {
     }
@@ -36,7 +33,6 @@ public class ModuleRemoteConfig extends ModuleBase {
         remoteConfigValuesShouldBeCached = config.isRemoteConfigValueCachingEnabled();
         autoEnrollEnabled = config.isAutoEnrollFlagEnabled();
 
-        downloadCallbacks.addAll(config.getRemoteConfigGlobalCallbackList());
 
         remoteConfigInterface = new RemoteConfig();
     }
@@ -251,7 +247,7 @@ public class ModuleRemoteConfig extends ModuleBase {
     }
 
     private void notifyDownloadCallbacks(final RCDownloadCallback devProvidedCallback, RequestResult requestResult, String message, boolean fullUpdate, Map<String, RCData> downloadedValues) {
-        downloadCallbacks.forEach(callback -> callback.callback(requestResult, message, fullUpdate, downloadedValues));
+        internalConfig.sdk.remoteConfigDownloadCallbacks.forEach(callback -> callback.callback(requestResult, message, fullUpdate, downloadedValues));
 
         if (devProvidedCallback != null) {
             devProvidedCallback.callback(requestResult, message, fullUpdate, downloadedValues);
@@ -310,6 +306,19 @@ public class ModuleRemoteConfig extends ModuleBase {
     public class RemoteConfig {
 
         /**
+         * The interface a call goes to: this one while its module runs, the running module's when
+         * this one was handed out before that started or kept from one that stopped, and
+         * {@code null} while the feature does not run.
+         *
+         * @param call the call, for the log line
+         * @return the interface, {@code null} for none
+         */
+        private RemoteConfig target(String call) {
+            ModuleRemoteConfig running = runningInstance(call);
+            return running == null ? null : running.remoteConfigInterface;
+        }
+
+        /**
          * Manual remote config call that will initiate a download of all except the given remote config keys.
          * If no keys are provided then it will download all available RC values
          *
@@ -317,6 +326,15 @@ public class ModuleRemoteConfig extends ModuleBase {
          * @param callback This is called when the operation concludes
          */
         public void downloadOmittingKeys(@Nullable String[] keysToOmit, @Nullable final RCDownloadCallback callback) {
+            RemoteConfig target = target("[RemoteConfig] downloadOmittingKeys");
+            if (target != this) {
+                if (target != null) {
+                    target.downloadOmittingKeys(keysToOmit, callback);
+                } else if (callback != null) {
+                    callback.callback(RequestResult.Error, NOT_RUNNING_ERROR, keysToOmit == null || keysToOmit.length == 0, null);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[RemoteConfig] downloadOmittingKeys");
 
@@ -336,6 +354,15 @@ public class ModuleRemoteConfig extends ModuleBase {
          * @param callback This is called when the operation concludes
          */
         public void downloadSpecificKeys(@Nullable String[] keysToInclude, @Nullable final RCDownloadCallback callback) {
+            RemoteConfig target = target("[RemoteConfig] downloadSpecificKeys");
+            if (target != this) {
+                if (target != null) {
+                    target.downloadSpecificKeys(keysToInclude, callback);
+                } else if (callback != null) {
+                    callback.callback(RequestResult.Error, NOT_RUNNING_ERROR, keysToInclude == null || keysToInclude.length == 0, null);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[RemoteConfig] downloadSpecificKeys");
 
@@ -353,6 +380,15 @@ public class ModuleRemoteConfig extends ModuleBase {
          * @param callback This is called when the operation concludes
          */
         public void downloadAllKeys(@Nullable RCDownloadCallback callback) {
+            RemoteConfig target = target("[RemoteConfig] downloadAllKeys");
+            if (target != this) {
+                if (target != null) {
+                    target.downloadAllKeys(callback);
+                } else if (callback != null) {
+                    callback.callback(RequestResult.Error, NOT_RUNNING_ERROR, true, null);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[RemoteConfig] downloadAllKeys");
                 updateRemoteConfigValues(null, null, callback);
@@ -365,6 +401,13 @@ public class ModuleRemoteConfig extends ModuleBase {
          * @return The available RC values
          */
         public @Nonnull Map<String, RCData> getValues() {
+            RemoteConfig target = target("[RemoteConfig] getValues");
+            if (target != this) {
+                if (target == null) {
+                    return new ConcurrentHashMap<>();
+                }
+                return target.getValues();
+            }
             synchronized (Countly.instance()) {
                 L.i("[RemoteConfig] getValues");
                 return getRemoteConfigValueStoreInternal().getAllValues();
@@ -377,6 +420,13 @@ public class ModuleRemoteConfig extends ModuleBase {
          * @return The available RC values
          */
         public @Nonnull Map<String, RCData> getAllValuesAndEnroll() {
+            RemoteConfig target = target("[RemoteConfig] getAllValuesAndEnroll");
+            if (target != this) {
+                if (target == null) {
+                    return new ConcurrentHashMap<>();
+                }
+                return target.getAllValuesAndEnroll();
+            }
             synchronized (Countly.instance()) {
                 L.i("[RemoteConfig] getAllValuesAndEnroll");
                 Map<String, RCData> values = getRemoteConfigValueStoreInternal().getAllValues();
@@ -399,6 +449,13 @@ public class ModuleRemoteConfig extends ModuleBase {
          * @return The returned value. If no value existed for the key then the inner object (value) will be returned as "null"
          */
         public @Nonnull RCData getValue(final @Nullable String key) {
+            RemoteConfig target = target("[RemoteConfig] getValue");
+            if (target != this) {
+                if (target == null) {
+                    return new RCData(null, true);
+                }
+                return target.getValue(key);
+            }
             synchronized (Countly.instance()) {
                 L.i("[RemoteConfig] getValue, key:[" + key + "]");
 
@@ -418,6 +475,13 @@ public class ModuleRemoteConfig extends ModuleBase {
          * @return The returned value. If no value existed for the key then the inner object will be returned as "null"
          */
         public @Nonnull RCData getValueAndEnroll(@Nullable String key) {
+            RemoteConfig target = target("[RemoteConfig] getValueAndEnroll");
+            if (target != this) {
+                if (target == null) {
+                    return new RCData(null, true);
+                }
+                return target.getValueAndEnroll(key);
+            }
             synchronized (Countly.instance()) {
                 L.i("[RemoteConfig] getValueAndEnroll, key:[" + key + "]");
 
@@ -443,6 +507,13 @@ public class ModuleRemoteConfig extends ModuleBase {
          * @param keys - String array of keys (parameters)
          */
         public void enrollIntoABTestsForKeys(@Nullable String[] keys) {
+            RemoteConfig target = target("[RemoteConfig] enrollIntoABTestsForKeys");
+            if (target != this) {
+                if (target != null) {
+                    target.enrollIntoABTestsForKeys(keys);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[RemoteConfig] enrollIntoABTestsForKeys");
                 if (keys == null || keys.length == 0) {
@@ -459,6 +530,13 @@ public class ModuleRemoteConfig extends ModuleBase {
          * @param keys - String array of keys (parameters)
          */
         public void exitABTestsForKeys(@Nullable String[] keys) {
+            RemoteConfig target = target("[RemoteConfig] exitABTestsForKeys");
+            if (target != this) {
+                if (target != null) {
+                    target.exitABTestsForKeys(keys);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[RemoteConfig] exitABTestsForKeys");
                 if (keys == null) {
@@ -469,18 +547,23 @@ public class ModuleRemoteConfig extends ModuleBase {
         }
 
         /**
-         * Register a global callback for when download operations have finished
+         * Register a global callback for when download operations have finished. It is kept while
+         * remote config does not run, as before its consent is given, and called once it does.
          *
          * @param callback The callback that should be added
          */
         public void registerDownloadCallback(@Nullable final RCDownloadCallback callback) {
             synchronized (Countly.instance()) {
-                L.i("[RemoteConfig] registerDownloadCallback");
-                if (callback == null) {
-                    L.w("[RemoteConfig] registerDownloadCallback, passed callback is null");
+                SDKCore core = SDKCore.instance;
+                if (core == null) {
                     return;
                 }
-                downloadCallbacks.add(callback);
+                core.L.i("[RemoteConfig] registerDownloadCallback");
+                if (callback == null) {
+                    core.L.w("[RemoteConfig] registerDownloadCallback, passed callback is null");
+                    return;
+                }
+                core.remoteConfigDownloadCallbacks.add(callback);
             }
         }
 
@@ -491,12 +574,16 @@ public class ModuleRemoteConfig extends ModuleBase {
          */
         public void removeDownloadCallback(@Nullable final RCDownloadCallback callback) {
             synchronized (Countly.instance()) {
-                L.i("[RemoteConfig] removeDownloadCallback");
-                if (callback == null) {
-                    L.w("[RemoteConfig] removeDownloadCallback, passed callback is null");
+                SDKCore core = SDKCore.instance;
+                if (core == null) {
                     return;
                 }
-                downloadCallbacks.remove(callback);
+                core.L.i("[RemoteConfig] removeDownloadCallback");
+                if (callback == null) {
+                    core.L.w("[RemoteConfig] removeDownloadCallback, passed callback is null");
+                    return;
+                }
+                core.remoteConfigDownloadCallbacks.remove(callback);
             }
         }
 
@@ -504,6 +591,13 @@ public class ModuleRemoteConfig extends ModuleBase {
          * Clear all stored remote config values.
          */
         public void clearAll() {
+            RemoteConfig target = target("[RemoteConfig] clearAll");
+            if (target != this) {
+                if (target != null) {
+                    target.clearAll();
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[RemoteConfig] clearAll");
                 clearValueStoreInternal();

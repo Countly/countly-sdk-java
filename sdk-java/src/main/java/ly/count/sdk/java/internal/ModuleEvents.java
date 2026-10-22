@@ -1,7 +1,10 @@
 package ly.count.sdk.java.internal;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,12 +15,17 @@ import ly.count.sdk.java.Session;
 import ly.count.sdk.java.View;
 
 public class ModuleEvents extends ModuleBase {
-    static final String INTERNAL_EVENT_KEY_PREFIX = "[CLY]_";
+    /**
+     * The keys of the events the SDK records itself, which the custom event settings of the SDK
+     * behavior settings do not apply to. Any other key is a custom event, one starting with
+     * {@code [CLY]_} too.
+     */
+    static final Set<String> INTERNAL_EVENT_KEYS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+        ModuleViews.KEY_VIEW_EVENT, FeedbackWidgetType.nps.eventKey, FeedbackWidgetType.survey.eventKey, FeedbackWidgetType.rating.eventKey)));
 
     protected EventQueue eventQueue = null;
     final Map<String, EventImpl> timedEvents = new ConcurrentHashMap<>();
     protected Events eventsInterface = null;
-    ViewIdProvider viewIdProvider = null;
     IdGenerator idGenerator = null;
     String previousEventId = null;
     /**
@@ -40,12 +48,6 @@ public class ModuleEvents extends ModuleBase {
         eventsInterface = new Events();
 
         idGenerator = config.eventIdGenerator;
-    }
-
-    @Override
-    public void initFinished(InternalConfig config) {
-        super.initFinished(config);
-        viewIdProvider = config.viewIdProvider;
     }
 
     @Override
@@ -209,7 +211,7 @@ public class ModuleEvents extends ModuleBase {
             return;
         }
 
-        boolean isCustomEvent = !key.startsWith(INTERNAL_EVENT_KEY_PREFIX);
+        boolean isCustomEvent = !INTERNAL_EVENT_KEYS.contains(key);
         if (isCustomEvent) {
             if (!configProvider.getCustomEventTrackingEnabled()) {
                 L.d("[ModuleEvents] recordEventInternal, custom event tracking is disabled by the SDK behavior settings, event [" + key + "] will not be recorded");
@@ -235,9 +237,7 @@ public class ModuleEvents extends ModuleBase {
             segmentation = UtilsInternalLimits.applySegmentationLimits(segmentation, configProvider, L, "[ModuleEvents] recordEventInternal");
         }
 
-        if (internalConfig.isAutoSendUserProperties() && internalConfig.sdk.userProfile() != null) {
-            internalConfig.sdk.module(ModuleUserProfile.class).saveInternal();
-        }
+        ModuleUserProfile.saveIfSentAutomatically(internalConfig);
 
         String eventId, pvid = null, cvid = null;
         if (Utils.isEmptyOrNull(eventIdOverride)) {
@@ -247,6 +247,7 @@ public class ModuleEvents extends ModuleBase {
             eventId = eventIdOverride;
         }
 
+        ViewIdProvider viewIdProvider = internalConfig.viewIdProvider;
         if (key.equals(ModuleViews.KEY_VIEW_EVENT)) {
             pvid = viewIdProvider.getPreviousViewId();
         } else {
@@ -289,7 +290,7 @@ public class ModuleEvents extends ModuleBase {
      * is in {@code jte}, or a view event whose name is in {@code jtv}.
      *
      * @param key the key of the event, as it was passed
-     * @param isCustomEvent whether the key is outside the {@code [CLY]_} prefix
+     * @param isCustomEvent whether the key is not one of {@link #INTERNAL_EVENT_KEYS}
      * @param segmentation the segmentation of the event, {@code null} for none
      * @param configProvider the settings in effect
      * @return {@code true} for a journey trigger
@@ -409,6 +410,19 @@ public class ModuleEvents extends ModuleBase {
     public class Events {
 
         /**
+         * The interface a call goes to: this one while its module runs, the running module's when
+         * this one was handed out before that started or kept from one that stopped, and
+         * {@code null} while the feature does not run.
+         *
+         * @param call the call, for the log line
+         * @return the interface, {@code null} for none
+         */
+        private Events target(String call) {
+            ModuleEvents running = runningInstance(call);
+            return running == null ? null : running.eventsInterface;
+        }
+
+        /**
          * Record an event.
          *
          * @param key key for this event, cannot be null or empty
@@ -418,6 +432,13 @@ public class ModuleEvents extends ModuleBase {
          * @param segmentation additional segmentation data that you want to set, leave null if you don't want to add anything
          */
         public void recordEvent(String key, Map<String, Object> segmentation, int count, Double sum, Double dur) {
+            Events target = target("[Events] recordEvent");
+            if (target != this) {
+                if (target != null) {
+                    target.recordEvent(key, segmentation, count, sum, dur);
+                }
+                return;
+            }
             L.i("[Events] recordEvent: key = " + key + ", count = " + count + ", sum = " + sum + ", segmentation = " + segmentation + ", dur = " + dur);
             recordEventInternal(key, count, sum, dur, segmentation, null);
         }
@@ -498,6 +519,10 @@ public class ModuleEvents extends ModuleBase {
          * @return true if no event with this key existed before and event is started, false otherwise
          */
         public boolean startEvent(final String key) {
+            Events target = target("[Events] startEvent");
+            if (target != this) {
+                return target != null && target.startEvent(key);
+            }
             L.i("[Events] startEvent: key = " + key);
             return startEventInternal(key);
         }
@@ -509,6 +534,10 @@ public class ModuleEvents extends ModuleBase {
          * @return true if event with this key has been previously started, false otherwise
          */
         public boolean endEvent(final String key) {
+            Events target = target("[Events] endEvent");
+            if (target != this) {
+                return target != null && target.endEvent(key);
+            }
             L.i("[Events] endEvent: key = " + key);
             return endEventInternal(key, null, 1, null);
         }
@@ -525,6 +554,10 @@ public class ModuleEvents extends ModuleBase {
          * @throws IllegalArgumentException if key is null or empty, count is less than 1, or if segmentation contains null or empty keys or values
          */
         public boolean endEvent(final String key, final Map<String, Object> segmentation, final int count, final Double sum) {
+            Events target = target("[Events] endEvent");
+            if (target != this) {
+                return target != null && target.endEvent(key, segmentation, count, sum);
+            }
             L.i("[Events] endEvent: key = " + key + ", segmentation = " + segmentation + ", count = " + count + ", sum = " + sum);
             return endEventInternal(key, segmentation, count, sum);
         }
@@ -535,6 +568,10 @@ public class ModuleEvents extends ModuleBase {
          * @return true if event with this key has been previously started, false otherwise
          **/
         public boolean cancelEvent(final String key) {
+            Events target = target("[Events] cancelEvent");
+            if (target != this) {
+                return target != null && target.cancelEvent(key);
+            }
             L.i("[Events] cancelEvent: key = " + key);
             return cancelEventInternal(key);
         }

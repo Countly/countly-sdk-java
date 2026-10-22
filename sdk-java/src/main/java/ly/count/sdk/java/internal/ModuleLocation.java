@@ -29,19 +29,43 @@ public class ModuleLocation extends ModuleBase {
 
     void disableLocationInternal() {
         L.d("[ModuleLocation] Calling 'disableLocationInternal'");
+        clearLocation();
+        sendLocation();
+    }
+
+    /**
+     * Forgets the location and marks it disabled, so the next location request erases it.
+     */
+    private void clearLocation() {
         country = null;
         city = null;
         location = null;
         ip = null;
         locationDisabled = true;
-        sendLocation();
+    }
+
+    /**
+     * Queues a request carrying the location as it is now.
+     */
+    private void pushLocation() {
+        ModuleRequests.pushAsync(internalConfig, new Request(prepareLocationParams()), true, null);
+    }
+
+    /**
+     * Clears the location and erases it on the server right away, without waiting for a session to
+     * begin, as when the location consent is removed.
+     */
+    void eraseLocation() {
+        L.d("[ModuleLocation] eraseLocation");
+        clearLocation();
+        pushLocation();
     }
 
     void sendLocation() {
         L.d("[ModuleLocation] Calling 'sendLocation'");
         SessionImpl session = internalConfig.sdk.getSession();
         if (session == null || session.getBegan() != null || !isLocationSentWithSessionBegin()) {
-            ModuleRequests.pushAsync(internalConfig, new Request(prepareLocationParams()), true, null);
+            pushLocation();
         } // else case, values are added to the session begin request
     }
 
@@ -214,9 +238,29 @@ public class ModuleLocation extends ModuleBase {
     public class Location {
 
         /**
+         * The interface a call goes to: this one while its module runs, the running module's when
+         * this one was handed out before that started or kept from one that stopped, and
+         * {@code null} while the feature does not run.
+         *
+         * @param call the call, for the log line
+         * @return the interface, {@code null} for none
+         */
+        private Location target(String call) {
+            ModuleLocation running = runningInstance(call);
+            return running == null ? null : running.locationInterface;
+        }
+
+        /**
          * Disable sending of location data. Erases server side saved location information
          */
         public void disableLocation() {
+            Location target = target("[Location] disableLocation");
+            if (target != this) {
+                if (target != null) {
+                    target.disableLocation();
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[Location] Calling 'disableLocation'");
 
@@ -235,6 +279,13 @@ public class ModuleLocation extends ModuleBase {
          * @param ipAddress ipAddress like "192.168.88.33"
          */
         public void setLocation(@Nullable String countryCode, @Nullable String city, @Nullable String gpsCoordinates, @Nullable String ipAddress) {
+            Location target = target("[Location] setLocation");
+            if (target != this) {
+                if (target != null) {
+                    target.setLocation(countryCode, city, gpsCoordinates, ipAddress);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[Location] Calling 'setLocation'");
 

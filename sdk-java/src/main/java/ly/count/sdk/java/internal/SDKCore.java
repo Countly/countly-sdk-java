@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Function;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import ly.count.sdk.java.Config;
@@ -37,6 +39,54 @@ public class SDKCore {
      * Selected by config map of module mappings
      */
     private static final Map<CoreFeature, Class<? extends ModuleBase>> moduleMappings = new ConcurrentHashMap<>();
+
+    /**
+     * The view IDs events carry while no views module runs.
+     */
+    static final ViewIdProvider NO_VIEW_IDS = new ViewIdProvider() {
+        /**
+         * No view runs, so there is no current view ID.
+         */
+        @Nonnull public String getCurrentViewId() {
+            return "";
+        }
+
+        /**
+         * No view runs, so there is no previous view ID.
+         */
+        @Nonnull public String getPreviousViewId() {
+            return "";
+        }
+    };
+
+    /**
+     * Interfaces of module instances the SDK never runs, handed out in place of the interface of a
+     * feature that does not run: before init, while its consent is not given, or when it is not
+     * enabled, so a caller never gets {@code null}. Like every module interface, each sends its
+     * calls to the module of its feature once that runs and ignores them until then.
+     */
+    public static final ModuleEvents.Events dormantEvents = new ModuleEvents().new Events();
+    public static final ModuleFeedback.Feedback dormantFeedback = new ModuleFeedback().new Feedback();
+    public static final ModuleContent.Content dormantContent = new ModuleContent().new Content();
+    public static final ModuleCrashes.Crashes dormantCrashes = new ModuleCrashes().new Crashes();
+    public static final ModuleViews.Views dormantViews = new ModuleViews().new Views();
+    public static final ModuleDeviceIdCore.DeviceId dormantDeviceId = new ModuleDeviceIdCore().new DeviceId();
+    public static final ModuleRemoteConfig.RemoteConfig dormantRemoteConfig = new ModuleRemoteConfig().new RemoteConfig();
+    public static final ModuleUserProfile.UserProfile dormantUserProfile = new ModuleUserProfile().new UserProfile();
+    public static final ModuleLocation.Location dormantLocation = new ModuleLocation().new Location();
+
+    /**
+     * The remote config download callbacks, those of the configuration and those registered through
+     * the remote config interface, kept beyond the module, so one built when the consent is given,
+     * or given again, calls them too.
+     */
+    final List<RCDownloadCallback> remoteConfigDownloadCallbacks = new CopyOnWriteArrayList<>();
+
+    /**
+     * The display registered through the content interface, kept beyond the module, so one built
+     * when the consent is given, or given again, draws with it.
+     */
+    volatile ContentDisplay contentDisplay = null;
 
     // sorted by feature index, and safe to iterate while a consent change adds or removes a module
     protected final Map<Integer, ModuleBase> modules;
@@ -96,7 +146,14 @@ public class SDKCore {
     }
 
     private void onTimer() {
-        modules.forEach((feature, module) -> module.onTimer());
+        modules.forEach((feature, module) -> {
+            try {
+                module.onTimer();
+            } catch (Throwable t) {
+                //one failing module does not hold back the others on the same tick
+                L.e("[SDKCore] onTimer, " + module.getClass().getSimpleName() + " failed on a tick, [" + t + "]");
+            }
+        });
         L.flushGatheredLogs();
     }
 
@@ -196,6 +253,7 @@ public class SDKCore {
                 } else {
                     module.init(config);
                     module.initFinished(config);
+                    module.setActive(true);
                     modules.put(feature.getIndex(), module);
                 }
             }
@@ -221,15 +279,21 @@ public class SDKCore {
         }
 
         if (removingConsent(noConsent, CoreFeature.Location)) {
-            user().edit().optOutFromLocationServices();
+            ModuleLocation location = module(ModuleLocation.class);
+            if (location != null) {
+                location.eraseLocation();
+            }
         }
 
         consents = consents & ~noConsent;
         L.dropLinesWithoutConsent();
 
         for (CoreFeature feature : moduleMappings.keySet()) {
+            if (feature == CoreFeature.Sessions || (noConsent & feature.getIndex()) == 0) {
+                continue;
+            }
             ModuleBase existing = module(moduleMappings.get(feature));
-            if (feature.getIndex() != CoreFeature.Sessions.getIndex() && existing != null) {
+            if (existing != null) {
                 existing.stop(config, true);
                 modules.remove(feature.getIndex());
             }
@@ -452,6 +516,7 @@ public class SDKCore {
         }
 
         requestQueueMemory = new ArrayDeque<>(config.getRequestQueueMaxSize());
+        remoteConfigDownloadCallbacks.addAll(config.getRemoteConfigGlobalCallbackList());
 
         if (config.viewIdGenerator == null) {
             config.viewIdGenerator = Utils::safeRandomVal;
@@ -462,15 +527,7 @@ public class SDKCore {
         }
 
         if (config.viewIdProvider == null) {
-            config.viewIdProvider = new ViewIdProvider() {
-                @Nonnull public String getCurrentViewId() {
-                    return "";
-                }
-
-                @Nonnull public String getPreviousViewId() {
-                    return "";
-                }
-            };
+            config.viewIdProvider = NO_VIEW_IDS;
         }
 
         // ModuleSessions is always enabled, even without consent
@@ -928,113 +985,120 @@ public class SDKCore {
         return ((ModuleSessions) module(CoreFeature.Sessions)).timedEvents();
     }
 
+    /**
+     * The events interface: the running module's, or one that ignores calls until the events feature runs, as its consent is not given or it is not enabled.
+     *
+     * @return the interface, never {@code null}
+     */
     public ModuleEvents.Events events() {
-        if (!hasConsentForFeature(CoreFeature.Events)) {
-            L.v("[SDKCore] events, Events feature has no consent, returning null");
-            return null;
-        }
-
-        ModuleEvents module = module(ModuleEvents.class);
-        if (module == null) {
-            return null;
-        }
-
-        return module.eventsInterface;
+        return runningInterface(CoreFeature.Events, ModuleEvents.class, module -> module.eventsInterface, dormantEvents);
     }
 
+    /**
+     * The feedback interface: the running module's, or one that ignores calls until the feedback feature runs, as its consent is not given or it is not enabled.
+     *
+     * @return the interface, never {@code null}
+     */
     public ModuleFeedback.Feedback feedback() {
-
-        if (!hasConsentForFeature(CoreFeature.Feedback)) {
-            L.v("[SDKCore] feedback, Feedback feature has no consent, returning null");
-            return null;
-        }
-
-        ModuleFeedback module = module(ModuleFeedback.class);
-        if (module == null) {
-            // Consent is not the only gate: the feature may simply never have been enabled,
-            // in which case the module was never built and there is nothing to hand back.
-            L.v("[SDKCore] feedback, feedback feature was not enabled, returning null");
-            return null;
-        }
-
-        return module.feedbackInterface;
+        return runningInterface(CoreFeature.Feedback, ModuleFeedback.class, module -> module.feedbackInterface, dormantFeedback);
     }
 
+    /**
+     * The content interface: the running module's, or one that ignores calls until the content feature runs, as its consent is not given or it is not enabled.
+     *
+     * @return the interface, never {@code null}
+     */
     public ModuleContent.Content content() {
-        if (!hasConsentForFeature(CoreFeature.Content)) {
-            L.v("[SDKCore] content, Content feature has no consent, returning null");
-            return null;
-        }
-
-        ModuleContent module = module(ModuleContent.class);
-        if (module == null) {
-            return null;
-        }
-
-        return module.contentInterface;
+        return runningInterface(CoreFeature.Content, ModuleContent.class, module -> module.contentInterface, dormantContent);
     }
 
+    /**
+     * The crashes interface: the running module's, or one that ignores calls until crash reporting runs, as its consent is not given or it is not enabled.
+     *
+     * @return the interface, never {@code null}
+     */
     public ModuleCrashes.Crashes crashes() {
-        if (!hasConsentForFeature(CoreFeature.CrashReporting)) {
-            L.v("[SDKCore] crash, Crash Reporting feature has no consent, returning null");
-            return null;
-        }
-
-        ModuleCrashes module = module(ModuleCrashes.class);
-        if (module == null) {
-            // Consent is not the only gate: the feature may simply never have been enabled,
-            // in which case the module was never built and there is nothing to hand back.
-            L.v("[SDKCore] crashes, crashes feature was not enabled, returning null");
-            return null;
-        }
-
-        return module.crashInterface;
+        return runningInterface(CoreFeature.CrashReporting, ModuleCrashes.class, module -> module.crashInterface, dormantCrashes);
     }
 
+    /**
+     * The views interface: the running module's, or one that ignores calls until the views feature runs, as its consent is not given or it is not enabled.
+     *
+     * @return the interface, never {@code null}
+     */
     public ModuleViews.Views views() {
-        ModuleViews module = module(ModuleViews.class);
-        if (module == null) {
-            L.v("[SDKCore] views, Views feature has no consent, returning null");
-            return null;
-        }
-
-        return module.viewsInterface;
+        return runningInterface(null, ModuleViews.class, module -> module.viewsInterface, dormantViews);
     }
 
+    /**
+     * The device ID interface: the running module's, or one that ignores calls until the device ID module runs.
+     *
+     * @return the interface, never {@code null}
+     */
     public ModuleDeviceIdCore.DeviceId deviceId() {
-        return module(ModuleDeviceIdCore.class).deviceIdInterface;
+        return runningInterface(null, ModuleDeviceIdCore.class, module -> module.deviceIdInterface, dormantDeviceId);
     }
 
+    /**
+     * The remote config interface: the running module's, or one that ignores calls until remote config runs, as its consent is not given or it is not enabled.
+     *
+     * @return the interface, never {@code null}
+     */
     public ModuleRemoteConfig.RemoteConfig remoteConfig() {
-        if (!hasConsentForFeature(CoreFeature.RemoteConfig)) {
-            L.v("[SDKCore] remoteConfig, RemoteConfig feature has no consent, returning null");
-            return null;
-        }
-
-        ModuleRemoteConfig module = module(ModuleRemoteConfig.class);
-        if (module == null) {
-            // Consent is not the only gate: the feature may simply never have been enabled,
-            // in which case the module was never built and there is nothing to hand back.
-            L.v("[SDKCore] remoteConfig, remoteConfig feature was not enabled, returning null");
-            return null;
-        }
-
-        return module.remoteConfigInterface;
+        return runningInterface(CoreFeature.RemoteConfig, ModuleRemoteConfig.class, module -> module.remoteConfigInterface, dormantRemoteConfig);
     }
 
+    /**
+     * The user profile interface: the running module's, or one that ignores calls until the user profile module runs.
+     *
+     * @return the interface, never {@code null}
+     */
     public ModuleUserProfile.UserProfile userProfile() {
-        return module(ModuleUserProfile.class).userProfileInterface;
+        return runningInterface(null, ModuleUserProfile.class, module -> module.userProfileInterface, dormantUserProfile);
     }
 
+    /**
+     * The location interface: the running module's, or one that ignores calls until the location feature runs, as its consent is not given or it is not enabled.
+     *
+     * @return the interface, never {@code null}
+     */
     public ModuleLocation.Location location() {
-        if (!hasConsentForFeature(CoreFeature.Location)) {
-            L.v("[SDKCore] location, Location feature has no consent, returning null");
-            return null;
+        return runningInterface(CoreFeature.Location, ModuleLocation.class, module -> module.locationInterface, dormantLocation);
+    }
+
+    /**
+     * The interface of a running module, or the one handed out while it does not run, whose calls
+     * go to the module once it runs and are ignored until then.
+     *
+     * @param consent the feature whose consent the module needs, {@code null} when it needs none
+     * @param moduleClass the class of the module
+     * @param interfaceOf reads the interface of a module
+     * @param dormant the interface handed out while the module does not run
+     * @param <M> the module type
+     * @param <I> the interface type
+     * @return the interface, never {@code null}
+     */
+    private <M extends ModuleBase, I> I runningInterface(@Nullable CoreFeature consent, @Nonnull Class<M> moduleClass, @Nonnull Function<M, I> interfaceOf, @Nonnull I dormant) {
+        M module = consent == null ? module(moduleClass) : runningModule(consent, moduleClass);
+        I running = module == null ? null : interfaceOf.apply(module);
+        if (running == null) {
+            L.v("[SDKCore] runningInterface, " + moduleClass.getSimpleName() + " does not run, handing out an interface that ignores calls until it does");
+            return dormant;
         }
-        ModuleLocation module = module(ModuleLocation.class);
-        if (module == null) {
-            return null;
-        }
-        return module.locationInterface;
+        return running;
+    }
+
+    /**
+     * The module of a feature while it runs: it was built and the feature's consent is given.
+     *
+     * @param feature the feature
+     * @param moduleClass the class of its module
+     * @param <M> the module type
+     * @return the module, {@code null} while it does not run
+     */
+    @Nullable
+    <M extends ModuleBase> M runningModule(@Nonnull CoreFeature feature, @Nonnull Class<M> moduleClass) {
+        M module = module(moduleClass);
+        return module != null && hasConsentForFeature(feature) ? module : null;
     }
 }

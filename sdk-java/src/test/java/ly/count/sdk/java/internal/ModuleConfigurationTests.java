@@ -379,8 +379,10 @@ public class ModuleConfigurationTests {
      * <p>
      * Verifies that a {@code cr} arriving while the SDK runs is stored but leaves the running SDK
      * without consent gating, that the stored value is in place before the modules are built on the
-     * next init, so the feature modules wait for consent, and that removing consent stops feature
-     * modules but never the configuration module, which keeps applying responses.
+     * next init, so the feature modules wait for consent while an integration that never asked for
+     * consent calls an events interface that ignores calls instead of throwing, and that removing
+     * consent stops feature modules but never the configuration module, which keeps applying
+     * responses.
      */
     @Test
     public void consentRequirement_appliesAtInitOnly_andConsentRemovalNeverStopsTheConfigurationModule() {
@@ -399,7 +401,9 @@ public class ModuleConfigurationTests {
 
         Assert.assertTrue(SDKCore.instance.config.requiresConsent());
         Assert.assertFalse(Countly.isTracking(Config.Feature.Events));
-        Assert.assertNull(Countly.instance().events());
+        Assert.assertSame(SDKCore.dormantEvents, Countly.instance().events());
+        Countly.instance().events().recordEvent("before_consent");
+        TestUtils.validateEQSize(0);
 
         Countly.onConsent(Config.Feature.Events);
         Assert.assertTrue(Countly.isTracking(Config.Feature.Events));
@@ -479,7 +483,8 @@ public class ModuleConfigurationTests {
     /**
      * {@code cet} covers custom events only, {@code tracking} covers every event.
      * <p>
-     * Verifies on the wire that with custom event tracking off a custom event is dropped while a view
+     * Verifies on the wire that with custom event tracking off a custom event, a {@code [CLY]_} key
+     * the SDK does not record itself included, is dropped while a view
      * started through the views interface and an internal event still reach the queue, flushed at the
      * event queue size the settings resolved, that tracking off then drops internal events too, and
      * that custom events are recorded again once both are back on. Networking is off throughout, so
@@ -491,6 +496,7 @@ public class ModuleConfigurationTests {
         init(TestUtils.getConfigSdkBehaviorSettings().enableFeatures(Config.Feature.Events, Config.Feature.Views).setEventQueueSizeToSend(100));
 
         Countly.instance().events().recordEvent("custom_event");
+        Countly.instance().events().recordEvent("[CLY]_not_an_sdk_event");
         TestUtils.validateEQSize(0);
 
         Countly.instance().views().startView("home");

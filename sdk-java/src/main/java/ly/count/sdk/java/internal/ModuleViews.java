@@ -61,6 +61,9 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
 
     @Override
     public void stop(InternalConfig config, boolean clear) {
+        if (config.viewIdProvider == this) {
+            config.viewIdProvider = SDKCore.NO_VIEW_IDS;
+        }
         viewsInterface = null;
         viewDataMap.clear();
         if (globalViewSegmentation != null) {
@@ -428,6 +431,19 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
     public class Views {
 
         /**
+         * The interface a call goes to: this one while its module runs, the running module's when
+         * this one was handed out before that started or kept from one that stopped, and
+         * {@code null} while the feature does not run.
+         *
+         * @param call the call, for the log line
+         * @return the interface, {@code null} for none
+         */
+        private Views target(String call) {
+            ModuleViews running = runningInstance(call);
+            return running == null ? null : running.viewsInterface;
+        }
+
+        /**
          * Record a view manually, without automatic tracking
          * or tracks a view that is not automatically tracked
          * like a fragment, Message box or a transparent Activity
@@ -436,6 +452,13 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
          * @return Returns View ID
          */
         public String startAutoStoppedView(@Nonnull String viewName) {
+            Views target = target("[Views] startAutoStoppedView");
+            if (target != this) {
+                if (target == null) {
+                    return null;
+                }
+                return target.startAutoStoppedView(viewName);
+            }
             synchronized (Countly.instance()) {
                 return startAutoStoppedView(viewName, null);
             }
@@ -452,6 +475,13 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
          * @return String - view ID
          */
         public String startAutoStoppedView(@Nonnull String viewName, @Nullable Map<String, Object> viewSegmentation) {
+            Views target = target("[Views] startAutoStoppedView");
+            if (target != this) {
+                if (target == null) {
+                    return null;
+                }
+                return target.startAutoStoppedView(viewName, viewSegmentation);
+            }
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling startAutoStoppedView [" + viewName + "] sg[" + viewSegmentation + "]");
                 return startViewInternal(viewName, viewSegmentation, true);
@@ -465,6 +495,13 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
          * @return String - View ID
          */
         public @Nullable String startView(@Nonnull String viewName) {
+            Views target = target("[Views] startView");
+            if (target != this) {
+                if (target == null) {
+                    return null;
+                }
+                return target.startView(viewName);
+            }
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling startView vn[" + viewName + "]");
                 return startViewInternal(viewName, null, false);
@@ -479,6 +516,13 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
          * @return String - View ID
          */
         public @Nullable String startView(@Nonnull String viewName, @Nullable Map<String, Object> viewSegmentation) {
+            Views target = target("[Views] startView");
+            if (target != this) {
+                if (target == null) {
+                    return null;
+                }
+                return target.startView(viewName, viewSegmentation);
+            }
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling startView vn[" + viewName + "] sg[" + viewSegmentation + "]");
                 return startViewInternal(viewName, viewSegmentation, false);
@@ -491,6 +535,13 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
          * @param viewName String - view name
          */
         public void stopViewWithName(@Nonnull String viewName) {
+            Views target = target("[Views] stopViewWithName");
+            if (target != this) {
+                if (target != null) {
+                    target.stopViewWithName(viewName);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling stopViewWithName vn[" + viewName + "]");
                 stopViewWithNameInternal(viewName, null);
@@ -504,6 +555,13 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
          * @param viewSegmentation Map<String, Object> - view segmentation
          */
         public void stopViewWithName(@Nonnull String viewName, @Nullable Map<String, Object> viewSegmentation) {
+            Views target = target("[Views] stopViewWithName");
+            if (target != this) {
+                if (target != null) {
+                    target.stopViewWithName(viewName, viewSegmentation);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling stopViewWithName vn[" + viewName + "] sg[" + viewSegmentation + "]");
                 stopViewWithNameInternal(viewName, viewSegmentation);
@@ -516,6 +574,13 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
          * @param viewID String - view ID
          */
         public void stopViewWithID(@Nonnull String viewID) {
+            Views target = target("[Views] stopViewWithID");
+            if (target != this) {
+                if (target != null) {
+                    target.stopViewWithID(viewID);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling stopViewWithID vi[" + viewID + "]");
                 stopViewWithIDInternal(viewID, null);
@@ -529,6 +594,13 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
          * @param viewSegmentation Map<String, Object> - view segmentation
          */
         public void stopViewWithID(@Nonnull String viewID, @Nullable Map<String, Object> viewSegmentation) {
+            Views target = target("[Views] stopViewWithID");
+            if (target != this) {
+                if (target != null) {
+                    target.stopViewWithID(viewID, viewSegmentation);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling stopViewWithID vi[" + viewID + "] sg[" + viewSegmentation + "]");
                 stopViewWithIDInternal(viewID, viewSegmentation);
@@ -541,6 +613,13 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
          * @param viewID String - view ID
          */
         public void pauseViewWithID(@Nonnull String viewID) {
+            Views target = target("[Views] pauseViewWithID");
+            if (target != this) {
+                if (target != null) {
+                    target.pauseViewWithID(viewID);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling pauseViewWithID vi[" + viewID + "]");
                 pauseViewWithIDInternal(viewID);
@@ -553,6 +632,13 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
          * @param viewID String - view ID
          */
         public void resumeViewWithID(@Nonnull String viewID) {
+            Views target = target("[Views] resumeViewWithID");
+            if (target != this) {
+                if (target != null) {
+                    target.resumeViewWithID(viewID);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling resumeViewWithID vi[" + viewID + "]");
                 resumeViewWithIDInternal(viewID);
@@ -565,6 +651,13 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
          * @param viewSegmentation Map<String, Object> - view segmentation
          */
         public void stopAllViews(@Nullable Map<String, Object> viewSegmentation) {
+            Views target = target("[Views] stopAllViews");
+            if (target != this) {
+                if (target != null) {
+                    target.stopAllViews(viewSegmentation);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling stopAllViews sg[" + viewSegmentation + "]");
                 stopAllViewsInternal(viewSegmentation);
@@ -578,6 +671,13 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
          * @param viewSegmentation Map<String, Object>
          */
         public void addSegmentationToViewWithName(@Nonnull String viewName, @Nullable Map<String, Object> viewSegmentation) {
+            Views target = target("[Views] addSegmentationToViewWithName");
+            if (target != this) {
+                if (target != null) {
+                    target.addSegmentationToViewWithName(viewName, viewSegmentation);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling addSegmentationToViewWithName vn[" + viewName + "] sg[" + viewSegmentation + "]");
                 addSegmentationToViewWithNameInternal(viewName, viewSegmentation);
@@ -591,6 +691,13 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
          * @param viewSegmentation Map<String, Object>
          */
         public void addSegmentationToViewWithID(@Nonnull String viewId, @Nullable Map<String, Object> viewSegmentation) {
+            Views target = target("[Views] addSegmentationToViewWithID");
+            if (target != this) {
+                if (target != null) {
+                    target.addSegmentationToViewWithID(viewId, viewSegmentation);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling addSegmentationToViewWithID vi[" + viewId + "] sg[" + viewSegmentation + "]");
                 addSegmentationToViewWithIDInternal(viewId, viewSegmentation);
@@ -603,6 +710,13 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
          * @param segmentation Map<String, Object> - global view segmentation
          */
         public void setGlobalViewSegmentation(@Nullable Map<String, Object> segmentation) {
+            Views target = target("[Views] setGlobalViewSegmentation");
+            if (target != this) {
+                if (target != null) {
+                    target.setGlobalViewSegmentation(segmentation);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling setGlobalViewSegmentation sg[" + (segmentation == null ? null : segmentation.size()) + "]");
 
@@ -616,6 +730,13 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
          * @param segmentation Map<String, Object> - global view segmentation
          */
         public void updateGlobalViewSegmentation(@Nullable Map<String, Object> segmentation) {
+            Views target = target("[Views] updateGlobalViewSegmentation");
+            if (target != this) {
+                if (target != null) {
+                    target.updateGlobalViewSegmentation(segmentation);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling updateGlobalViewSegmentation sg[" + (segmentation == null ? null : segmentation.size()) + "]");
 

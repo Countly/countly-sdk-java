@@ -68,7 +68,14 @@ public class CountlyTimer {
             startTime = 0;
         }
 
-        timerService.scheduleWithFixedDelay(runnable, startTime, delay, TimeUnit.MILLISECONDS);
+        timerService.scheduleWithFixedDelay(() -> {
+            try {
+                runnable.run();
+            } catch (Throwable t) {
+                //a fixed delay schedule ends for good once a run throws
+                L.e("[CountlyTimer] a timer run failed, [" + t + "]");
+            }
+        }, startTime, delay, TimeUnit.MILLISECONDS);
     }
 
     /**

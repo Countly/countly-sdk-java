@@ -267,11 +267,31 @@ public class ModuleCrashes extends ModuleBase {
     public class Crashes {
 
         /**
+         * The interface a call goes to: this one while its module runs, the running module's when
+         * this one was handed out before that started or kept from one that stopped, and
+         * {@code null} while the feature does not run.
+         *
+         * @param call the call, for the log line
+         * @return the interface, {@code null} for none
+         */
+        private Crashes target(String call) {
+            ModuleCrashes running = runningInstance(call);
+            return running == null ? null : running.crashInterface;
+        }
+
+        /**
          * Add crash breadcrumb like log record to the log that will be sent together with crash report
          *
          * @param record String a bread crumb for the crash report
          */
         public void addCrashBreadcrumb(String record) {
+            Crashes target = target("[Crashes] addCrashBreadcrumb");
+            if (target != this) {
+                if (target != null) {
+                    target.addCrashBreadcrumb(record);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[Crashes] Adding crash breadcrumb");
                 addBreadcrumbInternal(record);
@@ -284,6 +304,13 @@ public class ModuleCrashes extends ModuleBase {
          * @param exception Throwable to log
          */
         public void recordHandledException(Throwable exception) {
+            Crashes target = target("[Crashes] recordHandledException");
+            if (target != this) {
+                if (target != null) {
+                    target.recordHandledException(exception);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 recordExceptionInternal(exception, true, null, null);
             }
@@ -295,6 +322,13 @@ public class ModuleCrashes extends ModuleBase {
          * @param exception Throwable to log
          */
         public void recordUnhandledException(Throwable exception) {
+            Crashes target = target("[Crashes] recordUnhandledException");
+            if (target != this) {
+                if (target != null) {
+                    target.recordUnhandledException(exception);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 recordExceptionInternal(exception, false, null, null);
             }
@@ -306,6 +340,13 @@ public class ModuleCrashes extends ModuleBase {
          * @param exception Throwable to log
          */
         public void recordHandledException(final Throwable exception, final Map<String, Object> customSegmentation) {
+            Crashes target = target("[Crashes] recordHandledException");
+            if (target != this) {
+                if (target != null) {
+                    target.recordHandledException(exception, customSegmentation);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 recordExceptionInternal(exception, true, customSegmentation, null);
             }
@@ -317,6 +358,13 @@ public class ModuleCrashes extends ModuleBase {
          * @param exception Throwable to log
          */
         public void recordUnhandledException(final Throwable exception, final Map<String, Object> customSegmentation) {
+            Crashes target = target("[Crashes] recordUnhandledException");
+            if (target != this) {
+                if (target != null) {
+                    target.recordUnhandledException(exception, customSegmentation);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 recordExceptionInternal(exception, false, customSegmentation, null);
             }
