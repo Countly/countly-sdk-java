@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
+import ly.count.sdk.java.PredefinedUserPropertyKeys;
 import ly.count.sdk.java.View;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -445,6 +446,61 @@ public class ModuleConfigurationGatesTests {
         Assert.assertEquals(2, requests.length);
         Assert.assertEquals("1", requests[1].get("begin_session"));
         assertNoLocation(requests[1]);
+    }
+
+    /**
+     * {@code lt} off keeps the location of the deprecated user editor out of the user details.
+     * <p>
+     * Verifies that with location tracking on, a location committed through the user editor is
+     * sent; that after a response turning it off sends the erase request, neither a location,
+     * country and city committed through the user editor nor a country and city held from before
+     * are sent with the user details; that opting out of location services still sends its null
+     * values; that a country and city held while it is on are not sent once it is turned off and on
+     * again; and that a location committed then is sent.
+     */
+    @Test
+    public void locationTracking_off_keepsTheUserEditorLocationOutOfUserDetails() {
+        server.respondWith(new ServerConfigBuilder().networking(false));
+        init(TestUtils.getConfigSdkBehaviorSettings().enableFeatures(Config.Feature.Location, Config.Feature.UserProfiles));
+
+        Countly.instance().user().edit().setLocation(1.5, 2.5).commit();
+        Map<String, String>[] requests = TestUtils.getCurrentRQ();
+        Assert.assertEquals(1, requests.length);
+        Assert.assertEquals("1.5,2.5", requests[0].get("location"));
+
+        Countly.instance().user().edit().setCountry("TR").setCity("Izmir");
+        push(new ServerConfigBuilder().locationTracking(false));
+        requests = TestUtils.getCurrentRQ();
+        Assert.assertEquals(2, requests.length);
+        Assert.assertEquals("", requests[1].get("location"));
+
+        Countly.instance().user().edit().setLocation(56.4, 123.4).setCountry("US").setCity("New York").set(PredefinedUserPropertyKeys.NAME, "Name").commit();
+        requests = TestUtils.getCurrentRQ();
+        Assert.assertEquals(3, requests.length);
+        Assert.assertEquals("Name", new JSONObject(requests[2].get("user_details")).getString("name"));
+        assertNoLocation(requests[2]);
+
+        Countly.instance().user().edit().optOutFromLocationServices().commit();
+        requests = TestUtils.getCurrentRQ();
+        Assert.assertEquals(4, requests.length);
+        Assert.assertEquals("null", requests[3].get("location"));
+        Assert.assertEquals("null", requests[3].get("city"));
+        Assert.assertEquals("null", requests[3].get("country_code"));
+
+        push(new ServerConfigBuilder().locationTracking(true));
+        Countly.instance().user().edit().setCountry("NL").setCity("Amsterdam");
+        push(new ServerConfigBuilder().locationTracking(false));
+        push(new ServerConfigBuilder().locationTracking(true));
+        Countly.instance().user().edit().set(PredefinedUserPropertyKeys.NAME, "Other").commit();
+        requests = TestUtils.getCurrentRQ();
+        Assert.assertEquals(5, requests.length);
+        Assert.assertEquals("Other", new JSONObject(requests[4].get("user_details")).getString("name"));
+        assertNoLocation(requests[4]);
+
+        Countly.instance().user().edit().setLocation(3.5, 4.5).commit();
+        requests = TestUtils.getCurrentRQ();
+        Assert.assertEquals(6, requests.length);
+        Assert.assertEquals("3.5,4.5", requests[5].get("location"));
     }
 
     /**

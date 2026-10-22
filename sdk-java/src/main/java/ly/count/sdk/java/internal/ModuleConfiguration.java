@@ -530,7 +530,7 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
 
     /**
      * Applies the merged settings to the resolved values, decides the log gathering directive of a
-     * live response and restarts the refresh timer when its interval changed.
+     * live response and has the logger apply it, and restarts the refresh timer when its interval changed.
      *
      * @param config configuration of the running SDK
      * @param serverResponse the live response being applied, {@code null} at init, where only stored or provided settings exist
@@ -541,6 +541,7 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
 
         //read off the live response itself, so it applies even when its settings object was rejected
         readLogGatheringDirective(serverResponse);
+        L.applyLogGatheringDirective(serverResponse == null ? "init" : "server response");
 
         if (latestRetrievedConfiguration == null) {
             return false;
@@ -832,7 +833,8 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
     }
 
     /**
-     * Decides against log gathering when nothing decided yet, for a run where no response can arrive.
+     * Decides against log gathering when nothing decided yet, for a run where no response can arrive,
+     * and has the logger apply the decision.
      *
      * @param reason why no response can arrive
      */
@@ -840,6 +842,7 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
         if (currentVLogGathering.state == LogGatheringState.UNDECIDED) {
             L.d("[ModuleConfiguration] decideLogGatheringOffIfUndecided, " + reason + ", log gathering is off");
             setLogGatheringOff();
+            L.applyLogGatheringDirective(reason);
         }
     }
 

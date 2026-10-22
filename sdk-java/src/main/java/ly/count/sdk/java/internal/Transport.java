@@ -375,7 +375,9 @@ public class Transport implements X509TrustManager {
     }
 
     /**
-     * Sends a request once and hands its response to the module that owns it.
+     * Sends a request once and hands its response to the module that owns it. While the request
+     * carries a batch of gathered log lines, the sending thread is marked as doing their transport
+     * work, so nothing logged about the upload is gathered.
      *
      * @param request request to send
      * @return the task sending the request, resolving to whether the server accepted it
@@ -397,7 +399,12 @@ public class Transport implements X509TrustManager {
         return new Tasks.Task<Boolean>(request.storageId()) {
             @Override
             public Boolean call() {
-                return send();
+                L.setOwnTransportWork(request.params.has(Log.keySdkLogs));
+                try {
+                    return send();
+                } finally {
+                    L.setOwnTransportWork(false);
+                }
             }
 
             public Boolean send() {

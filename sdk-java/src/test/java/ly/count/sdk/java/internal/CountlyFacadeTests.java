@@ -1,7 +1,10 @@
 package ly.count.sdk.java.internal;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
@@ -292,6 +295,73 @@ public class CountlyFacadeTests {
         Assert.assertFalse(Countly.isTracking(Config.Feature.Events));
         Assert.assertNull(Countly.instance().events());
         Assert.assertNull(Countly.instance().views());
+    }
+
+    /**
+     * Consent changes add and remove modules while the transport hands responses to their owners,
+     * and every response still reaches its owner.
+     * <p>
+     * Verifies that while another thread keeps giving and removing a consent, handing responses
+     * over throws nothing and each one reaches the module that owns the request, that the consent
+     * changes throw nothing either, and that the last removal took effect.
+     */
+    @Test
+    public void requestCompletions_reachTheirOwner_whileConsentChangesAddAndRemoveModules() throws InterruptedException {
+        AtomicInteger delivered = new AtomicInteger();
+        SDKCore.testDummyModule = new ModuleBase() {
+            /**
+             * Counts a response handed over.
+             *
+             * @param request the request that was sent
+             * @param response the response body
+             * @param responseCode the response code
+             */
+            @Override
+            public void onRequestCompleted(Request request, String response, int responseCode) {
+                delivered.incrementAndGet();
+            }
+        };
+        try {
+            Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.Feedback).setRequiresConsent(true));
+            SDKCore core = SDKCore.instance;
+            Class<? extends ModuleBase> owner = SDKCore.testDummyModule.getClass();
+            Request request = ModuleRequests.nonSessionRequest(core.config);
+            List<Throwable> failures = new CopyOnWriteArrayList<>();
+            AtomicInteger handedOver = new AtomicInteger();
+            AtomicBoolean changingConsents = new AtomicBoolean(true);
+
+            Thread completions = new Thread(() -> {
+                while (changingConsents.get()) {
+                    try {
+                        core.onRequestCompleted(request, "{\"result\":\"Success\"}", 200, owner);
+                        handedOver.incrementAndGet();
+                    } catch (Throwable t) {
+                        failures.add(t);
+                        return;
+                    }
+                }
+            });
+            completions.start();
+            try {
+                for (int i = 0; i < 2000 && failures.isEmpty(); i++) {
+                    Countly.onConsent(Config.Feature.Feedback);
+                    Countly.onConsentRemoval(Config.Feature.Feedback);
+                }
+            } catch (RuntimeException e) {
+                failures.add(e);
+            } finally {
+                changingConsents.set(false);
+                completions.join(30_000);
+            }
+
+            Assert.assertFalse(completions.isAlive());
+            Assert.assertTrue("failed: " + failures, failures.isEmpty());
+            Assert.assertTrue(handedOver.get() > 0);
+            Assert.assertEquals(handedOver.get(), delivered.get());
+            Assert.assertNull(Countly.instance().feedback());
+        } finally {
+            SDKCore.testDummyModule = null;
+        }
     }
 
     // endregion

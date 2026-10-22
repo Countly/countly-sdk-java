@@ -171,8 +171,9 @@ public class ModuleConfigurationTests {
      * <p>
      * Verifies that a response missing one of the three, or with a {@code c} that is not an object,
      * is rejected without touching the store, that an empty {@code c} is accepted, that extra top
-     * level keys are accepted quietly and never stored, so neither {@code lg} nor {@code ct} ever is,
-     * and that a rejected response after an accepted one keeps the merged settings.
+     * level keys are accepted quietly and never stored, so neither {@code lg} nor {@code ct} ever is
+     * while {@code ct} still asks for one connection test, and that a rejected response after an
+     * accepted one keeps the merged settings.
      */
     @Test
     public void envelope_requiresVersionTimestampAndSettingsObject_andOnlyThoseAreStored() {
@@ -196,11 +197,15 @@ public class ModuleConfigurationTests {
         Assert.assertTrue(new JSONObject("{'v':1,'t':2,'c':{}}").similar(storedConfig()));
 
         warnings.clear();
+        List<Long> connectionTestRequests = new CopyOnWriteArrayList<>();
+        //the connection test module would run its probe battery against the test server over the network
+        module().setConnectionTestListener(connectionTestRequests::add);
         push(new ServerConfigBuilder().version(2).timestamp(3).tracking(false)
             .logGatheringOn("gather_id", "ew", 20)
             .connectionTest(1)
             .topLevelKey("someFutureFeature", "a value this SDK has never heard of"));
 
+        Assert.assertEquals(1, connectionTestRequests.size());
         Assert.assertFalse(provider().getTrackingEnabled());
         Assert.assertEquals(ConfigurationProvider.LogGatheringState.GATHERING, provider().getLogGatheringState());
         JSONObject stored = storedConfig();

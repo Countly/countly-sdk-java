@@ -60,6 +60,11 @@ public class ModuleContent extends ModuleBase {
      * value changed. Guarded by {@link #contentLock}.
      */
     private boolean contentZoneEnabledApplied = false;
+    /**
+     * Set once {@link #stop(InternalConfig, boolean)} starts, after which no zone is entered, so no
+     * zone timer outlives the module. Guarded by {@link #contentLock}.
+     */
+    private boolean stopped = false;
 
     /** When the SDK came up, which is what {@link #START_DELAY_MS} is measured from. */
     private long startedAt = 0;
@@ -176,8 +181,18 @@ public class ModuleContent extends ModuleBase {
         return true;
     }
 
+    /**
+     * Leaves the content zone for good: from here on no zone is entered, not even by a settings
+     * change that arrives while the SDK stops.
+     *
+     * @param config configuration of the SDK being stopped
+     * @param clear whether the SDK clears its data
+     */
     @Override
     public void stop(InternalConfig config, boolean clear) {
+        synchronized (contentLock) {
+            stopped = true;
+        }
         super.stop(config, clear);
         exitContentZoneInternal();
         display = null;
@@ -242,6 +257,11 @@ public class ModuleContent extends ModuleBase {
 
         int zoneTimerInterval = internalConfig.getConfigurationProvider().getContentZoneTimerInterval();
         synchronized (contentLock) {
+            if (stopped) {
+                L.d("[ModuleContent] enterContentZoneInternal, the module is stopped, ignoring the call");
+                return;
+            }
+
             if (zoneActive) {
                 if (!bySettings && zoneEnteredBySettings) {
                     zoneEnteredBySettings = false;

@@ -57,7 +57,9 @@ public class DefaultNetworking implements Networking {
 
     /**
      * Starts draining the request queue unless the SDK stopped, a request is being handled, there is
-     * no device ID yet or the backoff mechanism holds the queue back.
+     * no device ID yet or the backoff mechanism holds the queue back. A drain started from a thread
+     * marked as doing the log gathering's own transport work, which queued or sent a batch of
+     * gathered log lines, keeps that mark until it read the request to send.
      *
      * @param config configuration of the running SDK
      * @return whether a request is being handled
@@ -66,7 +68,7 @@ public class DefaultNetworking implements Networking {
     public boolean check(InternalConfig config) {
         L.d("[Networking] [check] state: shutdown [" + shutdown + "], backed off [" + backedOff + "], tasks running [" + tasks.isRunning() + "], net running [" + tasks.isRunning() + "], device id [" + config.getDeviceId() + "]");
         if (!shutdown && !backedOff && !tasks.isRunning() && config.getDeviceId() != null) {
-            tasks.run(submit(config));
+            tasks.run(submit(config, L.isOwnTransportWork()));
         }
         return tasks.isRunning();
     }
@@ -78,53 +80,87 @@ public class DefaultNetworking implements Networking {
      * that the backoff mechanism holds the queue back.
      *
      * @param config configuration of the running SDK
+     * @param followsOwnTransportWork whether the log gathering's own transport work started the
+     *     drain, which then keeps the thread marked while the drain checks whether it may run and
+     *     reads the request, so a drain that follows an upload does not report on it
      * @return the task, resolving to whether a request was handed over for sending or removed
      */
-    protected Tasks.Task<Boolean> submit(final InternalConfig config) {
+    protected Tasks.Task<Boolean> submit(final InternalConfig config, final boolean followsOwnTransportWork) {
         return new Tasks.Task<Boolean>(Tasks.ID_STRICT) {
             @Override
             public Boolean call() throws Exception {
-                if (!config.getNetworkingEnabled()) {
-                    L.d("[Networking] submit, networking disabled by SDK behavior settings; skipping queue drain");
-                    return false;
+                L.setOwnTransportWork(followsOwnTransportWork);
+                try {
+                    if (!config.getNetworkingEnabled()) {
+                        L.d("[Networking] submit, networking disabled by SDK behavior settings; skipping queue drain");
+                        return false;
+                    }
+                    if (backedOff) {
+                        L.d("[Networking] submit, the backoff mechanism holds the request queue back; skipping queue drain");
+                        return false;
+                    }
+                } finally {
+                    L.setOwnTransportWork(false);
                 }
-                if (backedOff) {
-                    L.d("[Networking] submit, the backoff mechanism holds the request queue back; skipping queue drain");
-                    return false;
-                }
-                final Request request = nextRequestWithinDropAge(config);
+                final Request request = nextRequestWithinDropAge(config, followsOwnTransportWork);
                 if (request == null) {
                     return false;
-                } else {
-                    L.d("[Networking] Preparing request: " + request);
-                    final Boolean check = SDKCore.instance.isRequestReady(request);
-                    if (check == null) {
-                        L.d("[Networking] Request is not ready yet: " + request);
-                        return false;
-                    } else if (check.equals(Boolean.FALSE)) {
-                        L.d("[Networking] Request won't be ready, removing: " + request);
-                        Storage.remove(config, request);
-                        return true;
-                    } else {
-                        if (request.params.has("rr")) {
-                            request.params.remove("rr");
-                        }
-                        request.params.add("rr", storageForRequestQueue.remaningRequests());
-                        final AtomicLong responseTimeMs = new AtomicLong(-1L);
-                        tasks.run(transport.send(request, responseTimeMs::set), result -> {
-                            L.d("[Networking] Request " + request.storageId() + " sent?: " + result + ", response time [" + responseTimeMs.get() + "] ms");
-                            if (result) {
-                                storageForRequestQueue.removeRequest(request);
-                                if (!backOffIfTheServerIsSlow(config, request, responseTimeMs.get())) {
-                                    check(config);
-                                }
-                            }
-                        });
-                        return true;
-                    }
+                }
+
+                boolean uploadsGatheredLogs = request.params.has(Log.keySdkLogs);
+                L.setOwnTransportWork(uploadsGatheredLogs);
+                try {
+                    return prepareAndSend(config, request, uploadsGatheredLogs);
+                } finally {
+                    L.setOwnTransportWork(false);
                 }
             }
         };
+    }
+
+    /**
+     * Hands a queued request to the transport once its owner says it is ready, or removes it when
+     * its owner says it never will be. While the request carries a batch of gathered log lines, the
+     * thread is marked as doing their transport work, also while the send completes, so nothing
+     * logged about the upload is gathered.
+     *
+     * @param config configuration of the running SDK
+     * @param request the oldest queued request
+     * @param uploadsGatheredLogs whether the request carries a batch of gathered log lines
+     * @return whether the request was handed over for sending or removed
+     */
+    private boolean prepareAndSend(final InternalConfig config, final Request request, final boolean uploadsGatheredLogs) {
+        L.d("[Networking] Preparing request: " + request);
+        final Boolean check = SDKCore.instance.isRequestReady(request);
+        if (check == null) {
+            L.d("[Networking] Request is not ready yet: " + request);
+            return false;
+        } else if (check.equals(Boolean.FALSE)) {
+            L.d("[Networking] Request won't be ready, removing: " + request);
+            Storage.remove(config, request);
+            return true;
+        }
+
+        if (request.params.has("rr")) {
+            request.params.remove("rr");
+        }
+        request.params.add("rr", storageForRequestQueue.remaningRequests());
+        final AtomicLong responseTimeMs = new AtomicLong(-1L);
+        tasks.run(transport.send(request, responseTimeMs::set), result -> {
+            L.setOwnTransportWork(uploadsGatheredLogs);
+            try {
+                L.d("[Networking] Request " + request.storageId() + " sent?: " + result + ", response time [" + responseTimeMs.get() + "] ms");
+                if (result) {
+                    storageForRequestQueue.removeRequest(request);
+                    if (!backOffIfTheServerIsSlow(config, request, responseTimeMs.get())) {
+                        check(config);
+                    }
+                }
+            } finally {
+                L.setOwnTransportWork(false);
+            }
+        });
+        return true;
     }
 
     /**
@@ -132,18 +168,37 @@ public class DefaultNetworking implements Networking {
      * request drop age of the SDK behavior settings.
      *
      * @param config configuration of the running SDK
+     * @param followsOwnTransportWork whether the log gathering's own transport work started the drain
      * @return the request to send next, {@code null} when the queue is empty or a request could not be dropped
      */
     @Nullable
-    private Request nextRequestWithinDropAge(@Nonnull InternalConfig config) {
-        Request request = storageForRequestQueue.getNextRequest();
+    private Request nextRequestWithinDropAge(@Nonnull InternalConfig config, boolean followsOwnTransportWork) {
+        Request request = readNextRequest(followsOwnTransportWork);
         while (request != null && isOlderThanDropAge(config, request)) {
             if (!dropWithoutSending(config, request)) {
                 return null;
             }
-            request = storageForRequestQueue.getNextRequest();
+            request = readNextRequest(followsOwnTransportWork);
         }
         return request;
+    }
+
+    /**
+     * Reads the oldest queued request. While the log gathering's own transport work started the
+     * drain, the thread is marked during the read, so the read it logs is not gathered, while a
+     * request dropped meanwhile is still reported.
+     *
+     * @param followsOwnTransportWork whether the log gathering's own transport work started the drain
+     * @return the request, {@code null} when the queue is empty
+     */
+    @Nullable
+    private Request readNextRequest(boolean followsOwnTransportWork) {
+        L.setOwnTransportWork(followsOwnTransportWork);
+        try {
+            return storageForRequestQueue.getNextRequest();
+        } finally {
+            L.setOwnTransportWork(false);
+        }
     }
 
     /**

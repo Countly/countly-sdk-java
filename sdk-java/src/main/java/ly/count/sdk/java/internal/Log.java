@@ -1,17 +1,95 @@
 package ly.count.sdk.java.internal;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BooleanSupplier;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import ly.count.sdk.java.Config;
+import ly.count.sdk.java.internal.ConfigurationProvider.LogGatheringState;
+import org.json.JSONObject;
 
 /**
  * Logging module. Exposes static functions for simplicity, thus can be used only from some point
  * in time when {@link Config} is created and {@link ModuleBase}s are up.
+ * <p>
+ * The logger also gathers the SDK's own lines for the server when the {@code lg} directive of the
+ * SDK behavior settings asks for them, and uploads them as the {@code sdk_logs} parameter of
+ * requests of their own, shaped {@code {"i":gatherId,"d":dropped,"l":[{"t":ms,"l":"e","m":message}]}}.
+ * Every level is captured, whatever is printed. Capture starts with the first line, into a
+ * provisional buffer, since the init lines are the ones worth having: a live directive adopts the
+ * buffer filtered to its levels, or drops it. Nothing of it is ever stored.
  */
 
 public class Log {
+    static final String keySdkLogs = "sdk_logs";
+    //a line that carries an uploaded batch is never gathered, or each batch would nest the previous one
+    static final String transportMarker = keySdkLogs + "=";
+
+    static final String keyBatchGatherId = "i";
+    static final String keyBatchDroppedCount = "d";
+    static final String keyBatchLines = "l";
+    static final String keyLineTimestamp = "t";
+    static final String keyLineLevel = "l";
+    static final String keyLineMessage = "m";
+
+    //the server keeps at most this many characters of a message
+    static final int maxMessageLength = 4096;
+    //a ceiling on the characters held, since the line ceiling alone does not bound the memory
+    static final int gatheredCharCeiling = 128 * 1024;
+    static final String DELIVERY_THREAD_NAME = "Countly-LogDelivery";
+
     private final LogCallback logListener;
     private final Config.LoggingLevel loggingLevel;
     //the lowest level printed: the developer level unless the SDK behavior settings override it
     private volatile Config.LoggingLevel printLevel;
+
+    //guards the buffer and the directive mirror; nothing is logged and nothing is called out while it is held
+    private final Object logBufferLock = new Object();
+    //held while batches are taken and queued, so ending the gathering waits for a delivery in flight
+    private final Object logDeliveryLock = new Object();
+    private final Object logDeliveryExecutorLock = new Object();
+
+    private final ArrayDeque<LogLine> gatheredLines = new ArrayDeque<>();
+    int droppedLogLineCount = 0;
+    int gatheredChars = 0;
+
+    //the directive mirror, so capturing a line never reads the settings; the state alone is read without the lock
+    volatile LogGatheringState logGatheringState = LogGatheringState.UNDECIDED;
+    String logGatherId = null;
+    String logGatherLevels = ModuleConfiguration.logGatheringAllLevels;
+    int logGatherBatchSize = ModuleConfiguration.logGatheringDefaultBatchSize;
+    private volatile boolean logGatheringEnded = false;
+
+    private final ThreadLocal<Boolean> ownTransportWork = new ThreadLocal<>();
+    private final AtomicBoolean logDeliveryPending = new AtomicBoolean(false);
+    private final AtomicBoolean partialLogDeliveryRequested = new AtomicBoolean(false);
+    volatile ExecutorService logDeliveryExecutor = null;
+    private volatile boolean sdkInitFinished = false;
+
+    private volatile ConfigurationProvider configProvider = null;
+    private volatile BooleanSupplier consentCheck = null;
+    private volatile LogBatchQueue logBatchQueue = null;
+
+    /**
+     * Queues one batch of gathered log lines as a request of its own.
+     */
+    interface LogBatchQueue {
+        /**
+         * Queues the batch.
+         *
+         * @param payload the {@code sdk_logs} value
+         * @return whether the batch was queued, {@code false} when the queue refused it
+         */
+        boolean queueLogBatch(@Nonnull String payload);
+    }
 
     public Log(Config.LoggingLevel loggingLevel, LogCallback logListener) {
         if (loggingLevel == null) {
@@ -56,6 +134,7 @@ public class Log {
     public void d(String logMessage) {
         print("[DEBUG] [Countly]\t" + logMessage, Config.LoggingLevel.DEBUG);
         informListener(logMessage, Config.LoggingLevel.DEBUG);
+        captureLogLine(logMessage, 'd');
     }
 
     /**
@@ -66,6 +145,7 @@ public class Log {
     public void i(String logMessage) {
         print("[INFO] [Countly]\t" + logMessage, Config.LoggingLevel.INFO);
         informListener(logMessage, Config.LoggingLevel.INFO);
+        captureLogLine(logMessage, 'i');
     }
 
     /**
@@ -76,6 +156,7 @@ public class Log {
     public void w(String logMessage) {
         print("[WARN] [Countly]\t" + logMessage, Config.LoggingLevel.WARN);
         informListener(logMessage, Config.LoggingLevel.WARN);
+        captureLogLine(logMessage, 'w');
     }
 
     /**
@@ -86,6 +167,7 @@ public class Log {
     public void e(String logMessage) {
         print("[ERROR] [Countly]\t" + logMessage, Config.LoggingLevel.ERROR);
         informListener(logMessage, Config.LoggingLevel.ERROR);
+        captureLogLine(logMessage, 'e');
     }
 
     /**
@@ -96,6 +178,7 @@ public class Log {
     public void v(String logMessage) {
         print("[VERBOSE] [Countly]\t" + logMessage, Config.LoggingLevel.VERBOSE);
         informListener(logMessage, Config.LoggingLevel.VERBOSE);
+        captureLogLine(logMessage, 'v');
     }
 
     private void print(String msg, Config.LoggingLevel level) {
@@ -107,6 +190,588 @@ public class Log {
     private void informListener(String msg, Config.LoggingLevel level) {
         if (logListener != null) {
             logListener.LogHappened(msg, level);
+        }
+    }
+
+    /**
+     * Hands the logger what it needs to act on the log gathering directive, then applies the
+     * directive in effect. Setters rather than constructor parameters, as the logger exists before
+     * any of them.
+     *
+     * @param configProvider the SDK behavior settings, which hold the directive
+     * @param consentCheck whether gathered lines may leave the device as far as consent goes
+     * @param logBatchQueue queues one batch as a request of its own
+     */
+    void setLogGatheringProviders(@Nonnull ConfigurationProvider configProvider, @Nonnull BooleanSupplier consentCheck, @Nonnull LogBatchQueue logBatchQueue) {
+        v("[Log] setLogGatheringProviders, held lines:[" + heldLogLineCount() + "]");
+        this.consentCheck = consentCheck;
+        this.logBatchQueue = logBatchQueue;
+        this.configProvider = configProvider;
+        applyLogGatheringDirective("init");
+    }
+
+    /**
+     * Applies the directive the settings hold to what is held. An armed directive adopts the held
+     * lines filtered to its levels, a decision against gathering drops them and stops the capture,
+     * and a new gather id drops the lines of the previous gather. Called after every decision, and
+     * ignored once the gathering ended.
+     *
+     * @param source what decided, for the log line only
+     */
+    void applyLogGatheringDirective(@Nonnull String source) {
+        if (logGatheringEnded) {
+            return;
+        }
+
+        ConfigurationProvider provider = configProvider;
+        if (provider == null) {
+            v("[Log] applyLogGatheringDirective, no configuration provider yet, source:[" + source + "]");
+            return;
+        }
+
+        LogGatheringState state = provider.getLogGatheringState();
+        String gatherId = provider.getLogGatheringId();
+        String levels = provider.getLogGatheringLevels();
+        int batchSize = provider.getLogGatheringBatchSize();
+
+        if (!adoptLogGatheringDirective(state, gatherId, levels, batchSize)) {
+            return;
+        }
+
+        d("[Log] applyLogGatheringDirective, source:[" + source + "], state:[" + state + "], id:[" + gatherId + "], levels:[" + levels + "], batch size:[" + batchSize + "], held lines:[" + heldLogLineCount() + "]");
+
+        if (state != LogGatheringState.GATHERING) {
+            shutdownLogDelivery();
+            return;
+        }
+
+        ensureLogDeliveryExecutor();
+        scheduleLogDelivery(false);
+    }
+
+    /**
+     * Lets the lines held during init go out, as the request queue is usable from here on.
+     */
+    void onSdkInitFinished() {
+        sdkInitFinished = true;
+        if (isGatheringLogs()) {
+            d("[Log] onSdkInitFinished, uploading the lines gathered during init");
+            scheduleLogDelivery(true);
+        }
+    }
+
+    /**
+     * Uploads what is held, on a timer tick, so a buffer that never fills a batch still goes out.
+     */
+    void flushGatheredLogs() {
+        if (isGatheringLogs() && heldLogLineCount() > 0) {
+            scheduleLogDelivery(true);
+        }
+    }
+
+    /**
+     * Marks the calling thread as doing this feature's own transport work, so nothing it logs
+     * meanwhile is gathered, or every upload would report on itself.
+     *
+     * @param transporting {@code true} to mark the thread, {@code false} to clear the mark
+     */
+    void setOwnTransportWork(boolean transporting) {
+        if (transporting) {
+            ownTransportWork.set(Boolean.TRUE);
+        } else {
+            ownTransportWork.remove();
+        }
+    }
+
+    /**
+     * Whether the calling thread is marked as doing this feature's own transport work.
+     *
+     * @return {@code true} while the thread is marked
+     */
+    boolean isOwnTransportWork() {
+        return Boolean.TRUE.equals(ownTransportWork.get());
+    }
+
+    /**
+     * Ends log gathering for good, as the SDK that owns this logger stops. A stop that keeps the SDK
+     * data queues what is held first, as far as tracking and consent allow, since nothing held
+     * outlives the SDK; a stop that clears the data discards it. Waits for a delivery in flight, so
+     * no batch of this logger is queued afterwards, and releases the delivery thread. Lines logged
+     * afterwards, by threads that outlive the SDK, are neither captured nor queued.
+     *
+     * @param queueHeldLines {@code true} to queue the held lines first, {@code false} to discard them
+     */
+    void endLogGathering(boolean queueHeldLines) {
+        Boolean previousMark = ownTransportWork.get();
+        setOwnTransportWork(true);
+        try {
+            synchronized (logDeliveryLock) {
+                try {
+                    if (queueHeldLines && isGatheringLogs()) {
+                        int heldLines = heldLogLineCount();
+                        d("[Log] endLogGathering, queueing the [" + heldLines + "] held lines before the SDK stops");
+                        deliverHeldLogBatches(heldLines);
+                    }
+                } catch (RuntimeException e) {
+                    e("[Log] endLogGathering, failed to queue the held lines, [" + e + "]");
+                } finally {
+                    synchronized (logBufferLock) {
+                        logGatheringEnded = true;
+                        logGatheringState = LogGatheringState.NOT_GATHERING;
+                        logGatherId = null;
+                        logGatherLevels = ModuleConfiguration.logGatheringAllLevels;
+                        logGatherBatchSize = ModuleConfiguration.logGatheringDefaultBatchSize;
+                        clearBufferLocked();
+                    }
+                }
+            }
+        } finally {
+            setOwnTransportWork(Boolean.TRUE.equals(previousMark));
+        }
+
+        shutdownLogDelivery();
+        configProvider = null;
+        consentCheck = null;
+        logBatchQueue = null;
+        v("[Log] endLogGathering, log gathering ended");
+    }
+
+    /**
+     * Whether lines are still held for the server, which is true until something decides against
+     * gathering.
+     *
+     * @return {@code true} while lines are captured
+     */
+    boolean isCapturingLogs() {
+        return logGatheringState != LogGatheringState.NOT_GATHERING;
+    }
+
+    /**
+     * Whether a live directive armed the gathering.
+     *
+     * @return {@code true} while gathering
+     */
+    boolean isGatheringLogs() {
+        return logGatheringState == LogGatheringState.GATHERING;
+    }
+
+    /**
+     * How many lines are held.
+     *
+     * @return the number of lines in the buffer
+     */
+    int heldLogLineCount() {
+        synchronized (logBufferLock) {
+            return gatheredLines.size();
+        }
+    }
+
+    /**
+     * Holds a line for the server: every level while nothing is decided, the directive's levels
+     * while gathering, nothing while not gathering. Lines that carry an uploaded batch and lines of a
+     * thread doing this feature's own transport work are skipped. A full batch is handed to the
+     * delivery thread.
+     *
+     * @param message the line as logged
+     * @param level the level character: e, w, i, d or v
+     */
+    private void captureLogLine(@Nullable String message, char level) {
+        if (logGatheringState == LogGatheringState.NOT_GATHERING) {
+            return;
+        }
+        if (Boolean.TRUE.equals(ownTransportWork.get())) {
+            return;
+        }
+        String msg = message == null ? "" : message;
+        if (msg.contains(transportMarker)) {
+            return;
+        }
+
+        boolean batchIsFull;
+        synchronized (logBufferLock) {
+            LogGatheringState state = logGatheringState;
+            if (state == LogGatheringState.NOT_GATHERING) {
+                return;
+            }
+            boolean gathering = state == LogGatheringState.GATHERING;
+            //while nothing is decided the wanted levels are unknown, so every level is held and filtered on adoption
+            if (gathering && logGatherLevels.indexOf(level) < 0) {
+                return;
+            }
+
+            LogLine line = new LogLine(System.currentTimeMillis(), level, trimLogMessage(msg));
+            gatheredLines.addLast(line);
+            gatheredChars += line.message.length();
+            trimBufferLocked();
+            batchIsFull = gathering && gatheredLines.size() >= logGatherBatchSize;
+        }
+
+        if (batchIsFull) {
+            scheduleLogDelivery(false);
+        }
+    }
+
+    /**
+     * Mirrors a directive and applies it to what is held.
+     *
+     * @param newState the decision
+     * @param newGatherId the gather id, {@code null} unless gathering
+     * @param newLevels the level characters to gather
+     * @param newBatchSize how many lines make a batch
+     * @return whether anything changed
+     */
+    private boolean adoptLogGatheringDirective(@Nonnull LogGatheringState newState, @Nullable String newGatherId, @Nonnull String newLevels, int newBatchSize) {
+        synchronized (logBufferLock) {
+            if (logGatheringEnded) {
+                return false;
+            }
+
+            boolean changed = logGatheringState != newState
+                || !Objects.equals(logGatherId, newGatherId)
+                || !logGatherLevels.equals(newLevels)
+                || logGatherBatchSize != newBatchSize;
+            if (!changed) {
+                return false;
+            }
+
+            boolean wasGathering = logGatheringState == LogGatheringState.GATHERING;
+            String previousGatherId = logGatherId;
+
+            logGatherId = newGatherId;
+            logGatherLevels = newLevels;
+            logGatherBatchSize = newBatchSize;
+            logGatheringState = newState;
+
+            switch (newState) {
+                case NOT_GATHERING:
+                    clearBufferLocked();
+                    break;
+                case GATHERING:
+                    if (wasGathering && previousGatherId != null && !previousGatherId.equals(newGatherId)) {
+                        //the held lines belong to the previous gather and never go out under another id
+                        clearBufferLocked();
+                    } else {
+                        filterBufferLocked();
+                        trimBufferLocked();
+                    }
+                    break;
+                case UNDECIDED:
+                default:
+                    break;
+            }
+            return true;
+        }
+    }
+
+    /**
+     * Asks the delivery thread to queue what is held, never the calling thread, which may hold a
+     * lock of its own. A delivery already waiting to run takes the request over. Never logs, as it
+     * runs from the capture of a line.
+     *
+     * @param includePartialBatch whether a batch that is not full goes out too
+     */
+    private void scheduleLogDelivery(boolean includePartialBatch) {
+        if (!sdkInitFinished) {
+            return;
+        }
+        if (includePartialBatch) {
+            partialLogDeliveryRequested.set(true);
+        }
+        if (!logDeliveryPending.compareAndSet(false, true)) {
+            return;
+        }
+
+        ExecutorService executor = logDeliveryExecutor;
+        if (executor == null) {
+            logDeliveryPending.set(false);
+            return;
+        }
+
+        try {
+            executor.execute(this::runLogDelivery);
+        } catch (RejectedExecutionException e) {
+            logDeliveryPending.set(false);
+        }
+    }
+
+    /**
+     * Runs one delivery on the delivery thread: every full batch, and when asked also what is held
+     * beyond them, up to what was held when the delivery started.
+     */
+    private void runLogDelivery() {
+        logDeliveryPending.set(false);
+        boolean includePartialBatch = partialLogDeliveryRequested.getAndSet(false);
+        try {
+            synchronized (logDeliveryLock) {
+                if (logGatheringEnded) {
+                    return;
+                }
+                deliverHeldLogBatches(includePartialBatch ? heldLogLineCount() : 0);
+            }
+        } catch (RuntimeException e) {
+            e("[Log] runLogDelivery, failed to upload the gathered log lines, [" + e + "]");
+        }
+    }
+
+    /**
+     * Queues the held lines batch by batch, oldest first, until nothing is left to queue or the
+     * queue refuses a batch: every full batch, and within the given budget also a batch that is not
+     * full. Holds everything while tracking is off or no consent is given, as gathered lines quote
+     * event keys and whole requests. The caller holds the delivery lock and has marked its thread.
+     *
+     * @param partialLineBudget how many lines may still go out in batches that are not full
+     */
+    private void deliverHeldLogBatches(int partialLineBudget) {
+        LogBatchQueue queue = logBatchQueue;
+        ConfigurationProvider provider = configProvider;
+        if (queue == null || provider == null) {
+            return;
+        }
+
+        int budget = partialLineBudget;
+        while (true) {
+            if (!provider.getTrackingEnabled()) {
+                d("[Log] deliverHeldLogBatches, tracking is disabled, keeping the gathered lines buffered");
+                return;
+            }
+
+            BooleanSupplier consent = consentCheck;
+            if (consent != null && !consent.getAsBoolean()) {
+                d("[Log] deliverHeldLogBatches, no consent is given, keeping the gathered lines buffered");
+                return;
+            }
+
+            LogBatch batch = takeLogBatch(budget > 0);
+            if (batch == null) {
+                return;
+            }
+            budget -= batch.lines.size();
+
+            String payload = buildLogBatchPayload(batch.gatherId, batch.dropped, batch.lines);
+            d("[Log] deliverHeldLogBatches, uploading a gathered log batch of [" + batch.lines.size() + "] lines, [" + payload.length() + "] characters");
+            if (!queue.queueLogBatch(payload)) {
+                d("[Log] deliverHeldLogBatches, the request queue refused the batch, keeping its lines buffered");
+                restoreLogBatch(batch);
+                return;
+            }
+        }
+    }
+
+    /**
+     * Takes up to one batch of the oldest lines out of the buffer, with the lines dropped since the
+     * last batch, which are reported once, with the batch that follows the loss.
+     *
+     * @param includePartialBatch whether a batch that is not full may be taken
+     * @return the batch, {@code null} when there is nothing to take
+     */
+    @Nullable
+    private LogBatch takeLogBatch(boolean includePartialBatch) {
+        synchronized (logBufferLock) {
+            if (logGatheringState != LogGatheringState.GATHERING || logGatherId == null || gatheredLines.isEmpty()) {
+                return null;
+            }
+            if (!includePartialBatch && gatheredLines.size() < logGatherBatchSize) {
+                return null;
+            }
+
+            int count = Math.min(logGatherBatchSize, gatheredLines.size());
+            List<LogLine> taken = new ArrayList<>(count);
+            for (int i = 0; i < count; i++) {
+                LogLine line = gatheredLines.removeFirst();
+                gatheredChars -= line.message.length();
+                taken.add(line);
+            }
+
+            LogBatch batch = new LogBatch(logGatherId, droppedLogLineCount, taken);
+            droppedLogLineCount = 0;
+            return batch;
+        }
+    }
+
+    /**
+     * Puts a batch the queue refused back at the front of the buffer, oldest first, with its drop
+     * count, unless its gather ended meanwhile.
+     *
+     * @param batch the refused batch
+     */
+    private void restoreLogBatch(@Nonnull LogBatch batch) {
+        synchronized (logBufferLock) {
+            if (logGatheringState != LogGatheringState.GATHERING || !batch.gatherId.equals(logGatherId)) {
+                return;
+            }
+
+            for (int i = batch.lines.size() - 1; i >= 0; i--) {
+                LogLine line = batch.lines.get(i);
+                if (logGatherLevels.indexOf(line.level) > -1) {
+                    gatheredLines.addFirst(line);
+                    gatheredChars += line.message.length();
+                }
+            }
+            droppedLogLineCount += batch.dropped;
+            trimBufferLocked();
+        }
+    }
+
+    /**
+     * Creates the delivery thread's executor unless it exists or the gathering ended. The thread is
+     * a daemon, and it is marked as doing transport work for its whole life.
+     */
+    private void ensureLogDeliveryExecutor() {
+        synchronized (logDeliveryExecutorLock) {
+            if (logGatheringEnded || logDeliveryExecutor != null) {
+                return;
+            }
+            logDeliveryExecutor = Executors.newSingleThreadExecutor(runnable -> {
+                Thread thread = new Thread(() -> {
+                    setOwnTransportWork(true);
+                    runnable.run();
+                }, DELIVERY_THREAD_NAME);
+                thread.setDaemon(true);
+                return thread;
+            });
+        }
+        v("[Log] ensureLogDeliveryExecutor, created the log batch delivery executor");
+    }
+
+    /**
+     * Releases the delivery thread. A delivery already queued still runs, and finds nothing to do
+     * once the gathering is off.
+     */
+    private void shutdownLogDelivery() {
+        ExecutorService executor;
+        synchronized (logDeliveryExecutorLock) {
+            executor = logDeliveryExecutor;
+            logDeliveryExecutor = null;
+        }
+
+        if (executor != null) {
+            v("[Log] shutdownLogDelivery, stopping the log batch delivery executor");
+            executor.shutdown();
+        }
+    }
+
+    /**
+     * Enforces both buffer ceilings by dropping the oldest lines, counting them into {@code d}.
+     */
+    private void trimBufferLocked() {
+        while (gatheredLines.size() > ModuleConfiguration.logGatheringMaxBufferedLines
+            || (gatheredChars > gatheredCharCeiling && gatheredLines.size() > 1)) {
+            gatheredChars -= gatheredLines.removeFirst().message.length();
+            droppedLogLineCount++;
+        }
+    }
+
+    /**
+     * Drops the held lines of levels the directive does not ask for. They are not counted as
+     * dropped, as they were never wanted.
+     */
+    private void filterBufferLocked() {
+        Iterator<LogLine> iterator = gatheredLines.iterator();
+        while (iterator.hasNext()) {
+            LogLine line = iterator.next();
+            if (logGatherLevels.indexOf(line.level) < 0) {
+                gatheredChars -= line.message.length();
+                iterator.remove();
+            }
+        }
+    }
+
+    /**
+     * Empties the buffer and forgets the drop count.
+     */
+    private void clearBufferLocked() {
+        gatheredLines.clear();
+        gatheredChars = 0;
+        droppedLogLineCount = 0;
+    }
+
+    /**
+     * Builds the {@code sdk_logs} value of one batch, its keys always in the same order.
+     *
+     * @param gatherId the gather id the directive named, which the server requires
+     * @param dropped how many lines were dropped since the last batch
+     * @param lines the lines, oldest first
+     * @return the JSON text
+     */
+    @Nonnull
+    static String buildLogBatchPayload(@Nonnull String gatherId, int dropped, @Nonnull List<LogLine> lines) {
+        StringBuilder payload = new StringBuilder(64 + lines.size() * 96);
+        payload.append("{\"").append(keyBatchGatherId).append("\":").append(JSONObject.quote(gatherId))
+            .append(",\"").append(keyBatchDroppedCount).append("\":").append(dropped)
+            .append(",\"").append(keyBatchLines).append("\":[");
+        for (int i = 0; i < lines.size(); i++) {
+            LogLine line = lines.get(i);
+            if (i > 0) {
+                payload.append(',');
+            }
+            payload.append("{\"").append(keyLineTimestamp).append("\":").append(line.timestamp)
+                .append(",\"").append(keyLineLevel).append("\":\"").append(line.level)
+                .append("\",\"").append(keyLineMessage).append("\":").append(JSONObject.quote(line.message))
+                .append('}');
+        }
+        return payload.append("]}").toString();
+    }
+
+    /**
+     * Cuts a message to what the server keeps, never between the two halves of a surrogate pair.
+     *
+     * @param message the message
+     * @return the message, at most {@value #maxMessageLength} characters long
+     */
+    @Nonnull
+    static String trimLogMessage(@Nonnull String message) {
+        if (message.length() <= maxMessageLength) {
+            return message;
+        }
+
+        int end = maxMessageLength;
+        if (Character.isHighSurrogate(message.charAt(end - 1))) {
+            end--;
+        }
+        return message.substring(0, end);
+    }
+
+    /**
+     * One captured line.
+     */
+    static final class LogLine {
+        final long timestamp;
+        final char level;
+        final String message;
+
+        /**
+         * Holds one line.
+         *
+         * @param timestamp when it was logged, in milliseconds
+         * @param level the level character
+         * @param message the message, already cut
+         */
+        LogLine(long timestamp, char level, @Nonnull String message) {
+            this.timestamp = timestamp;
+            this.level = level;
+            this.message = message;
+        }
+    }
+
+    /**
+     * One batch taken out of the buffer, kept whole so a refused batch can be put back.
+     */
+    private static final class LogBatch {
+        final String gatherId;
+        final int dropped;
+        final List<LogLine> lines;
+
+        /**
+         * Holds one batch.
+         *
+         * @param gatherId the gather id the batch is uploaded with
+         * @param dropped how many lines were dropped before it
+         * @param lines the lines, oldest first
+         */
+        LogBatch(@Nonnull String gatherId, int dropped, @Nonnull List<LogLine> lines) {
+            this.gatherId = gatherId;
+            this.dropped = dropped;
+            this.lines = lines;
         }
     }
 }

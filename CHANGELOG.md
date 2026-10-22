@@ -19,6 +19,24 @@
   </repositories>
   ```
   Versions released before this one stay available on Maven Central. The files are signed with the same key as before (`FC8DB0DE234A273BA45E562FB8C83A079A5BBD0C`).
+* ! Minor breaking change ! SDK behavior settings are now enabled by default. The SDK fetches them from the server at initialization and every few hours, so changes made in SDK Manager > SDK Configuration on your server affect SDK behavior directly. They are not used in backend mode.
+
+* Added support for SDK behavior settings that let the server control the SDK:
+  * Switches for tracking, networking, sessions, views, custom events, crash reporting, automatic crash reporting, location, and console logging
+  * The event queue size, request queue size, session update interval, and settings refresh interval
+  * The consent requirement, applied on the next initialization
+  * SDK internal limits for key length, value size, segmentation value count, stack trace lines per thread, stack trace line length, and breadcrumb count
+  * Listing filters (blacklist/whitelist) for events, segmentation keys, event specific segmentation keys, and user properties, plus a user property cache limit
+  * Entering, refreshing, and the fetch interval of the content zone, plus Journey Trigger Events and Journey Trigger Views that refresh it
+  * Dropping requests older than a given age
+* Added "setSdkBehaviorSettings(String)" init config method for providing SDK behavior settings at initialization.
+* Added "disableSdkBehaviorSettingsUpdates()" init config method for disabling SDK behavior settings requests.
+* Improved request queue handling with a built-in backoff mechanism which is enabled by default. When the server takes 10 seconds or longer to answer while few requests are queued, the SDK pauses sending for 60 seconds.
+* Added "disableBackoffMechanism()" init config method to disable the backoff behavior.
+* Added support for server requested SDK log gathering. When the server asks for it, the SDK uploads its own internal log lines, even if logging is disabled.
+* Added support for the SDK connection test. When the server asks for it, the SDK checks that it can reach every endpoint it depends on and reports the results.
+
+* Mitigated an issue where saving the SDK storage while remote config values were changing could empty the storage file.
 
 ## 26.8.0
 * Added support for the Content feature, accessible through the "Countly.instance().content()" interface:

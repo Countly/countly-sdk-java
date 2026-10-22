@@ -3,6 +3,7 @@ package ly.count.sdk.java.internal;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import ly.count.sdk.java.Countly;
+import org.json.JSONObject;
 
 public class ModuleLocation extends ModuleBase {
     boolean locationDisabled = false;
@@ -127,14 +128,19 @@ public class ModuleLocation extends ModuleBase {
 
     /**
      * Disables location when a server response turned location tracking off, which erases the
-     * location stored on the server as {@link Location#disableLocation()} does.
+     * location stored on the server as {@link Location#disableLocation()} does, and drops the
+     * location values held for the next user details request.
      *
      * @param config configuration of the running SDK
      */
     @Override
     protected void onSdkConfigurationChanged(InternalConfig config) {
         synchronized (Countly.instance()) {
-            if (!locationDisabled && !config.getConfigurationProvider().getLocationTrackingEnabled()) {
+            if (config.getConfigurationProvider().getLocationTrackingEnabled()) {
+                return;
+            }
+            dropDisallowedLegacyValues();
+            if (!locationDisabled) {
                 L.d("[ModuleLocation] onSdkConfigurationChanged, location tracking was disabled by the SDK behavior settings, disabling location");
                 disableLocationInternal();
             }
@@ -142,13 +148,13 @@ public class ModuleLocation extends ModuleBase {
     }
 
     protected void saveLocationToParamsLegacy(Params params) {
-        if (countryLegacy != null) {
+        if (isLegacyValueAllowed(countryLegacy)) {
             params.add("country_code", countryLegacy);
         }
-        if (cityLegacy != null) {
+        if (isLegacyValueAllowed(cityLegacy)) {
             params.add("city", cityLegacy);
         }
-        if (locationLegacy != null) {
+        if (isLegacyValueAllowed(locationLegacy)) {
             params.add("location", locationLegacy);
         }
         countryLegacy = null;
@@ -158,15 +164,51 @@ public class ModuleLocation extends ModuleBase {
 
     protected void setLocationLegacy(@Nullable Object countryCode, @Nullable Object city, @Nullable Object gpsCoordinates) {
         L.d("[Location] setLocationLegacy, calling legacy calls to send locations");
-        if (countryCode != null) {
+        if (isLegacyValueAllowed(countryCode)) {
             countryLegacy = countryCode.toString();
         }
-        if (city != null) {
+        if (isLegacyValueAllowed(city)) {
             cityLegacy = city.toString();
         }
-        if (gpsCoordinates != null) {
+        if (isLegacyValueAllowed(gpsCoordinates)) {
             locationLegacy = gpsCoordinates.toString();
         }
+    }
+
+    /**
+     * Drops the held deprecated location values that may not be sent while location tracking is off,
+     * so a value set before the SDK behavior settings turned location tracking off is not sent after
+     * they turn it on again.
+     */
+    private void dropDisallowedLegacyValues() {
+        if (!isLegacyValueAllowed(countryLegacy)) {
+            countryLegacy = null;
+        }
+        if (!isLegacyValueAllowed(cityLegacy)) {
+            cityLegacy = null;
+        }
+        if (!isLegacyValueAllowed(locationLegacy)) {
+            locationLegacy = null;
+        }
+    }
+
+    /**
+     * Whether a deprecated location value can be held and sent with the user details. While the SDK
+     * behavior settings disable location tracking, only the JSON null that opts out of location
+     * services can, as it erases a location instead of tracking one.
+     *
+     * @param value the value, or {@code null} when none is set
+     * @return {@code true} when the value is set and can be sent
+     */
+    private boolean isLegacyValueAllowed(@Nullable Object value) {
+        if (value == null) {
+            return false;
+        }
+        if (JSONObject.NULL.toString().equals(value.toString()) || internalConfig.getConfigurationProvider().getLocationTrackingEnabled()) {
+            return true;
+        }
+        L.d("[ModuleLocation] isLegacyValueAllowed, location tracking disabled by SDK behavior settings; dropping the location value");
+        return false;
     }
 
     public class Location {

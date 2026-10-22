@@ -6,8 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import ly.count.sdk.java.Config;
@@ -31,15 +31,20 @@ public class SDKCore {
     /**
      * Currently enabled features with consents
      */
-    protected int consents = 0;
+    protected volatile int consents = 0;
 
     /**
      * Selected by config map of module mappings
      */
     private static final Map<CoreFeature, Class<? extends ModuleBase>> moduleMappings = new ConcurrentHashMap<>();
 
-    // TreeMap to keep modules sorted by their feature indexes
+    // sorted by feature index, and safe to iterate while a consent change adds or removes a module
     protected final Map<Integer, ModuleBase> modules;
+
+    /**
+     * Set once {@link #stop(boolean)} starts, after which no settings change reaches the modules.
+     */
+    private volatile boolean stopping = false;
 
     public enum Signal {
         DID(1),
@@ -59,7 +64,7 @@ public class SDKCore {
     }
 
     public SDKCore() {
-        this.modules = new TreeMap<>();
+        this.modules = new ConcurrentSkipListMap<>();
         instance = this;
         sdkStorage = new SDKStorage();
     }
@@ -92,6 +97,7 @@ public class SDKCore {
 
     private void onTimer() {
         modules.forEach((feature, module) -> module.onTimer());
+        L.flushGatheredLogs();
     }
 
     /**
@@ -104,6 +110,7 @@ public class SDKCore {
         if (instance == null) {
             return;
         }
+        stopping = true;
 
         if (networking != null) {
             networking.stop(config);
@@ -131,6 +138,7 @@ public class SDKCore {
 
         modules.clear();
         moduleMappings.clear();
+        L.endLogGathering(!clear);
         sdkStorage.stop(config, clear);//from original super class
 
         user = null;
@@ -434,6 +442,7 @@ public class SDKCore {
         moduleConfiguration.init(config);
         applyLoggingSetting(config, moduleConfiguration);
         applyConsentRequirementAtInit(config, moduleConfiguration.getConsentRequired());
+        L.setLogGatheringProviders(moduleConfiguration, this::isAnyConsentGiven, this::queueGatheredLogBatch);
 
         //create internal timer
         synchronized (lockTimer) {
@@ -552,6 +561,29 @@ public class SDKCore {
     private void initFinished(final InternalConfig config) {
         modules.forEach((feature, module) -> module.initFinished(config));
         checkNetworking(config);
+        L.onSdkInitFinished();
+    }
+
+    /**
+     * Whether gathered log lines may leave the device as far as consent goes: always while no
+     * consent is required, otherwise once any consent is given.
+     *
+     * @return {@code true} when the lines may be uploaded
+     */
+    private boolean isAnyConsentGiven() {
+        InternalConfig current = config;
+        return current != null && (!current.requiresConsent() || consents != 0);
+    }
+
+    /**
+     * Queues one batch of gathered log lines as a request of its own.
+     *
+     * @param payload the batch
+     * @return whether the request was stored
+     */
+    private boolean queueGatheredLogBatch(@Nonnull String payload) {
+        InternalConfig current = config;
+        return current != null && ModuleRequests.pushSdkLogs(current, payload);
     }
 
     /**
@@ -618,12 +650,13 @@ public class SDKCore {
      * Applies SDK behavior settings that a server response changed while the SDK runs: sets what the
      * logger prints, restarts the global timer when the session update interval changed, lets the
      * request queue drain when networking is allowed, then notifies every module, each on its own.
+     * A change that arrives once the SDK started stopping is ignored, as its modules are being stopped.
      *
      * @param changedConfig configuration whose settings changed
      */
     void onSdkConfigurationChanged(@Nonnull InternalConfig changedConfig) {
-        if (config == null || config != changedConfig) {
-            L.d("[SDKCore] onSdkConfigurationChanged, the SDK was stopped before the change arrived, ignoring it");
+        if (stopping || config == null || config != changedConfig) {
+            L.d("[SDKCore] onSdkConfigurationChanged, the SDK is stopping or was stopped before the change arrived, ignoring it");
             return;
         }
 
@@ -636,14 +669,7 @@ public class SDKCore {
             checkNetworking(changedConfig);
         }
 
-        List<ModuleBase> modulesToNotify;
-        try {
-            modulesToNotify = new ArrayList<>(modules.values());
-        } catch (RuntimeException e) {
-            L.e("[SDKCore] onSdkConfigurationChanged, failed to list the modules, [" + e + "]");
-            return;
-        }
-
+        List<ModuleBase> modulesToNotify = new ArrayList<>(modules.values());
         for (ModuleBase module : modulesToNotify) {
             try {
                 module.onSdkConfigurationChanged(changedConfig);
@@ -778,21 +804,23 @@ public class SDKCore {
     /**
      * After a network request has been finished
      * propagate that response to the module
-     * that owns the request. A module that fails to handle it never fails the send.
+     * that owns the request. Neither looking the owner up nor the owner failing to handle the
+     * response ever fails the send.
      *
      * @param request the request that was sent, used to identify the request
      */
     public void onRequestCompleted(Request request, String response, int responseCode, Class<? extends ModuleBase> requestOwner) {
-        if (requestOwner != null) {
-            ModuleBase module = module(requestOwner);
+        if (requestOwner == null) {
+            return;
+        }
 
+        try {
+            ModuleBase module = module(requestOwner);
             if (module != null) {
-                try {
-                    module.onRequestCompleted(request, response, responseCode);
-                } catch (Exception e) {
-                    L.e("[SDKCore] onRequestCompleted, " + module.getClass().getSimpleName() + " failed to handle the response of request [" + (request == null ? null : request.storageId()) + "], [" + e + "]");
-                }
+                module.onRequestCompleted(request, response, responseCode);
             }
+        } catch (Exception e) {
+            L.e("[SDKCore] onRequestCompleted, " + requestOwner.getSimpleName() + " failed to handle the response of request [" + (request == null ? null : request.storageId()) + "], [" + e + "]");
         }
     }
 

@@ -17,6 +17,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
@@ -357,6 +359,64 @@ public class ModuleConfigurationContentTests {
         Assert.assertEquals(ModuleViews.KEY_VIEW_EVENT, view.getString("key"));
         Assert.assertEquals("checkout", view.getJSONObject("segmentation").getString(ModuleViews.KEY_NAME));
         awaitEmptyQueue();
+    }
+
+    /**
+     * A settings change turning {@code ecz} on that arrives while the SDK stops starts no zone timer.
+     * <p>
+     * Verifies, with the change handed over right after the content module left its zone during
+     * {@code halt()}, while its display is still registered, that the stopping SDK dispatches the
+     * change to no module, and that the content module, told directly, enters no zone, so no zone
+     * timer outlives the SDK.
+     */
+    @Test
+    public void contentZoneEnabled_arrivingWhileTheSdkStops_startsNoZoneTimer() {
+        AtomicInteger dispatchedChanges = new AtomicInteger();
+        SDKCore.testDummyModule = new ModuleBase() {
+            /**
+             * Counts a dispatched settings change.
+             *
+             * @param config configuration of the running SDK
+             */
+            @Override
+            protected void onSdkConfigurationChanged(InternalConfig config) {
+                dispatchedChanges.incrementAndGet();
+            }
+        };
+        AtomicReference<Runnable> onZoneLeft = new AtomicReference<>();
+        server.settings.respondWith(new ServerConfigBuilder());
+        init(TestUtils.getConfigSdkBehaviorSettings()
+            .enableFeatures(Config.Feature.Content, Config.Feature.Events)
+            .setLogListener((message, level) -> {
+                Runnable hook = message != null && message.startsWith("[ModuleContent] exitContentZoneInternal, left the content zone") ? onZoneLeft.getAndSet(null) : null;
+                if (hook != null) {
+                    hook.run();
+                }
+            }));
+        Countly.instance().content().setContentDisplay(display);
+        ModuleContent content = contentModule();
+        ModuleConfiguration configuration = SDKCore.instance.module(ModuleConfiguration.class);
+        InternalConfig config = SDKCore.instance.config;
+        Assert.assertNull(content.contentTimer);
+        int dispatchedBeforeStop = dispatchedChanges.get();
+
+        onZoneLeft.set(() -> {
+            configuration.currentVContentZone = true;
+            config.sdk.onSdkConfigurationChanged(config);
+            content.onSdkConfigurationChanged(config);
+        });
+        try {
+            Countly.instance().halt();
+            Assert.assertNull("the change was never handed over", onZoneLeft.get());
+            Assert.assertEquals(dispatchedBeforeStop, dispatchedChanges.get());
+            Assert.assertNull(content.contentTimer);
+        } finally {
+            SDKCore.testDummyModule = null;
+            CountlyTimer leaked = content.contentTimer;
+            if (leaked != null) {
+                leaked.stopTimer(false);
+            }
+        }
     }
 
     // endregion
