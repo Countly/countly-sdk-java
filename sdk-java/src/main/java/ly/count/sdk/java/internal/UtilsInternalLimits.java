@@ -264,10 +264,10 @@ final class UtilsInternalLimits {
     private static boolean exceedsKeyOrValueLimit(@Nonnull Map<String, Object> map, int maxKeyLength, int maxValueSize) {
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             String key = entry.getKey();
-            Object value = entry.getValue();
             if (key != null && key.length() > maxKeyLength) {
                 return true;
             }
+            Object value = entry.getValue();
             if (value instanceof String && ((String) value).length() > maxValueSize) {
                 return true;
             }

@@ -601,7 +601,7 @@ public class LogTests {
     @Test
     public void batchPayload_isJsonWithItsKeysInOrder_andEscapesEveryMessage() {
         String awkward = "quote \" backslash \\ newline \n tab \t closing </script> pair \uD83D\uDE00";
-        List<Log.LogLine> lines = Arrays.asList(new Log.LogLine(0, 1755500000000L, 'e', awkward, 0), new Log.LogLine(1, 1755500000001L, 'd', "", 0));
+        List<Log.LogLine> lines = Arrays.asList(new Log.LogLine(0, 1_755_500_000_000L, 'e', awkward, 0), new Log.LogLine(1, 1_755_500_000_001L, 'd', "", 0));
         String payload = Log.buildLogBatchPayload("gather \"quoted\"", 3, lines);
         Assert.assertTrue(payload, payload.startsWith("{\"i\":\"gather \\\"quoted\\\"\",\"d\":3,\"l\":[{\"t\":1755500000000,\"l\":\"e\",\"m\":\""));
 
@@ -610,7 +610,7 @@ public class LogTests {
         Assert.assertEquals(3, batch.getInt("d"));
         JSONArray parsed = batch.getJSONArray("l");
         Assert.assertEquals(2, parsed.length());
-        Assert.assertEquals(1755500000000L, parsed.getJSONObject(0).getLong("t"));
+        Assert.assertEquals(1_755_500_000_000L, parsed.getJSONObject(0).getLong("t"));
         Assert.assertEquals("e", parsed.getJSONObject(0).getString("l"));
         Assert.assertEquals(awkward, parsed.getJSONObject(0).getString("m"));
         Assert.assertEquals("d", parsed.getJSONObject(1).getString("l"));

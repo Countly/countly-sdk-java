@@ -353,17 +353,17 @@ public interface ConfigurationProvider {
         static final FilterList<Set<String>> NO_NAMES = new FilterList<>(Collections.<String>emptySet(), false);
         static final FilterList<Map<String, Set<String>>> NO_NAMES_PER_EVENT = new FilterList<>(Collections.<String, Set<String>>emptyMap(), false);
 
-        private final T filterList;
+        private final T names;
         private final boolean isWhitelist;
 
         /**
          * Wraps names that are already immutable.
          *
-         * @param filterList the names
+         * @param names the names
          * @param isWhitelist {@code true} when only the names are allowed, {@code false} when they are rejected
          */
-        private FilterList(@Nonnull T filterList, boolean isWhitelist) {
-            this.filterList = filterList;
+        private FilterList(@Nonnull T names, boolean isWhitelist) {
+            this.names = names;
             this.isWhitelist = isWhitelist;
         }
 
@@ -400,7 +400,7 @@ public interface ConfigurationProvider {
          */
         @Nonnull
         public T getFilterList() {
-            return filterList;
+            return names;
         }
 
         /**
@@ -419,7 +419,7 @@ public interface ConfigurationProvider {
          */
         @Override
         public String toString() {
-            return (isWhitelist ? "whitelist " : "blacklist ") + filterList;
+            return (isWhitelist ? "whitelist " : "blacklist ") + names;
         }
     }
 }

@@ -319,9 +319,6 @@ public class ModuleCrashesTests {
     public static class BreadcrumbCountingProcessor implements CrashProcessor {
         static final AtomicInteger taken = new AtomicInteger();
 
-        public BreadcrumbCountingProcessor() {
-        }
-
         @Override
         public Crash process(Crash crash) {
             List<String> logs = crash.getLogs();

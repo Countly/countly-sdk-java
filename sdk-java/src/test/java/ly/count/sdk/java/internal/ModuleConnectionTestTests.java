@@ -7,7 +7,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -413,7 +412,7 @@ public class ModuleConnectionTestTests {
         ModuleConnectionTest module = connectionTest();
         ModuleConfiguration configuration = SDKCore.instance.module(ModuleConfiguration.class);
         Assert.assertSame(module, SDKCore.instance.modules.get(0));
-        Assert.assertSame(module, listenerOf(configuration));
+        Assert.assertSame(module, configuration.connectionTestListener);
         FakeTransport gated = FakeTransport.gated();
         module.transport = gated;
 
@@ -422,7 +421,7 @@ public class ModuleConnectionTestTests {
         Countly.instance().stop();
 
         Assert.assertTrue(module.halted);
-        Assert.assertNull(listenerOf(configuration));
+        Assert.assertNull(configuration.connectionTestListener);
 
         //started before the stopped battery moves on, so a report it queued would land in this queue
         settings.pending();
@@ -438,7 +437,7 @@ public class ModuleConnectionTestTests {
         Assert.assertFalse(module.batteryRunning.get());
         Assert.assertEquals(1, gated.urls.size());
         Assert.assertNotSame(module, connectionTest());
-        Assert.assertSame(connectionTest(), listenerOf(SDKCore.instance.module(ModuleConfiguration.class)));
+        Assert.assertSame(connectionTest(), SDKCore.instance.module(ModuleConfiguration.class).connectionTestListener);
     }
 
     /**
@@ -1138,19 +1137,6 @@ public class ModuleConnectionTestTests {
     private static JSONObject storedConfig() {
         String stored = TestUtils.readJsonFile(SDKStorage.JSON_FILE_NAME).optString("sc", null);
         return stored == null ? null : new JSONObject(stored);
-    }
-
-    /**
-     * The listener a configuration module hands connection test requests to.
-     *
-     * @param configuration the configuration module
-     * @return the listener, {@code null} for none
-     * @throws ReflectiveOperationException when the field cannot be read
-     */
-    private static Object listenerOf(ModuleConfiguration configuration) throws ReflectiveOperationException {
-        Field field = ModuleConfiguration.class.getDeclaredField("connectionTestListener");
-        field.setAccessible(true);
-        return field.get(configuration);
     }
 
     /**

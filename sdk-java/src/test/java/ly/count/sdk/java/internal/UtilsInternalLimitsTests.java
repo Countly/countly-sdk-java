@@ -66,7 +66,7 @@ public class UtilsInternalLimitsTests {
         Assert.assertEquals("ab" + grinning, UtilsInternalLimits.truncateValue("ab" + grinning + "cd", 4, log, TAG));
         Assert.assertEquals(grinning, UtilsInternalLimits.truncateKey(grinning + "rest", 1, log, TAG));
 
-        Integer number = 123456789;
+        Integer number = 123_456_789;
         Assert.assertSame(number, UtilsInternalLimits.truncateIfString(number, 2, log, TAG));
         Assert.assertEquals("12", UtilsInternalLimits.truncateIfString("123456789", 2, log, TAG));
     }
@@ -82,7 +82,7 @@ public class UtilsInternalLimitsTests {
      */
     @Test
     public void segmentation_isCutTheSameWayWhateverTheOrderOfTheMap_andNeverInPlace() {
-        Map<String, Object> within = TestUtils.map("abc", "value", "number", 12345678);
+        Map<String, Object> within = TestUtils.map("abc", "value", "number", 12_345_678);
         Assert.assertSame(within, UtilsInternalLimits.applySegmentationLimits(within, limits(6, 5, 2), log, TAG));
         Assert.assertNull(UtilsInternalLimits.applySegmentationLimits(null, limits(1, 1, 1), log, TAG));
         Assert.assertEquals(0, warnings.size());

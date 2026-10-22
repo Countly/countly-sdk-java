@@ -117,7 +117,7 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
      * response requested before such a change can tell its gather was armed for the previous user.
      */
     private volatile int deviceIdChangesWithoutMerge = 0;
-    private volatile ConnectionTestListener connectionTestListener = null;
+    volatile ConnectionTestListener connectionTestListener = null;
 
     //resolved values; the constant seeds are here, the ones read from the developer configuration are in seedFromDeveloperConfig
     volatile boolean currentVTracking = true;
@@ -981,7 +981,7 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
         }
         if (value instanceof String) {
             String s = ((String) value).trim();
-            return !s.isEmpty() && !s.equals("0") && !s.equalsIgnoreCase("false");
+            return !s.isEmpty() && !"0".equals(s) && !"false".equalsIgnoreCase(s);
         }
         return true;
     }

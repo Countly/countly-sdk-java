@@ -156,7 +156,7 @@ public class ModuleConfigurationTests {
 
         ServerConfigBuilder allInvalid = new ServerConfigBuilder();
         for (String key : settingsKeysOfTheModule()) {
-            allInvalid.set(key, key.equals("tracking") ? -1 : "not a valid value");
+            allInvalid.set(key, "tracking".equals(key) ? -1 : "not a valid value");
         }
         push(allInvalid);
 

@@ -64,6 +64,17 @@ class ModuleConnectionTest extends ModuleBase implements ModuleConfiguration.Con
         new ProbeRow("content-page", false, "/_external/content/"),
     };
 
+    final AtomicBoolean batteryRunning = new AtomicBoolean(false);
+    volatile boolean halted = false;
+    //taken by stop() to set halted and by the battery to check it and queue the report, so a stopped SDK never gets one
+    private final Object reportLock = new Object();
+    private volatile ModuleConfiguration listenedConfiguration = null;
+
+    //package-private so tests can shrink the deadlines and take the network out
+    volatile int perRequestTimeoutMs = DEFAULT_PER_REQUEST_TIMEOUT_MS;
+    volatile long batteryCapExtraMs = BATTERY_CAP_EXTRA_MS;
+    volatile ProbeTransport transport = new HttpProbeTransport();
+
     /**
      * One feature row of the battery.
      */
@@ -86,7 +97,7 @@ class ModuleConnectionTest extends ModuleBase implements ModuleConfiguration.Con
         ProbeRow(@Nonnull String feature, boolean requiresSuccessStatus, @Nonnull String... paths) {
             this.feature = feature;
             this.requiresSuccessStatus = requiresSuccessStatus;
-            this.paths = paths;
+            this.paths = paths.clone();
         }
     }
 
@@ -145,17 +156,6 @@ class ModuleConnectionTest extends ModuleBase implements ModuleConfiguration.Con
         @Nonnull
         ProbeOutcome probe(@Nonnull String url, int timeoutMs, @Nullable Transport transport);
     }
-
-    final AtomicBoolean batteryRunning = new AtomicBoolean(false);
-    volatile boolean halted = false;
-    //taken by stop() to set halted and by the battery to check it and queue the report, so a stopped SDK never gets one
-    private final Object reportLock = new Object();
-    private volatile ModuleConfiguration listenedConfiguration = null;
-
-    //package-private so tests can shrink the deadlines and take the network out
-    volatile int perRequestTimeoutMs = DEFAULT_PER_REQUEST_TIMEOUT_MS;
-    volatile long batteryCapExtraMs = BATTERY_CAP_EXTRA_MS;
-    volatile ProbeTransport transport = new HttpProbeTransport();
 
     /**
      * Starts listening to the configuration module of the SDK for connection test requests.

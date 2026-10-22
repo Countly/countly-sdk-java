@@ -20,7 +20,9 @@
   ```
   Versions released before this one stay available on Maven Central. The files are signed with the same key as before (`FC8DB0DE234A273BA45E562FB8C83A079A5BBD0C`).
 * ! Minor breaking change ! SDK behavior settings are now enabled by default. The SDK fetches them from the server at initialization and every few hours, so changes made in SDK Manager > SDK Configuration on your server affect SDK behavior directly. They are not used in backend mode.
-* ! Minor breaking change ! The feature interfaces of "Countly.instance()" ("events()", "views()", "crashes()", "location()", "userProfile()", "remoteConfig()", "feedback()", "content()" and "deviceId()") no longer return null. Before initialization, while the consent of a feature is not given, or when a feature is not enabled, they return an interface that ignores calls until the feature runs and passes an error to the callbacks of the calls it ignores. An interface you keep sends its calls to the feature once it runs. Use "Countly.isTracking" to check whether a feature runs.
+* ! Minor breaking change ! The feature interfaces of "Countly.instance()" ("events()", "views()", "crashes()", "location()", "userProfile()", "remoteConfig()", "feedback()", "content()" and "deviceId()") no longer return null.
+  Before initialization, while the consent of a feature is not given, or when a feature is not enabled, they return an interface that ignores calls until the feature runs and passes an error to the callbacks of the calls it ignores.
+  An interface you keep sends its calls to the feature once it runs. Use "Countly.isTracking" to check whether a feature runs.
 
 * Added support for SDK behavior settings that let the server control the SDK:
   * Switches for tracking, networking, sessions, views, custom events, crash reporting, automatic crash reporting, location, and console logging

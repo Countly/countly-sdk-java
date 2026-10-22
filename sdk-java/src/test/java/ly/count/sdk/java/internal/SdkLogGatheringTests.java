@@ -147,7 +147,7 @@ public class SdkLogGatheringTests {
                     Assert.assertEquals(names("t", "l", "m"), line.keySet());
                     long timestamp = line.getLong("t");
                     Assert.assertTrue(timestamp >= startMs && timestamp <= System.currentTimeMillis());
-                    Assert.assertTrue(line.getString("l").equals("w") || line.getString("l").equals("i"));
+                    Assert.assertTrue("w".equals(line.getString("l")) || "i".equals(line.getString("l")));
                     Assert.assertFalse(line.getString("m").contains(Log.keySdkLogs));
                 }
                 if (request.params.get(Log.keySdkLogs).contains("[Test] armed line 9 ")) {
@@ -378,7 +378,7 @@ public class SdkLogGatheringTests {
         logger.e("[ModuleLocation] a location line");
         Countly.onConsent(Config.Feature.Sessions);
         Countly.session().begin();
-        ((SessionImpl) Countly.session()).addLocation(12.345678, 98.765432);
+        ((SessionImpl) Countly.session()).addLocation(12.345_678, 98.765_432);
         logger.flushGatheredLogs();
         awaitLogDelivery();
 
@@ -406,7 +406,7 @@ public class SdkLogGatheringTests {
         init(config);
         Countly.onConsent(Config.Feature.Sessions, Config.Feature.Location);
         Countly.session().begin();
-        ((SessionImpl) Countly.session()).addLocation(12.345678, 98.765432);
+        ((SessionImpl) Countly.session()).addLocation(12.345_678, 98.765_432);
         Countly.instance().stop();
         boolean coordinatesGathered = false;
         for (JSONObject batch : storedBatchesOnDisk()) {
@@ -982,7 +982,7 @@ public class SdkLogGatheringTests {
                 if (new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8).contains(Log.transportMarker)) {
                     count++;
                 }
-            } catch (IOException e) {
+            } catch (IOException ignored) {
                 //sent and removed while it was read
             }
         }

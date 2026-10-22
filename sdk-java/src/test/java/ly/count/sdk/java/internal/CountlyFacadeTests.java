@@ -1,6 +1,5 @@
 package ly.count.sdk.java.internal;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -432,12 +431,12 @@ public class CountlyFacadeTests {
         Map<String, String> segments = new HashMap<>();
         segments.put("secret_key", "secret_value");
 
-        Countly.api().addLocation(12.345678, 98.765432);
+        Countly.api().addLocation(12.345_678, 98.765_432);
         Countly.api().view("SecretViewName");
         Countly.api().addCrashReport(new RuntimeException("secret crash message"), false, "secret_crash_name", segments);
         Countly.api().addParam("param_key", "secret_param_value");
         Countly.instance().user().edit().setLocale("tr_TR").setCountry("TR_country").setCity("SecretCity")
-            .setLocation(1.234567, 2.345678).setLocation("38.456789,27.123456").setLocation("not a location").commit();
+            .setLocation(1.234_567, 2.345_678).setLocation("38.456789,27.123456").setLocation("not a location").commit();
 
         Assert.assertFalse(lines.isEmpty());
         for (String line : lines) {
