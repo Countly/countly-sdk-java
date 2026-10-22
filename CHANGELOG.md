@@ -20,6 +20,8 @@
   ```
   Versions released before this one stay available on Maven Central. The files are signed with the same key as before (`FC8DB0DE234A273BA45E562FB8C83A079A5BBD0C`).
 
+* Updated JSON library version from "20250517" to "20260814".
+
 * Mitigated an issue where requests, sessions or crashes created close together could get the same storage ID, so some of them were lost.
 * Mitigated an issue where verbose logs showed the values of custom network request headers. Only the number of headers is logged now.
 
