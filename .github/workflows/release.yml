@@ -29,6 +29,7 @@ jobs:
     permissions:
       contents: read
       checks: read
+      actions: read
     outputs:
       environment: ${{ steps.plan.outputs.environment }}
       check_tasks: ${{ steps.plan.outputs.check_tasks }}
@@ -55,6 +56,17 @@ jobs:
       - name: Plan
         id: plan
         run: python3 .github/release/release.py plan --tag "$TAG" --target "$TARGET" --commit "$GITHUB_SHA" --prerelease "${{ steps.release.outputs.prerelease || 'unknown' }}" --out plan.json
+      - name: The publish environment requires approval
+        if: env.TARGET == 'production'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ENVIRONMENT: ${{ steps.plan.outputs.environment }}
+        run: |
+          if ! gh api "repos/$GITHUB_REPOSITORY/environments/$ENVIRONMENT" > environment.json; then
+            echo "::error::Could not read the $ENVIRONMENT environment (the error above says why); it has to exist with required reviewers and selected tag deployment rules before releasing."
+            exit 1
+          fi
+          python3 .github/release/release.py check-environment --environment environment.json
       - name: The tag commit is on the release branch
         if: env.TARGET == 'production'
         run: python3 .github/release/release.py check-branch --plan plan.json --commit "$GITHUB_SHA"

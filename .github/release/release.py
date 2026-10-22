@@ -149,6 +149,12 @@ def cmd_check_required(args):
     finish([f"required check '{name}' did not succeed on the tag commit" for name in checks.missing_checks(runs, config["requiredChecks"])], "Required checks")
 
 
+def cmd_check_environment(args):
+    """The environment of the publish job must make a reviewer approve it and limit which refs deploy to it."""
+    environment = json.loads(Path(args.environment).read_text(encoding="utf-8"))
+    finish(checks.environment_problems(environment), "Publish environment")
+
+
 def cmd_stage(args):
     """Removes Gradle's indexes, places the SBOMs, checks the file set and writes the manifest."""
     config, plan = read_plan(args.plan)
@@ -338,6 +344,10 @@ def main(argv=None):
     command = commands.add_parser("check-required")
     command.add_argument("--check-runs", required=True)
     command.set_defaults(func=cmd_check_required)
+
+    command = commands.add_parser("check-environment")
+    command.add_argument("--environment", required=True)
+    command.set_defaults(func=cmd_check_environment)
 
     command = commands.add_parser("stage")
     command.add_argument("--plan", required=True)
