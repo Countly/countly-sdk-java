@@ -42,6 +42,8 @@
 
 * Mitigated an issue where requests, sessions or crashes created close together could get the same storage ID, so some of them were lost.
 * Mitigated an issue where verbose logs showed the values of custom network request headers. Only the number of headers is logged now.
+* Mitigated an issue where a fresh initialization logged an error for storage files that did not exist yet.
+* Mitigated an issue where a crash breadcrumb added while a crash was being recorded on another thread could be lost.
 
 ## 26.8.0
 * Added support for the Content feature, accessible through the "Countly.instance().content()" interface:

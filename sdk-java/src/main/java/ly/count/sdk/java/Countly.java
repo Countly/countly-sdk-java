@@ -84,7 +84,6 @@ public class Countly implements Usage {
         }
 
         Log L = new Log(internalConfig.loggingLevel, internalConfig.logListener);
-        internalConfig.setLogger(L);
 
         if (directory == null) {
             L.e("[Countly] File cannot be null");
@@ -104,6 +103,7 @@ public class Countly implements Usage {
             L.e("[Countly] Countly shouldn't be initialized twice. Please either use Countly.isInitialized() to check status or call Countly.stop() before second Countly.init(). Calling 'init' the second time will now do nothing");
             return;
         }
+        internalConfig.setLogger(L);
 
         if (internalConfig.enableBackendMode) {
             internalConfig.sdkName = "java-native-backend";
