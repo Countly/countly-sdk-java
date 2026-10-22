@@ -43,13 +43,13 @@ jobs:
       # dependencies -- exactly the blind spot that let a known org.json CVE sit in the demo
       # modules after sdk-java had been fixed.
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           java-version: '17'
           distribution: 'corretto'
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Resolve dependencies for every module
         run: |
@@ -128,7 +128,7 @@ jobs:
 
       - name: Upload dependency list
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: resolved-dependencies
           path: |
@@ -150,12 +150,12 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           java-version: '17'
           distribution: 'corretto'
       - name: Submit resolved dependency graph to GitHub
-        uses: gradle/actions/dependency-submission@v4
+        uses: gradle/actions/dependency-submission@v6
 
   dependency-review:
     name: Review dependency changes
