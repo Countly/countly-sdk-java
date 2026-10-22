@@ -1378,7 +1378,7 @@ public class ModuleConnectionTestTests {
      */
     private static String generatedPublicKeyPin() throws Exception {
         KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
-        generator.initialize(1024);
+        generator.initialize(2048);
         return Base64.getEncoder().encodeToString(generator.generateKeyPair().getPublic().getEncoded());
     }
 

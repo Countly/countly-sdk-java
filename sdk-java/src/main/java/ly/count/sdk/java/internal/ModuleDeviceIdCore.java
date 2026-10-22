@@ -149,11 +149,27 @@ public class ModuleDeviceIdCore extends ModuleBase {
             return;
         }
 
+        if (!withMerge) {
+            stopLogGatheringForDeviceIdChange();
+        }
+
         internalConfig.storageProvider.setDeviceIdType(type.name());
         internalConfig.storageProvider.setDeviceID(id);
         internalConfig.setDeviceId(new Config.DID(type.index, id));
 
         SDKCore.instance.notifyModulesDeviceIdChanged(old.id, withMerge);
+    }
+
+    /**
+     * Has the gathered SDK log lines of the current user queued under the current device ID and
+     * the gather stopped, as the device ID is about to change without merge.
+     */
+    private void stopLogGatheringForDeviceIdChange() {
+        SDKCore core = SDKCore.instance;
+        ModuleConfiguration configuration = core == null ? null : core.module(ModuleConfiguration.class);
+        if (configuration != null) {
+            configuration.stopLogGatheringForDeviceIdChange();
+        }
     }
 
     /**

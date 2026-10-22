@@ -185,6 +185,7 @@ public class SDKCore {
         }
 
         consents = consents | (consent & config.getFeatures1());
+        L.releaseConsentedLogLines();
 
         for (CoreFeature feature : moduleMappings.keySet()) {
             ModuleBase existing = module(moduleMappings.get(feature));
@@ -224,6 +225,7 @@ public class SDKCore {
         }
 
         consents = consents & ~noConsent;
+        L.dropLinesWithoutConsent();
 
         for (CoreFeature feature : moduleMappings.keySet()) {
             ModuleBase existing = module(moduleMappings.get(feature));
@@ -442,7 +444,7 @@ public class SDKCore {
         moduleConfiguration.init(config);
         applyLoggingSetting(config, moduleConfiguration);
         applyConsentRequirementAtInit(config, moduleConfiguration.getConsentRequired());
-        L.setLogGatheringProviders(moduleConfiguration, this::isAnyConsentGiven, this::queueGatheredLogBatch);
+        L.setLogGatheringProviders(moduleConfiguration, this::givenLogLineConsents, gatheredLogBatchQueue);
 
         //create internal timer
         synchronized (lockTimer) {
@@ -565,26 +567,48 @@ public class SDKCore {
     }
 
     /**
-     * Whether gathered log lines may leave the device as far as consent goes: always while no
-     * consent is required, otherwise once any consent is given.
+     * The features whose consent lets a gathered log line go: every feature while no consent is
+     * required, otherwise the ones consent was given for. Read inside log calls, so it never logs.
      *
-     * @return {@code true} when the lines may be uploaded
+     * @return the {@link CoreFeature} indexes, every bit while no consent is required
      */
-    private boolean isAnyConsentGiven() {
+    private int givenLogLineConsents() {
         InternalConfig current = config;
-        return current != null && (!current.requiresConsent() || consents != 0);
+        if (current == null) {
+            return 0;
+        }
+        if (!current.requiresConsent()) {
+            return ~0;
+        }
+        int given = consents;
+        //a feature the app never enabled holds no data and can never get consent, so it holds no line back
+        return given == 0 ? 0 : given | (~current.getFeatures1() & Log.UNATTRIBUTED_LINE_CONSENT);
     }
 
     /**
-     * Queues one batch of gathered log lines as a request of its own.
-     *
-     * @param payload the batch
-     * @return whether the request was stored
+     * The request queue as the log gathering uses it: one request per batch of gathered log lines,
+     * waiting until it is sent or dropped.
      */
-    private boolean queueGatheredLogBatch(@Nonnull String payload) {
-        InternalConfig current = config;
-        return current != null && ModuleRequests.pushSdkLogs(current, payload);
-    }
+    private final Log.LogBatchQueue gatheredLogBatchQueue = new Log.LogBatchQueue() {
+        /**
+         * Stores the batch as a request of its own, unless the SDK stopped.
+         */
+        @Nullable
+        @Override
+        public Long queueLogBatch(@Nonnull String payload) {
+            InternalConfig current = config;
+            return current == null ? null : ModuleRequests.pushSdkLogs(current, payload);
+        }
+
+        /**
+         * Whether the request file is still stored, which it is until the request is sent or dropped.
+         */
+        @Override
+        public boolean isQueued(@Nonnull Long requestId) {
+            InternalConfig current = config;
+            return current != null && sdkStorage.storableExists(current, Request.getStoragePrefix(), requestId);
+        }
+    };
 
     /**
      * Makes the consent requirement the SDK behavior settings resolved the one every module reads
