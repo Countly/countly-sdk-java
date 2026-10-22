@@ -1,7 +1,11 @@
 package ly.count.sdk.java.internal;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -134,11 +138,10 @@ public class ModuleRemoteConfigTests {
     @Test
     public void registerDownloadCallback_null() {
         Countly.instance().init(TestUtils.getConfigRemoteConfigs());
-        ModuleRemoteConfig rcModule = SDKCore.instance.module(ModuleRemoteConfig.class);
 
-        Assert.assertEquals(0, rcModule.downloadCallbacks.size());
+        Assert.assertEquals(0, SDKCore.instance.remoteConfigDownloadCallbacks.size());
         Countly.instance().remoteConfig().registerDownloadCallback(null);
-        Assert.assertEquals(0, rcModule.downloadCallbacks.size());
+        Assert.assertEquals(0, SDKCore.instance.remoteConfigDownloadCallbacks.size());
     }
 
     /**
@@ -149,12 +152,32 @@ public class ModuleRemoteConfigTests {
     @Test
     public void registerDownloadCallback() {
         Countly.instance().init(TestUtils.getConfigRemoteConfigs());
-        ModuleRemoteConfig rcModule = SDKCore.instance.module(ModuleRemoteConfig.class);
 
-        Assert.assertEquals(0, rcModule.downloadCallbacks.size());
+        Assert.assertEquals(0, SDKCore.instance.remoteConfigDownloadCallbacks.size());
         Countly.instance().remoteConfig().registerDownloadCallback((rResult, error, fullValueUpdate, downloadedValues) -> {
         });
-        Assert.assertEquals(1, rcModule.downloadCallbacks.size());
+        Assert.assertEquals(1, SDKCore.instance.remoteConfigDownloadCallbacks.size());
+    }
+
+    /**
+     * "registerDownloadCallback" before the consent
+     * Validating that a callback registered while remote config does not run is called by the module
+     * started once the consent is given, and that one removed meanwhile is not
+     */
+    @Test
+    public void registerDownloadCallback_beforeTheConsent_isCalledOnceRemoteConfigRuns() {
+        Countly.instance().init(TestUtils.getConfigRemoteConfigs().setRequiresConsent(true));
+        List<RequestResult> results = new ArrayList<>();
+        RCDownloadCallback removed = (rResult, error, fullValueUpdate, downloadedValues) -> results.add(null);
+        Countly.instance().remoteConfig().registerDownloadCallback((rResult, error, fullValueUpdate, downloadedValues) -> results.add(rResult));
+        Countly.instance().remoteConfig().registerDownloadCallback(removed);
+        Countly.instance().remoteConfig().removeDownloadCallback(removed);
+
+        Countly.onConsent(Config.Feature.RemoteConfig);
+        SDKCore.instance.config.immediateRequestGenerator = () -> remoteConfigRequestMaker(new JSONObject(), null, null, null);
+        Countly.instance().remoteConfig().downloadAllKeys(null);
+
+        Assert.assertEquals(Collections.singletonList(RequestResult.Success), results);
     }
 
     /**
@@ -165,11 +188,10 @@ public class ModuleRemoteConfigTests {
     @Test
     public void removeDownloadCallback_null() {
         Countly.instance().init(TestUtils.getConfigRemoteConfigs());
-        ModuleRemoteConfig rcModule = SDKCore.instance.module(ModuleRemoteConfig.class);
 
-        Assert.assertEquals(0, rcModule.downloadCallbacks.size());
+        Assert.assertEquals(0, SDKCore.instance.remoteConfigDownloadCallbacks.size());
         Countly.instance().remoteConfig().removeDownloadCallback(null);
-        Assert.assertEquals(0, rcModule.downloadCallbacks.size());
+        Assert.assertEquals(0, SDKCore.instance.remoteConfigDownloadCallbacks.size());
     }
 
     /**
@@ -181,11 +203,10 @@ public class ModuleRemoteConfigTests {
     public void removeDownloadCallback() {
         RCDownloadCallback callback = (rResult, error, fullValueUpdate, downloadedValues) -> Assert.assertEquals(RequestResult.Success, rResult);
         Countly.instance().init(TestUtils.getConfigRemoteConfigs().remoteConfigRegisterGlobalCallback(callback));
-        ModuleRemoteConfig rcModule = SDKCore.instance.module(ModuleRemoteConfig.class);
 
-        Assert.assertEquals(1, rcModule.downloadCallbacks.size());
+        Assert.assertEquals(1, SDKCore.instance.remoteConfigDownloadCallbacks.size());
         Countly.instance().remoteConfig().removeDownloadCallback(callback);
-        Assert.assertEquals(0, rcModule.downloadCallbacks.size());
+        Assert.assertEquals(0, SDKCore.instance.remoteConfigDownloadCallbacks.size());
     }
 
     /**

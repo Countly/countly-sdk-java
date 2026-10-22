@@ -79,7 +79,7 @@ public class ModuleBackendMode extends ModuleBase {
         eventQueues.get(deviceID).put(jsonObject);
         ++eventQSize;
 
-        if (eventQSize >= internalConfig.getEventsBufferSize()) {
+        if (eventQSize >= internalConfig.getConfigurationProvider().getEventQueueSizeThreshold()) {
             addEventsToRequestQ();
         }
     }
@@ -319,7 +319,7 @@ public class ModuleBackendMode extends ModuleBase {
     private void addRequestToRequestQ(Request request) {
         synchronized (SDKCore.instance.lockBRQStorage) {
             L.d("[BackendMode] addRequestToRequestQ");
-            if (internalConfig.getRequestQueueMaxSize() == SDKCore.instance.requestQueueMemory.size()) {
+            if (internalConfig.getConfigurationProvider().getRequestQueueMaxSize() == SDKCore.instance.requestQueueMemory.size()) {
                 L.d("[BackendMode] addRequestToRequestQ: In Memory request queue is full, dropping oldest request: " + request.params.toString());
                 SDKCore.instance.requestQueueMemory.remove();
             }

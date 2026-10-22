@@ -20,11 +20,40 @@
   ```
   Versions released before this one stay available on Maven Central. The files are signed with the same key as before (`FC8DB0DE234A273BA45E562FB8C83A079A5BBD0C`).
 * ! Minor breaking change ! `ly.count.sdk:java-ui` now has its own version numbers and is released only when it changes; see its own [CHANGELOG](sdk-java-ui/CHANGELOG.md). Use the latest version of each package instead of one shared number.
+* ! Minor breaking change ! SDK behavior settings are now enabled by default. The SDK fetches them from the server at initialization and every few hours, so changes made in SDK Manager > SDK Configuration on your server affect SDK behavior directly. They are not used in backend mode.
+* ! Minor breaking change ! The feature interfaces of "Countly.instance()" ("events()", "views()", "crashes()", "location()", "userProfile()", "remoteConfig()", "feedback()", "content()" and "deviceId()") no longer return null.
+  Before initialization, while the consent of a feature is not given, or when a feature is not enabled, they return an interface that ignores calls until the feature runs and passes an error to the callbacks of the calls it ignores.
+  An interface you keep sends its calls to the feature once it runs. Use "Countly.isTracking" to check whether a feature runs.
+
+* Added support for SDK behavior settings that let the server control the SDK:
+  * Switches for tracking, networking, sessions, views, custom events, crash reporting, automatic crash reporting, location, and console logging
+  * The event queue size, request queue size, session update interval, and settings refresh interval
+  * The consent requirement, applied on the next initialization
+  * SDK internal limits for key length, value size, segmentation value count, stack trace lines per thread, stack trace line length, and breadcrumb count
+  * Listing filters (blacklist/whitelist) for events, segmentation keys, event specific segmentation keys, and user properties, plus a user property cache limit
+  * Entering, refreshing, and the fetch interval of the content zone, plus Journey Trigger Events and Journey Trigger Views that refresh it
+  * Dropping requests older than a given age
+* Added "setSdkBehaviorSettings(String)" init config method for providing SDK behavior settings at initialization.
+* Added "disableSdkBehaviorSettingsUpdates()" init config method for disabling SDK behavior settings requests.
+* Improved request queue handling with a built-in backoff mechanism which is enabled by default. When the server takes 10 seconds or longer to answer while few requests are queued, the SDK pauses sending for 60 seconds.
+* Added "disableBackoffMechanism()" init config method to disable the backoff behavior.
+* Added support for server requested SDK log gathering. When the server asks for it, the SDK uploads its own internal log lines, even if logging is disabled. While consent is required, a line is uploaded only while the consent of the feature it belongs to is given.
+* Added support for the SDK connection test. When the server asks for it, the SDK checks that it can reach every endpoint it depends on and reports the results.
+
+* Mitigated an issue where saving the SDK storage while remote config values were changing could empty the storage file.
+* Mitigated an issue where a storage file cut short by a stopped process made initialization fail.
+* Mitigated an issue where a request recorded while the SDK was finishing a send could wait until the next request or session update before it was sent.
 
 * Updated JSON library version from "20250517" to "20260814".
 
 * Mitigated an issue where requests, sessions or crashes created close together could get the same storage ID, so some of them were lost.
+* Mitigated an issue where removing the consent of one feature also stopped the other features and deleted their queued events, unsent crashes and remote config values, after which the device ID and user profile interfaces could throw.
+* Mitigated an issue where, while consent was required, unhandled crashes were not recorded if the crash reporting consent was given after initialization.
+* Mitigated an issue where removing the location consent did not erase the location on the server.
+* Mitigated an issue where an error in one feature during a timer tick stopped the SDK timer, and with it session updates and event sending.
 * Mitigated an issue where verbose logs showed the values of custom network request headers. Only the number of headers is logged now.
+* Mitigated an issue where a fresh initialization logged an error for storage files that did not exist yet.
+* Mitigated an issue where a crash breadcrumb added while a crash was being recorded on another thread could be lost.
 
 ## 26.8.0
 * Added support for the Content feature, accessible through the "Countly.instance().content()" interface:

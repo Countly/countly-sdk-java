@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BooleanSupplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -57,11 +58,36 @@ public class TestUtils {
     }
 
     static Config getBaseConfig(String deviceID) {
+        Config config = getConfigSdkBehaviorSettings(deviceID);
+        // Disable server config requests by default in tests so the suite doesn't fire HTTP calls
+        // to a non-existent test host on every init. Tests covering ModuleConfiguration opt back in
+        // explicitly.
+        config.disableSdkBehaviorSettingsUpdates();
+        return config;
+    }
+
+    /**
+     * The base configuration with the SDK behavior settings requests left on, for the tests that
+     * exercise them. Pair it with an immediate request generator, or every init asks the test
+     * server for its settings.
+     *
+     * @return the configuration
+     */
+    static Config getConfigSdkBehaviorSettings() {
+        return getConfigSdkBehaviorSettings(DEVICE_ID);
+    }
+
+    /**
+     * The base configuration with the SDK behavior settings requests left on, for a given device ID.
+     *
+     * @param deviceID the custom device ID
+     * @return the configuration
+     */
+    static Config getConfigSdkBehaviorSettings(String deviceID) {
         File sdkStorageRootDirectory = getTestSDirectory();
         checkSdkStorageRootDirectoryExist(sdkStorageRootDirectory);
         Config config = new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
         config.setApplicationVersion(APPLICATION_VERSION);
-
         config.setCustomDeviceId(deviceID);
         return config;
     }
@@ -425,6 +451,19 @@ public class TestUtils {
         Assert.assertEquals(expectedSize, getCurrentEQ().size());
     }
 
+    /**
+     * The keys of the events in the event queue, in queue order.
+     *
+     * @return the keys
+     */
+    static List<String> keysInEQ() {
+        List<String> keys = new ArrayList<>();
+        for (EventImpl event : getCurrentEQ()) {
+            keys.add(event.key);
+        }
+        return keys;
+    }
+
     static String getOS() {
         return System.getProperty("os.name");
     }
@@ -697,5 +736,41 @@ public class TestUtils {
         config.viewIdGenerator = TestUtils.incrementalViewIdGenerator();
         config.views.setGlobalViewSegmentation(segmentation);
         return config;
+    }
+
+    /**
+     * Waits until the clock is past every timestamp handed out so far. A request file is named after
+     * a {@link TimeUtils#uniqueTimestampMs()} value, which is unique among the last ten values only,
+     * so requests stored back to back could reuse a name and overwrite each other.
+     */
+    static void letTheClockCatchUp() {
+        long latest = TimeUtils.uniqueTimestampMs();
+        while (System.currentTimeMillis() <= latest) {
+            try {
+                Thread.sleep(1);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+        }
+    }
+
+    /**
+     * Polls a condition until it holds or the time is up.
+     *
+     * @param timeoutMs how long to wait at most, in milliseconds
+     * @param condition the condition
+     * @return whether it held in time
+     * @throws InterruptedException when interrupted while waiting
+     */
+    static boolean waitFor(long timeoutMs, BooleanSupplier condition) throws InterruptedException {
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        while (System.currentTimeMillis() < deadline) {
+            if (condition.getAsBoolean()) {
+                return true;
+            }
+            Thread.sleep(10);
+        }
+        return condition.getAsBoolean();
     }
 }

@@ -3,6 +3,7 @@ package ly.count.sdk.java.internal;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import ly.count.sdk.java.Countly;
+import org.json.JSONObject;
 
 public class ModuleLocation extends ModuleBase {
     boolean locationDisabled = false;
@@ -28,23 +29,63 @@ public class ModuleLocation extends ModuleBase {
 
     void disableLocationInternal() {
         L.d("[ModuleLocation] Calling 'disableLocationInternal'");
+        clearLocation();
+        sendLocation();
+    }
+
+    /**
+     * Forgets the location and marks it disabled, so the next location request erases it.
+     */
+    private void clearLocation() {
         country = null;
         city = null;
         location = null;
         ip = null;
         locationDisabled = true;
-        sendLocation();
+    }
+
+    /**
+     * Queues a request carrying the location as it is now.
+     */
+    private void pushLocation() {
+        ModuleRequests.pushAsync(internalConfig, new Request(prepareLocationParams()), true, null);
+    }
+
+    /**
+     * Clears the location and erases it on the server right away, without waiting for a session to
+     * begin, as when the location consent is removed.
+     */
+    void eraseLocation() {
+        L.d("[ModuleLocation] eraseLocation");
+        clearLocation();
+        pushLocation();
     }
 
     void sendLocation() {
         L.d("[ModuleLocation] Calling 'sendLocation'");
         SessionImpl session = internalConfig.sdk.getSession();
-        if (session == null || session.getBegan() != null) {
-            ModuleRequests.pushAsync(internalConfig, new Request(prepareLocationParams()), true, null);
+        if (session == null || session.getBegan() != null || !isLocationSentWithSessionBegin()) {
+            pushLocation();
         } // else case, values are added to the session begin request
     }
 
+    /**
+     * Whether a session that has not begun yet sends the location with its begin request, which the
+     * SDK behavior settings allow only while both session tracking and location tracking are enabled.
+     *
+     * @return {@code true} when the location can wait for the begin request
+     */
+    private boolean isLocationSentWithSessionBegin() {
+        ConfigurationProvider configProvider = internalConfig.getConfigurationProvider();
+        return configProvider.getSessionTrackingEnabled() && configProvider.getLocationTrackingEnabled();
+    }
+
     void setLocationInternal(@Nullable String countryCode, @Nullable String cityName, @Nullable String gpsCoordinates, @Nullable String ipAddress) {
+        ConfigurationProvider configProvider = internalConfig.getConfigurationProvider();
+        if (!configProvider.getTrackingEnabled() || !configProvider.getLocationTrackingEnabled()) {
+            L.d("[ModuleLocation] setLocationInternal, location tracking disabled by SDK behavior settings; ignoring");
+            return;
+        }
         L.d("[ModuleLocation] setLocationInternal, Setting location parameters, cc[" + countryCode + "] cy[" + city + "] gps[" + gpsCoordinates + "] ip[" + ipAddress + "]");
 
         if (countryCode != null ^ city != null) {
@@ -96,8 +137,10 @@ public class ModuleLocation extends ModuleBase {
     @Override
     public void initFinished(@Nonnull InternalConfig config) {
         if (config.isLocationDisabled()) {
-            //disable location if needed
-            disableLocationInternal();
+            //disable location if needed, unless a settings response during init already did and sent the erase request
+            if (!locationDisabled) {
+                disableLocationInternal();
+            }
         } else {
             //if we are not disabling location, check for other set values
             String[] locParams = config.getLocationParams(); // country, city, location, ip
@@ -107,14 +150,35 @@ public class ModuleLocation extends ModuleBase {
         }
     }
 
+    /**
+     * Disables location when a server response turned location tracking off, which erases the
+     * location stored on the server as {@link Location#disableLocation()} does, and drops the
+     * location values held for the next user details request.
+     *
+     * @param config configuration of the running SDK
+     */
+    @Override
+    protected void onSdkConfigurationChanged(InternalConfig config) {
+        synchronized (Countly.instance()) {
+            if (config.getConfigurationProvider().getLocationTrackingEnabled()) {
+                return;
+            }
+            dropDisallowedLegacyValues();
+            if (!locationDisabled) {
+                L.d("[ModuleLocation] onSdkConfigurationChanged, location tracking was disabled by the SDK behavior settings, disabling location");
+                disableLocationInternal();
+            }
+        }
+    }
+
     protected void saveLocationToParamsLegacy(Params params) {
-        if (countryLegacy != null) {
+        if (isLegacyValueAllowed(countryLegacy)) {
             params.add("country_code", countryLegacy);
         }
-        if (cityLegacy != null) {
+        if (isLegacyValueAllowed(cityLegacy)) {
             params.add("city", cityLegacy);
         }
-        if (locationLegacy != null) {
+        if (isLegacyValueAllowed(locationLegacy)) {
             params.add("location", locationLegacy);
         }
         countryLegacy = null;
@@ -124,23 +188,79 @@ public class ModuleLocation extends ModuleBase {
 
     protected void setLocationLegacy(@Nullable Object countryCode, @Nullable Object city, @Nullable Object gpsCoordinates) {
         L.d("[Location] setLocationLegacy, calling legacy calls to send locations");
-        if (countryCode != null) {
+        if (isLegacyValueAllowed(countryCode)) {
             countryLegacy = countryCode.toString();
         }
-        if (city != null) {
+        if (isLegacyValueAllowed(city)) {
             cityLegacy = city.toString();
         }
-        if (gpsCoordinates != null) {
+        if (isLegacyValueAllowed(gpsCoordinates)) {
             locationLegacy = gpsCoordinates.toString();
         }
+    }
+
+    /**
+     * Drops the held deprecated location values that may not be sent while location tracking is off,
+     * so a value set before the SDK behavior settings turned location tracking off is not sent after
+     * they turn it on again.
+     */
+    private void dropDisallowedLegacyValues() {
+        if (!isLegacyValueAllowed(countryLegacy)) {
+            countryLegacy = null;
+        }
+        if (!isLegacyValueAllowed(cityLegacy)) {
+            cityLegacy = null;
+        }
+        if (!isLegacyValueAllowed(locationLegacy)) {
+            locationLegacy = null;
+        }
+    }
+
+    /**
+     * Whether a deprecated location value can be held and sent with the user details. While the SDK
+     * behavior settings disable location tracking, only the JSON null that opts out of location
+     * services can, as it erases a location instead of tracking one.
+     *
+     * @param value the value, or {@code null} when none is set
+     * @return {@code true} when the value is set and can be sent
+     */
+    private boolean isLegacyValueAllowed(@Nullable Object value) {
+        if (value == null) {
+            return false;
+        }
+        if (JSONObject.NULL.toString().equals(value.toString()) || internalConfig.getConfigurationProvider().getLocationTrackingEnabled()) {
+            return true;
+        }
+        L.d("[ModuleLocation] isLegacyValueAllowed, location tracking disabled by SDK behavior settings; dropping the location value");
+        return false;
     }
 
     public class Location {
 
         /**
+         * The interface a call goes to: this one while its module runs, the running module's when
+         * this one was handed out before that started or kept from one that stopped, and
+         * {@code null} while the feature does not run.
+         *
+         * @param call the call, for the log line
+         * @return the interface, {@code null} for none
+         */
+        private Location target(String call) {
+            ModuleLocation running = runningInstance(call);
+            return running == null ? null : running.locationInterface;
+        }
+
+        /**
          * Disable sending of location data. Erases server side saved location information
          */
         public void disableLocation() {
+            Location target = target("[Location] disableLocation");
+            if (target != this) {
+                if (target != null) {
+                    target.disableLocation();
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[Location] Calling 'disableLocation'");
 
@@ -159,6 +279,13 @@ public class ModuleLocation extends ModuleBase {
          * @param ipAddress ipAddress like "192.168.88.33"
          */
         public void setLocation(@Nullable String countryCode, @Nullable String city, @Nullable String gpsCoordinates, @Nullable String ipAddress) {
+            Location target = target("[Location] setLocation");
+            if (target != this) {
+                if (target != null) {
+                    target.setLocation(countryCode, city, gpsCoordinates, ipAddress);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[Location] Calling 'setLocation'");
 

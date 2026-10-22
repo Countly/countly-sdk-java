@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -236,6 +239,168 @@ public class JsonFileStorageTests {
 
         storage.delete(keysValues[2]);
         validateStorageSize(0, 1);
+    }
+
+    /**
+     * "getJsonObj" hands out a deep copy.
+     * <p>
+     * Verifies that changing the returned object, and an object and an array nested in it, changes
+     * neither what the storage returns next nor what "save" writes; that a missing key and a value
+     * that is not an object return the default; that the changed copy is stored once it is handed back
+     * through "addAndSave"; and that saving on one thread while another changes its copy and stores it,
+     * as the remote config values are, never fails to serialize and leaves every key on disk.
+     */
+    @Test
+    public void getJsonObj_returnsADeepCopy_soAChangeReachesTheStorageOnlyThroughAdd() throws InterruptedException {
+        Log logger = Mockito.mock(Log.class);
+        setupJsonFile("{\"rc\":{\"color\":{\"v\":\"red\",\"c\":1},\"list\":[{\"a\":1}]},\"plain\":\"text\"}");
+        storage = new JsonFileStorage(jsonFile(), logger);
+
+        JSONObject copy = storage.getJsonObj("rc", null);
+        copy.getJSONObject("color").put("c", 0);
+        copy.getJSONArray("list").getJSONObject(0).put("a", 2);
+        copy.put("size", "large");
+
+        JSONObject stored = storage.getJsonObj("rc", null);
+        Assert.assertNotSame(copy, stored);
+        Assert.assertEquals(1, stored.getJSONObject("color").getInt("c"));
+        Assert.assertEquals(1, stored.getJSONArray("list").getJSONObject(0).getInt("a"));
+        Assert.assertFalse(stored.has("size"));
+        storage.save();
+        Assert.assertTrue(stored.similar(TestUtils.readJsonFile(jsonFile()).getJSONObject("rc")));
+
+        JSONObject fallback = new JSONObject();
+        Assert.assertSame(fallback, storage.getJsonObj("missing", fallback));
+        Assert.assertSame(fallback, storage.getJsonObj("plain", fallback));
+        Assert.assertNull(storage.getJsonObj("missing", null));
+
+        storage.addAndSave("rc", copy);
+        Assert.assertTrue(copy.similar(storage.getJsonObj("rc", null)));
+        Assert.assertTrue(copy.similar(TestUtils.readJsonFile(jsonFile()).getJSONObject("rc")));
+
+        storage.add("device", "device_id");
+        List<Throwable> failures = new CopyOnWriteArrayList<>();
+        long deadline = System.currentTimeMillis() + 400;
+        Thread changer = new Thread(() -> {
+            try {
+                for (int round = 0; System.currentTimeMillis() < deadline; round++) {
+                    JSONObject values = storage.getJsonObj("rc", new JSONObject());
+                    for (int i = 0; i < 50; i++) {
+                        values.put("key_" + ((round * 50 + i) % 400), new JSONObject().put("v", i).put("c", 1));
+                    }
+                    for (int i = 0; i < 20; i++) {
+                        values.remove("key_" + ((round * 37 + i) % 400));
+                    }
+                    storage.add("rc", values);
+                }
+            } catch (Throwable t) {
+                failures.add(t);
+            }
+        });
+        changer.start();
+        try {
+            while (System.currentTimeMillis() < deadline) {
+                storage.save();
+            }
+        } catch (Throwable t) {
+            failures.add(t);
+        }
+        changer.join();
+
+        Assert.assertTrue("failures: " + failures, failures.isEmpty());
+        Mockito.verify(logger, Mockito.never()).e(Mockito.startsWith("[JsonFileStorage] save, Failed to serialize"));
+        storage.save();
+        JSONObject onDisk = TestUtils.readJsonFile(jsonFile());
+        Assert.assertEquals("device_id", onDisk.getString("device"));
+        Assert.assertEquals("text", onDisk.getString("plain"));
+        Assert.assertTrue(onDisk.getJSONObject("rc").similar(storage.getJsonObj("rc", null)));
+    }
+
+    /**
+     * "save" when the data cannot be serialized.
+     * <p>
+     * Verifies that the file keeps what it had instead of being emptied, and that the failure is logged.
+     */
+    @Test
+    public void save_leavesTheFileAsItIs_whenTheDataCannotBeSerialized() {
+        Log logger = Mockito.mock(Log.class);
+        setupJsonFile("{\"device\":\"device_id\"}");
+        storage = new JsonFileStorage(jsonFile(), logger);
+        storage.add("broken", new JSONObject() {
+            /**
+             * Fails as a value that cannot be serialized does.
+             *
+             * @param writer the writer
+             * @param indentFactor the indentation of each level
+             * @param indent the indentation of this level
+             * @return never
+             */
+            @Override
+            public java.io.Writer write(java.io.Writer writer, int indentFactor, int indent) {
+                throw new IllegalStateException("cannot be written");
+            }
+        });
+
+        storage.save();
+
+        Assert.assertEquals("device_id", TestUtils.readJsonFile(jsonFile()).getString("device"));
+        Assert.assertFalse(TestUtils.readJsonFile(jsonFile()).has("broken"));
+        Mockito.verify(logger).e(Mockito.startsWith("[JsonFileStorage] save, Failed to serialize the data"));
+    }
+
+    /**
+     * A json file cut short, as a process stopped while writing leaves it, does not stop the storage.
+     * <p>
+     * Verifies that the storage starts empty, that the failure is logged, and that the next save
+     * replaces the broken file with valid json.
+     */
+    @Test
+    public void readJsonFile_brokenJson_startsEmptyAndTheNextSaveReplacesIt() {
+        Log logger = Mockito.mock(Log.class);
+        setupJsonFile("{\"did\":\"generated_uuid\",\"sc\":\"{\\\"c\\\":{");
+        storage = new JsonFileStorage(jsonFile(), logger);
+
+        Assert.assertEquals(0, storage.size());
+        Mockito.verify(logger).e(Mockito.startsWith("[JsonFileStorage] readJsonFile, The json file is not valid json"));
+
+        storage.addAndSave("key", "value");
+        Assert.assertEquals("value", TestUtils.readJsonFile(jsonFile()).getString("key"));
+    }
+
+    /**
+     * "save" writes next to the file and moves the result over it.
+     * <p>
+     * Verifies that the file holds what was stored before and what was added, and that no temporary
+     * file is left behind.
+     */
+    @Test
+    public void save_replacesTheFileWhole_andLeavesNoTemporaryFile() {
+        setupJsonFile("{\"old\":\"value\"}");
+        storage = new JsonFileStorage(jsonFile(), L);
+        storage.addAndSave("new", "value");
+
+        JSONObject saved = TestUtils.readJsonFile(jsonFile());
+        Assert.assertEquals("value", saved.getString("old"));
+        Assert.assertEquals("value", saved.getString("new"));
+        Assert.assertFalse(JsonFileStorage.temporaryFileOf(jsonFile()).exists());
+    }
+
+    /**
+     * The temporary file of a save stopped before its move is deleted when the storage opens.
+     * <p>
+     * Verifies that the storage reads the json file, which holds the previous save, and that the
+     * leftover file is gone, so it is not taken for other stored SDK data.
+     */
+    @Test
+    public void constructor_deletesTheTemporaryFileOfAnInterruptedSave() throws IOException {
+        setupJsonFile("{\"saved\":\"before\"}");
+        File leftover = JsonFileStorage.temporaryFileOf(jsonFile());
+        Files.write(leftover.toPath(), "{\"saved\":".getBytes());
+
+        storage = new JsonFileStorage(jsonFile(), L);
+
+        Assert.assertEquals("before", storage.getString("saved"));
+        Assert.assertFalse(leftover.exists());
     }
 
     private static File jsonFile() {

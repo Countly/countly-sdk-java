@@ -228,8 +228,11 @@ public class Storage {
             public T call() throws Exception {
                 Boolean done = config.sdk.sdkStorage.storableRead(config, storable);
                 T ret = null;
-                if (done == null || !done) {
-                    config.getLogger().e("[Storage] No data for file " + name(storable));
+                if (done == null) {
+                    //every storable starts without a file, and one that could not be read was logged as an error already
+                    config.getLogger().d("[Storage] No data for file " + name(storable));
+                } else if (!done) {
+                    config.getLogger().e("[Storage] Could not restore the data of file " + name(storable));
                 } else {
                     ret = storable;
                 }

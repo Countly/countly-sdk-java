@@ -1,5 +1,7 @@
 package ly.count.sdk.java.internal;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import ly.count.sdk.java.Session;
 
 /**
@@ -13,6 +15,9 @@ import ly.count.sdk.java.Session;
  * </ul>
  */
 public abstract class ModuleBase {
+    //what a call through an interface while its module does not run hands to its callback
+    static final String NOT_RUNNING_ERROR = "The feature does not run, as its consent is not given or it is not enabled";
+
     private boolean active = false;
 
     protected Log L = null;
@@ -45,6 +50,27 @@ public abstract class ModuleBase {
      * @param clear {@code true} if module must clear its data files, {@code false} otherwise
      */
     public void stop(InternalConfig config, boolean clear) {
+    }
+
+    /**
+     * The instance of this module that the SDK runs, which every call through an interface of this
+     * module goes to: this one, or the running one when the interface was handed out before that
+     * started or kept from an instance that stopped. A call while none runs, as before init or while
+     * the consent of the feature is not given, is ignored and logged.
+     *
+     * @param call the call, starting with the bracketed name of the interface, for the log line
+     * @param <M> the module type
+     * @return the running instance, {@code null} while none runs
+     */
+    @SuppressWarnings("unchecked")
+    @Nullable
+    <M extends ModuleBase> M runningInstance(@Nonnull String call) {
+        SDKCore core = SDKCore.instance;
+        ModuleBase running = core == null ? null : core.module(getClass());
+        if (running == null && core != null && core.L != null) {
+            core.L.w(call + ", the feature does not run, as its consent is not given or it is not enabled, ignoring the call");
+        }
+        return (M) running;
     }
 
     /**
@@ -95,9 +121,16 @@ public abstract class ModuleBase {
     }
 
     /**
-     * Called when the request is executed.
+     * Called when the request is executed, only on the owning module ({@link Request#own(Class)}),
+     * once for every attempt to send it, on the networking thread. A request dropped unsent for
+     * being older than the request drop age gets a call too, with a {@code null} response and
+     * {@link Transport#NO_RESPONSE_CODE}.
      * Gives the module the ability to respond to the response received
      * Request identification should be done through the Request ID
+     *
+     * @param request the request that was sent
+     * @param response the response body, {@code null} when none could be read
+     * @param responseCode the response code, {@link Transport#NO_RESPONSE_CODE} when no response arrived
      */
     public void onRequestCompleted(Request request, String response, int responseCode) {
 
@@ -123,5 +156,18 @@ public abstract class ModuleBase {
      */
     protected void deviceIdChanged(String oldDeviceId, boolean withMerge) {
 
+    }
+
+    /**
+     * Called when a server response changed the SDK behavior settings while the SDK runs, after
+     * the SDK applied what it owns: the logger, the timer interval and the request queue. Read the
+     * new values through {@link InternalConfig#getConfigurationProvider()}. Runs on the thread that
+     * delivered the response, which is usually not the thread that initialized the SDK, and can run
+     * after {@link #init(InternalConfig)} but before {@link #initFinished(InternalConfig)} when the
+     * response of the fetch made at init arrives that early.
+     *
+     * @param config configuration of the running SDK
+     */
+    protected void onSdkConfigurationChanged(InternalConfig config) {
     }
 }

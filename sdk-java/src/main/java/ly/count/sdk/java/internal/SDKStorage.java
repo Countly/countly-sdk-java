@@ -33,6 +33,7 @@ public class SDKStorage implements StorageProvider {
     protected static final String key_device_id_type = "did_t";
     protected static final String key_remote_config = "rc";
     protected static final String key_migration_version = "dv";
+    protected static final String key_server_config = "sc";
 
     private JsonFileStorage jsonFileStorage;
 
@@ -170,6 +171,11 @@ public class SDKStorage implements StorageProvider {
     }
 
     public byte[] storableReadBytes(InternalConfig config, String filename) {
+        //every storable starts without a file, so a missing one is no error
+        if (!new File(createFileFullPath(config, filename)).exists()) {
+            return null;
+        }
+
         ByteArrayOutputStream buffer = null;
         FileInputStream stream = null;
 
@@ -188,6 +194,7 @@ public class SDKStorage implements StorageProvider {
 
             return buffer.toByteArray();
         } catch (FileNotFoundException e) {
+            L.e("[SDKStorage] Error while opening file " + filename + " " + e);
             return null;
         } catch (IOException e) {
             L.e("[SDKStorage] Error while reading file " + filename + " " + e);
@@ -274,6 +281,18 @@ public class SDKStorage implements StorageProvider {
 
         String[] ret = new String[fileNames.size()];
         return fileNames.toArray(ret);
+    }
+
+    /**
+     * Whether the file of a storable exists, as a stored request does until it is sent or dropped.
+     *
+     * @param config configuration of the running SDK
+     * @param prefix the storage prefix of the storable
+     * @param id the storage ID of the storable
+     * @return {@code true} while the file exists
+     */
+    boolean storableExists(InternalConfig config, String prefix, Long id) {
+        return new File(createFileFullPath(config, getName(prefix, id.toString()))).exists();
     }
 
     public List<Long> storableList(InternalConfig config, String prefix, int slice) {
@@ -384,6 +403,20 @@ public class SDKStorage implements StorageProvider {
     @Override
     public void setMigrationVersion(Integer migrationVersion) {
         jsonFileStorage.addAndSave(key_migration_version, migrationVersion);
+    }
+
+    @Override
+    public void setServerConfig(String config) {
+        if (config == null) {
+            jsonFileStorage.deleteAndSave(key_server_config);
+        } else {
+            jsonFileStorage.addAndSave(key_server_config, config);
+        }
+    }
+
+    @Override
+    public String getServerConfig() {
+        return jsonFileStorage.getString(key_server_config);
     }
 
     @Override

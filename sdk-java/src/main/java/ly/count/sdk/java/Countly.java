@@ -84,7 +84,6 @@ public class Countly implements Usage {
         }
 
         Log L = new Log(internalConfig.loggingLevel, internalConfig.logListener);
-        internalConfig.setLogger(L);
 
         if (directory == null) {
             L.e("[Countly] File cannot be null");
@@ -104,6 +103,7 @@ public class Countly implements Usage {
             L.e("[Countly] Countly shouldn't be initialized twice. Please either use Countly.isInitialized() to check status or call Countly.stop() before second Countly.init(). Calling 'init' the second time will now do nothing");
             return;
         }
+        internalConfig.setLogger(L);
 
         if (internalConfig.enableBackendMode) {
             internalConfig.sdkName = "java-native-backend";
@@ -396,14 +396,15 @@ public class Countly implements Usage {
      * <code>Feedback</code> interface to use feedback widgets nps,rating and forms.
      * And do manual reporting of feedbacks.
      *
-     * @return {@link ModuleFeedback.Feedback} instance.
+     * @return {@link ModuleFeedback.Feedback} instance, never {@code null}: before init, or while the feature does not
+     * run, as its consent is not given or it is not enabled, one that ignores calls until it runs
      */
     public ModuleFeedback.Feedback feedback() {
         if (!isInitialized()) {
             if (L != null) {
                 L.e("[Countly] SDK is not initialized yet.");
             }
-            return null;
+            return SDKCore.dormantFeedback;
         }
         return sdk.feedback();
     }
@@ -413,7 +414,8 @@ public class Countly implements Usage {
      * content block. A {@link ly.count.sdk.java.internal.ContentDisplay} has to be registered
      * before a content zone can be entered; the "ly.count.sdk:java-ui" artifact ships a JavaFX one.
      *
-     * @return {@link ModuleContent.Content} instance.
+     * @return {@link ModuleContent.Content} instance, never {@code null}: before init, or while the feature does not
+     * run, as its consent is not given or it is not enabled, one that ignores calls until it runs
      * @apiNote This is an EXPERIMENTAL feature, and it can have breaking changes
      */
     public ModuleContent.Content content() {
@@ -421,7 +423,7 @@ public class Countly implements Usage {
             if (L != null) {
                 L.e("[Countly] content, SDK is not initialized yet.");
             }
-            return null;
+            return SDKCore.dormantContent;
         }
         return sdk.content();
     }
@@ -429,14 +431,15 @@ public class Countly implements Usage {
     /**
      * <code>RemoteConfig</code> interface to use remote config feature.
      *
-     * @return {@link ModuleRemoteConfig.RemoteConfig} instance.
+     * @return {@link ModuleRemoteConfig.RemoteConfig} instance, never {@code null}: before init, or while the feature does not
+     * run, as its consent is not given or it is not enabled, one that ignores calls until it runs
      */
     public ModuleRemoteConfig.RemoteConfig remoteConfig() {
         if (!isInitialized()) {
             if (L != null) {
                 L.e("[Countly] remoteConfig, SDK is not initialized yet.");
             }
-            return null;
+            return SDKCore.dormantRemoteConfig;
         }
         return sdk.remoteConfig();
     }
@@ -444,14 +447,15 @@ public class Countly implements Usage {
     /**
      * <code>DeviceId</code> interface to use device id functionalities.
      *
-     * @return {@link ModuleDeviceIdCore.DeviceId} instance.
+     * @return {@link ModuleDeviceIdCore.DeviceId} instance, never {@code null}: before init, or while the feature does not
+     * run, as its consent is not given or it is not enabled, one that ignores calls until it runs
      */
     public ModuleDeviceIdCore.DeviceId deviceId() {
         if (!isInitialized()) {
             if (L != null) {
                 L.e("[Countly] SDK is not initialized yet.");
             }
-            return null;
+            return SDKCore.dormantDeviceId;
         }
         return sdk.deviceId();
     }
@@ -472,14 +476,15 @@ public class Countly implements Usage {
     /**
      * Event module calls
      *
-     * @return event module otherwise null if SDK is not initialized
+     * @return {@link ModuleEvents.Events} instance, never {@code null}: before init, or while the feature does not
+     * run, as its consent is not given or it is not enabled, one that ignores calls until it runs
      */
     public ModuleEvents.Events events() {
         if (!isInitialized()) {
             if (L != null) {
                 L.e("[Countly] SDK is not initialized yet.");
             }
-            return null;
+            return SDKCore.dormantEvents;
         }
         return sdk.events();
     }
@@ -487,14 +492,15 @@ public class Countly implements Usage {
     /**
      * Crash module calls
      *
-     * @return crash module otherwise null if SDK is not initialized
+     * @return {@link ModuleCrashes.Crashes} instance, never {@code null}: before init, or while the feature does not
+     * run, as its consent is not given or it is not enabled, one that ignores calls until it runs
      */
     public ModuleCrashes.Crashes crashes() {
         if (!isInitialized()) {
             if (L != null) {
                 L.e("[Countly] SDK is not initialized yet.");
             }
-            return null;
+            return SDKCore.dormantCrashes;
         }
         return sdk.crashes();
     }
@@ -502,14 +508,15 @@ public class Countly implements Usage {
     /**
      * <code>Views</code> interface to use views feature.
      *
-     * @return {@link ModuleViews.Views} instance.
+     * @return {@link ModuleViews.Views} instance, never {@code null}: before init, or while the feature does not
+     * run, as its consent is not given or it is not enabled, one that ignores calls until it runs
      */
     public ModuleViews.Views views() {
         if (!isInitialized()) {
             if (L != null) {
                 L.e("[Countly] SDK is not initialized yet.");
             }
-            return null;
+            return SDKCore.dormantViews;
         }
         return sdk.views();
     }
@@ -530,14 +537,15 @@ public class Countly implements Usage {
     /**
      * <code>UserProfile</code> interface to use user profile feature.
      *
-     * @return {@link ModuleUserProfile.UserProfile} instance.
+     * @return {@link ModuleUserProfile.UserProfile} instance, never {@code null}: before init, or while the feature does not
+     * run, as its consent is not given or it is not enabled, one that ignores calls until it runs
      */
     public ModuleUserProfile.UserProfile userProfile() {
         if (!isInitialized()) {
             if (L != null) {
                 L.e("[Countly] userProfile, SDK is not initialized yet.");
             }
-            return null;
+            return SDKCore.dormantUserProfile;
         }
         return sdk.userProfile();
     }
@@ -545,7 +553,8 @@ public class Countly implements Usage {
     /**
      * <code>Location</code> interface to use location feature.
      *
-     * @return {@link ModuleLocation.Location} instance.
+     * @return {@link ModuleLocation.Location} instance, never {@code null}: before init, or while the feature does not
+     * run, as its consent is not given or it is not enabled, one that ignores calls until it runs
      */
     public ModuleLocation.Location location() {
         if (!isInitialized()) {
@@ -553,7 +562,7 @@ public class Countly implements Usage {
             if (L != null) {
                 L.e("Countly.sharedInstance().init must be called before accessing location");
             }
-            return null;
+            return SDKCore.dormantLocation;
         }
 
         return sdk.location();
@@ -574,25 +583,25 @@ public class Countly implements Usage {
 
     @Override
     public Usage addParam(String key, Object value) {
-        L.d("[Countly] addParam: key = " + key + " value = " + value);
+        L.d("[Countly] addParam: key = " + key);
         return ((Session) sdk.session(null)).addParam(key, value);
     }
 
     @Override
     public Usage addCrashReport(Throwable t, boolean fatal) {
-        L.d("[Countly] addCrashReport: t = " + t + " fatal = " + fatal);
+        L.d("[Countly] addCrashReport: fatal = " + fatal);
         return ((Session) sdk.session(null)).addCrashReport(t, fatal);
     }
 
     @Override
     public Usage addCrashReport(Throwable t, boolean fatal, String name, Map<String, String> segments, String... logs) {
-        L.d("[Countly] addCrashReport: t = " + t + " fatal = " + fatal + " name = " + name + " segments = " + segments + " logs = " + logs);
+        L.d("[Countly] addCrashReport: fatal = " + fatal);
         return ((Session) sdk.session(null)).addCrashReport(t, fatal, name, segments, logs);
     }
 
     @Override
     public Usage addLocation(double latitude, double longitude) {
-        L.d("[Countly] addLocation: latitude = " + latitude + " longitude = " + longitude);
+        L.d("[Countly] addLocation");
         return ((Session) sdk.session(null)).addLocation(latitude, longitude);
     }
 
@@ -603,7 +612,7 @@ public class Countly implements Usage {
      */
     @Override
     public View view(String name, boolean start) {
-        L.d("[Countly] view: name = " + name + " start = " + start);
+        L.d("[Countly] view: start = " + start);
         return ((Session) sdk.session(null)).view(name, start);
     }
 
@@ -614,7 +623,7 @@ public class Countly implements Usage {
      */
     @Override
     public View view(String name) {
-        L.d("[Countly] view: name = " + name);
+        L.d("[Countly] view");
         return ((Session) sdk.session(null)).view(name);
     }
 }

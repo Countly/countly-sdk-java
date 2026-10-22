@@ -198,6 +198,20 @@ public class ScenarioInitRecoveryTests {
     // ── Corrupt/empty file resilience ───────────────────────────────────
 
     /**
+     * "init_withBrokenStoreFile"
+     * A store file cut short, as a process stopped while writing leaves it, must not stop the SDK
+     * from initializing: the storage starts empty instead of throwing to the application.
+     */
+    @Test
+    public void init_withBrokenStoreFile() {
+        TestUtils.writeToFile(SDKStorage.JSON_FILE_NAME, "{\"did\":\"generated_uuid\",\"sc\":\"{\\\"c\\\":{");
+
+        Countly.instance().init(TestUtils.getBaseConfig());
+
+        Assert.assertTrue("SDK should be initialized even with a broken store file", Countly.isInitialized());
+    }
+
+    /**
      * "init_withCorruptCrashFile"
      * Corrupt crash file should not block initialization.
      * processCrash returns false when Storage.read fails, so the file is NOT removed
