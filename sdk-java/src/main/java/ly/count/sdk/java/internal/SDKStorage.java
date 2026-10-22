@@ -171,6 +171,11 @@ public class SDKStorage implements StorageProvider {
     }
 
     public byte[] storableReadBytes(InternalConfig config, String filename) {
+        //every storable starts without a file, so a missing one is no error
+        if (!new File(createFileFullPath(config, filename)).exists()) {
+            return null;
+        }
+
         ByteArrayOutputStream buffer = null;
         FileInputStream stream = null;
 
@@ -189,6 +194,7 @@ public class SDKStorage implements StorageProvider {
 
             return buffer.toByteArray();
         } catch (FileNotFoundException e) {
+            L.e("[SDKStorage] Error while opening file " + filename + " " + e);
             return null;
         } catch (IOException e) {
             L.e("[SDKStorage] Error while reading file " + filename + " " + e);

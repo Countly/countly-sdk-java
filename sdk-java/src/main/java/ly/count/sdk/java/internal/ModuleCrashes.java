@@ -27,7 +27,8 @@ public class ModuleCrashes extends ModuleBase {
     //written under crashHandlerLock
     private volatile boolean stopped = false;
     protected CrashProcessor crashProcessor = null;
-    protected List<String> logs = new ArrayList<>();
+    //guarded by itself, as breadcrumbs are added on any thread and taken on the crash handler thread
+    protected final List<String> logs = new ArrayList<>();
 
     Crashes crashInterface;
 
@@ -56,7 +57,9 @@ public class ModuleCrashes extends ModuleBase {
         } catch (Throwable t) {
             L.e("[ModuleCrash] Exception while stopping crash reporting" + t);
         }
-        logs.clear();
+        synchronized (logs) {
+            logs.clear();
+        }
         crashInterface = null;
     }
 
@@ -215,9 +218,11 @@ public class ModuleCrashes extends ModuleBase {
             L.w("[ModuleCrash] onCrash, While recording an exception 'App version' was either null or empty");
         }
 
-        if (!logs.isEmpty()) {
-            crash.setLogs(logs.toArray(new String[0]));
-            logs.clear();
+        synchronized (logs) {
+            if (!logs.isEmpty()) {
+                crash.setLogs(logs.toArray(new String[0]));
+                logs.clear();
+            }
         }
 
         L.i("[ModuleCrash] onCrash: " + crash.getJSON());
@@ -255,13 +260,15 @@ public class ModuleCrashes extends ModuleBase {
         ConfigurationProvider configProvider = internalConfig.getConfigurationProvider();
         String breadcrumb = UtilsInternalLimits.truncateValue(record, configProvider.getMaxValueSize(), L, "[ModuleCrash] addBreadcrumbInternal");
 
-        //a loop, as the limit can shrink while breadcrumbs are kept
         int maxBreadcrumbCount = configProvider.getMaxBreadcrumbCount();
-        while (!logs.isEmpty() && logs.size() >= maxBreadcrumbCount) {
-            logs.remove(0);
-        }
+        synchronized (logs) {
+            //a loop, as the limit can shrink while breadcrumbs are kept
+            while (!logs.isEmpty() && logs.size() >= maxBreadcrumbCount) {
+                logs.remove(0);
+            }
 
-        logs.add(breadcrumb);
+            logs.add(breadcrumb);
+        }
     }
 
     public class Crashes {

@@ -2,8 +2,12 @@ package ly.count.sdk.java.internal;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
@@ -147,6 +151,45 @@ public class ModuleCrashesTests {
     }
 
     /**
+     * "addCrashBreadcrumb" while the uncaught exception handler records crashes
+     * Validating that breadcrumbs added through the interface while crashes are recorded on another
+     * thread, as the uncaught exception handler does, are each taken by one crash or kept for the
+     * next, none of them lost, and that no call throws
+     */
+    @Test
+    public void addCrashBreadcrumb_whileAnotherThreadRecordsCrashes_losesNone() throws InterruptedException {
+        BreadcrumbCountingProcessor.taken.set(0);
+        int breadcrumbs = 20_000;
+        Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.CrashReporting)
+            .setMaxBreadcrumbCount(breadcrumbs).setCrashProcessorClass(BreadcrumbCountingProcessor.class));
+        ModuleCrashes module = SDKCore.instance.module(ModuleCrashes.class);
+        List<Throwable> failures = new CopyOnWriteArrayList<>();
+        AtomicBoolean adding = new AtomicBoolean(true);
+
+        Thread crashes = new Thread(() -> {
+            try {
+                while (adding.get()) {
+                    module.recordExceptionInternal(new IllegalStateException("crash"), false, null, null);
+                }
+            } catch (Throwable t) {
+                failures.add(t);
+            }
+        });
+        crashes.start();
+        try {
+            for (int i = 0; i < breadcrumbs; i++) {
+                Countly.instance().crashes().addCrashBreadcrumb("breadcrumb" + i);
+            }
+        } finally {
+            adding.set(false);
+            crashes.join(30_000);
+        }
+
+        Assert.assertTrue("failed: " + failures, failures.isEmpty());
+        Assert.assertEquals(breadcrumbs, BreadcrumbCountingProcessor.taken.get() + module.logs.size());
+    }
+
+    /**
      * "addCrashBreadcrumb" with default "maxBreadcrumbCount"
      * Validating that handled exception is recorded correctly to request queue and has breadcrumbs,
      * Request queue should contain one request with crash object with breadcrumbs
@@ -268,6 +311,25 @@ public class ModuleCrashesTests {
         crashReporter.accept(testThrowable, customSegment);
 
         validateCrashInRQ(testThrowable, fatal, new JSONObject(customSegment), null, 0);
+    }
+
+    /**
+     * Counts the breadcrumbs of every crash it is given and drops the crash.
+     */
+    public static class BreadcrumbCountingProcessor implements CrashProcessor {
+        static final AtomicInteger taken = new AtomicInteger();
+
+        public BreadcrumbCountingProcessor() {
+        }
+
+        @Override
+        public Crash process(Crash crash) {
+            List<String> logs = crash.getLogs();
+            if (logs != null) {
+                taken.addAndGet(logs.size());
+            }
+            return null;
+        }
     }
 
     public static class TestCrashProcessor implements CrashProcessor {
