@@ -348,6 +348,61 @@ public class JsonFileStorageTests {
         Mockito.verify(logger).e(Mockito.startsWith("[JsonFileStorage] save, Failed to serialize the data"));
     }
 
+    /**
+     * A json file cut short, as a process stopped while writing leaves it, does not stop the storage.
+     * <p>
+     * Verifies that the storage starts empty, that the failure is logged, and that the next save
+     * replaces the broken file with valid json.
+     */
+    @Test
+    public void readJsonFile_brokenJson_startsEmptyAndTheNextSaveReplacesIt() {
+        Log logger = Mockito.mock(Log.class);
+        setupJsonFile("{\"did\":\"generated_uuid\",\"sc\":\"{\\\"c\\\":{");
+        storage = new JsonFileStorage(jsonFile(), logger);
+
+        Assert.assertEquals(0, storage.size());
+        Mockito.verify(logger).e(Mockito.startsWith("[JsonFileStorage] readJsonFile, The json file is not valid json"));
+
+        storage.addAndSave("key", "value");
+        Assert.assertEquals("value", TestUtils.readJsonFile(jsonFile()).getString("key"));
+    }
+
+    /**
+     * "save" writes next to the file and moves the result over it.
+     * <p>
+     * Verifies that the file holds what was stored before and what was added, and that no temporary
+     * file is left behind.
+     */
+    @Test
+    public void save_replacesTheFileWhole_andLeavesNoTemporaryFile() {
+        setupJsonFile("{\"old\":\"value\"}");
+        storage = new JsonFileStorage(jsonFile(), L);
+        storage.addAndSave("new", "value");
+
+        JSONObject saved = TestUtils.readJsonFile(jsonFile());
+        Assert.assertEquals("value", saved.getString("old"));
+        Assert.assertEquals("value", saved.getString("new"));
+        Assert.assertFalse(JsonFileStorage.temporaryFileOf(jsonFile()).exists());
+    }
+
+    /**
+     * The temporary file of a save stopped before its move is deleted when the storage opens.
+     * <p>
+     * Verifies that the storage reads the json file, which holds the previous save, and that the
+     * leftover file is gone, so it is not taken for other stored SDK data.
+     */
+    @Test
+    public void constructor_deletesTheTemporaryFileOfAnInterruptedSave() throws IOException {
+        setupJsonFile("{\"saved\":\"before\"}");
+        File leftover = JsonFileStorage.temporaryFileOf(jsonFile());
+        Files.write(leftover.toPath(), "{\"saved\":".getBytes());
+
+        storage = new JsonFileStorage(jsonFile(), L);
+
+        Assert.assertEquals("before", storage.getString("saved"));
+        Assert.assertFalse(leftover.exists());
+    }
+
     private static File jsonFile() {
         return new File(TestUtils.getTestSDirectory(), JSON_FILE_NAME);
     }

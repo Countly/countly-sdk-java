@@ -315,7 +315,7 @@ public class ModuleConfigurationLimitsTests {
      * <p>
      * Verifies that an event recorded before any limit is sent whole, that after a response brings
      * key and value limits the same call is cut by them, that a later response lowering the key
-     * length and adding an entry limit is merged over the value limit it leaves out, that one raising
+     * length and adding an entry limit lifts the value limit it leaves out, that one raising
      * every limit sends the event whole again from the caller's untouched map, and that breadcrumbs
      * and stack trace lines follow the limits in effect when each breadcrumb is added and when the
      * crash is recorded.
@@ -330,7 +330,7 @@ public class ModuleConfigurationLimitsTests {
         push(new ServerConfigBuilder().keyLengthLimit(8).valueSizeLimit(4));
         Countly.instance().events().recordEvent("event_key", segmentation);
         push(new ServerConfigBuilder().keyLengthLimit(3).segmentationValuesLimit(1));
-        Assert.assertEquals(4, provider().getMaxValueSize());
+        Assert.assertEquals(ModuleConfiguration.NO_LIMIT, provider().getMaxValueSize());
         Countly.instance().events().recordEvent("event_key", segmentation);
         push(new ServerConfigBuilder().keyLengthLimit(64).valueSizeLimit(64).segmentationValuesLimit(64));
         Countly.instance().events().recordEvent("event_key", segmentation);
@@ -344,7 +344,7 @@ public class ModuleConfigurationLimitsTests {
 
         push(new ServerConfigBuilder().valueSizeLimit(4));
         Countly.instance().crashes().addCrashBreadcrumb("alpha_breadcrumb");
-        push(new ServerConfigBuilder().breadcrumbLimit(1).traceLengthLimit(12));
+        push(new ServerConfigBuilder().valueSizeLimit(4).breadcrumbLimit(1).traceLengthLimit(12));
         Countly.instance().crashes().addCrashBreadcrumb("omega_breadcrumb");
         Exception exception = new Exception("recorded after the change");
         Countly.instance().crashes().recordHandledException(exception);

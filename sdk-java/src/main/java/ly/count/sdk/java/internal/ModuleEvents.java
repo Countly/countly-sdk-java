@@ -25,6 +25,11 @@ public class ModuleEvents extends ModuleBase {
      * response, which decides whether the content zone is refreshed.
      */
     final Set<Long> journeyTriggerRequestIds = ConcurrentHashMap.newKeySet();
+    /**
+     * The thread ending the timed events and the view of the previous device ID during a device ID
+     * change without merge; its sends wait, so those events go out in one request under that ID.
+     */
+    private volatile Thread threadEndingEventsOfThePreviousDeviceId = null;
 
     @Override
     public void init(InternalConfig config) {
@@ -104,20 +109,26 @@ public class ModuleEvents extends ModuleBase {
         super.deviceIdChanged(oldDeviceId, withMerge);
         L.d("[ModuleEvents] deviceIdChanged: oldDeviceId = " + oldDeviceId + ", withMerge = " + withMerge);
         if (!withMerge) {
-            for (Map.Entry<String, EventImpl> timedEventEntry : timedEvents.entrySet()) {
-                L.d("[ModuleEvents] deviceIdChanged, Ending timed event: [" + timedEventEntry.getKey() + "]");
-                endEventInternal(timedEventEntry.getKey(), timedEventEntry.getValue().segmentation, timedEventEntry.getValue().count, timedEventEntry.getValue().sum);
-            }
-
-            // this part is to end and record the current view if exists
-            Session session = Countly.session();
-            if (session != null && session.isActive()) {
-                View currentView = ((SessionImpl) session).currentView;
-                if (currentView != null) {
-                    currentView.stop(true);
-                } else {
-                    Storage.pushAsync(internalConfig, (SessionImpl) Countly.session());
+            //the new device ID is already set, so the events ended here are sent below under the old one, never on their own
+            threadEndingEventsOfThePreviousDeviceId = Thread.currentThread();
+            try {
+                for (Map.Entry<String, EventImpl> timedEventEntry : timedEvents.entrySet()) {
+                    L.d("[ModuleEvents] deviceIdChanged, Ending timed event: [" + timedEventEntry.getKey() + "]");
+                    endEventInternal(timedEventEntry.getKey(), timedEventEntry.getValue().segmentation, timedEventEntry.getValue().count, timedEventEntry.getValue().sum);
                 }
+
+                // this part is to end and record the current view if exists
+                Session session = Countly.session();
+                if (session != null && session.isActive()) {
+                    View currentView = ((SessionImpl) session).currentView;
+                    if (currentView != null) {
+                        currentView.stop(true);
+                    } else {
+                        Storage.pushAsync(internalConfig, (SessionImpl) Countly.session());
+                    }
+                }
+            } finally {
+                threadEndingEventsOfThePreviousDeviceId = null;
             }
 
             addEventsToRequestQ(oldDeviceId);
@@ -322,6 +333,10 @@ public class ModuleEvents extends ModuleBase {
      * @param journeyTrigger whether the queue holds a journey trigger
      */
     private void checkEventQueueToSend(boolean forceSend, boolean journeyTrigger) {
+        if (Thread.currentThread() == threadEndingEventsOfThePreviousDeviceId) {
+            L.d("[ModuleEvents] checkEventQueueToSend, the events of the previous device ID are being ended, they are sent together under that ID");
+            return;
+        }
         L.d("[ModuleEvents] queue size:[" + eventQueue.eqSize() + "] || forceSend: " + forceSend);
         if (forceSend || eventQueue.eqSize() >= internalConfig.getConfigurationProvider().getEventQueueSizeThreshold()) {
             addEventsToRequestQ(null, journeyTrigger);

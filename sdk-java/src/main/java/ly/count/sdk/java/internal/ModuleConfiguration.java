@@ -21,6 +21,8 @@ import org.json.JSONObject;
  * <p>
  * Every setting starts from the developer configuration and is overridden by the settings provided
  * at init (only while nothing is stored), by the stored settings and by every later server response.
+ * Each accepted response replaces the stored settings as a whole, so a setting the server stops
+ * sending goes back to the developer configuration, or to the SDK default when it sets none.
  * {@link SDKCore} runs {@link #init(InternalConfig)}, which does the resolve, before it starts the
  * global timer and builds the other modules; {@link #initFinished(InternalConfig)} fetches the
  * settings and starts the refresh timer. In backend mode the module stays inert and serves the
@@ -99,9 +101,11 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
     static final int MIN_CONTENT_ZONE_INTERVAL = 16;
     static final int NO_LIMIT = Integer.MAX_VALUE;
 
-    //the settings merged from every accepted configuration, the stored form; guarded by this
-    JSONObject latestRetrievedConfigurationFull = null;
+    //the settings of the last accepted configuration; guarded by this
     JSONObject latestRetrievedConfiguration = null;
+
+    //what each setting goes back to when the stored settings do not carry it, read from the developer configuration at init
+    private ConfigurationProvider developerValues = null;
 
     //guarded by this
     CountlyTimer serverConfigUpdateTimer = null;
@@ -224,6 +228,7 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
         L.d("[ModuleConfiguration] init, backend mode:[" + backendMode + "], server config requests disabled:[" + serverConfigRequestsDisabled + "]");
 
         seedFromDeveloperConfig(config);
+        developerValues = developerDefaults(config);
 
         if (backendMode) {
             L.d("[ModuleConfiguration] init, backend mode is enabled, SDK behavior settings are not applied");
@@ -315,7 +320,7 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
      * not support. Other top level keys are allowed; they are never stored.
      *
      * @param config a configuration as the server sends it, its settings object is changed in place
-     * @return whether the configuration can be merged
+     * @return whether the configuration can be stored
      */
     boolean validateServerConfig(@Nonnull JSONObject config) {
         L.v("[ModuleConfiguration] validateServerConfig");
@@ -451,9 +456,10 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
     }
 
     /**
-     * Validates a configuration, merges its settings into the stored ones and stores the result.
-     * Only {@code v}, {@code t} and {@code c} are stored, so the log gathering directive and the
-     * connection test flag never are. An invalid configuration leaves the stored settings as they are.
+     * Validates a configuration and replaces the stored settings with its settings, so a setting it
+     * does not carry is no longer stored. Only {@code v}, {@code t} and {@code c} are stored, so the
+     * log gathering directive and the connection test flag never are. An invalid configuration
+     * leaves the stored settings as they are.
      *
      * @param config a configuration as the server sends it
      */
@@ -463,16 +469,6 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
             L.w("[ModuleConfiguration] saveAndStoreDownloadedConfig, retrieved configuration is not valid, ignoring it");
             return;
         }
-
-        JSONObject newInner = config.optJSONObject(keyRConfig);
-        if (latestRetrievedConfigurationFull == null) {
-            latestRetrievedConfiguration = new JSONObject();
-            latestRetrievedConfigurationFull = new JSONObject();
-            latestRetrievedConfigurationFull.put(keyRConfig, latestRetrievedConfiguration);
-        }
-
-        latestRetrievedConfigurationFull.put(keyRVersion, config.get(keyRVersion));
-        latestRetrievedConfigurationFull.put(keyRTimestamp, config.get(keyRTimestamp));
 
         List<String> notStoredTopLevelKeys = new ArrayList<>();
         for (String key : config.keySet()) {
@@ -484,48 +480,9 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
             L.d("[ModuleConfiguration] saveAndStoreDownloadedConfig, top level keys that are not stored: " + notStoredTopLevelKeys);
         }
 
-        removeListingFilterKeysFromConfig(newInner);
-
-        for (String key : newInner.keySet()) {
-            Object value = newInner.opt(key);
-            if (value != null && !JSONObject.NULL.equals(value)) {
-                latestRetrievedConfiguration.put(key, value);
-            }
-        }
-
-        internalConfig.storageProvider.setServerConfig(latestRetrievedConfigurationFull.toString());
-    }
-
-    /**
-     * Drops the stored listing filters of the opposite kind: a configuration with any whitelist
-     * removes every stored blacklist and the reverse. One with neither keeps the stored filters.
-     *
-     * @param newConfig the settings object being merged
-     */
-    private void removeListingFilterKeysFromConfig(@Nonnull JSONObject newConfig) {
-        boolean hasAnyWhitelist = newConfig.has(keyREventWhitelist)
-            || newConfig.has(keyRUserPropertyWhitelist)
-            || newConfig.has(keyRSegmentationWhitelist)
-            || newConfig.has(keyREventSegmentationWhitelist);
-
-        boolean hasAnyBlacklist = newConfig.has(keyREventBlacklist)
-            || newConfig.has(keyRUserPropertyBlacklist)
-            || newConfig.has(keyRSegmentationBlacklist)
-            || newConfig.has(keyREventSegmentationBlacklist);
-
-        if (hasAnyWhitelist) {
-            latestRetrievedConfiguration.remove(keyREventBlacklist);
-            latestRetrievedConfiguration.remove(keyRUserPropertyBlacklist);
-            latestRetrievedConfiguration.remove(keyRSegmentationBlacklist);
-            latestRetrievedConfiguration.remove(keyREventSegmentationBlacklist);
-        }
-
-        if (hasAnyBlacklist) {
-            latestRetrievedConfiguration.remove(keyREventWhitelist);
-            latestRetrievedConfiguration.remove(keyRUserPropertyWhitelist);
-            latestRetrievedConfiguration.remove(keyRSegmentationWhitelist);
-            latestRetrievedConfiguration.remove(keyREventSegmentationWhitelist);
-        }
+        //validation already removed every value that is not a usable setting, so the settings object is kept as it is
+        latestRetrievedConfiguration = config.optJSONObject(keyRConfig);
+        internalConfig.storageProvider.setServerConfig(new JSONObject(config, keyRVersion, keyRTimestamp, keyRConfig).toString());
     }
 
     /**
@@ -549,40 +506,42 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
 
         StringBuilder sb = new StringBuilder();
         boolean previousRequiresConsent = currentVRequiresConsent;
+        ConfigurationProvider developer = developerValues;
 
-        currentVNetworking = extractBoolean(keyRNetworking, sb, currentVNetworking);
-        currentVTracking = extractBoolean(keyRTracking, sb, currentVTracking);
-        currentVSessionTracking = extractBoolean(keyRSessionTracking, sb, currentVSessionTracking);
-        currentVCrashReporting = extractBoolean(keyRCrashReporting, sb, currentVCrashReporting);
-        currentVAutomaticSessionTracking = extractBoolean(keyRAutomaticSessionTracking, sb, currentVAutomaticSessionTracking);
-        currentVAutomaticViewTracking = extractBoolean(keyRAutomaticViewTracking, sb, currentVAutomaticViewTracking);
-        currentVAutomaticCrashReporting = extractBoolean(keyRAutomaticCrashReporting, sb, currentVAutomaticCrashReporting);
-        currentVViewTracking = extractBoolean(keyRViewTracking, sb, currentVViewTracking);
-        currentVCustomEventTracking = extractBoolean(keyRCustomEventTracking, sb, currentVCustomEventTracking);
-        currentVLocationTracking = extractBoolean(keyRLocationTracking, sb, currentVLocationTracking);
-        currentVContentZone = extractBoolean(keyREnterContentZone, sb, currentVContentZone);
-        currentVRefreshContentZone = extractBoolean(keyRRefreshContentZone, sb, currentVRefreshContentZone);
-        currentVBackoffMechanism = extractBoolean(keyRBackoffMechanism, sb, currentVBackoffMechanism);
-        currentVLoggingEnabled = extractBoolean(keyRLogging, sb, currentVLoggingEnabled);
-        currentVRequiresConsent = extractBoolean(keyRConsentRequired, sb, currentVRequiresConsent);
+        currentVNetworking = extractBoolean(keyRNetworking, sb, currentVNetworking, developer.getNetworkingEnabled());
+        currentVTracking = extractBoolean(keyRTracking, sb, currentVTracking, developer.getTrackingEnabled());
+        currentVSessionTracking = extractBoolean(keyRSessionTracking, sb, currentVSessionTracking, developer.getSessionTrackingEnabled());
+        currentVCrashReporting = extractBoolean(keyRCrashReporting, sb, currentVCrashReporting, developer.getCrashReportingEnabled());
+        currentVAutomaticSessionTracking = extractBoolean(keyRAutomaticSessionTracking, sb, currentVAutomaticSessionTracking, developer.getAutomaticSessionTrackingEnabled());
+        currentVAutomaticViewTracking = extractBoolean(keyRAutomaticViewTracking, sb, currentVAutomaticViewTracking, developer.getAutomaticViewTrackingEnabled());
+        currentVAutomaticCrashReporting = extractBoolean(keyRAutomaticCrashReporting, sb, currentVAutomaticCrashReporting, developer.getAutomaticCrashReportingEnabled());
+        currentVViewTracking = extractBoolean(keyRViewTracking, sb, currentVViewTracking, developer.getViewTrackingEnabled());
+        currentVCustomEventTracking = extractBoolean(keyRCustomEventTracking, sb, currentVCustomEventTracking, developer.getCustomEventTrackingEnabled());
+        currentVLocationTracking = extractBoolean(keyRLocationTracking, sb, currentVLocationTracking, developer.getLocationTrackingEnabled());
+        currentVContentZone = extractBoolean(keyREnterContentZone, sb, currentVContentZone, developer.getContentZoneEnabled());
+        currentVRefreshContentZone = extractBoolean(keyRRefreshContentZone, sb, currentVRefreshContentZone, developer.getRefreshContentZoneEnabled());
+        currentVBackoffMechanism = extractBoolean(keyRBackoffMechanism, sb, currentVBackoffMechanism, developer.getBOMEnabled());
+        currentVLoggingEnabled = extractBoolean(keyRLogging, sb, currentVLoggingEnabled, developer.getLoggingEnabled());
+        //the settings can turn the consent requirement on, never off when the developer turned it on
+        currentVRequiresConsent = developer.getConsentRequired() || extractBoolean(keyRConsentRequired, sb, currentVRequiresConsent, false);
 
-        currentVServerConfigUpdateInterval = extractInt(keyRServerConfigUpdateInterval, sb, currentVServerConfigUpdateInterval, 1);
-        currentVRequestQueueMaxSize = extractInt(keyRReqQueueSize, sb, currentVRequestQueueMaxSize, 1);
-        currentVEventQueueSizeThreshold = extractInt(keyREventQueueSize, sb, currentVEventQueueSizeThreshold, 1);
-        currentVSessionUpdateInterval = extractInt(keyRSessionUpdateInterval, sb, currentVSessionUpdateInterval, 1);
-        currentVMaxKeyLength = extractInt(keyRLimitKeyLength, sb, currentVMaxKeyLength, 1);
-        currentVMaxValueSize = extractInt(keyRLimitValueSize, sb, currentVMaxValueSize, 1);
-        currentVMaxSegmentationValues = extractInt(keyRLimitSegValues, sb, currentVMaxSegmentationValues, 1);
-        currentVMaxBreadcrumbCount = extractInt(keyRLimitBreadcrumb, sb, currentVMaxBreadcrumbCount, 1);
-        currentVMaxStackTraceLinesPerThread = extractInt(keyRLimitTraceLine, sb, currentVMaxStackTraceLinesPerThread, 1);
-        currentVMaxStackTraceLineLength = extractInt(keyRLimitTraceLength, sb, currentVMaxStackTraceLineLength, 1);
-        currentVUserPropertyCacheLimit = extractInt(keyRUserPropertyCacheLimit, sb, currentVUserPropertyCacheLimit, 1);
-        currentVBOMAcceptedTimeoutSeconds = extractInt(keyRBOMAcceptedTimeout, sb, currentVBOMAcceptedTimeoutSeconds, 1);
-        currentVBOMRQPercentage = extractFraction(keyRBOMRQPercentage, sb, currentVBOMRQPercentage);
-        currentVBOMRequestAge = extractInt(keyRBOMRequestAge, sb, currentVBOMRequestAge, 1);
-        currentVBOMDuration = extractInt(keyRBOMDuration, sb, currentVBOMDuration, 1);
-        currentVDropAgeHours = extractInt(keyRDropOldRequestTime, sb, currentVDropAgeHours, 0);
-        currentVZoneTimerInterval = extractInt(keyRContentZoneInterval, sb, currentVZoneTimerInterval, MIN_CONTENT_ZONE_INTERVAL);
+        currentVServerConfigUpdateInterval = extractInt(keyRServerConfigUpdateInterval, sb, currentVServerConfigUpdateInterval, developer.getServerConfigUpdateInterval());
+        currentVRequestQueueMaxSize = extractInt(keyRReqQueueSize, sb, currentVRequestQueueMaxSize, developer.getRequestQueueMaxSize());
+        currentVEventQueueSizeThreshold = extractInt(keyREventQueueSize, sb, currentVEventQueueSizeThreshold, developer.getEventQueueSizeThreshold());
+        currentVSessionUpdateInterval = extractInt(keyRSessionUpdateInterval, sb, currentVSessionUpdateInterval, developer.getSessionUpdateInterval());
+        currentVMaxKeyLength = extractInt(keyRLimitKeyLength, sb, currentVMaxKeyLength, developer.getMaxKeyLength());
+        currentVMaxValueSize = extractInt(keyRLimitValueSize, sb, currentVMaxValueSize, developer.getMaxValueSize());
+        currentVMaxSegmentationValues = extractInt(keyRLimitSegValues, sb, currentVMaxSegmentationValues, developer.getMaxSegmentationValues());
+        currentVMaxBreadcrumbCount = extractInt(keyRLimitBreadcrumb, sb, currentVMaxBreadcrumbCount, developer.getMaxBreadcrumbCount());
+        currentVMaxStackTraceLinesPerThread = extractInt(keyRLimitTraceLine, sb, currentVMaxStackTraceLinesPerThread, developer.getMaxStackTraceLinesPerThread());
+        currentVMaxStackTraceLineLength = extractInt(keyRLimitTraceLength, sb, currentVMaxStackTraceLineLength, developer.getMaxStackTraceLineLength());
+        currentVUserPropertyCacheLimit = extractInt(keyRUserPropertyCacheLimit, sb, currentVUserPropertyCacheLimit, developer.getUserPropertyCacheLimit());
+        currentVBOMAcceptedTimeoutSeconds = extractInt(keyRBOMAcceptedTimeout, sb, currentVBOMAcceptedTimeoutSeconds, developer.getBOMAcceptedTimeoutSeconds());
+        currentVBOMRQPercentage = extractFraction(keyRBOMRQPercentage, sb, currentVBOMRQPercentage, developer.getBOMRQPercentage());
+        currentVBOMRequestAge = extractInt(keyRBOMRequestAge, sb, currentVBOMRequestAge, developer.getBOMRequestAge());
+        currentVBOMDuration = extractInt(keyRBOMDuration, sb, currentVBOMDuration, developer.getBOMDuration());
+        currentVDropAgeHours = extractInt(keyRDropOldRequestTime, sb, currentVDropAgeHours, developer.getRequestDropAgeHours());
+        currentVZoneTimerInterval = extractInt(keyRContentZoneInterval, sb, currentVZoneTimerInterval, developer.getContentZoneTimerInterval());
         currentVRequestQueueMaxSizeFromBehaviorSettings = latestRetrievedConfiguration.has(keyRReqQueueSize);
 
         updateListingFilters();
@@ -605,82 +564,70 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
     }
 
     /**
-     * Reads a switch from the merged settings.
+     * Resolves a switch from the stored settings. Validation keeps only usable values, so a stored
+     * value is used as it is.
      *
      * @param key the settings key
      * @param changedValues where a change is described
      * @param currentValue the value in effect
-     * @return the stored value, or the value in effect when none is stored
+     * @param fallbackValue the developer's value, or the SDK default when the developer sets none
+     * @return the stored value, or the fallback value when none is stored
      */
-    private boolean extractBoolean(@Nonnull String key, @Nonnull StringBuilder changedValues, boolean currentValue) {
+    private boolean extractBoolean(@Nonnull String key, @Nonnull StringBuilder changedValues, boolean currentValue, boolean fallbackValue) {
         Object value = latestRetrievedConfiguration.opt(key);
-        if (!(value instanceof Boolean)) {
-            return currentValue;
-        }
-
-        boolean extracted = (Boolean) value;
-        if (extracted != currentValue) {
-            changedValues.append(key).append(":[").append(extracted).append("], ");
-        }
-        return extracted;
+        return noteChange(key, changedValues, currentValue, value instanceof Boolean ? (Boolean) value : fallbackValue);
     }
 
     /**
-     * Reads an integer from the merged settings.
+     * Resolves an integer from the stored settings. Validation keeps only usable values, so a
+     * stored value is used as it is.
      *
      * @param key the settings key
      * @param changedValues where a change is described
      * @param currentValue the value in effect
-     * @param minimum the smallest valid value
-     * @return the stored value, or the value in effect when none, or none valid, is stored
+     * @param fallbackValue the developer's value, or the SDK default when the developer sets none
+     * @return the stored value, or the fallback value when none is stored
      */
-    private int extractInt(@Nonnull String key, @Nonnull StringBuilder changedValues, int currentValue, int minimum) {
+    private int extractInt(@Nonnull String key, @Nonnull StringBuilder changedValues, int currentValue, int fallbackValue) {
         Object value = latestRetrievedConfiguration.opt(key);
-        if (!(value instanceof Integer)) {
-            return currentValue;
-        }
-
-        int extracted = (Integer) value;
-        if (extracted < minimum) {
-            L.w("[ModuleConfiguration] updateConfigVariables, value for '" + key + "' is not valid, value: [" + extracted + "]");
-            return currentValue;
-        }
-
-        if (extracted != currentValue) {
-            changedValues.append(key).append(":[").append(extracted).append("], ");
-        }
-        return extracted;
+        return noteChange(key, changedValues, currentValue, value instanceof Integer ? (Integer) value : fallbackValue);
     }
 
     /**
-     * Reads a fraction strictly between 0 and 1 from the merged settings.
+     * Resolves a fraction from the stored settings. Validation keeps only usable values, so a
+     * stored value is used as it is.
      *
      * @param key the settings key
      * @param changedValues where a change is described
      * @param currentValue the value in effect
-     * @return the stored value, or the value in effect when none, or none valid, is stored
+     * @param fallbackValue the SDK default
+     * @return the stored value, or the fallback value when none is stored
      */
-    private double extractFraction(@Nonnull String key, @Nonnull StringBuilder changedValues, double currentValue) {
+    private double extractFraction(@Nonnull String key, @Nonnull StringBuilder changedValues, double currentValue, double fallbackValue) {
         Object value = latestRetrievedConfiguration.opt(key);
-        if (!(value instanceof Number)) {
-            return currentValue;
-        }
-
-        double extracted = ((Number) value).doubleValue();
-        if (!isFraction(value)) {
-            L.w("[ModuleConfiguration] updateConfigVariables, value for '" + key + "' is not valid, value: [" + extracted + "]");
-            return currentValue;
-        }
-
-        if (Double.compare(extracted, currentValue) != 0) {
-            changedValues.append(key).append(":[").append(extracted).append("], ");
-        }
-        return extracted;
+        return noteChange(key, changedValues, currentValue, value instanceof Number ? ((Number) value).doubleValue() : fallbackValue);
     }
 
     /**
-     * Rebuilds the listing filters and the journey trigger sets from the merged settings and
-     * publishes each as a new immutable snapshot. A filter the merged settings do not hold is an
+     * Describes a resolved value that differs from the value in effect.
+     *
+     * @param key the settings key
+     * @param changedValues where a change is described
+     * @param currentValue the value in effect
+     * @param resolvedValue the value just resolved
+     * @param <T> the type of the value
+     * @return the resolved value
+     */
+    private static <T> T noteChange(@Nonnull String key, @Nonnull StringBuilder changedValues, @Nonnull T currentValue, @Nonnull T resolvedValue) {
+        if (!resolvedValue.equals(currentValue)) {
+            changedValues.append(key).append(":[").append(resolvedValue).append("], ");
+        }
+        return resolvedValue;
+    }
+
+    /**
+     * Rebuilds the listing filters and the journey trigger sets from the stored settings and
+     * publishes each as a new immutable snapshot. A filter the stored settings do not hold is an
      * empty blacklist, which allows everything.
      */
     private void updateListingFilters() {
@@ -700,7 +647,7 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
     }
 
     /**
-     * Builds a names filter from the merged settings, the blacklist winning when both are stored.
+     * Builds a names filter from the stored settings, the blacklist winning when both are stored.
      *
      * @param blacklistKey the settings key of the blacklist
      * @param whitelistKey the settings key of the whitelist
@@ -722,7 +669,7 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
     }
 
     /**
-     * Builds a names per event filter from the merged settings, the blacklist winning when both are stored.
+     * Builds a names per event filter from the stored settings, the blacklist winning when both are stored.
      *
      * @param blacklistKey the settings key of the blacklist
      * @param whitelistKey the settings key of the whitelist
@@ -939,8 +886,8 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
     }
 
     /**
-     * Handles the response of a settings request: strips the connection test flag, merges, stores
-     * and applies the settings, and tells the SDK when a resolved value changed.
+     * Handles the response of a settings request: strips the connection test flag, stores and
+     * applies the settings, and tells the SDK when a resolved value changed.
      *
      * @param config configuration of the running SDK
      * @param response the response, {@code null} when the request failed

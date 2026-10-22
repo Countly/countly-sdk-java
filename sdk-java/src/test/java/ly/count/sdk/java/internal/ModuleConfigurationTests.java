@@ -33,7 +33,7 @@ import static ly.count.sdk.java.internal.ServerConfigBuilder.names;
 
 /**
  * SDK behavior settings, the server side configuration served by {@code /o/sdk?method=sc}: how
- * {@link ModuleConfiguration} validates, merges, stores and resolves them, and how the SDK applies
+ * {@link ModuleConfiguration} validates, stores and resolves them, and how the SDK applies
  * the values it owns at init and when a response changes them.
  * <p>
  * The settings request goes through a {@link ServerConfigResponder} injected on the
@@ -138,11 +138,11 @@ public class ModuleConfigurationTests {
      * differs from the default, then every key at an invalid value.
      * <p>
      * Verifies that each value reaches its provider getter and the store, that the request queue size
-     * is reported as coming from the settings, and that a response made only of invalid values changes
-     * nothing, neither the resolved values nor the stored settings.
+     * is reported as coming from the settings, and that a response made only of invalid values stores
+     * no setting and brings every one back to the developer value, as one more change.
      */
     @Test
-    public void allSettings_resolveFromAResponse_andInvalidValuesNeverOverrideThem() throws IllegalAccessException {
+    public void allSettings_resolveFromAResponse_andInvalidValuesFallBackToTheDeveloperValues() throws IllegalAccessException {
         AtomicInteger changes = installCountingModule().changes;
         ServerConfigBuilder allKeys = new ServerConfigBuilder().allKeysAtNonDefaultValues();
         server.respondWith(allKeys);
@@ -160,9 +160,20 @@ public class ModuleConfigurationTests {
         }
         push(allInvalid);
 
-        allKeys.validateAgainst(provider());
-        Assert.assertEquals(1, changes.get());
-        Assert.assertTrue(storedSettings.similar(storedConfig().getJSONObject("c")));
+        ConfigurationProvider developer = ModuleConfiguration.developerDefaults(new InternalConfig(TestUtils.getConfigSdkBehaviorSettings()));
+        Set<String> nameFilterKeys = names("eb", "ew", "upb", "upw", "sb", "sw", "esb", "esw");
+        for (String key : allKeys.config.keySet()) {
+            if (!nameFilterKeys.contains(key)) {
+                Assert.assertEquals("value of '" + key + "'", ServerConfigBuilder.valueOf(developer, key), ServerConfigBuilder.valueOf(provider(), key));
+            }
+        }
+        assertFilter(provider().getEventFilterList(), false, names());
+        assertFilter(provider().getUserPropertyFilterList(), false, names());
+        assertFilter(provider().getSegmentationFilterList(), false, names());
+        Assert.assertTrue(provider().getEventSegmentationFilterList().getFilterList().isEmpty());
+        Assert.assertFalse(provider().isRequestQueueMaxSizeFromBehaviorSettings());
+        Assert.assertEquals(2, changes.get());
+        Assert.assertEquals(0, storedConfig().getJSONObject("c").length());
     }
 
     /**
@@ -227,11 +238,12 @@ public class ModuleConfigurationTests {
      * stored, then the stored settings, then each server response.
      * <p>
      * Verifies each layer overriding the one below it, that the provided settings are stored and
-     * ignored once something is stored, that a response merges into the stored settings instead of
-     * replacing them, and that the merge survives {@code stop()} and a new init.
+     * ignored once something is stored, that a response replaces the stored settings, so a setting it
+     * leaves out goes back to the developer value, and that the replacement survives {@code stop()}
+     * and a new init.
      */
     @Test
-    public void precedence_developerThenProvidedThenStoredThenServer_andTheMergeSurvivesARestart() {
+    public void precedence_developerThenProvidedThenStoredThenServer_andAResponseReplacesTheStoredSettings() {
         server.pending();
         init(developerConfig());
 
@@ -257,19 +269,20 @@ public class ModuleConfigurationTests {
         push(new ServerConfigBuilder().eventQueueSize(33).breadcrumbLimit(5).logging(false));
 
         Assert.assertEquals(33, provider().getEventQueueSizeThreshold());
-        Assert.assertEquals(22, provider().getRequestQueueMaxSize());
+        Assert.assertEquals(50, provider().getRequestQueueMaxSize());
+        Assert.assertFalse(provider().isRequestQueueMaxSizeFromBehaviorSettings());
         Assert.assertEquals(5, provider().getMaxBreadcrumbCount());
         Assert.assertEquals(30, provider().getSessionUpdateInterval());
         Assert.assertFalse(provider().getLoggingEnabled());
         JSONObject storedSettings = storedConfig().getJSONObject("c");
-        Assert.assertEquals(names("eqs", "rqs", "lbc", "log"), storedSettings.keySet());
+        Assert.assertEquals(names("eqs", "lbc", "log"), storedSettings.keySet());
         Countly.instance().stop();
 
         server.failing();
         init(developerConfig().setSdkBehaviorSettings(new ServerConfigBuilder().eventQueueSize(99).sessionTracking(false).build()));
 
         Assert.assertEquals(33, provider().getEventQueueSizeThreshold());
-        Assert.assertEquals(22, provider().getRequestQueueMaxSize());
+        Assert.assertEquals(50, provider().getRequestQueueMaxSize());
         Assert.assertEquals(5, provider().getMaxBreadcrumbCount());
         Assert.assertFalse(provider().getLoggingEnabled());
         Assert.assertTrue(provider().getSessionTrackingEnabled());
@@ -509,11 +522,11 @@ public class ModuleConfigurationTests {
      * Listing filters and journey trigger sets are published as immutable snapshots.
      * <p>
      * Verifies every filter family and both journey sets as parsed, that a reader's snapshot never
-     * changes under it, that a response with any whitelist drops every stored blacklist and the
-     * reverse, that a response with neither keeps the stored filters, and that they survive a restart.
+     * changes under it, that each response replaces every filter and journey set, so one it leaves out
+     * is turned off, and that the filters of the last response survive a restart.
      */
     @Test
-    public void listingFilters_arePublishedAsSnapshots_andOneKindReplacesTheStoredOtherKind() {
+    public void listingFilters_arePublishedAsSnapshots_andEachResponseReplacesThem() {
         Map<String, Set<String>> perEvent = new LinkedHashMap<>();
         perEvent.put("purchase", names("card"));
         server.respondWith(new ServerConfigBuilder()
@@ -548,27 +561,148 @@ public class ModuleConfigurationTests {
         assertFilter(events, false, names("blocked_a", "blocked_b"));
         assertFilter(provider().getEventFilterList(), true, names("allowed_event"));
         assertFilter(provider().getSegmentationFilterList(), false, names());
-        assertFilter(provider().getUserPropertyFilterList(), true, names("plan"));
+        assertFilter(provider().getUserPropertyFilterList(), false, names());
         Assert.assertTrue(provider().getEventSegmentationFilterList().getFilterList().isEmpty());
-        Assert.assertEquals(names("checkout"), provider().getJourneyTriggerEvents());
-        Assert.assertEquals(names("ew", "upw", "jte", "jtv"), storedConfig().getJSONObject("c").keySet());
+        Assert.assertTrue(provider().getJourneyTriggerEvents().isEmpty());
+        Assert.assertTrue(provider().getJourneyTriggerViews().isEmpty());
+        Assert.assertEquals(names("ew"), storedConfig().getJSONObject("c").keySet());
 
         push(new ServerConfigBuilder().tracking(false));
-        assertFilter(provider().getEventFilterList(), true, names("allowed_event"));
-
-        push(new ServerConfigBuilder().segmentationFilterList(names("secret"), false));
         assertFilter(provider().getEventFilterList(), false, names());
-        assertFilter(provider().getUserPropertyFilterList(), false, names());
+
+        push(new ServerConfigBuilder().segmentationFilterList(names("secret"), false).journeyTriggerEvents(names("checkout")));
         assertFilter(provider().getSegmentationFilterList(), false, names("secret"));
-        Assert.assertEquals(names("jte", "jtv", "tracking", "sb"), storedConfig().getJSONObject("c").keySet());
+        Assert.assertEquals(names("checkout"), provider().getJourneyTriggerEvents());
+        Assert.assertTrue(provider().getTrackingEnabled());
+        Assert.assertEquals(names("sb", "jte"), storedConfig().getJSONObject("c").keySet());
         Countly.instance().stop();
 
         server.pending();
         init(TestUtils.getConfigSdkBehaviorSettings());
         assertFilter(provider().getSegmentationFilterList(), false, names("secret"));
         Assert.assertEquals(names("checkout"), provider().getJourneyTriggerEvents());
-        Assert.assertEquals(names("paywall"), provider().getJourneyTriggerViews());
+        Assert.assertTrue(provider().getJourneyTriggerViews().isEmpty());
+        Assert.assertTrue(provider().getTrackingEnabled());
+    }
+
+    /**
+     * A setting the server stops sending goes back to the developer value, or to the SDK default when
+     * the developer sets none, instead of keeping the last server value.
+     * <p>
+     * Verifies with a developer configuration that sets the event and request queue sizes and the
+     * breadcrumb limit that a response leaving out tracking, the event queue size, the key length
+     * limit and an event blacklist brings back the default tracking, the developer's queue size, no
+     * key length limit and no event filter, that only what that response carries is stored, and that
+     * a response with no settings, which the server sends once every setting is removed, brings back
+     * every developer value and stores no setting.
+     */
+    @Test
+    public void removedSettings_goBackToTheDeveloperValues_andAnEmptyResponseBringsBackAll() {
+        server.respondWith(new ServerConfigBuilder().tracking(false).eventQueueSize(3).keyLengthLimit(20).breadcrumbLimit(5)
+            .requestQueueSize(22).eventFilterList(names("blocked_event"), false));
+        init(developerConfig());
         Assert.assertFalse(provider().getTrackingEnabled());
+        Assert.assertEquals(3, provider().getEventQueueSizeThreshold());
+        Assert.assertEquals(20, provider().getMaxKeyLength());
+        assertFilter(provider().getEventFilterList(), false, names("blocked_event"));
+
+        push(new ServerConfigBuilder().networking(true).requestQueueSize(22).breadcrumbLimit(5));
+        Assert.assertTrue(provider().getTrackingEnabled());
+        Assert.assertEquals(7, provider().getEventQueueSizeThreshold());
+        Assert.assertEquals(ModuleConfiguration.NO_LIMIT, provider().getMaxKeyLength());
+        assertFilter(provider().getEventFilterList(), false, names());
+        Assert.assertEquals(22, provider().getRequestQueueMaxSize());
+        Assert.assertEquals(5, provider().getMaxBreadcrumbCount());
+        Assert.assertEquals(names("networking", "rqs", "lbc"), storedConfig().getJSONObject("c").keySet());
+
+        push("{'v':1,'t':3,'c':{}}");
+        Assert.assertEquals(50, provider().getRequestQueueMaxSize());
+        Assert.assertFalse(provider().isRequestQueueMaxSizeFromBehaviorSettings());
+        Assert.assertEquals(40, provider().getMaxBreadcrumbCount());
+        Assert.assertTrue(provider().getLoggingEnabled());
+        Assert.assertEquals(0, storedConfig().getJSONObject("c").length());
+    }
+
+    /**
+     * Settings provided at init stand in for the server's until its first response, which replaces
+     * them.
+     * <p>
+     * Verifies that the provided settings apply at init, and that the first response, carrying only
+     * the request queue size, brings tracking and the event queue size back to the developer values
+     * and is all that is stored.
+     */
+    @Test
+    public void providedSettings_applyUntilTheFirstResponse() {
+        server.pending();
+        init(developerConfig().setSdkBehaviorSettings(new ServerConfigBuilder().tracking(false).eventQueueSize(11).build()));
+        Assert.assertFalse(provider().getTrackingEnabled());
+        Assert.assertEquals(11, provider().getEventQueueSizeThreshold());
+
+        push(new ServerConfigBuilder().requestQueueSize(500));
+        Assert.assertTrue(provider().getTrackingEnabled());
+        Assert.assertEquals(7, provider().getEventQueueSizeThreshold());
+        Assert.assertEquals(500, provider().getRequestQueueMaxSize());
+        Assert.assertEquals(names("rqs"), storedConfig().getJSONObject("c").keySet());
+    }
+
+    /**
+     * The settings can add a consent requirement but never lift the one the developer set.
+     * <p>
+     * Verifies with {@link Config#setRequiresConsent(boolean)} on that a provided, a live and a stored
+     * {@code cr} false all leave consent required, so the feature modules wait for consent, and that
+     * without the developer's requirement a {@code cr} true is lifted again by a response without it.
+     */
+    @Test
+    public void consentRequirement_aFalseFromTheSettingsNeverLiftsTheDevelopersRequirement() {
+        server.respondWith(new ServerConfigBuilder().consentRequired(false));
+        init(TestUtils.getConfigSdkBehaviorSettings().setRequiresConsent(true).enableFeatures(Config.Feature.Events)
+            .setSdkBehaviorSettings(new ServerConfigBuilder().consentRequired(false).build()));
+
+        Assert.assertTrue(provider().getConsentRequired());
+        Assert.assertTrue(SDKCore.instance.config.requiresConsent());
+        Assert.assertFalse(Countly.isTracking(Config.Feature.Events));
+        Assert.assertFalse(storedConfig().getJSONObject("c").getBoolean("cr"));
+        Countly.instance().stop();
+
+        server.pending();
+        init(TestUtils.getConfigSdkBehaviorSettings().setRequiresConsent(true).enableFeatures(Config.Feature.Events));
+        Assert.assertTrue(provider().getConsentRequired());
+        Assert.assertTrue(SDKCore.instance.config.requiresConsent());
+        Assert.assertFalse(Countly.isTracking(Config.Feature.Events));
+        Countly.instance().halt();
+
+        server = new ServerConfigResponder().respondWith(new ServerConfigBuilder().consentRequired(true));
+        init(TestUtils.getConfigSdkBehaviorSettings().enableFeatures(Config.Feature.Events));
+        Assert.assertTrue(provider().getConsentRequired());
+        push(new ServerConfigBuilder().tracking(true));
+        Assert.assertFalse(provider().getConsentRequired());
+    }
+
+    /**
+     * A journey trigger that a device ID change without merge ends is sent with the other events of
+     * the previous device ID, under that ID.
+     * <p>
+     * Verifies with {@code checkout} as a journey trigger and networking off that ending a timed
+     * {@code checkout} on the change does not send the queue under the new ID: the queued event and
+     * the trigger are stored in one request that carries the previous device ID, and that request
+     * refreshes no content zone for the new device ID.
+     */
+    @Test
+    public void journeyTrigger_endedByADeviceIdChange_isSentUnderThePreviousDeviceId() {
+        server.respondWith(new ServerConfigBuilder().journeyTriggerEvents(names("checkout")).eventQueueSize(100).networking(false));
+        init(TestUtils.getConfigSdkBehaviorSettings().enableFeatures(Config.Feature.Events));
+
+        Countly.instance().events().recordEvent("old_user_event");
+        Countly.instance().events().startEvent("checkout");
+        Countly.instance().deviceId().changeWithoutMerge("new_device_id");
+        TestUtils.letTheClockCatchUp();
+
+        Assert.assertEquals(1, TestUtils.getCurrentRQ().length);
+        List<EventImpl> events = TestUtils.readEventsFromRequest(0, TestUtils.DEVICE_ID);
+        Assert.assertEquals(2, events.size());
+        Assert.assertEquals("old_user_event", events.get(0).key);
+        Assert.assertEquals("checkout", events.get(1).key);
+        Assert.assertTrue(SDKCore.instance.module(ModuleEvents.class).journeyTriggerRequestIds.isEmpty());
     }
 
     /**

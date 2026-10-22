@@ -1533,7 +1533,11 @@ public class Config {
      * Provide an initial SDK behavior settings payload to apply at init time,
      * before the first {@code /o/sdk?method=sc} fetch returns. The value is
      * the same JSON shape the Countly server emits: {@code {"v":1,"t":<ts>,
-     * "c":{...}}}. The seed is only used when nothing has been persisted yet.
+     * "c":{...}}}. The seed is only used when nothing has been persisted yet,
+     * and it stands in for the server's settings: the first answer from the
+     * server replaces it, so a setting the answer does not carry goes back to
+     * this configuration. A {@code "cr":true} here can be lifted by that answer;
+     * use {@link #setRequiresConsent(boolean)} for a requirement that must hold.
      *
      * @param sdkBehaviorSettings serialized config JSON, or {@code null} for none
      * @return {@code this} instance for method chaining

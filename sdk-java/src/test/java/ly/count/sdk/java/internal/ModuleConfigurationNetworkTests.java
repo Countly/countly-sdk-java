@@ -240,7 +240,7 @@ public class ModuleConfigurationNetworkTests {
         Assert.assertTrue("the queue never drained, logs: " + logs, waitFor(() -> queueServer.received.size() == 2 && queuedRequestCount() == 0));
         Assert.assertEquals(0, logsContaining(BACKOFF_STARTED));
 
-        push(new ServerConfigBuilder().backoffMechanism(true).backoffDuration(2));
+        push(new ServerConfigBuilder().backoffMechanism(true).backoffAcceptedTimeout(1).backoffDuration(2));
         Assert.assertTrue(provider().getBOMEnabled());
         Assert.assertEquals(2, provider().getBOMDuration());
 
@@ -393,7 +393,7 @@ public class ModuleConfigurationNetworkTests {
         Assert.assertEquals(1, pending.size());
         ageStoredRequests(2 * HOUR_MS);
 
-        push(new ServerConfigBuilder().networking(true));
+        push(new ServerConfigBuilder().networking(true).journeyTriggerEvents(names("purchase")).dropOldRequestTime(1));
         Assert.assertTrue("the aged request was never dropped, logs: " + logs, waitNudging(() -> queuedRequestCount() == 0));
         Assert.assertEquals(1, logsContaining(DROPPED_UNSENT));
         Assert.assertEquals(1, logsContaining("carrying a journey trigger failed with code [" + Transport.NO_RESPONSE_CODE + "], the content zone is not refreshed"));
