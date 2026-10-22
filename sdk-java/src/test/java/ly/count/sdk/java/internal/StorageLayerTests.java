@@ -1,9 +1,13 @@
 package ly.count.sdk.java.internal;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Future;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import org.junit.After;
@@ -92,6 +96,37 @@ public class StorageLayerTests {
 
         Assert.assertTrue(Storage.remove(config, first));
         Assert.assertEquals(1, Storage.list(config, Request.getStoragePrefix()).size());
+    }
+
+    /**
+     * A burst of requests pushed without waiting, as the SDK queues them when every event is sent
+     * on its own, keeps every request: none is skipped as a duplicate write or overwritten.
+     */
+    @Test
+    public void burstOfRequests_keepsEveryRequest() throws Exception {
+        List<Future<Boolean>> writes = new ArrayList<>();
+        for (int i = 0; i < 50; i++) {
+            writes.add(Storage.pushAsync(config, new Request("burst", i)));
+        }
+        for (Future<Boolean> write : writes) {
+            Assert.assertTrue(write.get());
+        }
+
+        Assert.assertEquals(50, Storage.list(config, Request.getStoragePrefix()).size());
+    }
+
+    /**
+     * Requests, sessions and crashes created together never share an id: the storage task that
+     * writes one of them is keyed by its id, so a shared id would drop the other write.
+     */
+    @Test
+    public void storablesOfEveryKind_neverShareAnId() {
+        Set<Long> ids = new HashSet<>();
+        for (int i = 0; i < 300; i++) {
+            Assert.assertTrue(ids.add(new Request().storageId()));
+            Assert.assertTrue(ids.add(new SessionImpl(config).storageId()));
+            Assert.assertTrue(ids.add(new CrashImpl(config.getLogger()).storageId()));
+        }
     }
 
     /**

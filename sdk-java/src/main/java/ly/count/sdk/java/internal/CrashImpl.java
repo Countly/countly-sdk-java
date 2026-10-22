@@ -25,7 +25,7 @@ public class CrashImpl implements Crash, Storable {
     private Map<Thread, StackTraceElement[]> traces;
 
     protected CrashImpl(Log logger) {
-        this(TimeUtils.uniqueTimestampMs(), logger);
+        this(TimeUtils.uniqueStorageId(), logger);
     }
 
     protected CrashImpl(Long id, Log logger) {

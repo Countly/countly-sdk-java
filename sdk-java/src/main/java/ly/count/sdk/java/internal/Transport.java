@@ -151,7 +151,7 @@ public class Transport implements X509TrustManager {
 
         if (config.getCustomNetworkRequestHeaders() != null) {
             //if there are custom header values, add them
-            L.v("[Transport] connection, Adding [" + config.getCustomNetworkRequestHeaders() + "] custom header fields");
+            L.v("[Transport] connection, Adding [" + config.getCustomNetworkRequestHeaders().size() + "] custom header fields");
             for (Map.Entry<String, String> entry : config.getCustomNetworkRequestHeaders().entrySet()) {
                 String key = entry.getKey();
                 String value = entry.getValue();

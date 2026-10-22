@@ -71,11 +71,11 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     private boolean pushOnChange = true;
 
     /**
-     * Create session with current time as id.
+     * Create session with a new storage id based on the current time.
      */
     protected SessionImpl(final InternalConfig config) {
         L = config.getLogger();
-        this.id = TimeUtils.uniqueTimestampMs();
+        this.id = TimeUtils.uniqueStorageId();
         this.config = config;
     }
 
@@ -85,7 +85,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     public SessionImpl(final InternalConfig config, Long id) {
         L = config.getLogger();
         this.config = config;
-        this.id = id == null ? TimeUtils.uniqueTimestampMs() : id;
+        this.id = id == null ? TimeUtils.uniqueStorageId() : id;
         if (SDKCore.instance != null) {
             this.consents = SDKCore.instance.consents;
         }
