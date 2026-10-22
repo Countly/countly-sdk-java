@@ -198,7 +198,7 @@ public class ModuleConfigurationNetworkTests {
 
         Assert.assertTrue("the old requests never drained, logs: " + logs, waitFor(() -> queueServer.received.size() == 2 && queuedRequestCount() == 0));
         Assert.assertEquals(Arrays.asList("old_1", "old_2"), receivedParams("marker"));
-        Assert.assertEquals(2, logsContaining("but the request is older than [1] hours, " + NOT_BACKING_OFF));
+        awaitLogs("but the request is older than [1] hours, " + NOT_BACKING_OFF, 2);
         Assert.assertEquals(0, logsContaining(BACKOFF_STARTED));
         Countly.instance().halt();
 
@@ -396,7 +396,7 @@ public class ModuleConfigurationNetworkTests {
         push(new ServerConfigBuilder().networking(true).journeyTriggerEvents(names("purchase")).dropOldRequestTime(1));
         Assert.assertTrue("the aged request was never dropped, logs: " + logs, waitNudging(() -> queuedRequestCount() == 0));
         Assert.assertEquals(1, logsContaining(DROPPED_UNSENT));
-        Assert.assertEquals(1, logsContaining("carrying a journey trigger failed with code [" + Transport.NO_RESPONSE_CODE + "], the content zone is not refreshed"));
+        awaitLogs("carrying a journey trigger failed with code [" + Transport.NO_RESPONSE_CODE + "], the content zone is not refreshed", 1);
         Assert.assertTrue(pending.isEmpty());
         Assert.assertTrue(queueServer.received.isEmpty());
         assertZoneIsInactive(0);
