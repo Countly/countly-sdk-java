@@ -26,6 +26,12 @@ updates:
     target-branch: staging
     schedule:
       interval: monthly
+    # CodeQL's init and analyze steps must run the same version or the analyze
+    # step fails, so their updates come in one PR.
+    groups:
+      codeql:
+        patterns:
+          - "github/codeql-action*"
     labels:
       - dependencies
       - ci
