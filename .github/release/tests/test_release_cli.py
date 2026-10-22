@@ -68,6 +68,18 @@ class ReleaseCliTest(unittest.TestCase):
                 result = run_cli("plan", "--tag", tag, "--target", "production", "--prerelease", prerelease, "--out", str(self.folder / "plan.json"))
                 self.assertEqual(result.returncode, code, result.stdout)
 
+    def test_check_environment_reads_the_api_answer_and_fails_an_unprotected_environment(self):
+        """The workflow saves the environments API answer and passes its path; an unprotected environment fails the step."""
+        protected = {"name": "maven-release", "protection_rules": [{"type": "required_reviewers", "reviewers": [{"type": "User"}]}],
+                     "deployment_branch_policy": {"protected_branches": False, "custom_branch_policies": True}}
+        unprotected = {"name": "maven-release", "protection_rules": [], "deployment_branch_policy": None}
+        for environment, code in ((protected, 0), (unprotected, 1)):
+            with self.subTest(code=code):
+                path = self.folder / "environment.json"
+                path.write_text(json.dumps(environment), encoding="utf-8")
+                result = run_cli("check-environment", "--environment", str(path))
+                self.assertEqual(result.returncode, code, result.stdout + result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

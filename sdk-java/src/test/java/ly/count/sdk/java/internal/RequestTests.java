@@ -24,6 +24,20 @@ public class RequestTests {
         return (String) field.get(null);
     }
 
+    /**
+     * Requests created faster than the clock moves get strictly increasing ids, so none of them is
+     * stored in the file of another.
+     */
+    @Test
+    public void request_burstGetsDistinctIncreasingIds() {
+        long previous = new Request().storageId();
+        for (int i = 0; i < 1_000; i++) {
+            long id = new Request().storageId();
+            Assert.assertTrue(id + " is not greater than the previous id " + previous, id > previous);
+            previous = id;
+        }
+    }
+
     @Test
     public void request_constructorString() {
         String paramVals = "a=1&b=2";

@@ -25,10 +25,10 @@ public class Request implements Storable {
     public Params params;
 
     /**
-     * Create request from params with current time as id.
+     * Create request from params with a new storage id based on the current time.
      */
     public Request(Object... params) {
-        this.id = TimeUtils.uniqueTimestampMs();
+        this.id = TimeUtils.uniqueStorageId();
         this.params = new Params(params);
     }
 

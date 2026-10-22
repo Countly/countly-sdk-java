@@ -1,4 +1,4 @@
-"""Checks on the tag commit: its release branch and the required status checks."""
+"""Checks before a release: the tag commit's release branch, its required status checks and the publish environment."""
 
 import subprocess
 
@@ -19,4 +19,20 @@ def missing_checks(check_runs, required):
         conclusions = [run.get("conclusion") for run in check_runs.get("check_runs", []) if run["name"] == name]
         if not conclusions or any(conclusion != "success" for conclusion in conclusions):
             problems.append(name)
+    return problems
+
+
+def environment_problems(environment):
+    """Problems unless the deployment environment, as the GitHub environments API returns it, makes a reviewer approve
+    the publish job and limits deployments to selected branches and tags. GitHub creates an environment a job names on
+    first use with neither rule, and once the signing and upload secrets are added to it the job would publish
+    unattended. Releases run on tags, which a protected-branches-only policy would refuse after the build, so only
+    selected rules count."""
+    name = environment.get("name")
+    rules = environment.get("protection_rules") or []
+    problems = []
+    if not any(rule.get("type") == "required_reviewers" and rule.get("reviewers") for rule in rules):
+        problems.append(f"environment {name} does not require a reviewer to approve the publish job")
+    if not (environment.get("deployment_branch_policy") or {}).get("custom_branch_policies"):
+        problems.append(f"environment {name} does not limit deployments to selected branches and tags")
     return problems

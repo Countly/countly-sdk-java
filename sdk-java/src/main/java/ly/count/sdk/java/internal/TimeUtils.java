@@ -73,6 +73,18 @@ public class TimeUtils {
     }
 
     /**
+     * Returns the id of a new stored request, session or crash, from {@link UniqueTimeGenerator#id()}.
+     * The id names the file the object is stored in, orders the request queue and keys the storage
+     * task that writes it, so two objects with one id would share a file or a task and one of them
+     * would be lost.
+     *
+     * @return a new storage id
+     */
+    public static synchronized long uniqueStorageId() {
+        return uniqueTimer.id();
+    }
+
+    /**
      * Wraps {@link System#currentTimeMillis()} and returns it
      *
      * @return current time in ms
