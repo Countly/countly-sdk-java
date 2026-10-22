@@ -59,13 +59,28 @@ javafx {
 
 dependencies {
   // 'api' so a consumer of this artifact also gets the core SDK, whose types
-  // appear in this package's public signatures.
-  api project(':sdk-java')
+  // appear in this package's public signatures. A released core, not the sdk-java
+  // project: this artifact is released on its own, so what it is built and tested
+  // against is exactly what its POM tells integrators to use. Raise it only to a
+  // core version that is already published.
+  api 'ly.count.sdk:java:26.8.0'
 
   implementation 'org.json:json:20260814'
 
   testImplementation 'junit:junit:4.13.2'
   testImplementation 'org.mockito:mockito-core:4.11.0'
+}
+
+// -PtestUiWithLocalCore=true builds and tests this module's source against the sdk-java project
+// instead of the released core above. This module uses the core's internal classes, so a core
+// change that breaks it fails CI before the core is released. It does not test the released
+// java-ui jar on a newer core.
+if (findProperty('testUiWithLocalCore') == 'true') {
+  configurations.configureEach {
+    resolutionStrategy.dependencySubstitution {
+      substitute module('ly.count.sdk:java') using project(':sdk-java')
+    }
+  }
 }
 
 // Coverage. Reports land in build/reports/jacoco/test/ (HTML to read, XML for tooling).

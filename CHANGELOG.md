@@ -19,6 +19,7 @@
   </repositories>
   ```
   Versions released before this one stay available on Maven Central. The files are signed with the same key as before (`FC8DB0DE234A273BA45E562FB8C83A079A5BBD0C`).
+* ! Minor breaking change ! `ly.count.sdk:java-ui` now has its own version numbers and is released only when it changes; see its own [CHANGELOG](sdk-java-ui/CHANGELOG.md). Use the latest version of each package instead of one shared number.
 * ! Minor breaking change ! SDK behavior settings are now enabled by default. The SDK fetches them from the server at initialization and every few hours, so changes made in SDK Manager > SDK Configuration on your server affect SDK behavior directly. They are not used in backend mode.
 * ! Minor breaking change ! The feature interfaces of "Countly.instance()" ("events()", "views()", "crashes()", "location()", "userProfile()", "remoteConfig()", "feedback()", "content()" and "deviceId()") no longer return null.
   Before initialization, while the consent of a feature is not given, or when a feature is not enabled, they return an interface that ignores calls until the feature runs and passes an error to the callbacks of the calls it ignores.

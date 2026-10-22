@@ -6,7 +6,8 @@
   "platformSpecificGroups": ["org.openjfx"],
   "requiredChecks": ["Build and Test", "Test on ubuntu-latest", "Test on windows-latest", "OSV scan (all modules)", "Analyze (java)"],
   "tagRules": [
-    { "tag": "{version}", "branch": "staging", "artifacts": ["java", "java-ui"] }
+    { "tag": "{version}", "branch": "staging", "artifacts": ["java"] },
+    { "tag": "ui-{version}", "branch": "staging", "artifacts": ["java-ui"] }
   ],
   "artifacts": {
     "java": {
@@ -23,11 +24,9 @@
       "group": "ly.count.sdk", "artifact": "java-ui", "module": ":sdk-java-ui",
       "contract": ".github/release-contract/java-ui.json", "consumerJava": 17,
       "versionSources": [
-        { "file": "gradle.properties", "regex": "^VERSION_NAME=(.+)$" },
-        { "file": "build.gradle", "regex": "ext\\.CLY_VERSION = \"([^\"]+)\"" },
-        { "file": "sdk-java/src/main/java/ly/count/sdk/java/Config.java", "regex": "protected String sdkVersion = \"([^\"]+)\"" }
+        { "file": "sdk-java-ui/gradle.properties", "regex": "^VERSION_NAME=(.+)$" }
       ],
-      "changelog": "CHANGELOG.md"
+      "changelog": "sdk-java-ui/CHANGELOG.md"
     }
   }
 }

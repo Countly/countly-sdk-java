@@ -16,6 +16,10 @@
       <id>countly</id>
       <url>${countly.repository}</url>
     </repository>
+    <repository>
+      <id>countly-public</id>
+      <url>${countly.publicRepository}</url>
+    </repository>
   </repositories>
 
   <dependencies>

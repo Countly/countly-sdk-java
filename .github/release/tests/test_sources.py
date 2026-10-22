@@ -50,6 +50,21 @@ class SourcesTest(unittest.TestCase):
         self.write_sdk("26.8.1\r", "26.8.1", "26.8.1", "## 26.8.1\r\n")
         self.assertEqual(check_version_sources(self.root, plan_for_tag(self.config, "26.8.1"), self.config), [])
 
+    def test_ui_uses_its_own_version_and_changelog(self):
+        self.write_sdk("26.9.0", "26.9.0", "26.9.0", "## 26.9.0\n")
+        self.write("sdk-java-ui/gradle.properties", "POM_ARTIFACT_ID=java-ui\nVERSION_NAME=26.8.1\n")
+        self.write("sdk-java-ui/CHANGELOG.md", "## 26.8.1\n* Fixed the survey card.\n")
+        self.assertEqual(check_version_sources(self.root, plan_for_tag(self.config, "ui-26.8.1"), self.config), [])
+        self.assertEqual(check_version_sources(self.root, plan_for_tag(self.config, "26.9.0"), self.config), [])
+
+    def test_ui_mismatches_are_reported(self):
+        self.write("sdk-java-ui/gradle.properties", "POM_ARTIFACT_ID=java-ui\nVERSION_NAME=26.8.0\n")
+        self.write("sdk-java-ui/CHANGELOG.md", "## 26.8.0\n")
+        self.assertEqual(check_version_sources(self.root, plan_for_tag(self.config, "ui-26.8.1"), self.config), [
+            "sdk-java-ui/gradle.properties: version is 26.8.0, the tag says 26.8.1",
+            "sdk-java-ui/CHANGELOG.md: no '## 26.8.1' heading",
+        ])
+
     def test_every_version_source_is_found_in_this_checkout(self):
         root = Path(__file__).resolve().parents[3]
         for spec in self.config["artifacts"].values():
