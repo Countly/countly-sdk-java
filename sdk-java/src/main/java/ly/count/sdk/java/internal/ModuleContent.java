@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import ly.count.sdk.java.Countly;
 import org.json.JSONArray;
@@ -49,8 +50,21 @@ public class ModuleContent extends ModuleBase {
     private boolean fetching = false;
     private int waitForDelay = 0;
     private int generation = 0;
-
-    private int zoneTimerInterval = ConfigContent.DEFAULT_ZONE_TIMER_INTERVAL;
+    /**
+     * Whether the active zone was entered because the {@code ecz} setting asked for it, so turning
+     * that setting off leaves it. Guarded by {@link #contentLock}.
+     */
+    private boolean zoneEnteredBySettings = false;
+    /**
+     * The {@code ecz} value this module last acted on, so a settings change acts only when that
+     * value changed. Guarded by {@link #contentLock}.
+     */
+    private boolean contentZoneEnabledApplied = false;
+    /**
+     * Set once {@link #stop(InternalConfig, boolean)} starts, after which no zone is entered, so no
+     * zone timer outlives the module. Guarded by {@link #contentLock}.
+     */
+    private boolean stopped = false;
 
     /** When the SDK came up, which is what {@link #START_DELAY_MS} is measured from. */
     private long startedAt = 0;
@@ -64,10 +78,103 @@ public class ModuleContent extends ModuleBase {
         super.init(config);
         L.v("[ModuleContent] Initializing");
 
-        zoneTimerInterval = config.content.zoneTimerInterval;
         globalContentCallback = config.content.globalContentCallback;
         contentInterface = new Content();
         startedAt = TimeUtils.uniqueTimestampMs();
+        synchronized (contentLock) {
+            display = config.sdk.contentDisplay;
+            contentZoneEnabledApplied = config.getConfigurationProvider().getContentZoneEnabled();
+        }
+    }
+
+    /**
+     * Enters the content zone when the {@code ecz} setting asks for it. While no display is
+     * registered the zone is entered once one is.
+     *
+     * @param config configuration of the running SDK
+     */
+    @Override
+    protected void initFinished(InternalConfig config) {
+        super.initFinished(config);
+        if (config.getConfigurationProvider().getContentZoneEnabled()) {
+            enterContentZoneForSettings("initFinished");
+        }
+    }
+
+    /**
+     * Applies the content settings a server response changed. A changed {@code czi} restarts the
+     * timer of an active zone. A changed {@code ecz} enters the zone when it turned on, and when it
+     * turned off leaves the zone only if this setting entered it: a zone entered through
+     * {@link Content#enterContentZone()} is left to the application.
+     *
+     * @param config configuration of the running SDK
+     */
+    @Override
+    protected void onSdkConfigurationChanged(InternalConfig config) {
+        ConfigurationProvider configProvider = config.getConfigurationProvider();
+        boolean contentZoneEnabled = configProvider.getContentZoneEnabled();
+        boolean contentZoneSettingChanged;
+        synchronized (contentLock) {
+            contentZoneSettingChanged = contentZoneEnabled != contentZoneEnabledApplied;
+            contentZoneEnabledApplied = contentZoneEnabled;
+        }
+
+        restartZoneTimerIfIntervalChanged(configProvider.getContentZoneTimerInterval());
+
+        if (!contentZoneSettingChanged) {
+            return;
+        }
+
+        if (contentZoneEnabled) {
+            enterContentZoneForSettings("onSdkConfigurationChanged");
+        } else if (exitContentZoneInternal(true, true)) {
+            L.i("[ModuleContent] onSdkConfigurationChanged, the SDK behavior settings turned the content zone off, left the zone they had entered");
+        } else {
+            L.d("[ModuleContent] onSdkConfigurationChanged, the SDK behavior settings turned the content zone off, no zone they entered is active");
+        }
+    }
+
+    /**
+     * Enters the content zone because the {@code ecz} setting asks for it, once a display is registered.
+     *
+     * @param caller the calling method, for the log
+     */
+    private void enterContentZoneForSettings(@Nonnull String caller) {
+        boolean hasDisplay;
+        synchronized (contentLock) {
+            hasDisplay = display != null;
+        }
+
+        if (!hasDisplay) {
+            L.d("[ModuleContent] " + caller + ", the SDK behavior settings ask for the content zone, it is entered once a content display is registered");
+            return;
+        }
+
+        L.d("[ModuleContent] " + caller + ", entering the content zone as the SDK behavior settings ask");
+        enterContentZoneInternal(true);
+    }
+
+    /**
+     * Restarts the timer of an active zone when the fetch interval changed, keeping the zone as it
+     * is. The next fetch comes as soon as the start delay allows.
+     *
+     * @param intervalSeconds the fetch interval now in effect
+     */
+    private void restartZoneTimerIfIntervalChanged(int intervalSeconds) {
+        CountlyTimer timerToStop;
+        synchronized (contentLock) {
+            if (!zoneActive || contentTimer == null || contentTimer.getTimerDelaySeconds() == intervalSeconds) {
+                return;
+            }
+
+            L.d("[ModuleContent] restartZoneTimerIfIntervalChanged, the fetch interval changed from [" + contentTimer.getTimerDelaySeconds() + "] to [" + intervalSeconds + "] seconds, restarting the zone timer");
+            timerToStop = contentTimer;
+            contentTimer = new CountlyTimer(L);
+            contentTimer.startTimer(intervalSeconds, firstFetchDelay(), this::onZoneTimerTick);
+        }
+
+        // Not awaited: the zone stays active, so a tick of the replaced timer that is still running is harmless.
+        timerToStop.stopTimer(false);
     }
 
     @Override
@@ -75,8 +182,18 @@ public class ModuleContent extends ModuleBase {
         return true;
     }
 
+    /**
+     * Leaves the content zone for good: from here on no zone is entered, not even by a settings
+     * change that arrives while the SDK stops.
+     *
+     * @param config configuration of the SDK being stopped
+     * @param clear whether the SDK clears its data
+     */
     @Override
     public void stop(InternalConfig config, boolean clear) {
+        synchronized (contentLock) {
+            stopped = true;
+        }
         super.stop(config, clear);
         exitContentZoneInternal();
         display = null;
@@ -105,12 +222,30 @@ public class ModuleContent extends ModuleBase {
 
     void setContentDisplayInternal(ContentDisplay contentDisplay) {
         L.d("[ModuleContent] setContentDisplayInternal, display set:[" + (contentDisplay != null) + "]");
+        boolean zoneInactive;
         synchronized (contentLock) {
             display = contentDisplay;
+            zoneInactive = !zoneActive;
+        }
+
+        if (contentDisplay != null && zoneInactive && internalConfig.getConfigurationProvider().getContentZoneEnabled()) {
+            enterContentZoneForSettings("setContentDisplayInternal");
         }
     }
 
     void enterContentZoneInternal() {
+        enterContentZoneInternal(false);
+    }
+
+    /**
+     * Enters the content zone, fetching every {@code czi} seconds. Entering a zone that is already
+     * active does nothing, except that a call made for the application keeps a zone the settings
+     * entered active until the application leaves it.
+     *
+     * @param bySettings {@code true} when the {@code ecz} setting asks for the zone, {@code false}
+     *     when the application does
+     */
+    private void enterContentZoneInternal(boolean bySettings) {
         if (display == null) {
             L.w("[ModuleContent] enterContentZoneInternal, no content display is registered, ignoring the call");
             return;
@@ -121,9 +256,20 @@ public class ModuleContent extends ModuleBase {
             return;
         }
 
+        int zoneTimerInterval = internalConfig.getConfigurationProvider().getContentZoneTimerInterval();
         synchronized (contentLock) {
+            if (stopped) {
+                L.d("[ModuleContent] enterContentZoneInternal, the module is stopped, ignoring the call");
+                return;
+            }
+
             if (zoneActive) {
-                L.d("[ModuleContent] enterContentZoneInternal, already in a content zone, ignoring the call");
+                if (!bySettings && zoneEnteredBySettings) {
+                    zoneEnteredBySettings = false;
+                    L.d("[ModuleContent] enterContentZoneInternal, already in the content zone the SDK behavior settings entered, it now stays until it is left through exitContentZone");
+                } else {
+                    L.d("[ModuleContent] enterContentZoneInternal, already in a content zone, ignoring the call");
+                }
                 return;
             }
 
@@ -132,6 +278,7 @@ public class ModuleContent extends ModuleBase {
             contentShown = false;
             fetching = false;
             waitForDelay = 0;
+            zoneEnteredBySettings = bySettings;
             // Any fetch left in flight from a previous zone belongs to an older generation and is
             // discarded when it completes.
             generation++;
@@ -172,13 +319,31 @@ public class ModuleContent extends ModuleBase {
      *     tick, because a task cannot wait for itself to finish
      */
     private void exitContentZoneInternal(boolean awaitTimerTermination) {
+        exitContentZoneInternal(awaitTimerTermination, false);
+    }
+
+    /**
+     * Leaves the content zone.
+     *
+     * @param awaitTimerTermination must be {@code false} when called from the zone timer's own
+     *     tick, because a task cannot wait for itself to finish
+     * @param onlyIfEnteredBySettings {@code true} to leave only an active zone the {@code ecz}
+     *     setting entered
+     * @return whether the zone was left
+     */
+    private boolean exitContentZoneInternal(boolean awaitTimerTermination, boolean onlyIfEnteredBySettings) {
         CountlyTimer timerToStop;
         synchronized (contentLock) {
+            if (onlyIfEnteredBySettings && !(zoneActive && zoneEnteredBySettings)) {
+                return false;
+            }
+
             zoneActive = false;
             shouldFetch = false;
             contentShown = false;
             fetching = false;
             waitForDelay = 0;
+            zoneEnteredBySettings = false;
             generation++;
 
             timerToStop = contentTimer;
@@ -191,14 +356,27 @@ public class ModuleContent extends ModuleBase {
         }
 
         L.i("[ModuleContent] exitContentZoneInternal, left the content zone");
+        return true;
     }
 
+    /**
+     * Flushes the event queue and enters the content zone again, keeping who entered it. Called by
+     * the application and when the server accepted a journey trigger; ignored while the
+     * {@code rcz} setting forbids refreshing and while a content block is on screen.
+     */
     void refreshContentZoneInternal() {
+        if (!internalConfig.getConfigurationProvider().getRefreshContentZoneEnabled()) {
+            L.d("[ModuleContent] refreshContentZoneInternal, refreshing the content zone is disabled by the SDK behavior settings, ignoring the call");
+            return;
+        }
+
+        boolean enteredBySettings;
         synchronized (contentLock) {
             if (contentShown) {
                 L.d("[ModuleContent] refreshContentZoneInternal, a content block is on screen, ignoring the call");
                 return;
             }
+            enteredBySettings = zoneActive && zoneEnteredBySettings;
         }
 
         // Push whatever is queued out first, so the trigger the developer just recorded has a
@@ -206,7 +384,7 @@ public class ModuleContent extends ModuleBase {
         flushEventQueue();
 
         exitContentZoneInternal();
-        enterContentZoneInternal();
+        enterContentZoneInternal(enteredBySettings);
     }
 
     void previewContentInternal(String contentId) {
@@ -240,11 +418,13 @@ public class ModuleContent extends ModuleBase {
             return;
         }
 
-        ModuleEvents.Events events = SDKCore.instance == null ? null : SDKCore.instance.events();
-        if (events == null) {
+        SDKCore core = SDKCore.instance;
+        ModuleEvents eventsModule = core == null ? null : core.runningModule(CoreFeature.Events, ModuleEvents.class);
+        if (eventsModule == null) {
             L.w("[ModuleContent] recordContentEventsInternal, events are not available, content events are dropped");
             return;
         }
+        ModuleEvents.Events events = eventsModule.eventsInterface;
 
         boolean recorded = false;
         try {
@@ -467,24 +647,56 @@ public class ModuleContent extends ModuleBase {
     public class Content {
 
         /**
+         * The interface a call goes to: this one while its module runs, the running module's when
+         * this one was handed out before that started or kept from one that stopped, and
+         * {@code null} while the feature does not run.
+         *
+         * @param call the call, for the log line
+         * @return the interface, {@code null} for none
+         */
+        private Content target(String call) {
+            ModuleContent running = runningInstance(call);
+            return running == null ? null : running.contentInterface;
+        }
+
+        /**
          * Register the display that draws content blocks. Required before entering a content zone.
-         * Pass {@code null} to unregister.
+         * Pass {@code null} to unregister. While the SDK behavior settings ask for the content zone,
+         * registering a display enters it. A display registered before the content consent is given
+         * is used once it is.
          *
          * @param contentDisplay the display to draw content with
          * @apiNote This is an EXPERIMENTAL feature, and it can have breaking changes
          */
         public void setContentDisplay(@Nullable ContentDisplay contentDisplay) {
             synchronized (Countly.instance()) {
-                setContentDisplayInternal(contentDisplay);
+                SDKCore core = SDKCore.instance;
+                if (core == null) {
+                    return;
+                }
+                core.contentDisplay = contentDisplay;
+                ModuleContent running = core.module(ModuleContent.class);
+                if (running != null) {
+                    running.setContentDisplayInternal(contentDisplay);
+                }
             }
         }
 
         /**
          * Start asking the server for content to show. Ignored while already in a content zone.
+         * Once this is called, the zone stays even when the SDK behavior settings turn the content
+         * zone off.
          *
          * @apiNote This is an EXPERIMENTAL feature, and it can have breaking changes
          */
         public void enterContentZone() {
+            Content target = target("[Content] enterContentZone");
+            if (target != this) {
+                if (target != null) {
+                    target.enterContentZone();
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[Content] enterContentZone, entering the content zone");
                 enterContentZoneInternal();
@@ -498,6 +710,13 @@ public class ModuleContent extends ModuleBase {
          * @apiNote This is an EXPERIMENTAL feature, and it can have breaking changes
          */
         public void exitContentZone() {
+            Content target = target("[Content] exitContentZone");
+            if (target != this) {
+                if (target != null) {
+                    target.exitContentZone();
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[Content] exitContentZone, leaving the content zone");
                 exitContentZoneInternal();
@@ -506,11 +725,19 @@ public class ModuleContent extends ModuleBase {
 
         /**
          * Re-enter the content zone right away, after flushing the event queue. Use it when a
-         * trigger condition just changed. Ignored while a content block is on screen.
+         * trigger condition just changed. Ignored while a content block is on screen and while the
+         * SDK behavior settings do not allow refreshing the content zone.
          *
          * @apiNote This is an EXPERIMENTAL feature, and it can have breaking changes
          */
         public void refreshContentZone() {
+            Content target = target("[Content] refreshContentZone");
+            if (target != this) {
+                if (target != null) {
+                    target.refreshContentZone();
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[Content] refreshContentZone, refreshing the content zone");
                 refreshContentZoneInternal();
@@ -525,6 +752,13 @@ public class ModuleContent extends ModuleBase {
          * @apiNote This is an EXPERIMENTAL feature, and it can have breaking changes
          */
         public void previewContent(@Nullable String contentId) {
+            Content target = target("[Content] previewContent");
+            if (target != this) {
+                if (target != null) {
+                    target.previewContent(contentId);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.i("[Content] previewContent, previewing content:[" + contentId + "]");
                 if (Utils.isEmptyOrNull(contentId)) {
@@ -544,6 +778,13 @@ public class ModuleContent extends ModuleBase {
          * @apiNote This is an EXPERIMENTAL feature, and it can have breaking changes
          */
         public void recordContentEvents(@Nullable String eventsJson) {
+            Content target = target("[Content] recordContentEvents");
+            if (target != this) {
+                if (target != null) {
+                    target.recordContentEvents(eventsJson);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 L.d("[Content] recordContentEvents, recording the events of a content block");
                 recordContentEventsInternal(eventsJson);

@@ -1,20 +1,57 @@
 package ly.count.sdk.java.internal;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 public class DefaultNetworking implements Networking {
+    /**
+     * Name of the thread that ends a backoff of the request queue.
+     */
+    static final String BACKOFF_THREAD_NAME = "network-backoff";
+    private static final String TIMESTAMP_PARAM = "timestamp";
+    private static final long MS_IN_HOUR = 60L * 60L * 1000L;
+
     private Log L = null;
 
     private Transport transport;
     private Tasks tasks;
-    private boolean shutdown;
+    private volatile boolean shutdown;
+    private volatile boolean backedOff;
+
+    private final Object recheckLock = new Object();
+    //a check asked for while a task ran, which a drain that found the queue empty would otherwise lose:
+    //null for none, else whether every check asked for came from the log gathering's own transport work
+    private Boolean pendingRecheck = null;
+    private boolean backendMode;
+    private ScheduledExecutorService backoffScheduler;
     IStorageForRequestQueue storageForRequestQueue;
 
+    /**
+     * Prepares the transport, the thread requests are sent on and the scheduler that ends a
+     * backoff, which starts its daemon thread only when a first backoff is scheduled.
+     *
+     * @param config configuration of the SDK being initialized
+     * @param storageForRequestQueue the request queue to drain
+     */
     @Override
     public void init(InternalConfig config, IStorageForRequestQueue storageForRequestQueue) {
         L = config.getLogger();
         shutdown = false;
+        backedOff = false;
+        backendMode = config.isBackendModeEnabled();
         transport = new Transport();
         transport.init(config);
         tasks = new Tasks("network", L);
+        backoffScheduler = Executors.newSingleThreadScheduledExecutor(runnable -> {
+            Thread thread = new Thread(runnable, BACKOFF_THREAD_NAME);
+            thread.setDaemon(true);
+            return thread;
+        });
         this.storageForRequestQueue = storageForRequestQueue;
     }
 
@@ -23,54 +60,411 @@ public class DefaultNetworking implements Networking {
         return tasks.isRunning();
     }
 
+    /**
+     * Starts draining the request queue unless the SDK stopped, there is no device ID yet or the
+     * backoff mechanism holds the queue back. While a request is being handled the check is kept
+     * for when the drain ends without handing a request over. A drain started from a thread marked
+     * as doing the log gathering's own transport work, which queued or sent a batch of gathered log
+     * lines, keeps that mark until it read the request to send.
+     *
+     * @param config configuration of the running SDK
+     * @return whether a request is being handled
+     */
     @Override
     public boolean check(InternalConfig config) {
-        L.d("[Networking] [check] state: shutdown [" + shutdown + "], tasks running [" + tasks.isRunning() + "], net running [" + tasks.isRunning() + "], device id [" + config.getDeviceId() + "]");
-        if (!shutdown && !tasks.isRunning() && config.getDeviceId() != null) {
-            tasks.run(submit(config));
+        L.d("[Networking] [check] state: shutdown [" + shutdown + "], backed off [" + backedOff + "], tasks running [" + tasks.isRunning() + "], net running [" + tasks.isRunning() + "], device id [" + config.getDeviceId() + "]");
+        if (!shutdown && !backedOff && config.getDeviceId() != null) {
+            boolean ownTransportWork = L.isOwnTransportWork();
+            boolean drainNow;
+            //decided under the lock the end of a drain takes, so a check kept for that end is never kept too late
+            synchronized (recheckLock) {
+                drainNow = !tasks.isRunning();
+                if (!drainNow) {
+                    pendingRecheck = pendingRecheck == null ? ownTransportWork : pendingRecheck && ownTransportWork;
+                }
+            }
+            if (drainNow) {
+                drain(config, ownTransportWork);
+            }
         }
         return tasks.isRunning();
     }
 
-    protected Tasks.Task<Boolean> submit(final InternalConfig config) {
+    /**
+     * Starts a queue drain. When it ends without handing a request over for sending, failing
+     * included, it checks again if a check was asked for meanwhile, as a request stored just after the drain read the
+     * queue would otherwise wait for the next check. A drain that hands a request over is followed
+     * by the check of that send, so one request is handled at a time.
+     *
+     * @param config configuration of the running SDK
+     * @param followsOwnTransportWork whether the log gathering's own transport work started the drain
+     */
+    private void drain(@Nonnull InternalConfig config, boolean followsOwnTransportWork) {
+        synchronized (recheckLock) {
+            pendingRecheck = null;
+        }
+        final Tasks.Task<Boolean> drain = submit(config, followsOwnTransportWork);
+        tasks.run(new Tasks.Task<Boolean>(drain.id) {
+            /**
+             * Runs the drain, a failure counting as a drain that handed nothing over.
+             */
+            @Override
+            public Boolean call() {
+                try {
+                    return drain.call();
+                } catch (Exception e) {
+                    L.e("[Networking] drain, failed to handle the next request, [" + e + "]");
+                    return false;
+                }
+            }
+        }, handedOver -> {
+            if (!Boolean.TRUE.equals(handedOver)) {
+                recheckIfRequested(config);
+            }
+        });
+    }
+
+    /**
+     * Runs a check kept while a task ran, marked as the log gathering's own transport work when
+     * every thread that asked for it was.
+     *
+     * @param config configuration of the running SDK
+     */
+    private void recheckIfRequested(@Nonnull InternalConfig config) {
+        Boolean followsOwnTransportWork;
+        synchronized (recheckLock) {
+            followsOwnTransportWork = pendingRecheck;
+            pendingRecheck = null;
+        }
+        if (followsOwnTransportWork == null) {
+            return;
+        }
+
+        L.setOwnTransportWork(followsOwnTransportWork);
+        try {
+            check(config);
+        } finally {
+            L.setOwnTransportWork(false);
+        }
+    }
+
+    /**
+     * Sends the oldest queued request, unless networking is off or the backoff mechanism holds the
+     * queue back. Queued requests older than the request drop age are dropped first, unsent. Once
+     * the server accepts the request the next one follows, unless the server answered so slowly
+     * that the backoff mechanism holds the queue back.
+     *
+     * @param config configuration of the running SDK
+     * @param followsOwnTransportWork whether the log gathering's own transport work started the
+     *     drain, which then keeps the thread marked while the drain checks whether it may run and
+     *     reads the request, so a drain that follows an upload does not report on it
+     * @return the task, resolving to whether a request was handed over for sending or removed
+     */
+    protected Tasks.Task<Boolean> submit(final InternalConfig config, final boolean followsOwnTransportWork) {
         return new Tasks.Task<Boolean>(Tasks.ID_STRICT) {
             @Override
             public Boolean call() throws Exception {
-                final Request request = storageForRequestQueue.getNextRequest();
+                L.setOwnTransportWork(followsOwnTransportWork);
+                try {
+                    if (!config.getNetworkingEnabled()) {
+                        L.d("[Networking] submit, networking disabled by SDK behavior settings; skipping queue drain");
+                        return false;
+                    }
+                    if (backedOff) {
+                        L.d("[Networking] submit, the backoff mechanism holds the request queue back; skipping queue drain");
+                        return false;
+                    }
+                } finally {
+                    L.setOwnTransportWork(false);
+                }
+                final Request request = nextRequestWithinDropAge(config, followsOwnTransportWork);
                 if (request == null) {
                     return false;
-                } else {
-                    L.d("[Networking] Preparing request: " + request);
-                    final Boolean check = SDKCore.instance.isRequestReady(request);
-                    if (check == null) {
-                        L.d("[Networking] Request is not ready yet: " + request);
-                        return false;
-                    } else if (check.equals(Boolean.FALSE)) {
-                        L.d("[Networking] Request won't be ready, removing: " + request);
-                        Storage.remove(config, request);
-                        return true;
-                    } else {
-                        if (request.params.has("rr")) {
-                            request.params.remove("rr");
-                        }
-                        request.params.add("rr", storageForRequestQueue.remaningRequests());
-                        tasks.run(transport.send(request), result -> {
-                            L.d("[Networking] Request " + request.storageId() + " sent?: " + result);
-                            if (result) {
-                                storageForRequestQueue.removeRequest(request);
-                                check(config);
-                            }
-                        });
-                        return true;
-                    }
+                }
+
+                boolean uploadsGatheredLogs = request.params.has(Log.keySdkLogs);
+                L.setOwnTransportWork(uploadsGatheredLogs);
+                try {
+                    return prepareAndSend(config, request, uploadsGatheredLogs);
+                } finally {
+                    L.setOwnTransportWork(false);
                 }
             }
         };
     }
 
+    /**
+     * Hands a queued request to the transport once its owner says it is ready, or removes it when
+     * its owner says it never will be. While the request carries a batch of gathered log lines, the
+     * thread is marked as doing their transport work, also while the send completes, so nothing
+     * logged about the upload is gathered, and once it is sent the logger may queue its next batch.
+     *
+     * @param config configuration of the running SDK
+     * @param request the oldest queued request
+     * @param uploadsGatheredLogs whether the request carries a batch of gathered log lines
+     * @return whether the request was handed over for sending or removed
+     */
+    private boolean prepareAndSend(final InternalConfig config, final Request request, final boolean uploadsGatheredLogs) {
+        L.d("[Networking] Preparing request: " + request);
+        final Boolean check = SDKCore.instance.isRequestReady(request);
+        if (check == null) {
+            L.d("[Networking] Request is not ready yet: " + request);
+            return false;
+        } else if (check.equals(Boolean.FALSE)) {
+            L.d("[Networking] Request won't be ready, removing: " + request);
+            Storage.remove(config, request);
+            return true;
+        }
+
+        if (request.params.has("rr")) {
+            request.params.remove("rr");
+        }
+        request.params.add("rr", storageForRequestQueue.remaningRequests());
+        final AtomicLong responseTimeMs = new AtomicLong(-1L);
+        tasks.run(transport.send(request, responseTimeMs::set), result -> {
+            L.setOwnTransportWork(uploadsGatheredLogs);
+            try {
+                L.d("[Networking] Request " + request.storageId() + " sent?: " + result + ", response time [" + responseTimeMs.get() + "] ms");
+                if (result) {
+                    storageForRequestQueue.removeRequest(request);
+                    if (uploadsGatheredLogs) {
+                        L.onLogBatchSent();
+                    }
+                    if (!backOffIfTheServerIsSlow(config, request, responseTimeMs.get())) {
+                        check(config);
+                    }
+                }
+            } finally {
+                L.setOwnTransportWork(false);
+            }
+        });
+        return true;
+    }
+
+    /**
+     * Reads the oldest queued request, first dropping, unsent, every queued request older than the
+     * request drop age of the SDK behavior settings.
+     *
+     * @param config configuration of the running SDK
+     * @param followsOwnTransportWork whether the log gathering's own transport work started the drain
+     * @return the request to send next, {@code null} when the queue is empty or a request could not be dropped
+     */
+    @Nullable
+    private Request nextRequestWithinDropAge(@Nonnull InternalConfig config, boolean followsOwnTransportWork) {
+        Request request = readNextRequest(followsOwnTransportWork);
+        while (request != null && isOlderThanDropAge(config, request)) {
+            if (!dropWithoutSending(config, request)) {
+                return null;
+            }
+            request = readNextRequest(followsOwnTransportWork);
+        }
+        return request;
+    }
+
+    /**
+     * Reads the oldest queued request. While the log gathering's own transport work started the
+     * drain, the thread is marked during the read, so the read it logs is not gathered, while a
+     * request dropped meanwhile is still reported.
+     *
+     * @param followsOwnTransportWork whether the log gathering's own transport work started the drain
+     * @return the request, {@code null} when the queue is empty
+     */
+    @Nullable
+    private Request readNextRequest(boolean followsOwnTransportWork) {
+        L.setOwnTransportWork(followsOwnTransportWork);
+        try {
+            return storageForRequestQueue.getNextRequest();
+        } finally {
+            L.setOwnTransportWork(false);
+        }
+    }
+
+    /**
+     * Whether a queued request is older than the request drop age of the SDK behavior settings, a
+     * drop age of {@code 0} keeping every request. Never in backend mode, where the settings are
+     * inert and a request carries the time the application recorded it at.
+     *
+     * @param config configuration of the running SDK
+     * @param request the queued request
+     * @return {@code true} when the request has to be dropped without being sent
+     */
+    private boolean isOlderThanDropAge(@Nonnull InternalConfig config, @Nonnull Request request) {
+        if (backendMode) {
+            return false;
+        }
+
+        int dropAgeHours = config.getConfigurationProvider().getRequestDropAgeHours();
+        return dropAgeHours > 0 && requestAgeMs(request) > dropAgeHours * MS_IN_HOUR;
+    }
+
+    /**
+     * Removes a queued request without sending it, then tells the module that owns it, with a
+     * {@code null} response and {@link Transport#NO_RESPONSE_CODE}, so nothing keeps waiting for
+     * its response.
+     *
+     * @param config configuration of the running SDK
+     * @param request the request to drop
+     * @return whether the request was removed
+     */
+    private boolean dropWithoutSending(@Nonnull InternalConfig config, @Nonnull Request request) {
+        L.w("[Networking] dropWithoutSending, request [" + request.storageId() + "] is older than the request drop age of [" + config.getConfigurationProvider().getRequestDropAgeHours() + "] hours set by the SDK behavior settings, dropping it without sending");
+        if (!Boolean.TRUE.equals(storageForRequestQueue.removeRequest(request))) {
+            L.e("[Networking] dropWithoutSending, failed to remove request [" + request.storageId() + "], the queue drain stops here");
+            return false;
+        }
+        if (request.params.has(Log.keySdkLogs)) {
+            L.onLogBatchSent();
+        }
+
+        Class<? extends ModuleBase> requestOwner = request.owner();
+        SDKCore core = SDKCore.instance;
+        if (requestOwner != null && core != null) {
+            try {
+                core.onRequestCompleted(request, null, Transport.NO_RESPONSE_CODE, requestOwner);
+            } catch (Exception e) {
+                L.e("[Networking] dropWithoutSending, failed to tell the owner of request [" + request.storageId() + "] that it was dropped, [" + e + "]");
+            }
+        }
+        return true;
+    }
+
+    /**
+     * How long ago a request was recorded, read from its {@code timestamp} parameter, or from its
+     * storage ID, which is taken from the clock when the request is created, when it has none.
+     *
+     * @param request the request
+     * @return the age in milliseconds, negative for a request dated in the future
+     */
+    private long requestAgeMs(@Nonnull Request request) {
+        Long recordedAtMs = request.storageId();
+        String timestamp = request.params == null ? null : request.params.get(TIMESTAMP_PARAM);
+        if (timestamp != null) {
+            try {
+                recordedAtMs = Long.parseLong(timestamp);
+            } catch (NumberFormatException e) {
+                L.w("[Networking] requestAgeMs, request [" + request.storageId() + "] has a timestamp that is not a number [" + timestamp + "], dating it by its storage ID");
+            }
+        }
+
+        long nowMs = System.currentTimeMillis();
+        return recordedAtMs == null ? 0L : nowMs - recordedAtMs;
+    }
+
+    /**
+     * Holds the request queue back for the backoff duration of the SDK behavior settings when the
+     * backoff mechanism is on and the server answered slowly: the response took at least the
+     * accepted timeout, the request is not older than the backoff request age, and the requests
+     * still queued are at most the given share of the request queue size. Never in backend mode,
+     * where the settings are inert.
+     *
+     * @param config configuration of the running SDK
+     * @param request the request the server just accepted, already removed from the queue
+     * @param responseTimeMs how long the server took to answer it, in milliseconds
+     * @return whether the queue is now held back
+     */
+    private boolean backOffIfTheServerIsSlow(@Nonnull InternalConfig config, @Nonnull Request request, long responseTimeMs) {
+        if (backendMode) {
+            return false;
+        }
+
+        ConfigurationProvider provider = config.getConfigurationProvider();
+        if (!provider.getBOMEnabled() || responseTimeMs < provider.getBOMAcceptedTimeoutSeconds() * 1000L) {
+            return false;
+        }
+
+        if (requestAgeMs(request) > provider.getBOMRequestAge() * MS_IN_HOUR) {
+            L.v("[Networking] backOffIfTheServerIsSlow, the server took [" + responseTimeMs + "] ms to answer request [" + request.storageId() + "], but the request is older than [" + provider.getBOMRequestAge() + "] hours, not backing off");
+            return false;
+        }
+
+        int queuedRequests = queuedRequestCount();
+        if (queuedRequests < 0) {
+            return false;
+        }
+
+        double queueShare = provider.getRequestQueueMaxSize() * provider.getBOMRQPercentage();
+        if (queuedRequests > queueShare) {
+            L.v("[Networking] backOffIfTheServerIsSlow, the server took [" + responseTimeMs + "] ms to answer request [" + request.storageId() + "], but [" + queuedRequests + "] requests remain queued, more than [" + queueShare + "], not backing off");
+            return false;
+        }
+
+        int durationSeconds = provider.getBOMDuration();
+        L.i("[Networking] backOffIfTheServerIsSlow, the server took [" + responseTimeMs + "] ms to answer request [" + request.storageId() + "] and [" + queuedRequests + "] requests remain queued, holding the request queue back for [" + durationSeconds + "] seconds");
+        return startBackoff(config, durationSeconds);
+    }
+
+    /**
+     * How many requests the queue holds.
+     *
+     * @return the number of queued requests, {@code -1} when they could not be counted
+     */
+    private int queuedRequestCount() {
+        try {
+            Integer remaining = storageForRequestQueue.remaningRequests();
+            return remaining == null ? -1 : remaining + 1;
+        } catch (RuntimeException e) {
+            L.w("[Networking] queuedRequestCount, failed to count the queued requests, not backing off, [" + e + "]");
+            return -1;
+        }
+    }
+
+    /**
+     * Holds the request queue back for the given time, after which it drains again.
+     *
+     * @param config configuration of the running SDK
+     * @param durationSeconds how long to hold the queue back
+     * @return whether the queue is held back, {@code false} when the SDK is stopping
+     */
+    private boolean startBackoff(@Nonnull final InternalConfig config, int durationSeconds) {
+        backedOff = true;
+        try {
+            backoffScheduler.schedule(() -> endBackoff(config), durationSeconds, TimeUnit.SECONDS);
+            return true;
+        } catch (RejectedExecutionException e) {
+            backedOff = false;
+            L.d("[Networking] startBackoff, the SDK is stopping, the request queue is not held back");
+            return false;
+        }
+    }
+
+    /**
+     * Ends a backoff and lets the request queue drain again, unless the SDK stopped meanwhile.
+     *
+     * @param config configuration of the running SDK
+     */
+    private void endBackoff(@Nonnull InternalConfig config) {
+        backedOff = false;
+        if (shutdown) {
+            return;
+        }
+
+        L.d("[Networking] endBackoff, the backoff is over, the request queue drains again");
+        try {
+            check(config);
+        } catch (RuntimeException e) {
+            L.w("[Networking] endBackoff, failed to restart the request queue drain, [" + e + "]");
+        }
+    }
+
+    /**
+     * Stops sending. A backoff that is still running never ends in a drain, and a request that is
+     * being sent may finish.
+     *
+     * @param config configuration of the SDK being stopped
+     */
     @Override
     public void stop(InternalConfig config) {
         shutdown = true;
+        if (backoffScheduler != null) {
+            backoffScheduler.shutdownNow();
+            try {
+                if (!backoffScheduler.awaitTermination(1, TimeUnit.SECONDS)) {
+                    L.w("[Networking] stop, the backoff scheduler did not stop in time");
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
         tasks.shutdown();
     }
 

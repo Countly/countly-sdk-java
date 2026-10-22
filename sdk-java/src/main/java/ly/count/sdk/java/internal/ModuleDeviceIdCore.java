@@ -149,11 +149,27 @@ public class ModuleDeviceIdCore extends ModuleBase {
             return;
         }
 
+        if (!withMerge) {
+            stopLogGatheringForDeviceIdChange();
+        }
+
         internalConfig.storageProvider.setDeviceIdType(type.name());
         internalConfig.storageProvider.setDeviceID(id);
         internalConfig.setDeviceId(new Config.DID(type.index, id));
 
         SDKCore.instance.notifyModulesDeviceIdChanged(old.id, withMerge);
+    }
+
+    /**
+     * Has the gathered SDK log lines of the current user queued under the current device ID and
+     * the gather stopped, as the device ID is about to change without merge.
+     */
+    private void stopLogGatheringForDeviceIdChange() {
+        SDKCore core = SDKCore.instance;
+        ModuleConfiguration configuration = core == null ? null : core.module(ModuleConfiguration.class);
+        if (configuration != null) {
+            configuration.stopLogGatheringForDeviceIdChange();
+        }
     }
 
     /**
@@ -238,11 +254,31 @@ public class ModuleDeviceIdCore extends ModuleBase {
     public class DeviceId {
 
         /**
+         * The interface a call goes to: this one while its module runs, the running module's when
+         * this one was handed out before that started or kept from one that stopped, and
+         * {@code null} while the feature does not run.
+         *
+         * @param call the call, for the log line
+         * @return the interface, {@code null} for none
+         */
+        private DeviceId target(String call) {
+            ModuleDeviceIdCore running = runningInstance(call);
+            return running == null ? null : running.deviceIdInterface;
+        }
+
+        /**
          * Returns current device id.
          *
          * @return device id string
          */
         public String getID() {
+            DeviceId target = target("[DeviceId] getID");
+            if (target != this) {
+                if (target == null) {
+                    return null;
+                }
+                return target.getID();
+            }
             synchronized (Countly.instance()) {
                 return getIDInternal();
             }
@@ -255,6 +291,13 @@ public class ModuleDeviceIdCore extends ModuleBase {
          * @param newDeviceID device id to set
          */
         public void setID(String newDeviceID) {
+            DeviceId target = target("[DeviceId] setID");
+            if (target != this) {
+                if (target != null) {
+                    target.setID(newDeviceID);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 setIDInternal(newDeviceID);
             }
@@ -266,6 +309,13 @@ public class ModuleDeviceIdCore extends ModuleBase {
          * @return device id type
          */
         public DeviceIdType getType() {
+            DeviceId target = target("[DeviceId] getType");
+            if (target != this) {
+                if (target == null) {
+                    return null;
+                }
+                return target.getType();
+            }
             synchronized (Countly.instance()) {
                 return getTypeInternal();
             }
@@ -277,6 +327,13 @@ public class ModuleDeviceIdCore extends ModuleBase {
          * @param id new device id string, cannot be empty
          */
         public void changeWithMerge(String id) {
+            DeviceId target = target("[DeviceId] changeWithMerge");
+            if (target != this) {
+                if (target != null) {
+                    target.changeWithMerge(id);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 changeDeviceIdInternal(id, DeviceIdType.DEVELOPER_SUPPLIED, true);
             }
@@ -288,6 +345,13 @@ public class ModuleDeviceIdCore extends ModuleBase {
          * @param id new device id string, cannot be empty
          */
         public void changeWithoutMerge(String id) {
+            DeviceId target = target("[DeviceId] changeWithoutMerge");
+            if (target != this) {
+                if (target != null) {
+                    target.changeWithoutMerge(id);
+                }
+                return;
+            }
             synchronized (Countly.instance()) {
                 changeDeviceIdInternal(id, DeviceIdType.DEVELOPER_SUPPLIED, false);
             }

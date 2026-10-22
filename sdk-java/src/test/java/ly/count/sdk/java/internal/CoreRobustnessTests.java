@@ -1,7 +1,9 @@
 package ly.count.sdk.java.internal;
 
 import java.io.File;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import org.junit.After;
@@ -76,36 +78,42 @@ public class CoreRobustnessTests {
     }
 
     /**
-     * Feature accessors for features that were never enabled return null rather than throwing.
+     * Feature accessors for features that were never enabled hand out an interface that ignores every
+     * call, rather than null or throwing.
      * <p>
      * They dereferenced a module that was never built, and consent is not the gate that stops them:
      * with consent not required, the consent check passes and the null module was used anyway.
      */
     @Test
-    public void accessors_forFeaturesThatWereNeverEnabled_returnNull() {
+    public void accessors_forFeaturesThatWereNeverEnabled_handOutInterfacesThatIgnoreCalls() {
         Countly.instance().init(TestUtils.getConfigEvents(2));
 
-        Assert.assertNull(Countly.instance().feedback());
-        Assert.assertNull(Countly.instance().crashes());
-        Assert.assertNull(Countly.instance().remoteConfig());
-        Assert.assertNull(Countly.instance().content());
+        Assert.assertSame(SDKCore.dormantFeedback, Countly.instance().feedback());
+        Assert.assertSame(SDKCore.dormantCrashes, Countly.instance().crashes());
+        Assert.assertSame(SDKCore.dormantRemoteConfig, Countly.instance().remoteConfig());
+        Assert.assertSame(SDKCore.dormantContent, Countly.instance().content());
+        int queued = TestUtils.getCurrentRQ().length;
+        Countly.instance().crashes().recordHandledException(new RuntimeException("never enabled"));
+        Countly.instance().content().enterContentZone();
+        Assert.assertEquals(queued, TestUtils.getCurrentRQ().length);
 
         // The feature that IS enabled still works, so the guards did not break the happy path.
-        Assert.assertNotNull(Countly.instance().events());
+        Assert.assertNotSame(SDKCore.dormantEvents, Countly.instance().events());
     }
 
     /**
-     * Accessors used before init log and return null. "location" logged through a logger that does
-     * not exist yet, unlike every sibling accessor.
+     * Accessors used before init log and hand out an interface that ignores calls, backend mode
+     * aside, which still answers null. "location" logged through a logger that does not exist yet,
+     * unlike every sibling accessor.
      */
     @Test
-    public void accessors_beforeInit_returnNullWithoutCrashing() {
+    public void accessors_beforeInit_doNotThrow() {
         Countly.instance().halt();
 
-        Assert.assertNull(Countly.instance().location());
-        Assert.assertNull(Countly.instance().feedback());
-        Assert.assertNull(Countly.instance().content());
-        Assert.assertNull(Countly.instance().remoteConfig());
+        Assert.assertSame(SDKCore.dormantLocation, Countly.instance().location());
+        Assert.assertSame(SDKCore.dormantFeedback, Countly.instance().feedback());
+        Assert.assertSame(SDKCore.dormantContent, Countly.instance().content());
+        Assert.assertSame(SDKCore.dormantRemoteConfig, Countly.instance().remoteConfig());
         Assert.assertNull(Countly.instance().backendM());
     }
 
@@ -164,6 +172,62 @@ public class CoreRobustnessTests {
         File[] litter = TestUtils.getTestSDirectory().listFiles((dir, name) -> name.contains(UnserialisableStorable.PREFIX));
         Assert.assertNotNull(litter);
         Assert.assertEquals("no file should have been created, found: " + litter.length, 0, litter.length);
+    }
+
+    /**
+     * A fresh init reads storage files that do not exist yet, which is the normal first run state:
+     * each one is logged at debug level, and no error is logged for any of them.
+     */
+    @Test
+    public void freshInit_logsTheStorageFilesThatDoNotExistYet_atDebugLevel() {
+        List<String> missingFileLines = new CopyOnWriteArrayList<>();
+        Countly.instance().init(TestUtils.getConfigEvents(2).setLoggingLevel(Config.LoggingLevel.VERBOSE)
+            .setLogListener((message, level) -> {
+                if (message.contains("No data for file")) {
+                    missingFileLines.add(level + " " + message);
+                }
+            }));
+
+        Assert.assertFalse(missingFileLines.isEmpty());
+        for (String line : missingFileLines) {
+            Assert.assertTrue(line, line.startsWith(Config.LoggingLevel.DEBUG + " "));
+        }
+    }
+
+    /**
+     * A storage file that exists but cannot be opened, unlike a missing one, is logged as an error.
+     */
+    @Test
+    public void init_withAStorageFileThatCannotBeOpened_logsAnError() {
+        Assert.assertTrue(new File(TestUtils.getTestSDirectory(), "[CLY]_timedEvent_0").mkdir());
+        List<String> errors = new CopyOnWriteArrayList<>();
+        Countly.instance().init(TestUtils.getConfigEvents(2).setLoggingLevel(Config.LoggingLevel.VERBOSE)
+            .setLogListener((message, level) -> {
+                if (level == Config.LoggingLevel.ERROR && message.contains("timedEvent_0")) {
+                    errors.add(message);
+                }
+            }));
+
+        Assert.assertEquals(errors.toString(), 1, errors.size());
+        Assert.assertTrue(errors.get(0), errors.get(0).contains("Error while opening file"));
+    }
+
+    /**
+     * A second init is refused before it changes the running SDK, so given the same configuration
+     * object again it leaves the logger the running SDK and its configuration log through in place.
+     */
+    @Test
+    public void secondInit_withTheSameConfigObject_keepsTheRunningLogger() {
+        InternalConfig config = new InternalConfig(TestUtils.getConfigEvents(2));
+        Countly.instance().init(config);
+        Log running = SDKCore.instance.L;
+        Assert.assertSame(running, config.getLogger());
+
+        Countly.instance().init(config);
+
+        Assert.assertTrue(Countly.isInitialized());
+        Assert.assertSame(running, SDKCore.instance.L);
+        Assert.assertSame(running, config.getLogger());
     }
 
     /**

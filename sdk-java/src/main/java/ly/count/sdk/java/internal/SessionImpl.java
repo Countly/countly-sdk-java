@@ -107,6 +107,8 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         if (SDKCore.instance == null) {
             L.e("[SessionImpl] Countly is not initialized");
             return null;
+        } else if (!isSessionTrackingEnabled("begin")) {
+            return null;
         } else if (began != null) {
             L.e("[SessionImpl] Session already began");
             return null;
@@ -118,15 +120,14 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         }
 
         this.consents = SDKCore.instance.consents;
-        if (config.isAutoSendUserProperties() && config.sdk.userProfile() != null) {
-            config.sdk.module(ModuleUserProfile.class).saveInternal();
-        }
+        ModuleUserProfile.saveIfSentAutomatically(config);
 
         if (pushOnChange) {
             Storage.pushAsync(config, this);
         }
-        if (hasConsent(CoreFeature.Location) && config.sdk.module(ModuleLocation.class) != null) {
-            params.add(config.sdk.module(ModuleLocation.class).prepareLocationParams());
+        ModuleLocation locationModule = config.sdk.module(ModuleLocation.class);
+        if (hasConsent(CoreFeature.Location) && locationModule != null && config.getConfigurationProvider().getLocationTrackingEnabled()) {
+            params.add(locationModule.prepareLocationParams());
         }
         Future<Boolean> ret = ModuleRequests.sessionBegin(config, this);
 
@@ -151,6 +152,8 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         if (SDKCore.instance == null) {
             L.e("[SessionImpl] Countly is not initialized");
             return null;
+        } else if (!isSessionTrackingEnabled("update")) {
+            return null;
         } else if (began == null) {
             L.e("[SessionImpl] Session is not began to update it");
             return null;
@@ -160,9 +163,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         }
 
         this.consents = SDKCore.instance.consents;
-        if (config.isAutoSendUserProperties() && config.sdk.userProfile() != null) {
-            config.sdk.module(ModuleUserProfile.class).saveInternal();
-        }
+        ModuleUserProfile.saveIfSentAutomatically(config);
 
         Long duration = updateDuration(now);
 
@@ -188,6 +189,8 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         if (SDKCore.instance == null) {
             L.e("[SessionImpl] Countly is not initialized");
             return null;
+        } else if (!isSessionTrackingEnabled("end")) {
+            return null;
         } else if (began == null) {
             L.e("[SessionImpl] Session is not began to end it");
             return null;
@@ -198,9 +201,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         ended = now == null ? System.nanoTime() : now;
 
         this.consents = SDKCore.instance.consents;
-        if (config.isAutoSendUserProperties() && config.sdk.userProfile() != null) {
-            config.sdk.module(ModuleUserProfile.class).saveInternal();
-        }
+        ModuleUserProfile.saveIfSentAutomatically(config);
 
         if (currentView != null) {
             currentView.stop(true);
@@ -222,10 +223,22 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         return ret;
     }
 
+    /**
+     * Ends a session left on disk by an earlier run, or removes it when there is nothing to end.
+     * While session tracking is disabled by the SDK behavior settings, no session request may be
+     * sent, so an unended session is removed without an end request: keeping it would end it on a
+     * later run with a stale duration.
+     *
+     * @param config configuration of the SDK being initialized
+     * @return whether the session was ended or removed, {@code null} when it is left as it is
+     */
     Boolean recover(InternalConfig config) {
         Log L = config.getLogger();
         if ((System.currentTimeMillis() - id) < 0) {
             return null;
+        } else if (!config.getConfigurationProvider().getSessionTrackingEnabled()) {
+            L.d("[SessionImpl] recover, session tracking is disabled by the SDK behavior settings, removing session " + id + " without ending it");
+            return Storage.remove(config, this);
         } else {
             Future<Boolean> future;
             if (began == null) {
@@ -258,6 +271,22 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
     public boolean isActive() {
         L.d("[SessionImpl] isActive");
         return began != null && ended == null;
+    }
+
+    /**
+     * Whether the SDK behavior settings allow session tracking. While they do not, beginning,
+     * updating and ending a session are ignored, and the session keeps its state.
+     *
+     * @param function the ignored call, for the log
+     * @return {@code true} when session tracking is enabled
+     */
+    private boolean isSessionTrackingEnabled(String function) {
+        if (config.getConfigurationProvider().getSessionTrackingEnabled()) {
+            return true;
+        }
+
+        L.d("[SessionImpl] " + function + ", session tracking is disabled by the SDK behavior settings, ignoring the call");
+        return false;
     }
 
     /**
@@ -308,11 +337,11 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
      */
     @Override
     public void recordEvent(Event event) {
-        L.d("[SessionImpl] recordEvent: " + event.toString());
         if (!SDKCore.enabled(CoreFeature.Events)) {
             L.i("[SessionImpl] recordEvent: Skipping event - feature is not enabled");
             return;
         }
+        L.d("[SessionImpl] recordEvent");
 
         if (began == null) {
             begin();
@@ -368,11 +397,11 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             return this;
         }
 
-        L.d("[SessionImpl] addLocation: latitude = " + latitude + " longitude = " + longitude);
         if (!SDKCore.enabled(CoreFeature.Location)) {
             L.i("[SessionImpl] addLocation: Skipping event - feature is not enabled");
             return this;
         }
+        L.d("[SessionImpl] addLocation");
         Countly.instance().location().setLocation(null, null, latitude + "," + longitude, null);
         return this;
     }
@@ -386,11 +415,11 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
      * @deprecated use {@link ModuleViews.Views#startView(String)} instead via {@link Countly#views()}
      */
     public View view(String name, boolean start) {
-        L.d("[SessionImpl] view: name = " + name + " start = " + start);
         if (!SDKCore.enabled(CoreFeature.Views)) {
             L.i("[SessionImpl] view: Skipping view - feature is not enabled");
             return null;
         }
+        L.d("[SessionImpl] view: start = " + start);
         if (currentView != null) {
             currentView.stop(false);
         }

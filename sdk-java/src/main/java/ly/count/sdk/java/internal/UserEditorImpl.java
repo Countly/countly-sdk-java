@@ -1,6 +1,7 @@
 package ly.count.sdk.java.internal;
 
 import java.io.File;
+import java.util.function.Consumer;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.PredefinedUserPropertyKeys;
 import ly.count.sdk.java.User;
@@ -100,68 +101,70 @@ public class UserEditorImpl implements UserEditor {
 
     @Override
     public UserEditor setLocale(String locale) {
-        L.d("setLocale: locale = " + locale);
+        L.d("[UserEditorImpl] setLocale");
         return this;
     }
 
     @Override
     public UserEditor setCountry(String country) {
-        L.d("setCountry: country = " + country);
+        L.d("[UserEditorImpl] setCountry");
         String countryLegacy = country == null ? JSONObject.NULL.toString() : country;
-        callLocationService(() -> SDKCore.instance.module(ModuleLocation.class).setLocationLegacy(countryLegacy, null, null));
+        callLocationService(module -> module.setLocationLegacy(countryLegacy, null, null));
         return this;
     }
 
     @Override
     public UserEditor setCity(String city) {
-        L.d("setCity: city = " + city);
+        L.d("[UserEditorImpl] setCity");
         String cityLegacy = city == null ? JSONObject.NULL.toString() : city;
-        callLocationService(() -> SDKCore.instance.module(ModuleLocation.class).setLocationLegacy(null, cityLegacy, null));
+        callLocationService(module -> module.setLocationLegacy(null, cityLegacy, null));
         return this;
     }
 
     @Override
     public UserEditor setLocation(String location) {
-        L.d("setLocation: location = " + location);
+        L.d("[UserEditorImpl] setLocation");
         if (location != null) {
             String[] comps = location.split(",");
             if (comps.length == 2) {
                 try {
                     String locationString = Double.parseDouble(comps[0]) + "," + Double.parseDouble(comps[1]);
-                    callLocationService(() -> SDKCore.instance.module(ModuleLocation.class).setLocationLegacy(null, null, locationString));
+                    callLocationService(module -> module.setLocationLegacy(null, null, locationString));
                     return this;
                 } catch (Throwable t) {
-                    L.e("[UserEditorImpl] Invalid location format: " + location + " " + t);
+                    L.e("[UserEditorImpl] setLocation, invalid location format, " + t.getClass().getSimpleName());
                     return this;
                 }
             } else {
-                L.e("[UserEditorImpl] Invalid location format: " + location);
+                L.e("[UserEditorImpl] setLocation, invalid location format");
                 return this;
             }
         } else {
-            callLocationService(() -> SDKCore.instance.module(ModuleLocation.class).setLocationLegacy(null, null, JSONObject.NULL));
+            callLocationService(module -> module.setLocationLegacy(null, null, JSONObject.NULL));
             return this;
         }
     }
 
     @Override
     public UserEditor setLocation(double latitude, double longitude) {
-        L.d("setLocation: latitude = " + latitude + " longitude" + longitude);
+        L.d("[UserEditorImpl] setLocation");
         String locationString = latitude + "," + longitude;
-        callLocationService(() -> SDKCore.instance.module(ModuleLocation.class).setLocationLegacy(null, null, locationString));
+        callLocationService(module -> module.setLocationLegacy(null, null, locationString));
         return this;
     }
 
     @Override
     public UserEditor optOutFromLocationServices() {
         L.d("optOutFromLocationServices");
-        callLocationService(() -> SDKCore.instance.module(ModuleLocation.class).setLocationLegacy(JSONObject.NULL, JSONObject.NULL, JSONObject.NULL));
+        callLocationService(module -> module.setLocationLegacy(JSONObject.NULL, JSONObject.NULL, JSONObject.NULL));
         return this;
     }
 
-    private void callLocationService(Runnable runnable) {
-        if (Countly.instance().location() != null) {
-            runnable.run();
+    private void callLocationService(Consumer<ModuleLocation> call) {
+        SDKCore core = SDKCore.instance;
+        ModuleLocation location = core == null ? null : core.runningModule(CoreFeature.Location, ModuleLocation.class);
+        if (location != null) {
+            call.accept(location);
         }
     }
 
