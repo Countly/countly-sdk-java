@@ -43,7 +43,7 @@ jobs:
       # dependencies -- exactly the blind spot that let a known org.json CVE sit in the demo
       # modules after sdk-java had been fixed.
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           java-version: '17'
           distribution: 'corretto'
@@ -150,7 +150,7 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           java-version: '17'
           distribution: 'corretto'
