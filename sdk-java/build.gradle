@@ -18,7 +18,7 @@ if (JavaVersion.current().isJava9Compatible()) {
 }
 
 dependencies {
-  implementation 'org.json:json:20250517'
+  implementation 'org.json:json:20260814'
   implementation 'com.google.code.findbugs:jsr305:3.0.2'
 
   testImplementation 'junit:junit:4.13.1'
