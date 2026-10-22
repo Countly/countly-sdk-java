@@ -129,8 +129,9 @@ public class ModuleContentTests {
     }
 
     /**
-     * With consent required, the content interface is unreachable until content consent is given,
-     * and a zone that is already running is torn down when that consent is taken away again.
+     * With consent required, the content interface ignores calls until content consent is given, and
+     * a zone that is already running is torn down when that consent is taken away again, after which
+     * the interface kept from before ignores calls too.
      */
     @Test
     public void content_isGatedByConsent() throws JSONException {
@@ -138,7 +139,7 @@ public class ModuleContentTests {
         init(config);
         nextResponse = new JSONObject(CONTENT_RESPONSE);
 
-        Assert.assertNull(Countly.instance().content());
+        Assert.assertSame(SDKCore.dormantContent, Countly.instance().content());
 
         Countly.onConsent(Config.Feature.Content, Config.Feature.Events);
         installRequestMaker();
@@ -151,7 +152,9 @@ public class ModuleContentTests {
         Assert.assertEquals(1, requests.size());
 
         Countly.onConsentRemoval(Config.Feature.Content);
-        Assert.assertNull(Countly.instance().content());
+        Assert.assertSame(SDKCore.dormantContent, Countly.instance().content());
+        content.enterContentZone();
+        content.refreshContentZone();
         Assert.assertEquals(1, requests.size());
     }
 

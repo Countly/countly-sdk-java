@@ -3,6 +3,7 @@ package ly.count.sdk.java.internal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import ly.count.sdk.java.Crash;
@@ -138,8 +139,36 @@ public class CrashFlowTests {
     }
 
     /**
-     * Consent gating. With consent required and CrashReporting not granted the interface is withheld
-     * entirely; once granted the crash flows.
+     * With consent required, an unhandled crash is recorded once the crash reporting consent is given
+     * after init, and still reaches the handler the application installed.
+     */
+    @Test
+    public void unhandledCrash_isRecorded_whenTheConsentIsGivenAfterInit() throws InterruptedException {
+        Thread.UncaughtExceptionHandler before = Thread.getDefaultUncaughtExceptionHandler();
+        List<Throwable> reachedTheApp = new CopyOnWriteArrayList<>();
+        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> reachedTheApp.add(throwable));
+        try {
+            Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.CrashReporting).setRequiresConsent(true));
+            Countly.onConsent(Config.Feature.CrashReporting);
+
+            Thread crashing = new Thread(() -> {
+                throw new IllegalStateException("unhandled after consent");
+            });
+            crashing.start();
+            crashing.join();
+            Storage.await(SDKCore.instance.config.getLogger());
+
+            Assert.assertEquals(1, reachedTheApp.size());
+            Assert.assertEquals(1, crashRequestCount());
+        } finally {
+            Countly.instance().halt();
+            Thread.setDefaultUncaughtExceptionHandler(before);
+        }
+    }
+
+    /**
+     * Consent gating. With consent required and CrashReporting not granted the interface ignores every
+     * call; once granted the crash flows.
      */
     @Test
     public void crashReporting_isGatedOnConsent() {
@@ -148,7 +177,8 @@ public class CrashFlowTests {
             .setRequiresConsent(true);
         Countly.instance().init(config);
 
-        Assert.assertNull("no consent means no crash interface", Countly.instance().crashes());
+        Assert.assertSame("no consent means a crash interface that ignores calls", SDKCore.dormantCrashes, Countly.instance().crashes());
+        Countly.instance().crashes().recordHandledException(new RuntimeException("before consent"));
 
         Countly.onConsent(Config.Feature.CrashReporting);
         Assert.assertNotNull(Countly.instance().crashes());

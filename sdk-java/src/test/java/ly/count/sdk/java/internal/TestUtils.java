@@ -450,6 +450,19 @@ public class TestUtils {
         Assert.assertEquals(expectedSize, getCurrentEQ().size());
     }
 
+    /**
+     * The keys of the events in the event queue, in queue order.
+     *
+     * @return the keys
+     */
+    static List<String> keysInEQ() {
+        List<String> keys = new ArrayList<>();
+        for (EventImpl event : getCurrentEQ()) {
+            keys.add(event.key);
+        }
+        return keys;
+    }
+
     static String getOS() {
         return System.getProperty("os.name");
     }

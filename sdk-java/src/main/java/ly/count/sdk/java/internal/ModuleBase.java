@@ -1,5 +1,7 @@
 package ly.count.sdk.java.internal;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import ly.count.sdk.java.Session;
 
 /**
@@ -13,6 +15,9 @@ import ly.count.sdk.java.Session;
  * </ul>
  */
 public abstract class ModuleBase {
+    //what a call through an interface while its module does not run hands to its callback
+    static final String NOT_RUNNING_ERROR = "The feature does not run, as its consent is not given or it is not enabled";
+
     private boolean active = false;
 
     protected Log L = null;
@@ -45,6 +50,27 @@ public abstract class ModuleBase {
      * @param clear {@code true} if module must clear its data files, {@code false} otherwise
      */
     public void stop(InternalConfig config, boolean clear) {
+    }
+
+    /**
+     * The instance of this module that the SDK runs, which every call through an interface of this
+     * module goes to: this one, or the running one when the interface was handed out before that
+     * started or kept from an instance that stopped. A call while none runs, as before init or while
+     * the consent of the feature is not given, is ignored and logged.
+     *
+     * @param call the call, starting with the bracketed name of the interface, for the log line
+     * @param <M> the module type
+     * @return the running instance, {@code null} while none runs
+     */
+    @SuppressWarnings("unchecked")
+    @Nullable
+    <M extends ModuleBase> M runningInstance(@Nonnull String call) {
+        SDKCore core = SDKCore.instance;
+        ModuleBase running = core == null ? null : core.module(getClass());
+        if (running == null && core != null && core.L != null) {
+            core.L.w(call + ", the feature does not run, as its consent is not given or it is not enabled, ignoring the call");
+        }
+        return (M) running;
     }
 
     /**

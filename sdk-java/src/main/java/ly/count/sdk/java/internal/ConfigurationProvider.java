@@ -52,7 +52,7 @@ public interface ConfigurationProvider {
     /**
      * Key {@code cet}.
      *
-     * @return whether custom events, the ones whose key does not start with {@code [CLY]_}, may be recorded
+     * @return whether custom events, the ones whose key is not one of {@link ModuleEvents#INTERNAL_EVENT_KEYS}, may be recorded
      */
     boolean getCustomEventTrackingEnabled();
 

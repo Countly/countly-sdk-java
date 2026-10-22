@@ -36,6 +36,21 @@ public class ModuleLocationsTests {
     }
 
     /**
+     * Removing the location consent erases the location on the server right away
+     * Request queue should hold the location request and then one with an empty location
+     */
+    @Test
+    public void locationConsentRemoval_erasesTheLocation() {
+        Countly.instance().init(TestUtils.getBaseConfig().enableFeatures(Config.Feature.Location).setRequiresConsent(true));
+        Countly.onConsent(Config.Feature.Location);
+        Countly.instance().location().setLocation("TR", "Izmir", "38.4,27.1", null);
+
+        Countly.onConsentRemoval(Config.Feature.Location);
+
+        validateLocationRequestInRQ(TestUtils.map("location", ""), 1);
+    }
+
+    /**
      * "disableLocation"
      * Validating that empty location parameter is not sent because location is not enabled
      * Request queue size should be 0
@@ -43,7 +58,8 @@ public class ModuleLocationsTests {
     @Test
     public void disableLocation_noConsent() {
         Countly.instance().init(TestUtils.getBaseConfig());
-        Assert.assertNull(Countly.instance().location());
+        Assert.assertSame(SDKCore.dormantLocation, Countly.instance().location());
+        Countly.instance().location().disableLocation();
         Assert.assertEquals(0, TestUtils.getCurrentRQ().length);
     }
 

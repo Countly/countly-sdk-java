@@ -63,31 +63,32 @@ public class ModuleConfigurationFiltersTests {
      * {@code eb} and then {@code ew} decide which custom events are recorded, while internal events
      * always pass.
      * <p>
-     * Verifies that with a blacklist, listed keys, spaces and dashes included, are dropped with one
-     * warning each, timed events too, while an unlisted key, a view and an internal event listed in
-     * the blacklist are recorded; that a response bringing a whitelist replaces the blacklist, so only
+     * Verifies that with a blacklist, listed keys, spaces and dashes and a {@code [CLY]_} key the SDK
+     * does not record itself included, are dropped with one warning each, timed events too, while an
+     * unlisted key, a view and an internal event listed in the blacklist are recorded; that a response bringing a whitelist replaces the blacklist, so only
      * its keys are recorded, a view still is and a key the blacklist dropped is dropped again; and that
      * an empty whitelist allows every key.
      */
     @Test
     public void eventFilter_blacklistThenWhitelist_decideCustomEventsOnly_andAnEmptyListAllowsEverything() {
         server.respondWith(new ServerConfigBuilder()
-            .eventFilterList(names("blocked_event", "event with spaces", "event-with-dashes", ModuleViews.KEY_VIEW_EVENT, "[CLY]_star_rating"), false)
+            .eventFilterList(names("blocked_event", "event with spaces", "event-with-dashes", "[CLY]_not_an_sdk_event", ModuleViews.KEY_VIEW_EVENT, "[CLY]_star_rating"), false)
             .networking(false));
         init(configWithWarnings().enableFeatures(Config.Feature.Events, Config.Feature.Views).setEventQueueSizeToSend(100));
 
         Countly.instance().events().recordEvent("blocked_event");
         Countly.instance().events().recordEvent("event with spaces");
         Countly.instance().events().recordEvent("event-with-dashes", TestUtils.map("colour", "red"));
+        Countly.instance().events().recordEvent("[CLY]_not_an_sdk_event");
         Countly.instance().events().startEvent("blocked_event");
         Countly.instance().events().endEvent("blocked_event");
         TestUtils.validateEQSize(0);
-        Assert.assertEquals(4, warningsContaining("is filtered out by the event filter"));
+        Assert.assertEquals(5, warningsContaining("is filtered out by the event filter"));
 
         Countly.instance().events().recordEvent("allowed_event");
         Countly.instance().views().startView("home");
         Countly.instance().events().recordEvent("[CLY]_star_rating");
-        Assert.assertEquals(Arrays.asList("allowed_event", ModuleViews.KEY_VIEW_EVENT, "[CLY]_star_rating"), keysInEQ());
+        Assert.assertEquals(Arrays.asList("allowed_event", ModuleViews.KEY_VIEW_EVENT, "[CLY]_star_rating"), TestUtils.keysInEQ());
 
         push(new ServerConfigBuilder().eventFilterList(names("allowed_event", "another_allowed"), true));
         Countly.instance().events().recordEvent("allowed_event");
@@ -96,15 +97,15 @@ public class ModuleConfigurationFiltersTests {
         Countly.instance().events().recordEvent("blocked_event");
         Countly.instance().views().stopViewWithName("home");
         Assert.assertEquals(Arrays.asList("allowed_event", ModuleViews.KEY_VIEW_EVENT, "[CLY]_star_rating",
-            "allowed_event", "another_allowed", ModuleViews.KEY_VIEW_EVENT), keysInEQ());
-        Assert.assertEquals(6, warningsContaining("is filtered out by the event filter"));
+            "allowed_event", "another_allowed", ModuleViews.KEY_VIEW_EVENT), TestUtils.keysInEQ());
+        Assert.assertEquals(7, warningsContaining("is filtered out by the event filter"));
 
         push(new ServerConfigBuilder().eventFilterList(names(), true));
         Countly.instance().events().recordEvent("not_in_whitelist");
         Countly.instance().events().recordEvent("blocked_event");
-        List<String> keys = keysInEQ();
+        List<String> keys = TestUtils.keysInEQ();
         Assert.assertEquals(Arrays.asList("not_in_whitelist", "blocked_event"), keys.subList(6, keys.size()));
-        Assert.assertEquals(6, warningsContaining("is filtered out by the event filter"));
+        Assert.assertEquals(7, warningsContaining("is filtered out by the event filter"));
         Assert.assertEquals(0, TestUtils.getCurrentRQ().length);
     }
 
@@ -370,19 +371,6 @@ public class ModuleConfigurationFiltersTests {
             }
         }
         return count;
-    }
-
-    /**
-     * The keys of the events in the event queue, in queue order.
-     *
-     * @return the keys
-     */
-    private static List<String> keysInEQ() {
-        List<String> keys = new ArrayList<>();
-        for (EventImpl event : TestUtils.getCurrentEQ()) {
-            keys.add(event.key);
-        }
-        return keys;
     }
 
     /**
