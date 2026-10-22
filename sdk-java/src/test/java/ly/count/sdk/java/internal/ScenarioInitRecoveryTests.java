@@ -45,7 +45,7 @@ public class ScenarioInitRecoveryTests {
     }
 
     private long plantCrashFile(JSONObject crashData) {
-        long crashId = TimeUtils.uniqueTimestampMs();
+        long crashId = TimeUtils.uniqueStorageId();
         TestUtils.writeToFile("crash_" + crashId, crashData.toString());
         return crashId;
     }

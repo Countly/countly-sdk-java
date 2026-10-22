@@ -38,6 +38,11 @@
 
 * Mitigated an issue where saving the SDK storage while remote config values were changing could empty the storage file.
 
+* Updated JSON library version from "20250517" to "20260814".
+
+* Mitigated an issue where requests, sessions or crashes created close together could get the same storage ID, so some of them were lost.
+* Mitigated an issue where verbose logs showed the values of custom network request headers. Only the number of headers is logged now.
+
 ## 26.8.0
 * Added support for the Content feature, accessible through the "Countly.instance().content()" interface:
   * "enterContentZone" / "exitContentZone" for starting and stopping periodic content fetching

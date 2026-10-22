@@ -129,10 +129,6 @@ public class ModuleRequests extends ModuleBase {
         return sessionRequest(config, null, null, null);
     }
 
-    public static Request nonSessionRequest(InternalConfig config, Long timestamp) {
-        return new Request(timestamp);
-    }
-
     public static void injectParams(InternalConfig config, ParamsInjector injector) {
         SessionImpl session = SDKCore.instance.getSession();
         if (session == null) {

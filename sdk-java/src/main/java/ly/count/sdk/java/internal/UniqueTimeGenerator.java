@@ -10,6 +10,7 @@ import java.util.List;
 class UniqueTimeGenerator {
     final List<Long> lastTsMs = new ArrayList<>(10);
     long addition = 0;
+    long lastId = 0;
 
     long currentTimeMillis() {
         return System.currentTimeMillis() + addition;
@@ -36,5 +37,18 @@ class UniqueTimeGenerator {
         }
         lastTsMs.add(ms);
         return ms;
+    }
+
+    /**
+     * Returns the current time in milliseconds, or one more than the previous id while the clock
+     * has not moved past it. Unlike {@link #timestamp()}, which only remembers its last 10 values,
+     * an id never repeats or goes back within a process, not in a burst and not after the clock is
+     * set back.
+     *
+     * @return an id greater than every id returned before
+     */
+    synchronized long id() {
+        lastId = Math.max(currentTimeMillis(), lastId + 1);
+        return lastId;
     }
 }

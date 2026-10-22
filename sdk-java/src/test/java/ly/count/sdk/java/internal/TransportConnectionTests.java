@@ -110,8 +110,19 @@ public class TransportConnectionTests {
     }
 
     private Transport buildTransport(Config config) {
+        return buildTransport(config, null);
+    }
+
+    /**
+     * Builds a transport whose log lines go to the given callback.
+     *
+     * @param config the configuration to build it from
+     * @param logCallback receives every log line, or null for none
+     * @return the initialized transport
+     */
+    private Transport buildTransport(Config config, LogCallback logCallback) {
         InternalConfig ic = new InternalConfig(config);
-        ic.setLogger(new Log(Config.LoggingLevel.OFF, null));
+        ic.setLogger(new Log(Config.LoggingLevel.OFF, logCallback));
         Transport transport = new Transport();
         transport.init(ic);
         return transport;
@@ -184,6 +195,31 @@ public class TransportConnectionTests {
         // The Request.ENDPOINT marker must never leak onto the wire.
         Assert.assertFalse(recorded.query.contains("endpoint="));
         Assert.assertFalse(request.params.has(Request.ENDPOINT));
+    }
+
+    /**
+     * Custom header values often carry credentials, so the log says how many headers are added
+     * and never shows a value, while the header itself still reaches the server.
+     */
+    @Test
+    public void connection_logsTheCustomHeaderCountButNoValue() throws IOException {
+        Config config = localServerConfig();
+        Map<String, String> customHeaders = new ConcurrentHashMap<>();
+        customHeaders.put("Authorization", "Bearer secret-token");
+        config.addCustomNetworkRequestHeaders(customHeaders);
+        List<String> logLines = Collections.synchronizedList(new ArrayList<>());
+        Transport transport = buildTransport(config, (message, level) -> logLines.add(message));
+
+        HttpURLConnection connection = transport.connection(new Request());
+        connection.connect();
+        Assert.assertEquals(200, connection.getResponseCode());
+        connection.disconnect();
+
+        Assert.assertTrue(logLines.contains("[Transport] connection, Adding [1] custom header fields"));
+        for (String line : logLines) {
+            Assert.assertFalse(line, line.contains("secret-token"));
+        }
+        Assert.assertEquals("Bearer secret-token", lastRequest().headers.get("Authorization"));
     }
 
     /**
