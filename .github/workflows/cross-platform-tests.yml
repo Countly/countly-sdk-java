@@ -56,9 +56,14 @@ jobs:
       #
       # Deliberately without -Dcountly.ui.pageLoadTests: that enables the one class showing a
       # transparent stage, which segfaults the JVM everywhere it has been tried.
+      #
+      # testUiWithLocalCore (see sdk-java-ui/build.gradle) runs the UI on this checkout's core. The
+      # release of a ui- tag still tests it against the released core it names.
       - name: Run the JavaFX UI tests
         if: always()
         shell: bash
+        env:
+          ORG_GRADLE_PROJECT_testUiWithLocalCore: 'true'
         run: |
           if [ "$RUNNER_OS" = "Linux" ]; then
             sudo apt-get update -qq && sudo apt-get install -y -qq xvfb
