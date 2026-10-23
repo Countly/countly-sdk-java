@@ -896,12 +896,25 @@ public class SdkLogGatheringTests {
         for (int round = 0; round < 200; round++) {
             awaitLogDelivery();
             Assert.assertTrue("a queued batch never reached the server", TestUtils.waitFor(30_000, () -> storedBatchCount() == 0));
+            //the networking removes a sent batch before it lets the logger queue the next one
+            awaitNetworking();
             awaitLogDelivery();
             if (storedBatchCount() == 0) {
                 return;
             }
         }
         Assert.fail("the logger kept queueing batches");
+    }
+
+    /**
+     * Waits until the networking finished the task it was running, the handling of a sent request
+     * included.
+     */
+    private static void awaitNetworking() {
+        SDKCore core = SDKCore.instance;
+        if (core != null && core.networking instanceof DefaultNetworking) {
+            ((DefaultNetworking) core.networking).tasks.await();
+        }
     }
 
     /**
