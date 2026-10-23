@@ -16,8 +16,9 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class sc_MV_ManualViewTests {
     @Before
-    public void beforeTest() {
+    public void beforeTest() throws InterruptedException {
         TestUtils.createCleanTestState();
+        TestUtils.awaitStartOfSecond();
     }
 
     @After
