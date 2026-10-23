@@ -16,6 +16,7 @@ import contract
 import index
 import layout
 import manifest as manifest_module
+import pending
 import sbom
 import sign
 import sources
@@ -114,6 +115,28 @@ def cmd_checkout_tags(args):
         return
     outputs({"tags": json.dumps(tags)})
     summary([f"### Tags {args.branch} would release"] + [f"- {tag}" for tag in tags or ["none"]])
+
+
+def cmd_pending(args):
+    """Lists the GitHub releases a release PR from staging into master creates and writes their notes, after checking
+    the merge; fails on anything that would stop one of them, so nothing is created."""
+    config = load_config()
+    problems = pending.merge_problems(args.head, args.merge, REPO_ROOT)
+    releases = []
+    if not problems:
+        try:
+            releases, problems = pending.pending_releases(config, REPO_ROOT, args.branch, pending.existing_tags(REPO_ROOT))
+        except (PlanError, OSError) as error:
+            problems = [str(error)]
+    if not problems:
+        notes = Path(args.notes)
+        notes.mkdir(parents=True, exist_ok=True)
+        for release in releases:
+            (notes / f"{release.tag}.md").write_bytes(release.notes.encode("utf-8"))
+        Path(args.out).write_bytes(json.dumps({"releases": [release.to_json() for release in releases]}, indent=2).encode("utf-8"))
+        lines = [f"- {release.tag}{' (pre-release)' if release.prerelease else ''}" for release in releases]
+        summary(["### Releases of this merge"] + (lines or ["- none, every version is tagged already"]))
+    finish(problems, "Release plan")
 
 
 def cmd_check_branch(args):
@@ -326,6 +349,14 @@ def main(argv=None):
     command = commands.add_parser("checkout-tags")
     command.add_argument("--branch", required=True)
     command.set_defaults(func=cmd_checkout_tags)
+
+    command = commands.add_parser("pending")
+    command.add_argument("--head", required=True)
+    command.add_argument("--merge", required=True)
+    command.add_argument("--branch", required=True)
+    command.add_argument("--out", required=True)
+    command.add_argument("--notes", required=True)
+    command.set_defaults(func=cmd_pending)
 
     command = commands.add_parser("check-branch")
     command.add_argument("--plan", required=True)
