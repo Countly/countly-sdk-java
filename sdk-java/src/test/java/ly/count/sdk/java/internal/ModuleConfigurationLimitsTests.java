@@ -357,6 +357,77 @@ public class ModuleConfigurationLimitsTests {
     }
 
     /**
+     * The key length limit of the developer configuration cuts keys while the settings set none, the
+     * settings override it while they carry {@code lkl}, and it applies again once they stop.
+     * <p>
+     * Verifies that a developer limit of 5 cuts the event key and the segmentation keys while the
+     * values stay whole, that a response with a key length limit of 8 cuts to 8 instead, and that a
+     * response leaving the limit out brings back the developer limit of 5.
+     */
+    @Test
+    public void theDeveloperKeyLengthLimit_cutsKeys_untilTheSettingsOverrideIt() {
+        server.respondWith(new ServerConfigBuilder().networking(false));
+        init(configWithWarnings().enableFeatures(Config.Feature.Events).setEventQueueSizeToSend(100).setMaxKeyLength(5));
+        Assert.assertEquals(5, provider().getMaxKeyLength());
+        Map<String, Object> segmentation = TestUtils.map("segment_key", "segment_value", "second", 2);
+
+        Countly.instance().events().recordEvent("event_key", segmentation);
+        push(new ServerConfigBuilder().keyLengthLimit(8));
+        Assert.assertEquals(8, provider().getMaxKeyLength());
+        Countly.instance().events().recordEvent("event_key", segmentation);
+        push(new ServerConfigBuilder().networking(false));
+        Assert.assertEquals(5, provider().getMaxKeyLength());
+        Countly.instance().events().recordEvent("event_key", segmentation);
+
+        List<EventImpl> queued = TestUtils.getCurrentEQ();
+        Assert.assertEquals(keysOf(queued).toString(), 3, queued.size());
+        assertEvent(queued.get(0), "event", TestUtils.map("segme", "segment_value", "secon", 2));
+        assertEvent(queued.get(1), "event_ke", TestUtils.map("segment_", "segment_value", "second", 2));
+        assertEvent(queued.get(2), "event", TestUtils.map("segme", "segment_value", "secon", 2));
+    }
+
+    /**
+     * Without any SDK behavior settings, the key length limit of the developer configuration cuts the
+     * keys of events, views and custom user properties.
+     * <p>
+     * Verifies with a limit of 4 the event key and segmentation keys, the view name, and the custom
+     * user property keys of a set and of a modification, while the keys the SDK adds to a view stay
+     * whole.
+     */
+    @Test
+    public void withoutSettings_theDeveloperKeyLengthLimitCutsKeys() {
+        Countly.instance().init(TestUtils.getBaseConfig().setLogListener(this::keepWarning)
+            .enableFeatures(Config.Feature.Events, Config.Feature.Views, Config.Feature.UserProfiles)
+            .setEventQueueSizeToSend(100).setMaxKeyLength(4));
+
+        Countly.instance().events().recordEvent("event_key", TestUtils.map("segment_key", "segment_value"));
+        Countly.instance().views().startView("view_name");
+        List<EventImpl> queued = TestUtils.getCurrentEQ();
+        Assert.assertEquals(keysOf(queued).toString(), 2, queued.size());
+        assertEvent(queued.get(0), "even", TestUtils.map("segm", "segment_value"));
+        Assert.assertEquals("view", queued.get(1).segmentation.get(ModuleViews.KEY_NAME));
+        Assert.assertEquals("1", queued.get(1).segmentation.get(ModuleViews.KEY_VISIT));
+
+        Countly.instance().userProfile().setProperty("custom_key", "custom_value");
+        Countly.instance().userProfile().push("list_key", "item");
+        Countly.instance().userProfile().save();
+        TestUtils.letTheClockCatchUp();
+
+        JSONObject details = null;
+        for (Map<String, String> request : TestUtils.getCurrentRQ()) {
+            if (request.containsKey("user_details")) {
+                details = new JSONObject(request.get("user_details"));
+            }
+        }
+        Assert.assertNotNull(details);
+        JSONObject custom = details.getJSONObject(ModuleUserProfile.CUSTOM_KEY);
+        Assert.assertEquals("custom_value", custom.getString("cust"));
+        Assert.assertEquals("item", custom.getJSONObject("list").getString("$push"));
+        Assert.assertEquals(2, custom.length());
+        Assert.assertTrue(warningsContaining("key length limit of [4]") > 0);
+    }
+
+    /**
      * With a live response that sets no limit, nothing any feature sends is cut, however long or wide.
      * <p>
      * Verifies that the provider reports no key, value, entry, lines per thread and line length limit

@@ -39,6 +39,7 @@
 * Added "disableBackoffMechanism()" init config method to disable the backoff behavior.
 * Added support for server requested SDK log gathering. When the server asks for it, the SDK uploads its own internal log lines, even if logging is disabled. While consent is required, a line is uploaded only while the consent of the feature it belongs to is given.
 * Added support for the SDK connection test. When the server asks for it, the SDK checks that it can reach every endpoint it depends on and reports the results.
+* Added "setMaxKeyLength(int)" init config method to limit the length of event keys, view names, segmentation keys and custom user property keys. Longer keys are truncated. There is no limit by default, and the key length limit of the SDK behavior settings overrides it.
 
 * Mitigated an issue where saving the SDK storage while remote config values were changing could empty the storage file.
 * Mitigated an issue where a storage file cut short by a stopped process made initialization fail.
