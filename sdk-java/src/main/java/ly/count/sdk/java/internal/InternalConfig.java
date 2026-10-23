@@ -245,6 +245,15 @@ public class InternalConfig extends Config {
         return maxBreadcrumbCount;
     }
 
+    /**
+     * The key length limit the developer set.
+     *
+     * @return the limit, {@link Integer#MAX_VALUE} when none is set
+     */
+    int getMaxKeyLength() {
+        return maxKeyLength;
+    }
+
     String[] getLocationParams() {
         return new String[] { country, city, location, ip };
     }
