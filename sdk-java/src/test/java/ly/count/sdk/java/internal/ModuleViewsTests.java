@@ -17,8 +17,9 @@ import org.junit.runners.JUnit4;
 public class ModuleViewsTests {
 
     @Before
-    public void beforeTest() {
+    public void beforeTest() throws InterruptedException {
         TestUtils.createCleanTestState();
+        TestUtils.awaitStartOfSecond();
     }
 
     @After

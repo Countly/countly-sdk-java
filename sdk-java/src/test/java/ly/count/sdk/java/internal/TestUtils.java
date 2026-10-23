@@ -352,6 +352,20 @@ public class TestUtils {
      */
     private static final double SLEEP_OVERRUN_TOLERANCE_SECONDS = 2.0;
 
+    /**
+     * Waits for the next second when the clock is past the first 200 ms of the current one. A view
+     * duration is the difference of two whole-second timestamps, so a view stopped right after it
+     * started reports 1 s when the two calls fall on either side of a second boundary.
+     *
+     * @throws InterruptedException when the wait is interrupted
+     */
+    static void awaitStartOfSecond() throws InterruptedException {
+        long intoSecond = System.currentTimeMillis() % 1000;
+        if (intoSecond > 200) {
+            Thread.sleep(1000 - intoSecond);
+        }
+    }
+
     static void validateEvent(EventImpl gonnaValidate, String key, Map<String, Object> segmentation, int count, Double sum, Double duration, String id, String pvid, String cvid, String peid) {
         Assert.assertEquals(key, gonnaValidate.key);
 

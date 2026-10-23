@@ -614,13 +614,14 @@ public class SessionImplTests {
      * start, stop and next view should be recorded to EQ
      */
     @Test
-    public void view_stopStartedAndNext() {
+    public void view_stopStartedAndNext() throws InterruptedException {
         InternalConfig config = new InternalConfig(TestUtils.getConfigSessions(Config.Feature.Views, Config.Feature.Events).setEventQueueSizeToSend(4));
         config.viewIdGenerator = TestUtils.idGenerator();
         Countly.instance().init(config);
 
         SessionImpl session = (SessionImpl) Countly.session();
         TestUtils.validateEQSize(0);
+        TestUtils.awaitStartOfSecond();
         session.view("start");
         TestUtils.validateEQSize(1);
         session.view("next");
