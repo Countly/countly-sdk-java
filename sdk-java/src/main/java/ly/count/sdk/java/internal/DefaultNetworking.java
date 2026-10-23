@@ -19,7 +19,8 @@ public class DefaultNetworking implements Networking {
     private Log L = null;
 
     private Transport transport;
-    private Tasks tasks;
+    //package-private so tests can wait until a sent request was handled
+    Tasks tasks;
     private volatile boolean shutdown;
     private volatile boolean backedOff;
 
