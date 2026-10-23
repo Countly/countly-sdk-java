@@ -4,11 +4,8 @@ import unittest
 from pathlib import Path
 
 from plan import plan_for_tag
-from sources import check_version_sources
-from tests.support import repository_config
-
-BUILD_GRADLE = 'allprojects {\n  ext.CLY_VERSION = "{version}"\n  ext.POWERMOCK_VERSION = "1.7.4"\n}\n'
-CONFIG_JAVA = 'public class Config {\n    protected String sdkVersion = "{version}";\n}\n'
+from sources import changelog_section, check_version_sources
+from tests.support import repository_config, write_core, write_file
 
 
 class SourcesTest(unittest.TestCase):
@@ -18,16 +15,11 @@ class SourcesTest(unittest.TestCase):
 
     def write(self, relative, text):
         """Writes a file of the fake checkout."""
-        path = self.root / relative
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_bytes(text.encode("utf-8"))
+        write_file(self.root, relative, text)
 
     def write_sdk(self, properties_version, gradle_version, java_version, changelog):
         """Writes the three version sources and the changelog."""
-        self.write("gradle.properties", f"VERSION_NAME={properties_version}\nGROUP=ly.count.sdk\n")
-        self.write("build.gradle", BUILD_GRADLE.replace("{version}", gradle_version))
-        self.write("sdk-java/src/main/java/ly/count/sdk/java/Config.java", CONFIG_JAVA.replace("{version}", java_version))
-        self.write("CHANGELOG.md", changelog)
+        write_core(self.root, properties_version, gradle_version, java_version, changelog)
 
     def test_matching_sources(self):
         self.write_sdk("26.8.1", "26.8.1", "26.8.1", "## 26.8.1\n* Fixed things.\n")
@@ -40,6 +32,7 @@ class SourcesTest(unittest.TestCase):
             "build.gradle: version is 26.8.0, the tag says 26.8.1",
             "sdk-java/src/main/java/ly/count/sdk/java/Config.java: version is 26.8.2, the tag says 26.8.1",
             "CHANGELOG.md: no '## 26.8.1' heading",
+            "CHANGELOG.md: still has a '## XX.XX.XX' heading; move its lines under '## 26.8.1'",
         ])
 
     def test_candidates_need_no_changelog_heading(self):
@@ -64,6 +57,19 @@ class SourcesTest(unittest.TestCase):
             "sdk-java-ui/gradle.properties: version is 26.8.0, the tag says 26.8.1",
             "sdk-java-ui/CHANGELOG.md: no '## 26.8.1' heading",
         ])
+
+    def test_a_changelog_section_ends_at_the_next_heading_and_keeps_its_lines(self):
+        text = "## XX.XX.XX\n\n* New.\n  ```groovy\n  code\n  ```\n\n## 26.8.0\n* Old.\n"
+        self.assertEqual(changelog_section(text, "XX.XX.XX"), "* New.\n  ```groovy\n  code\n  ```\n")
+        self.assertEqual(changelog_section(text, "26.8.0"), "* Old.\n")
+        self.assertIsNone(changelog_section(text, "26.9.0"))
+        fenced = "## 26.9.0\r\n* Add the repository:\r\n```markdown\r\n## Not a release\r\n```\r\n## 26.8.0\r\n"
+        self.assertEqual(changelog_section(fenced, "26.9.0"), "* Add the repository:\n```markdown\n## Not a release\n```\n")
+
+    def test_a_missing_changelog_is_reported(self):
+        self.write_sdk("26.9.0", "26.9.0", "26.9.0", "")
+        (self.root / "CHANGELOG.md").unlink()
+        self.assertEqual(check_version_sources(self.root, plan_for_tag(self.config, "26.9.0"), self.config), ["CHANGELOG.md does not exist"])
 
     def test_every_version_source_is_found_in_this_checkout(self):
         root = Path(__file__).resolve().parents[3]

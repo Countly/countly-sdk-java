@@ -1,18 +1,21 @@
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 
+from tests.support import write_core, write_ui
+
 RELEASE = Path(__file__).resolve().parents[1] / "release.py"
 
 
-def run_cli(*args, output=""):
+def run_cli(*args, output="", script=RELEASE):
     """Runs release.py like the workflow does; GitHub's step output file is written only when `output` names one."""
     env = dict(os.environ, GITHUB_OUTPUT=output, GITHUB_STEP_SUMMARY="")
-    return subprocess.run([sys.executable, str(RELEASE), *args], capture_output=True, text=True, env=env)
+    return subprocess.run([sys.executable, str(script), *args], capture_output=True, text=True, env=env)
 
 
 class ReleaseCliTest(unittest.TestCase):
@@ -60,6 +63,32 @@ class ReleaseCliTest(unittest.TestCase):
         result = run_cli("checkout-tags", "--branch", "master", output=str(output))
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(output.read_text(encoding="utf-8").strip(), "tags=[]")
+
+    def test_pending_creates_nothing_when_the_merge_does_not_contain_the_head(self):
+        out = self.folder / "pending.json"
+        result = run_cli("pending", "--head", "0" * 40, "--merge", "HEAD", "--branch", "staging", "--out", str(out), "--notes", str(self.folder / "notes"))
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("::error::", result.stdout)
+        self.assertFalse(out.exists())
+
+    def test_pending_writes_the_untagged_releases_and_their_notes_for_the_workflow(self):
+        """Runs a copy of the release tools in a throwaway repository whose core version has no tag yet."""
+        repo = self.folder / "repo"
+        shutil.copytree(RELEASE.parent, repo / ".github/release", ignore=shutil.ignore_patterns("tests", "__pycache__"))
+        write_core(repo, "26.9.0", "26.9.0", "26.9.0", "## 26.9.0\n* Core change.\n\n## 26.8.0\n* Old.\n")
+        write_ui(repo, "26.8.0", "## 26.8.0\n* Old UI.\n")
+        git = ["git", "-C", str(repo), "-c", "user.name=Release test", "-c", "user.email=release@example.com", "-c", "commit.gpgsign=false", "-c", "tag.gpgSign=false"]
+        subprocess.run(["git", "init", "-q", str(repo)], check=True)
+        subprocess.run(git + ["add", "-A"], check=True)
+        subprocess.run(git + ["commit", "-q", "-m", "Release 26.9.0"], check=True)
+        subprocess.run(git + ["tag", "ui-26.8.0"], check=True)
+        out = self.folder / "pending.json"
+        notes = self.folder / "notes"
+        result = run_cli("pending", "--head", "HEAD", "--merge", "HEAD", "--branch", "staging", "--out", str(out), "--notes", str(notes), script=repo / ".github/release/release.py")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(json.loads(out.read_text(encoding="utf-8")), {"releases": [{"tag": "26.9.0", "prerelease": False, "latest": True}]})
+        self.assertEqual(sorted(path.name for path in notes.iterdir()), ["26.9.0.md"])
+        self.assertEqual((notes / "26.9.0.md").read_text(encoding="utf-8"), "* Core change.\n")
 
     def test_prerelease_flag_must_match(self):
         cases = [("26.8.1", "true", 1), ("26.8.1-rc1", "false", 1), ("26.8.1", "unknown", 1), ("26.8.1-rc1", "true", 0), ("26.8.1", "false", 0)]

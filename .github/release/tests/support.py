@@ -1,14 +1,38 @@
-"""Shared test helpers: the repository configuration and in-memory stand-ins for R2 and the web."""
+"""Shared test helpers: the repository configuration, fake checkouts and in-memory stand-ins for R2 and the web."""
 
 import hashlib
 from pathlib import Path
 
 from plan import load_config
 
+BUILD_GRADLE = 'allprojects {\n  ext.CLY_VERSION = "{version}"\n  ext.POWERMOCK_VERSION = "1.7.4"\n}\n'
+CONFIG_JAVA = 'public class Config {\n    protected String sdkVersion = "{version}";\n}\n'
+
 
 def repository_config():
     """The real config.json of this repository."""
     return load_config(Path(__file__).resolve().parents[1] / "config.json")
+
+
+def write_file(root, relative, text):
+    """Writes a file of a fake checkout."""
+    path = Path(root) / relative
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(text.encode("utf-8"))
+
+
+def write_core(root, properties_version, gradle_version, java_version, changelog):
+    """Writes the three version sources of the core SDK and its changelog into a fake checkout."""
+    write_file(root, "gradle.properties", f"VERSION_NAME={properties_version}\nGROUP=ly.count.sdk\n")
+    write_file(root, "build.gradle", BUILD_GRADLE.replace("{version}", gradle_version))
+    write_file(root, "sdk-java/src/main/java/ly/count/sdk/java/Config.java", CONFIG_JAVA.replace("{version}", java_version))
+    write_file(root, "CHANGELOG.md", changelog)
+
+
+def write_ui(root, version, changelog):
+    """Writes the version source of the UI package and its changelog into a fake checkout."""
+    write_file(root, "sdk-java-ui/gradle.properties", f"POM_ARTIFACT_ID=java-ui\nVERSION_NAME={version}\n")
+    write_file(root, "sdk-java-ui/CHANGELOG.md", changelog)
 
 
 class FakeBucket:
