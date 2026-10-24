@@ -290,6 +290,7 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
         currentVEventQueueSizeThreshold = config.getEventsBufferSize();
         currentVSessionUpdateInterval = config.getSendUpdateEachSeconds();
         currentVMaxBreadcrumbCount = config.getMaxBreadcrumbCount();
+        currentVMaxKeyLength = config.getMaxKeyLength();
         currentVZoneTimerInterval = config.content.zoneTimerInterval;
     }
 

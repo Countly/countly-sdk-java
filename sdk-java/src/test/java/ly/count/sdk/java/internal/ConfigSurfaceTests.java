@@ -51,6 +51,7 @@ public class ConfigSurfaceTests {
             .setEventQueueSizeToSend(9)
             .setRequestQueueMaxSize(321)
             .setMaxBreadcrumbCount(12)
+            .setMaxKeyLength(64)
             .setNetworkConnectTimeout(11)
             .setNetworkReadTimeout(12)
             .setNetworkRequestCooldown(1300)
@@ -92,6 +93,7 @@ public class ConfigSurfaceTests {
         Assert.assertEquals("test-platform", SDKCore.instance.config.getSdkPlatform());
         // These two are only readable off the internal config, which is what the modules see.
         Assert.assertEquals(12, SDKCore.instance.config.getMaxBreadcrumbCount());
+        Assert.assertEquals(64, SDKCore.instance.config.getMaxKeyLength());
         Assert.assertFalse(SDKCore.instance.config.isUnhandledCrashReportingEnabled());
     }
 
@@ -143,6 +145,15 @@ public class ConfigSurfaceTests {
         Assert.assertEquals(23, config.getEventsBufferSize());
         config.setEventQueueSizeToSend(-5);
         Assert.assertEquals("a negative event queue size must be refused", 23, config.getEventsBufferSize());
+
+        // key length accepts 1 and up, and sets no limit until it is called
+        Assert.assertEquals(Integer.MAX_VALUE, new InternalConfig(config).getMaxKeyLength());
+        config.setMaxKeyLength(40);
+        for (int bad : new int[] { 0, -1, Integer.MIN_VALUE }) {
+            config.setMaxKeyLength(bad);
+            Assert.assertEquals("key length must reject " + bad, 40, new InternalConfig(config).getMaxKeyLength());
+        }
+        Assert.assertEquals(1, new InternalConfig(config.setMaxKeyLength(1)).getMaxKeyLength());
 
         // The boundary values themselves are valid.
         Assert.assertEquals(300, config.setNetworkConnectTimeout(300).getNetworkConnectionTimeout());
