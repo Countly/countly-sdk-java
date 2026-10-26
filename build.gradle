@@ -17,7 +17,7 @@ buildscript {
     if (gradle.startParameter.taskNames.any { it.toLowerCase().contains("publish") }) {
       // This requires minimum java 11 to work
       classpath 'com.vanniktech:gradle-maven-publish-plugin:0.28.0'
-      classpath 'org.cyclonedx:cyclonedx-gradle-plugin:3.4.1'
+      classpath 'org.cyclonedx:cyclonedx-gradle-plugin:3.5.1'
     }
   }
 }
