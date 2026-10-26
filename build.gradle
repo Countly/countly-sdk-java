@@ -157,7 +157,7 @@ ext.countFailedTests = { module ->
   int failed = 0
   resultsDir.listFiles({ file -> file.name.endsWith('.xml') } as FileFilter)?.each { file ->
     try {
-      def suite = new XmlParser(false, false).parse(file)
+      def suite = new groovy.xml.XmlParser(false, false).parse(file)
       failed += (suite.@failures as int) + (suite.@errors as int)
     } catch (Exception ignored) {
       // An unreadable result file is not worth failing the summary over.
@@ -173,7 +173,7 @@ ext.countFailedTests = { module ->
  * build depend on the network, so external entities are switched off.
  */
 ext.readCounters = { File report ->
-  def parser = new XmlParser(false, false)
+  def parser = new groovy.xml.XmlParser(false, false)
   parser.setFeature('http://apache.org/xml/features/disallow-doctype-decl', false)
   parser.setFeature('http://apache.org/xml/features/nonvalidating/load-external-dtd', false)
 

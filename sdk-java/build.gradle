@@ -17,6 +17,16 @@ if (JavaVersion.current().isJava9Compatible()) {
   }
 }
 
+// Gradle itself needs Java 17, so CI passes -PtestJavaVersion=8 to run the tests on the SDK's Java 8 floor.
+def testJavaVersion = findProperty('testJavaVersion')
+if (testJavaVersion) {
+  tasks.named('test') {
+    javaLauncher = javaToolchains.launcherFor {
+      languageVersion = JavaLanguageVersion.of(testJavaVersion.toString())
+    }
+  }
+}
+
 dependencies {
   implementation 'org.json:json:20260814'
   implementation 'com.google.code.findbugs:jsr305:3.0.2'
