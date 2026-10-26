@@ -16,4 +16,6 @@ dependencies {
   //implementation "ly.count.sdk:java:${CLY_VERSION}"
 }
 
-mainClassName = 'ly.count.java.demo.ReproduceIssue264'
+application {
+  mainClass = 'ly.count.java.demo.ReproduceIssue264'
+}
