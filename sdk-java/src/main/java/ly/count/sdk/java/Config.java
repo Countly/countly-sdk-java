@@ -227,6 +227,11 @@ public class Config {
     protected int maxBreadcrumbCount = 100;
 
     /**
+     * Maximum length of the keys the SDK records, no limit by default.
+     */
+    protected int maxKeyLength = Integer.MAX_VALUE;
+
+    /**
      * Enable automatic crash reporting for unhandled exceptions.
      */
     protected boolean unhandledCrashReportingEnabled = true;
@@ -319,6 +324,26 @@ public class Config {
      */
     public Config setMaxBreadcrumbCount(int maxBreadcrumbCount) {
         this.maxBreadcrumbCount = maxBreadcrumbCount;
+        return this;
+    }
+
+    /**
+     * Set the maximum length of the keys the SDK records: event keys, view names, segmentation keys,
+     * custom user property keys, and the keys of custom user property modifiers. Longer keys are
+     * truncated to this length. There is no limit by default. The key length limit of the SDK behavior
+     * settings overrides this value.
+     *
+     * @param maxKeyLength the maximum key length, at least 1
+     * @return {@code this} instance for method chaining
+     */
+    public Config setMaxKeyLength(int maxKeyLength) {
+        if (maxKeyLength < 1) {
+            if (configLog != null) {
+                configLog.e("[Config] maxKeyLength cannot be less than 1");
+            }
+        } else {
+            this.maxKeyLength = maxKeyLength;
+        }
         return this;
     }
 
