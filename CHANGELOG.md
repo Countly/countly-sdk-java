@@ -55,6 +55,9 @@
 * Mitigated an issue where verbose logs showed the values of custom network request headers. Only the number of headers is logged now.
 * Mitigated an issue where a fresh initialization logged an error for storage files that did not exist yet.
 * Mitigated an issue where a crash breadcrumb added while a crash was being recorded on another thread could be lost.
+* Mitigated an issue where backend mode requests carried no device ID type, so the server did not count the users recorded in backend mode as identified.
+* Mitigated an issue where a backend mode direct request sent a key twice when the given map contained a key the SDK also sets. The value in the map now replaces the SDK's value, as documented.
+* Mitigated an issue where a backend mode direct request changed the given map, and failed with an unmodifiable map.
 
 ## 26.8.0
 * Added support for the Content feature, accessible through the "Countly.instance().content()" interface:
