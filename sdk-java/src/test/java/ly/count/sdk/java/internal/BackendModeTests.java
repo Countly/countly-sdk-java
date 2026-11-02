@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -833,7 +834,7 @@ public class BackendModeTests {
     public void testRecordDirectRequest() {
         ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
 
-        // Direct request with timestamp and device id
+        // Values in the map replace the base request's values
         Map<String, String> requestData = new ConcurrentHashMap<>();
         requestData.put("data1", "value1");
         requestData.put("device_id", "device-id-1");
@@ -852,7 +853,14 @@ public class BackendModeTests {
         Assert.assertEquals("value1", request.params.get("data1"));
         Assert.assertEquals("value3", request.params.get("data3"));
         Assert.assertEquals("1", request.params.get("dr"));
-        validateRequestTimeFields("device-id-2", 1_647_938_191_782L, request);
+        Assert.assertEquals("device-id-1", request.params.get("device_id"));
+        Assert.assertEquals("1647938191782", request.params.get("timestamp"));
+        Assert.assertEquals("100", request.params.get("tz"));
+        Assert.assertEquals("0", request.params.get("dow"));
+        Assert.assertEquals("9", request.params.get("hour"));
+        for (String key : new String[] { "device_id", "timestamp", "tz", "dow", "hour" }) {
+            Assert.assertEquals(key + " is sent more than once: " + request.params, 1, countParam(request.params, key));
+        }
 
         // Direct request without timestamp and device id
         requestData = new ConcurrentHashMap<>();
@@ -870,6 +878,92 @@ public class BackendModeTests {
         Assert.assertEquals("1", request.params.get("dr"));
 
         validateRequestTimeFields("device-id-2", 987_654_321L, request);
+    }
+
+    /**
+     * Every backend mode request carries the device ID type "developer supplied" (t=0),
+     * so the server counts the users recorded in backend mode as identified.
+     */
+    @Test
+    public void testEveryRequestCarriesDeveloperSuppliedDeviceIdType() {
+        ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
+        Map<String, Object> userProperties = new HashMap<>();
+        userProperties.put("name", "Full Name");
+        Map<String, String> requestData = new HashMap<>();
+        requestData.put("custom_key", "custom_value");
+
+        backendMode.sessionBegin("device-id-1", new HashMap<>(), null, 1_646_640_780_130L);
+        backendMode.sessionUpdate("device-id-1", 10, 1_646_640_780_130L);
+        backendMode.recordEvent("device-id-1", "key-1", 1, null, null, null, 1_646_640_780_130L);
+        backendMode.sessionEnd("device-id-1", 20, 1_646_640_780_130L);
+        backendMode.recordException("device-id-1", "message", "stacktrace", null, null, 1_646_640_780_130L);
+        backendMode.recordUserProperties("device-id-1", userProperties, 1_646_640_780_130L);
+        backendMode.recordDirectRequest("device-id-1", requestData, 1_646_640_780_130L);
+
+        Assert.assertEquals(7, SDKCore.instance.requestQueueMemory.size());
+        for (Request request : SDKCore.instance.requestQueueMemory) {
+            Assert.assertEquals(request.params.toString(), "0", request.params.get("t"));
+        }
+    }
+
+    /**
+     * In a direct request, a value given in the map replaces the SDK's value, so each key is sent once.
+     * sdk_name, sdk_version, checksum and checksum256 stay the SDK's.
+     */
+    @Test
+    public void testRecordDirectRequestMapValuesReplaceBaseValues() {
+        ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
+        Map<String, String> requestData = new HashMap<>();
+        requestData.put("app_key", "other-app-key");
+        requestData.put("old_device_id", "old-device-id");
+        requestData.put("t", "1");
+        requestData.put("sdk_name", "other-sdk");
+        requestData.put("sdk_version", "0.0.0");
+        requestData.put("checksum", "given");
+        requestData.put("checksum256", "given");
+
+        backendMode.recordDirectRequest("device-id-1", requestData, 1_646_640_780_130L);
+
+        Assert.assertEquals(1, SDKCore.instance.requestQueueMemory.size());
+        Request request = SDKCore.instance.requestQueueMemory.remove();
+        Assert.assertEquals("other-app-key", request.params.get("app_key"));
+        Assert.assertEquals("old-device-id", request.params.get("old_device_id"));
+        Assert.assertEquals("1", request.params.get("t"));
+        Assert.assertEquals("java-native-backend", request.params.get("sdk_name"));
+        Assert.assertNotEquals("0.0.0", request.params.get("sdk_version"));
+        Assert.assertFalse(request.params.has("checksum"));
+        Assert.assertFalse(request.params.has("checksum256"));
+        for (String key : new String[] { "app_key", "old_device_id", "t", "sdk_name", "sdk_version", "device_id", "timestamp" }) {
+            Assert.assertEquals(key + " is sent more than once: " + request.params, 1, countParam(request.params, key));
+        }
+    }
+
+    /**
+     * Recording a direct request leaves the given map unchanged, so an unmodifiable map works too.
+     */
+    @Test
+    public void testRecordDirectRequestKeepsGivenMapUnchanged() {
+        ModuleBackendMode.BackendMode backendMode = moduleBackendMode.new BackendMode();
+        Map<String, String> data = new HashMap<>();
+        data.put("custom_key", "custom_value");
+        data.put("checksum", "given");
+        Map<String, String> requestData = Collections.unmodifiableMap(data);
+
+        backendMode.recordDirectRequest("device-id-1", requestData, 1_646_640_780_130L);
+
+        Assert.assertEquals(2, requestData.size());
+        Assert.assertEquals(1, SDKCore.instance.requestQueueMemory.size());
+        Assert.assertEquals("custom_value", SDKCore.instance.requestQueueMemory.remove().params.get("custom_key"));
+    }
+
+    private int countParam(Params params, String key) {
+        int count = 0;
+        for (String pair : params.toString().split("&")) {
+            if (pair.split("=")[0].equals(key)) {
+                count++;
+            }
+        }
+        return count;
     }
 
     private Map<String, Object> populateUserProperties(boolean addUserDetail, boolean addCustomDetail, boolean addOperation) {

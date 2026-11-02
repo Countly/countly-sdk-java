@@ -26,6 +26,8 @@ public class ModuleBackendMode extends ModuleBase {
 
     final String[] userPredefinedKeys = { "name", "username", "email", "organization", "phone", "gender", "byear" };
 
+    static final String[] DIRECT_REQUEST_PROTECTED_KEYS = { "checksum", "checksum256", "sdk_name", "sdk_version" };
+
     @Override
     public void init(InternalConfig config) {
         super.init(config);
@@ -97,7 +99,7 @@ public class ModuleBackendMode extends ModuleBase {
 
         JSONObject metricsJson = new JSONObject(metrics);
         request.params.add("metrics", metricsJson);
-        ModuleRequests.addRequiredParametersToParams(internalConfig, request.params);
+        addRequiredParameters(request);
 
         if (location != null) {
             for (Map.Entry<String, String> entry : location.entrySet()) {
@@ -120,7 +122,7 @@ public class ModuleBackendMode extends ModuleBase {
         Request request = new Request();
         request.params.add("device_id", deviceID);
         request.params.add("session_duration", duration);
-        ModuleRequests.addRequiredParametersToParams(internalConfig, request.params);
+        addRequiredParameters(request);
 
         addTimeInfoIntoRequest(request, timestamp);
         addRequestToRequestQ(request);
@@ -141,7 +143,7 @@ public class ModuleBackendMode extends ModuleBase {
         request.params.add("device_id", deviceID);
         request.params.add("end_session", 1);
         request.params.add("session_duration", duration);
-        ModuleRequests.addRequiredParametersToParams(internalConfig, request.params);
+        addRequiredParameters(request);
 
         addTimeInfoIntoRequest(request, timestamp);
         addRequestToRequestQ(request);
@@ -171,7 +173,7 @@ public class ModuleBackendMode extends ModuleBase {
         Request request = new Request();
         request.params.add("device_id", deviceID);
         request.params.add("crash", crash);
-        ModuleRequests.addRequiredParametersToParams(internalConfig, request.params);
+        addRequiredParameters(request);
 
         addTimeInfoIntoRequest(request, timestamp);
 
@@ -214,7 +216,7 @@ public class ModuleBackendMode extends ModuleBase {
 
         request.params.add("device_id", deviceID);
         request.params.add("user_details", properties);
-        ModuleRequests.addRequiredParametersToParams(internalConfig, request.params);
+        addRequiredParameters(request);
 
         addTimeInfoIntoRequest(request, timestamp);
         addRequestToRequestQ(request);
@@ -231,18 +233,15 @@ public class ModuleBackendMode extends ModuleBase {
         request.params.add("device_id", deviceID);
         request.params.add("dr", "1");
         addTimeInfoIntoRequest(request, timestamp);
-
-        //remove checksum, will add before sending request to server
-        requestData.remove("checksum");
-        requestData.remove("checksum256");
-        requestData.remove("sdk_name");
-        requestData.remove("sdk_version");
+        addRequiredParameters(request);
 
         for (Map.Entry<String, String> item : requestData.entrySet()) {
-            request.params.add(item.getKey(), item.getValue());
+            if (!Arrays.asList(DIRECT_REQUEST_PROTECTED_KEYS).contains(item.getKey())) {
+                request.params.remove(item.getKey());
+                request.params.add(item.getKey(), item.getValue());
+            }
         }
 
-        ModuleRequests.addRequiredParametersToParams(internalConfig, request.params);
         addRequestToRequestQ(request);
     }
 
@@ -274,6 +273,17 @@ public class ModuleBackendMode extends ModuleBase {
         return jsonObject;
     }
 
+    /**
+     * Adds the parameters every backend mode request carries: the common ones and the device ID type
+     * "developer supplied" (t=0), because every backend mode call provides its device ID.
+     *
+     * @param request the request to add the parameters to
+     */
+    private void addRequiredParameters(Request request) {
+        ModuleRequests.addRequiredParametersToParams(internalConfig, request.params);
+        request.params.add("t", 0);
+    }
+
     private void addTimeInfoIntoRequest(Request request, Long timestamp) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(timestamp);
@@ -298,7 +308,7 @@ public class ModuleBackendMode extends ModuleBase {
         Request request = new Request();
         request.params.add("device_id", deviceID);
         request.params.add("events", events);
-        ModuleRequests.addRequiredParametersToParams(internalConfig, request.params);
+        addRequiredParameters(request);
 
         addTimeInfoIntoRequest(request, System.currentTimeMillis());
         request.own(ModuleBackendMode.class);
@@ -599,7 +609,8 @@ public class ModuleBackendMode extends ModuleBase {
         }
 
         /**
-         * Record a direct request.
+         * Record a direct request. A value in the map replaces the base request's value of the same key,
+         * except sdk_name, sdk_version, checksum and checksum256, so each key is sent once. The given map is not changed.
          *
          * @param deviceID device id, cannot be null or empty
          * @param requestData a map contains request data, it can not be null or empty
