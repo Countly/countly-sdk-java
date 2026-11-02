@@ -5,8 +5,11 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import org.junit.After;
@@ -232,6 +235,36 @@ public class EventQueueTests {
         eventQueue.restoreFromDisk();
         TestUtils.validateEQSize(1, eventQueue);
         validateEvent(eventQueue.eventQueueMemoryCache.get(0), "test-joinEvents-1", null, 1, null, null);
+    }
+
+    /**
+     * Take the matching events from the queue
+     * "take" function should remove them from both memory and storage and return them in queue order
+     * the other events stay, "count" counts the matching ones, and a take that matches nothing changes nothing
+     */
+    @Test
+    public void take() {
+        init(TestUtils.getConfigEvents(10));
+
+        EventImpl first = createEvent("test-take-1", null, 1, null, null);
+        EventImpl kept = createEvent("test-take-kept", null, 1, null, null);
+        EventImpl second = createEvent("test-take-2", null, 1, null, null);
+        eventQueue.addEvent(first);
+        eventQueue.addEvent(kept);
+        eventQueue.addEvent(second);
+        Predicate<EventImpl> notKept = event -> !"test-take-kept".equals(event.key);
+        Assert.assertEquals(2, eventQueue.count(notKept));
+
+        Assert.assertEquals(Arrays.asList(first, second), eventQueue.take(notKept));
+
+        Assert.assertEquals(Collections.singletonList(kept), eventQueue.eventQueueMemoryCache);
+        Assert.assertEquals(Collections.singletonList("test-take-kept"), TestUtils.keysInEQ());
+        Assert.assertEquals(0, eventQueue.count(notKept));
+        Assert.assertTrue(eventQueue.take(notKept).isEmpty());
+        TestUtils.validateEQSize(1, eventQueue);
+
+        Assert.assertEquals(Collections.singletonList(kept), eventQueue.take(event -> true));
+        TestUtils.validateEQSize(0, eventQueue);
     }
 
     static void writeToEventQueue(String fileContent, boolean delete) throws IOException {

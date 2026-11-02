@@ -142,7 +142,8 @@ public class SDKCore {
      * @return {@code true} if consent has been given
      */
     public boolean isTracking(Integer feat) {
-        return modules.containsKey(feat);
+        ModuleBase module = modules.get(feat);
+        return module != null && module.featureRuns();
     }
 
     private void onTimer() {
@@ -285,11 +286,20 @@ public class SDKCore {
             }
         }
 
+        boolean removingEventsConsent = removingConsent(noConsent, CoreFeature.Events);
         consents = consents & ~noConsent;
         L.dropLinesWithoutConsent();
 
+        if (removingEventsConsent) {
+            ModuleEvents events = module(ModuleEvents.class);
+            if (events != null) {
+                events.dropEventsWithoutConsent();
+            }
+        }
+
         for (CoreFeature feature : moduleMappings.keySet()) {
-            if (feature == CoreFeature.Sessions || (noConsent & feature.getIndex()) == 0) {
+            //the events module keeps running, for the events of the views and feedback features
+            if (feature == CoreFeature.Sessions || feature == CoreFeature.Events || (noConsent & feature.getIndex()) == 0) {
                 continue;
             }
             ModuleBase existing = module(moduleMappings.get(feature));
@@ -345,6 +355,8 @@ public class SDKCore {
             modules.put(-1, moduleConfiguration);
         }
         modules.put(0, new ModuleConnectionTest());
+        //the events module queues the events of the views and feedback features too, which need only their own consent
+        modules.put(CoreFeature.Events.getIndex(), new ModuleEvents());
         modules.put(CoreFeature.Sessions.getIndex(), new ModuleSessions());
         modules.put(CoreFeature.UserProfiles.getIndex(), new ModuleUserProfile());
 
@@ -850,8 +862,10 @@ public class SDKCore {
     }
 
     public static boolean enabled(int feature) {
-        return (feature & instance.consents) == feature &&
-            (feature & instance.config().getFeatures1()) == feature;
+        SDKCore core = instance;
+        InternalConfig config = core == null ? null : core.config;
+        return config != null && (feature & core.consents) == feature &&
+            (feature & config.getFeatures1()) == feature;
     }
 
     public static boolean enabled(CoreFeature feature) {
@@ -1089,7 +1103,8 @@ public class SDKCore {
     }
 
     /**
-     * The module of a feature while it runs: it was built and the feature's consent is given.
+     * The module of a feature while it runs: it was built, the feature is enabled and, when consent
+     * is required, the feature's consent is given.
      *
      * @param feature the feature
      * @param moduleClass the class of its module
@@ -1099,6 +1114,6 @@ public class SDKCore {
     @Nullable
     <M extends ModuleBase> M runningModule(@Nonnull CoreFeature feature, @Nonnull Class<M> moduleClass) {
         M module = module(moduleClass);
-        return module != null && hasConsentForFeature(feature) ? module : null;
+        return module != null && enabled(feature) ? module : null;
     }
 }

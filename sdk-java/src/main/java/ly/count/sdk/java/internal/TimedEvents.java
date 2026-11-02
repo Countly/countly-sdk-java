@@ -125,7 +125,7 @@ class TimedEvents implements Storable, EventImpl.EventRecorder {
             while (l-- > 0) {
                 String key = stream.readUTF();
                 EventImpl event = EventImpl.fromJSON(stream.readUTF(), this, L);
-                ModuleEvents eventsModule = SDKCore.instance.module(ModuleEvents.class);
+                ModuleEvents eventsModule = SDKCore.instance.runningModule(CoreFeature.Events, ModuleEvents.class);
                 if (eventsModule != null) {
                     eventsModule.timedEvents.put(key, event);
                 } else {

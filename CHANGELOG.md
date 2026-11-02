@@ -24,6 +24,7 @@
 * ! Minor breaking change ! The feature interfaces of "Countly.instance()" ("events()", "views()", "crashes()", "location()", "userProfile()", "remoteConfig()", "feedback()", "content()" and "deviceId()") no longer return null.
   Before initialization, while the consent of a feature is not given, or when a feature is not enabled, they return an interface that ignores calls until the feature runs and passes an error to the callbacks of the calls it ignores.
   An interface you keep sends its calls to the feature once it runs. Use "Countly.isTracking" to check whether a feature runs.
+* ! Minor breaking change ! Views and feedback widget results are now recorded without "Config.Feature.Events" and its consent: their own feature and its consent are enough. Before, they were dropped while the events feature did not run. Removing the events consent still drops the custom and timed events not sent yet, and now keeps the views and feedback widget results whose own consent is still given.
 
 * Added support for SDK behavior settings that let the server control the SDK:
   * Switches for tracking, networking, sessions, views, custom events, crash reporting, automatic crash reporting, location, and console logging

@@ -454,7 +454,7 @@ public class ModuleUserProfile extends ModuleBase {
             return;
         }
 
-        ModuleEvents events = internalConfig.sdk.runningModule(CoreFeature.Events, ModuleEvents.class);
+        ModuleEvents events = internalConfig.sdk.module(ModuleEvents.class);
         if (internalConfig.isAutoSendUserProperties() && events != null) {
             events.checkEventQueueToSend(true);
         }

@@ -2,7 +2,9 @@ package ly.count.sdk.java.internal;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
+import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 
 public class EventQueue {
@@ -106,6 +108,42 @@ public class EventQueue {
         SDKCore.instance.sdkStorage.storeEventQueue("");
         synchronized (lockEQ) {
             eventQueueMemoryCache.clear();
+        }
+    }
+
+    /**
+     * Removes the events that match and stores the ones left.
+     *
+     * @param filter which events to remove
+     * @return the removed events, in queue order
+     */
+    @Nonnull List<EventImpl> take(@Nonnull Predicate<EventImpl> filter) {
+        List<EventImpl> taken = new ArrayList<>();
+        synchronized (lockEQ) {
+            Iterator<EventImpl> events = eventQueueMemoryCache.iterator();
+            while (events.hasNext()) {
+                EventImpl event = events.next();
+                if (filter.test(event)) {
+                    taken.add(event);
+                    events.remove();
+                }
+            }
+            if (!taken.isEmpty()) {
+                SDKCore.instance.sdkStorage.storeEventQueue(joinEvents(eventQueueMemoryCache));
+            }
+        }
+        return taken;
+    }
+
+    /**
+     * Counts the queued events that match.
+     *
+     * @param filter which events to count
+     * @return the number of matching events
+     */
+    int count(@Nonnull Predicate<EventImpl> filter) {
+        synchronized (lockEQ) {
+            return (int) eventQueueMemoryCache.stream().filter(filter).count();
         }
     }
 }

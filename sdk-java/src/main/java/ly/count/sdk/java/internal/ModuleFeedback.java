@@ -267,7 +267,12 @@ public class ModuleFeedback extends ModuleBase {
             segm.putAll(UtilsInternalLimits.truncateStringValues(widgetResult, maxValueSize, L, "[ModuleFeedback] reportFeedbackWidgetManuallyInternal"));
         }
 
-        Countly.instance().events().recordEvent(widgetInfo.type.eventKey, segm);
+        ModuleEvents events = internalConfig.sdk.module(ModuleEvents.class);
+        if (events == null) {
+            L.e("[ModuleFeedback] reportFeedbackWidgetManuallyInternal, events module is not initialized");
+            return;
+        }
+        events.recordEventInternal(widgetInfo.type.eventKey, 1, null, null, segm, null);
     }
 
     private void putIfNotNull(Map<String, Object> segmentation, String key, Object value) {

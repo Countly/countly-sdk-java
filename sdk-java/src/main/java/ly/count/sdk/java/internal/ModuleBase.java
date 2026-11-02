@@ -53,20 +53,34 @@ public abstract class ModuleBase {
     }
 
     /**
+     * Whether the feature of this module runs while the SDK runs the module. The SDK runs a module
+     * only for its feature, so this is {@code true}, except for a module it also runs for other
+     * features.
+     *
+     * @return {@code true} while the feature of this module runs
+     */
+    boolean featureRuns() {
+        return true;
+    }
+
+    /**
      * The instance of this module that the SDK runs, which every call through an interface of this
      * module goes to: this one, or the running one when the interface was handed out before that
-     * started or kept from an instance that stopped. A call while none runs, as before init or while
-     * the consent of the feature is not given, is ignored and logged.
+     * started or kept from an instance that stopped. A call while none runs or its feature does not,
+     * as before init or while the consent of the feature is not given, is ignored and logged.
      *
      * @param call the call, starting with the bracketed name of the interface, for the log line
      * @param <M> the module type
-     * @return the running instance, {@code null} while none runs
+     * @return the running instance, {@code null} while none runs or its feature does not
      */
     @SuppressWarnings("unchecked")
     @Nullable
     <M extends ModuleBase> M runningInstance(@Nonnull String call) {
         SDKCore core = SDKCore.instance;
         ModuleBase running = core == null ? null : core.module(getClass());
+        if (running != null && !running.featureRuns()) {
+            running = null;
+        }
         if (running == null && core != null && core.L != null) {
             core.L.w(call + ", the feature does not run, as its consent is not given or it is not enabled, ignoring the call");
         }

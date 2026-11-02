@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,8 +18,8 @@ import ly.count.sdk.java.View;
 public class ModuleEvents extends ModuleBase {
     /**
      * The keys of the events the SDK records itself, which the custom event settings of the SDK
-     * behavior settings do not apply to. Any other key is a custom event, one starting with
-     * {@code [CLY]_} too.
+     * behavior settings do not apply to, and which the views and feedback features record without
+     * the events consent. Any other key is a custom event, one starting with {@code [CLY]_} too.
      */
     static final Set<String> INTERNAL_EVENT_KEYS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
         ModuleViews.KEY_VIEW_EVENT, FeedbackWidgetType.nps.eventKey, FeedbackWidgetType.survey.eventKey, FeedbackWidgetType.rating.eventKey)));
@@ -148,7 +149,56 @@ public class ModuleEvents extends ModuleBase {
     }
 
     /**
-     * Moves every queued event into one request.
+     * The events feature runs while it is enabled and, when consent is required, its consent is
+     * given. This module also runs without it, for the events of the views and feedback features.
+     *
+     * @return {@code true} while custom events can be recorded and sent
+     */
+    @Override
+    boolean featureRuns() {
+        return SDKCore.enabled(CoreFeature.Events);
+    }
+
+    /**
+     * Drops the timed events and the queued events whose feature no longer runs, as the events
+     * consent was removed: the custom events, and the views and feedback widget results whose own
+     * consent is not given either. The next custom event starts a new chain of previous event IDs.
+     */
+    synchronized void dropEventsWithoutConsent() {
+        List<EventImpl> dropped = eventQueue.take(event -> !SDKCore.enabled(featureOf(event.key)));
+        L.d("[ModuleEvents] dropEventsWithoutConsent, the events consent was removed, dropped [" + dropped.size() + "] queued events and [" + timedEvents.size() + "] timed events");
+        timedEvents.clear();
+        previousEventId = null;
+    }
+
+    /**
+     * Whether a key is the key of a custom event rather than of one the SDK records for the views or
+     * feedback feature, as only custom events need the events consent.
+     *
+     * @param key the key of the event
+     * @return {@code true} for a custom event
+     */
+    private static boolean isCustomEventKey(@Nonnull String key) {
+        return !INTERNAL_EVENT_KEYS.contains(key);
+    }
+
+    /**
+     * The feature whose consent an event needs: the views or the feedback feature for the events the
+     * SDK records for them, the events feature for custom events.
+     *
+     * @param key the key of the event
+     * @return the feature
+     */
+    private static CoreFeature featureOf(@Nonnull String key) {
+        if (ModuleViews.KEY_VIEW_EVENT.equals(key)) {
+            return CoreFeature.Views;
+        }
+        return isCustomEventKey(key) ? CoreFeature.Events : CoreFeature.Feedback;
+    }
+
+    /**
+     * Moves the queued events into one request: all of them while the events feature runs, otherwise
+     * the ones of the views and feedback features.
      *
      * @param deviceId the device ID the events belong to, {@code null} for the current one
      */
@@ -157,7 +207,8 @@ public class ModuleEvents extends ModuleBase {
     }
 
     /**
-     * Moves every queued event into one request.
+     * Moves the queued events into one request: all of them while the events feature runs, otherwise
+     * the ones of the views and feedback features.
      *
      * @param deviceId the device ID the events belong to, {@code null} for the current one
      * @param journeyTrigger whether the events include a journey trigger, whose request refreshes
@@ -166,8 +217,11 @@ public class ModuleEvents extends ModuleBase {
     private synchronized void addEventsToRequestQ(@Nullable String deviceId, boolean journeyTrigger) {
         L.d("[ModuleEvents] addEventsToRequestQ");
 
-        if (eventQueue.getEQ().isEmpty()) {
-            L.d("[ModuleEvents] addEventsToRequestQ, eventQueueMemoryCache is empty, skipping");
+        boolean allEvents = featureRuns();
+        //custom events restored from an earlier run wait until the events feature runs, the others never need it
+        List<EventImpl> events = eventQueue.take(event -> allEvents || !isCustomEventKey(event.key));
+        if (events.isEmpty()) {
+            L.d("[ModuleEvents] addEventsToRequestQ, no events to send, skipping");
             return;
         }
 
@@ -175,10 +229,9 @@ public class ModuleEvents extends ModuleBase {
         if (deviceId != null) {
             request.params.add("device_id", deviceId);
         }
-        request.params.arr("events").put(eventQueue.getEQ()).add();
+        request.params.arr("events").put(events).add();
         request.own(ModuleEvents.class);
 
-        eventQueue.clear();
         if (!journeyTrigger) {
             ModuleRequests.pushAsync(internalConfig, request);
             return;
@@ -211,8 +264,13 @@ public class ModuleEvents extends ModuleBase {
             return;
         }
 
-        boolean isCustomEvent = !INTERNAL_EVENT_KEYS.contains(key);
+        boolean isCustomEvent = isCustomEventKey(key);
         if (isCustomEvent) {
+            if (!featureRuns()) {
+                L.d("[ModuleEvents] recordEventInternal, the events feature does not run, as its consent is not given or it is not enabled, event [" + key + "] will not be recorded");
+                return;
+            }
+
             if (!configProvider.getCustomEventTrackingEnabled()) {
                 L.d("[ModuleEvents] recordEventInternal, custom event tracking is disabled by the SDK behavior settings, event [" + key + "] will not be recorded");
                 return;
@@ -328,7 +386,8 @@ public class ModuleEvents extends ModuleBase {
     }
 
     /**
-     * Sends the queued events when asked to or when the queue reached its threshold.
+     * Sends the queued events when asked to or when the ones the next request carries reached the
+     * threshold, so custom events waiting for the events feature never make the others go one by one.
      *
      * @param forceSend whether to send whatever is queued
      * @param journeyTrigger whether the queue holds a journey trigger
@@ -338,8 +397,11 @@ public class ModuleEvents extends ModuleBase {
             L.d("[ModuleEvents] checkEventQueueToSend, the events of the previous device ID are being ended, they are sent together under that ID");
             return;
         }
-        L.d("[ModuleEvents] queue size:[" + eventQueue.eqSize() + "] || forceSend: " + forceSend);
-        if (forceSend || eventQueue.eqSize() >= internalConfig.getConfigurationProvider().getEventQueueSizeThreshold()) {
+        int queued = eventQueue.eqSize();
+        L.d("[ModuleEvents] queue size:[" + queued + "] || forceSend: " + forceSend);
+        int threshold = internalConfig.getConfigurationProvider().getEventQueueSizeThreshold();
+        boolean thresholdReached = queued >= threshold && (featureRuns() || eventQueue.count(event -> !isCustomEventKey(event.key)) >= threshold);
+        if (forceSend || thresholdReached) {
             addEventsToRequestQ(null, journeyTrigger);
         }
     }

@@ -324,7 +324,8 @@ public class CountlyFacadeTests {
      * Verifies that an events interface handed out before init and one handed out before the consent
      * record once the consent is given, that a views interface handed out before the consent starts a
      * view then, and that a running events interface kept across a removal of its consent ignores
-     * calls until the consent is given again and then records into the new module.
+     * calls until the consent is given again and then records, while the removal dropped the custom
+     * events queued and kept the view, which needs only the views consent.
      */
     @Test
     public void aKeptInterface_reachesTheModuleOnceItsFeatureRuns() {
@@ -349,11 +350,11 @@ public class CountlyFacadeTests {
         ModuleEvents.Events running = Countly.instance().events();
         Countly.onConsentRemoval(Config.Feature.Events);
         running.recordEvent("ignored_after_removal");
-        TestUtils.validateEQSize(0);
+        Assert.assertEquals(Collections.singletonList(ModuleViews.KEY_VIEW_EVENT), TestUtils.keysInEQ());
 
         Countly.onConsent(Config.Feature.Events);
         running.recordEvent("after_consent_again");
-        Assert.assertEquals(Collections.singletonList("after_consent_again"), TestUtils.keysInEQ());
+        Assert.assertEquals(Arrays.asList(ModuleViews.KEY_VIEW_EVENT, "after_consent_again"), TestUtils.keysInEQ());
     }
 
     /**
@@ -453,7 +454,7 @@ public class CountlyFacadeTests {
      * Verifies that after the location consent is removed the location interface ignores calls while
      * the device ID, events, views and user profile interfaces keep working and recording, and that
      * an events interface kept from before the events consent is removed ignores calls instead of
-     * recording into the stopped module.
+     * recording.
      */
     @Test
     public void consentRemoval_stopsOnlyTheFeaturesItNames_andAKeptInterfaceIgnoresCalls() {

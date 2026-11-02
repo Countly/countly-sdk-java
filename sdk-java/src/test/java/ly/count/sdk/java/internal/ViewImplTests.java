@@ -1,5 +1,6 @@
 package ly.count.sdk.java.internal;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import ly.count.sdk.java.Config;
@@ -98,15 +99,15 @@ public class ViewImplTests {
 
     /**
      * "start" with no consent to Events
-     * Validating that view is not recorded
-     * A view should not be recorded
+     * Validating that view is recorded
+     * A view needs only the views feature, so it should be recorded
      */
     @Test
     public void start_noEventsConsent() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Views));
         TestUtils.validateEQSize(0);
         Countly.instance().view(TestUtils.keysValues[0]); // this calls start automatically
-        TestUtils.validateEQSize(0);
+        Assert.assertEquals(Collections.singletonList(ModuleViews.KEY_VIEW_EVENT), TestUtils.keysInEQ());
     }
 
     /**
@@ -186,17 +187,17 @@ public class ViewImplTests {
 
     /**
      * "stop" with no consent to events
-     * Validating that nothing should be recorded
-     * Event queue should be empty
+     * Validating that start view and stop view are recorded
+     * Views need only the views feature, so the event queue should hold the four view events
      */
     @Test
     public void stop_noConsentForEvents() {
         Countly.instance().init(TestUtils.getBaseConfig().setFeatures(Config.Feature.Views));
         TestUtils.validateEQSize(0);
         Countly.instance().view(TestUtils.keysValues[0]); // this calls start automatically
-        TestUtils.validateEQSize(0);
+        TestUtils.validateEQSize(1);
         Countly.instance().view(TestUtils.keysValues[0]).stop(false); // this call stop previous view and creates new one and stops it
-        TestUtils.validateEQSize(0);
+        Assert.assertEquals(Collections.nCopies(4, ModuleViews.KEY_VIEW_EVENT), TestUtils.keysInEQ());
     }
 
     /**
