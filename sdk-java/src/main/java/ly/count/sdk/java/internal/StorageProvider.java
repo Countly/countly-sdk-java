@@ -83,4 +83,31 @@ public interface StorageProvider {
      * @return serialized configuration, or {@code null} if none persisted yet
      */
     String getServerConfig();
+
+    /**
+     * Read the stored health check counters.
+     *
+     * @return the counters as JSON text, {@code null} or empty when none are stored
+     */
+    String getHealthCheckState();
+
+    /**
+     * Store the health check counters.
+     *
+     * @param state the counters as JSON text, empty to clear them
+     */
+    void setHealthCheckState(String state);
+
+    /**
+     * Add one automatically detected crash to the count the next start reports in the health check.
+     * Written right away, without the health check counters, as it runs while the crash is reported.
+     */
+    void incrementAutomaticCrashCount();
+
+    /**
+     * Read the automatically detected crashes counted since the last call, and set the stored count back to 0.
+     *
+     * @return the stored count of automatically detected crashes
+     */
+    int takeAutomaticCrashCount();
 }

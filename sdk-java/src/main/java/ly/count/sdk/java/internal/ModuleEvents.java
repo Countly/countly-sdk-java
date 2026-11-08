@@ -197,17 +197,20 @@ public class ModuleEvents extends ModuleBase {
     protected void recordEventInternal(String key, int count, Double sum, Double dur, Map<String, Object> segmentation, String eventIdOverride) {
         ConfigurationProvider configProvider = internalConfig.getConfigurationProvider();
         if (!configProvider.getTrackingEnabled()) {
-            L.d("[ModuleEvents] recordEventInternal, tracking is disabled by the SDK behavior settings, event [" + key + "] will not be recorded");
+            L.w("[ModuleEvents] recordEventInternal, tracking is disabled by the SDK behavior settings, event [" + key + "] will not be recorded");
+            L.recordLogCode("w505", HealthCheckCounter.AREA_EVENTS);
             return;
         }
 
         if (count <= 0) {
             L.w("[ModuleEvents] recordEventInternal, Count can't be less than 1, ignoring this event.");
+            L.recordLogCode("w750", HealthCheckCounter.AREA_EVENTS);
             return;
         }
 
         if (key == null || key.isEmpty()) {
             L.w("[ModuleEvents] recordEventInternal, Key can't be null or empty, ignoring this event.");
+            L.recordLogCode("w701", HealthCheckCounter.AREA_EVENTS);
             return;
         }
 
@@ -346,10 +349,13 @@ public class ModuleEvents extends ModuleBase {
 
     boolean startEventInternal(final String key) {
         if (key == null || key.isEmpty()) {
-            L.e("[ModuleEvents] Can't start event with a null or empty key");
+            L.w("[ModuleEvents] Can't start event with a null or empty key");
+            L.recordLogCode("w700", HealthCheckCounter.AREA_EVENTS);
             return false;
         }
         if (timedEvents.containsKey(key)) {
+            L.w("[ModuleEvents] startEventInternal, a timed event with the key [" + key + "] is already running, the call is ignored");
+            L.recordLogCode("w722", HealthCheckCounter.AREA_EVENTS);
             return false;
         }
 
@@ -371,19 +377,22 @@ public class ModuleEvents extends ModuleBase {
         L.d("[ModuleEvents] Ending event: [" + key + "]");
 
         if (key == null || key.isEmpty()) {
-            L.e("[ModuleEvents] Can't end event with a null or empty key");
+            L.w("[ModuleEvents] Can't end event with a null or empty key");
+            L.recordLogCode("w700", HealthCheckCounter.AREA_EVENTS);
             return false;
         }
 
         EventImpl event = timedEvents.remove(key);
 
         if (event == null) {
-            L.w("endEventInternal, No timed event with the name [" + key + "] is started, nothing to end. Will ignore call.");
+            L.w("[ModuleEvents] endEventInternal, No timed event with the name [" + key + "] is started, nothing to end. Will ignore call.");
+            L.recordLogCode("w720", HealthCheckCounter.AREA_EVENTS);
             return false;
         }
 
         if (count < 1) {
-            L.e("endEventInternal, Countly event count should be greater than zero [" + count + "]. Changing value to 1");
+            L.w("[ModuleEvents] endEventInternal, Countly event count should be greater than zero [" + count + "]. Changing value to 1");
+            L.recordLogCode("w750", HealthCheckCounter.AREA_EVENTS);
             count = 1;
         }
 
@@ -398,13 +407,20 @@ public class ModuleEvents extends ModuleBase {
 
     boolean cancelEventInternal(final String key) {
         if (key == null || key.isEmpty()) {
-            L.e("[ModuleEvents] Can't cancel event with a null or empty key");
+            L.w("[ModuleEvents] Can't cancel event with a null or empty key");
+            L.recordLogCode("w700", HealthCheckCounter.AREA_EVENTS);
             return false;
         }
 
         EventImpl event = timedEvents.remove(key);
 
-        return event != null;
+        if (event == null) {
+            L.w("[ModuleEvents] cancelEventInternal, no timed event with the key [" + key + "] is running, the call is ignored");
+            L.recordLogCode("w721", HealthCheckCounter.AREA_EVENTS);
+            return false;
+        }
+
+        return true;
     }
 
     public class Events {
@@ -440,6 +456,7 @@ public class ModuleEvents extends ModuleBase {
                 return;
             }
             L.i("[Events] recordEvent: key = " + key + ", count = " + count + ", sum = " + sum + ", segmentation = " + segmentation + ", dur = " + dur);
+            L.recordUsage(HealthCheckCounter.AREA_EVENTS, "record");
             recordEventInternal(key, count, sum, dur, segmentation, null);
         }
 
@@ -524,6 +541,7 @@ public class ModuleEvents extends ModuleBase {
                 return target != null && target.startEvent(key);
             }
             L.i("[Events] startEvent: key = " + key);
+            L.recordUsage(HealthCheckCounter.AREA_EVENTS, "start");
             return startEventInternal(key);
         }
 
@@ -539,6 +557,7 @@ public class ModuleEvents extends ModuleBase {
                 return target != null && target.endEvent(key);
             }
             L.i("[Events] endEvent: key = " + key);
+            L.recordUsage(HealthCheckCounter.AREA_EVENTS, "end");
             return endEventInternal(key, null, 1, null);
         }
 
@@ -559,6 +578,7 @@ public class ModuleEvents extends ModuleBase {
                 return target != null && target.endEvent(key, segmentation, count, sum);
             }
             L.i("[Events] endEvent: key = " + key + ", segmentation = " + segmentation + ", count = " + count + ", sum = " + sum);
+            L.recordUsage(HealthCheckCounter.AREA_EVENTS, "end");
             return endEventInternal(key, segmentation, count, sum);
         }
 
@@ -573,6 +593,7 @@ public class ModuleEvents extends ModuleBase {
                 return target != null && target.cancelEvent(key);
             }
             L.i("[Events] cancelEvent: key = " + key);
+            L.recordUsage(HealthCheckCounter.AREA_EVENTS, "cancel");
             return cancelEventInternal(key);
         }
     }

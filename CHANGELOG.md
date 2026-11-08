@@ -25,6 +25,7 @@
   Before initialization, while the consent of a feature is not given, or when a feature is not enabled, they return an interface that ignores calls until the feature runs and passes an error to the callbacks of the calls it ignores.
   An interface you keep sends its calls to the feature once it runs. Use "Countly.isTracking" to check whether a feature runs.
 
+* Added the health check feature. The SDK now sends a health check request once after each initialization, except in backend mode.
 * Added support for SDK behavior settings that let the server control the SDK:
   * Switches for tracking, networking, sessions, views, custom events, crash reporting, automatic crash reporting, location, and console logging
   * The event queue size, request queue size, session update interval, and settings refresh interval
@@ -40,6 +41,9 @@
 * Added support for server requested SDK log gathering. When the server asks for it, the SDK uploads its own internal log lines, even if logging is disabled. While consent is required, a line is uploaded only while the consent of the feature it belongs to is given.
 * Added support for the SDK connection test. When the server asks for it, the SDK checks that it can reach every endpoint it depends on and reports the results.
 * Added "setMaxKeyLength(int)" init config method to limit the length of event keys, view names, segmentation keys and custom user property keys. Longer keys are truncated. There is no limit by default, and the key length limit of the SDK behavior settings overrides it.
+* Added "disableHealthCheck()" init config method to turn off the health check request.
+* The deprecated "event", "timedEvent", "view" and "addCrashReport" calls of the session interface, and "record" and "endAndRecord" of a legacy event, now log a warning that names the call to use instead.
+* Failed requests are now logged at debug level, and wrong uses of the session, event, view and crash methods at warning level instead of error level.
 
 * Mitigated an issue where saving the SDK storage while remote config values were changing could empty the storage file.
 * Mitigated an issue where a storage file cut short by a stopped process made initialization fail.
@@ -58,6 +62,8 @@
 * Mitigated an issue where backend mode requests carried no device ID type, so the server did not count the users recorded in backend mode as identified.
 * Mitigated an issue where a backend mode direct request sent a key twice when the given map contained a key the SDK also sets. The value in the map now replaces the SDK's value, as documented.
 * Mitigated an issue where a backend mode direct request changed the given map, and failed with an unmodifiable map.
+* Mitigated an issue where "onConsent" and "onConsentRemoval" threw a NullPointerException when one of the given features was null.
+* Mitigated an issue where the session update timer logged an error every minute for a session that was created but not begun.
 
 ## 26.8.0
 * Added support for the Content feature, accessible through the "Countly.instance().content()" interface:

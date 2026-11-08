@@ -1086,7 +1086,8 @@ public class ModuleConnectionTestTests {
             .setCustomDeviceId(TestUtils.DEVICE_ID)
             .setNetworkRequestCooldown(0)
             .setNetworkImportantRequestCooldown(0)
-            .setLogListener((message, level) -> logs.add(message));
+            .setLogListener((message, level) -> logs.add(message))
+            .disableHealthCheck();
     }
 
     /**

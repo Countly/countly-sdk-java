@@ -66,6 +66,7 @@ public class JsonFileStorage {
         String content = json.toString();
         if (content == null) {
             logger.e("[JsonFileStorage] save, Failed to serialize the data, the json file is left as it is: [" + file.getAbsolutePath() + "]");
+            logger.recordLogCode("e501");
             return;
         }
 
@@ -77,6 +78,7 @@ public class JsonFileStorage {
             replaceFile(temporary, file);
         } catch (IOException e) {
             logger.e("[JsonFileStorage] save, Failed to save json file, reason: [" + e.getMessage() + "]");
+            logger.recordLogCode("e501");
         }
     }
 

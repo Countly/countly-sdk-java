@@ -44,9 +44,10 @@ public class ModuleSessions extends ModuleBase {
             L.d("[ModuleSessions] onTimer, session tracking disabled by SDK behavior settings; skipping update");
             return;
         }
-        if (!internalConfig.isBackendModeEnabled() && isActive() && getSession() != null) {
+        SessionImpl running = getSession();
+        if (!internalConfig.isBackendModeEnabled() && isActive() && running != null && running.isActive()) {
             L.i("[ModuleSessions] onTimer, updating session");
-            getSession().update();
+            running.updateAutomatically();
         }
     }
 
@@ -73,11 +74,11 @@ public class ModuleSessions extends ModuleBase {
         L.d("[ModuleSessions] deviceIdChanged, " + deviceId + ", old " + oldDeviceId);
         if (!withMerge && session != null && session.isActive()) {
             L.d("[ModuleSessions] deviceIdChanged, Ending session because device id was unset from [" + oldDeviceId + "]");
-            session.end(null, null, oldDeviceId);
+            session.endAutomatically(null, null, oldDeviceId);
         }
         
         if (deviceId != null && oldDeviceId != null && (session == null || !session.isActive()) && !withMerge) {
-            session(internalConfig, null).begin();
+            session(internalConfig, null).beginAutomatically();
         }
     }
 

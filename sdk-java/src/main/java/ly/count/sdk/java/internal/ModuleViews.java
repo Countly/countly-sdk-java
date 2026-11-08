@@ -186,13 +186,19 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
      */
     @Nullable String startViewInternal(@Nullable String viewName, @Nullable Map<String, Object> customViewSegmentation, boolean viewShouldBeAutomaticallyStopped) {
         ConfigurationProvider configProvider = internalConfig.getConfigurationProvider();
-        if (!configProvider.getTrackingEnabled() || !configProvider.getViewTrackingEnabled()) {
+        if (!configProvider.getTrackingEnabled()) {
+            L.w("[ModuleViews] startViewInternal, tracking disabled by SDK behavior settings; ignoring");
+            L.recordLogCode("w505", HealthCheckCounter.AREA_VIEWS);
+            return null;
+        }
+        if (!configProvider.getViewTrackingEnabled()) {
             L.d("[ModuleViews] startViewInternal, view tracking disabled by SDK behavior settings; ignoring");
             return null;
         }
 
         if (viewName == null || viewName.isEmpty()) {
-            L.e("[ModuleViews] startViewInternal, Trying to record view with null or empty view name, ignoring request");
+            L.w("[ModuleViews] startViewInternal, Trying to record view with null or empty view name, ignoring request");
+            L.recordLogCode("w710", HealthCheckCounter.AREA_VIEWS);
             return null;
         }
 
@@ -304,6 +310,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
 
         if (vd.viewStartTimeSeconds == 0) {
             L.w("[ModuleViews] pauseViewWithIDInternal, pausing a view that is already paused. ID:[" + viewID + "], name:[" + vd.viewName + "]");
+            L.recordLogCode("w731", HealthCheckCounter.AREA_VIEWS);
             return;
         }
 
@@ -326,6 +333,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
 
         if (vd.viewStartTimeSeconds > 0) {
             L.w("[ModuleViews] resumeViewWithIDInternal, resuming a view that is already running. ID:[" + viewID + "], name:[" + vd.viewName + "]");
+            L.recordLogCode("w731", HealthCheckCounter.AREA_VIEWS);
             return;
         }
 
@@ -359,12 +367,14 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
 
     private ViewData validateViewID(String viewID, String function) {
         if (viewID == null || viewID.isEmpty()) {
-            L.e("[ModuleViews] validateViewID, " + function + ", Trying to process view with null or empty view ID, ignoring request");
+            L.w("[ModuleViews] validateViewID, " + function + ", Trying to process view with null or empty view ID, ignoring request");
+            L.recordLogCode("w700", HealthCheckCounter.AREA_VIEWS);
             return null;
         }
 
         if (!viewDataMap.containsKey(viewID)) {
             L.w("[ModuleViews] validateViewID, " + function + ",  there is no view with the provided view id");
+            L.recordLogCode("w730", HealthCheckCounter.AREA_VIEWS);
             return null;
         }
 
@@ -378,7 +388,8 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
 
     private String validateViewWithName(String viewName, String function) {
         if (viewName == null || viewName.isEmpty()) {
-            L.e("[ModuleViews] " + function + ", Trying to process the view with null or empty view name, ignoring request");
+            L.w("[ModuleViews] " + function + ", Trying to process the view with null or empty view name, ignoring request");
+            L.recordLogCode("w700", HealthCheckCounter.AREA_VIEWS);
             return null;
         }
 
@@ -392,7 +403,8 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
         }
 
         if (viewID == null) {
-            L.e("[ModuleViews] " + function + ", No view entry found with the provided name :[" + viewName + "]");
+            L.w("[ModuleViews] " + function + ", No view entry found with the provided name :[" + viewName + "]");
+            L.recordLogCode("w730", HealthCheckCounter.AREA_VIEWS);
         }
 
         return viewID;
@@ -413,7 +425,8 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
         }
 
         if (viewSegmentation == null || viewSegmentation.isEmpty()) {
-            L.e("[ModuleViews] addSegmentationToViewWithIdInternal, Trying to add segmentation with null or empty view segmentation, ignoring request");
+            L.w("[ModuleViews] addSegmentationToViewWithIdInternal, Trying to add segmentation with null or empty view segmentation, ignoring request");
+            L.recordLogCode("w700", HealthCheckCounter.AREA_VIEWS);
             return;
         }
         removeReservedKeysFromViewSegmentation(viewSegmentation);
@@ -484,6 +497,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
             }
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling startAutoStoppedView [" + viewName + "] sg[" + viewSegmentation + "]");
+                L.recordUsage(HealthCheckCounter.AREA_VIEWS, "startAuto");
                 return startViewInternal(viewName, viewSegmentation, true);
             }
         }
@@ -504,6 +518,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
             }
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling startView vn[" + viewName + "]");
+                L.recordUsage(HealthCheckCounter.AREA_VIEWS, "start");
                 return startViewInternal(viewName, null, false);
             }
         }
@@ -525,6 +540,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
             }
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling startView vn[" + viewName + "] sg[" + viewSegmentation + "]");
+                L.recordUsage(HealthCheckCounter.AREA_VIEWS, "start");
                 return startViewInternal(viewName, viewSegmentation, false);
             }
         }
@@ -544,6 +560,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
             }
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling stopViewWithName vn[" + viewName + "]");
+                L.recordUsage(HealthCheckCounter.AREA_VIEWS, "stop");
                 stopViewWithNameInternal(viewName, null);
             }
         }
@@ -564,6 +581,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
             }
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling stopViewWithName vn[" + viewName + "] sg[" + viewSegmentation + "]");
+                L.recordUsage(HealthCheckCounter.AREA_VIEWS, "stop");
                 stopViewWithNameInternal(viewName, viewSegmentation);
             }
         }
@@ -583,6 +601,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
             }
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling stopViewWithID vi[" + viewID + "]");
+                L.recordUsage(HealthCheckCounter.AREA_VIEWS, "stop");
                 stopViewWithIDInternal(viewID, null);
             }
         }
@@ -603,6 +622,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
             }
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling stopViewWithID vi[" + viewID + "] sg[" + viewSegmentation + "]");
+                L.recordUsage(HealthCheckCounter.AREA_VIEWS, "stop");
                 stopViewWithIDInternal(viewID, viewSegmentation);
             }
         }
@@ -622,6 +642,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
             }
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling pauseViewWithID vi[" + viewID + "]");
+                L.recordUsage(HealthCheckCounter.AREA_VIEWS, "pause");
                 pauseViewWithIDInternal(viewID);
             }
         }
@@ -641,6 +662,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
             }
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling resumeViewWithID vi[" + viewID + "]");
+                L.recordUsage(HealthCheckCounter.AREA_VIEWS, "resume");
                 resumeViewWithIDInternal(viewID);
             }
         }
@@ -660,6 +682,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
             }
             synchronized (Countly.instance()) {
                 L.i("[Views] Calling stopAllViews sg[" + viewSegmentation + "]");
+                L.recordUsage(HealthCheckCounter.AREA_VIEWS, "stopAll");
                 stopAllViewsInternal(viewSegmentation);
             }
         }
@@ -742,6 +765,7 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
 
                 if (segmentation == null) {
                     L.w("[View] When updating segmentation values, they can't be 'null'.");
+                    L.recordLogCode("w700", HealthCheckCounter.AREA_VIEWS);
                     return;
                 }
 

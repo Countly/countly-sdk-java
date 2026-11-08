@@ -69,7 +69,7 @@ class ImmediateRequestMaker implements ImmediateRequestI {
             try {
                 connection = cp.connection(request);
             } catch (IOException e) {
-                L.e("[ImmediateRequestMaker] IOException while preparing remote config update request :[" + e + "]");
+                L.d("[ImmediateRequestMaker] IOException while preparing remote config update request :[" + e + "]");
                 return null;
             }
             //connecting
@@ -79,7 +79,7 @@ class ImmediateRequestMaker implements ImmediateRequestI {
             String receivedBuffer = cp.response(connection);
 
             if (receivedBuffer == null) {
-                L.e("[ImmediateRequestMaker] Encountered problem while making a immediate server request, received result was null");
+                L.d("[ImmediateRequestMaker] Encountered problem while making a immediate server request, received result was null");
                 return null;
             }
 
@@ -92,11 +92,11 @@ class ImmediateRequestMaker implements ImmediateRequestI {
                 }
                 return new JSONObject(receivedBuffer);
             } else {
-                L.e("[ImmediateRequestMaker] Encountered problem while making a immediate server request, :[" + receivedBuffer + "]");
+                L.d("[ImmediateRequestMaker] Encountered problem while making a immediate server request, :[" + receivedBuffer + "]");
                 return null;
             }
         } catch (Exception e) {
-            L.e("[ImmediateRequestMaker] Received exception while making a immediate server request " + e.getMessage());
+            L.d("[ImmediateRequestMaker] Received exception while making a immediate server request " + e.getMessage());
         } finally {
             if (connection != null) {
                 connection.disconnect();

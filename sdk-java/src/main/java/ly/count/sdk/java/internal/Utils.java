@@ -423,6 +423,7 @@ public class Utils {
 
         toRemove.forEach(key -> {
             L.w("[Utils] removeInvalidDataFromSegments, In segmentation Data type '" + segments.get(key) + "' of item '" + key + "' isn't valid.");
+            L.recordLogCode("w206");
             segments.remove(key);
         });
     }

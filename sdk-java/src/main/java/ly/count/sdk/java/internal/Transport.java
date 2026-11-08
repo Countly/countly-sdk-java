@@ -445,7 +445,7 @@ public class Transport implements X509TrustManager {
 
                     return processResponse(code, response, request.storageId());
                 } catch (IOException e) {
-                    L.w("[network] Error while sending request " + request + " " + e);
+                    L.d("[network] Error while sending request " + request + " " + e);
                     notifyOwnerOfAttemptWithoutResponse(request, requestOwner);
                     return false;
                 } catch (Exception e) {
@@ -511,11 +511,21 @@ public class Transport implements X509TrustManager {
         return code >= 200 && code < 300 && response.has("result");
     }
 
+    /**
+     * Whether the server accepted a queued request. An answer it did not accept is kept for the
+     * health check, which reports the last one; a request without an answer changes nothing there.
+     * A failed request is logged at debug level, as the health check reports it on its own.
+     *
+     * @param code the response code
+     * @param response the response body, {@code null} when none could be read
+     * @param requestId the storage ID of the request, for the log
+     * @return {@code true} when the server accepted the request
+     */
     Boolean processResponse(int code, String response, Long requestId) {
         L.i("[network] [processResponse] Code [" + code + "] response [" + response + "] for request[" + requestId + "]");
 
         if (response == null) {
-            L.w("[network] Null response for request [" + requestId + "]");
+            L.d("[network] Null response for request [" + requestId + "]");
             return false;
         }
 
@@ -525,11 +535,13 @@ public class Transport implements X509TrustManager {
                 L.d("[network] Success");
                 return true;
             } else {
-                L.w("[network] Fail: code :" + code + ", result: " + response);
+                L.d("[network] Fail: code :" + code + ", result: " + response);
+                L.logFailedNetworkRequest(code, response);
                 return false;
             }
         } catch (Exception e) {
-            L.w("[network] Failed to parse response as JSON for request [" + requestId + "], response: [" + response + "], error: [" + e.getMessage() + "]");
+            L.d("[network] Failed to parse response as JSON for request [" + requestId + "], response: [" + response + "], error: [" + e.getMessage() + "]");
+            L.logFailedNetworkRequest(code, response);
             return false;
         }
     }

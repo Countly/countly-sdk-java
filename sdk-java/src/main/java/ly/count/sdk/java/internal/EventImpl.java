@@ -102,6 +102,16 @@ class EventImpl implements Event, JSONable {
             return;
         }
 
+        L.w("[EventImpl] record, this function is deprecated, use 'events().recordEvent' instead");
+        L.recordLogCode("w120");
+        L.recordUsage(HealthCheckCounter.AREA_EVENTS, "record:d");
+        recordInternal();
+    }
+
+    /**
+     * Hands the event to its recorder once.
+     */
+    private void recordInternal() {
         if (recorder != null && !invalid) {
             invalid = true;
             recorder.recordEvent(this);
@@ -117,8 +127,11 @@ class EventImpl implements Event, JSONable {
             return;
         }
 
+        L.w("[EventImpl] endAndRecord, this function is deprecated, use 'events().endEvent' instead");
+        L.recordLogCode("w120");
+        L.recordUsage(HealthCheckCounter.AREA_EVENTS, "endAndRecord:d");
         setDuration((TimeUtils.timestampMs() - timestamp) / 1000);
-        record();
+        recordInternal();
     }
 
     @Override
