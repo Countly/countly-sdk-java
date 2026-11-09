@@ -99,21 +99,39 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         }
 
         L.d("[SessionImpl] begin");
+        L.recordUsage(HealthCheckCounter.AREA_SESSIONS, "begin");
         begin(null);
         return this;
     }
 
+    /**
+     * Begins the session on the SDK's own behalf, counted as "begin:a" in the health check.
+     */
+    void beginAutomatically() {
+        if (config.isBackendModeEnabled()) {
+            L.w("[SessionImpl] beginAutomatically: Skipping session begin, backend mode is enabled!");
+            return;
+        }
+
+        L.d("[SessionImpl] beginAutomatically");
+        L.recordUsage(HealthCheckCounter.AREA_SESSIONS, "begin:a");
+        begin(null);
+    }
+
     Future<Boolean> begin(Long now) {
         if (SDKCore.instance == null) {
-            L.e("[SessionImpl] Countly is not initialized");
+            L.w("[SessionImpl] Countly is not initialized");
+            Log.recordLogCodeWhileNotInitialized("w101");
             return null;
         } else if (!isSessionTrackingEnabled("begin")) {
             return null;
         } else if (began != null) {
-            L.e("[SessionImpl] Session already began");
+            L.w("[SessionImpl] Session already began");
+            L.recordLogCode("w760", HealthCheckCounter.AREA_SESSIONS);
             return null;
         } else if (ended != null) {
-            L.e("[SessionImpl] Session already ended");
+            L.w("[SessionImpl] Session already ended");
+            L.recordLogCode("w760", HealthCheckCounter.AREA_SESSIONS);
             return null;
         } else {
             began = now == null ? System.nanoTime() : now;
@@ -144,21 +162,39 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         }
 
         L.d("[SessionImpl] update");
+        L.recordUsage(HealthCheckCounter.AREA_SESSIONS, "update");
         update(null);
         return this;
     }
 
+    /**
+     * Updates the running session on the SDK's own behalf, from the update timer, counted as
+     * "update:a" in the health check. A session that does not run is left alone.
+     */
+    void updateAutomatically() {
+        if (config.isBackendModeEnabled() || !isActive()) {
+            return;
+        }
+
+        L.d("[SessionImpl] updateAutomatically");
+        L.recordUsage(HealthCheckCounter.AREA_SESSIONS, "update:a");
+        update(null);
+    }
+
     Future<Boolean> update(Long now) {
         if (SDKCore.instance == null) {
-            L.e("[SessionImpl] Countly is not initialized");
+            L.w("[SessionImpl] Countly is not initialized");
+            Log.recordLogCodeWhileNotInitialized("w101");
             return null;
         } else if (!isSessionTrackingEnabled("update")) {
             return null;
         } else if (began == null) {
-            L.e("[SessionImpl] Session is not began to update it");
+            L.w("[SessionImpl] Session is not began to update it");
+            L.recordLogCode("w760", HealthCheckCounter.AREA_SESSIONS);
             return null;
         } else if (ended != null) {
-            L.e("[SessionImpl] Session is already ended to update it");
+            L.w("[SessionImpl] Session is already ended to update it");
+            L.recordLogCode("w760", HealthCheckCounter.AREA_SESSIONS);
             return null;
         }
 
@@ -182,20 +218,43 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         }
 
         L.d("[SessionImpl] end");
+        L.recordUsage(HealthCheckCounter.AREA_SESSIONS, "end");
         end(null, null, null);
+    }
+
+    /**
+     * Ends the session on the SDK's own behalf, counted as "end:a" in the health check.
+     *
+     * @param now the time the session ends at, {@code null} for now
+     * @param callback called once the end request is handled, {@code null} for none
+     * @param did the device ID the session belongs to, {@code null} for the current one
+     * @return the end request, {@code null} when nothing was sent
+     */
+    Future<Boolean> endAutomatically(Long now, final Tasks.Callback<Boolean> callback, String did) {
+        if (config.isBackendModeEnabled()) {
+            L.w("[SessionImpl] endAutomatically: Skipping session end, backend mode is enabled!");
+            return null;
+        }
+
+        L.d("[SessionImpl] endAutomatically");
+        L.recordUsage(HealthCheckCounter.AREA_SESSIONS, "end:a");
+        return end(now, callback, did);
     }
 
     Future<Boolean> end(Long now, final Tasks.Callback<Boolean> callback, String did) {
         if (SDKCore.instance == null) {
-            L.e("[SessionImpl] Countly is not initialized");
+            L.w("[SessionImpl] Countly is not initialized");
+            Log.recordLogCodeWhileNotInitialized("w101");
             return null;
         } else if (!isSessionTrackingEnabled("end")) {
             return null;
         } else if (began == null) {
-            L.e("[SessionImpl] Session is not began to end it");
+            L.w("[SessionImpl] Session is not began to end it");
+            L.recordLogCode("w760", HealthCheckCounter.AREA_SESSIONS);
             return null;
         } else if (ended != null) {
-            L.e("[SessionImpl] Session already ended");
+            L.w("[SessionImpl] Session already ended");
+            L.recordLogCode("w760", HealthCheckCounter.AREA_SESSIONS);
             return null;
         }
         ended = now == null ? System.nanoTime() : now;
@@ -244,9 +303,9 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             if (began == null) {
                 return Storage.remove(config, this);
             } else if (ended == null && updated == null) {
-                future = end(began, null, null);
+                future = endAutomatically(began, null, null);
             } else if (ended == null) {
-                future = end(updated, null, null);
+                future = endAutomatically(updated, null, null);
             } else {
                 // began != null && ended != null
                 return Storage.remove(config, this);
@@ -318,6 +377,9 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
      * @deprecated use {@link ModuleEvents.Events#startEvent(String)}} instead via <code>instance().events()</code> call
      */
     public Event timedEvent(String key) {
+        L.w("[SessionImpl] timedEvent, this function is deprecated, use 'events().startEvent' instead");
+        L.recordLogCode("w120");
+        L.recordUsage(HealthCheckCounter.AREA_EVENTS, "timedEvent:d");
         return timedEvents().event(config, key);
     }
 
@@ -344,7 +406,7 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
         L.d("[SessionImpl] recordEvent");
 
         if (began == null) {
-            begin();
+            beginAutomatically();
         }
 
         ModuleEvents eventsModule = (ModuleEvents) SDKCore.instance.module(CoreFeature.Events);
@@ -373,6 +435,10 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             L.i("[SessionImpl] addCrashReport: Skipping event - feature is not enabled");
             return this;
         }
+
+        L.w("[SessionImpl] addCrashReport, this function is deprecated, use 'crashes().recordHandledException' or 'crashes().recordUnhandledException' instead");
+        L.recordLogCode("w120");
+        L.recordUsage(HealthCheckCounter.AREA_CRASHES, "addCrashReport:d");
 
         ModuleCrashes crashesModule = config.sdk.module(ModuleCrashes.class);
 
@@ -420,6 +486,9 @@ public class SessionImpl implements Session, Storable, EventImpl.EventRecorder {
             return null;
         }
         L.d("[SessionImpl] view: start = " + start);
+        L.w("[SessionImpl] view, this function is deprecated, use 'views().startView' instead");
+        L.recordLogCode("w120");
+        L.recordUsage(HealthCheckCounter.AREA_VIEWS, "view:d");
         if (currentView != null) {
             currentView.stop(false);
         }

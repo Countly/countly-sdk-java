@@ -184,6 +184,15 @@ public class InternalConfig extends Config {
     }
 
     /**
+     * Whether the SDK sends its health check, see {@link Config#disableHealthCheck()}.
+     *
+     * @return {@code true} unless the health check was disabled
+     */
+    boolean isHealthCheckEnabled() {
+        return healthCheckEnabled;
+    }
+
+    /**
      * Whether the developer left the backoff mechanism on, the value the {@code bom} setting of the
      * SDK behavior settings starts from.
      *

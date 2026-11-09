@@ -89,6 +89,9 @@ public class TestUtils {
         Config config = new Config(SERVER_URL, SERVER_APP_KEY, sdkStorageRootDirectory);
         config.setApplicationVersion(APPLICATION_VERSION);
         config.setCustomDeviceId(deviceID);
+        // Off by default in tests, so no init sends a health check to the test host or counts as an
+        // immediate request; ModuleHealthCheckTests builds its own configuration with it on.
+        config.disableHealthCheck();
         return config;
     }
 

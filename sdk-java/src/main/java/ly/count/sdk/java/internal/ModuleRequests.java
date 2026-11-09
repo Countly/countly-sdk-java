@@ -224,7 +224,8 @@ public class ModuleRequests extends ModuleBase {
         config.getLogger().d("New request " + request.storageId() + ": " + request);
 
         if (!config.getConfigurationProvider().getTrackingEnabled()) {
-            config.getLogger().d("[ModuleRequests] pushAsync, tracking disabled by SDK behavior settings; dropping request");
+            config.getLogger().w("[ModuleRequests] pushAsync, tracking disabled by SDK behavior settings; dropping request");
+            config.getLogger().recordLogCode("w505");
             if (callback != null) {
                 try {
                     callback.call(false);
@@ -377,6 +378,7 @@ public class ModuleRequests extends ModuleBase {
             }
 
             config.getLogger().w("[ModuleRequests] dropOldestRequestsOverQueueLimit, the request queue went over its size of [" + maxSize + "] set by the SDK behavior settings, dropped the [" + droppedIds.size() + "] oldest requests");
+            config.getLogger().recordLogCode("w310", droppedIds.size());
         } catch (Exception e) {
             config.getLogger().e("[ModuleRequests] dropOldestRequestsOverQueueLimit, failed to keep the request queue within its size, [" + e + "]");
         }

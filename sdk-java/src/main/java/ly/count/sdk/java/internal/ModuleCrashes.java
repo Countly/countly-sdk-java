@@ -130,6 +130,8 @@ public class ModuleCrashes extends ModuleBase {
     /**
      * Builds the handler that records an unhandled crash, while the module runs and the SDK behavior
      * settings enable automatic crash reporting, and then always hands the crash to the handler it replaced.
+     * While the crash is reported, the health check counts no method usage and no log codes; the
+     * crash itself is counted as a stored number that the health check of the next start reports.
      *
      * @param previous the handler to hand every crash to, {@code null} for none
      * @return the handler
@@ -142,7 +144,14 @@ public class ModuleCrashes extends ModuleBase {
 
             try {
                 if (isActive() && !stopped && isAutomaticCrashReportingEnabled()) {
-                    recordExceptionInternal(throwable, false, null, null);
+                    L.stopHealthCheckRecordingForCrash();
+                    try {
+                        if (recordExceptionInternal(throwable, false, null, null)) {
+                            internalConfig.storageProvider.incrementAutomaticCrashCount();
+                        }
+                    } finally {
+                        L.resumeHealthCheckRecordingAfterCrash();
+                    }
                 }
             } catch (Throwable recordFailure) {
                 L.e("[ModuleCrash] uncaughtException, failed to record the crash, [" + recordFailure + "]");
@@ -180,20 +189,36 @@ public class ModuleCrashes extends ModuleBase {
         }
     }
 
-    protected void recordExceptionInternal(Throwable t, boolean handled, Map<String, Object> segments, String legacyCrashName) {
+    /**
+     * Records a crash, unless the SDK behavior settings turn crash reporting off, backend mode is
+     * on, or there is no throwable.
+     *
+     * @param t the throwable
+     * @param handled whether the app handled it
+     * @param segments custom segmentation, {@code null} for none
+     * @param legacyCrashName the name of the deprecated crash report call, {@code null} for none
+     * @return whether the crash was stored for sending
+     */
+    protected boolean recordExceptionInternal(Throwable t, boolean handled, Map<String, Object> segments, String legacyCrashName) {
         ConfigurationProvider configProvider = internalConfig.getConfigurationProvider();
-        if (!configProvider.getTrackingEnabled() || !configProvider.getCrashReportingEnabled()) {
+        if (!configProvider.getTrackingEnabled()) {
+            L.w("[ModuleCrash] recordExceptionInternal, tracking disabled by SDK behavior settings; ignoring");
+            L.recordLogCode("w505", HealthCheckCounter.AREA_CRASHES);
+            return false;
+        }
+        if (!configProvider.getCrashReportingEnabled()) {
             L.d("[ModuleCrash] recordExceptionInternal, crash reporting disabled by SDK behavior settings; ignoring");
-            return;
+            return false;
         }
         if (config.isBackendModeEnabled()) {
             L.w("[ModuleCrash] recordExceptionInternal, Skipping crash, backend mode is enabled!");
-            return;
+            return false;
         }
 
         if (t == null) {
-            L.e("[ModuleCrash] recordExceptionInternal, Throwable cannot be null");
-            return;
+            L.w("[ModuleCrash] recordExceptionInternal, Throwable cannot be null");
+            L.recordLogCode("w700", HealthCheckCounter.AREA_CRASHES);
+            return false;
         }
 
         CrashImpl crash = new CrashImpl(L).addThrowable(t).setFatal(!handled).addSegments(segments);
@@ -203,7 +228,7 @@ public class ModuleCrashes extends ModuleBase {
             crash.setName(legacyCrashName);
         }
 
-        onCrash(config, crash);
+        return onCrash(config, crash) != null;
     }
 
     public CrashImpl onCrash(InternalConfig config, CrashImpl crash) {
@@ -244,7 +269,8 @@ public class ModuleCrashes extends ModuleBase {
         //after the processor, so it matches against the whole crash and what it adds is limited too
         crash.applyInternalLimits(config.getConfigurationProvider(), "[ModuleCrash] onCrash");
         if (!Storage.push(config, crash)) {
-            L.e("[ModuleCrash] Couldn't persist a crash, so dumping it here: " + crash.getJSON());
+            L.w("[ModuleCrash] Couldn't persist a crash, so dumping it here: " + crash.getJSON());
+            L.recordLogCode("w504");
         } else {
             SDKCore.instance.onSignal(config, SDKCore.Signal.Crash.getIndex(), crash.storageId().toString());
         }
@@ -253,7 +279,8 @@ public class ModuleCrashes extends ModuleBase {
 
     protected void addBreadcrumbInternal(String record) {
         if (Utils.isEmptyOrNull(record)) {
-            L.e("[ModuleCrash] addBreadcrumbInternal, record cannot be null or empty");
+            L.w("[ModuleCrash] addBreadcrumbInternal, record cannot be null or empty");
+            L.recordLogCode("w700", HealthCheckCounter.AREA_CRASHES);
             return;
         }
 
@@ -301,6 +328,7 @@ public class ModuleCrashes extends ModuleBase {
             }
             synchronized (Countly.instance()) {
                 L.i("[Crashes] Adding crash breadcrumb");
+                L.recordUsage(HealthCheckCounter.AREA_CRASHES, "log");
                 addBreadcrumbInternal(record);
             }
         }
@@ -319,6 +347,7 @@ public class ModuleCrashes extends ModuleBase {
                 return;
             }
             synchronized (Countly.instance()) {
+                L.recordUsage(HealthCheckCounter.AREA_CRASHES, "record");
                 recordExceptionInternal(exception, true, null, null);
             }
         }
@@ -337,6 +366,7 @@ public class ModuleCrashes extends ModuleBase {
                 return;
             }
             synchronized (Countly.instance()) {
+                L.recordUsage(HealthCheckCounter.AREA_CRASHES, "record");
                 recordExceptionInternal(exception, false, null, null);
             }
         }
@@ -355,6 +385,7 @@ public class ModuleCrashes extends ModuleBase {
                 return;
             }
             synchronized (Countly.instance()) {
+                L.recordUsage(HealthCheckCounter.AREA_CRASHES, "record");
                 recordExceptionInternal(exception, true, customSegmentation, null);
             }
         }
@@ -373,6 +404,7 @@ public class ModuleCrashes extends ModuleBase {
                 return;
             }
             synchronized (Countly.instance()) {
+                L.recordUsage(HealthCheckCounter.AREA_CRASHES, "record");
                 recordExceptionInternal(exception, false, customSegmentation, null);
             }
         }

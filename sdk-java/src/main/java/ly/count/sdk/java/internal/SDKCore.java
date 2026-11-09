@@ -29,6 +29,8 @@ public class SDKCore {
     private ModuleConfiguration moduleConfiguration;
 
     protected Log L = null;
+    //the health check counters, null in backend mode
+    volatile HealthCheckCounter healthCheckCounter = null;
     protected static ModuleBase testDummyModule = null;//set during testing when trying to check the SDK's lifecycle
     /**
      * Currently enabled features with consents
@@ -195,6 +197,8 @@ public class SDKCore {
 
         modules.clear();
         moduleMappings.clear();
+        L.setHealthCheckCounter(null);
+        healthCheckCounter = null;
         L.endLogGathering(!clear);
         sdkStorage.stop(config, clear);//from original super class
 
@@ -232,13 +236,13 @@ public class SDKCore {
 
         if (addingConsent(consent, CoreFeature.Sessions)) {
             SessionImpl session = module(ModuleSessions.class).getSession();
-            if (session != null) {
-                session.end();
+            if (session != null && session.isActive()) {
+                session.endAutomatically(null, null, null);
             }
 
             consents = consents | (consent & config.getFeatures1());
 
-            module(ModuleSessions.class).session(config, null).begin();
+            module(ModuleSessions.class).session(config, null).beginAutomatically();
         }
 
         consents = consents | (consent & config.getFeatures1());
@@ -273,8 +277,8 @@ public class SDKCore {
 
         if (removingConsent(noConsent, CoreFeature.Sessions)) {
             SessionImpl session = module(ModuleSessions.class).getSession();
-            if (session != null) {
-                session.end();
+            if (session != null && session.isActive()) {
+                session.endAutomatically(null, null, null);
             }
         }
 
@@ -370,6 +374,11 @@ public class SDKCore {
             }
         }
         modules.put(CoreFeature.BackendMode.getIndex(), new ModuleBackendMode());
+
+        //last, so the health check sent at the end of init counts what the other modules logged while starting
+        if (healthCheckCounter != null) {
+            modules.put(Integer.MAX_VALUE, new ModuleHealthCheck());
+        }
 
         // dummy module for tests if any
         if (testDummyModule != null) {
@@ -486,6 +495,8 @@ public class SDKCore {
         config.sdk = this;
         sdkStorage.init(config);
         config.storageProvider = sdkStorage;
+        healthCheckCounter = ModuleHealthCheck.createCounter(config, sdkStorage, this);
+        L.setHealthCheckCounter(healthCheckCounter);
 
         if (config.immediateRequestGenerator == null) {
             config.immediateRequestGenerator = ImmediateRequestMaker::new;
@@ -858,6 +869,24 @@ public class SDKCore {
         return enabled(feature.getIndex());
     }
 
+    /**
+     * Whether calls of a feature are counted in the health check method usage: the feature has
+     * consent, or no consent is required. Reads only this instance, so it is safe while the SDK stops.
+     *
+     * @param feature the feature behind a method usage area
+     * @return {@code true} when its calls are counted
+     */
+    boolean hasConsentForUsageArea(@Nonnull CoreFeature feature) {
+        InternalConfig current = config;
+        if (current == null) {
+            return false;
+        }
+        if (!current.requiresConsent()) {
+            return true;
+        }
+        return (consents & feature.getIndex()) == feature.getIndex();
+    }
+
     public boolean hasConsentForFeature(CoreFeature feature) {
         if (!instance.config.requiresConsent()) {
             //if no consent required, return true
@@ -949,7 +978,8 @@ public class SDKCore {
         crash = Storage.read(config, crash);
 
         if (crash == null) {
-            L.e("Cannot read crash from storage, skipping");
+            L.w("[SDKCore] processCrash, Cannot read crash from storage, skipping");
+            L.recordLogCode("w504");
             return false;
         }
 

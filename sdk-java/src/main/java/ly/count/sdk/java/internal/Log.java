@@ -122,6 +122,15 @@ public class Log {
     private volatile IntSupplier givenConsents = null;
     private volatile LogBatchQueue logBatchQueue = null;
 
+    //guards the counts kept until the health check counter exists and the handover to it
+    private final Object healthCountLock = new Object();
+    private volatile HealthCheckCounter healthCheckCounter = null;
+    private long warningsBeforeHealthCheck = 0;
+    private long errorsBeforeHealthCheck = 0;
+    private final Map<String, Integer> logCodesBeforeHealthCheck = new HashMap<>();
+    //log codes recorded while no SDK runs, such as calls made before init, handed to the next counter
+    private static final Map<String, Integer> logCodesWhileNotInitialized = new HashMap<>();
+
     /**
      * The request queue as the log gathering uses it: one request per batch of gathered log lines.
      */
@@ -207,6 +216,7 @@ public class Log {
      * @param logMessage string to log
      */
     public void w(String logMessage) {
+        countWarning();
         print("[WARN] [Countly]\t" + logMessage, Config.LoggingLevel.WARN);
         informListener(logMessage, Config.LoggingLevel.WARN);
         captureLogLine(logMessage, 'w');
@@ -218,9 +228,219 @@ public class Log {
      * @param logMessage string to log
      */
     public void e(String logMessage) {
+        countError();
         print("[ERROR] [Countly]\t" + logMessage, Config.LoggingLevel.ERROR);
         informListener(logMessage, Config.LoggingLevel.ERROR);
         captureLogLine(logMessage, 'e');
+    }
+
+    /**
+     * Counts a warning for the health check, whether or not it is printed. Kept here until the
+     * health check counter exists.
+     */
+    private void countWarning() {
+        HealthCheckCounter counter = healthCheckCounter;
+        if (counter != null) {
+            counter.logWarning();
+            return;
+        }
+        synchronized (healthCountLock) {
+            counter = healthCheckCounter;
+            if (counter == null) {
+                warningsBeforeHealthCheck++;
+                return;
+            }
+        }
+        counter.logWarning();
+    }
+
+    /**
+     * Counts an error for the health check, whether or not it is printed. Kept here until the
+     * health check counter exists.
+     */
+    private void countError() {
+        HealthCheckCounter counter = healthCheckCounter;
+        if (counter != null) {
+            counter.logError();
+            return;
+        }
+        synchronized (healthCountLock) {
+            counter = healthCheckCounter;
+            if (counter == null) {
+                errorsBeforeHealthCheck++;
+                return;
+            }
+        }
+        counter.logError();
+    }
+
+    /**
+     * Hands the health check counter to the logger, with the warnings, errors and log codes counted
+     * before it existed, including the codes recorded while no SDK ran. {@code null} detaches it,
+     * after which counts are kept here again.
+     *
+     * @param counter the counter, {@code null} for none
+     */
+    void setHealthCheckCounter(@Nullable HealthCheckCounter counter) {
+        long warnings;
+        long errors;
+        Map<String, Integer> codes = new HashMap<>();
+        synchronized (healthCountLock) {
+            healthCheckCounter = counter;
+            if (counter == null) {
+                return;
+            }
+            warnings = warningsBeforeHealthCheck;
+            errors = errorsBeforeHealthCheck;
+            warningsBeforeHealthCheck = 0;
+            errorsBeforeHealthCheck = 0;
+            codes.putAll(logCodesBeforeHealthCheck);
+            logCodesBeforeHealthCheck.clear();
+        }
+        synchronized (logCodesWhileNotInitialized) {
+            for (Map.Entry<String, Integer> entry : logCodesWhileNotInitialized.entrySet()) {
+                codes.merge(entry.getKey(), entry.getValue(), Integer::sum);
+            }
+            logCodesWhileNotInitialized.clear();
+        }
+
+        for (long a = 0; a < warnings; a++) {
+            counter.logWarning();
+        }
+        for (long a = 0; a < errors; a++) {
+            counter.logError();
+        }
+        for (Map.Entry<String, Integer> entry : codes.entrySet()) {
+            counter.recordLogCode(entry.getKey(), entry.getValue());
+        }
+    }
+
+    /**
+     * Records a health check log code, such as "w740", next to the log line of its condition. A
+     * code recorded before the health check counter exists is kept until it does.
+     *
+     * @param code the log code
+     */
+    public void recordLogCode(@Nonnull String code) {
+        recordLogCode(code, 1);
+    }
+
+    /**
+     * Records several occurrences of a health check log code at once, for a condition several
+     * items met together, such as requests dropped from the queue in one go.
+     *
+     * @param code the log code
+     * @param count how many times the condition occurred
+     */
+    public void recordLogCode(@Nonnull String code, int count) {
+        if (count <= 0) {
+            return;
+        }
+        HealthCheckCounter counter = healthCheckCounter;
+        if (counter == null) {
+            synchronized (healthCountLock) {
+                counter = healthCheckCounter;
+                if (counter == null) {
+                    logCodesBeforeHealthCheck.merge(code, count, Integer::sum);
+                    return;
+                }
+            }
+        }
+        counter.recordLogCode(code, count);
+    }
+
+    /**
+     * Records a health check log code that a public method of a feature area records, so it is
+     * ignored while that feature has no consent. Ignored before the health check counter exists,
+     * as no consent is known then.
+     *
+     * @param code the log code
+     * @param area the feature area: "sessions", "events", "views" or "crashes"
+     */
+    public void recordLogCode(@Nonnull String code, @Nonnull String area) {
+        HealthCheckCounter counter = healthCheckCounter;
+        if (counter != null) {
+            counter.recordLogCode(code, area);
+        }
+    }
+
+    /**
+     * Counts one call of a method for the health check method usage, under its feature area. A call
+     * the SDK made by itself carries ":a", a deprecated method ":d".
+     *
+     * @param area the feature area: "sessions", "events", "views" or "crashes"
+     * @param method the method name with its modifiers
+     */
+    public void recordUsage(@Nonnull String area, @Nonnull String method) {
+        HealthCheckCounter counter = healthCheckCounter;
+        if (counter != null) {
+            counter.recordUsage(area, method);
+        }
+    }
+
+    /**
+     * Keeps the answer of the server to a queued request it did not accept for the health check.
+     *
+     * @param statusCode the HTTP status code
+     * @param response the body of the answer
+     */
+    void logFailedNetworkRequest(int statusCode, @Nullable String response) {
+        HealthCheckCounter counter = healthCheckCounter;
+        if (counter != null) {
+            counter.logFailedNetworkRequest(statusCode, response);
+        }
+    }
+
+    /**
+     * Counts a backoff of the request queue for the health check.
+     */
+    void logBackoffRequest() {
+        HealthCheckCounter counter = healthCheckCounter;
+        if (counter != null) {
+            counter.logBackoffRequest();
+        }
+    }
+
+    /**
+     * Ends the run of backoffs in a row of the health check, as a queued request was answered in time.
+     */
+    void logConsecutiveBackoffRequest() {
+        HealthCheckCounter counter = healthCheckCounter;
+        if (counter != null) {
+            counter.logConsecutiveBackoffRequest();
+        }
+    }
+
+    /**
+     * Stops method usage and log codes from counting while an automatically detected crash is reported.
+     */
+    void stopHealthCheckRecordingForCrash() {
+        HealthCheckCounter counter = healthCheckCounter;
+        if (counter != null) {
+            counter.stopRecordingForCrash();
+        }
+    }
+
+    /**
+     * Lets method usage and log codes count again once an automatically detected crash was reported.
+     */
+    void resumeHealthCheckRecordingAfterCrash() {
+        HealthCheckCounter counter = healthCheckCounter;
+        if (counter != null) {
+            counter.resumeRecordingAfterCrash();
+        }
+    }
+
+    /**
+     * Records a health check log code while no SDK runs, for a call made before init or after the
+     * SDK stopped, which no logger can print. The next SDK that starts reports it.
+     *
+     * @param code the log code
+     */
+    public static void recordLogCodeWhileNotInitialized(@Nonnull String code) {
+        synchronized (logCodesWhileNotInitialized) {
+            logCodesWhileNotInitialized.merge(code, 1, (current, added) -> Math.min(current + added, HealthCheckCounter.COUNT_CAP));
+        }
     }
 
     /**

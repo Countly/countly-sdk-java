@@ -34,6 +34,8 @@ public class SDKStorage implements StorageProvider {
     protected static final String key_remote_config = "rc";
     protected static final String key_migration_version = "dv";
     protected static final String key_server_config = "sc";
+    protected static final String key_health_check = "HEALTH_CHECK";
+    protected static final String key_health_check_automatic_crashes = "HEALTH_CHECK_AUTOMATIC_CRASHES";
 
     private JsonFileStorage jsonFileStorage;
 
@@ -120,7 +122,8 @@ public class SDKStorage implements StorageProvider {
             stream.close();
             return true;
         } catch (IOException e) {
-            L.w("[SDKStorage] Cannot write data to " + filename + " " + e);
+            L.e("[SDKStorage] Cannot write data to " + filename + " " + e);
+            L.recordLogCode("e501");
         } finally {
             if (stream != null) {
                 try {
@@ -417,6 +420,45 @@ public class SDKStorage implements StorageProvider {
     @Override
     public String getServerConfig() {
         return jsonFileStorage.getString(key_server_config);
+    }
+
+    @Override
+    public String getHealthCheckState() {
+        JsonFileStorage storage = jsonFileStorage;
+        return storage == null ? null : storage.getString(key_health_check);
+    }
+
+    @Override
+    public void setHealthCheckState(String state) {
+        JsonFileStorage storage = jsonFileStorage;
+        if (storage != null) {
+            storage.addAndSave(key_health_check, state == null ? "" : state);
+        }
+    }
+
+    @Override
+    public void incrementAutomaticCrashCount() {
+        JsonFileStorage storage = jsonFileStorage;
+        if (storage != null) {
+            synchronized (storage) {
+                storage.addAndSave(key_health_check_automatic_crashes, storage.getInt(key_health_check_automatic_crashes, 0) + 1);
+            }
+        }
+    }
+
+    @Override
+    public int takeAutomaticCrashCount() {
+        JsonFileStorage storage = jsonFileStorage;
+        if (storage == null) {
+            return 0;
+        }
+        synchronized (storage) {
+            int count = storage.getInt(key_health_check_automatic_crashes, 0);
+            if (count != 0) {
+                storage.deleteAndSave(key_health_check_automatic_crashes);
+            }
+            return Math.max(count, 0);
+        }
     }
 
     @Override

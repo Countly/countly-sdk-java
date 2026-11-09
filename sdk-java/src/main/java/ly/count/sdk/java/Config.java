@@ -278,6 +278,11 @@ public class Config {
      */
     protected boolean backoffMechanismEnabled = true;
 
+    /**
+     * Whether the SDK sends its health check after init.
+     */
+    protected boolean healthCheckEnabled = true;
+
     // TODO: storage limits & configuration
     //    protected int maxRequestsStored = 0;
     //    protected int storageDirectory = "";
@@ -1593,6 +1598,21 @@ public class Config {
      */
     public Config disableBackoffMechanism() {
         this.backoffMechanismEnabled = false;
+        return this;
+    }
+
+    /**
+     * Disable the SDK health check. Once after init the SDK sends the server a short report about
+     * its own state: how many warnings and errors it logged, the last request the server refused,
+     * how often it had to wait for a slow server, how often its session, event, view and crash
+     * methods were called, and which known problems occurred. It carries no data the app recorded.
+     * The server shows it in the SDK Manager. With this option the report is not sent; the SDK
+     * keeps counting, as before.
+     *
+     * @return {@code this} instance for method chaining
+     */
+    public Config disableHealthCheck() {
+        this.healthCheckEnabled = false;
         return this;
     }
 }

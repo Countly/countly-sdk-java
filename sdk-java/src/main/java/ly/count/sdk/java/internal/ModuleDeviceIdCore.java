@@ -141,11 +141,12 @@ public class ModuleDeviceIdCore extends ModuleBase {
     protected void changeDeviceIdInternal(String id, DeviceIdType type, boolean withMerge) {
         if (Utils.isEmptyOrNull(id)) {
             L.w("[ModuleDeviceIdCore] changeDeviceId, Empty id passed to changeDeviceId method");
+            L.recordLogCode("w601");
             return;
         }
         final Config.DID old = internalConfig.getDeviceId();
         if (old.id.equals(id)) {
-            L.w("[ModuleDeviceIdCore] changeDeviceId, Same id passed to changeDeviceId method, ignoring");
+            L.d("[ModuleDeviceIdCore] changeDeviceId, Same id passed to changeDeviceId method, ignoring");
             return;
         }
 
@@ -214,11 +215,12 @@ public class ModuleDeviceIdCore extends ModuleBase {
     private void setIDInternal(String newDeviceID) {
         if (Utils.isEmptyOrNull(newDeviceID)) {
             L.w("[ModuleDeviceIdCore] setID, Empty id passed to setID method");
+            L.recordLogCode("w601");
             return;
         }
 
         if (getIDInternal().equals(newDeviceID)) {
-            L.w("[ModuleDeviceIdCore] setID, Same id passed to setID method, ignoring");
+            L.d("[ModuleDeviceIdCore] setID, Same id passed to setID method, ignoring");
             return;
         }
 

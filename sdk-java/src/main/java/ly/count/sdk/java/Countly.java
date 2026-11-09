@@ -1,6 +1,7 @@
 package ly.count.sdk.java;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Map;
 import ly.count.sdk.java.internal.Device;
 import ly.count.sdk.java.internal.DeviceIdType;
@@ -100,7 +101,9 @@ public class Countly implements Usage {
         }
 
         if (isInitialized()) {
-            L.e("[Countly] Countly shouldn't be initialized twice. Please either use Countly.isInitialized() to check status or call Countly.stop() before second Countly.init(). Calling 'init' the second time will now do nothing");
+            Log running = cly.L != null ? cly.L : L;
+            running.w("[Countly] Countly shouldn't be initialized twice. Please either use Countly.isInitialized() to check status or call Countly.stop() before second Countly.init(). Calling 'init' the second time will now do nothing");
+            running.recordLogCode("w110");
             return;
         }
         internalConfig.setLogger(L);
@@ -110,7 +113,8 @@ public class Countly implements Usage {
         }
 
         if (internalConfig.requestQueueMaxSize < 1) {
-            L.e("[Countly] init: Request queue max size can not be less than 1.");
+            L.w("[Countly] init: Request queue max size can not be less than 1.");
+            L.recordLogCode("w121");
             internalConfig.requestQueueMaxSize = 1;
         }
 
@@ -211,9 +215,7 @@ public class Countly implements Usage {
      */
     public static Session session() {
         if (!isInitialized()) {
-            if (cly.L != null) {
-                cly.L.e("[Countly] SDK is not initialized yet.");
-            }
+            Log.recordLogCodeWhileNotInitialized("w101");
 
             return null;
         }
@@ -237,9 +239,7 @@ public class Countly implements Usage {
      */
     public ModuleBackendMode.BackendMode backendM() {
         if (!isInitialized()) {
-            if (cly.L != null) {
-                cly.L.e("[Countly] SDK is not initialized yet.");
-            }
+            Log.recordLogCodeWhileNotInitialized("w101");
             return null;
         } else {
             ModuleBackendMode mbm = cly.sdk.module(ModuleBackendMode.class);
@@ -353,19 +353,44 @@ public class Countly implements Usage {
      */
     public static void onConsent(Config.Feature... features) {
         if (!isInitialized()) {
-            if (cly.L != null) {
-                cly.L.e("[Countly] SDK is not initialized yet.");
-            }
+            Log.recordLogCodeWhileNotInitialized("w101");
         } else {
             if (cly.L != null) {
-                cly.L.e("[Countly] onConsent: features = " + features);
+                cly.L.i("[Countly] onConsent: features = " + Arrays.toString(features));
             }
-            int ftrs = 0;
-            for (Config.Feature f : features) {
-                ftrs = ftrs | f.getIndex();
-            }
-            cly.sdk.onConsent(ftrs);
+            cly.sdk.onConsent(consentFeatureIndexes("onConsent", features));
         }
+    }
+
+    /**
+     * The feature bits a consent call names. A call that names no feature, or a {@code null}
+     * feature, is reported as log code w402; such a name is ignored.
+     *
+     * @param call the consent call, for the log
+     * @param features the features the call names
+     * @return the bits of the named features
+     */
+    private static int consentFeatureIndexes(String call, Config.Feature... features) {
+        int ftrs = 0;
+        if (features == null || features.length == 0) {
+            if (cly.L != null) {
+                cly.L.w("[Countly] " + call + ", no feature is given, the call does nothing");
+                cly.L.recordLogCode("w402");
+            }
+            return ftrs;
+        }
+
+        for (Config.Feature f : features) {
+            if (f == null) {
+                if (cly.L != null) {
+                    cly.L.w("[Countly] " + call + ", a 'null' feature is given, it is ignored");
+                    cly.L.recordLogCode("w402");
+                }
+                continue;
+            }
+            ftrs = ftrs | f.getIndex();
+        }
+        return ftrs;
     }
 
     /**
@@ -377,18 +402,12 @@ public class Countly implements Usage {
      */
     public static void onConsentRemoval(Config.Feature... features) {
         if (cly.L != null) {
-            cly.L.e("[Countly] onConsentRemoval: features = " + features);
+            cly.L.i("[Countly] onConsentRemoval: features = " + Arrays.toString(features));
         }
         if (!isInitialized()) {
-            if (cly.L != null) {
-                cly.L.e("[Countly] onConsentRemoval: SDK is not initialized yet.");
-            }
+            Log.recordLogCodeWhileNotInitialized("w101");
         } else {
-            int ftrs = 0;
-            for (Config.Feature f : features) {
-                ftrs = ftrs | f.getIndex();
-            }
-            cly.sdk.onConsentRemoval(cly.sdk.config, ftrs);
+            cly.sdk.onConsentRemoval(cly.sdk.config, consentFeatureIndexes("onConsentRemoval", features));
         }
     }
 
@@ -401,9 +420,7 @@ public class Countly implements Usage {
      */
     public ModuleFeedback.Feedback feedback() {
         if (!isInitialized()) {
-            if (L != null) {
-                L.e("[Countly] SDK is not initialized yet.");
-            }
+            Log.recordLogCodeWhileNotInitialized("w101");
             return SDKCore.dormantFeedback;
         }
         return sdk.feedback();
@@ -420,9 +437,7 @@ public class Countly implements Usage {
      */
     public ModuleContent.Content content() {
         if (!isInitialized()) {
-            if (L != null) {
-                L.e("[Countly] content, SDK is not initialized yet.");
-            }
+            Log.recordLogCodeWhileNotInitialized("w101");
             return SDKCore.dormantContent;
         }
         return sdk.content();
@@ -436,9 +451,7 @@ public class Countly implements Usage {
      */
     public ModuleRemoteConfig.RemoteConfig remoteConfig() {
         if (!isInitialized()) {
-            if (L != null) {
-                L.e("[Countly] remoteConfig, SDK is not initialized yet.");
-            }
+            Log.recordLogCodeWhileNotInitialized("w101");
             return SDKCore.dormantRemoteConfig;
         }
         return sdk.remoteConfig();
@@ -452,9 +465,7 @@ public class Countly implements Usage {
      */
     public ModuleDeviceIdCore.DeviceId deviceId() {
         if (!isInitialized()) {
-            if (L != null) {
-                L.e("[Countly] SDK is not initialized yet.");
-            }
+            Log.recordLogCodeWhileNotInitialized("w101");
             return SDKCore.dormantDeviceId;
         }
         return sdk.deviceId();
@@ -481,9 +492,7 @@ public class Countly implements Usage {
      */
     public ModuleEvents.Events events() {
         if (!isInitialized()) {
-            if (L != null) {
-                L.e("[Countly] SDK is not initialized yet.");
-            }
+            Log.recordLogCodeWhileNotInitialized("w101");
             return SDKCore.dormantEvents;
         }
         return sdk.events();
@@ -497,9 +506,7 @@ public class Countly implements Usage {
      */
     public ModuleCrashes.Crashes crashes() {
         if (!isInitialized()) {
-            if (L != null) {
-                L.e("[Countly] SDK is not initialized yet.");
-            }
+            Log.recordLogCodeWhileNotInitialized("w101");
             return SDKCore.dormantCrashes;
         }
         return sdk.crashes();
@@ -513,9 +520,7 @@ public class Countly implements Usage {
      */
     public ModuleViews.Views views() {
         if (!isInitialized()) {
-            if (L != null) {
-                L.e("[Countly] SDK is not initialized yet.");
-            }
+            Log.recordLogCodeWhileNotInitialized("w101");
             return SDKCore.dormantViews;
         }
         return sdk.views();
@@ -542,9 +547,7 @@ public class Countly implements Usage {
      */
     public ModuleUserProfile.UserProfile userProfile() {
         if (!isInitialized()) {
-            if (L != null) {
-                L.e("[Countly] userProfile, SDK is not initialized yet.");
-            }
+            Log.recordLogCodeWhileNotInitialized("w101");
             return SDKCore.dormantUserProfile;
         }
         return sdk.userProfile();
@@ -558,10 +561,7 @@ public class Countly implements Usage {
      */
     public ModuleLocation.Location location() {
         if (!isInitialized()) {
-            // L is null before init, so this has to be guarded like every sibling accessor.
-            if (L != null) {
-                L.e("Countly.sharedInstance().init must be called before accessing location");
-            }
+            Log.recordLogCodeWhileNotInitialized("w101");
             return SDKCore.dormantLocation;
         }
 

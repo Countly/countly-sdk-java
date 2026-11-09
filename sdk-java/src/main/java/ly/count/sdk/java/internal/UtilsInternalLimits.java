@@ -52,6 +52,7 @@ final class UtilsInternalLimits {
 
         String truncated = truncate(key, maxKeyLength);
         L.w(tag + ", the key [" + key + "] is longer than the key length limit of [" + maxKeyLength + "] of the SDK behavior settings, it is truncated to [" + truncated + "]");
+        L.recordLogCode("w201");
         return truncated;
     }
 
@@ -72,6 +73,7 @@ final class UtilsInternalLimits {
 
         String truncated = truncate(value, maxValueSize);
         L.w(tag + ", a value of [" + value.length() + "] characters is longer than the value size limit of [" + maxValueSize + "] of the SDK behavior settings, it is truncated to [" + truncated + "]");
+        L.recordLogCode("w202");
         return truncated;
     }
 
@@ -162,6 +164,7 @@ final class UtilsInternalLimits {
         }
 
         L.w(tag + ", the segmentation has [" + keys.size() + "] entries, over the limit of [" + maxSegmentationValues + "] of the SDK behavior settings, dropped the entries of the keys that sort last: " + keys.subList(maxSegmentationValues, keys.size()));
+        L.recordLogCode("w203");
         return kept;
     }
 
@@ -229,6 +232,7 @@ final class UtilsInternalLimits {
         }
 
         L.w(tag + ", [" + truncatedLines + "] stack trace lines are longer than the line length limit of [" + maxLineLength + "] of the SDK behavior settings, they are truncated");
+        L.recordLogCode("w205");
         return truncated.toString();
     }
 
@@ -249,6 +253,7 @@ final class UtilsInternalLimits {
         }
 
         L.w(tag + ", the stack trace of the thread [" + threadName + "] has [" + lineCount + "] lines, over the limit of [" + maxLinesPerThread + "] lines per thread of the SDK behavior settings, dropped the bottom ones");
+        L.recordLogCode("w205");
         return maxLinesPerThread;
     }
 

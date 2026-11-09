@@ -231,6 +231,9 @@ public class DefaultNetworking implements Networking {
                     if (uploadsGatheredLogs) {
                         L.onLogBatchSent();
                     }
+                    if (!backendMode && responseTimeMs.get() >= 0 && responseTimeMs.get() < config.getConfigurationProvider().getBOMAcceptedTimeoutSeconds() * 1000L) {
+                        L.logConsecutiveBackoffRequest();
+                    }
                     if (!backOffIfTheServerIsSlow(config, request, responseTimeMs.get())) {
                         check(config);
                     }
@@ -309,6 +312,7 @@ public class DefaultNetworking implements Networking {
      */
     private boolean dropWithoutSending(@Nonnull InternalConfig config, @Nonnull Request request) {
         L.w("[Networking] dropWithoutSending, request [" + request.storageId() + "] is older than the request drop age of [" + config.getConfigurationProvider().getRequestDropAgeHours() + "] hours set by the SDK behavior settings, dropping it without sending");
+        L.recordLogCode("w330");
         if (!Boolean.TRUE.equals(storageForRequestQueue.removeRequest(request))) {
             L.e("[Networking] dropWithoutSending, failed to remove request [" + request.storageId() + "], the queue drain stops here");
             return false;
@@ -390,8 +394,12 @@ public class DefaultNetworking implements Networking {
         }
 
         int durationSeconds = provider.getBOMDuration();
-        L.i("[Networking] backOffIfTheServerIsSlow, the server took [" + responseTimeMs + "] ms to answer request [" + request.storageId() + "] and [" + queuedRequests + "] requests remain queued, holding the request queue back for [" + durationSeconds + "] seconds");
-        return startBackoff(config, durationSeconds);
+        if (!startBackoff(config, durationSeconds)) {
+            return false;
+        }
+        L.w("[Networking] backOffIfTheServerIsSlow, the server took [" + responseTimeMs + "] ms to answer request [" + request.storageId() + "] and [" + queuedRequests + "] requests remain queued, holding the request queue back for [" + durationSeconds + "] seconds");
+        L.logBackoffRequest();
+        return true;
     }
 
     /**
