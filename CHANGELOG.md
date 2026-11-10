@@ -42,6 +42,9 @@
 * Added support for the SDK connection test. When the server asks for it, the SDK checks that it can reach every endpoint it depends on and reports the results.
 * Added "setMaxKeyLength(int)" init config method to limit the length of event keys, view names, segmentation keys and custom user property keys. Longer keys are truncated. There is no limit by default, and the key length limit of the SDK behavior settings overrides it.
 * Added "disableHealthCheck()" init config method to turn off the health check request.
+* Added "changeServerUrl(String)" to "Countly.instance()" to change the server URL after init
+* Added "changeAppKey(String)" to "Countly.instance()" to change the app key after init
+* Added "flushQueues()", "replaceAllAppKeysInQueueWithCurrentAppKey()", "removeDifferentAppKeysFromQueue()" and "attemptToSendStoredRequests()" to "Countly.instance()" to manage the request queue
 * The deprecated "event", "timedEvent", "view" and "addCrashReport" calls of the session interface, and "record" and "endAndRecord" of a legacy event, now log a warning that names the call to use instead.
 * Failed requests are now logged at debug level, and wrong uses of the session, event, view and crash methods at warning level instead of error level.
 

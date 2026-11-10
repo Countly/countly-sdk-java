@@ -8,6 +8,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -385,6 +387,58 @@ public class ModuleRequests extends ModuleBase {
 
         settleJourneyTriggersOf(config, droppedIds);
         return droppedIds.size();
+    }
+
+    /**
+     * Sets the current app key on every queued request that carries another one, or none, as one
+     * storage task. The checksum is computed when a request is sent, so it matches the new key.
+     *
+     * @param config configuration of the running SDK
+     * @return how many requests were changed
+     */
+    static int replaceAppKeysInQueue(@Nonnull InternalConfig config) {
+        final String appKey = config.getServerAppKey();
+        final AtomicInteger replaced = new AtomicInteger();
+        Storage.transform(config, Request.getStoragePrefix(), (id, data) -> {
+            Request request = new Request(id);
+            if (!request.restore(data, config.getLogger()) || appKey.equals(request.params.get("app_key"))) {
+                return null;
+            }
+            request.params.remove("app_key");
+            request.params.add("app_key", appKey);
+            replaced.incrementAndGet();
+            return request.store(config.getLogger());
+        });
+        return replaced.get();
+    }
+
+    /**
+     * Removes the queued requests a filter selects, unsent, in one storage task, so no other storage
+     * work interleaves. A request being sent finishes, then the network removes it by its storage
+     * ID, so no other request is lost. Settles the journey triggers the removed requests carried.
+     *
+     * @param config configuration of the running SDK
+     * @param filter selects a request to remove, {@code null} to remove every request without reading it
+     * @return how many requests were removed
+     */
+    static int removeQueuedRequests(@Nonnull InternalConfig config, @Nullable Predicate<Request> filter) {
+        List<Long> removedIds = Storage.runAndWait(config, () -> {
+            List<Long> removed = new ArrayList<>();
+            for (Long id : config.sdk.sdkStorage.storableList(config, Request.getStoragePrefix(), 0)) {
+                Request request = new Request(id);
+                boolean selected = filter == null || (Boolean.TRUE.equals(config.sdk.sdkStorage.storableRead(config, request)) && filter.test(request));
+                if (selected && Boolean.TRUE.equals(config.sdk.sdkStorage.storableRemove(config, request))) {
+                    removed.add(id);
+                }
+            }
+            return removed;
+        });
+        if (removedIds == null) {
+            return 0;
+        }
+
+        settleJourneyTriggersOf(config, removedIds);
+        return removedIds.size();
     }
 
     /**

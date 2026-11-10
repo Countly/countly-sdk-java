@@ -315,7 +315,7 @@ public class ModuleBackendMode extends ModuleBase {
         addRequestToRequestQ(request);
     }
 
-    private synchronized void addEventsToRequestQ() {
+    synchronized void addEventsToRequestQ() {
         L.d("[BackendMode] addEventsToRequestQ");
 
         for (String s : eventQueues.keySet()) {

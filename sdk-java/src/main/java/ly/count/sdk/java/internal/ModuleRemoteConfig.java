@@ -74,11 +74,19 @@ public class ModuleRemoteConfig extends ModuleBase {
 
             Transport transport = internalConfig.sdk.networking.getTransport();
             final boolean networkingIsEnabled = internalConfig.getNetworkingEnabled();
+            final String requestedAppKey = internalConfig.getServerAppKey();
+            final String requestedServerUrl = internalConfig.getServerURL().toString();
 
             internalConfig.immediateRequestGenerator.createImmediateRequestMaker().doWork(requestData, "/o/sdk?", transport, false, networkingIsEnabled, checkResponse -> {
                 L.d("[ModuleRemoteConfig] updateRemoteConfigValues, Processing remote config received response, received response is null:[" + (checkResponse == null) + "]");
                 if (checkResponse == null) {
                     notifyDownloadCallbacks(devProvidedCallback, RequestResult.Error, "Encountered problem while trying to reach the server, possibly no internet connection", fullUpdate, null);
+                    return;
+                }
+
+                if (Utils.isNotEqual(requestedAppKey, internalConfig.getServerAppKey()) || !requestedServerUrl.equals(internalConfig.getServerURL().toString())) {
+                    L.d("[ModuleRemoteConfig] updateRemoteConfigValues, the app key or the server URL changed after the request was made, ignoring its response");
+                    notifyDownloadCallbacks(devProvidedCallback, RequestResult.Error, "The app key or the server URL changed before the response arrived", fullUpdate, null);
                     return;
                 }
 
@@ -238,7 +246,10 @@ public class ModuleRemoteConfig extends ModuleBase {
         internalConfig.storageProvider.setRemoteConfigValues(rcvs.values);
     }
 
-    private void cacheOrClearRCValuesIfNeeded() {
+    /**
+     * Clears the stored remote config values, or marks them as cached with value caching.
+     */
+    void cacheOrClearRCValuesIfNeeded() {
         L.v("[ModuleRemoteConfig] cacheOrClearRCValuesIfNeeded, cache-clearing values");
 
         RemoteConfigValueStore rcvs = getRemoteConfigValueStoreInternal();
@@ -254,7 +265,12 @@ public class ModuleRemoteConfig extends ModuleBase {
         }
     }
 
-    private void rcAutomaticDownloadTrigger(final boolean cacheClearOldValues) {
+    /**
+     * Downloads every remote config value when automatic download triggers are enabled.
+     *
+     * @param cacheClearOldValues whether the stored values are first cleared, or marked as cached with value caching
+     */
+    void rcAutomaticDownloadTrigger(final boolean cacheClearOldValues) {
         if (cacheClearOldValues) {
             cacheOrClearRCValuesIfNeeded();
         }

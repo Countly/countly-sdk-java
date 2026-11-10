@@ -903,9 +903,11 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
             Transport transport = config.sdk.networking.getTransport();
             final long fetchStartNs = System.nanoTime();
             final int requestedAfterDeviceIdChanges = deviceIdChangesWithoutMerge;
+            final String requestedAppKey = config.getServerAppKey();
+            final String requestedServerUrl = config.getServerURL().toString();
 
             config.immediateRequestGenerator.createImmediateRequestMaker().doWork(requestData, "/o/sdk?", transport, false, true,
-                response -> onServerConfigResponse(config, response, fetchStartNs, requestedAfterDeviceIdChanges), L);
+                response -> onServerConfigResponse(config, response, fetchStartNs, requestedAfterDeviceIdChanges, requestedAppKey, requestedServerUrl), L);
         } catch (Exception e) {
             L.e("[ModuleConfiguration] fetchConfigFromServer, failed to request the configuration, [" + e + "]");
             decideLogGatheringOffIfUndecided("the server config request failed");
@@ -920,8 +922,11 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
      * @param response the response, {@code null} when the request failed
      * @param fetchStartNs {@link System#nanoTime()} just before the request was made
      * @param requestedAfterDeviceIdChanges how many device ID changes without merge happened before the request was made
+     * @param requestedAppKey the app key the request was made with
+     * @param requestedServerUrl the server URL the request was made to
      */
-    private void onServerConfigResponse(@Nonnull InternalConfig config, @Nullable JSONObject response, long fetchStartNs, int requestedAfterDeviceIdChanges) {
+    private void onServerConfigResponse(@Nonnull InternalConfig config, @Nullable JSONObject response, long fetchStartNs, int requestedAfterDeviceIdChanges,
+        @Nullable String requestedAppKey, @Nonnull String requestedServerUrl) {
         if (!running) {
             L.d("[ModuleConfiguration] onServerConfigResponse, the SDK was stopped before the response arrived, ignoring it");
             return;
@@ -930,6 +935,11 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
         if (response == null) {
             L.w("[ModuleConfiguration] onServerConfigResponse, not possible to retrieve configuration data, probably due to lack of connection to the server");
             decideLogGatheringOffIfUndecided("server config fetch failed");
+            return;
+        }
+
+        if (Utils.isNotEqual(requestedAppKey, config.getServerAppKey()) || !requestedServerUrl.equals(config.getServerURL().toString())) {
+            L.d("[ModuleConfiguration] onServerConfigResponse, the app key or the server URL changed after the request was made, ignoring its response");
             return;
         }
 
