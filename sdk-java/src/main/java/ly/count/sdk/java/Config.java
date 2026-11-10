@@ -29,12 +29,12 @@ public class Config {
     /**
      * URL of Countly server
      */
-    protected URL serverURL;
+    protected volatile URL serverURL;
 
     /**
      * Application key of Countly server
      */
-    protected String serverAppKey;
+    protected volatile String serverAppKey;
 
     /**
      * Set of Countly SDK features enabled

@@ -2,6 +2,7 @@ package ly.count.sdk.java.internal;
 
 import java.io.File;
 import java.lang.reflect.Field;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -236,6 +237,24 @@ public class InternalConfig extends Config {
 
     public void setLogger(Log logger) {
         this.configLog = logger;
+    }
+
+    /**
+     * Replaces the server URL every later request is sent to, in this configuration only.
+     *
+     * @param serverURL the new server URL
+     */
+    void setServerURL(@Nonnull URL serverURL) {
+        this.serverURL = serverURL;
+    }
+
+    /**
+     * Replaces the app key every later request carries, in this configuration only.
+     *
+     * @param serverAppKey the new app key
+     */
+    void setServerAppKey(@Nonnull String serverAppKey) {
+        this.serverAppKey = serverAppKey;
     }
 
     File getSdkStorageRootDirectory() {

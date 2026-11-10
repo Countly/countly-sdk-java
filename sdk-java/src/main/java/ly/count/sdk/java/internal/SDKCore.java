@@ -1,11 +1,15 @@
 package ly.count.sdk.java.internal;
 
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -13,8 +17,14 @@ import java.util.function.Function;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import ly.count.sdk.java.Config;
+import ly.count.sdk.java.Countly;
 
 public class SDKCore {
+
+    /**
+     * The app key placeholder of the integration samples, never a key of a real app.
+     */
+    private static final String PLACEHOLDER_APP_KEY = "YOUR_APP_KEY";
 
     protected static SDKCore instance;
     protected final SDKStorage sdkStorage;
@@ -777,6 +787,202 @@ public class SDKCore {
 
     public InternalConfig config() {
         return config;
+    }
+
+    /**
+     * Switches to a valid server URL in memory, then sends the request queue and catches up the new
+     * server, see {@link Countly#changeServerUrl(String)}.
+     *
+     * @param serverUrl the new server URL, ignored with log code e102 when it is not valid
+     */
+    public void changeServerUrl(@Nullable String serverUrl) {
+        URL url = validServerUrl(serverUrl);
+        if (url == null) {
+            L.recordLogCode("e102");
+            return;
+        }
+
+        config.setServerURL(url);
+        L.i("[SDKCore] changeServerUrl, requests are sent to [" + url + "] from now on");
+        checkNetworking(config);
+        catchUpAfterChange(false);
+    }
+
+    /**
+     * Parses a server URL the SDK can send to, logging an error when it cannot.
+     *
+     * @param serverUrl the URL as given
+     * @return the URL without trailing "/" characters, {@code null} when it is not valid
+     */
+    @Nullable
+    private URL validServerUrl(@Nullable String serverUrl) {
+        URL url;
+        try {
+            url = new URL(serverUrl == null ? "" : serverUrl.replaceAll("/+$", ""));
+            url.toURI();
+        } catch (MalformedURLException | URISyntaxException e) {
+            url = null;
+        }
+
+        if (url == null || !("http".equals(url.getProtocol()) || "https".equals(url.getProtocol())) || Utils.isEmptyOrNull(url.getHost())) {
+            L.e("[SDKCore] changeServerUrl, [" + serverUrl + "] is not an absolute http or https URL with a host, the server URL stays [" + config.getServerURL() + "]");
+            return null;
+        }
+
+        Set<String> keyPins = config.getPublicKeyPins();
+        Set<String> certificatePins = config.getCertificatePins();
+        boolean pinned = (keyPins != null && !keyPins.isEmpty()) || (certificatePins != null && !certificatePins.isEmpty());
+        if (pinned && !"https".equals(url.getProtocol())) {
+            L.e("[SDKCore] changeServerUrl, certificate or public key pins are set, so [" + serverUrl + "] must use https, the server URL stays [" + config.getServerURL() + "]");
+            return null;
+        }
+        return url;
+    }
+
+    /**
+     * Closes what belongs to the old app under the old key, switches the key in memory, begins a
+     * session again if one was running and catches up the new app, see
+     * {@link Countly#changeAppKey(String)}.
+     *
+     * @param appKey the new app key, ignored with log code e103 when it is empty or "YOUR_APP_KEY"
+     */
+    public void changeAppKey(@Nullable String appKey) {
+        if (ignoredInBackendMode("changeAppKey")) {
+            return;
+        }
+        if (Utils.isEmptyOrNull(appKey) || PLACEHOLDER_APP_KEY.equals(appKey)) {
+            L.e("[SDKCore] changeAppKey, [" + appKey + "] is not a valid app key, the app key stays the same");
+            L.recordLogCode("e103");
+            return;
+        }
+        if (appKey.equals(config.getServerAppKey())) {
+            L.d("[SDKCore] changeAppKey, the given app key is already in use, ignoring the call");
+            return;
+        }
+
+        //the lock of the views, user profile and device ID calls, so none of them runs between closing and switching
+        synchronized (Countly.instance()) {
+            ModuleViews views = module(ModuleViews.class);
+            if (views != null) {
+                views.stopAllViewsInternal(null);
+            }
+            ModuleEvents events = runningModule(CoreFeature.Events, ModuleEvents.class);
+            if (events != null) {
+                events.checkEventQueueToSend(true);
+            }
+            ModuleUserProfile.saveIfSentAutomatically(config);
+            SessionImpl session = getSession();
+            boolean sessionWasRunning = session != null && session.isActive();
+            if (sessionWasRunning) {
+                session.endAutomatically(null, null, null);
+            }
+
+            config.setServerAppKey(appKey);
+            L.i("[SDKCore] changeAppKey, new requests carry the new app key from now on");
+
+            if (sessionWasRunning) {
+                session(null).beginAutomatically();
+            }
+        }
+        catchUpAfterChange(true);
+    }
+
+    /**
+     * Catches up a server or app that knows nothing of this device yet: requests the SDK behavior
+     * settings, keeping the stored ones until the answer arrives, and, as at init, downloads remote
+     * config when it downloads automatically, except in temporary device ID mode.
+     *
+     * @param appKeyChanged whether the stored remote config values belong to the old app, so they
+     *     are cleared, or marked as cached with value caching
+     */
+    private void catchUpAfterChange(boolean appKeyChanged) {
+        ModuleConfiguration configuration = moduleConfiguration;
+        if (configuration != null) {
+            configuration.fetchConfigFromServer(config);
+        }
+        ModuleRemoteConfig remoteConfig = runningModule(CoreFeature.RemoteConfig, ModuleRemoteConfig.class);
+        if (remoteConfig == null) {
+            return;
+        }
+        if (appKeyChanged) {
+            remoteConfig.cacheOrClearRCValuesIfNeeded();
+        }
+        if (!config.isTemporaryIdEnabled()) {
+            remoteConfig.rcAutomaticDownloadTrigger(false);
+        }
+    }
+
+    /**
+     * Drops the queued events and every queued request, unsent, see {@link Countly#flushQueues()}.
+     */
+    public void flushQueues() {
+        if (ignoredInBackendMode("flushQueues")) {
+            return;
+        }
+        ModuleEvents events = module(ModuleEvents.class);
+        if (events != null) {
+            events.clearEventQueue();
+        } else {
+            //events stored by an earlier run, which the events module restores once it runs
+            sdkStorage.storeEventQueue("");
+        }
+        int removed = ModuleRequests.removeQueuedRequests(config, null);
+        L.i("[SDKCore] flushQueues, cleared the event queue and removed [" + removed + "] queued requests");
+    }
+
+    /**
+     * Sets the current app key on every queued request, so the requests queued under another key
+     * go to the current app.
+     */
+    public void replaceAllAppKeysInQueueWithCurrentAppKey() {
+        if (ignoredInBackendMode("replaceAllAppKeysInQueueWithCurrentAppKey")) {
+            return;
+        }
+        int replaced = ModuleRequests.replaceAppKeysInQueue(config);
+        L.i("[SDKCore] replaceAllAppKeysInQueueWithCurrentAppKey, [" + replaced + "] queued requests now carry the current app key");
+    }
+
+    /**
+     * Removes, unsent, every queued request whose app key is not the current one.
+     */
+    public void removeDifferentAppKeysFromQueue() {
+        if (ignoredInBackendMode("removeDifferentAppKeysFromQueue")) {
+            return;
+        }
+        String appKey = config.getServerAppKey();
+        int removed = ModuleRequests.removeQueuedRequests(config, request -> !appKey.equals(request.params.get("app_key")));
+        L.i("[SDKCore] removeDifferentAppKeysFromQueue, removed [" + removed + "] queued requests with another app key");
+    }
+
+    /**
+     * Moves the queued events, those of backend mode included, into requests and starts sending
+     * the request queue now, see {@link Countly#attemptToSendStoredRequests()}.
+     */
+    public void attemptToSendStoredRequests() {
+        ModuleEvents events = runningModule(CoreFeature.Events, ModuleEvents.class);
+        if (events != null) {
+            events.checkEventQueueToSend(true);
+        }
+        ModuleBackendMode backendMode = module(ModuleBackendMode.class);
+        if (config.isBackendModeEnabled() && backendMode != null) {
+            backendMode.addEventsToRequestQ();
+        }
+        checkNetworking(config);
+    }
+
+    /**
+     * Whether a call is ignored as backend mode is enabled, where the application sets the app key
+     * of each request, so the queue holds requests of other apps on purpose.
+     *
+     * @param call the call, for the log line
+     * @return {@code true} when backend mode is enabled
+     */
+    private boolean ignoredInBackendMode(@Nonnull String call) {
+        if (!config.isBackendModeEnabled()) {
+            return false;
+        }
+        L.w("[SDKCore] " + call + ", backend mode is enabled, where requests carry the app key the application sets, ignoring the call");
+        return true;
     }
 
     public void notifyModulesDeviceIdChanged(@Nullable String old, final boolean withMerge) {

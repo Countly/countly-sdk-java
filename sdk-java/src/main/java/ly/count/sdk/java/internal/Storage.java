@@ -2,6 +2,7 @@ package ly.count.sdk.java.internal;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -182,6 +183,28 @@ public class Storage {
             config.getLogger().e("[Storage] Interrupted while reading all " + prefix + " " + e);
         }
         return false;
+    }
+
+    /**
+     * Runs a job on the storage thread and waits for it, so no other storage task reads or changes
+     * the stored files while the job runs.
+     *
+     * @param config to configure
+     * @param job the job to run
+     * @return the result of the job, {@code null} when it failed or the wait was interrupted
+     */
+    static <T> T runAndWait(final InternalConfig config, final Callable<T> job) {
+        try {
+            return tasks.run(new Tasks.Task<T>(Tasks.ID_STRICT) {
+                @Override
+                public T call() throws Exception {
+                    return job.call();
+                }
+            }).get();
+        } catch (InterruptedException | ExecutionException e) {
+            config.getLogger().e("[Storage] runAndWait, the storage job failed, [" + e + "]");
+        }
+        return null;
     }
 
     /**

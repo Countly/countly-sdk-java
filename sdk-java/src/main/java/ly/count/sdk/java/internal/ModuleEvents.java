@@ -194,6 +194,14 @@ public class ModuleEvents extends ModuleBase {
         });
     }
 
+    /**
+     * Drops the queued events, unsent; timed events are kept. Takes the lock of moving the queued
+     * events into a request, so a request they were already moved into is queued first.
+     */
+    synchronized void clearEventQueue() {
+        eventQueue.clear();
+    }
+
     protected void recordEventInternal(String key, int count, Double sum, Double dur, Map<String, Object> segmentation, String eventIdOverride) {
         ConfigurationProvider configProvider = internalConfig.getConfigurationProvider();
         if (!configProvider.getTrackingEnabled()) {

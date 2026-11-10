@@ -3,6 +3,7 @@ package ly.count.sdk.java;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.function.Consumer;
 import ly.count.sdk.java.internal.Device;
 import ly.count.sdk.java.internal.DeviceIdType;
 import ly.count.sdk.java.internal.InternalConfig;
@@ -409,6 +410,88 @@ public class Countly implements Usage {
         } else {
             cly.sdk.onConsentRemoval(cly.sdk.config, consentFeatureIndexes("onConsentRemoval", features));
         }
+    }
+
+    /**
+     * Changes the server URL while the SDK runs. Every later request goes to the new URL, queued
+     * ones included; a request being sent finishes at the old one. The app key, salt and custom
+     * request headers stay. Then the SDK requests its behavior settings from the new server, and
+     * remote config when it downloads automatically. Kept in memory only: the next initialization
+     * uses the URL of the configuration again. An invalid URL is ignored with an error log.
+     *
+     * @param serverUrl an absolute http or https URL with a host, https only while certificate or
+     * public key pins are set; trailing "/" characters are removed
+     */
+    public void changeServerUrl(String serverUrl) {
+        callIfInitialized("changeServerUrl, serverUrl:[" + serverUrl + "]", sdk -> sdk.changeServerUrl(serverUrl));
+    }
+
+    /**
+     * Changes the app key while the SDK runs, so the SDK reports to another app. First, under the
+     * old key, the running views are stopped, the queued events and pending user profile changes
+     * are stored as requests, and a running session is ended, then begun again under the new key.
+     * Queued requests keep their key: see {@link #replaceAllAppKeysInQueueWithCurrentAppKey()} and
+     * {@link #removeDifferentAppKeysFromQueue()}. Then the SDK requests the behavior settings of
+     * the new app, and its remote config when remote config downloads automatically; the remote
+     * config values of the old app are cleared, or marked as cached with value caching. Kept in
+     * memory only: the next initialization uses the key of the configuration again. An invalid key
+     * is ignored with an error log. The key in use is ignored, and so is any call in backend mode.
+     *
+     * @param appKey the new app key, neither empty nor "YOUR_APP_KEY"
+     */
+    public void changeAppKey(String appKey) {
+        callIfInitialized("changeAppKey, appKey:[" + appKey + "]", sdk -> sdk.changeAppKey(appKey));
+    }
+
+    /**
+     * Clears the request queue and the event queue: all pending data is discarded. Started timed
+     * events, running views, pending user profile changes and the health check counters are kept,
+     * and a request that is being sent is not stopped. Ignored in backend mode.
+     */
+    public void flushQueues() {
+        callIfInitialized("flushQueues", SDKCore::flushQueues);
+    }
+
+    /**
+     * Replaces the app key of every queued request with the current app key, so requests queued
+     * under another key are sent to the current app. Ignored in backend mode.
+     */
+    public void replaceAllAppKeysInQueueWithCurrentAppKey() {
+        callIfInitialized("replaceAllAppKeysInQueueWithCurrentAppKey", SDKCore::replaceAllAppKeysInQueueWithCurrentAppKey);
+    }
+
+    /**
+     * Removes every queued request whose app key differs from the current app key, so it is never
+     * sent. Ignored in backend mode.
+     */
+    public void removeDifferentAppKeysFromQueue() {
+        callIfInitialized("removeDifferentAppKeysFromQueue", SDKCore::removeDifferentAppKeysFromQueue);
+    }
+
+    /**
+     * Packs the queued events into a request and starts sending the request queue right away,
+     * without waiting for the next timer tick. During a backoff pause, or while the SDK behavior
+     * settings turn networking off, sending waits as usual.
+     */
+    public void attemptToSendStoredRequests() {
+        callIfInitialized("attemptToSendStoredRequests", SDKCore::attemptToSendStoredRequests);
+    }
+
+    /**
+     * Logs a call at info level and runs it on the SDK, or only records log code w101 before init.
+     *
+     * @param logLine the call and its arguments, as logged
+     * @param call the call on the SDK
+     */
+    private static void callIfInitialized(String logLine, Consumer<SDKCore> call) {
+        if (!isInitialized()) {
+            Log.recordLogCodeWhileNotInitialized("w101");
+            return;
+        }
+        if (cly.L != null) {
+            cly.L.i("[Countly] " + logLine);
+        }
+        call.accept(cly.sdk);
     }
 
     /**
