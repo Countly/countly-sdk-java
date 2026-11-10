@@ -42,9 +42,9 @@
 * Added support for the SDK connection test. When the server asks for it, the SDK checks that it can reach every endpoint it depends on and reports the results.
 * Added "setMaxKeyLength(int)" init config method to limit the length of event keys, view names, segmentation keys and custom user property keys. Longer keys are truncated. There is no limit by default, and the key length limit of the SDK behavior settings overrides it.
 * Added "disableHealthCheck()" init config method to turn off the health check request.
-* Added "changeServerUrl(String)" to "Countly.instance()" for changing the server URL while the SDK runs. Queued requests are sent to the new URL too, and the next initialization uses the URL of the config again.
-* Added "changeAppKey(String)" to "Countly.instance()" for reporting to another app while the SDK runs. The running views, queued events, pending user profile changes and the running session are closed under the old app key, then a session begins under the new one if one was running. Queued requests keep the app key they were created with, and the next initialization uses the app key of the config again.
-* Added "flushQueues()", "replaceAllAppKeysInQueueWithCurrentAppKey()", "removeDifferentAppKeysFromQueue()" and "attemptToSendStoredRequests()" to "Countly.instance()" for managing the request queue.
+* Added "changeServerUrl(String)" to "Countly.instance()" to change the server URL after init
+* Added "changeAppKey(String)" to "Countly.instance()" to change the app key after init
+* Added "flushQueues()", "replaceAllAppKeysInQueueWithCurrentAppKey()", "removeDifferentAppKeysFromQueue()" and "attemptToSendStoredRequests()" to "Countly.instance()" to manage the request queue
 * The deprecated "event", "timedEvent", "view" and "addCrashReport" calls of the session interface, and "record" and "endAndRecord" of a legacy event, now log a warning that names the call to use instead.
 * Failed requests are now logged at debug level, and wrong uses of the session, event, view and crash methods at warning level instead of error level.
 
