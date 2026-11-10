@@ -79,6 +79,7 @@ public class ServerUrlChangeTests {
         Countly.instance().init(config(serverA, Config.Feature.Events).setEventQueueSizeToSend(1));
         Countly.instance().events().recordEvent("queued_while_down");
         serverA.await(withEvent("queued_while_down"));
+        awaitSendHandled();
 
         Countly.instance().changeServerUrl(serverB.url() + "///");
 
@@ -204,6 +205,7 @@ public class ServerUrlChangeTests {
 
         Countly.instance().attemptToSendStoredRequests();
         serverA.await(withEvent("waiting_in_the_event_queue"));
+        awaitSendHandled();
         Assert.assertEquals(0, TestUtils.getCurrentEQ().size());
         Assert.assertEquals(1, queuedRequestCount());
 
@@ -274,6 +276,15 @@ public class ServerUrlChangeTests {
         Storage.await(null);
         File[] files = TestUtils.getTestSDirectory().listFiles((dir, name) -> name.startsWith("[CLY]_request_"));
         return files == null ? 0 : files.length;
+    }
+
+    /**
+     * Waits until the SDK finished handling the request it is sending. A send asked for while a
+     * failed send is still being handled waits for the next request or timer tick, so a retry is
+     * asked for only once the failed send is handled.
+     */
+    private static void awaitSendHandled() throws InterruptedException {
+        Assert.assertTrue("the send in progress must end", TestUtils.waitFor(10_000, () -> !SDKCore.instance.networking.isSending()));
     }
 
     /**
