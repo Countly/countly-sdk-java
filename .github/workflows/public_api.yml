@@ -54,7 +54,8 @@ jobs:
               exit 1
             fi
             python3 .github/scripts/public_api.py --root-package ly.count.sdk.java \
-              --root-package ly.count.sdk.java.ui "$RUNNER_TEMP/check.log" >> "$RUNNER_TEMP/breaking.txt"
+              --root-package ly.count.sdk.java.ui --signatures "$RUNNER_TEMP/api" --module-dir "${module#:}" \
+              "$RUNNER_TEMP/check.log" >> "$RUNNER_TEMP/breaking.txt"
           done
 
       - name: Require a CHANGELOG entry for breaking changes
