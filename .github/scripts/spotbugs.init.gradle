@@ -1,0 +1,43 @@
+// Applies SpotBugs to the modules listed in -DspotbugsModules (for example :sdk-java,:sdk-java-ui) and writes each
+// analysis as SARIF to <-DspotbugsDir>/<module name>-<task name>.sarif. Findings never fail the build.
+// Only .github/workflows/static_analysis.yml applies it, through --init-script, so no build file changes.
+def spotbugsModules = (System.getProperty('spotbugsModules') ?: '').tokenize(',') as Set
+def spotbugsDir = System.getProperty('spotbugsDir')
+
+rootProject {
+  buildscript {
+    repositories {
+      gradlePluginPortal {
+        content {
+          includeGroup 'com.github.spotbugs.snom'
+        }
+      }
+    }
+    dependencies {
+      classpath 'com.github.spotbugs.snom:spotbugs-gradle-plugin:6.5.13'
+    }
+  }
+}
+
+allprojects { project ->
+  if (!spotbugsModules.contains(project.path)) {
+    return
+  }
+  if (!spotbugsDir) {
+    throw new org.gradle.api.GradleException('Pass -DspotbugsDir=<directory> to choose where the reports go.')
+  }
+  project.pluginManager.withPlugin('java') {
+    project.pluginManager.apply('com.github.spotbugs')
+    project.spotbugs {
+      ignoreFailures.set(true)
+    }
+    project.tasks.matching { it.name.startsWith('spotbugs') }.configureEach { task ->
+      task.reports {
+        create('sarif') {
+          required.set(true)
+          outputLocation.set(new File(spotbugsDir, "${project.name}-${task.name}.sarif"))
+        }
+      }
+    }
+  }
+}
