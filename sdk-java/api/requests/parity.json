@@ -1,0 +1,115 @@
+[
+  {
+    "path": "/i",
+    "params": {
+      "app_key": "parity-app-key",
+      "begin_session": "1",
+      "device_id": "parity-device-001",
+      "dow": "<masked>",
+      "hour": "<masked>",
+      "metrics": {
+        "_app_version": "<masked>",
+        "_device": "<masked>",
+        "_locale": "<masked>",
+        "_os": "<masked>",
+        "_os_version": "<masked>",
+        "_resolution": "<masked>"
+      },
+      "sdk_name": "java-native",
+      "sdk_version": "<masked>",
+      "session_id": "<masked>",
+      "timestamp": "<masked>",
+      "tz": "<masked>"
+    }
+  },
+  {
+    "path": "/i",
+    "params": {
+      "app_key": "parity-app-key",
+      "device_id": "parity-device-001",
+      "dow": "<masked>",
+      "events": [
+        {
+          "count": 2,
+          "cvid": "<masked>",
+          "dow": "<masked>",
+          "dur": 5,
+          "hour": "<masked>",
+          "id": "<masked>",
+          "key": "purchase",
+          "segmentation": {
+            "hashirama": -2147483647,
+            "itachi": 1.7976931348623157E+308,
+            "kakaski": 4.9E-324,
+            "nar": "uto",
+            "sakura": false,
+            "sasuke": 2147483647
+          },
+          "sum": 9.99,
+          "timestamp": "<masked>"
+        }
+      ],
+      "hour": "<masked>",
+      "sdk_name": "java-native",
+      "sdk_version": "<masked>",
+      "timestamp": "<masked>",
+      "tz": "<masked>"
+    }
+  },
+  {
+    "path": "/i",
+    "params": {
+      "app_key": "parity-app-key",
+      "device_id": "parity-device-001",
+      "dow": "<masked>",
+      "hour": "<masked>",
+      "sdk_name": "java-native",
+      "sdk_version": "<masked>",
+      "timestamp": "<masked>",
+      "tz": "<masked>",
+      "user_details": {
+        "byear": 1980,
+        "custom": {
+          "age": 30,
+          "tier": "gold"
+        },
+        "email": "john@example.com",
+        "gender": "M",
+        "name": "John Doe",
+        "organization": "Countly",
+        "phone": "1234567890",
+        "username": "john_d"
+      }
+    }
+  },
+  {
+    "path": "/i",
+    "params": {
+      "app_key": "parity-app-key",
+      "device_id": "parity-device-001",
+      "dow": "<masked>",
+      "hour": "<masked>",
+      "sdk_name": "java-native",
+      "sdk_version": "<masked>",
+      "session_duration": "<masked>",
+      "session_id": "<masked>",
+      "timestamp": "<masked>",
+      "tz": "<masked>"
+    }
+  },
+  {
+    "path": "/i",
+    "params": {
+      "app_key": "parity-app-key",
+      "device_id": "parity-device-001",
+      "dow": "<masked>",
+      "end_session": "1",
+      "hour": "<masked>",
+      "sdk_name": "java-native",
+      "sdk_version": "<masked>",
+      "session_id": "<masked>",
+      "timestamp": "<masked>",
+      "tz": "<masked>"
+    }
+  }
+]
