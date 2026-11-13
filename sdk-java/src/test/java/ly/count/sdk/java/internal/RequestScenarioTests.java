@@ -2,19 +2,19 @@ package ly.count.sdk.java.internal;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 import org.junit.After;
@@ -37,11 +37,15 @@ public class RequestScenarioTests {
     private static final List<String> MASKED_PARAMS = Arrays.asList("timestamp", "hour", "dow", "tz", "sdk_version", "av", "rr", "checksum", "checksum256", "session_duration", "session_id");
     private static final List<String> JSON_PARAMS = Arrays.asList("events", "metrics", "user_details", "crash", "consent", "hc");
     private static final List<String> MASKED_EVENT_FIELDS = Arrays.asList("timestamp", "hour", "dow", "id", "pvid", "cvid", "peid");
+    private static final List<String> MASKED_VIEW_FIELDS = Arrays.asList("timestamp", "hour", "dow", "id", "pvid", "cvid", "peid", "dur");
     private static final List<String> MASKED_CRASH_FIELDS = Arrays.asList("_error", "_run", "_os", "_os_version", "_resolution", "_density", "_locale", "_device", "_device_type", "_manufacture", "_cpu", "_opengl", "_ram_current", "_ram_total", "_disk_current", "_disk_total", "_bat", "_orientation", "_root", "_online", "_muted", "_background");
     // a view's "segment" is the operating system the SDK runs on
     private static final List<String> MASKED_VIEW_SEGMENTS = Arrays.asList("segment");
-    private static final int MAX_INT = 2147483647;
+    private static final String VIEW_KEY = "[CLY]_view";
     private static final File RECORDS = new File("api/requests");
+    private static final long SETTLE_QUIET_MS = 500;
+    private static final long SETTLE_LIMIT_MS = 10_000;
+    private static final char FIRST_PRINTABLE = ' ';
 
     /**
      * The calls of a scenario.
@@ -56,14 +60,20 @@ public class RequestScenarioTests {
     }
 
     /**
-     * Starts every scenario from an empty SDK storage, with fixed device details and without the timer of a test that
-     * shortened it.
+     * Starts every scenario from an empty SDK storage, with fixed device details, no metric overrides that other tests
+     * left and without the timer of a test that shortened it.
+     *
+     * @throws ReflectiveOperationException when the device's metric overrides cannot be reached
      */
     @Before
-    public void setUp() {
+    public void setUp() throws ReflectiveOperationException {
         TestUtils.createCleanTestState();
         CountlyTimer.TIMER_DELAY_MS = 0;
         TestUtils.setAdditionalDeviceMetrics();
+        // every test shares the device, and its API can only add metric overrides
+        Field metricOverride = Device.class.getDeclaredField("metricOverride");
+        metricOverride.setAccessible(true);
+        ((Map<?, ?>) metricOverride.get(Device.dev)).clear();
     }
 
     /**
@@ -77,14 +87,15 @@ public class RequestScenarioTests {
     /**
      * A session with an event of every segmentation value type, the user details and a session update.
      *
-     * @throws Exception when the requests cannot be read or compared
+     * @throws IOException when the record cannot be read or written
+     * @throws InterruptedException when waiting for the SDK is interrupted
      */
     @Test
-    public void parity() throws Exception {
+    public void parity() throws IOException, InterruptedException {
         assertRequests("parity", config(), () -> {
             Countly.session().begin();
             Countly.instance().events().recordEvent("purchase", paritySegmentation(), 2, 9.99, 5.0);
-            Map<String, Object> properties = new HashMap<>();
+            Map<String, Object> properties = new ConcurrentHashMap<>();
             properties.put("name", "John Doe");
             properties.put("username", "john_d");
             properties.put("email", "john@example.com");
@@ -107,13 +118,14 @@ public class RequestScenarioTests {
     /**
      * Two views in a session, the first with segmentation.
      *
-     * @throws Exception when the requests cannot be read or compared
+     * @throws IOException when the record cannot be read or written
+     * @throws InterruptedException when waiting for the SDK is interrupted
      */
     @Test
-    public void views() throws Exception {
+    public void views() throws IOException, InterruptedException {
         assertRequests("views", config(), () -> {
             Countly.session().begin();
-            Map<String, Object> segmentation = new HashMap<>();
+            Map<String, Object> segmentation = new ConcurrentHashMap<>();
             segmentation.put("source", "scenario");
             Countly.instance().views().startView("Home", segmentation);
             Countly.instance().views().stopViewWithName("Home");
@@ -125,13 +137,14 @@ public class RequestScenarioTests {
     /**
      * A handled exception with a breadcrumb and segmentation.
      *
-     * @throws Exception when the requests cannot be read or compared
+     * @throws IOException when the record cannot be read or written
+     * @throws InterruptedException when waiting for the SDK is interrupted
      */
     @Test
-    public void crash() throws Exception {
+    public void crash() throws IOException, InterruptedException {
         assertRequests("crash", config(), () -> {
             Countly.instance().crashes().addCrashBreadcrumb("breadcrumb one");
-            Map<String, Object> segmentation = new HashMap<>();
+            Map<String, Object> segmentation = new ConcurrentHashMap<>();
             segmentation.put("tier", "gold");
             Countly.instance().crashes().recordHandledException(new Exception("parity crash"), segmentation);
         });
@@ -140,10 +153,11 @@ public class RequestScenarioTests {
     /**
      * Consent given for sessions and events, then taken back for events.
      *
-     * @throws Exception when the requests cannot be read or compared
+     * @throws IOException when the record cannot be read or written
+     * @throws InterruptedException when waiting for the SDK is interrupted
      */
     @Test
-    public void consent() throws Exception {
+    public void consent() throws IOException, InterruptedException {
         assertRequests("consent", config().setRequiresConsent(true), () -> {
             Countly.onConsent(Config.Feature.Sessions, Config.Feature.Events);
             Countly.session().begin();
@@ -158,10 +172,11 @@ public class RequestScenarioTests {
     /**
      * A device ID change with merge, then one without.
      *
-     * @throws Exception when the requests cannot be read or compared
+     * @throws IOException when the record cannot be read or written
+     * @throws InterruptedException when waiting for the SDK is interrupted
      */
     @Test
-    public void deviceId() throws Exception {
+    public void deviceId() throws IOException, InterruptedException {
         assertRequests("device-id", config(), () -> {
             Countly.session().begin();
             Countly.instance().deviceId().changeWithMerge("parity-device-002");
@@ -192,14 +207,14 @@ public class RequestScenarioTests {
      * @return segmentation
      */
     private Map<String, Object> paritySegmentation() {
-        Map<String, Object> segmentation = new HashMap<>();
+        Map<String, Object> segmentation = new ConcurrentHashMap<>();
         segmentation.put("nar", "uto");
-        segmentation.put("sasuke", MAX_INT);
+        segmentation.put("sasuke", Integer.MAX_VALUE);
         segmentation.put("sakura", false);
         segmentation.put("itachi", Double.MAX_VALUE);
         segmentation.put("kakaski", Double.MIN_VALUE);
-        segmentation.put("hashirama", -MAX_INT);
-        Map<String, Object> tobi = new HashMap<>();
+        segmentation.put("hashirama", -Integer.MAX_VALUE);
+        Map<String, Object> tobi = new ConcurrentHashMap<>();
         tobi.put("obito", "uchiha");
         tobi.put("zetsu", "white");
         segmentation.put("tobi", tobi);
@@ -208,15 +223,21 @@ public class RequestScenarioTests {
         segmentation.put("doubleList", Arrays.asList(1.1, 2.2, 3.3));
         segmentation.put("boolList", Arrays.asList(true, false, true));
         segmentation.put("mixedList", Arrays.asList("value1", 2, 3.3, true));
-        List<Map<String, Object>> mapList = new ArrayList<>();
-        for (int i = 1; i <= 3; i++) {
-            Map<String, Object> entry = new HashMap<>();
-            entry.put("key1", "value" + i);
-            entry.put("key2", i + 1);
-            mapList.add(entry);
-        }
-        segmentation.put("mapList", mapList);
+        segmentation.put("mapList", Arrays.asList(mapListEntry(1), mapListEntry(2), mapListEntry(3)));
         return segmentation;
+    }
+
+    /**
+     * An entry of the parity scenario's list of objects.
+     *
+     * @param index position of the entry, from 1
+     * @return the entry
+     */
+    private Map<String, Object> mapListEntry(int index) {
+        Map<String, Object> entry = new ConcurrentHashMap<>();
+        entry.put("key1", "value" + index);
+        entry.put("key2", index + 1);
+        return entry;
     }
 
     /**
@@ -234,14 +255,16 @@ public class RequestScenarioTests {
         int count = -1;
         long quietSince = System.currentTimeMillis();
         long started = quietSince;
-        while (System.currentTimeMillis() - started < 10_000) {
+        while (System.currentTimeMillis() - started < SETTLE_LIMIT_MS) {
             Thread.sleep(50);
             int queued = TestUtils.getCurrentRQ().length;
-            if (queued != count) {
+            if (queued == count) {
+                if (System.currentTimeMillis() - quietSince > SETTLE_QUIET_MS) {
+                    return;
+                }
+            } else {
                 count = queued;
                 quietSince = System.currentTimeMillis();
-            } else if (System.currentTimeMillis() - quietSince > 500) {
-                return;
             }
         }
         Assert.fail("the request queue kept changing for 10 seconds");
@@ -254,9 +277,10 @@ public class RequestScenarioTests {
      * @param name scenario name, the record file name without .json
      * @param config init config
      * @param scenario the calls
-     * @throws Exception when the record cannot be read or written, or the requests cannot be parsed
+     * @throws IOException when the record cannot be read or written
+     * @throws InterruptedException when waiting for the SDK is interrupted
      */
-    private void assertRequests(String name, Config config, Scenario scenario) throws Exception {
+    private void assertRequests(String name, Config config, Scenario scenario) throws IOException, InterruptedException {
         Countly.instance().init(config);
         scenario.run();
         settle();
@@ -277,38 +301,54 @@ public class RequestScenarioTests {
      *
      * @param requests the request queue, as TestUtils.getCurrentRQ gives it
      * @return file content
-     * @throws JSONException when a JSON parameter cannot be parsed
      */
-    private String report(Map<String, String>[] requests) throws JSONException {
-        StringBuilder out = new StringBuilder("[");
+    private String report(Map<String, String>[] requests) {
+        StringBuilder out = new StringBuilder(8192).append('[');
         for (int i = 0; i < requests.length; i++) {
-            String path = "/i";
-            JSONObject params = new JSONObject();
-            for (Map.Entry<String, String> param : requests[i].entrySet()) {
-                String name = param.getKey();
-                Object value = param.getValue();
-                // the SDK takes both out of a queued request before it sends it
-                if (name.equals(Request.MODULE)) {
-                    continue;
-                }
-                if (name.equals(Request.ENDPOINT)) {
-                    path = param.getValue().replaceAll("\\?$", "");
-                    continue;
-                }
-                if (MASKED_PARAMS.contains(name)) {
-                    value = MASK;
-                } else if (JSON_PARAMS.contains(name) && !param.getValue().isEmpty()) {
-                    value = maskedJson(name, new JSONTokener(param.getValue()).nextValue());
-                }
-                params.put(name, value);
-            }
             out.append(i == 0 ? "\n" : ",\n").append("  {\n    \"path\": ");
-            string(out, path);
+            string(out, pathOf(requests[i]));
             out.append(",\n    \"params\": ");
-            write(out, params, "    ");
+            write(out, recordedParams(requests[i]), "    ");
             out.append("\n  }");
         }
         return out.append(requests.length == 0 ? "]\n" : "\n]\n").toString();
+    }
+
+    /**
+     * The path a queued request is sent to: its endpoint without the query mark, or /i.
+     *
+     * @param request the queued request's parameters
+     * @return the path
+     */
+    private String pathOf(Map<String, String> request) {
+        String endpoint = request.get(Request.ENDPOINT);
+        return endpoint == null ? "/i" : endpoint.replaceAll("\\?$", "");
+    }
+
+    /**
+     * The parameters of a queued request as the SDK sends them, with the values that change from run to run masked and
+     * the JSON parameters parsed.
+     *
+     * @param request the queued request's parameters
+     * @return the parameters
+     */
+    private JSONObject recordedParams(Map<String, String> request) {
+        JSONObject params = new JSONObject();
+        for (Map.Entry<String, String> param : request.entrySet()) {
+            String name = param.getKey();
+            // the SDK takes both out of a queued request before it sends it
+            if (Request.MODULE.equals(name) || Request.ENDPOINT.equals(name)) {
+                continue;
+            }
+            if (MASKED_PARAMS.contains(name)) {
+                params.put(name, MASK);
+            } else if (JSON_PARAMS.contains(name) && !param.getValue().isEmpty()) {
+                params.put(name, maskedJson(name, new JSONTokener(param.getValue()).nextValue()));
+            } else {
+                params.put(name, param.getValue());
+            }
+        }
+        return params;
     }
 
     /**
@@ -317,35 +357,41 @@ public class RequestScenarioTests {
      * @param name parameter name
      * @param value parsed parameter value
      * @return the masked value
-     * @throws JSONException when the value cannot be read
      */
-    private Object maskedJson(String name, Object value) throws JSONException {
-        if ((name.equals("metrics") || name.equals("hc")) && value instanceof JSONObject) {
+    private Object maskedJson(String name, Object value) {
+        if (("metrics".equals(name) || "hc".equals(name)) && value instanceof JSONObject) {
             return masked((JSONObject) value, keys((JSONObject) value));
         }
-        if (name.equals("events") && value instanceof JSONArray) {
+        if ("events".equals(name) && value instanceof JSONArray) {
             JSONArray events = (JSONArray) value;
             JSONArray result = new JSONArray();
             for (int i = 0; i < events.length(); i++) {
-                JSONObject event = events.getJSONObject(i);
-                List<String> fields = new ArrayList<>(MASKED_EVENT_FIELDS);
-                boolean view = "[CLY]_view".equals(event.optString("key"));
-                if (view) {
-                    fields.add("dur");
-                }
-                JSONObject maskedEvent = masked(event, fields);
-                JSONObject segmentation = maskedEvent.optJSONObject("segmentation");
-                if (view && segmentation != null) {
-                    maskedEvent.put("segmentation", masked(segmentation, MASKED_VIEW_SEGMENTS));
-                }
-                result.put(maskedEvent);
+                result.put(maskedEvent(events.getJSONObject(i)));
             }
             return result;
         }
-        if (name.equals("crash") && value instanceof JSONObject) {
+        if ("crash".equals(name) && value instanceof JSONObject) {
             return masked((JSONObject) value, MASKED_CRASH_FIELDS);
         }
         return value;
+    }
+
+    /**
+     * An event with the values that change from run to run masked, for a view also in its segmentation.
+     *
+     * @param event the event
+     * @return the masked copy
+     */
+    private JSONObject maskedEvent(JSONObject event) {
+        if (!VIEW_KEY.equals(event.optString("key"))) {
+            return masked(event, MASKED_EVENT_FIELDS);
+        }
+        JSONObject view = masked(event, MASKED_VIEW_FIELDS);
+        JSONObject segmentation = view.optJSONObject("segmentation");
+        if (segmentation != null) {
+            view.put("segmentation", masked(segmentation, MASKED_VIEW_SEGMENTS));
+        }
+        return view;
     }
 
     /**
@@ -354,9 +400,8 @@ public class RequestScenarioTests {
      * @param value object
      * @param fields keys to mask
      * @return the masked copy
-     * @throws JSONException when the object cannot be read
      */
-    private JSONObject masked(JSONObject value, List<String> fields) throws JSONException {
+    private JSONObject masked(JSONObject value, List<String> fields) {
         JSONObject copy = new JSONObject();
         for (String key : keys(value)) {
             copy.put(key, fields.contains(key) ? MASK : value.get(key));
@@ -385,35 +430,12 @@ public class RequestScenarioTests {
      * @param out where to write
      * @param value JSON value
      * @param indent indentation of the line the value starts on
-     * @throws JSONException when the value cannot be read
      */
-    private void write(StringBuilder out, Object value, String indent) throws JSONException {
+    private void write(StringBuilder out, Object value, String indent) {
         if (value instanceof JSONObject) {
-            List<String> keys = keys((JSONObject) value);
-            if (keys.isEmpty()) {
-                out.append("{}");
-                return;
-            }
-            out.append("{");
-            for (int i = 0; i < keys.size(); i++) {
-                out.append(i == 0 ? "\n" : ",\n").append(indent).append("  ");
-                string(out, keys.get(i));
-                out.append(": ");
-                write(out, ((JSONObject) value).get(keys.get(i)), indent + "  ");
-            }
-            out.append("\n").append(indent).append("}");
+            writeObject(out, (JSONObject) value, indent);
         } else if (value instanceof JSONArray) {
-            JSONArray array = (JSONArray) value;
-            if (array.length() == 0) {
-                out.append("[]");
-                return;
-            }
-            out.append("[");
-            for (int i = 0; i < array.length(); i++) {
-                out.append(i == 0 ? "\n" : ",\n").append(indent).append("  ");
-                write(out, array.get(i), indent + "  ");
-            }
-            out.append("\n").append(indent).append("]");
+            writeArray(out, (JSONArray) value, indent);
         } else if (value instanceof String) {
             string(out, (String) value);
         } else if (value == null || value == JSONObject.NULL) {
@@ -421,6 +443,49 @@ public class RequestScenarioTests {
         } else {
             out.append(value);
         }
+    }
+
+    /**
+     * Writes a JSON object with its keys sorted.
+     *
+     * @param out where to write
+     * @param value the object
+     * @param indent indentation of the line the object starts on
+     */
+    private void writeObject(StringBuilder out, JSONObject value, String indent) {
+        List<String> keys = keys(value);
+        if (keys.isEmpty()) {
+            out.append("{}");
+            return;
+        }
+        out.append('{');
+        for (int i = 0; i < keys.size(); i++) {
+            out.append(i == 0 ? "\n" : ",\n").append(indent).append("  ");
+            string(out, keys.get(i));
+            out.append(": ");
+            write(out, value.get(keys.get(i)), indent + "  ");
+        }
+        out.append('\n').append(indent).append('}');
+    }
+
+    /**
+     * Writes a JSON array.
+     *
+     * @param out where to write
+     * @param array the array
+     * @param indent indentation of the line the array starts on
+     */
+    private void writeArray(StringBuilder out, JSONArray array, String indent) {
+        if (array.length() == 0) {
+            out.append("[]");
+            return;
+        }
+        out.append('[');
+        for (int i = 0; i < array.length(); i++) {
+            out.append(i == 0 ? "\n" : ",\n").append(indent).append("  ");
+            write(out, array.get(i), indent + "  ");
+        }
+        out.append('\n').append(indent).append(']');
     }
 
     /**
@@ -432,18 +497,26 @@ public class RequestScenarioTests {
     private void string(StringBuilder out, String value) {
         out.append('"');
         for (char c : value.toCharArray()) {
-            if (c == '"' || c == '\\') {
-                out.append('\\').append(c);
-            } else if (c == '\n') {
-                out.append("\\n");
-            } else if (c == '\r') {
-                out.append("\\r");
-            } else if (c == '\t') {
-                out.append("\\t");
-            } else if (c < 0x20) {
-                out.append(String.format("\\u%04x", (int) c));
-            } else {
-                out.append(c);
+            switch (c) {
+                case '"':
+                case '\\':
+                    out.append('\\').append(c);
+                    break;
+                case '\n':
+                    out.append("\\n");
+                    break;
+                case '\r':
+                    out.append("\\r");
+                    break;
+                case '\t':
+                    out.append("\\t");
+                    break;
+                default:
+                    if (c < FIRST_PRINTABLE) {
+                        out.append(String.format("\\u%04x", (int) c));
+                    } else {
+                        out.append(c);
+                    }
             }
         }
         out.append('"');
