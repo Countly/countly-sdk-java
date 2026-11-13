@@ -1,0 +1,100 @@
+// Signature format: 4.0
+package ly.count.sdk.java.ui {
+
+  public class ContentJsBridge {
+    method public void post(String!);
+  }
+
+  public final class CountlyWebView {
+    method public static void disableContentZone();
+    method public static void enableContentZone();
+    method public static void enableContentZone(javafx.stage.Window!);
+    method public static boolean isShowingWidgetsWithinApp();
+    method public static void presentFeedbackWidget(javafx.stage.Window!, ly.count.sdk.java.internal.CountlyFeedbackWidget!, Runnable!);
+    method public static void presentNPS(javafx.stage.Window!);
+    method public static void presentNPS(javafx.stage.Window!, String!);
+    method public static void presentNPS(javafx.stage.Window!, String!, Runnable!);
+    method public static void presentRating(javafx.stage.Window!);
+    method public static void presentRating(javafx.stage.Window!, String!);
+    method public static void presentRating(javafx.stage.Window!, String!, Runnable!);
+    method public static void presentSurvey(javafx.stage.Window!);
+    method public static void presentSurvey(javafx.stage.Window!, String!);
+    method public static void presentSurvey(javafx.stage.Window!, String!, Runnable!);
+    method public static void setOverlayCornerRadius(double);
+    method public static void setShowWidgetsWithinApp(boolean);
+    method public static void setWebViewDiagnosticsEnabled(boolean);
+  }
+
+  public class FeedbackWidgetPresenter implements ly.count.sdk.java.ui.WidgetWebHost.Listener {
+    ctor public FeedbackWidgetPresenter(ly.count.sdk.java.ui.WidgetWebHost!, ly.count.sdk.java.internal.ModuleFeedback.Feedback!, Runnable!);
+    method public void onCardFollowing(int, int);
+    method public void onCardMeasured(int, int);
+    method public void onContentOverflow(int);
+    method public void onLoadFailed();
+    method public void onNavigationStarting(String!);
+    method public void onPageLoaded();
+    method public void onSizeNotReported(int, int);
+    method public void onWidgetMessage(String!);
+    method public void refreshPlacement();
+    method public void start(ly.count.sdk.java.internal.CountlyFeedbackWidget!);
+  }
+
+  public class JavaFxContentDisplay implements ly.count.sdk.java.internal.ContentDisplay {
+    ctor public JavaFxContentDisplay();
+    ctor public JavaFxContentDisplay(javafx.stage.Window!);
+    method public ly.count.sdk.java.internal.ContentScreen! getScreen();
+    method public void present(ly.count.sdk.java.internal.ContentData!, ly.count.sdk.java.internal.ContentCloseCallback!);
+  }
+
+  public class WidgetJsBridge {
+    method public void cardChanged(String!);
+    method public void post(String!);
+  }
+
+  public class WidgetMessageParser {
+    method public static ly.count.sdk.java.internal.WidgetAction! parse(String!);
+  }
+
+  public class WidgetPlacement {
+    method public static ly.count.sdk.java.internal.ContentPlacement! following(ly.count.sdk.java.internal.ContentPlacement!, ly.count.sdk.java.ui.WidgetSurface!, ly.count.sdk.java.internal.ContentPlacement!, ly.count.sdk.java.ui.WidgetSurface!, ly.count.sdk.java.ui.WidgetSurface!);
+    method public static ly.count.sdk.java.internal.ContentPlacement! rescale(ly.count.sdk.java.internal.ContentPlacement!, ly.count.sdk.java.ui.WidgetSurface!, ly.count.sdk.java.ui.WidgetSurface!);
+    method public static ly.count.sdk.java.internal.ContentPlacement! resolve(ly.count.sdk.java.internal.ContentPlacement!, ly.count.sdk.java.ui.WidgetSurface!);
+    method public static ly.count.sdk.java.internal.ContentPlacement! resolve(ly.count.sdk.java.internal.WidgetAction!, ly.count.sdk.java.ui.WidgetSurface!);
+  }
+
+  public class WidgetSurface {
+    ctor public WidgetSurface(int, int, int, int);
+    method public boolean isLandscape();
+    method public boolean sameAs(ly.count.sdk.java.ui.WidgetSurface!);
+    method public boolean sameSizeAs(ly.count.sdk.java.ui.WidgetSurface!);
+    method public String toString();
+    field public final int height;
+    field public final int width;
+    field public final int x;
+    field public final int y;
+  }
+
+  public interface WidgetWebHost {
+    method public void closeHost();
+    method public void followGeometry(ly.count.sdk.java.internal.ContentPlacement!);
+    method public ly.count.sdk.java.ui.WidgetSurface! getSurface();
+    method public void navigate(String!);
+    method public void placeAndShow(ly.count.sdk.java.internal.ContentPlacement!);
+    method public void reportSurfaceSize(int, int);
+    method public void setListener(ly.count.sdk.java.ui.WidgetWebHost.Listener!);
+    method public void setSurface(ly.count.sdk.java.ui.WidgetSurface!);
+  }
+
+  public static interface WidgetWebHost.Listener {
+    method public void onCardFollowing(int, int);
+    method public void onCardMeasured(int, int);
+    method public void onContentOverflow(int);
+    method public void onLoadFailed();
+    method public void onNavigationStarting(String!);
+    method public void onPageLoaded();
+    method public void onSizeNotReported(int, int);
+    method public void onWidgetMessage(String!);
+  }
+
+}
+

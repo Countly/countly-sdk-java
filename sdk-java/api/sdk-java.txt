@@ -1,0 +1,1556 @@
+// Signature format: 4.0
+package ly.count.sdk.java {
+
+  public class Config {
+    ctor @Deprecated public Config(String!, String!);
+    ctor public Config(String!, String!, File!);
+    method public ly.count.sdk.java.Config! addCertificatePin(String!);
+    method public ly.count.sdk.java.Config! addCustomNetworkRequestHeaders(Map<String!,String!>!);
+    method public ly.count.sdk.java.Config! addPublicKeyPin(String!);
+    method @Deprecated public ly.count.sdk.java.Config! disableANRCrashReporting();
+    method public ly.count.sdk.java.Config! disableAutoSendUserProperties();
+    method public ly.count.sdk.java.Config! disableBackoffMechanism();
+    method public ly.count.sdk.java.Config! disableFeatures(ly.count.sdk.java.Config.Feature!...!);
+    method public ly.count.sdk.java.Config! disableHealthCheck();
+    method public ly.count.sdk.java.Config! disableLocation();
+    method public ly.count.sdk.java.Config! disableSdkBehaviorSettingsUpdates();
+    method @Deprecated public ly.count.sdk.java.Config! disableTestMode();
+    method public ly.count.sdk.java.Config! disableUnhandledCrashReporting();
+    method public ly.count.sdk.java.Config! disableUpdateRequests();
+    method public ly.count.sdk.java.Config! enableBackendMode();
+    method public ly.count.sdk.java.Config! enableFeatures(ly.count.sdk.java.Config.Feature!...!);
+    method public ly.count.sdk.java.Config! enableForcedHTTPPost();
+    method public ly.count.sdk.java.Config! enableParameterTamperingProtection(String!);
+    method public ly.count.sdk.java.Config! enableRemoteConfigAutomaticTriggers();
+    method public ly.count.sdk.java.Config! enableRemoteConfigValueCaching();
+    method @Deprecated public ly.count.sdk.java.Config! enableTestMode();
+    method @Deprecated public ly.count.sdk.java.Config! enableUsePOST();
+    method public ly.count.sdk.java.Config! enrollABOnRCDownload();
+    method @Deprecated public String! getApplicationName();
+    method public String! getApplicationVersion();
+    method public Set<String!>! getCertificatePins();
+    method public String! getCrashProcessorClass();
+    method @Deprecated public int getCrashReportingANRCheckingPeriod();
+    method public String! getCustomDeviceId();
+    method public Map<String!,String!>! getCustomNetworkRequestHeaders();
+    method public int getDeviceIdStrategy();
+    method public ly.count.sdk.java.Config.DeviceIdStrategy! getDeviceIdStrategyEnum();
+    method @Deprecated public int getEventsBufferSize();
+    method public Set<ly.count.sdk.java.Config.Feature!>! getFeatures();
+    method public int getFeaturesMap();
+    method public ly.count.sdk.java.internal.LogCallback! getLogListener();
+    method public ly.count.sdk.java.Config.LoggingLevel! getLoggingLevel();
+    method @Deprecated public String! getLoggingTag();
+    method @Deprecated public Class<? extends ly.count.sdk.java.internal.ModuleBase!>! getModuleOverride(int);
+    method @Deprecated public Class<? extends ly.count.sdk.java.internal.ModuleBase!>! getModuleOverride(ly.count.sdk.java.Config.Feature!);
+    method public int getNetworkConnectionTimeout();
+    method public int getNetworkImportantRequestCooldown();
+    method public int getNetworkReadTimeout();
+    method public int getNetworkRequestCooldown();
+    method public String! getParameterTamperingProtectionSalt();
+    method public Set<String!>! getPublicKeyPins();
+    method public int getRequestQueueMaxSize();
+    method @Deprecated public String! getSdkName();
+    method public String! getSdkPlatform();
+    method @Deprecated public String! getSdkVersion();
+    method public int getSendUpdateEachSeconds();
+    method public String! getServerAppKey();
+    method public URL! getServerURL();
+    method public boolean isBackendModeEnabled();
+    method @Deprecated public boolean isDeviceIdFallbackAllowed();
+    method public boolean isFeatureEnabled(int);
+    method public boolean isFeatureEnabled(ly.count.sdk.java.Config.Feature!);
+    method public boolean isHTTPPostForced();
+    method @Deprecated public boolean isTestModeEnabled();
+    method @Deprecated protected ly.count.sdk.java.Config! overrideModule(Integer!, Class<? extends ly.count.sdk.java.internal.ModuleBase!>!);
+    method public ly.count.sdk.java.Config! remoteConfigRegisterGlobalCallback(ly.count.sdk.java.internal.RCDownloadCallback!);
+    method public boolean requiresConsent();
+    method @Deprecated public ly.count.sdk.java.Config! setApplicationName(String!);
+    method public ly.count.sdk.java.Config! setApplicationVersion(String!);
+    method public ly.count.sdk.java.Config! setCrashProcessorClass(Class<? extends ly.count.sdk.java.CrashProcessor!>!);
+    method @Deprecated public ly.count.sdk.java.Config! setCrashReportingANRCheckingPeriod(int);
+    method public ly.count.sdk.java.Config! setCustomDeviceId(String!);
+    method @Deprecated public ly.count.sdk.java.Config! setDeviceIdFallbackAllowed(boolean);
+    method public ly.count.sdk.java.Config! setDeviceIdStrategy(ly.count.sdk.java.Config.DeviceIdStrategy!);
+    method public ly.count.sdk.java.Config! setDeviceIdStrategy(ly.count.sdk.java.Config.DeviceIdStrategy!, String!);
+    method public ly.count.sdk.java.Config! setEventQueueSizeToSend(int);
+    method @Deprecated public ly.count.sdk.java.Config! setEventsBufferSize(int);
+    method public ly.count.sdk.java.Config! setFeatures(ly.count.sdk.java.Config.Feature!...!);
+    method public ly.count.sdk.java.Config! setLocation(String!, String!, String!, String!);
+    method public ly.count.sdk.java.Config! setLogListener(ly.count.sdk.java.internal.LogCallback!);
+    method public ly.count.sdk.java.Config! setLoggingLevel(ly.count.sdk.java.Config.LoggingLevel!);
+    method @Deprecated public ly.count.sdk.java.Config! setLoggingTag(String!);
+    method public ly.count.sdk.java.Config! setMaxBreadcrumbCount(int);
+    method public ly.count.sdk.java.Config! setMaxKeyLength(int);
+    method public ly.count.sdk.java.Config! setMetricOverride(Map<String!,String!>!);
+    method public ly.count.sdk.java.Config! setNetworkConnectTimeout(int);
+    method public ly.count.sdk.java.Config! setNetworkImportantRequestCooldown(int);
+    method public ly.count.sdk.java.Config! setNetworkReadTimeout(int);
+    method public ly.count.sdk.java.Config! setNetworkRequestCooldown(int);
+    method public ly.count.sdk.java.Config! setRequestQueueMaxSize(int);
+    method public ly.count.sdk.java.Config! setRequiresConsent(boolean);
+    method public ly.count.sdk.java.Config! setSdkBehaviorSettings(String!);
+    method @Deprecated public ly.count.sdk.java.Config! setSdkName(String!);
+    method public ly.count.sdk.java.Config! setSdkPlatform(String!);
+    method @Deprecated public ly.count.sdk.java.Config! setSdkVersion(String!);
+    method @Deprecated public ly.count.sdk.java.Config! setSendUpdateEachSeconds(int);
+    method public ly.count.sdk.java.Config! setUpdateSessionTimerDelay(int);
+    method @Deprecated public ly.count.sdk.java.Config! setUsePOST(boolean);
+    field protected String! applicationVersion;
+    field protected boolean autoSendUserProperties;
+    field protected boolean backoffMechanismEnabled;
+    field protected Set<String!>! certificatePins;
+    field protected String! city;
+    field protected ly.count.sdk.java.internal.Log! configLog;
+    field public ly.count.sdk.java.internal.ConfigContent! content;
+    field protected String! country;
+    field protected String! crashProcessorClass;
+    field protected String! customDeviceId;
+    field protected Map<String!,String!>! customNetworkRequestHeaders;
+    field protected int deviceIdStrategy;
+    field protected boolean enableAutoEnrollFlag;
+    field protected boolean enableBackendMode;
+    field protected boolean enableRemoteConfigAutomaticDownloadTriggers;
+    field protected boolean enableRemoteConfigValueCaching;
+    field protected int eventQueueThreshold;
+    field protected int features;
+    field protected boolean forceHTTPPost;
+    field protected boolean healthCheckEnabled;
+    field protected String! ip;
+    field protected String! location;
+    field protected boolean locationEnabled;
+    field protected ly.count.sdk.java.internal.LogCallback! logListener;
+    field protected ly.count.sdk.java.Config.LoggingLevel! loggingLevel;
+    field protected int maxBreadcrumbCount;
+    field protected int maxKeyLength;
+    field protected final Map<String!,String!>! metricOverride;
+    field protected Map<Integer!,Class<? extends ly.count.sdk.java.internal.ModuleBase!>!>! moduleOverrides;
+    field protected int networkConnectionTimeout;
+    field protected int networkImportantRequestCooldown;
+    field protected int networkReadTimeout;
+    field protected int networkRequestCooldown;
+    field protected Set<String!>! publicKeyPins;
+    field protected List<ly.count.sdk.java.internal.RCDownloadCallback!>! remoteConfigGlobalCallbacks;
+    field protected int requestQueueMaxSize;
+    field protected boolean requiresConsent;
+    field protected String! salt;
+    field protected String! sdkBehaviorSettings;
+    field protected boolean sdkBehaviorSettingsRequestsDisabled;
+    field protected String! sdkName;
+    field protected String! sdkPlatform;
+    field protected File! sdkStorageRootDirectory;
+    field protected String! sdkVersion;
+    field protected int sendUpdateEachSeconds;
+    field protected volatile String! serverAppKey;
+    field protected volatile URL! serverURL;
+    field protected boolean unhandledCrashReportingEnabled;
+    field public ly.count.sdk.java.internal.ConfigViews! views;
+  }
+
+  public static final class Config.DID {
+    ctor public Config.DID(int, String!);
+    method public boolean equals(Object?);
+    method public int hashCode();
+    method public String toString();
+    field public static final int STRATEGY_CUSTOM = 10; // 0xa
+    field public static final int STRATEGY_UUID = 0; // 0x0
+    field public String! id;
+    field public int strategy;
+  }
+
+  public enum Config.DeviceIdStrategy {
+    method public static ly.count.sdk.java.Config.DeviceIdStrategy! fromIndex(int);
+    method public int getIndex();
+    enum_constant public static final ly.count.sdk.java.Config.DeviceIdStrategy CUSTOM_ID;
+    enum_constant public static final ly.count.sdk.java.Config.DeviceIdStrategy UUID;
+  }
+
+  public enum Config.Feature {
+    method public static ly.count.sdk.java.Config.Feature! byIndex(int);
+    method public int getIndex();
+    enum_constant public static final ly.count.sdk.java.Config.Feature Content;
+    enum_constant public static final ly.count.sdk.java.Config.Feature CrashReporting;
+    enum_constant public static final ly.count.sdk.java.Config.Feature Events;
+    enum_constant public static final ly.count.sdk.java.Config.Feature Feedback;
+    enum_constant public static final ly.count.sdk.java.Config.Feature Location;
+    enum_constant public static final ly.count.sdk.java.Config.Feature RemoteConfig;
+    enum_constant public static final ly.count.sdk.java.Config.Feature Sessions;
+    enum_constant public static final ly.count.sdk.java.Config.Feature UserProfiles;
+    enum_constant public static final ly.count.sdk.java.Config.Feature Views;
+  }
+
+  public enum Config.LoggingLevel {
+    method public int getLevel();
+    method public boolean prints(ly.count.sdk.java.Config.LoggingLevel!);
+    enum_constant public static final ly.count.sdk.java.Config.LoggingLevel DEBUG;
+    enum_constant public static final ly.count.sdk.java.Config.LoggingLevel ERROR;
+    enum_constant public static final ly.count.sdk.java.Config.LoggingLevel INFO;
+    enum_constant public static final ly.count.sdk.java.Config.LoggingLevel OFF;
+    enum_constant public static final ly.count.sdk.java.Config.LoggingLevel VERBOSE;
+    enum_constant public static final ly.count.sdk.java.Config.LoggingLevel WARN;
+  }
+
+  public class Countly implements ly.count.sdk.java.Usage {
+    ctor public Countly();
+    ctor protected Countly(ly.count.sdk.java.internal.SDKCore!, ly.count.sdk.java.internal.Log!);
+    method public ly.count.sdk.java.Usage! addCrashReport(Throwable!, boolean);
+    method public ly.count.sdk.java.Usage! addCrashReport(Throwable!, boolean, String!, Map<String!,String!>!, String!...!);
+    method public ly.count.sdk.java.Usage! addLocation(double, double);
+    method public ly.count.sdk.java.Usage! addParam(String!, Object!);
+    method public static ly.count.sdk.java.Usage! api();
+    method public void attemptToSendStoredRequests();
+    method public ly.count.sdk.java.internal.ModuleBackendMode.BackendMode! backendM();
+    method @Deprecated public static ly.count.sdk.java.internal.ModuleBackendMode.BackendMode! backendMode();
+    method public void changeAppKey(String!);
+    method @Deprecated public ly.count.sdk.java.Usage! changeDeviceIdWithMerge(String!);
+    method @Deprecated public ly.count.sdk.java.Usage! changeDeviceIdWithoutMerge(String!);
+    method public void changeServerUrl(String!);
+    method public ly.count.sdk.java.internal.ModuleContent.Content! content();
+    method public ly.count.sdk.java.internal.ModuleCrashes.Crashes! crashes();
+    method public ly.count.sdk.java.internal.ModuleDeviceIdCore.DeviceId! deviceId();
+    method @Deprecated public ly.count.sdk.java.Event! event(String!);
+    method public ly.count.sdk.java.internal.ModuleEvents.Events! events();
+    method public ly.count.sdk.java.internal.ModuleFeedback.Feedback! feedback();
+    method public void flushQueues();
+    method @Deprecated public String! getDeviceId();
+    method public ly.count.sdk.java.internal.DeviceIdType! getDeviceIdType();
+    method public void halt();
+    method @Deprecated public static void init(File!, ly.count.sdk.java.Config!);
+    method public void init(ly.count.sdk.java.Config!);
+    method public static ly.count.sdk.java.Countly! instance();
+    method public static boolean isInitialized();
+    method public static boolean isTracking(ly.count.sdk.java.Config.Feature!);
+    method public ly.count.sdk.java.internal.ModuleLocation.Location! location();
+    method public ly.count.sdk.java.Usage! login(String!);
+    method public ly.count.sdk.java.Usage! logout();
+    method public static void onConsent(ly.count.sdk.java.Config.Feature!...!);
+    method public static void onConsentRemoval(ly.count.sdk.java.Config.Feature!...!);
+    method public ly.count.sdk.java.internal.ModuleRemoteConfig.RemoteConfig! remoteConfig();
+    method public void removeDifferentAppKeysFromQueue();
+    method public void replaceAllAppKeysInQueueWithCurrentAppKey();
+    method public static ly.count.sdk.java.Session! session();
+    method public void stop();
+    method @Deprecated public static void stop(boolean);
+    method @Deprecated public ly.count.sdk.java.Event! timedEvent(String!);
+    method public ly.count.sdk.java.User! user();
+    method public ly.count.sdk.java.internal.ModuleUserProfile.UserProfile! userProfile();
+    method @Deprecated public ly.count.sdk.java.View! view(String!);
+    method @Deprecated public ly.count.sdk.java.View! view(String!, boolean);
+    method public ly.count.sdk.java.internal.ModuleViews.Views! views();
+    field protected ly.count.sdk.java.internal.Log! L;
+    field public static final ly.count.sdk.java.internal.Device! device;
+    field protected ly.count.sdk.java.internal.SDKCore! sdk;
+  }
+
+  public interface Crash {
+    method public ly.count.sdk.java.Crash! addException(Exception!);
+    method public ly.count.sdk.java.Crash! addThrowable(Throwable!);
+    method public ly.count.sdk.java.Crash! addTraces(Thread!, Map<Thread!,StackTraceElement![]!>!);
+    method public List<String!>! getLogs();
+    method public String! getName();
+    method public Map<String!,String!>! getSegments();
+    method public Throwable! getThrowable();
+    method public Map<Thread!,StackTraceElement![]!>! getTraces();
+    method public boolean isFatal();
+    method public ly.count.sdk.java.Crash! setFatal(boolean);
+    method public ly.count.sdk.java.Crash! setLogs(String![]!);
+    method public ly.count.sdk.java.Crash! setName(String!);
+    method public ly.count.sdk.java.Crash! setSegments(Map<String!,String!>!);
+  }
+
+  public interface CrashProcessor {
+    method public ly.count.sdk.java.Crash! process(ly.count.sdk.java.Crash!);
+  }
+
+  @Deprecated public interface Event {
+    method @Deprecated public ly.count.sdk.java.Event! addSegment(String, String);
+    method @Deprecated public ly.count.sdk.java.Event! addSegments(String!...);
+    method @Deprecated public void endAndRecord();
+    method @Deprecated public boolean isInvalid();
+    method @Deprecated public void record();
+    method @Deprecated public ly.count.sdk.java.Event! setCount(int);
+    method @Deprecated public ly.count.sdk.java.Event! setDuration(double);
+    method @Deprecated public ly.count.sdk.java.Event! setSegmentation(Map<String!,String!>);
+    method @Deprecated public ly.count.sdk.java.Event! setSum(double);
+  }
+
+  public class PredefinedUserPropertyKeys {
+    ctor public PredefinedUserPropertyKeys();
+    field public static final String BIRTH_YEAR = "byear";
+    field public static final String EMAIL = "email";
+    field public static final String GENDER = "gender";
+    field public static final String NAME = "name";
+    field public static final String ORGANIZATION = "organization";
+    field public static final String PHONE = "phone";
+    field public static final String PICTURE = "picture";
+    field public static final String PICTURE_PATH = "picturePath";
+    field public static final String USERNAME = "username";
+  }
+
+  public interface Session extends ly.count.sdk.java.Usage {
+    method public ly.count.sdk.java.Session! begin();
+    method public void end();
+    method public Long! getBegan();
+    method public Long! getEnded();
+    method public Long! getId();
+    method public boolean isActive();
+    method public ly.count.sdk.java.Session! update();
+  }
+
+  public interface Usage {
+    method @Deprecated public ly.count.sdk.java.Usage! addCrashReport(Throwable!, boolean);
+    method @Deprecated public ly.count.sdk.java.Usage! addCrashReport(Throwable!, boolean, String!, Map<String!,String!>!, String!...!);
+    method @Deprecated public ly.count.sdk.java.Usage! addLocation(double, double);
+    method public ly.count.sdk.java.Usage! addParam(String!, Object!);
+    method @Deprecated public ly.count.sdk.java.Usage! changeDeviceIdWithMerge(String!);
+    method @Deprecated public ly.count.sdk.java.Usage! changeDeviceIdWithoutMerge(String!);
+    method @Deprecated public ly.count.sdk.java.Event! event(String!);
+    method @Deprecated public String! getDeviceId();
+    method @Deprecated public ly.count.sdk.java.Usage! login(String!);
+    method @Deprecated public ly.count.sdk.java.Usage! logout();
+    method @Deprecated public ly.count.sdk.java.Event! timedEvent(String!);
+    method public ly.count.sdk.java.User! user();
+    method @Deprecated public ly.count.sdk.java.View! view(String!);
+    method @Deprecated public ly.count.sdk.java.View! view(String!, boolean);
+  }
+
+  public abstract class User {
+    ctor public User();
+    method public abstract Integer! birthyear();
+    method public abstract String! city();
+    method public abstract String! country();
+    method public abstract Map<String!,Object!>! custom();
+    method public abstract ly.count.sdk.java.UserEditor! edit();
+    method public abstract String! email();
+    method public abstract ly.count.sdk.java.User.Gender! gender();
+    method public abstract String! locale();
+    method public abstract String! location();
+    method public abstract String! name();
+    method public abstract String! org();
+    method public abstract String! phone();
+    method public abstract byte[]! picture();
+    method public abstract String! picturePath();
+    method public abstract String! username();
+  }
+
+  public enum User.Gender {
+    method public static ly.count.sdk.java.User.Gender! fromString(String!);
+    method public String toString();
+    enum_constant public static final ly.count.sdk.java.User.Gender FEMALE;
+    enum_constant public static final ly.count.sdk.java.User.Gender MALE;
+  }
+
+  @Deprecated public interface UserEditor {
+    method @Deprecated public ly.count.sdk.java.UserEditor! addToCohort(String!);
+    method @Deprecated public ly.count.sdk.java.User! commit();
+    method @Deprecated public ly.count.sdk.java.UserEditor! inc(String!, int);
+    method @Deprecated public ly.count.sdk.java.UserEditor! max(String!, double);
+    method @Deprecated public ly.count.sdk.java.UserEditor! min(String!, double);
+    method @Deprecated public ly.count.sdk.java.UserEditor! mul(String!, double);
+    method @Deprecated public ly.count.sdk.java.UserEditor! optOutFromLocationServices();
+    method @Deprecated public ly.count.sdk.java.UserEditor! pull(String!, Object!);
+    method @Deprecated public ly.count.sdk.java.UserEditor! push(String!, Object!);
+    method @Deprecated public ly.count.sdk.java.UserEditor! pushUnique(String!, Object!);
+    method @Deprecated public ly.count.sdk.java.UserEditor! removeFromCohort(String!);
+    method @Deprecated public ly.count.sdk.java.UserEditor! set(String!, Object!);
+    method @Deprecated public ly.count.sdk.java.UserEditor! setBirthyear(int);
+    method @Deprecated public ly.count.sdk.java.UserEditor! setBirthyear(String!);
+    method @Deprecated public ly.count.sdk.java.UserEditor! setCity(String!);
+    method @Deprecated public ly.count.sdk.java.UserEditor! setCountry(String!);
+    method @Deprecated public ly.count.sdk.java.UserEditor! setCustom(String!, Object!);
+    method @Deprecated public ly.count.sdk.java.UserEditor! setEmail(String!);
+    method @Deprecated public ly.count.sdk.java.UserEditor! setGender(Object!);
+    method @Deprecated public ly.count.sdk.java.UserEditor! setLocale(String!);
+    method @Deprecated public ly.count.sdk.java.UserEditor! setLocation(double, double);
+    method @Deprecated public ly.count.sdk.java.UserEditor! setLocation(String!);
+    method @Deprecated public ly.count.sdk.java.UserEditor! setName(String!);
+    method @Deprecated public ly.count.sdk.java.UserEditor! setOnce(String!, Object!);
+    method @Deprecated public ly.count.sdk.java.UserEditor! setOrg(String!);
+    method @Deprecated public ly.count.sdk.java.UserEditor! setPhone(String!);
+    method @Deprecated public ly.count.sdk.java.UserEditor! setPicture(byte[]!);
+    method @Deprecated public ly.count.sdk.java.UserEditor! setPicturePath(String!);
+    method @Deprecated public ly.count.sdk.java.UserEditor! setUsername(String!);
+  }
+
+  public interface View {
+    method @Deprecated public void start(boolean);
+    method @Deprecated public void stop(boolean);
+  }
+
+}
+
+package ly.count.sdk.java.internal {
+
+  public interface Byteable {
+    method public boolean restore(byte[]!, ly.count.sdk.java.internal.Log!);
+    method public byte[]! store(ly.count.sdk.java.internal.Log!);
+  }
+
+  public interface CallbackOnFinish<T> {
+    method public void onFinished(T, String!);
+  }
+
+  public class ConfigContent {
+    ctor public ConfigContent(ly.count.sdk.java.Config!);
+    method public ly.count.sdk.java.Config! setContentUrlHandler(ly.count.sdk.java.internal.ContentUrlHandler!);
+    method public ly.count.sdk.java.Config! setGlobalContentCallback(ly.count.sdk.java.internal.ContentCallback!);
+    method public ly.count.sdk.java.Config! setZoneTimerInterval(int);
+    field protected ly.count.sdk.java.internal.ContentUrlHandler! contentUrlHandler;
+    field protected ly.count.sdk.java.internal.ContentCallback! globalContentCallback;
+    field protected int zoneTimerInterval;
+  }
+
+  public class ConfigViews {
+    ctor public ConfigViews(ly.count.sdk.java.Config!);
+    method public ly.count.sdk.java.Config! setGlobalViewSegmentation(Map<String!,Object!>!);
+    field protected Map<String!,Object!>! globalViewSegmentation;
+  }
+
+  public interface ConfigurationProvider {
+    method public boolean getAutomaticCrashReportingEnabled();
+    method public boolean getAutomaticSessionTrackingEnabled();
+    method public boolean getAutomaticViewTrackingEnabled();
+    method public int getBOMAcceptedTimeoutSeconds();
+    method public int getBOMDuration();
+    method public boolean getBOMEnabled();
+    method public double getBOMRQPercentage();
+    method public int getBOMRequestAge();
+    method public boolean getConsentRequired();
+    method public boolean getContentZoneEnabled();
+    method public int getContentZoneTimerInterval();
+    method public boolean getCrashReportingEnabled();
+    method public boolean getCustomEventTrackingEnabled();
+    method public ly.count.sdk.java.internal.ConfigurationProvider.FilterList<Set<String!>!> getEventFilterList();
+    method public int getEventQueueSizeThreshold();
+    method public ly.count.sdk.java.internal.ConfigurationProvider.FilterList<Map<String!,Set<String!>!>!> getEventSegmentationFilterList();
+    method public Set<String!> getJourneyTriggerEvents();
+    method public Set<String!> getJourneyTriggerViews();
+    method public boolean getLocationTrackingEnabled();
+    method public int getLogGatheringBatchSize();
+    method public String? getLogGatheringId();
+    method public String getLogGatheringLevels();
+    method public ly.count.sdk.java.internal.ConfigurationProvider.LogGatheringState getLogGatheringState();
+    method public boolean getLoggingEnabled();
+    method public int getMaxBreadcrumbCount();
+    method public int getMaxKeyLength();
+    method public int getMaxSegmentationValues();
+    method public int getMaxStackTraceLineLength();
+    method public int getMaxStackTraceLinesPerThread();
+    method public int getMaxValueSize();
+    method public boolean getNetworkingEnabled();
+    method public boolean getRefreshContentZoneEnabled();
+    method public int getRequestDropAgeHours();
+    method public int getRequestQueueMaxSize();
+    method public ly.count.sdk.java.internal.ConfigurationProvider.FilterList<Set<String!>!> getSegmentationFilterList();
+    method public int getServerConfigUpdateInterval();
+    method public boolean getSessionTrackingEnabled();
+    method public int getSessionUpdateInterval();
+    method public boolean getTrackingEnabled();
+    method public int getUserPropertyCacheLimit();
+    method public ly.count.sdk.java.internal.ConfigurationProvider.FilterList<Set<String!>!> getUserPropertyFilterList();
+    method public boolean getViewTrackingEnabled();
+    method public boolean isRequestQueueMaxSizeFromBehaviorSettings();
+  }
+
+  public static final class ConfigurationProvider.FilterList<T> {
+    method public T getFilterList();
+    method public boolean isWhitelist();
+    method public String toString();
+  }
+
+  public enum ConfigurationProvider.LogGatheringState {
+    enum_constant public static final ly.count.sdk.java.internal.ConfigurationProvider.LogGatheringState GATHERING;
+    enum_constant public static final ly.count.sdk.java.internal.ConfigurationProvider.LogGatheringState NOT_GATHERING;
+    enum_constant public static final ly.count.sdk.java.internal.ConfigurationProvider.LogGatheringState UNDECIDED;
+  }
+
+  public interface ContentCallback {
+    method public void onContentCallback(ly.count.sdk.java.internal.ContentStatus!, Map<String!,Object!>!);
+  }
+
+  public interface ContentCloseCallback {
+    method public void onClosed(Map<String!,Object!>!);
+  }
+
+  public class ContentData {
+    ctor public ContentData(String!, ly.count.sdk.java.internal.ContentPlacement!, ly.count.sdk.java.internal.ContentPlacement!);
+    method public ly.count.sdk.java.internal.ContentPlacement! placementFor(boolean);
+    method public String toString();
+    field public final ly.count.sdk.java.internal.ContentPlacement! landscape;
+    field public final ly.count.sdk.java.internal.ContentPlacement! portrait;
+    field public final String! url;
+  }
+
+  public interface ContentDisplay {
+    method public ly.count.sdk.java.internal.ContentScreen! getScreen();
+    method public void present(ly.count.sdk.java.internal.ContentData!, ly.count.sdk.java.internal.ContentCloseCallback!);
+  }
+
+  public class ContentPlacement {
+    ctor public ContentPlacement(int, int, int, int);
+    method public String toString();
+    field public final int height;
+    field public final int width;
+    field public final int x;
+    field public final int y;
+  }
+
+  public class ContentScreen {
+    ctor public ContentScreen(int, int);
+    method public String toString();
+    field public final int height;
+    field public final int width;
+  }
+
+  public enum ContentStatus {
+    enum_constant public static final ly.count.sdk.java.internal.ContentStatus CLOSED;
+    enum_constant public static final ly.count.sdk.java.internal.ContentStatus COMPLETED;
+  }
+
+  public interface ContentUrlHandler {
+    method public boolean onContentUrl(String!);
+  }
+
+  public enum CoreFeature {
+    method public ly.count.sdk.java.internal.ModuleBaseCreator! getCreator();
+    method public int getIndex();
+    enum_constant public static final ly.count.sdk.java.internal.CoreFeature BackendMode;
+    enum_constant public static final ly.count.sdk.java.internal.CoreFeature Content;
+    enum_constant public static final ly.count.sdk.java.internal.CoreFeature CrashReporting;
+    enum_constant public static final ly.count.sdk.java.internal.CoreFeature DeviceId;
+    enum_constant public static final ly.count.sdk.java.internal.CoreFeature Events;
+    enum_constant public static final ly.count.sdk.java.internal.CoreFeature Feedback;
+    enum_constant public static final ly.count.sdk.java.internal.CoreFeature Location;
+    enum_constant public static final ly.count.sdk.java.internal.CoreFeature Logs;
+    enum_constant public static final ly.count.sdk.java.internal.CoreFeature RemoteConfig;
+    enum_constant public static final ly.count.sdk.java.internal.CoreFeature Requests;
+    enum_constant public static final ly.count.sdk.java.internal.CoreFeature Sessions;
+    enum_constant public static final ly.count.sdk.java.internal.CoreFeature TestDummy;
+    enum_constant public static final ly.count.sdk.java.internal.CoreFeature UserProfiles;
+    enum_constant public static final ly.count.sdk.java.internal.CoreFeature Views;
+  }
+
+  public class CountlyFeedbackWidget {
+    ctor public CountlyFeedbackWidget();
+    method public boolean equals(Object?);
+    method public int hashCode();
+    field public String! name;
+    field public String! position;
+    field public String![]! tags;
+    field public ly.count.sdk.java.internal.FeedbackWidgetType! type;
+    field public String! widgetId;
+  }
+
+  public class CountlyTimer {
+    ctor protected CountlyTimer(ly.count.sdk.java.internal.Log!);
+    method protected void startTimer(long, long, Runnable!);
+    method protected void startTimer(long, Runnable!);
+    method protected void stopTimer();
+    method protected void stopTimer(boolean);
+    field protected static int TIMER_DELAY_MS;
+  }
+
+  public class CrashImpl implements ly.count.sdk.java.Crash ly.count.sdk.java.internal.Storable {
+    ctor protected CrashImpl(Long!, ly.count.sdk.java.internal.Log!);
+    ctor protected CrashImpl(ly.count.sdk.java.internal.Log!);
+    method protected ly.count.sdk.java.internal.CrashImpl! add(String!, Object!);
+    method public ly.count.sdk.java.internal.CrashImpl! addException(Exception!);
+    method protected ly.count.sdk.java.internal.CrashImpl! addSegments(Map<String!,Object!>!);
+    method public ly.count.sdk.java.internal.CrashImpl! addThrowable(Throwable!);
+    method public ly.count.sdk.java.internal.CrashImpl! addTraces(Thread!, Map<Thread!,StackTraceElement![]!>!);
+    method public org.json.JSONObject! getData();
+    method public String! getJSON();
+    method public List<String!>! getLogs();
+    method public String! getName();
+    method public Map<String!,String!>! getSegments();
+    method public static String! getStoragePrefix();
+    method public Throwable! getThrowable();
+    method public Map<Thread!,StackTraceElement![]!>! getTraces();
+    method public boolean isFatal();
+    method public ly.count.sdk.java.internal.CrashImpl! putMetrics(Long!);
+    method public boolean restore(byte[]!, ly.count.sdk.java.internal.Log!);
+    method public ly.count.sdk.java.internal.CrashImpl! setFatal(boolean);
+    method public void setId(Long!);
+    method public ly.count.sdk.java.internal.CrashImpl! setLogs(String![]!);
+    method public ly.count.sdk.java.internal.CrashImpl! setName(String!);
+    method public ly.count.sdk.java.internal.CrashImpl! setSegments(Map<String!,String!>!);
+    method public Long! storageId();
+    method public String! storagePrefix();
+    method public byte[]! store(ly.count.sdk.java.internal.Log!);
+    method public String toString();
+  }
+
+  public class DefaultNetworking implements ly.count.sdk.java.internal.Networking {
+    ctor public DefaultNetworking();
+    method public boolean check(ly.count.sdk.java.internal.InternalConfig!);
+    method public ly.count.sdk.java.internal.Transport! getTransport();
+    method public void init(ly.count.sdk.java.internal.InternalConfig!, ly.count.sdk.java.internal.IStorageForRequestQueue!);
+    method public boolean isSending();
+    method public void stop(ly.count.sdk.java.internal.InternalConfig!);
+    method protected ly.count.sdk.java.internal.Tasks.Task<Boolean!>! submit(ly.count.sdk.java.internal.InternalConfig!, boolean);
+  }
+
+  public class Device {
+    ctor protected Device();
+    method public ly.count.sdk.java.internal.Params! buildMetrics();
+    method public String! getAppVersion();
+    method public Float! getBatteryLevel();
+    method public String! getCpu();
+    method public String! getDevice();
+    method public Long! getDiskAvailable();
+    method public Long! getDiskTotal();
+    method public String! getLocale();
+    method public String! getManufacturer();
+    method public String! getOS();
+    method public String! getOSVersion();
+    method public String! getOpenGL();
+    method public String! getOrientation();
+    method public Long! getRAMAvailable();
+    method public Long! getRAMTotal();
+    method public String! getResolution();
+    method public int getTimezoneOffset();
+    method public Boolean! isMuted();
+    method public Boolean! isOnline();
+    method public ly.count.sdk.java.internal.Device! setAppVersion(String!);
+    method public ly.count.sdk.java.internal.Device! setBatteryLevel(Float!);
+    method public ly.count.sdk.java.internal.Device! setCpu(String!);
+    method public ly.count.sdk.java.internal.Device! setDevice(String!);
+    method public void setLog(ly.count.sdk.java.internal.Log!);
+    method public ly.count.sdk.java.internal.Device! setManufacturer(String!);
+    method public ly.count.sdk.java.internal.Device setMetricOverride(Map<String!,String!>?);
+    method public ly.count.sdk.java.internal.Device! setMuted(Boolean!);
+    method public ly.count.sdk.java.internal.Device! setOnline(Boolean!);
+    method public ly.count.sdk.java.internal.Device! setOpenGL(String!);
+    method public ly.count.sdk.java.internal.Device! setOrientation(String!);
+    method public ly.count.sdk.java.internal.Device! setResolution(String!);
+    field protected static final Long BYTES_IN_MB;
+    field protected static final Double MS_IN_SECOND;
+    field protected static final Double NS_IN_MS;
+    field protected static final Double NS_IN_SECOND;
+    field public static ly.count.sdk.java.internal.Device! dev;
+  }
+
+  public interface DeviceIdGenerator {
+    method public String! generate(ly.count.sdk.java.internal.InternalConfig!);
+  }
+
+  public enum DeviceIdType {
+    method public static ly.count.sdk.java.internal.DeviceIdType! fromInt(int, ly.count.sdk.java.internal.Log!);
+    method public static int toInt(String!);
+    enum_constant public static final ly.count.sdk.java.internal.DeviceIdType DEVELOPER_SUPPLIED;
+    enum_constant public static final ly.count.sdk.java.internal.DeviceIdType SDK_GENERATED;
+    field public final int index;
+  }
+
+  public class EventQueue {
+    ctor protected EventQueue();
+    ctor protected EventQueue(ly.count.sdk.java.internal.Log, int);
+    method public void clear();
+    method protected int eqSize();
+    method protected List<ly.count.sdk.java.internal.EventImpl!>! getEQ();
+    field protected final Object! lockEQ;
+  }
+
+  public class FeedbackWidgetSelector {
+    method public static ly.count.sdk.java.internal.CountlyFeedbackWidget! select(List<ly.count.sdk.java.internal.CountlyFeedbackWidget!>!, ly.count.sdk.java.internal.FeedbackWidgetType!, String!);
+  }
+
+  public enum FeedbackWidgetType {
+    enum_constant public static final ly.count.sdk.java.internal.FeedbackWidgetType nps;
+    enum_constant public static final ly.count.sdk.java.internal.FeedbackWidgetType rating;
+    enum_constant public static final ly.count.sdk.java.internal.FeedbackWidgetType survey;
+  }
+
+  public class HealthCheckCounter {
+    ctor public HealthCheckCounter(ly.count.sdk.java.internal.StorageProvider, ly.count.sdk.java.internal.Log, Predicate<ly.count.sdk.java.internal.CoreFeature!>);
+  }
+
+  public interface IStorageForRequestQueue {
+    method public ly.count.sdk.java.internal.Request! getNextRequest();
+    method public Integer! remaningRequests();
+    method public Boolean! removeRequest(ly.count.sdk.java.internal.Request!);
+  }
+
+  public interface IdGenerator {
+    method public String generateId();
+  }
+
+  public interface ImmediateRequestGenerator {
+    method public ly.count.sdk.java.internal.ImmediateRequestI! createImmediateRequestMaker();
+  }
+
+  public interface ImmediateRequestI {
+    method public void doWork(String!, String!, ly.count.sdk.java.internal.Transport!, boolean, boolean, ly.count.sdk.java.internal.ImmediateRequestMaker.InternalImmediateRequestCallback!, ly.count.sdk.java.internal.Log!);
+  }
+
+  public class InternalConfig extends ly.count.sdk.java.Config {
+    ctor public InternalConfig();
+    ctor public InternalConfig(ly.count.sdk.java.Config!);
+    ctor public InternalConfig(String!, String!);
+    method public ly.count.sdk.java.Config.DID! getDeviceId();
+    method public int getFeatures1();
+    method public Map<String!,String!>! getMetricOverride();
+    method public Set<Integer!>! getModuleOverrides();
+    method public boolean getNetworkingEnabled();
+    method public List<ly.count.sdk.java.internal.RCDownloadCallback!>! getRemoteConfigGlobalCallbackList();
+    method protected String! getSDKNameInternal();
+    method public String! getSdkBehaviorSettings();
+    method public static String! getStoragePrefix();
+    method public boolean isAutoEnrollFlagEnabled();
+    method public boolean isDefaultNetworking();
+    method public boolean isRemoteConfigAutomaticDownloadTriggersEnabled();
+    method public boolean isRemoteConfigValueCachingEnabled();
+    method public boolean isSdkBehaviorSettingsRequestsDisabled();
+    method public boolean isTemporaryIdEnabled();
+    method public boolean removeDeviceId(ly.count.sdk.java.Config.DID!);
+    method public boolean removeDeviceId(String!);
+    method public void setDefaultNetworking(boolean);
+    method public ly.count.sdk.java.Config.DID! setDeviceId(ly.count.sdk.java.Config.DID!);
+    method public void setFrom(ly.count.sdk.java.Config!);
+    method public void setLogger(ly.count.sdk.java.internal.Log!);
+    method public static Long! storageId();
+    field protected ly.count.sdk.java.internal.IdGenerator! eventIdGenerator;
+    field public ly.count.sdk.java.internal.SDKCore! sdk;
+    field public ly.count.sdk.java.internal.StorageProvider! storageProvider;
+    field protected ly.count.sdk.java.internal.IdGenerator! viewIdGenerator;
+    field protected ly.count.sdk.java.internal.ViewIdProvider! viewIdProvider;
+  }
+
+  public interface JSONable {
+    method public String! toJSON(ly.count.sdk.java.internal.Log!);
+  }
+
+  public class JsonFileStorage {
+    ctor public JsonFileStorage(File, ly.count.sdk.java.internal.Log);
+    method public void add(String, Object);
+    method public void addAndSave(String, Object);
+    method public void clear();
+    method public void clearAndSave();
+    method public void delete(String);
+    method public void deleteAndSave(String);
+    method public Object! get(String);
+    method public int getInt(String, int);
+    method public org.json.JSONObject! getJsonObj(String, org.json.JSONObject!);
+    method public String! getString(String);
+    method public String! getString(String, String!);
+    method public void save();
+    method public int size();
+  }
+
+  public class Log {
+    ctor public Log(ly.count.sdk.java.Config.LoggingLevel!, ly.count.sdk.java.internal.LogCallback!);
+    method public void d(String!);
+    method public void e(String!);
+    method public void i(String!);
+    method public void recordLogCode(String);
+    method public void recordLogCode(String, int);
+    method public void recordLogCode(String, String);
+    method public static void recordLogCodeWhileNotInitialized(String);
+    method public void recordUsage(String, String);
+    method public void v(String!);
+    method public void w(String!);
+  }
+
+  public interface LogCallback {
+    method public void LogHappened(String!, ly.count.sdk.java.Config.LoggingLevel!);
+  }
+
+  public class MigrationHelper {
+    ctor protected MigrationHelper(ly.count.sdk.java.internal.Log!);
+    method protected void applyMigrations(Map<String!,Object!>!);
+    method protected boolean migration_DeleteConfigFile_01(Map<String!,Object!>!);
+    method protected boolean migration_UserImplFile_02(Map<String!,Object!>!);
+    method protected void setupMigrations(ly.count.sdk.java.internal.StorageProvider!);
+    field protected int currentDataModelVersion;
+    field protected ly.count.sdk.java.internal.Log! logger;
+  }
+
+  public class ModuleBackendMode extends ly.count.sdk.java.internal.ModuleBase {
+    ctor public ModuleBackendMode();
+    method public void disableModule();
+    method public void recordExceptionInternal(String!, String!, String!, Map<String!,Object!>!, Map<String!,String!>!, Long!);
+    method protected Map<String!,Object!>! removeInvalidDataFromSegments(Map<String!,Object!>!);
+    field protected boolean disabledModule;
+    field protected int eventQSize;
+    field protected final Map<String!,org.json.JSONArray!>! eventQueues;
+    field protected ly.count.sdk.java.internal.InternalConfig! internalConfig;
+  }
+
+  public class ModuleBackendMode.BackendMode {
+    ctor public ModuleBackendMode.BackendMode();
+    method protected ly.count.sdk.java.internal.ModuleBase! getModule();
+    method public int getQueueSize();
+    method public void recordDirectRequest(String!, Map<String!,String!>!, Long!);
+    method public void recordEvent(String!, String!, int, Double!, Double!, Map<String!,Object!>!, Long!);
+    method public void recordException(String!, String!, String!, Map<String!,Object!>!, Map<String!,String!>!, Long!);
+    method public void recordException(String!, Throwable!, Map<String!,Object!>!, Map<String!,String!>!, Long!);
+    method public void recordUserProperties(String!, Map<String!,Object!>!, Long!);
+    method public void recordView(String!, String!, Map<String!,Object!>!, Long!);
+    method public void sessionBegin(String!, Map<String!,String!>!, Map<String!,String!>!, Long!);
+    method public void sessionEnd(String!, double, Long!);
+    method public void sessionUpdate(String!, double, Long!);
+  }
+
+  public abstract class ModuleBase {
+    ctor public ModuleBase();
+    method protected void deviceIdChanged(String!, boolean);
+    method public void init(ly.count.sdk.java.internal.InternalConfig!);
+    method protected void initFinished(ly.count.sdk.java.internal.InternalConfig!);
+    method public boolean isActive();
+    method public Boolean! onRequest(ly.count.sdk.java.internal.Request!);
+    method public void onRequestCompleted(ly.count.sdk.java.internal.Request!, String!, int);
+    method protected void onSdkConfigurationChanged(ly.count.sdk.java.internal.InternalConfig!);
+    method public void onSessionBegan(ly.count.sdk.java.Session!, ly.count.sdk.java.internal.InternalConfig!);
+    method public void onSessionEnded(ly.count.sdk.java.Session!, ly.count.sdk.java.internal.InternalConfig!);
+    method protected void onTimer();
+    method public void setActive(boolean);
+    method public void stop(ly.count.sdk.java.internal.InternalConfig!, boolean);
+    field protected ly.count.sdk.java.internal.Log! L;
+  }
+
+  public interface ModuleBaseCreator {
+    method public ly.count.sdk.java.internal.ModuleBase! create();
+  }
+
+  public class ModuleConfiguration extends ly.count.sdk.java.internal.ModuleBase implements ly.count.sdk.java.internal.ConfigurationProvider {
+    ctor public ModuleConfiguration();
+    method public boolean getAutomaticCrashReportingEnabled();
+    method public boolean getAutomaticSessionTrackingEnabled();
+    method public boolean getAutomaticViewTrackingEnabled();
+    method public int getBOMAcceptedTimeoutSeconds();
+    method public int getBOMDuration();
+    method public boolean getBOMEnabled();
+    method public double getBOMRQPercentage();
+    method public int getBOMRequestAge();
+    method public boolean getConsentRequired();
+    method public boolean getContentZoneEnabled();
+    method public int getContentZoneTimerInterval();
+    method public boolean getCrashReportingEnabled();
+    method public boolean getCustomEventTrackingEnabled();
+    method public ly.count.sdk.java.internal.ConfigurationProvider.FilterList<Set<String!>!> getEventFilterList();
+    method public int getEventQueueSizeThreshold();
+    method public ly.count.sdk.java.internal.ConfigurationProvider.FilterList<Map<String!,Set<String!>!>!> getEventSegmentationFilterList();
+    method public Set<String!> getJourneyTriggerEvents();
+    method public Set<String!> getJourneyTriggerViews();
+    method public boolean getLocationTrackingEnabled();
+    method public int getLogGatheringBatchSize();
+    method public String? getLogGatheringId();
+    method public String getLogGatheringLevels();
+    method public ly.count.sdk.java.internal.ConfigurationProvider.LogGatheringState getLogGatheringState();
+    method public boolean getLoggingEnabled();
+    method public int getMaxBreadcrumbCount();
+    method public int getMaxKeyLength();
+    method public int getMaxSegmentationValues();
+    method public int getMaxStackTraceLineLength();
+    method public int getMaxStackTraceLinesPerThread();
+    method public int getMaxValueSize();
+    method public boolean getNetworkingEnabled();
+    method public boolean getRefreshContentZoneEnabled();
+    method public int getRequestDropAgeHours();
+    method public int getRequestQueueMaxSize();
+    method public ly.count.sdk.java.internal.ConfigurationProvider.FilterList<Set<String!>!> getSegmentationFilterList();
+    method public int getServerConfigUpdateInterval();
+    method public boolean getSessionTrackingEnabled();
+    method public int getSessionUpdateInterval();
+    method public boolean getTrackingEnabled();
+    method public int getUserPropertyCacheLimit();
+    method public ly.count.sdk.java.internal.ConfigurationProvider.FilterList<Set<String!>!> getUserPropertyFilterList();
+    method public boolean getViewTrackingEnabled();
+    method public void initFinished(ly.count.sdk.java.internal.InternalConfig);
+    method public boolean isRequestQueueMaxSizeFromBehaviorSettings();
+  }
+
+  public class ModuleContent extends ly.count.sdk.java.internal.ModuleBase {
+  }
+
+  public class ModuleContent.Content {
+    ctor public ModuleContent.Content();
+    method public void enterContentZone();
+    method public void exitContentZone();
+    method public void previewContent(String?);
+    method public void recordContentEvents(String?);
+    method public void refreshContentZone();
+    method public void setContentDisplay(ly.count.sdk.java.internal.ContentDisplay?);
+  }
+
+  public class ModuleCrashes extends ly.count.sdk.java.internal.ModuleBase {
+    ctor public ModuleCrashes();
+    method protected void addBreadcrumbInternal(String!);
+    method public void initFinished(ly.count.sdk.java.internal.InternalConfig!);
+    method public ly.count.sdk.java.internal.CrashImpl! onCrash(ly.count.sdk.java.internal.InternalConfig!, ly.count.sdk.java.internal.CrashImpl!);
+    method protected boolean recordExceptionInternal(Throwable!, boolean, Map<String!,Object!>!, String!);
+    field protected ly.count.sdk.java.internal.InternalConfig! config;
+    field protected ly.count.sdk.java.CrashProcessor! crashProcessor;
+    field protected final List<String!>! logs;
+    field protected long started;
+  }
+
+  public class ModuleCrashes.Crashes {
+    ctor public ModuleCrashes.Crashes();
+    method public void addCrashBreadcrumb(String!);
+    method public void recordHandledException(Throwable!);
+    method public void recordHandledException(Throwable!, Map<String!,Object!>!);
+    method public void recordUnhandledException(Throwable!);
+    method public void recordUnhandledException(Throwable!, Map<String!,Object!>!);
+  }
+
+  public class ModuleDeviceIdCore extends ly.count.sdk.java.internal.ModuleBase {
+    ctor public ModuleDeviceIdCore();
+    method protected ly.count.sdk.java.Config.DID! acquireId();
+    method protected void changeDeviceIdInternal(String!, ly.count.sdk.java.internal.DeviceIdType!, boolean);
+    method public void deviceIdChanged(String!, boolean);
+    method protected String! getIDInternal();
+    method protected ly.count.sdk.java.internal.DeviceIdType! getTypeInternal();
+    method public void init(ly.count.sdk.java.internal.InternalConfig!);
+    method public void initFinished(ly.count.sdk.java.internal.InternalConfig!);
+    method public void login(String!);
+    method public void logout();
+    field protected ly.count.sdk.java.internal.ModuleDeviceIdCore.DeviceId! deviceIdInterface;
+  }
+
+  public class ModuleDeviceIdCore.DeviceId {
+    ctor public ModuleDeviceIdCore.DeviceId();
+    method public void changeWithMerge(String!);
+    method public void changeWithoutMerge(String!);
+    method public String! getID();
+    method public ly.count.sdk.java.internal.DeviceIdType! getType();
+    method public void setID(String!);
+  }
+
+  public class ModuleEvents extends ly.count.sdk.java.internal.ModuleBase {
+    ctor public ModuleEvents();
+    method public void deviceIdChanged(String!, boolean);
+    method protected void recordEventInternal(String!, int, Double!, Double!, Map<String!,Object!>!, String!);
+    field protected ly.count.sdk.java.internal.EventQueue! eventQueue;
+    field protected ly.count.sdk.java.internal.ModuleEvents.Events! eventsInterface;
+  }
+
+  public class ModuleEvents.Events {
+    ctor public ModuleEvents.Events();
+    method public boolean cancelEvent(String!);
+    method public boolean endEvent(String!);
+    method public boolean endEvent(String!, Map<String!,Object!>!, int, Double!);
+    method public void recordEvent(String!);
+    method public void recordEvent(String!, int);
+    method public void recordEvent(String!, int, Double!);
+    method public void recordEvent(String!, Map<String!,Object!>!);
+    method public void recordEvent(String!, Map<String!,Object!>!, int);
+    method public void recordEvent(String!, Map<String!,Object!>!, int, Double!);
+    method public void recordEvent(String!, Map<String!,Object!>!, int, Double!, Double!);
+    method public boolean startEvent(String!);
+  }
+
+  public class ModuleFeedback extends ly.count.sdk.java.internal.ModuleBase {
+  }
+
+  public class ModuleFeedback.Feedback {
+    ctor public ModuleFeedback.Feedback();
+    method public String! constructFeedbackWidgetUrl(ly.count.sdk.java.internal.CountlyFeedbackWidget?);
+    method public String! constructFeedbackWidgetUrl(ly.count.sdk.java.internal.CountlyFeedbackWidget?, int, int);
+    method public void getAvailableFeedbackWidgets(ly.count.sdk.java.internal.CallbackOnFinish<List<ly.count.sdk.java.internal.CountlyFeedbackWidget!>!>?);
+    method public void getFeedbackWidgetData(ly.count.sdk.java.internal.CountlyFeedbackWidget?, ly.count.sdk.java.internal.CallbackOnFinish<org.json.JSONObject!>?);
+    method public void reportFeedbackWidgetManually(ly.count.sdk.java.internal.CountlyFeedbackWidget?, org.json.JSONObject?, Map<String!,Object!>?);
+  }
+
+  public class ModuleHealthCheck extends ly.count.sdk.java.internal.ModuleBase {
+    ctor public ModuleHealthCheck();
+  }
+
+  public class ModuleLocation extends ly.count.sdk.java.internal.ModuleBase {
+    method public void initFinished(ly.count.sdk.java.internal.InternalConfig);
+    method protected void saveLocationToParamsLegacy(ly.count.sdk.java.internal.Params!);
+    method protected void setLocationLegacy(Object?, Object?, Object?);
+  }
+
+  public class ModuleLocation.Location {
+    ctor public ModuleLocation.Location();
+    method public void disableLocation();
+    method public void setLocation(String?, String?, String?, String?);
+  }
+
+  public class ModuleRemoteConfig extends ly.count.sdk.java.internal.ModuleBase {
+    method public void initFinished(ly.count.sdk.java.internal.InternalConfig);
+  }
+
+  public class ModuleRemoteConfig.RemoteConfig {
+    ctor public ModuleRemoteConfig.RemoteConfig();
+    method public void clearAll();
+    method public void downloadAllKeys(ly.count.sdk.java.internal.RCDownloadCallback?);
+    method public void downloadOmittingKeys(String![]?, ly.count.sdk.java.internal.RCDownloadCallback?);
+    method public void downloadSpecificKeys(String![]?, ly.count.sdk.java.internal.RCDownloadCallback?);
+    method public void enrollIntoABTestsForKeys(String![]?);
+    method public void exitABTestsForKeys(String![]?);
+    method public Map<String!,ly.count.sdk.java.internal.RCData!> getAllValuesAndEnroll();
+    method public ly.count.sdk.java.internal.RCData getValue(String?);
+    method public ly.count.sdk.java.internal.RCData getValueAndEnroll(String?);
+    method public Map<String!,ly.count.sdk.java.internal.RCData!> getValues();
+    method public void registerDownloadCallback(ly.count.sdk.java.internal.RCDownloadCallback?);
+    method public void removeDownloadCallback(ly.count.sdk.java.internal.RCDownloadCallback?);
+  }
+
+  public class ModuleRequests extends ly.count.sdk.java.internal.ModuleBase {
+    ctor public ModuleRequests();
+    method public static Future<Boolean!>! changeId(ly.count.sdk.java.internal.InternalConfig!, String!);
+    method public void initFinished(ly.count.sdk.java.internal.InternalConfig!);
+    method public static void injectParams(ly.count.sdk.java.internal.InternalConfig!, ly.count.sdk.java.internal.ModuleRequests.ParamsInjector!);
+    method public static Future<Boolean!>! location(ly.count.sdk.java.internal.InternalConfig!, double, double);
+    method public static ly.count.sdk.java.internal.Request! nonSessionRequest(ly.count.sdk.java.internal.InternalConfig!);
+    method public static ly.count.sdk.java.internal.Params! prepareRequiredParams(ly.count.sdk.java.internal.InternalConfig!);
+    method public static String! prepareRequiredParamsAsString(ly.count.sdk.java.internal.InternalConfig!, Object!...!);
+    method public static Future<Boolean!>! pushAsync(ly.count.sdk.java.internal.InternalConfig!, ly.count.sdk.java.internal.Request!);
+    method public static Future<Boolean!>! pushAsync(ly.count.sdk.java.internal.InternalConfig!, ly.count.sdk.java.internal.Request!, boolean, ly.count.sdk.java.internal.Tasks.Callback<Boolean!>!);
+    method public static Future<Boolean!>! sessionBegin(ly.count.sdk.java.internal.InternalConfig!, ly.count.sdk.java.internal.SessionImpl!);
+    method public static Future<Boolean!>! sessionEnd(ly.count.sdk.java.internal.InternalConfig!, ly.count.sdk.java.internal.SessionImpl!, Long!, String!, ly.count.sdk.java.internal.Tasks.Callback<Boolean!>!);
+    method public static Future<Boolean!>! sessionUpdate(ly.count.sdk.java.internal.InternalConfig!, ly.count.sdk.java.internal.SessionImpl!, Long!);
+  }
+
+  public static interface ModuleRequests.ParamsInjector {
+    method public void call(ly.count.sdk.java.internal.Params!);
+  }
+
+  public class ModuleSessions extends ly.count.sdk.java.internal.ModuleBase {
+    ctor public ModuleSessions();
+    method public void deviceIdChanged(String!, boolean);
+    method public void forgetSession();
+    method public ly.count.sdk.java.internal.SessionImpl! getSession();
+    method public void initFinished(ly.count.sdk.java.internal.InternalConfig!);
+    method public ly.count.sdk.java.internal.SessionImpl! session(ly.count.sdk.java.internal.InternalConfig!, Long!);
+    method public ly.count.sdk.java.internal.TimedEvents! timedEvents();
+  }
+
+  public class ModuleUserProfile extends ly.count.sdk.java.internal.ModuleBase {
+    method protected void clearInternal();
+    method public void deviceIdChanged(String!, boolean);
+    method public void initFinished(ly.count.sdk.java.internal.InternalConfig!);
+    method protected void saveInternal();
+    method protected void setPropertiesInternal(Map<String!,Object!>);
+  }
+
+  public class ModuleUserProfile.UserProfile {
+    ctor public ModuleUserProfile.UserProfile();
+    method public void clear();
+    method public void increment(String!);
+    method public void incrementBy(String!, int);
+    method public void multiply(String!, double);
+    method public void pull(String!, Object!);
+    method public void push(String!, Object!);
+    method public void pushUnique(String!, Object!);
+    method public void save();
+    method public void saveMax(String!, double);
+    method public void saveMin(String!, double);
+    method public void setOnce(String!, Object!);
+    method public void setProperties(Map<String!,Object!>!);
+    method public void setProperty(String!, Object!);
+  }
+
+  public class ModuleViews extends ly.count.sdk.java.internal.ModuleBase implements ly.count.sdk.java.internal.ViewIdProvider {
+    method public void deviceIdChanged(String!, boolean);
+    method public String getCurrentViewId();
+    method public String getPreviousViewId();
+    method protected void setFirstViewInternal(boolean);
+    method public void updateGlobalViewSegmentationInternal(Map<String!,Object!>);
+  }
+
+  public class ModuleViews.Views {
+    ctor public ModuleViews.Views();
+    method public void addSegmentationToViewWithID(String, Map<String!,Object!>?);
+    method public void addSegmentationToViewWithName(String, Map<String!,Object!>?);
+    method public void pauseViewWithID(String);
+    method public void resumeViewWithID(String);
+    method public void setGlobalViewSegmentation(Map<String!,Object!>?);
+    method public String! startAutoStoppedView(String);
+    method public String! startAutoStoppedView(String, Map<String!,Object!>?);
+    method public String? startView(String);
+    method public String? startView(String, Map<String!,Object!>?);
+    method public void stopAllViews(Map<String!,Object!>?);
+    method public void stopViewWithID(String);
+    method public void stopViewWithID(String, Map<String!,Object!>?);
+    method public void stopViewWithName(String);
+    method public void stopViewWithName(String, Map<String!,Object!>?);
+    method public void updateGlobalViewSegmentation(Map<String!,Object!>?);
+  }
+
+  public interface Networking {
+    method public boolean check(ly.count.sdk.java.internal.InternalConfig!);
+    method public ly.count.sdk.java.internal.Transport! getTransport();
+    method public void init(ly.count.sdk.java.internal.InternalConfig!, ly.count.sdk.java.internal.IStorageForRequestQueue!);
+    method public boolean isSending();
+    method public void stop(ly.count.sdk.java.internal.InternalConfig!);
+  }
+
+  public class Params {
+    ctor public Params();
+    ctor public Params(Object!...!);
+    ctor public Params(String!);
+    method public ly.count.sdk.java.internal.Params! add(ly.count.sdk.java.internal.Params!);
+    method public ly.count.sdk.java.internal.Params! add(Object!...!);
+    method public ly.count.sdk.java.internal.Params! add(String!);
+    method public ly.count.sdk.java.internal.Params! add(String!, Object!);
+    method public ly.count.sdk.java.internal.Params.Arr! arr(String!);
+    method public void clear();
+    method public boolean equals(Object?);
+    method public String! get(String!);
+    method public boolean has(String!);
+    method public int hashCode();
+    method public int length();
+    method public Map<String!,String!>! map();
+    method public ly.count.sdk.java.internal.Params.Obj! obj(String!);
+    method public String! remove(String!);
+    method public String toString();
+  }
+
+  public static final class Params.Arr {
+    method public ly.count.sdk.java.internal.Params! add();
+    method public ly.count.sdk.java.internal.Params.Arr! put(Collection!);
+    method public ly.count.sdk.java.internal.Params.Arr! put(ly.count.sdk.java.internal.JSONable!);
+  }
+
+  public static final class Params.Obj {
+    method public ly.count.sdk.java.internal.Params! add();
+    method public ly.count.sdk.java.internal.Params.Obj! put(String!, Object!);
+  }
+
+  public class RCData {
+    ctor public RCData(Object!, boolean);
+    field public boolean isCurrentUsersData;
+    field public Object! value;
+  }
+
+  public interface RCDownloadCallback {
+    method public void callback(ly.count.sdk.java.internal.RequestResult!, String!, boolean, Map<String!,ly.count.sdk.java.internal.RCData!>!);
+  }
+
+  public class RemoteConfigValueStore {
+    ctor protected RemoteConfigValueStore(org.json.JSONObject, boolean, ly.count.sdk.java.internal.Log);
+    method protected void cacheClearValues();
+    method protected Map<String!,ly.count.sdk.java.internal.RCData!> getAllValues();
+    method protected ly.count.sdk.java.internal.RCData getValue(String);
+    method protected void mergeValues(Map<String!,ly.count.sdk.java.internal.RCData!>, boolean);
+    field protected ly.count.sdk.java.internal.Log! L;
+    field protected static final int cacheValCached = 0; // 0x0
+    field protected static final int cacheValFresh = 1; // 0x1
+    field protected static final String keyCacheFlag = "c";
+    field protected static final String keyValue = "v";
+    field protected org.json.JSONObject! values;
+    field protected boolean valuesCanBeCached;
+  }
+
+  public class Request implements ly.count.sdk.java.internal.Storable {
+    ctor public Request(Long!);
+    ctor public Request(Object!...!);
+    method public ly.count.sdk.java.internal.Request! endpoint(String!);
+    method public boolean equals(Object?);
+    method public static String! getStoragePrefix();
+    method public int hashCode();
+    method public ly.count.sdk.java.internal.Request! own(Class<? extends ly.count.sdk.java.internal.ModuleBase!>!);
+    method public Class<? extends ly.count.sdk.java.internal.ModuleBase!>! owner();
+    method public boolean restore(byte[]!, ly.count.sdk.java.internal.Log!);
+    method public void setId(Long!);
+    method public Long! storageId();
+    method public String! storagePrefix();
+    method public byte[]! store(ly.count.sdk.java.internal.Log!);
+    method public String toString();
+    field public static final String ENDPOINT = "endpoint";
+    field public static final String MODULE = "module";
+    field public ly.count.sdk.java.internal.Params! params;
+  }
+
+  public enum RequestResult {
+    enum_constant public static final ly.count.sdk.java.internal.RequestResult Error;
+    enum_constant public static final ly.count.sdk.java.internal.RequestResult NetworkIssue;
+    enum_constant public static final ly.count.sdk.java.internal.RequestResult Success;
+  }
+
+  public class SDKCore {
+    ctor public SDKCore();
+    method public void attemptToSendStoredRequests();
+    method protected void buildModules(ly.count.sdk.java.internal.InternalConfig!, int);
+    method public void changeAppKey(String?);
+    method @Deprecated public void changeDeviceIdWithMerge(ly.count.sdk.java.internal.InternalConfig!, String!);
+    method @Deprecated public void changeDeviceIdWithoutMerge(ly.count.sdk.java.internal.InternalConfig!, String!);
+    method public void changeServerUrl(String?);
+    method public ly.count.sdk.java.internal.InternalConfig! config();
+    method public ly.count.sdk.java.internal.ModuleContent.Content! content();
+    method public static ly.count.sdk.java.internal.ContentUrlHandler! contentUrlHandler();
+    method public ly.count.sdk.java.internal.ModuleCrashes.Crashes! crashes();
+    method public ly.count.sdk.java.internal.ModuleDeviceIdCore.DeviceId! deviceId();
+    method public static boolean enabled(int);
+    method public static boolean enabled(ly.count.sdk.java.internal.CoreFeature!);
+    method public ly.count.sdk.java.internal.ModuleEvents.Events! events();
+    method public ly.count.sdk.java.internal.ModuleFeedback.Feedback! feedback();
+    method public void flushQueues();
+    method public ly.count.sdk.java.internal.SessionImpl! getSession();
+    method public void halt();
+    method public boolean hasConsentForFeature(ly.count.sdk.java.internal.CoreFeature!);
+    method public void init(ly.count.sdk.java.internal.InternalConfig!);
+    method public Boolean! isRequestReady(ly.count.sdk.java.internal.Request!);
+    method public boolean isTracking(Integer!);
+    method public ly.count.sdk.java.internal.ModuleLocation.Location! location();
+    method public static ly.count.sdk.java.internal.Log! logger();
+    method public void login(String!);
+    method public void logout();
+    method public <T extends ly.count.sdk.java.internal.ModuleBase> T module(Class<T>!);
+    method protected ly.count.sdk.java.internal.ModuleBase! module(ly.count.sdk.java.internal.CoreFeature!);
+    method public void notifyModulesDeviceIdChanged(String?, boolean);
+    method public void onConsent(int);
+    method public void onConsentRemoval(ly.count.sdk.java.internal.InternalConfig!, int);
+    method public void onRequest(ly.count.sdk.java.internal.InternalConfig!, ly.count.sdk.java.internal.Request!);
+    method public void onRequestCompleted(ly.count.sdk.java.internal.Request!, String!, int, Class<? extends ly.count.sdk.java.internal.ModuleBase!>!);
+    method public ly.count.sdk.java.internal.SessionImpl! onSessionBegan(ly.count.sdk.java.internal.InternalConfig!, ly.count.sdk.java.internal.SessionImpl!);
+    method public ly.count.sdk.java.internal.SessionImpl! onSessionEnded(ly.count.sdk.java.internal.InternalConfig!, ly.count.sdk.java.internal.SessionImpl!);
+    method public void onSignal(ly.count.sdk.java.internal.InternalConfig!, int);
+    method public void onSignal(ly.count.sdk.java.internal.InternalConfig!, int, String!);
+    method protected void prepareMappings();
+    method protected void recover(ly.count.sdk.java.internal.InternalConfig!);
+    method protected static void registerDefaultModuleMappings();
+    method public ly.count.sdk.java.internal.ModuleRemoteConfig.RemoteConfig! remoteConfig();
+    method public void removeDifferentAppKeysFromQueue();
+    method public void replaceAllAppKeysInQueueWithCurrentAppKey();
+    method public static File! sdkStorageDirectory();
+    method public ly.count.sdk.java.internal.SessionImpl! session(Long!);
+    method protected void setDeviceIdFromStorageIfExist(ly.count.sdk.java.internal.InternalConfig!);
+    method @Deprecated public void stop(boolean);
+    method public ly.count.sdk.java.internal.UserImpl! user();
+    method public ly.count.sdk.java.internal.ModuleUserProfile.UserProfile! userProfile();
+    method public ly.count.sdk.java.internal.ModuleViews.Views! views();
+    field protected ly.count.sdk.java.internal.Log! L;
+    field public ly.count.sdk.java.internal.InternalConfig! config;
+    field protected volatile int consents;
+    field public static final ly.count.sdk.java.internal.ModuleContent.Content! dormantContent;
+    field public static final ly.count.sdk.java.internal.ModuleCrashes.Crashes! dormantCrashes;
+    field public static final ly.count.sdk.java.internal.ModuleDeviceIdCore.DeviceId! dormantDeviceId;
+    field public static final ly.count.sdk.java.internal.ModuleEvents.Events! dormantEvents;
+    field public static final ly.count.sdk.java.internal.ModuleFeedback.Feedback! dormantFeedback;
+    field public static final ly.count.sdk.java.internal.ModuleLocation.Location! dormantLocation;
+    field public static final ly.count.sdk.java.internal.ModuleRemoteConfig.RemoteConfig! dormantRemoteConfig;
+    field public static final ly.count.sdk.java.internal.ModuleUserProfile.UserProfile! dormantUserProfile;
+    field public static final ly.count.sdk.java.internal.ModuleViews.Views! dormantViews;
+    field protected static ly.count.sdk.java.internal.SDKCore! instance;
+    field protected final Object! lockBRQStorage;
+    field protected final Map<Integer!,ly.count.sdk.java.internal.ModuleBase!>! modules;
+    field protected ly.count.sdk.java.internal.Networking! networking;
+    field protected Queue<ly.count.sdk.java.internal.Request!>! requestQueueMemory;
+    field protected final ly.count.sdk.java.internal.SDKStorage! sdkStorage;
+    field protected static ly.count.sdk.java.internal.ModuleBase! testDummyModule;
+  }
+
+  public enum SDKCore.Signal {
+    method public int getIndex();
+    enum_constant public static final ly.count.sdk.java.internal.SDKCore.Signal Crash;
+    enum_constant public static final ly.count.sdk.java.internal.SDKCore.Signal DID;
+    enum_constant public static final ly.count.sdk.java.internal.SDKCore.Signal Ping;
+    enum_constant public static final ly.count.sdk.java.internal.SDKCore.Signal Start;
+  }
+
+  public class SDKStorage implements ly.count.sdk.java.internal.StorageProvider {
+    ctor protected SDKStorage();
+    method public String! getDeviceID();
+    method public String! getDeviceIdType();
+    method public String! getHealthCheckState();
+    method public Integer! getMigrationVersion();
+    method public org.json.JSONObject! getRemoteConfigValues();
+    method public String! getServerConfig();
+    method public void incrementAutomaticCrashCount();
+    method public ly.count.sdk.java.internal.SDKStorage! init(ly.count.sdk.java.internal.InternalConfig!);
+    method public boolean isCountlyStorageEmpty();
+    method protected String! readEventQueue();
+    method public void setDeviceID(String!);
+    method public void setDeviceIdType(String!);
+    method public void setHealthCheckState(String!);
+    method public void setMigrationVersion(Integer!);
+    method public void setRemoteConfigValues(org.json.JSONObject!);
+    method public void setServerConfig(String!);
+    method public void stop(ly.count.sdk.java.internal.InternalConfig!, boolean);
+    method public List<Long!>! storableList(ly.count.sdk.java.internal.InternalConfig!, String!, int);
+    method public <T extends ly.count.sdk.java.internal.Storable> Boolean! storablePop(ly.count.sdk.java.internal.InternalConfig!, T);
+    method public int storablePurge(ly.count.sdk.java.internal.InternalConfig!, String!);
+    method public <T extends ly.count.sdk.java.internal.Storable> Boolean! storableRead(ly.count.sdk.java.internal.InternalConfig!, T);
+    method public byte[]! storableReadBytes(ly.count.sdk.java.internal.InternalConfig!, String!);
+    method public byte[]! storableReadBytes(ly.count.sdk.java.internal.InternalConfig!, String!, Long!);
+    method public <T extends ly.count.sdk.java.internal.Storable> Map.Entry<Long!,byte[]!>! storableReadBytesOneOf(ly.count.sdk.java.internal.InternalConfig!, T, boolean);
+    method public <T extends ly.count.sdk.java.internal.Storable> Boolean! storableRemove(ly.count.sdk.java.internal.InternalConfig!, T);
+    method public Boolean! storableWrite(ly.count.sdk.java.internal.InternalConfig!, String!, Long!, byte[]!);
+    method public <T extends ly.count.sdk.java.internal.Storable> Boolean! storableWrite(ly.count.sdk.java.internal.InternalConfig!, T);
+    method protected void storeEventQueue(String!);
+    method public int takeAutomaticCrashCount();
+    field protected static final String EVENT_QUEUE_FILE_NAME = "event_queue";
+    field protected static final String FILE_NAME_PREFIX = "[CLY]";
+    field protected static final String FILE_NAME_SEPARATOR = "_";
+    field protected static final String JSON_FILE_NAME = "countly_store.json";
+    field protected static final String key_device_id = "did";
+    field protected static final String key_device_id_type = "did_t";
+    field protected static final String key_health_check = "HEALTH_CHECK";
+    field protected static final String key_health_check_automatic_crashes = "HEALTH_CHECK_AUTOMATIC_CRASHES";
+    field protected static final String key_migration_version = "dv";
+    field protected static final String key_remote_config = "rc";
+    field protected static final String key_server_config = "sc";
+  }
+
+  public class SessionImpl implements ly.count.sdk.java.Session ly.count.sdk.java.internal.Storable {
+    ctor protected SessionImpl(ly.count.sdk.java.internal.InternalConfig!);
+    ctor public SessionImpl(ly.count.sdk.java.internal.InternalConfig!, Long!);
+    method public ly.count.sdk.java.Session! addCrashReport(Throwable!, boolean);
+    method public ly.count.sdk.java.Session! addCrashReport(Throwable!, boolean, String!, Map<String!,String!>!, String!...!);
+    method public ly.count.sdk.java.Session! addLocation(double, double);
+    method public ly.count.sdk.java.Session! addParam(String!, Object!);
+    method public ly.count.sdk.java.Session! begin();
+    method @Deprecated public ly.count.sdk.java.Usage! changeDeviceIdWithMerge(String!);
+    method @Deprecated public ly.count.sdk.java.Usage! changeDeviceIdWithoutMerge(String!);
+    method public void end();
+    method public boolean equals(Object?);
+    method public ly.count.sdk.java.Event! event(String!);
+    method public Long! getBegan();
+    method @Deprecated public String! getDeviceId();
+    method public Long! getEnded();
+    method public Long! getId();
+    method public static String! getStoragePrefix();
+    method public int hashCode();
+    method public boolean isActive();
+    method public ly.count.sdk.java.Usage! login(String!);
+    method public ly.count.sdk.java.Usage! logout();
+    method @Deprecated public void recordEvent(ly.count.sdk.java.Event!);
+    method public boolean restore(byte[]!, ly.count.sdk.java.internal.Log!);
+    method public void setId(Long!);
+    method public Long! storageId();
+    method public String! storagePrefix();
+    method public byte[]! store(ly.count.sdk.java.internal.Log!);
+    method @Deprecated public ly.count.sdk.java.Event! timedEvent(String!);
+    method @Deprecated protected ly.count.sdk.java.internal.TimedEvents! timedEvents();
+    method public String toString();
+    method public ly.count.sdk.java.Session! update();
+    method public ly.count.sdk.java.User! user();
+    method @Deprecated public ly.count.sdk.java.View! view(String!);
+    method @Deprecated public ly.count.sdk.java.View! view(String!, boolean);
+    field protected ly.count.sdk.java.internal.Log! L;
+    field protected Long! began;
+    field protected ly.count.sdk.java.View! currentView;
+    field protected Long! ended;
+    field protected final List<ly.count.sdk.java.Event!>! events;
+    field protected Long! id;
+    field protected final ly.count.sdk.java.internal.Params! params;
+    field protected boolean startView;
+    field protected Long! updated;
+  }
+
+  public interface Storable extends ly.count.sdk.java.internal.Byteable {
+    method public void setId(Long!);
+    method public Long! storageId();
+    method public String! storagePrefix();
+  }
+
+  public class Storage {
+    ctor public Storage();
+    method public static void await(ly.count.sdk.java.internal.Log!);
+    method public static List<Long!>! list(ly.count.sdk.java.internal.InternalConfig!, String!);
+    method public static List<Long!>! list(ly.count.sdk.java.internal.InternalConfig!, String!, int);
+    method public static Future<List<Long!>!>! listAsync(ly.count.sdk.java.internal.InternalConfig!, String!, int);
+    method public static String! name(ly.count.sdk.java.internal.Storable!);
+    method public static <T extends ly.count.sdk.java.internal.Storable> T pop(ly.count.sdk.java.internal.InternalConfig!, T);
+    method public static <T extends ly.count.sdk.java.internal.Storable> Future<T>! popAsync(ly.count.sdk.java.internal.InternalConfig!, T);
+    method public static boolean push(ly.count.sdk.java.internal.InternalConfig!, ly.count.sdk.java.internal.Storable!);
+    method public static Future<Boolean!>! pushAsync(ly.count.sdk.java.internal.InternalConfig!, ly.count.sdk.java.internal.Storable!);
+    method public static Future<Boolean!>! pushAsync(ly.count.sdk.java.internal.InternalConfig!, ly.count.sdk.java.internal.Storable!, ly.count.sdk.java.internal.Tasks.Callback<Boolean!>!);
+    method public static <T extends ly.count.sdk.java.internal.Storable> T read(ly.count.sdk.java.internal.InternalConfig!, T);
+    method public static <T extends ly.count.sdk.java.internal.Storable> Future<T>! readAsync(ly.count.sdk.java.internal.InternalConfig!, T);
+    method public static <T extends ly.count.sdk.java.internal.Storable> Future<T>! readAsync(ly.count.sdk.java.internal.InternalConfig!, T, ly.count.sdk.java.internal.Tasks.Callback<T>!);
+    method public static <T extends ly.count.sdk.java.internal.Storable> T readOne(ly.count.sdk.java.internal.InternalConfig!, T, boolean);
+    method public static <T extends ly.count.sdk.java.internal.Storable> Future<T>! readOneAsync(ly.count.sdk.java.internal.InternalConfig!, T, boolean);
+    method public static <T extends ly.count.sdk.java.internal.Storable> Boolean! remove(ly.count.sdk.java.internal.InternalConfig!, T);
+    method public static <T extends ly.count.sdk.java.internal.Storable> Future<Boolean!>! removeAsync(ly.count.sdk.java.internal.InternalConfig!, T, ly.count.sdk.java.internal.Tasks.Callback<Boolean!>!);
+    method public static void stop();
+  }
+
+  public interface StorageProvider {
+    method public String! getDeviceID();
+    method public String! getDeviceIdType();
+    method public String! getHealthCheckState();
+    method public Integer! getMigrationVersion();
+    method public org.json.JSONObject! getRemoteConfigValues();
+    method public String! getServerConfig();
+    method public void incrementAutomaticCrashCount();
+    method public boolean isCountlyStorageEmpty();
+    method public void setDeviceID(String!);
+    method public void setDeviceIdType(String!);
+    method public void setHealthCheckState(String!);
+    method public void setMigrationVersion(Integer!);
+    method public void setRemoteConfigValues(org.json.JSONObject!);
+    method public void setServerConfig(String!);
+    method public int takeAutomaticCrashCount();
+  }
+
+  public class Tasks {
+    ctor public Tasks(String!, ly.count.sdk.java.internal.Log!);
+    method public <T> Future<T>! run(ly.count.sdk.java.internal.Tasks.Task<T>!);
+    field public static final Long ID_LIST;
+    field public static final Long ID_STRICT;
+  }
+
+  public static interface Tasks.Callback<T> {
+    method public void call(T);
+  }
+
+  public abstract static class Tasks.Task<T> {
+    method public abstract T call();
+  }
+
+  public class TimeUtils {
+    ctor public TimeUtils();
+    method public static int currentDayOfWeek();
+    method public static int currentHour();
+    method public static ly.count.sdk.java.internal.TimeUtils.Instant! getCurrentInstant();
+    method protected static ly.count.sdk.java.internal.TimeUtils.Instant! getCurrentInstant(long);
+    method public static ly.count.sdk.java.internal.TimeUtils.Instant! getCurrentInstantUnique();
+    method public static long nsToMs(long);
+    method public static long nsToSec(long);
+    method public static long secToMs(long);
+    method public static long secToNs(long);
+    method public static long timestampMs();
+    method public static long uniqueStorageId();
+    method public static long uniqueTimestampMs();
+    method public static long uniqueTimestampS();
+    field protected static final long MS_IN_SECOND = 1000L; // 0x3e8L
+    field protected static final Double NS_IN_MS;
+    field protected static final Double NS_IN_SECOND;
+  }
+
+  public static class TimeUtils.Instant {
+    field public final int dow;
+    field public final int hour;
+    field public final long timestamp;
+    field public final int tz;
+  }
+
+  public interface Transformer {
+    method public byte[]! doTheJob(Long!, byte[]!);
+  }
+
+  public class Transport {
+    ctor public Transport();
+    method public void checkClientTrusted(X509Certificate![]!, String!);
+    method public void checkServerTrusted(X509Certificate![]!, String!);
+    method public X509Certificate![]! getAcceptedIssuers();
+    method public void init(ly.count.sdk.java.internal.InternalConfig!);
+    method public HttpURLConnection! openConnection(String!, String!, boolean);
+    method public ly.count.sdk.java.internal.Tasks.Task<Boolean!>! send(ly.count.sdk.java.internal.Request!);
+  }
+
+  public class UserEditorImpl implements ly.count.sdk.java.UserEditor {
+    method public ly.count.sdk.java.UserEditor! addToCohort(String!);
+    method public ly.count.sdk.java.User! commit();
+    method public ly.count.sdk.java.UserEditor! inc(String!, int);
+    method public ly.count.sdk.java.UserEditor! max(String!, double);
+    method public ly.count.sdk.java.UserEditor! min(String!, double);
+    method public ly.count.sdk.java.UserEditor! mul(String!, double);
+    method public ly.count.sdk.java.UserEditor! optOutFromLocationServices();
+    method public ly.count.sdk.java.UserEditor! pull(String!, Object!);
+    method public ly.count.sdk.java.UserEditor! push(String!, Object!);
+    method public ly.count.sdk.java.UserEditor! pushUnique(String!, Object!);
+    method public ly.count.sdk.java.UserEditor! removeFromCohort(String!);
+    method public ly.count.sdk.java.UserEditor! set(String!, Object!);
+    method public ly.count.sdk.java.UserEditor! setBirthyear(int);
+    method public ly.count.sdk.java.UserEditor! setBirthyear(String!);
+    method public ly.count.sdk.java.UserEditor! setCity(String!);
+    method public ly.count.sdk.java.UserEditor! setCountry(String!);
+    method public ly.count.sdk.java.UserEditor! setCustom(String!, Object!);
+    method public ly.count.sdk.java.UserEditor! setEmail(String!);
+    method public ly.count.sdk.java.UserEditor! setGender(Object!);
+    method public ly.count.sdk.java.UserEditor! setLocale(String!);
+    method public ly.count.sdk.java.UserEditor! setLocation(double, double);
+    method public ly.count.sdk.java.UserEditor! setLocation(String!);
+    method public ly.count.sdk.java.UserEditor! setName(String!);
+    method public ly.count.sdk.java.UserEditor! setOnce(String!, Object!);
+    method public ly.count.sdk.java.UserEditor! setOrg(String!);
+    method public ly.count.sdk.java.UserEditor! setPhone(String!);
+    method public ly.count.sdk.java.UserEditor! setPicture(byte[]!);
+    method public ly.count.sdk.java.UserEditor! setPicturePath(String!);
+    method public ly.count.sdk.java.UserEditor! setUsername(String!);
+  }
+
+  public class UserImpl extends ly.count.sdk.java.User {
+    ctor public UserImpl(ly.count.sdk.java.internal.InternalConfig!);
+    method public Integer! birthyear();
+    method public String! city();
+    method public String! country();
+    method public Map<String!,Object!>! custom();
+    method public ly.count.sdk.java.UserEditor! edit();
+    method public String! email();
+    method public ly.count.sdk.java.User.Gender! gender();
+    method public String! id();
+    method public String! locale();
+    method public String! location();
+    method public String! name();
+    method public String! org();
+    method public String! phone();
+    method public byte[]! picture();
+    method public String! picturePath();
+    method public String toString();
+    method public String! username();
+  }
+
+  public class Utils {
+    ctor public Utils();
+    method public static boolean contains(String!, String!);
+    method public static String! digestHex(String!, String!, ly.count.sdk.java.internal.Log!);
+    method public static Map<String!,String!>! fixSegmentKeysAndValues(int, int, Map<String!,String!>!, ly.count.sdk.java.internal.Log!);
+    method public static String! hex(byte[]!);
+    method public static boolean isEmptyOrNull(String!);
+    method public static boolean isEqual(Object!, Object!);
+    method public static boolean isNotEmpty(String!);
+    method public static boolean isNotEqual(Object!, Object!);
+    method public static boolean isValidDataType(Object!);
+    method public static boolean isValidURL(String!);
+    method public static <T> String! join(Collection<T>!, String!);
+    method public static String! readFileContent(File!, ly.count.sdk.java.internal.Log!);
+    method public static byte[]! readStream(InputStream!, ly.count.sdk.java.internal.Log!);
+    method public static List<Field!>! reflectiveGetDeclaredFields(Class<? extends java.lang.Object!>!, boolean);
+    method public static List<Field!>! reflectiveGetDeclaredFields(List<Field!>!, Class<? extends java.lang.Object!>!, boolean);
+    method public static void removeInvalidDataFromSegments(Map<String!,Object!>!, ly.count.sdk.java.internal.Log!);
+    method public static String! safeRandomVal();
+    method public static String! trimKey(int, String!, ly.count.sdk.java.internal.Log!);
+    method public static String! trimValue(int, String!, String!, ly.count.sdk.java.internal.Log!);
+    method public static String![]! trimValues(int, String![]!, ly.count.sdk.java.internal.Log!);
+    method public static String! urldecode(String!);
+    method public static String! urlencode(String!, ly.count.sdk.java.internal.Log!);
+    method protected static String! urlencode(String!, ly.count.sdk.java.internal.Log!, String!);
+    field public static final char[]! BASE_16;
+    field public static final String CRLF = "\r\n";
+    field public static final String UTF8 = "UTF-8";
+  }
+
+  public static class Utils.Base64 {
+    ctor public Utils.Base64();
+    method public static byte[]! decode(String!, ly.count.sdk.java.internal.Log!);
+    method public static String! decodeToString(String!, ly.count.sdk.java.internal.Log!);
+    method public static String! encode(byte[]!);
+    method public static String! encode(String!);
+  }
+
+  public interface ViewIdProvider {
+    method public String getCurrentViewId();
+    method public String getPreviousViewId();
+  }
+
+  public class WidgetAction {
+    ctor public WidgetAction();
+    method public ly.count.sdk.java.internal.ContentPlacement! resizeFor(boolean);
+    field public boolean close;
+    field public String! eventPayload;
+    field public boolean hasResize;
+    field public boolean isActionEvent;
+    field public boolean isExternalLink;
+    field public boolean isSdkSignal;
+    field public boolean isWidgetCommand;
+    field public ly.count.sdk.java.internal.ContentPlacement! landscape;
+    field public String! link;
+    field public ly.count.sdk.java.internal.ContentPlacement! portrait;
+    field public Map<String!,Object!>! queryParams;
+  }
+
+  public class WidgetActionParser {
+    method public static ly.count.sdk.java.internal.WidgetAction! parse(String!, ly.count.sdk.java.internal.Log!);
+    field public static final String ACTION_HOST = "countly_action_event";
+    field public static final String! ACTION_URL_START = "https://countly_action_event";
+  }
+
+}
+
