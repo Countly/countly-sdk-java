@@ -41,6 +41,9 @@ public class RequestScenarioTests {
     private static final List<String> MASKED_CRASH_FIELDS = Arrays.asList("_error", "_run", "_os", "_os_version", "_resolution", "_density", "_locale", "_device", "_device_type", "_manufacture", "_cpu", "_opengl", "_ram_current", "_ram_total", "_disk_current", "_disk_total", "_bat", "_orientation", "_root", "_online", "_muted", "_background");
     // a view's "segment" is the operating system the SDK runs on
     private static final List<String> MASKED_VIEW_SEGMENTS = Arrays.asList("segment");
+    private static final List<String> FULLY_MASKED_PARAMS = Arrays.asList("metrics", "hc");
+    private static final String EVENTS_PARAM = "events";
+    private static final String CRASH_PARAM = "crash";
     private static final String VIEW_KEY = "[CLY]_view";
     private static final File RECORDS = new File("api/requests");
     private static final long SETTLE_QUIET_MS = 500;
@@ -66,6 +69,7 @@ public class RequestScenarioTests {
      * @throws ReflectiveOperationException when the device's metric overrides cannot be reached
      */
     @Before
+    @SuppressWarnings("PMD.AvoidAccessibilityAlteration")
     public void setUp() throws ReflectiveOperationException {
         TestUtils.createCleanTestState();
         CountlyTimer.TIMER_DELAY_MS = 0;
@@ -343,12 +347,22 @@ public class RequestScenarioTests {
             if (MASKED_PARAMS.contains(name)) {
                 params.put(name, MASK);
             } else if (JSON_PARAMS.contains(name) && !param.getValue().isEmpty()) {
-                params.put(name, maskedJson(name, new JSONTokener(param.getValue()).nextValue()));
+                params.put(name, maskedJson(name, parsed(param.getValue())));
             } else {
                 params.put(name, param.getValue());
             }
         }
         return params;
+    }
+
+    /**
+     * The value a JSON parameter holds.
+     *
+     * @param json the parameter's text
+     * @return the parsed value
+     */
+    private Object parsed(String json) {
+        return new JSONTokener(json).nextValue();
     }
 
     /**
@@ -359,10 +373,10 @@ public class RequestScenarioTests {
      * @return the masked value
      */
     private Object maskedJson(String name, Object value) {
-        if (("metrics".equals(name) || "hc".equals(name)) && value instanceof JSONObject) {
+        if (FULLY_MASKED_PARAMS.contains(name) && value instanceof JSONObject) {
             return masked((JSONObject) value, keys((JSONObject) value));
         }
-        if ("events".equals(name) && value instanceof JSONArray) {
+        if (EVENTS_PARAM.equals(name) && value instanceof JSONArray) {
             JSONArray events = (JSONArray) value;
             JSONArray result = new JSONArray();
             for (int i = 0; i < events.length(); i++) {
@@ -370,7 +384,7 @@ public class RequestScenarioTests {
             }
             return result;
         }
-        if ("crash".equals(name) && value instanceof JSONObject) {
+        if (CRASH_PARAM.equals(name) && value instanceof JSONObject) {
             return masked((JSONObject) value, MASKED_CRASH_FIELDS);
         }
         return value;
@@ -499,8 +513,10 @@ public class RequestScenarioTests {
         for (char c : value.toCharArray()) {
             switch (c) {
                 case '"':
+                    out.append("\\\"");
+                    break;
                 case '\\':
-                    out.append('\\').append(c);
+                    out.append("\\\\");
                     break;
                 case '\n':
                     out.append("\\n");
@@ -517,6 +533,7 @@ public class RequestScenarioTests {
                     } else {
                         out.append(c);
                     }
+                    break;
             }
         }
         out.append('"');
