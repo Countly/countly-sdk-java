@@ -1,26 +1,14 @@
 package ly.count.sdk.java.internal;
 
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpServer;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.zip.GZIPInputStream;
 import ly.count.sdk.java.Config;
 import ly.count.sdk.java.Countly;
 import org.json.JSONObject;
@@ -41,11 +29,10 @@ import org.junit.runners.JUnit4;
 public class RequestCompressionTests {
 
     private static final String SALT = "gzip-salt";
-    private static final String MARKER_QUERY = "content_encoding=gzip";
     private static final int BIG = 5000;
 
-    private Server server;
-    private Server otherServer;
+    private GzipStandInServer server;
+    private GzipStandInServer otherServer;
 
     /**
      * Starts every test without SDK files and with a new server.
@@ -53,7 +40,7 @@ public class RequestCompressionTests {
     @Before
     public void beforeTest() throws IOException {
         TestUtils.createCleanTestState();
-        server = new Server();
+        server = new GzipStandInServer();
     }
 
     /**
@@ -73,18 +60,18 @@ public class RequestCompressionTests {
      * gzip, and a big request goes plain although the server says it reads gzip.
      */
     @Test
-    public void compressionOff_settingsRequestDoesNotAskAndRequestsArePlain() throws Exception {
+    public void compressionOff_settingsRequestDoesNotAskAndRequestsArePlain() throws InterruptedException {
         server.answer(101, true);
         Countly.instance().init(config(server));
         awaitSettings(101);
 
         queueRequest("big", BIG);
-        Received big = server.await(withMarker("big"));
+        GzipStandInRequest big = server.await(withMarker("big"));
 
         Assert.assertNull(server.await(withMethod("sc")).params.get("gzip"));
         Assert.assertFalse(big.compressed);
         Assert.assertEquals(BIG, big.params.get("payload").length());
-        Assert.assertFalse(provider().getRequestCompressionEnabled());
+        Assert.assertFalse(provider().isRequestCompressionAllowed());
     }
 
     /**
@@ -93,14 +80,14 @@ public class RequestCompressionTests {
      * checksum is the one of the plain body.
      */
     @Test
-    public void compressionOn_serverReadsGzip_bigRequestIsCompressed() throws Exception {
+    public void compressionOn_serverReadsGzip_bigRequestIsCompressed() throws InterruptedException {
         server.answer(101, true);
         Countly.instance().init(config(server).enableRequestCompression().enableParameterTamperingProtection(SALT));
         awaitSettings(101);
-        Assert.assertTrue(provider().getRequestCompressionEnabled());
+        Assert.assertTrue(provider().isRequestCompressionAllowed());
 
         queueRequest("big", BIG);
-        Received big = server.await(withMarker("big"));
+        GzipStandInRequest big = server.await(withMarker("big"));
 
         Assert.assertEquals("1", server.await(withMethod("sc")).params.get("gzip"));
         Assert.assertTrue(big.compressed);
@@ -118,15 +105,15 @@ public class RequestCompressionTests {
      * A body under 1 KB goes plain, also as a POST, and a bigger one after it is compressed.
      */
     @Test
-    public void compressionOn_smallRequestStaysPlain() throws Exception {
+    public void compressionOn_smallRequestStaysPlain() throws InterruptedException {
         server.answer(101, true);
         Countly.instance().init(config(server).enableRequestCompression().enableForcedHTTPPost());
         awaitSettings(101);
 
         queueRequest("small", 300);
-        Received small = server.await(withMarker("small"));
+        GzipStandInRequest small = server.await(withMarker("small"));
         queueRequest("big", BIG);
-        Received big = server.await(withMarker("big"));
+        GzipStandInRequest big = server.await(withMarker("big"));
 
         Assert.assertEquals("POST", small.method);
         Assert.assertFalse(small.compressed);
@@ -138,17 +125,17 @@ public class RequestCompressionTests {
      * A settings answer without the gzip key keeps every body plain.
      */
     @Test
-    public void compressionOn_serverDoesNotSayGzip_requestsArePlain() throws Exception {
+    public void compressionOn_serverDoesNotSayGzip_requestsArePlain() throws InterruptedException {
         server.answer(101, false);
         Countly.instance().init(config(server).enableRequestCompression());
         awaitSettings(101);
 
         queueRequest("big", BIG);
-        Received big = server.await(withMarker("big"));
+        GzipStandInRequest big = server.await(withMarker("big"));
 
         Assert.assertEquals("1", server.await(withMethod("sc")).params.get("gzip"));
         Assert.assertFalse(big.compressed);
-        Assert.assertFalse(provider().getRequestCompressionEnabled());
+        Assert.assertFalse(provider().isRequestCompressionAllowed());
     }
 
     /**
@@ -156,15 +143,15 @@ public class RequestCompressionTests {
      * stays on for the requests after it.
      */
     @Test
-    public void compressionOn_bodyOverOneMegabyteStaysPlain_compressionStaysOn() throws Exception {
+    public void compressionOn_bodyOverOneMegabyteStaysPlain_compressionStaysOn() throws InterruptedException {
         server.answer(101, true);
         Countly.instance().init(config(server).enableRequestCompression());
         awaitSettings(101);
 
         queueRequest("huge", Utils.REQUEST_COMPRESSION_MAX_BYTES);
-        Received huge = server.await(withMarker("huge"));
+        GzipStandInRequest huge = server.await(withMarker("huge"));
         queueRequest("big", BIG);
-        Received big = server.await(withMarker("big"));
+        GzipStandInRequest big = server.await(withMarker("big"));
 
         Assert.assertFalse(huge.compressed);
         Assert.assertTrue(huge.bodyBytes > Utils.REQUEST_COMPRESSION_MAX_BYTES);
@@ -176,9 +163,9 @@ public class RequestCompressionTests {
      * requests after it.
      */
     @Test
-    public void compressedRequestRefused_retryAndLaterRequestsArePlain() throws Exception {
+    public void compressedRequestRefused_retryAndLaterRequestsArePlain() throws InterruptedException {
         server.answer(101, true);
-        server.refuseCompressed = 1;
+        server.refuseCompressed.set(1);
         Countly.instance().init(config(server).enableRequestCompression());
         awaitSettings(101);
 
@@ -188,9 +175,9 @@ public class RequestCompressionTests {
         Countly.instance().attemptToSendStoredRequests();
         Assert.assertTrue(TestUtils.waitFor(15_000, () -> server.count(withMarker("refused")) == 2));
         queueRequest("after", BIG);
-        Received after = server.await(withMarker("after"));
+        GzipStandInRequest after = server.await(withMarker("after"));
 
-        List<Received> refused = server.all(withMarker("refused"));
+        List<GzipStandInRequest> refused = server.all(withMarker("refused"));
         Assert.assertEquals(Arrays.asList(true, false), compressedFlags(refused));
         Assert.assertEquals(refused.get(0).params, refused.get(1).params);
         Assert.assertFalse(after.compressed);
@@ -201,28 +188,28 @@ public class RequestCompressionTests {
      * next one with "gzip": true turns it on again.
      */
     @Test
-    public void compressedRequestRefused_nextGzipAnswerTurnsCompressionOnAgain() throws Exception {
+    public void compressedRequestRefused_nextGzipAnswerTurnsCompressionOnAgain() throws InterruptedException {
         server.answer(101, true);
-        server.refuseCompressed = 1;
+        server.refuseCompressed.set(1);
         Countly.instance().init(config(server).enableRequestCompression());
         awaitSettings(101);
         queueRequest("refused", BIG);
         server.await(withMarker("refused"));
-        Assert.assertTrue(TestUtils.waitFor(10_000, () -> !provider().getRequestCompressionEnabled()));
+        Assert.assertTrue(TestUtils.waitFor(10_000, () -> !provider().isRequestCompressionAllowed()));
 
         server.answer(102, false);
         fetchSettings();
         awaitSettings(102);
-        Assert.assertFalse(provider().getRequestCompressionEnabled());
+        Assert.assertFalse(provider().isRequestCompressionAllowed());
 
         server.answer(103, true);
         fetchSettings();
         awaitSettings(103);
-        Assert.assertTrue(TestUtils.waitFor(10_000, () -> provider().getRequestCompressionEnabled()));
+        Assert.assertTrue(TestUtils.waitFor(10_000, () -> provider().isRequestCompressionAllowed()));
         awaitSendHandled();
         Countly.instance().attemptToSendStoredRequests();
         queueRequest("after_gzip_answer", BIG);
-        Received after = server.await(withMarker("after_gzip_answer"));
+        GzipStandInRequest after = server.await(withMarker("after_gzip_answer"));
 
         Assert.assertTrue(after.compressed);
         Assert.assertEquals(Arrays.asList(true, false), compressedFlags(server.all(withMarker("refused"))));
@@ -232,7 +219,7 @@ public class RequestCompressionTests {
      * A compressed remote config download answered with JSON leaves compression on.
      */
     @Test
-    public void compressedImmediateRequestAnsweredWithJson_compressionStaysOn() throws Exception {
+    public void compressedImmediateRequestAnsweredWithJson_compressionStaysOn() throws InterruptedException {
         Assert.assertTrue(immediateRequestKeepsCompression(200, "{\"color\":\"red\"}"));
     }
 
@@ -241,7 +228,7 @@ public class RequestCompressionTests {
      * may send, was not accepted: compression stops.
      */
     @Test
-    public void compressedImmediateRequestAnsweredWithPage_stopsCompression() throws Exception {
+    public void compressedImmediateRequestAnsweredWithPage_stopsCompression() throws InterruptedException {
         Assert.assertFalse(immediateRequestKeepsCompression(200, "<html><body>Bad gateway</body></html>"));
     }
 
@@ -250,7 +237,7 @@ public class RequestCompressionTests {
      * compression stops.
      */
     @Test
-    public void compressedImmediateRequestAnsweredWithError_stopsCompression() throws Exception {
+    public void compressedImmediateRequestAnsweredWithError_stopsCompression() throws InterruptedException {
         Assert.assertFalse(immediateRequestKeepsCompression(400, "{\"result\":\"Invalid request body\"}"));
     }
 
@@ -258,7 +245,7 @@ public class RequestCompressionTests {
      * A compressed remote config download answered with nothing was not accepted: compression stops.
      */
     @Test
-    public void compressedImmediateRequestAnsweredWithNothing_stopsCompression() throws Exception {
+    public void compressedImmediateRequestAnsweredWithNothing_stopsCompression() throws InterruptedException {
         Assert.assertFalse(immediateRequestKeepsCompression(200, ""));
     }
 
@@ -267,32 +254,32 @@ public class RequestCompressionTests {
      * goes compressed again.
      */
     @Test
-    public void compressedRequestWithoutAnswer_compressionStaysOn() throws Exception {
+    public void compressedRequestWithoutAnswer_compressionStaysOn() throws InterruptedException {
         server.answer(101, true);
-        server.dropCompressed = true;
+        server.dropCompressed.set(true);
         Countly.instance().init(config(server).enableRequestCompression());
         awaitSettings(101);
 
         queueRequest("dropped", BIG);
         server.await(withMarker("dropped"));
         awaitSendHandled();
-        server.dropCompressed = false;
+        server.dropCompressed.set(false);
         Countly.instance().attemptToSendStoredRequests();
-        Assert.assertTrue(TestUtils.waitFor(15_000, () -> server.count(withMarker("dropped").and(r -> r.answered)) == 1));
+        Assert.assertTrue(TestUtils.waitFor(15_000, () -> server.count(withMarker("dropped").and(r -> r.answered.get())) == 1));
 
-        List<Received> dropped = server.all(withMarker("dropped"));
+        List<GzipStandInRequest> dropped = server.all(withMarker("dropped"));
         Assert.assertTrue(dropped.size() >= 2);
-        for (Received received : dropped) {
+        for (GzipStandInRequest received : dropped) {
             Assert.assertTrue(received.compressed);
         }
-        Assert.assertTrue(provider().getRequestCompressionEnabled());
+        Assert.assertTrue(provider().isRequestCompressionAllowed());
     }
 
     /**
      * The gzip key is read from the live answer only, never stored with the settings.
      */
     @Test
-    public void gzipAnswer_isNotStored() throws Exception {
+    public void gzipAnswer_isNotStored() throws InterruptedException {
         server.answer(101, true);
         Countly.instance().init(config(server).enableRequestCompression());
         awaitSettings(101);
@@ -310,23 +297,23 @@ public class RequestCompressionTests {
      * After a server URL change the requests go plain, until the new server says it reads gzip.
      */
     @Test
-    public void serverUrlChange_newServerGetsPlainRequestsUntilItSaysGzip() throws Exception {
+    public void serverUrlChange_newServerGetsPlainRequestsUntilItSaysGzip() throws IOException, InterruptedException {
         server.answer(101, true);
-        otherServer = new Server();
+        otherServer = new GzipStandInServer();
         otherServer.answer(102, true);
         CountDownLatch release = new CountDownLatch(1);
-        otherServer.holdSettings = release;
+        otherServer.holdSettings.set(release);
         Countly.instance().init(config(server).enableRequestCompression());
         awaitSettings(101);
 
         Countly.instance().changeServerUrl(otherServer.url());
         otherServer.await(withMethod("sc"));
         queueRequest("before_answer", BIG);
-        Received before = otherServer.await(withMarker("before_answer"));
+        GzipStandInRequest before = otherServer.await(withMarker("before_answer"));
         release.countDown();
         awaitSettings(102);
         queueRequest("after_answer", BIG);
-        Received after = otherServer.await(withMarker("after_answer"));
+        GzipStandInRequest after = otherServer.await(withMarker("after_answer"));
 
         Assert.assertFalse(before.compressed);
         Assert.assertTrue(after.compressed);
@@ -343,7 +330,7 @@ public class RequestCompressionTests {
         Assert.assertFalse(accepted.has("gzip"));
 
         for (String answer : new String[] { "{\"gzip\":false}", "{\"gzip\":\"true\"}", "{\"gzip\":1}", "{\"c\":{\"gzip\":true}}", "{}" }) {
-            Assert.assertFalse(answer, ModuleConfiguration.extractGzipFlag(new JSONObject(answer)));
+            Assert.assertFalse(answer, gzipFlagOf(answer));
         }
         Assert.assertFalse(ModuleConfiguration.extractGzipFlag(null));
     }
@@ -361,7 +348,7 @@ public class RequestCompressionTests {
             String body = "app_key=key&payload=" + repeat('a', size - 20);
             byte[] compressed = Utils.gzipRequestBody(body, log);
             Assert.assertTrue(compressed.length > 0 && compressed.length < body.length());
-            Assert.assertEquals(body, new String(gunzip(compressed), StandardCharsets.UTF_8));
+            Assert.assertEquals(body, gunzipText(compressed));
         }
     }
 
@@ -382,10 +369,10 @@ public class RequestCompressionTests {
      * Downloads remote config with 120 keys, a compressed POST, answered with the given status and
      * text, then tells whether a big request sent after it was compressed.
      */
-    private boolean immediateRequestKeepsCompression(int remoteConfigCode, String remoteConfigAnswer) throws Exception {
+    private boolean immediateRequestKeepsCompression(int remoteConfigCode, String remoteConfigAnswer) throws InterruptedException {
         server.answer(101, true);
-        server.remoteConfigCode = remoteConfigCode;
-        server.remoteConfigAnswer = remoteConfigAnswer;
+        server.remoteConfigCode.set(remoteConfigCode);
+        server.remoteConfigAnswer.set(remoteConfigAnswer);
         Countly.instance().init(config(server, Config.Feature.RemoteConfig).enableRequestCompression());
         awaitSettings(101);
 
@@ -397,9 +384,9 @@ public class RequestCompressionTests {
         Countly.instance().remoteConfig().downloadSpecificKeys(keys, (result, error, fullValueUpdate, values) -> downloaded.countDown());
         Assert.assertTrue(downloaded.await(15, TimeUnit.SECONDS));
         queueRequest("after_download", BIG);
-        Received after = server.await(withMarker("after_download"));
+        GzipStandInRequest after = server.await(withMarker("after_download"));
 
-        Received download = server.await(withMethod("rc"));
+        GzipStandInRequest download = server.await(withMethod("rc"));
         Assert.assertTrue(download.compressed);
         Assert.assertEquals(120, new org.json.JSONArray(download.params.get("keys")).length());
         return after.compressed;
@@ -408,7 +395,7 @@ public class RequestCompressionTests {
     /**
      * A configuration that sends to the given server without request cooldowns or health check.
      */
-    private static Config config(Server server, Config.Feature... features) {
+    private static Config config(GzipStandInServer server, Config.Feature... features) {
         File directory = TestUtils.getTestSDirectory();
         TestUtils.checkSdkStorageRootDirectoryExist(directory);
 
@@ -466,21 +453,21 @@ public class RequestCompressionTests {
     /**
      * Matches the request that carries the given marker parameter.
      */
-    private static Predicate<Received> withMarker(String marker) {
+    private static Predicate<GzipStandInRequest> withMarker(String marker) {
         return r -> marker.equals(r.params.get("marker"));
     }
 
     /**
      * Matches an immediate request of the given method.
      */
-    private static Predicate<Received> withMethod(String method) {
+    private static Predicate<GzipStandInRequest> withMethod(String method) {
         return r -> method.equals(r.params.get("method"));
     }
 
     /**
      * Whether each request came compressed.
      */
-    private static List<Boolean> compressedFlags(List<Received> requests) {
+    private static List<Boolean> compressedFlags(List<GzipStandInRequest> requests) {
         return requests.stream().map(r -> r.compressed).collect(Collectors.toList());
     }
 
@@ -494,177 +481,17 @@ public class RequestCompressionTests {
     }
 
     /**
-     * Decodes gzip bytes.
+     * Reads the gzip flag of a settings answer given as text.
      */
-    private static byte[] gunzip(byte[] compressed) throws IOException {
-        try (InputStream in = new GZIPInputStream(new ByteArrayInputStream(compressed))) {
-            return readAll(in);
-        }
+    private static boolean gzipFlagOf(String answer) {
+        return ModuleConfiguration.extractGzipFlag(new JSONObject(answer));
     }
 
     /**
-     * Reads a stream to its end.
+     * Decodes gzip bytes into text.
      */
-    private static byte[] readAll(InputStream stream) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        byte[] buffer = new byte[8192];
-        int read;
-        while ((read = stream.read(buffer)) != -1) {
-            out.write(buffer, 0, read);
-        }
-        return out.toByteArray();
-    }
-
-    /**
-     * One request as a server received it: the body decoded and its parameters read the way the
-     * Countly server reads them.
-     */
-    private static final class Received {
-        final String method;
-        final String path;
-        final boolean compressed;
-        final String body;
-        final int bodyBytes;
-        final String contentType;
-        final String contentEncoding;
-        final Map<String, String> params;
-        volatile boolean answered = false;
-
-        /**
-         * Reads a request from its exchange.
-         */
-        Received(HttpExchange exchange) throws IOException {
-            method = exchange.getRequestMethod();
-            path = exchange.getRequestURI().getPath();
-            String query = exchange.getRequestURI().getRawQuery();
-            compressed = MARKER_QUERY.equals(query);
-            byte[] raw = readAll(exchange.getRequestBody());
-            bodyBytes = raw.length;
-            body = new String(compressed ? gunzip(raw) : raw, StandardCharsets.UTF_8);
-            contentType = exchange.getRequestHeaders().getFirst("Content-Type");
-            contentEncoding = exchange.getRequestHeaders().getFirst("Content-Encoding");
-            params = TestUtils.parseQueryParams(compressed || !Utils.isNotEmpty(query) ? body : query);
-            params.replaceAll((key, value) -> Utils.urldecode(value));
-        }
-    }
-
-    /**
-     * A Countly server stand-in on loopback that records every request. It answers the SDK behavior
-     * settings with the answer set by {@link #answer(int, boolean)}, remote config with
-     * {@link #remoteConfigCode} and {@link #remoteConfigAnswer}, and anything else with success; it can refuse or drop compressed
-     * requests and hold its settings answer until a latch opens.
-     */
-    private static final class Server {
-        final HttpServer http;
-        final List<Received> received = new CopyOnWriteArrayList<>();
-        volatile String settingsAnswer = "{}";
-        volatile String remoteConfigAnswer = "{}";
-        volatile int remoteConfigCode = 200;
-        volatile int refuseCompressed = 0;
-        volatile boolean dropCompressed = false;
-        volatile CountDownLatch holdSettings = null;
-
-        /**
-         * Starts the server on a free loopback port.
-         */
-        Server() throws IOException {
-            http = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
-            http.createContext("/", this::handle);
-            http.setExecutor(Executors.newCachedThreadPool());
-            http.start();
-        }
-
-        /**
-         * Sets the settings answer: an {@code lkl} value that tells it apart, with "gzip": true when
-         * the server reads compressed bodies.
-         */
-        void answer(int lkl, boolean gzip) {
-            JSONObject answer = new JSONObject().put("v", 1).put("t", 1_700_000_000_000L).put("c", new JSONObject().put("lkl", lkl));
-            if (gzip) {
-                answer.put("gzip", true);
-            }
-            settingsAnswer = answer.toString();
-        }
-
-        /**
-         * Records a request and answers it.
-         */
-        private void handle(HttpExchange exchange) throws IOException {
-            Received request = new Received(exchange);
-            received.add(request);
-            String method = request.params.get("method");
-            int code = 200;
-            String response = "{\"result\":\"Success\"}";
-            if ("sc".equals(method)) {
-                CountDownLatch hold = holdSettings;
-                if (hold != null) {
-                    try {
-                        hold.await(15, TimeUnit.SECONDS);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    }
-                }
-                response = settingsAnswer;
-            } else if ("rc".equals(method)) {
-                code = remoteConfigCode;
-                response = remoteConfigAnswer;
-            }
-            if (request.compressed && dropCompressed) {
-                exchange.close();
-                return;
-            }
-            if (request.compressed && refuseCompressed > 0) {
-                refuseCompressed--;
-                code = 400;
-                response = "{\"result\":\"Invalid request body\"}";
-            }
-            byte[] out = response.getBytes(StandardCharsets.UTF_8);
-            exchange.sendResponseHeaders(code, out.length == 0 ? -1 : out.length);
-            try (OutputStream stream = exchange.getResponseBody()) {
-                stream.write(out);
-            }
-            request.answered = true;
-        }
-
-        /**
-         * The URL the SDK reaches this server at.
-         */
-        String url() {
-            return "http://127.0.0.1:" + http.getAddress().getPort();
-        }
-
-        /**
-         * How many received requests match.
-         */
-        int count(Predicate<Received> filter) {
-            return (int) received.stream().filter(filter).count();
-        }
-
-        /**
-         * Every received request that matches, in arrival order.
-         */
-        List<Received> all(Predicate<Received> filter) {
-            return new ArrayList<>(received.stream().filter(filter).collect(Collectors.toList()));
-        }
-
-        /**
-         * Waits for the first matching request and returns it.
-         */
-        Received await(Predicate<Received> filter) throws InterruptedException {
-            Assert.assertTrue("no matching request arrived at " + url() + ", it received " + received.size(), TestUtils.waitFor(15_000, () -> count(filter) > 0));
-            return received.stream().filter(filter).findFirst().orElse(null);
-        }
-
-        /**
-         * Opens a held settings answer and stops the server.
-         */
-        void stop() {
-            CountDownLatch hold = holdSettings;
-            if (hold != null) {
-                hold.countDown();
-            }
-            http.stop(0);
-        }
+    private static String gunzipText(byte[] compressed) throws IOException {
+        return new String(GzipStandInRequest.gunzip(compressed), StandardCharsets.UTF_8);
     }
 
     // endregion

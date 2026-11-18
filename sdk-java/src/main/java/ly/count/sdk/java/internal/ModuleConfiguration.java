@@ -117,7 +117,7 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
     private boolean serverConfigRequestsDisabled = false;
     private volatile boolean running = false;
 
-    private boolean requestCompressionEnabled = false;
+    private final AtomicBoolean requestCompressionEnabled = new AtomicBoolean(false);
     final AtomicReference<String> gzipAcceptingServerUrl = new AtomicReference<>(null);
     final AtomicBoolean requestCompressionBlocked = new AtomicBoolean(false);
     /**
@@ -238,7 +238,7 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
         super.init(config);
         boolean backendMode = config.isBackendModeEnabled();
         serverConfigRequestsDisabled = backendMode || config.isSdkBehaviorSettingsRequestsDisabled();
-        requestCompressionEnabled = config.isRequestCompressionEnabled();
+        requestCompressionEnabled.set(config.isRequestCompressionEnabled());
         L.d("[ModuleConfiguration] init, backend mode:[" + backendMode + "], server config requests disabled:[" + serverConfigRequestsDisabled + "]");
 
         seedFromDeveloperConfig(config);
@@ -909,7 +909,7 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
 
         try {
             Params params = ModuleRequests.prepareRequiredParams(config).add("method", "sc");
-            if (requestCompressionEnabled) {
+            if (requestCompressionEnabled.get()) {
                 params.add("gzip", "1");
             }
             String requestData = params.toString();
@@ -960,7 +960,7 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
         long fetchLatencyMs = (System.nanoTime() - fetchStartNs) / 1_000_000L;
         boolean connectionTestRequested = extractConnectionTestFlag(response);
         boolean gzipAccepted = extractGzipFlag(response);
-        if (requestCompressionEnabled) {
+        if (requestCompressionEnabled.get()) {
             gzipAcceptingServerUrl.set(gzipAccepted ? requestedServerUrl : null);
             if (gzipAccepted && requestCompressionBlocked.compareAndSet(true, false)) {
                 L.i("[ModuleConfiguration] onServerConfigResponse, a behavior settings answer says that the server reads compressed bodies, requests are compressed again");
@@ -1097,10 +1097,10 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
 
     /** {@inheritDoc} */
     @Override
-    public boolean getRequestCompressionEnabled() {
+    public boolean isRequestCompressionAllowed() {
         String acceptingUrl = gzipAcceptingServerUrl.get();
         InternalConfig config = internalConfig;
-        return requestCompressionEnabled && !requestCompressionBlocked.get() && acceptingUrl != null && config != null
+        return requestCompressionEnabled.get() && !requestCompressionBlocked.get() && acceptingUrl != null && config != null
             && acceptingUrl.equals(config.getServerURL().toString());
     }
 

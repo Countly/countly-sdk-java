@@ -157,7 +157,7 @@ public class Transport implements X509TrustManager {
                 request.params.add(CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, request.params + config.getParameterTamperingProtectionSalt(), L));
             }
             String markedPath = compressedRequestPath(path);
-            if (markedPath != null && config.getConfigurationProvider().getRequestCompressionEnabled()) {
+            if (markedPath != null && config.getConfigurationProvider().isRequestCompressionAllowed()) {
                 String body = request.params.toString();
                 compressedBody = Utils.gzipRequestBody(body, L);
                 if (compressedBody.length > 0) {

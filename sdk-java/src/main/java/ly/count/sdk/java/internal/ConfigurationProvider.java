@@ -304,7 +304,7 @@ public interface ConfigurationProvider {
      *
      * @return {@code true} when a request body may be compressed
      */
-    default boolean getRequestCompressionEnabled() {
+    default boolean isRequestCompressionAllowed() {
         return false;
     }
 

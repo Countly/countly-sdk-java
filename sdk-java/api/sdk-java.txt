@@ -442,7 +442,6 @@ package ly.count.sdk.java.internal {
     method public int getMaxValueSize();
     method public boolean getNetworkingEnabled();
     method public boolean getRefreshContentZoneEnabled();
-    method public default boolean getRequestCompressionEnabled();
     method public int getRequestDropAgeHours();
     method public int getRequestQueueMaxSize();
     method public ly.count.sdk.java.internal.ConfigurationProvider.FilterList<Set<String!>!> getSegmentationFilterList();
@@ -453,6 +452,7 @@ package ly.count.sdk.java.internal {
     method public int getUserPropertyCacheLimit();
     method public ly.count.sdk.java.internal.ConfigurationProvider.FilterList<Set<String!>!> getUserPropertyFilterList();
     method public boolean getViewTrackingEnabled();
+    method public default boolean isRequestCompressionAllowed();
     method public boolean isRequestQueueMaxSizeFromBehaviorSettings();
   }
 

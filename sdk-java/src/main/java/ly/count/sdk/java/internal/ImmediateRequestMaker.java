@@ -98,7 +98,7 @@ class ImmediateRequestMaker implements ImmediateRequestI {
                 return null;
             }
         } catch (JSONException | StringIndexOutOfBoundsException e) {
-            L.d("[ImmediateRequestMaker] Received an answer that is empty or not JSON while making a immediate server request, [" + e + "]");
+            L.d("[ImmediateRequestMaker] Received an answer that is empty or not JSON while making a immediate server request, [" + e.getMessage() + "]");
             cp.blockCompressionIfCompressed(connection);
         } catch (Exception e) {
             L.d("[ImmediateRequestMaker] Received exception while making a immediate server request " + e.getMessage());
