@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Utility class
@@ -31,6 +32,9 @@ public class Utils {
     public static final String UTF8 = "UTF-8";
     public static final String CRLF = "\r\n";
     public static final char[] BASE_16 = "0123456789ABCDEF".toCharArray();
+    static final int REQUEST_COMPRESSION_MIN_BYTES = 1024;
+    // the server refuses a compressed body that is larger than this once decoded
+    static final int REQUEST_COMPRESSION_MAX_BYTES = 1024 * 1024;
 
     /**
      * Joins objects with a separator
@@ -181,6 +185,33 @@ public class Utils {
             }
             return null;
         }
+    }
+
+    /**
+     * Compresses a request body with gzip, for sending it with the compression marker as the URL query.
+     *
+     * @param body the url encoded request body, checksum included
+     * @param L logger
+     * @return the gzip bytes, or an empty array when the body is smaller than
+     * {@link #REQUEST_COMPRESSION_MIN_BYTES} or larger than {@link #REQUEST_COMPRESSION_MAX_BYTES},
+     * compressing fails, or the result is not smaller than the body
+     */
+    static byte[] gzipRequestBody(String body, Log L) {
+        byte[] plain = body.getBytes(StandardCharsets.UTF_8);
+        if (plain.length < REQUEST_COMPRESSION_MIN_BYTES || plain.length > REQUEST_COMPRESSION_MAX_BYTES) {
+            return new byte[0];
+        }
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream(plain.length / 2);
+        try (GZIPOutputStream gzip = new GZIPOutputStream(out)) {
+            gzip.write(plain);
+        } catch (IOException e) {
+            L.d("[Utils] gzipRequestBody, compressing failed, the body is sent uncompressed: [" + e + "]");
+            return new byte[0];
+        }
+
+        byte[] compressed = out.toByteArray();
+        return compressed.length < plain.length ? compressed : new byte[0];
     }
 
     /**

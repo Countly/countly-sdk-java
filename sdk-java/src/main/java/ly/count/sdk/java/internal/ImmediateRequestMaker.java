@@ -3,6 +3,7 @@ package ly.count.sdk.java.internal;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.concurrent.CompletableFuture;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -93,8 +94,12 @@ class ImmediateRequestMaker implements ImmediateRequestI {
                 return new JSONObject(receivedBuffer);
             } else {
                 L.d("[ImmediateRequestMaker] Encountered problem while making a immediate server request, :[" + receivedBuffer + "]");
+                cp.blockCompressionIfCompressed(connection);
                 return null;
             }
+        } catch (JSONException | StringIndexOutOfBoundsException e) {
+            L.d("[ImmediateRequestMaker] Received an answer that is empty or not JSON while making a immediate server request, [" + e + "]");
+            cp.blockCompressionIfCompressed(connection);
         } catch (Exception e) {
             L.d("[ImmediateRequestMaker] Received exception while making a immediate server request " + e.getMessage());
         } finally {

@@ -185,6 +185,15 @@ public class InternalConfig extends Config {
     }
 
     /**
+     * Whether the developer turned request compression on, see {@link Config#enableRequestCompression()}.
+     *
+     * @return {@code true} after {@link Config#enableRequestCompression()}
+     */
+    boolean isRequestCompressionEnabled() {
+        return requestCompressionEnabled;
+    }
+
+    /**
      * Whether the SDK sends its health check, see {@link Config#disableHealthCheck()}.
      *
      * @return {@code true} unless the health check was disabled

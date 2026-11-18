@@ -298,6 +298,25 @@ public interface ConfigurationProvider {
     @Nonnull Set<String> getJourneyTriggerViews();
 
     /**
+     * Whether a request body may be sent gzip-compressed now: the developer turned request
+     * compression on, the current server said in its SDK behavior settings answer that it reads
+     * compressed bodies, and no compressed request was refused since that answer.
+     *
+     * @return {@code true} when a request body may be compressed
+     */
+    default boolean getRequestCompressionEnabled() {
+        return false;
+    }
+
+    /**
+     * Stops request compression until the next SDK behavior settings answer says that the server
+     * reads compressed bodies, or the SDK starts again; called after the server, or something in
+     * front of it, answered a compressed request without accepting it.
+     */
+    default void blockRequestCompression() {
+    }
+
+    /**
      * The decision of the {@code lg} directive, which sits next to {@code c} in a live response.
      *
      * @return whether this device gathers its SDK logs for the server

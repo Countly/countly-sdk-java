@@ -273,6 +273,12 @@ public class Config {
     protected boolean sdkBehaviorSettingsRequestsDisabled = false;
 
     /**
+     * Whether request bodies are sent gzip-compressed, once the server's SDK behavior settings
+     * answer says it reads them.
+     */
+    protected boolean requestCompressionEnabled = false;
+
+    /**
      * Whether the backoff mechanism may hold the request queue back after the server answered
      * slowly. The SDK behavior settings can override it.
      */
@@ -1585,6 +1591,22 @@ public class Config {
      */
     public Config disableSdkBehaviorSettingsUpdates() {
         this.sdkBehaviorSettingsRequestsDisabled = true;
+        return this;
+    }
+
+    /**
+     * Compress request bodies between 1 KB and 1 MB with gzip before sending them. The SDK
+     * compresses only after the server's SDK behavior settings answer said it reads compressed
+     * bodies, so older servers keep getting plain requests. It needs the SDK behavior settings
+     * updates, which backend mode and {@link #disableSdkBehaviorSettingsUpdates()} turn off. A
+     * compressed request that the server, or something in front of it, answers without accepting
+     * it stops compression until the next SDK behavior settings answer says again that the server
+     * reads compressed bodies.
+     *
+     * @return {@code this} instance for method chaining
+     */
+    public Config enableRequestCompression() {
+        this.requestCompressionEnabled = true;
         return this;
     }
 

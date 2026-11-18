@@ -44,7 +44,7 @@ import static ly.count.sdk.java.internal.ServerConfigBuilder.names;
 @RunWith(JUnit4.class)
 public class ModuleConfigurationTests {
 
-    private static final Set<String> TOP_LEVEL_KEYS = names("v", "t", "c", "lg", "ct");
+    private static final Set<String> TOP_LEVEL_KEYS = names("v", "t", "c", "lg", "ct", "gzip");
 
     private ServerConfigResponder server;
 
