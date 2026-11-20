@@ -23,6 +23,7 @@ package ly.count.sdk.java {
     method public ly.count.sdk.java.Config! enableParameterTamperingProtection(String!);
     method public ly.count.sdk.java.Config! enableRemoteConfigAutomaticTriggers();
     method public ly.count.sdk.java.Config! enableRemoteConfigValueCaching();
+    method public ly.count.sdk.java.Config! enableRequestCompression();
     method @Deprecated public ly.count.sdk.java.Config! enableTestMode();
     method @Deprecated public ly.count.sdk.java.Config! enableUsePOST();
     method public ly.count.sdk.java.Config! enrollABOnRCDownload();
@@ -131,6 +132,7 @@ package ly.count.sdk.java {
     field protected int networkRequestCooldown;
     field protected Set<String!>! publicKeyPins;
     field protected List<ly.count.sdk.java.internal.RCDownloadCallback!>! remoteConfigGlobalCallbacks;
+    field protected boolean requestCompressionEnabled;
     field protected int requestQueueMaxSize;
     field protected boolean requiresConsent;
     field protected String! salt;
@@ -407,6 +409,7 @@ package ly.count.sdk.java.internal {
   }
 
   public interface ConfigurationProvider {
+    method public default void blockRequestCompression();
     method public boolean getAutomaticCrashReportingEnabled();
     method public boolean getAutomaticSessionTrackingEnabled();
     method public boolean getAutomaticViewTrackingEnabled();
@@ -449,6 +452,7 @@ package ly.count.sdk.java.internal {
     method public int getUserPropertyCacheLimit();
     method public ly.count.sdk.java.internal.ConfigurationProvider.FilterList<Set<String!>!> getUserPropertyFilterList();
     method public boolean getViewTrackingEnabled();
+    method public default boolean isRequestCompressionAllowed();
     method public boolean isRequestQueueMaxSizeFromBehaviorSettings();
   }
 

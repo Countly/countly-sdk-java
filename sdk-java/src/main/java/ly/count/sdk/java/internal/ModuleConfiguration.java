@@ -8,6 +8,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import ly.count.sdk.java.Config;
@@ -38,6 +40,8 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
     static final String keyRConfig = "c";
     static final String keyRLogGathering = "lg";
     static final String keyRConnectionTest = "ct";
+    //top level key, a sibling of 'c', read from a live response and never stored
+    static final String keyRGzip = "gzip";
 
     static final String keyRTracking = "tracking";
     static final String keyRNetworking = "networking";
@@ -112,6 +116,10 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
 
     private boolean serverConfigRequestsDisabled = false;
     private volatile boolean running = false;
+
+    private final AtomicBoolean requestCompressionEnabled = new AtomicBoolean(false);
+    final AtomicReference<String> gzipAcceptingServerUrl = new AtomicReference<>(null);
+    final AtomicBoolean requestCompressionBlocked = new AtomicBoolean(false);
     /**
      * How many times the device ID changed without merge, written under this module's lock, so a
      * response requested before such a change can tell its gather was armed for the previous user.
@@ -230,6 +238,7 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
         super.init(config);
         boolean backendMode = config.isBackendModeEnabled();
         serverConfigRequestsDisabled = backendMode || config.isSdkBehaviorSettingsRequestsDisabled();
+        requestCompressionEnabled.set(config.isRequestCompressionEnabled());
         L.d("[ModuleConfiguration] init, backend mode:[" + backendMode + "], server config requests disabled:[" + serverConfigRequestsDisabled + "]");
 
         seedFromDeveloperConfig(config);
@@ -899,7 +908,11 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
         }
 
         try {
-            String requestData = ModuleRequests.prepareRequiredParams(config).add("method", "sc").toString();
+            Params params = ModuleRequests.prepareRequiredParams(config).add("method", "sc");
+            if (requestCompressionEnabled.get()) {
+                params.add("gzip", "1");
+            }
+            String requestData = params.toString();
             Transport transport = config.sdk.networking.getTransport();
             final long fetchStartNs = System.nanoTime();
             final int requestedAfterDeviceIdChanges = deviceIdChangesWithoutMerge;
@@ -946,6 +959,14 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
         L.d("[ModuleConfiguration] onServerConfigResponse, retrieved configuration response: [" + response + "]");
         long fetchLatencyMs = (System.nanoTime() - fetchStartNs) / 1_000_000L;
         boolean connectionTestRequested = extractConnectionTestFlag(response);
+        boolean gzipAccepted = extractGzipFlag(response);
+        if (requestCompressionEnabled.get()) {
+            gzipAcceptingServerUrl.set(gzipAccepted ? requestedServerUrl : null);
+            if (gzipAccepted && requestCompressionBlocked.compareAndSet(true, false)) {
+                L.i("[ModuleConfiguration] onServerConfigResponse, a behavior settings answer says that the server reads compressed bodies, requests are compressed again");
+            }
+            L.d("[ModuleConfiguration] onServerConfigResponse, the server " + (gzipAccepted ? "reads" : "does not say it reads") + " compressed request bodies");
+        }
 
         boolean changed;
         synchronized (this) {
@@ -965,6 +986,21 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
         if (connectionTestRequested) {
             notifyConnectionTestRequested(fetchLatencyMs);
         }
+    }
+
+    /**
+     * Reads and removes the {@code gzip} flag of a live response, so it is never stored: only an
+     * answer that carries {@code true} says that the server reads compressed request bodies.
+     *
+     * @param serverConfigResponse the live response, changed in place
+     * @return {@code true} only when the response had {@code "gzip": true}
+     */
+    static boolean extractGzipFlag(@Nullable JSONObject serverConfigResponse) {
+        if (serverConfigResponse == null || !serverConfigResponse.has(keyRGzip)) {
+            return false;
+        }
+
+        return Boolean.TRUE.equals(serverConfigResponse.remove(keyRGzip));
     }
 
     /**
@@ -1060,6 +1096,21 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
     }
 
     /** {@inheritDoc} */
+    @Override
+    public boolean isRequestCompressionAllowed() {
+        String acceptingUrl = gzipAcceptingServerUrl.get();
+        InternalConfig config = internalConfig;
+        return requestCompressionEnabled.get() && !requestCompressionBlocked.get() && acceptingUrl != null && config != null
+            && acceptingUrl.equals(config.getServerURL().toString());
+    }
+
+    @Override
+    public void blockRequestCompression() {
+        if (requestCompressionBlocked.compareAndSet(false, true)) {
+            L.i("[ModuleConfiguration] blockRequestCompression, a compressed request was refused, requests are sent uncompressed until a behavior settings answer says that the server reads compressed bodies, or the SDK starts again");
+        }
+    }
+
     @Override
     public boolean getNetworkingEnabled() {
         return currentVNetworking;

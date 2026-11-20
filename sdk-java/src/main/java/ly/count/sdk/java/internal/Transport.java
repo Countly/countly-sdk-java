@@ -64,6 +64,7 @@ public class Transport implements X509TrustManager {
     private Log L = null;
     private static final String PARAMETER_TAMPERING_DIGEST = "SHA-256";
     private static final String CHECKSUM = "checksum256";
+    static final String REQUEST_COMPRESSION_MARKER = "content_encoding=gzip";
     private InternalConfig config;
 
     private SSLContext sslContext;          // ssl context to use if pinning is enabled
@@ -150,6 +151,22 @@ public class Transport implements X509TrustManager {
             request.params.add(CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, request.params + config.getParameterTamperingProtectionSalt(), L));
         }
 
+        byte[] compressedBody = new byte[0];
+        if (!usingGET && maybePictureData == null) {
+            if (config.getParameterTamperingProtectionSalt() != null) {
+                request.params.add(CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, request.params + config.getParameterTamperingProtectionSalt(), L));
+            }
+            String markedPath = compressedRequestPath(path);
+            if (markedPath != null && config.getConfigurationProvider().isRequestCompressionAllowed()) {
+                String body = request.params.toString();
+                compressedBody = Utils.gzipRequestBody(body, L);
+                if (compressedBody.length > 0) {
+                    path = markedPath;
+                    L.d("[Transport] connection, the request body is sent gzip-compressed, [" + body.length() + "] -> [" + compressedBody.length + "] bytes");
+                }
+            }
+        }
+
         HttpURLConnection connection = openConnection(path, request.params.toString(), usingGET);
         connection.setConnectTimeout(1000 * config.getNetworkConnectionTimeout());
         connection.setReadTimeout(1000 * config.getNetworkReadTimeout());
@@ -191,17 +208,19 @@ public class Transport implements X509TrustManager {
                     writer.append("--").append(boundary).append("--").append(Utils.CRLF).flush();
                 } else {
                     //picture data is "null". If it was sent, we send "null" to server to clear the image there
-                    //we send a normal request in HTTP POST
-                    if (config.getParameterTamperingProtectionSalt() != null) {
-                        request.params.add(CHECKSUM, Utils.digestHex(PARAMETER_TAMPERING_DIGEST, request.params + config.getParameterTamperingProtectionSalt(), L));
-                    }
+                    //we send a normal request in HTTP POST, its checksum was added above
                     connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 
                     output = connection.getOutputStream();
-                    writer = new PrintWriter(new OutputStreamWriter(output, StandardCharsets.UTF_8), true);
+                    if (compressedBody.length > 0) {
+                        output.write(compressedBody);
+                        output.flush();
+                    } else {
+                        writer = new PrintWriter(new OutputStreamWriter(output, StandardCharsets.UTF_8), true);
 
-                    writer.write(request.params.toString());
-                    writer.flush();
+                        writer.write(request.params.toString());
+                        writer.flush();
+                    }
                 }
             } finally {
                 if (writer != null) {
@@ -220,6 +239,44 @@ public class Transport implements X509TrustManager {
         }
 
         return connection;
+    }
+
+    /**
+     * The URL a compressed request goes to: the request URL with the compression marker as its only
+     * query. Endpoints end with an empty query, as in {@code /i?}, which the marker fills.
+     *
+     * @param url the URL the request goes to
+     * @return the URL with the marker, or {@code null} when the URL already has a query, where the
+     * marker could not be the only one
+     */
+    static String compressedRequestPath(@Nonnull String url) {
+        int query = url.indexOf('?');
+        if (query == -1) {
+            return url + "?" + REQUEST_COMPRESSION_MARKER;
+        }
+        return query == url.length() - 1 ? url + REQUEST_COMPRESSION_MARKER : null;
+    }
+
+    /**
+     * Tells whether a connection made by {@link #connection(Request)} sends its body gzip-compressed.
+     *
+     * @param connection the connection
+     * @return {@code true} when its URL carries the compression marker as its query
+     */
+    static boolean isCompressedRequest(@Nullable HttpURLConnection connection) {
+        return connection != null && REQUEST_COMPRESSION_MARKER.equals(connection.getURL().getQuery());
+    }
+
+    /**
+     * Stops request compression when the connection sent a compressed body; called after its answer
+     * was not accepted.
+     *
+     * @param connection the connection whose answer was not accepted
+     */
+    void blockCompressionIfCompressed(@Nullable HttpURLConnection connection) {
+        if (isCompressedRequest(connection)) {
+            config.getConfigurationProvider().blockRequestCompression();
+        }
     }
 
     /**
@@ -444,7 +501,11 @@ public class Transport implements X509TrustManager {
 
                     SDKCore.instance.onRequestCompleted(request, response, code, requestOwner);
 
-                    return processResponse(code, response, request.storageId());
+                    Boolean accepted = processResponse(code, response, request.storageId());
+                    if (!Boolean.TRUE.equals(accepted)) {
+                        blockCompressionIfCompressed(connection);
+                    }
+                    return accepted;
                 } catch (IOException e) {
                     L.d("[network] Error while sending request " + request + " " + e);
                     notifyOwnerOfAttemptWithoutResponse(request, requestOwner);
