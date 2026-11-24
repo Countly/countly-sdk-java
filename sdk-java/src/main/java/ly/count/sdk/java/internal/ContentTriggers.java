@@ -199,16 +199,9 @@ final class ContentTriggers {
     }
 
     /**
-     * Whether what was recorded is a content trigger. When the server sent content triggers, only they decide, and
-     * only while the app wants the content zone. Otherwise (an older server, or disableAutoContentTriggers) a custom
-     * event key in the journey trigger events and a view name in the journey trigger views decide, also while the app
-     * doesn't want the content zone.
+     * Whether what was recorded is a content trigger: the content triggers decide while the zone is wanted, else the
+     * journey trigger events ("jte") and views ("jtv") decide.
      *
-     * @param contentTriggers the content triggers in use, null when there are none
-     * @param zoneWanted true after the app or the "ecz" setting entered the content zone, until it is exited
-     * @param journeyTriggerEvents the journey trigger events ("jte")
-     * @param journeyTriggerViews the journey trigger views ("jtv")
-     * @param trigger what was recorded
      * @return the match, or null when it is not a content trigger
      */
     @Nullable

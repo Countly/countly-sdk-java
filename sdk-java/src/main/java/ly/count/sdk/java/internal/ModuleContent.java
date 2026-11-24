@@ -69,7 +69,7 @@ public class ModuleContent extends ModuleBase {
     private int waitForDelay = 0;
     private int generation = 0;
     /** The {@code ecz} value of the settings in use at init, which decides the entry at init. */
-    private boolean contentZoneEnabledAtInit = false;
+    private final AtomicBoolean contentZoneEnabledAtInit = new AtomicBoolean(false);
     /** Whether the {@code ecz} setting decided to enter the zone, which then happens once a display is registered. */
     private final AtomicBoolean settingsAskForZone = new AtomicBoolean(false);
     /** Set after the application or the {@code ecz} setting entered the zone, until the zone is left. */
@@ -109,7 +109,7 @@ public class ModuleContent extends ModuleBase {
             display = config.sdk.contentDisplay;
         }
         // the settings in use at init decide the entry, also when an answer arrives before init ends
-        contentZoneEnabledAtInit = config.getConfigurationProvider().getContentZoneEnabled();
+        contentZoneEnabledAtInit.set(config.getConfigurationProvider().getContentZoneEnabled());
         triggerExecutor = Executors.newSingleThreadScheduledExecutor(runnable -> {
             Thread thread = new Thread(runnable, "Countly-content-triggers");
             thread.setDaemon(true);
@@ -126,7 +126,7 @@ public class ModuleContent extends ModuleBase {
     @Override
     protected void initFinished(InternalConfig config) {
         super.initFinished(config);
-        if (contentZoneEnabledAtInit) {
+        if (contentZoneEnabledAtInit.get()) {
             enterContentZoneForSettings("initFinished");
         }
     }

@@ -198,7 +198,7 @@ public class ModuleConfigurationContentTests {
      * follow, and that the same event inside its gap starts no round.
      */
     @Test
-    public void contentTriggers_aListedEventSendsTheQueueThenAsksForContent() throws Exception {
+    public void contentTriggers_aListedEventSendsTheQueueThenAsksForContent() throws IOException, InterruptedException {
         startQueueServer();
         server.settings.respondWith(new ServerConfigBuilder().topLevelKey("jt", triggers("e", "purchase")));
         init(networkedContentConfig());
@@ -223,7 +223,7 @@ public class ModuleConfigurationContentTests {
      * triggers, even an empty one, makes the SDK ignore the journey trigger events.
      */
     @Test
-    public void contentTriggers_needTheContentZone_andHideTheJourneyTriggerEvents() throws Exception {
+    public void contentTriggers_needTheContentZone_andHideTheJourneyTriggerEvents() throws IOException, InterruptedException {
         startQueueServer();
         server.settings.respondWith(new ServerConfigBuilder().journeyTriggerEvents(names("legacy")).topLevelKey("jt", triggers("e", "purchase")));
         init(networkedContentConfig());
@@ -249,7 +249,7 @@ public class ModuleConfigurationContentTests {
      * and a listed view when it starts and again when it ends, each with its own gap.
      */
     @Test
-    public void journeyTriggers_askForContentDirectly_forEventsOfTheAppAndBothEventsOfAView() throws Exception {
+    public void journeyTriggers_askForContentDirectly_forEventsOfTheAppAndBothEventsOfAView() throws IOException, InterruptedException {
         startQueueServer();
         server.settings.respondWith(new ServerConfigBuilder().refreshContentZone(false)
             .journeyTriggerEvents(names("purchase", "[CLY]_star_rating"))
@@ -277,7 +277,7 @@ public class ModuleConfigurationContentTests {
      * are triggers too.
      */
     @Test
-    public void contentTriggers_earlyTriggerAndTheOtherTriggerKinds() throws Exception {
+    public void contentTriggers_earlyTriggerAndTheOtherTriggerKinds() throws IOException, InterruptedException {
         startQueueServer();
         server.settings.pending();
         init(networkedContentConfig().enableFeatures(Config.Feature.CrashReporting, Config.Feature.UserProfiles));

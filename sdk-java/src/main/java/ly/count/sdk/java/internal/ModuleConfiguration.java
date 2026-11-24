@@ -176,7 +176,7 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
      * Whether the SDK neither asks for the content triggers nor follows them, from
      * {@link ConfigContent#disableAutoContentTriggers()}.
      */
-    boolean autoContentTriggersDisabled = false;
+    final AtomicBoolean autoContentTriggersDisabled = new AtomicBoolean(false);
     /**
      * Whether settings were stored or provided at init. Without them the first settings answer of
      * the run decides whether the content zone is entered.
@@ -251,8 +251,8 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
         boolean backendMode = config.isBackendModeEnabled();
         serverConfigRequestsDisabled = backendMode || config.isSdkBehaviorSettingsRequestsDisabled();
         requestCompressionEnabled.set(config.isRequestCompressionEnabled());
-        autoContentTriggersDisabled = config.content.autoContentTriggersDisabled;
-        L.d("[ModuleConfiguration] init, backend mode:[" + backendMode + "], server config requests disabled:[" + serverConfigRequestsDisabled + "], content triggers disabled:[" + autoContentTriggersDisabled + "]");
+        autoContentTriggersDisabled.set(config.content.autoContentTriggersDisabled);
+        L.d("[ModuleConfiguration] init, backend mode:[" + backendMode + "], server config requests disabled:[" + serverConfigRequestsDisabled + "], content triggers disabled:[" + autoContentTriggersDisabled.get() + "]");
 
         seedFromDeveloperConfig(config);
         developerValues = developerDefaults(config);
@@ -512,7 +512,7 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
 
         //validation already removed every value that is not a usable setting, so the settings object is kept as it is
         latestRetrievedConfiguration = config.optJSONObject(keyRConfig);
-        currentVContentTriggers.set(autoContentTriggersDisabled ? null : ContentTriggers.parse(config.opt(keyRContentTriggers), L));
+        currentVContentTriggers.set(autoContentTriggersDisabled.get() ? null : ContentTriggers.parse(config.opt(keyRContentTriggers), L));
         internalConfig.storageProvider.setServerConfig(new JSONObject(config, keyRVersion, keyRTimestamp, keyRConfig, keyRContentTriggers).toString());
         return true;
     }
@@ -931,7 +931,7 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
             if (requestCompressionEnabled.get()) {
                 params.add("gzip", "1");
             }
-            if (!autoContentTriggersDisabled) {
+            if (!autoContentTriggersDisabled.get()) {
                 params.add(keyRContentTriggers, "1");
             }
             String requestData = params.toString();
