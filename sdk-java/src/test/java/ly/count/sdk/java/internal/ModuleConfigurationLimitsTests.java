@@ -69,12 +69,10 @@ public class ModuleConfigurationLimitsTests {
     // region scenarios
 
     /**
-     * {@code lkl}, {@code lvs} and {@code lsv} cut custom events after the listing filters and the
-     * journey trigger match, which see the full key, while an internal event only gets the string
-     * values of its widget result cut.
+     * {@code lkl}, {@code lvs} and {@code lsv} cut custom events after the listing filters, which see
+     * the full key, while an internal event only gets the string values of its widget result cut.
      * <p>
-     * Verifies on the wire that a journey trigger listed by its full key sends the queue at once, that
-     * its key is cut to 5 characters, that a segmentation key blacklisted by its full name and an
+     * Verifies on the wire, once the queue is sent, that the key of an event is cut to 5 characters, that a segmentation key blacklisted by its full name and an
      * entry of an unsupported type are removed before the entry limit counts while a key blacklisted
      * only by its truncated form is kept, that of two keys cut to the same key the one that sorts last
      * keeps its value, that string values are cut to 6 characters, that past 2 entries the keys that
@@ -84,11 +82,10 @@ public class ModuleConfigurationLimitsTests {
      * result keeps every key and entry and the values the SDK adds, only its own strings being cut.
      */
     @Test
-    public void customEvents_areCutAfterTheFiltersAndTheJourneyTriggerSawTheFullKey_andInternalEventsOnlyGetWidgetValuesCut() {
+    public void customEvents_areCutAfterTheFilters_andInternalEventsOnlyGetWidgetValuesCut() {
         server.respondWith(smallLimits()
             .eventFilterList(names("purchase_completed", "timed_checkout", "check"), true)
-            .segmentationFilterList(names("internal_notes", "payme"), false)
-            .journeyTriggerEvents(names("purchase_completed")));
+            .segmentationFilterList(names("internal_notes", "payme"), false));
         init(configWithWarnings().enableFeatures(Config.Feature.Events, Config.Feature.Feedback).setEventQueueSizeToSend(100));
 
         Map<String, Object> segmentation = new HashMap<>();
@@ -100,7 +97,7 @@ public class ModuleConfigurationLimitsTests {
         segmentation.put("zz_note", "dropped_by_the_entry_limit");
         Map<String, Object> callers = Collections.unmodifiableMap(new HashMap<>(segmentation));
         Countly.instance().events().recordEvent("purchase_completed", callers, 2, 9.99);
-        TestUtils.letTheClockCatchUp();
+        sendEventQueue();
 
         List<EventImpl> sent = sentEvents();
         Assert.assertEquals(keysOf(sent).toString(), 1, sent.size());
@@ -148,12 +145,12 @@ public class ModuleConfigurationLimitsTests {
      * reserved key is removed so an end event never carries {@code visit}, that an entry of an
      * unsupported type takes no place under the entry limit, that past 2 entries the keys that sort
      * last are dropped while {@code name}, {@code visit}, {@code start} and
-     * {@code segment} stay with their values uncut, that a journey trigger view matches the name as
-     * sent, and that a view started under a long name is still stopped by that name.
+     * {@code segment} stay with their values uncut, and that a view started under a long name is still
+     * stopped by that name.
      */
     @Test
     public void views_nameAndSegmentationAreCut_whileTheKeysTheSdkAddsAreNeitherCutNorCounted() {
-        server.respondWith(smallLimits().journeyTriggerViews(names("Setti")));
+        server.respondWith(smallLimits());
         init(configWithWarnings().enableFeatures(Config.Feature.Events, Config.Feature.Views).setEventQueueSizeToSend(100));
         String platform = SDKCore.instance.config.getSdkPlatform();
         Countly.instance().views().setGlobalViewSegmentation(TestUtils.map("global_key", "global_value"));
@@ -162,7 +159,7 @@ public class ModuleConfigurationLimitsTests {
         TestUtils.letTheClockCatchUp();
         Countly.instance().views().addSegmentationToViewWithID(viewId, TestUtils.map("added_key", "added_value", "bb_second", 2));
         Countly.instance().views().stopViewWithID(viewId, TestUtils.map("visitor_type", "new_visitor", "cc_third", "third_value", "aa_unsupported", new int[] { 1 }));
-        TestUtils.letTheClockCatchUp();
+        sendEventQueue();
 
         List<EventImpl> sent = sentEvents();
         Assert.assertEquals(keysOf(sent).toString(), 2, sent.size());
@@ -185,7 +182,7 @@ public class ModuleConfigurationLimitsTests {
         Assert.assertEquals("1", queued.get(1).segmentation.get(ModuleViews.KEY_VISIT));
         assertEvent(queued.get(2), ModuleViews.KEY_VIEW_EVENT, TestUtils.map("globa", "global",
             ModuleViews.KEY_NAME, "Profi", ModuleViews.KEY_SEGMENT, platform));
-        Assert.assertEquals(2, TestUtils.getCurrentRQ().length);
+        Assert.assertEquals(1, TestUtils.getCurrentRQ().length);
     }
 
     /**
@@ -647,6 +644,14 @@ public class ModuleConfigurationLimitsTests {
      *
      * @return the events
      */
+    /**
+     * Moves the queued events into a request and waits until it is stored.
+     */
+    private static void sendEventQueue() {
+        SDKCore.instance.module(ModuleEvents.class).checkEventQueueToSend(true);
+        TestUtils.letTheClockCatchUp();
+    }
+
     private static List<EventImpl> sentEvents() {
         List<EventImpl> events = new ArrayList<>();
         int requestCount = TestUtils.getCurrentRQ().length;

@@ -44,7 +44,7 @@ import static ly.count.sdk.java.internal.ServerConfigBuilder.names;
 @RunWith(JUnit4.class)
 public class ModuleConfigurationTests {
 
-    private static final Set<String> TOP_LEVEL_KEYS = names("v", "t", "c", "lg", "ct", "gzip");
+    private static final Set<String> TOP_LEVEL_KEYS = names("v", "t", "c", "lg", "ct", "gzip", "jt");
 
     private ServerConfigResponder server;
 
@@ -708,7 +708,6 @@ public class ModuleConfigurationTests {
         Assert.assertEquals(2, events.size());
         Assert.assertEquals("old_user_event", events.get(0).key);
         Assert.assertEquals("checkout", events.get(1).key);
-        Assert.assertTrue(SDKCore.instance.module(ModuleEvents.class).journeyTriggerRequestIds.isEmpty());
     }
 
     /**

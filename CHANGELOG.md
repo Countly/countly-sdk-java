@@ -32,8 +32,12 @@
   * The consent requirement, applied on the next initialization
   * SDK internal limits for key length, value size, segmentation value count, stack trace lines per thread, stack trace line length, and breadcrumb count
   * Listing filters (blacklist/whitelist) for events, segmentation keys, event specific segmentation keys, and user properties, plus a user property cache limit
-  * Entering, refreshing, and the fetch interval of the content zone, plus Journey Trigger Events and Journey Trigger Views that refresh it
+  * Entering the content zone at initialization, refreshing it, and its fetch interval, plus Journey Trigger Events and Journey Trigger Views, which ask for content right away while the server sends no content triggers
   * Dropping requests older than a given age
+* Added content triggers. When the application records something that starts a journey or a campaign with content, the SDK sends the queued requests and asks for that content right away, instead of waiting for the content zone timer:
+  * The triggers are events, the start or the end of a view, a new session, a user property and a recorded exception.
+  * The server lists them in its SDK behavior settings answer, and they apply while the content zone is entered.
+  * Call "disableAutoContentTriggers()" on the content config to turn them off.
 * Added "setSdkBehaviorSettings(String)" init config method for providing SDK behavior settings at initialization.
 * Added "disableSdkBehaviorSettingsUpdates()" init config method for disabling SDK behavior settings requests.
 * Improved request queue handling with a built-in backoff mechanism which is enabled by default. When the server takes 10 seconds or longer to answer while few requests are queued, the SDK pauses sending for 60 seconds.

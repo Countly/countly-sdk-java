@@ -99,6 +99,20 @@ public interface StorageProvider {
     void setHealthCheckState(String state);
 
     /**
+     * Read when each content trigger last asked for content.
+     *
+     * @return a JSON object of trigger to time in milliseconds, {@code null} or empty when none is stored
+     */
+    String getContentTriggerGaps();
+
+    /**
+     * Store when each content trigger last asked for content, so its gap holds after a restart.
+     *
+     * @param gaps a JSON object of trigger to time in milliseconds, empty to clear them
+     */
+    void setContentTriggerGaps(String gaps);
+
+    /**
      * Add one automatically detected crash to the count the next start reports in the health check.
      * Written right away, without the health check counters, as it runs while the crash is reported.
      */

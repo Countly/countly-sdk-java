@@ -459,8 +459,43 @@ public class ModuleUserProfile extends ModuleBase {
             events.checkEventQueueToSend(true);
         }
 
-        ModuleRequests.pushAsync(internalConfig, new Request(generatedParams));
+        ModuleRequests.pushAsync(internalConfig, new Request(generatedParams), false,
+            stored -> ModuleRequests.notifyContentTrigger(internalConfig, stored, ContentTriggers.Trigger.userProperties(sentPropertyNames(generatedParams))));
         clearInternal();
+    }
+
+    /**
+     * The user properties a user details request sends, as content triggers name them: a user detail
+     * ("email"), or "custom." and the key of a custom property.
+     *
+     * @param params the parameters of the request
+     * @return the property names
+     */
+    @Nonnull
+    static List<String> sentPropertyNames(@Nonnull Params params) {
+        List<String> names = new ArrayList<>();
+        String details = params.get("user_details");
+        if (details != null) {
+            try {
+                JSONObject json = new JSONObject(details);
+                for (String key : json.keySet()) {
+                    JSONObject custom = "custom".equals(key) ? json.optJSONObject(key) : null;
+                    if (custom == null) {
+                        names.add(key);
+                        continue;
+                    }
+                    for (String customKey : custom.keySet()) {
+                        names.add("custom." + customKey);
+                    }
+                }
+            } catch (JSONException ignored) {
+                // a request without readable user details sends no property names
+            }
+        }
+        if ((params.has(PICTURE_BYTES) || params.has(PredefinedUserPropertyKeys.PICTURE_PATH)) && !names.contains("picture")) {
+            names.add("picture");
+        }
+        return names;
     }
 
     protected void clearInternal() {

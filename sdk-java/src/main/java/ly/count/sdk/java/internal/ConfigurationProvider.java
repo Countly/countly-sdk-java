@@ -298,6 +298,14 @@ public interface ConfigurationProvider {
     @Nonnull Set<String> getJourneyTriggerViews();
 
     /**
+     * Key {@code jt}, next to the settings.
+     *
+     * @return the content triggers the server sent, {@code null} when it sent none or an invalid
+     *     value, or when content triggers are turned off, so the journey trigger events and views apply
+     */
+    @Nullable ContentTriggers getContentTriggers();
+
+    /**
      * Whether a request body may be sent gzip-compressed now: the developer turned request
      * compression on, the current server said in its SDK behavior settings answer that it reads
      * compressed bodies, and no compressed request was refused since that answer.

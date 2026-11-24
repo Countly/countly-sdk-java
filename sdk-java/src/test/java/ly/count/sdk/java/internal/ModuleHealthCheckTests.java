@@ -99,6 +99,13 @@ public class ModuleHealthCheckTests {
             healthCheckState = state;
         }
 
+        @Override public String getContentTriggerGaps() {
+            return null;
+        }
+
+        @Override public void setContentTriggerGaps(String gaps) {
+        }
+
         @Override public void incrementAutomaticCrashCount() {
             automaticCrashes++;
         }

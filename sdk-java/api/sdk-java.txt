@@ -394,9 +394,11 @@ package ly.count.sdk.java.internal {
 
   public class ConfigContent {
     ctor public ConfigContent(ly.count.sdk.java.Config!);
+    method public ly.count.sdk.java.Config! disableAutoContentTriggers();
     method public ly.count.sdk.java.Config! setContentUrlHandler(ly.count.sdk.java.internal.ContentUrlHandler!);
     method public ly.count.sdk.java.Config! setGlobalContentCallback(ly.count.sdk.java.internal.ContentCallback!);
     method public ly.count.sdk.java.Config! setZoneTimerInterval(int);
+    field protected boolean autoContentTriggersDisabled;
     field protected ly.count.sdk.java.internal.ContentUrlHandler! contentUrlHandler;
     field protected ly.count.sdk.java.internal.ContentCallback! globalContentCallback;
     field protected int zoneTimerInterval;
@@ -419,6 +421,7 @@ package ly.count.sdk.java.internal {
     method public double getBOMRQPercentage();
     method public int getBOMRequestAge();
     method public boolean getConsentRequired();
+    method public ly.count.sdk.java.internal.ContentTriggers? getContentTriggers();
     method public boolean getContentZoneEnabled();
     method public int getContentZoneTimerInterval();
     method public boolean getCrashReportingEnabled();
@@ -827,6 +830,7 @@ package ly.count.sdk.java.internal {
     method public double getBOMRQPercentage();
     method public int getBOMRequestAge();
     method public boolean getConsentRequired();
+    method public ly.count.sdk.java.internal.ContentTriggers? getContentTriggers();
     method public boolean getContentZoneEnabled();
     method public int getContentZoneTimerInterval();
     method public boolean getCrashReportingEnabled();
@@ -1248,6 +1252,7 @@ package ly.count.sdk.java.internal {
 
   public class SDKStorage implements ly.count.sdk.java.internal.StorageProvider {
     ctor protected SDKStorage();
+    method public String! getContentTriggerGaps();
     method public String! getDeviceID();
     method public String! getDeviceIdType();
     method public String! getHealthCheckState();
@@ -1258,6 +1263,7 @@ package ly.count.sdk.java.internal {
     method public ly.count.sdk.java.internal.SDKStorage! init(ly.count.sdk.java.internal.InternalConfig!);
     method public boolean isCountlyStorageEmpty();
     method protected String! readEventQueue();
+    method public void setContentTriggerGaps(String!);
     method public void setDeviceID(String!);
     method public void setDeviceIdType(String!);
     method public void setHealthCheckState(String!);
@@ -1281,6 +1287,7 @@ package ly.count.sdk.java.internal {
     field protected static final String FILE_NAME_PREFIX = "[CLY]";
     field protected static final String FILE_NAME_SEPARATOR = "_";
     field protected static final String JSON_FILE_NAME = "countly_store.json";
+    field protected static final String key_content_trigger_gaps = "CONTENT_TRIGGER_GAPS";
     field protected static final String key_device_id = "did";
     field protected static final String key_device_id_type = "did_t";
     field protected static final String key_health_check = "HEALTH_CHECK";
@@ -1365,6 +1372,7 @@ package ly.count.sdk.java.internal {
   }
 
   public interface StorageProvider {
+    method public String! getContentTriggerGaps();
     method public String! getDeviceID();
     method public String! getDeviceIdType();
     method public String! getHealthCheckState();
@@ -1373,6 +1381,7 @@ package ly.count.sdk.java.internal {
     method public String! getServerConfig();
     method public void incrementAutomaticCrashCount();
     method public boolean isCountlyStorageEmpty();
+    method public void setContentTriggerGaps(String!);
     method public void setDeviceID(String!);
     method public void setDeviceIdType(String!);
     method public void setHealthCheckState(String!);

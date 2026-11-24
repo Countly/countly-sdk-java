@@ -228,7 +228,14 @@ public class ModuleCrashes extends ModuleBase {
             crash.setName(legacyCrashName);
         }
 
-        return onCrash(config, crash) != null;
+        boolean recorded = onCrash(config, crash) != null;
+        if (recorded && handled && config.sdk != null) {
+            ModuleContent content = config.sdk.module(ModuleContent.class);
+            if (content != null) {
+                content.onContentTrigger(ContentTriggers.Trigger.of(ContentTriggers.KEY_CRASH));
+            }
+        }
+        return recorded;
     }
 
     public CrashImpl onCrash(InternalConfig config, CrashImpl crash) {
