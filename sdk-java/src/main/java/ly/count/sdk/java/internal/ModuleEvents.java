@@ -1,7 +1,6 @@
 package ly.count.sdk.java.internal;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,11 +28,6 @@ public class ModuleEvents extends ModuleBase {
     IdGenerator idGenerator = null;
     String previousEventId = null;
     /**
-     * Storage IDs of the event requests that carry a journey trigger and are waiting for their first
-     * response, which decides whether the content zone is refreshed.
-     */
-    final Set<Long> journeyTriggerRequestIds = ConcurrentHashMap.newKeySet();
-    /**
      * The thread ending the timed events and the view of the previous device ID during a device ID
      * change without merge; its sends wait, so those events go out in one request under that ID.
      */
@@ -58,52 +52,6 @@ public class ModuleEvents extends ModuleBase {
     @Override
     public Boolean onRequest(Request request) {
         return true;
-    }
-
-    /**
-     * Refreshes the content zone once the server accepted a request that carries a journey trigger.
-     * The first attempt to send such a request settles it: when it fails, neither it nor its retry
-     * refreshes anything. A request dropped from the queue unsent settles it the same way.
-     *
-     * @param request the request that was sent
-     * @param response the response body, {@code null} when none could be read
-     * @param responseCode the response code, {@link Transport#NO_RESPONSE_CODE} when no response arrived
-     */
-    @Override
-    public void onRequestCompleted(Request request, String response, int responseCode) {
-        if (request == null || !journeyTriggerRequestIds.remove(request.storageId())) {
-            return;
-        }
-
-        if (!Transport.isSuccessfulResponse(responseCode, response)) {
-            L.d("[ModuleEvents] onRequestCompleted, the request [" + request.storageId() + "] carrying a journey trigger failed with code [" + responseCode + "], the content zone is not refreshed");
-            return;
-        }
-
-        SDKCore core = SDKCore.instance;
-        ModuleContent content = core == null ? null : core.module(ModuleContent.class);
-        if (content == null) {
-            L.d("[ModuleEvents] onRequestCompleted, the server accepted the request [" + request.storageId() + "] carrying a journey trigger, there is no content zone to refresh");
-            return;
-        }
-
-        L.d("[ModuleEvents] onRequestCompleted, the server accepted the request [" + request.storageId() + "] carrying a journey trigger, refreshing the content zone");
-        content.refreshContentZoneInternal();
-    }
-
-    /**
-     * Settles the journey triggers carried by requests that were removed from the queue unread,
-     * which leaves their owner unknown and untold. No response will ever arrive for them, and none
-     * of them refreshes the content zone.
-     *
-     * @param requestIds storage IDs of the removed requests
-     */
-    void onRequestsDroppedUnread(@Nonnull Collection<Long> requestIds) {
-        for (Long requestId : requestIds) {
-            if (journeyTriggerRequestIds.remove(requestId)) {
-                L.d("[ModuleEvents] onRequestsDroppedUnread, the request [" + requestId + "] carrying a journey trigger was dropped from the queue without being sent, the content zone is not refreshed");
-            }
-        }
     }
 
     @Override
@@ -140,7 +88,6 @@ public class ModuleEvents extends ModuleBase {
     @Override
     public void stop(InternalConfig config, final boolean clear) {
         super.stop(config, clear);
-        journeyTriggerRequestIds.clear();
         if (clear) {
             eventQueue.clear();
             timedEvents.clear();
@@ -152,18 +99,7 @@ public class ModuleEvents extends ModuleBase {
      *
      * @param deviceId the device ID the events belong to, {@code null} for the current one
      */
-    private void addEventsToRequestQ(@Nullable String deviceId) {
-        addEventsToRequestQ(deviceId, false);
-    }
-
-    /**
-     * Moves every queued event into one request.
-     *
-     * @param deviceId the device ID the events belong to, {@code null} for the current one
-     * @param journeyTrigger whether the events include a journey trigger, whose request refreshes
-     *     the content zone once the server accepts it
-     */
-    private synchronized void addEventsToRequestQ(@Nullable String deviceId, boolean journeyTrigger) {
+    private synchronized void addEventsToRequestQ(@Nullable String deviceId) {
         L.d("[ModuleEvents] addEventsToRequestQ");
 
         if (eventQueue.getEQ().isEmpty()) {
@@ -171,27 +107,41 @@ public class ModuleEvents extends ModuleBase {
             return;
         }
 
+        Request request = eventsRequest(deviceId);
+        eventQueue.clear();
+        ModuleRequests.pushAsync(internalConfig, request);
+    }
+
+    /**
+     * Moves every queued event into one request, for a content trigger round, which sends the
+     * request queue once this request is stored.
+     *
+     * @param onStored called once the request is stored, or right away when no event is queued
+     */
+    synchronized void moveEventsToRequestQueue(@Nonnull Runnable onStored) {
+        if (eventQueue.getEQ().isEmpty()) {
+            onStored.run();
+            return;
+        }
+
+        Request request = eventsRequest(null);
+        eventQueue.clear();
+        ModuleRequests.pushAsync(internalConfig, request, false, stored -> onStored.run());
+    }
+
+    /**
+     * @param deviceId the device ID the events belong to, {@code null} for the current one
+     * @return a request with every queued event
+     */
+    @Nonnull
+    private Request eventsRequest(@Nullable String deviceId) {
         Request request = new Request();
         if (deviceId != null) {
             request.params.add("device_id", deviceId);
         }
         request.params.arr("events").put(eventQueue.getEQ()).add();
         request.own(ModuleEvents.class);
-
-        eventQueue.clear();
-        if (!journeyTrigger) {
-            ModuleRequests.pushAsync(internalConfig, request);
-            return;
-        }
-
-        final Long requestId = request.storageId();
-        journeyTriggerRequestIds.add(requestId);
-        L.d("[ModuleEvents] addEventsToRequestQ, the request [" + requestId + "] carries a journey trigger, the content zone is refreshed once the server accepts it");
-        ModuleRequests.pushAsync(internalConfig, request, false, stored -> {
-            if (!Boolean.TRUE.equals(stored)) {
-                journeyTriggerRequestIds.remove(requestId);
-            }
-        });
+        return request;
     }
 
     /**
@@ -237,7 +187,7 @@ public class ModuleEvents extends ModuleBase {
             segmentation = filteredCustomEventSegmentation(key, segmentation, configProvider);
         }
 
-        boolean journeyTrigger = isJourneyTrigger(key, isCustomEvent, segmentation, configProvider);
+        String keyAsGiven = key;
 
         L.d("[ModuleEvents] recordEventInternal, Recording event with key: [" + key + "] and provided event ID of:[" + eventIdOverride + "] and segmentation with:[" + (segmentation == null ? "null" : segmentation.size()) + "] keys");
 
@@ -272,7 +222,39 @@ public class ModuleEvents extends ModuleBase {
             this.previousEventId = eventId;
         }
 
-        addEventToQueue(new EventImpl(key, count, sum, dur, segmentation, L, eventId, pvid, cvid, previousEventIdToSend), journeyTrigger);
+        addEventToQueue(new EventImpl(key, count, sum, dur, segmentation, L, eventId, pvid, cvid, previousEventIdToSend));
+        notifyContentTrigger(keyAsGiven, eventId, segmentation);
+    }
+
+    /**
+     * Tells the content module about a recorded event, which can be a content trigger: a view event
+     * by its name, and any other event by its key, both as the app passed them, before the limits
+     * cut them.
+     *
+     * @param keyAsGiven the event key as the app passed it
+     * @param eventId the ID of the event, which is the view ID for a view event
+     * @param segmentation the segmentation of the event, {@code null} for none
+     */
+    private void notifyContentTrigger(@Nonnull String keyAsGiven, @Nonnull String eventId, @Nullable Map<String, Object> segmentation) {
+        SDKCore core = SDKCore.instance;
+        ModuleContent content = core == null ? null : core.module(ModuleContent.class);
+        if (content == null) {
+            return;
+        }
+
+        if (!ModuleViews.KEY_VIEW_EVENT.equals(keyAsGiven)) {
+            content.onContentTrigger(ContentTriggers.Trigger.event(keyAsGiven, !keyAsGiven.startsWith("[CLY]_")));
+            return;
+        }
+
+        ModuleViews views = core.module(ModuleViews.class);
+        String viewName = views == null ? null : views.viewNameFor(eventId);
+        if (viewName == null && segmentation != null && segmentation.get(ModuleViews.KEY_NAME) instanceof String) {
+            viewName = (String) segmentation.get(ModuleViews.KEY_NAME);
+        }
+        if (viewName != null) {
+            content.onContentTrigger(ContentTriggers.Trigger.view(viewName, segmentation == null || !segmentation.containsKey(ModuleViews.KEY_VISIT)));
+        }
     }
 
     /**
@@ -297,61 +279,29 @@ public class ModuleEvents extends ModuleBase {
     }
 
     /**
-     * Whether an event is a journey trigger of the SDK behavior settings: a custom event whose key
-     * is in {@code jte}, or a view event whose name is in {@code jtv}.
-     *
-     * @param key the key of the event, as it was passed
-     * @param isCustomEvent whether the key is not one of {@link #INTERNAL_EVENT_KEYS}
-     * @param segmentation the segmentation of the event, {@code null} for none
-     * @param configProvider the settings in effect
-     * @return {@code true} for a journey trigger
-     */
-    private static boolean isJourneyTrigger(@Nonnull String key, boolean isCustomEvent, @Nullable Map<String, Object> segmentation, @Nonnull ConfigurationProvider configProvider) {
-        if (isCustomEvent) {
-            return configProvider.getJourneyTriggerEvents().contains(key);
-        }
-
-        if (!ModuleViews.KEY_VIEW_EVENT.equals(key) || segmentation == null) {
-            return false;
-        }
-
-        Object viewName = segmentation.get(ModuleViews.KEY_NAME);
-        return viewName != null && configProvider.getJourneyTriggerViews().contains(viewName);
-    }
-
-    /**
-     * Adds an event to the event queue and sends the queue when it is full or holds a journey trigger.
+     * Adds an event to the event queue and sends the queue when it is full.
      *
      * @param event the event
-     * @param journeyTrigger whether the event is a journey trigger
      */
-    private void addEventToQueue(@Nonnull EventImpl event, boolean journeyTrigger) {
+    private void addEventToQueue(@Nonnull EventImpl event) {
         L.d("[ModuleEvents] addEventToQueue");
         eventQueue.addEvent(event);
-        if (journeyTrigger) {
-            L.d("[ModuleEvents] addEventToQueue, event [" + event.key + "] is a journey trigger, sending the event queue now");
-        }
-        checkEventQueueToSend(journeyTrigger, journeyTrigger);
-    }
-
-    void checkEventQueueToSend(boolean forceSend) {
-        checkEventQueueToSend(forceSend, false);
+        checkEventQueueToSend(false);
     }
 
     /**
      * Sends the queued events when asked to or when the queue reached its threshold.
      *
      * @param forceSend whether to send whatever is queued
-     * @param journeyTrigger whether the queue holds a journey trigger
      */
-    private void checkEventQueueToSend(boolean forceSend, boolean journeyTrigger) {
+    void checkEventQueueToSend(boolean forceSend) {
         if (Thread.currentThread() == threadEndingEventsOfThePreviousDeviceId) {
             L.d("[ModuleEvents] checkEventQueueToSend, the events of the previous device ID are being ended, they are sent together under that ID");
             return;
         }
         L.d("[ModuleEvents] queue size:[" + eventQueue.eqSize() + "] || forceSend: " + forceSend);
         if (forceSend || eventQueue.eqSize() >= internalConfig.getConfigurationProvider().getEventQueueSizeThreshold()) {
-            addEventsToRequestQ(null, journeyTrigger);
+            addEventsToRequestQ(null);
         }
     }
 

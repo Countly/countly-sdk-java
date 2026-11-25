@@ -235,6 +235,16 @@ public class ModuleViews extends ModuleBase implements ViewIdProvider {
         return currentViewData.viewID;
     }
 
+    /**
+     * @param viewId the ID of a started view, which is also the ID of its view events
+     * @return the name the app passed for the view, {@code null} when no started view has the ID
+     */
+    @Nullable
+    String viewNameFor(@Nullable String viewId) {
+        ViewData vd = viewId == null ? null : viewDataMap.get(viewId);
+        return vd == null ? null : vd.viewName;
+    }
+
     protected void setFirstViewInternal(boolean firstView) {
         this.firstView = firstView;
     }

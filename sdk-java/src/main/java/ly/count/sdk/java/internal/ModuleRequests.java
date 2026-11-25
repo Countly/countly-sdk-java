@@ -73,7 +73,25 @@ public class ModuleRequests extends ModuleBase {
 
     public static Future<Boolean> sessionBegin(InternalConfig config, SessionImpl session) {
         Request request = sessionRequest(config, session, "begin_session", 1L);
-        return request.isEmpty() ? null : pushAsync(config, request);
+        return request.isEmpty() ? null : pushAsync(config, request, false, stored -> notifyContentTrigger(config, stored, ContentTriggers.Trigger.of(ContentTriggers.KEY_SESSION)));
+    }
+
+    /**
+     * Tells the content module about something recorded that can be a content trigger, once its
+     * request is stored, so a round it starts sends that request before it asks for content.
+     *
+     * @param config configuration of the running SDK
+     * @param stored whether the request was stored
+     * @param trigger what was recorded
+     */
+    static void notifyContentTrigger(@Nonnull InternalConfig config, @Nullable Boolean stored, @Nonnull ContentTriggers.Trigger trigger) {
+        if (!Boolean.TRUE.equals(stored) || config.sdk == null) {
+            return;
+        }
+        ModuleContent content = config.sdk.module(ModuleContent.class);
+        if (content != null) {
+            content.onContentTrigger(trigger);
+        }
     }
 
     public static Future<Boolean> sessionUpdate(InternalConfig config, SessionImpl session, Long seconds) {
@@ -385,7 +403,6 @@ public class ModuleRequests extends ModuleBase {
             config.getLogger().e("[ModuleRequests] dropOldestRequestsOverQueueLimit, failed to keep the request queue within its size, [" + e + "]");
         }
 
-        settleJourneyTriggersOf(config, droppedIds);
         return droppedIds.size();
     }
 
@@ -437,30 +454,6 @@ public class ModuleRequests extends ModuleBase {
             return 0;
         }
 
-        settleJourneyTriggersOf(config, removedIds);
         return removedIds.size();
-    }
-
-    /**
-     * Tells the events module which requests were dropped unread, so a journey trigger one of them
-     * carried stops waiting for a response. Only a set of IDs is touched, which is safe on the
-     * storage thread.
-     *
-     * @param config configuration of the running SDK
-     * @param droppedIds storage IDs of the dropped requests
-     */
-    private static void settleJourneyTriggersOf(@Nonnull InternalConfig config, @Nonnull List<Long> droppedIds) {
-        if (droppedIds.isEmpty() || config.sdk == null) {
-            return;
-        }
-
-        try {
-            ModuleEvents events = config.sdk.module(ModuleEvents.class);
-            if (events != null) {
-                events.onRequestsDroppedUnread(droppedIds);
-            }
-        } catch (Exception e) {
-            config.getLogger().e("[ModuleRequests] settleJourneyTriggersOf, failed to settle the journey triggers of the dropped requests, [" + e + "]");
-        }
     }
 }

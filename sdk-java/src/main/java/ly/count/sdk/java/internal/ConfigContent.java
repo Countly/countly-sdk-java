@@ -16,6 +16,7 @@ public class ConfigContent {
     protected int zoneTimerInterval = DEFAULT_ZONE_TIMER_INTERVAL;
     protected ContentCallback globalContentCallback = null;
     protected ContentUrlHandler contentUrlHandler = null;
+    protected boolean autoContentTriggersDisabled = false;
 
     public ConfigContent(Config config) {
         this.config = config;
@@ -61,6 +62,19 @@ public class ConfigContent {
      */
     public synchronized Config setGlobalContentCallback(ContentCallback callback) {
         this.globalContentCallback = callback;
+        return config;
+    }
+
+    /**
+     * Turn off the content triggers: the SDK does not ask the server for them and does not follow
+     * the ones it has, so content comes only with the content zone timer, as before. The journey
+     * trigger events and views of the SDK behavior settings still apply.
+     *
+     * @return the same config object for convenient linking
+     * @apiNote This is an EXPERIMENTAL feature, and it can have breaking changes
+     */
+    public synchronized Config disableAutoContentTriggers() {
+        this.autoContentTriggersDisabled = true;
         return config;
     }
 }

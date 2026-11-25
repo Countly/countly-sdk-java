@@ -84,67 +84,39 @@ public class ModuleConfigurationContentTests {
     // region scenarios
 
     /**
-     * {@code ecz} enters the content zone once a display is registered, and turning it off leaves
-     * only a zone it entered.
+     * {@code ecz} decides only whether the SDK enters the content zone at init.
      * <p>
-     * Verifies that the response of the fetch made at init, applied before the content module
-     * finished its init, enters nothing while no display is registered; that registering one enters
-     * the zone, which a refresh keeps as the settings' zone; that turning the setting off leaves that
-     * zone and turning it on enters again; that a zone the application entered, or claimed by entering
-     * while the settings' zone ran, survives the setting turning off; that a response which leaves the
-     * setting as it is changes nothing, so a zone the application left stays left; that registering a
-     * display again enters; and that the stored setting enters again after a restart.
+     * Verifies that on a first start the first answer decides, and the zone is entered once a display
+     * is registered; that a later answer turning the setting off does not leave the zone; that after
+     * the application left the zone a later answer turning it on does not enter it; and that at the
+     * next init the stored setting enters the zone once a display is registered.
      */
     @Test
-    public void contentZoneEnabled_entersOnceADisplayIsRegistered_andTurningItOffLeavesOnlyTheZoneItEntered() {
+    public void contentZoneEnabled_decidesOnlyTheEntryAtInit() throws InterruptedException {
         server.settings.respondWith(new ServerConfigBuilder().contentZone(true));
         init(contentConfig());
         holdTheZoneTimer();
 
-        Assert.assertTrue(provider().getContentZoneEnabled());
-        Assert.assertEquals(2, logsContaining("it is entered once a content display is registered"));
+        awaitLogs("it is entered once a content display is registered", 1);
         assertZoneIsInactive(0);
-
         Countly.instance().content().setContentDisplay(display);
         assertZoneFetches(1);
-        Countly.instance().content().refreshContentZone();
+
+        push(new ServerConfigBuilder().contentZone(false));
         assertZoneFetches(2);
 
-        push(new ServerConfigBuilder().contentZone(false));
+        Countly.instance().content().exitContentZone();
         assertZoneIsInactive(2);
         push(new ServerConfigBuilder().contentZone(true));
-        assertZoneFetches(3);
-
-        Countly.instance().content().enterContentZone();
-        push(new ServerConfigBuilder().contentZone(false));
-        assertZoneFetches(4);
-        push(new ServerConfigBuilder().eventQueueSize(5));
-        assertZoneFetches(5);
-        Countly.instance().content().exitContentZone();
-        assertZoneIsInactive(5);
-
-        Countly.instance().content().enterContentZone();
-        push(new ServerConfigBuilder().contentZone(true));
-        push(new ServerConfigBuilder().contentZone(false));
-        assertZoneFetches(6);
-        Countly.instance().content().exitContentZone();
-
-        push(new ServerConfigBuilder().contentZone(true));
-        assertZoneFetches(7);
-        Countly.instance().content().exitContentZone();
-        push(new ServerConfigBuilder().contentZone(true).eventQueueSize(6));
-        assertZoneIsInactive(7);
-
-        Countly.instance().content().setContentDisplay(display);
-        assertZoneFetches(8);
+        assertZoneIsInactive(2);
         Countly.instance().stop();
 
         server.settings.pending();
         init(contentConfig());
         holdTheZoneTimer();
-        assertZoneIsInactive(8);
+        assertZoneIsInactive(2);
         Countly.instance().content().setContentDisplay(display);
-        assertZoneFetches(9);
+        assertZoneFetches(3);
     }
 
     /**
@@ -193,172 +165,139 @@ public class ModuleConfigurationContentTests {
     }
 
     /**
-     * {@code jte} and {@code jtv} send the whole event queue as soon as a trigger is recorded.
-     * <p>
-     * Verifies on disk, with networking off, that events that are not triggers wait for the queue
-     * threshold, an internal event listed in {@code jte} included, that a custom trigger sends them all
-     * with it, that each later trigger gets its own request and each such request waits for its
-     * response, that both the start and the end of a trigger view send the queue, and that a trigger
-     * filtered out by {@code eb} or a trigger view while view tracking is off sends nothing.
+     * The settings request asks for the content triggers with {@code jt=1}, and they are stored with
+     * the settings, unless {@code disableAutoContentTriggers} is set.
      */
     @Test
-    public void journeyTriggers_sendTheWholeEventQueueRightAway_eachTriggerInItsOwnRequest() {
-        server.settings.respondWith(journeyTriggerSettings());
-        init(contentConfig().enableFeatures(Config.Feature.Views));
+    public void contentTriggers_areAskedForAndStored_unlessTurnedOff() {
+        server.settings.respondWith(new ServerConfigBuilder().topLevelKey("jt", triggers("e", "purchase")));
+        init(contentConfig());
 
-        Countly.instance().events().recordEvent("regular");
-        Countly.instance().events().recordEvent("[CLY]_star_rating");
-        Countly.instance().views().startView("home");
-        Assert.assertEquals(0, TestUtils.getCurrentRQ().length);
-        TestUtils.validateEQSize(3);
+        Assert.assertEquals("1", server.settings.requests.get(0).get("jt"));
+        Assert.assertTrue(provider().getContentTriggers().keys.contains("purchase"));
+        Assert.assertTrue(SDKCore.instance.config.storageProvider.getServerConfig().contains("\"jt\""));
+        Countly.instance().halt();
 
-        Countly.instance().events().recordEvent("purchase", TestUtils.map("item", "book"));
-        TestUtils.letTheClockCatchUp();
-        TestUtils.validateEQSize(0);
-        Assert.assertEquals(1, TestUtils.getCurrentRQ().length);
-        List<EventImpl> sent = TestUtils.readEventsFromRequest(0, TestUtils.DEVICE_ID);
-        Assert.assertEquals(4, sent.size());
-        Assert.assertEquals("regular", sent.get(0).key);
-        Assert.assertEquals("[CLY]_star_rating", sent.get(1).key);
-        Assert.assertEquals(ModuleViews.KEY_VIEW_EVENT, sent.get(2).key);
-        Assert.assertEquals("purchase", sent.get(3).key);
-        Assert.assertEquals("book", sent.get(3).segmentation.get("item"));
+        TestUtils.createCleanTestState();
+        server = new SettingsAndContentServer();
+        server.settings.respondWith(new ServerConfigBuilder().topLevelKey("jt", triggers("e", "purchase")));
+        Config config = contentConfig();
+        config.content.disableAutoContentTriggers();
+        init(config);
 
-        Countly.instance().events().recordEvent("purchase");
-        TestUtils.letTheClockCatchUp();
-        Assert.assertEquals(2, TestUtils.getCurrentRQ().length);
-        Assert.assertEquals(1, TestUtils.readEventsFromRequest(1, TestUtils.DEVICE_ID).size());
-
-        Countly.instance().views().startView("checkout");
-        TestUtils.letTheClockCatchUp();
-        Countly.instance().views().stopViewWithName("checkout");
-        TestUtils.letTheClockCatchUp();
-        Assert.assertEquals(4, TestUtils.getCurrentRQ().length);
-        List<EventImpl> checkoutStart = TestUtils.readEventsFromRequest(2, TestUtils.DEVICE_ID);
-        List<EventImpl> checkoutEnd = TestUtils.readEventsFromRequest(3, TestUtils.DEVICE_ID);
-        Assert.assertEquals("checkout", checkoutStart.get(0).segmentation.get(ModuleViews.KEY_NAME));
-        Assert.assertEquals("1", checkoutStart.get(0).segmentation.get(ModuleViews.KEY_VISIT));
-        Assert.assertEquals("checkout", checkoutEnd.get(0).segmentation.get(ModuleViews.KEY_NAME));
-        Assert.assertNull(checkoutEnd.get(0).segmentation.get(ModuleViews.KEY_VISIT));
-        Assert.assertEquals(storedRequestIds(), SDKCore.instance.module(ModuleEvents.class).journeyTriggerRequestIds);
-
-        Countly.instance().views().startView("profile");
-        push(journeyTriggerSettings().eventFilterList(names("purchase"), false));
-        Countly.instance().events().recordEvent("purchase");
-        push(journeyTriggerSettings().viewTracking(false));
-        Assert.assertNull(Countly.instance().views().startView("checkout"));
-        Assert.assertEquals(4, TestUtils.getCurrentRQ().length);
-        TestUtils.validateEQSize(1);
-        Assert.assertEquals(4, SDKCore.instance.module(ModuleEvents.class).journeyTriggerRequestIds.size());
+        Assert.assertNull(server.settings.requests.get(0).get("jt"));
+        Assert.assertNull(provider().getContentTriggers());
     }
 
     /**
-     * A {@code jte} trigger refreshes the content zone once the server accepts the request carrying it.
+     * A listed event, while the content zone is wanted, sends the queued requests and then asks for
+     * content, up to three times while there is none; the same event asks again only after its gap.
      * <p>
-     * Verifies against a local server that the zone is entered only after the request carrying the
-     * trigger and the events queued before it was accepted; that while a content block is on screen
-     * the refresh is ignored; that a rejected request refreshes nothing, and neither does its retry
-     * once accepted; and that an attempt that got no response settles it the same way.
+     * Verifies against a local server that every recorded event goes out with the trigger, that the
+     * request queue is empty when the first content request goes out, that three content requests
+     * follow, and that the same event inside its gap starts no round.
      */
     @Test
-    public void journeyTriggerEvent_refreshesTheZoneOnlyWhenTheServerAcceptsItsRequest() throws Exception {
+    public void contentTriggers_aListedEventSendsTheQueueThenAsksForContent() throws IOException, InterruptedException {
         startQueueServer();
-        server.settings.respondWith(new ServerConfigBuilder().journeyTriggerEvents(names("purchase")));
+        server.settings.respondWith(new ServerConfigBuilder().topLevelKey("jt", triggers("e", "purchase")));
         init(networkedContentConfig());
         holdTheZoneTimer();
         Countly.instance().content().setContentDisplay(display);
-        assertZoneIsInactive(0);
+        Countly.instance().content().enterContentZone();
 
         Countly.instance().events().recordEvent("regular");
-        TestUtils.validateEQSize(1);
         Countly.instance().events().recordEvent("purchase");
-        awaitZoneFetch(1);
-        Assert.assertEquals(1, queueServer.eventRequests().size());
+        awaitContentRequests(3);
         Assert.assertEquals("[\"regular\",\"purchase\"]", eventKeys(queueServer.eventRequests().get(0)).toString());
-        awaitEmptyQueue();
+        Assert.assertEquals(Integer.valueOf(0), server.queuedRequestsAtFetch.get(0));
 
-        server.contentResponse = CONTENT_RESPONSE;
-        assertZoneFetches(2);
-        Assert.assertEquals(1, display.presented.size());
         Countly.instance().events().recordEvent("purchase");
-        awaitLogs("a content block is on screen, ignoring the call", 1);
-        display.lastCallback.onClosed(new HashMap<>());
-        Countly.instance().content().exitContentZone();
-        server.contentResponse = NO_CONTENT_RESPONSE;
-        awaitEmptyQueue();
-        assertZoneIsInactive(2);
-
-        queueServer.mode = QueueServer.REJECT;
-        Countly.instance().events().recordEvent("purchase");
-        awaitLogs("carrying a journey trigger failed with code [500]", 1);
-        Assert.assertEquals(1, queuedRequestCount());
-        assertZoneIsInactive(2);
-        queueServer.mode = QueueServer.ACCEPT;
-        awaitEmptyQueue();
-        assertZoneIsInactive(2);
-
-        queueServer.mode = QueueServer.DROP;
-        Countly.instance().events().recordEvent("purchase");
-        awaitLogs("carrying a journey trigger failed with code [" + Transport.NO_RESPONSE_CODE + "]", 1);
-        assertZoneIsInactive(2);
-        queueServer.mode = QueueServer.ACCEPT;
-        awaitEmptyQueue();
-        assertZoneIsInactive(2);
-        Assert.assertEquals(2, logsContaining("carrying a journey trigger, refreshing the content zone"));
-        Assert.assertTrue(SDKCore.instance.module(ModuleEvents.class).journeyTriggerRequestIds.isEmpty());
+        awaitLogs("started a round less than [10] seconds ago", 1);
+        Thread.sleep(1500);
+        Assert.assertEquals(3, server.contentFetches.size());
     }
 
     /**
-     * A {@code jtv} trigger refreshes the zone like an event does, it never triggers while view
-     * tracking is off, and {@code rcz} off ignores every refresh.
-     * <p>
-     * Verifies against a local server that with refreshing forbidden the application's refresh is
-     * ignored before it sends the queued events and the refresh of an accepted trigger is ignored too;
-     * that with view tracking off a trigger view is not recorded, so nothing is sent; and that with
-     * both allowed a trigger view sends the queue and enters the zone once the server accepted it.
+     * Content triggers apply only while the content zone is wanted, and an answer with content
+     * triggers, even an empty one, makes the SDK ignore the journey trigger events.
      */
     @Test
-    public void journeyTriggerView_refreshesLikeAnEvent_neverWhileViewTrackingIsOff_andRczOffIgnoresEveryRefresh() throws Exception {
+    public void contentTriggers_needTheContentZone_andHideTheJourneyTriggerEvents() throws IOException, InterruptedException {
         startQueueServer();
-        server.settings.respondWith(new ServerConfigBuilder()
-            .journeyTriggerViews(names("checkout"))
-            .journeyTriggerEvents(names("purchase"))
-            .refreshContentZone(false));
+        server.settings.respondWith(new ServerConfigBuilder().journeyTriggerEvents(names("legacy")).topLevelKey("jt", triggers("e", "purchase")));
         init(networkedContentConfig());
         holdTheZoneTimer();
         Countly.instance().content().setContentDisplay(display);
 
-        Countly.instance().views().startView("home");
-        Countly.instance().content().refreshContentZone();
-        TestUtils.validateEQSize(1);
-        Assert.assertEquals(1, logsContaining("refreshing the content zone is disabled by the SDK behavior settings"));
-        assertZoneIsInactive(0);
+        Countly.instance().events().recordEvent("purchase");
+        Countly.instance().events().recordEvent("legacy");
+        Thread.sleep(2500);
+        Assert.assertEquals(0, server.contentFetches.size());
+
+        push(new ServerConfigBuilder().journeyTriggerEvents(names("legacy")).topLevelKey("jt", new JSONObject()));
+        Countly.instance().content().enterContentZone();
+        int zoneFetches = server.contentFetches.size();
+        Countly.instance().events().recordEvent("legacy");
+        Thread.sleep(2500);
+        Assert.assertEquals(zoneFetches, server.contentFetches.size());
+    }
+
+    /**
+     * Without content triggers, the journey trigger events and views ask for content directly, also
+     * outside the content zone and while {@code rcz} is off: an event of the app whose key is listed,
+     * and a listed view when it starts and again when it ends, each with its own gap.
+     */
+    @Test
+    public void journeyTriggers_askForContentDirectly_forEventsOfTheAppAndBothEventsOfAView() throws IOException, InterruptedException {
+        startQueueServer();
+        server.settings.respondWith(new ServerConfigBuilder().refreshContentZone(false)
+            .journeyTriggerEvents(names("purchase", "[CLY]_star_rating"))
+            .journeyTriggerViews(names("checkout")));
+        init(networkedContentConfig());
+        holdTheZoneTimer();
+        Countly.instance().content().setContentDisplay(display);
+
+        Countly.instance().events().recordEvent("[CLY]_star_rating");
+        Thread.sleep(2000);
+        Assert.assertEquals(0, server.contentFetches.size());
 
         Countly.instance().events().recordEvent("purchase");
-        awaitLogs("refreshing the content zone is disabled by the SDK behavior settings", 2);
-        awaitEmptyQueue();
-        assertZoneIsInactive(0);
-        Assert.assertEquals("[\"[CLY]_view\",\"purchase\"]", eventKeys(queueServer.eventRequests().get(0)).toString());
+        awaitContentRequests(3);
 
-        push(new ServerConfigBuilder().refreshContentZone(true).viewTracking(false)
-            .journeyTriggerViews(names("checkout"))
-            .journeyTriggerEvents(names("purchase")));
-        Assert.assertNull(Countly.instance().views().startView("checkout"));
-        TestUtils.validateEQSize(0);
-        Assert.assertEquals(0, queuedRequestCount());
-        assertZoneIsInactive(0);
-
-        push(new ServerConfigBuilder().viewTracking(true)
-            .journeyTriggerViews(names("checkout"))
-            .journeyTriggerEvents(names("purchase")));
         Countly.instance().views().startView("checkout");
-        awaitZoneFetch(1);
-        List<Map<String, String>> eventRequests = queueServer.eventRequests();
-        Assert.assertEquals(2, eventRequests.size());
-        JSONObject view = new JSONArray(eventRequests.get(1).get("events")).getJSONObject(0);
-        Assert.assertEquals(ModuleViews.KEY_VIEW_EVENT, view.getString("key"));
-        Assert.assertEquals("checkout", view.getJSONObject("segmentation").getString(ModuleViews.KEY_NAME));
-        awaitEmptyQueue();
+        awaitContentRequests(6);
+        Countly.instance().views().stopViewWithName("checkout");
+        awaitContentRequests(9);
+    }
+
+    /**
+     * What was recorded before the first settings answer of the run is checked again when it
+     * arrives, and a listed one starts a round; a session, a user property and a handled exception
+     * are triggers too.
+     */
+    @Test
+    public void contentTriggers_earlyTriggerAndTheOtherTriggerKinds() throws IOException, InterruptedException {
+        startQueueServer();
+        server.settings.pending();
+        init(networkedContentConfig().enableFeatures(Config.Feature.CrashReporting, Config.Feature.UserProfiles));
+        holdTheZoneTimer();
+        Countly.instance().content().setContentDisplay(display);
+        Countly.instance().content().enterContentZone();
+
+        Countly.instance().events().recordEvent("purchase");
+        Thread.sleep(1000);
+        Assert.assertEquals(0, server.contentFetches.size());
+        JSONObject listed = triggers("e", "purchase", "[CLY]_crash").put("p", new JSONArray().put("custom.plan"));
+        push(new ServerConfigBuilder().topLevelKey("jt", listed));
+        awaitContentRequests(3);
+
+        Countly.instance().userProfile().setProperty("plan", "pro");
+        Countly.instance().userProfile().save();
+        awaitContentRequests(6);
+
+        Countly.instance().crashes().recordHandledException(new IllegalStateException("content trigger"));
+        awaitContentRequests(9);
     }
 
     /**
@@ -429,12 +368,28 @@ public class ModuleConfigurationContentTests {
      *
      * @return a builder holding those settings
      */
-    private static ServerConfigBuilder journeyTriggerSettings() {
-        return new ServerConfigBuilder()
-            .journeyTriggerEvents(names("purchase", "[CLY]_star_rating"))
-            .journeyTriggerViews(names("checkout"))
-            .eventQueueSize(100)
-            .networking(false);
+    /**
+     * @param list the list of the content triggers, "e", "v" or "p"
+     * @param names the names in it
+     * @return content triggers with that one list
+     */
+    private static JSONObject triggers(String list, String... names) {
+        JSONArray array = new JSONArray();
+        for (String name : names) {
+            array.put(name);
+        }
+        return new JSONObject().put(list, array);
+    }
+
+    /**
+     * Waits until the content requests reached the expected count, then that no more follow at once.
+     *
+     * @param expected the expected count of content requests
+     */
+    private void awaitContentRequests(int expected) throws InterruptedException {
+        Assert.assertTrue("only [" + server.contentFetches.size() + "] content requests, logs: " + logs, waitFor(() -> server.contentFetches.size() >= expected));
+        Thread.sleep(300);
+        Assert.assertEquals(expected, server.contentFetches.size());
     }
 
     /**
@@ -446,6 +401,7 @@ public class ModuleConfigurationContentTests {
     private static final class SettingsAndContentServer implements ImmediateRequestGenerator {
         final ModuleConfigurationTests.ServerConfigResponder settings = new ModuleConfigurationTests.ServerConfigResponder();
         final List<String> contentFetches = new CopyOnWriteArrayList<>();
+        final List<Integer> queuedRequestsAtFetch = new CopyOnWriteArrayList<>();
         volatile String contentResponse = NO_CONTENT_RESPONSE;
 
         /**
@@ -465,6 +421,7 @@ public class ModuleConfigurationContentTests {
                     callback.callback(null);
                     return;
                 }
+                queuedRequestsAtFetch.add(queuedRequestCount());
                 contentFetches.add(requestData);
                 callback.callback(new JSONObject(contentResponse));
             };

@@ -36,6 +36,7 @@ public class SDKStorage implements StorageProvider {
     protected static final String key_server_config = "sc";
     protected static final String key_health_check = "HEALTH_CHECK";
     protected static final String key_health_check_automatic_crashes = "HEALTH_CHECK_AUTOMATIC_CRASHES";
+    protected static final String key_content_trigger_gaps = "CONTENT_TRIGGER_GAPS";
 
     private JsonFileStorage jsonFileStorage;
 
@@ -433,6 +434,20 @@ public class SDKStorage implements StorageProvider {
         JsonFileStorage storage = jsonFileStorage;
         if (storage != null) {
             storage.addAndSave(key_health_check, state == null ? "" : state);
+        }
+    }
+
+    @Override
+    public String getContentTriggerGaps() {
+        JsonFileStorage storage = jsonFileStorage;
+        return storage == null ? null : storage.getString(key_content_trigger_gaps);
+    }
+
+    @Override
+    public void setContentTriggerGaps(String gaps) {
+        JsonFileStorage storage = jsonFileStorage;
+        if (storage != null) {
+            storage.addAndSave(key_content_trigger_gaps, gaps == null ? "" : gaps);
         }
     }
 

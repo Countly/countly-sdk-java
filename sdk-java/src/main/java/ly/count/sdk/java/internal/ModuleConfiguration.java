@@ -85,6 +85,7 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
     static final String keyREventSegmentationWhitelist = "esw";
     static final String keyRJourneyTriggerEvents = "jte";
     static final String keyRJourneyTriggerViews = "jtv";
+    static final String keyRContentTriggers = "jt";
 
     static final String keyLGEnabled = "e";
     static final String keyLGId = "i";
@@ -170,6 +171,17 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
     volatile Set<String> currentVJourneyTriggerEvents = Collections.emptySet();
     volatile Set<String> currentVJourneyTriggerViews = Collections.emptySet();
     volatile LogGatheringDirective currentVLogGathering = LogGatheringDirective.UNDECIDED;
+    final AtomicReference<ContentTriggers> currentVContentTriggers = new AtomicReference<>(null);
+    /**
+     * Whether the SDK neither asks for the content triggers nor follows them, from
+     * {@link ConfigContent#disableAutoContentTriggers()}.
+     */
+    final AtomicBoolean autoContentTriggersDisabled = new AtomicBoolean(false);
+    /**
+     * Whether settings were stored or provided at init. Without them the first settings answer of
+     * the run decides whether the content zone is entered.
+     */
+    boolean behaviorSettingsStoredAtInit = false;
 
     /**
      * Runs the connection test that a live settings response asks for with its {@code ct} flag.
@@ -239,7 +251,8 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
         boolean backendMode = config.isBackendModeEnabled();
         serverConfigRequestsDisabled = backendMode || config.isSdkBehaviorSettingsRequestsDisabled();
         requestCompressionEnabled.set(config.isRequestCompressionEnabled());
-        L.d("[ModuleConfiguration] init, backend mode:[" + backendMode + "], server config requests disabled:[" + serverConfigRequestsDisabled + "]");
+        autoContentTriggersDisabled.set(config.content.autoContentTriggersDisabled);
+        L.d("[ModuleConfiguration] init, backend mode:[" + backendMode + "], server config requests disabled:[" + serverConfigRequestsDisabled + "], content triggers disabled:[" + autoContentTriggersDisabled.get() + "]");
 
         seedFromDeveloperConfig(config);
         developerValues = developerDefaults(config);
@@ -265,6 +278,7 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
     public void initFinished(@Nonnull InternalConfig config) {
         L.d("[ModuleConfiguration] initFinished");
         if (serverConfigRequestsDisabled) {
+            notifyBehaviorSettingsSettled(false);
             return;
         }
 
@@ -324,7 +338,7 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
         }
 
         try {
-            saveAndStoreDownloadedConfig(new JSONObject(sConfig));
+            behaviorSettingsStoredAtInit = saveAndStoreDownloadedConfig(new JSONObject(sConfig));
         } catch (JSONException e) {
             L.w("[ModuleConfiguration] loadConfigFromStorage, failed to parse, " + e);
         }
@@ -472,22 +486,23 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
 
     /**
      * Validates a configuration and replaces the stored settings with its settings, so a setting it
-     * does not carry is no longer stored. Only {@code v}, {@code t} and {@code c} are stored, so the
-     * log gathering directive and the connection test flag never are. An invalid configuration
-     * leaves the stored settings as they are.
+     * does not carry is no longer stored. Only {@code v}, {@code t}, {@code c} and the content
+     * triggers {@code jt} are stored, so the log gathering directive and the connection test flag
+     * never are. An invalid configuration leaves the stored settings as they are.
      *
      * @param config a configuration as the server sends it
+     * @return whether the configuration was valid and is now stored
      */
-    synchronized void saveAndStoreDownloadedConfig(@Nonnull JSONObject config) {
+    synchronized boolean saveAndStoreDownloadedConfig(@Nonnull JSONObject config) {
         L.v("[ModuleConfiguration] saveAndStoreDownloadedConfig");
         if (!validateServerConfig(config)) {
             L.w("[ModuleConfiguration] saveAndStoreDownloadedConfig, retrieved configuration is not valid, ignoring it");
-            return;
+            return false;
         }
 
         List<String> notStoredTopLevelKeys = new ArrayList<>();
         for (String key : config.keySet()) {
-            if (!keyRVersion.equals(key) && !keyRTimestamp.equals(key) && !keyRConfig.equals(key)) {
+            if (!keyRVersion.equals(key) && !keyRTimestamp.equals(key) && !keyRConfig.equals(key) && !keyRContentTriggers.equals(key)) {
                 notStoredTopLevelKeys.add(key);
             }
         }
@@ -497,7 +512,9 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
 
         //validation already removed every value that is not a usable setting, so the settings object is kept as it is
         latestRetrievedConfiguration = config.optJSONObject(keyRConfig);
-        internalConfig.storageProvider.setServerConfig(new JSONObject(config, keyRVersion, keyRTimestamp, keyRConfig).toString());
+        currentVContentTriggers.set(autoContentTriggersDisabled.get() ? null : ContentTriggers.parse(config.opt(keyRContentTriggers), L));
+        internalConfig.storageProvider.setServerConfig(new JSONObject(config, keyRVersion, keyRTimestamp, keyRConfig, keyRContentTriggers).toString());
+        return true;
     }
 
     /**
@@ -898,12 +915,14 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
         if (config.getDeviceId() == null) {
             L.d("[ModuleConfiguration] fetchConfigFromServer, fetching the configuration is aborted, there is no device ID yet");
             decideLogGatheringOffIfUndecided("no device ID, no server response this run");
+            notifyBehaviorSettingsSettled(false);
             return;
         }
 
         if (config.sdk == null || config.sdk.networking == null) {
             L.w("[ModuleConfiguration] fetchConfigFromServer, fetching the configuration is aborted, networking is not available");
             decideLogGatheringOffIfUndecided("networking is not available, no server response this run");
+            notifyBehaviorSettingsSettled(false);
             return;
         }
 
@@ -911,6 +930,9 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
             Params params = ModuleRequests.prepareRequiredParams(config).add("method", "sc");
             if (requestCompressionEnabled.get()) {
                 params.add("gzip", "1");
+            }
+            if (!autoContentTriggersDisabled.get()) {
+                params.add(keyRContentTriggers, "1");
             }
             String requestData = params.toString();
             Transport transport = config.sdk.networking.getTransport();
@@ -924,6 +946,7 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
         } catch (Exception e) {
             L.e("[ModuleConfiguration] fetchConfigFromServer, failed to request the configuration, [" + e + "]");
             decideLogGatheringOffIfUndecided("the server config request failed");
+            notifyBehaviorSettingsSettled(false);
         }
     }
 
@@ -948,6 +971,7 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
         if (response == null) {
             L.w("[ModuleConfiguration] onServerConfigResponse, not possible to retrieve configuration data, probably due to lack of connection to the server");
             decideLogGatheringOffIfUndecided("server config fetch failed");
+            notifyBehaviorSettingsSettled(false);
             return;
         }
 
@@ -969,19 +993,21 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
         }
 
         boolean changed;
+        boolean applied;
         synchronized (this) {
             //checked again under the lock stop() takes, so a response racing stop() never writes the store
             if (!running) {
                 L.d("[ModuleConfiguration] onServerConfigResponse, the SDK was stopped while the response was read, ignoring it");
                 return;
             }
-            saveAndStoreDownloadedConfig(response);
+            applied = saveAndStoreDownloadedConfig(response);
             changed = updateConfigVariables(config, response, requestedAfterDeviceIdChanges == deviceIdChangesWithoutMerge);
         }
 
         if (changed && config.sdk != null) {
             config.sdk.onSdkConfigurationChanged(config);
         }
+        notifyBehaviorSettingsSettled(applied);
 
         if (connectionTestRequested) {
             notifyConnectionTestRequested(fetchLatencyMs);
@@ -1348,6 +1374,26 @@ public class ModuleConfiguration extends ModuleBase implements ConfigurationProv
     @Override
     public Set<String> getJourneyTriggerViews() {
         return currentVJourneyTriggerViews;
+    }
+
+    @Override
+    @Nullable
+    public ContentTriggers getContentTriggers() {
+        return currentVContentTriggers.get();
+    }
+
+    /**
+     * Tells the content module that the settings answer of this run arrived and was applied, or
+     * that none will arrive, so it checks again what was recorded before it.
+     *
+     * @param answered whether an answer arrived and was applied
+     */
+    private void notifyBehaviorSettingsSettled(boolean answered) {
+        SDKCore core = SDKCore.instance;
+        ModuleContent content = core == null ? null : core.module(ModuleContent.class);
+        if (content != null) {
+            content.onBehaviorSettingsSettled(answered);
+        }
     }
 
     /** {@inheritDoc} */
